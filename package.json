@@ -1,5 +1,12 @@
 {
   "name": "browser-agent",
   "version": "0.0.1",
-  "description": "browser agent"
+  "description": "browser agent",
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
+  },
+  "devDependencies": {
+    "webpack": "4.29.0",
+    "webpack-cli": "3.2.1"
+  }
 }
