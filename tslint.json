@@ -1,0 +1,27 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint-config-airbnb",
+    "tslint:recommended",
+    "tslint:latest",
+    "tslint-eslint-rules",
+    "tslint-config-prettier"
+  ],
+  "jsRules": {},
+  "rules": {
+    "import-name": false,
+    "interface-name": [true, "never-prefix"],
+    "member-access": false,
+    "no-console": false,
+    "no-default-export": true,
+    "no-implicit-dependencies": false,
+    "no-var-keyword": true,
+    "no-submodule-imports": false,
+    "object-literal-sort-keys": false,
+    "object-shorthand-properties-first": false,
+    "ordered-imports": false,
+    "prefer-array-literal": false,
+    "ter-computed-property-spacing": false
+  },
+  "rulesDirectory": []
+}
