@@ -15,6 +15,7 @@
     "member-access": false,
     "no-console": false,
     "no-default-export": true,
+    "no-implicit-dependencies": [true, "dev"],
     "ter-computed-property-spacing": false
   },
   "rulesDirectory": []
