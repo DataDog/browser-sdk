@@ -1,8 +1,11 @@
 const path = require("path");
 
-module.exports = {
+module.exports = (env, argv) => ({
   entry: "./src/index.ts",
-  mode: "production",
+  devtool: argv.mode === "development" ? "inline-source-map" : "false",
+  devServer: {
+    contentBase: "./dist"
+  },
   module: {
     rules: [
       {
@@ -13,10 +16,10 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: [".ts"]
+    extensions: [".ts", ".js"]
   },
   output: {
     filename: "browser-agent.js",
     path: path.resolve(__dirname, "dist")
   }
-};
+});

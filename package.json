@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "browser agent",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.config.js --mode=production",
+    "dev": "webpack-dev-server --mode=development",
     "format": "prettier --check \"**/*.{ts,js,json,md}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json"
   },
@@ -18,7 +19,8 @@
     "tslint-eslint-rules": "5.4.0",
     "typescript": "3.2.4",
     "webpack": "4.29.0",
-    "webpack-cli": "3.2.1"
+    "webpack-cli": "3.2.1",
+    "webpack-dev-server": "3.1.14"
   },
   "husky": {
     "hooks": {

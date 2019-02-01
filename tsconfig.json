@@ -3,6 +3,7 @@
     "outDir": "./dist/",
     "strict": true,
     "module": "es6",
-    "target": "es5"
+    "target": "es5",
+    "sourceMap": true
   }
 }
