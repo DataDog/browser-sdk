@@ -1,0 +1,43 @@
+variables:
+  APP: "browser-agent"
+  CURRENT_CI_IMAGE: 2
+  BUILD_STABLE_REGISTRY: "486234852809.dkr.ecr.us-east-1.amazonaws.com"
+  CI_IMAGE: "$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE"
+
+stages:
+  - ci-image
+  - test
+
+ci-image:
+  stage: ci-image
+  when: manual
+  except: [tags, schedules]
+  tags: ["runner:docker", "size:large"]
+  image: $BUILD_STABLE_REGISTRY/docker:18.03.1
+  script:
+    - docker build --tag $CI_IMAGE .
+    - docker push $CI_IMAGE
+
+format:
+  stage: test
+  tags: ["runner:main", "size:large"]
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn format
+
+lint:
+  stage: test
+  tags: ["runner:main", "size:large"]
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn lint
+
+build:
+  stage: test
+  tags: ["runner:main", "size:large"]
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn build

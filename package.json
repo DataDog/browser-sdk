@@ -5,7 +5,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js --mode=production",
     "dev": "webpack-dev-server --mode=development",
-    "format": "prettier --check \"**/*.{ts,js,json,md}\" \"!dist/**\"",
+    "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json"
   },
   "devDependencies": {
