@@ -9,7 +9,9 @@
   ],
   "jsRules": {},
   "rules": {
+    "indent": [true, "spaces", 2],
     "interface-name": [true, "never-prefix"],
+    "max-line-length": [true, 120],
     "member-access": false,
     "no-console": false,
     "no-default-export": true,
