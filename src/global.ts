@@ -5,6 +5,6 @@ declare global {
 }
 
 export interface Datadog {
-  init(publicAPIKey: string): void;
+  init?(publicAPIKey: string): void;
   log?(message: string): void;
 }

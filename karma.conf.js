@@ -9,10 +9,11 @@ module.exports = function(config) {
         flags: ["--no-sandbox"]
       }
     },
-    files: ["**/*.unit.ts"],
-    frameworks: ["mocha", "chai"],
+    files: ["src/**/*.unit.ts", "src/**/*.integration.ts"],
+    frameworks: ["mocha", "chai", "sinon"],
     preprocessors: {
-      "src/**/*.unit.ts": ["webpack"]
+      "src/**/*.unit.ts": ["webpack"],
+      "src/**/*.integration.ts": ["webpack"]
     },
     singleRun: true,
     webpack: {
