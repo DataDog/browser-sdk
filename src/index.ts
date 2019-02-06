@@ -1,11 +1,12 @@
+import { Boot } from "./boot";
+import { Configuration } from "./core/configuration";
 import { initGlobal } from "./global";
-import { loggerModule } from "./logger/logger.module";
 
-initGlobal();
-window.Datadog.init = (publicAPIKey: string) => {
-  const configuration = {
-    publicAPIKey,
-    logsEndpoint: "https://http-intake.logs.datadoghq.com/v1/input"
-  };
-  loggerModule(configuration);
-};
+try {
+  const configuration = new Configuration();
+  const boot = new Boot(configuration);
+  initGlobal();
+  window.Datadog.init = boot.init.bind(boot);
+} catch {
+  // nothing to do
+}
