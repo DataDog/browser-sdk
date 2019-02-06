@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
+    "importHelpers": true,
+    "moduleResolution": "node",
     "outDir": "./dist/",
     "strict": true,
     "module": "es6",
