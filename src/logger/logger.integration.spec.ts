@@ -9,18 +9,13 @@ describe("logger module", () => {
   };
 
   beforeEach(() => {
-    window.Datadog = {};
     loggerModule(configuration);
-  });
-
-  it("should expose log method", () => {
-    expect(window.Datadog.log).to.exist;
   });
 
   it("should send log data to log endpoint", () => {
     const server = sinon.fakeServer.create();
 
-    window.Datadog.log!("foo");
+    window.Datadog.log("foo");
 
     expect(server.requests.length).to.equal(1);
     expect(server.requests[0].url).to.contain(configuration.logsEndpoint);
