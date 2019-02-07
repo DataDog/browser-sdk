@@ -6,7 +6,7 @@ function init(publicAPIKey: string) {
     logsEndpoint: "https://http-intake.logs.datadoghq.com/v1/input"
   };
 
-  loggerModule(window.Datadog, configuration);
+  loggerModule(configuration);
 }
 
 window.Datadog = { init };
