@@ -1,3 +1,5 @@
+import { LOG_LEVELS } from "./logger/logLevel";
+
 declare global {
   interface Window {
     Datadog: Datadog;
@@ -20,7 +22,7 @@ export interface Datadog {
  */
 export function initGlobal() {
   const global: any = {};
-  ["init", "log", "trace", "debug", "info", "warn", "error"].forEach(method => {
+  ["init", "log", ...LOG_LEVELS].forEach(method => {
     global[method] = () => console.log(`'${method}' not available`);
   });
   window.Datadog = global;
