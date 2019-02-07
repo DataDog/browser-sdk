@@ -6,7 +6,12 @@ declare global {
 
 export interface Datadog {
   init(publicAPIKey: string): void;
-  log(message: string): void;
+  log(message: string, context?: any, severity?: string): void;
+  trace(message: string, context?: any): void;
+  debug(message: string, context?: any): void;
+  info(message: string, context?: any): void;
+  warn(message: string, context?: any): void;
+  error(message: string, context?: any): void;
 }
 
 /**
@@ -15,7 +20,7 @@ export interface Datadog {
  */
 export function initGlobal() {
   const global: any = {};
-  ["init", "log"].forEach(method => {
+  ["init", "log", "trace", "debug", "info", "warn", "error"].forEach(method => {
     global[method] = () => console.log(`'${method}' not available`);
   });
   window.Datadog = global;
