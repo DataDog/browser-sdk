@@ -5,10 +5,12 @@
     "tslint:recommended",
     "tslint:latest",
     "tslint-eslint-rules",
+    "tslint-no-unused-expression-chai",
     "tslint-config-prettier"
   ],
   "jsRules": {},
   "rules": {
+    "file-name-casing": [true, "camel-case"],
     "indent": [true, "spaces", 2],
     "interface-name": [true, "never-prefix"],
     "max-line-length": [true, 120],
@@ -16,6 +18,7 @@
     "no-console": false,
     "no-default-export": true,
     "no-implicit-dependencies": [true, "dev"],
+    "object-literal-sort-keys": [true, "shorthand-first"],
     "ter-computed-property-spacing": false
   },
   "rulesDirectory": []
