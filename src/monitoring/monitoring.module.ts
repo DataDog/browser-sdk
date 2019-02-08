@@ -2,7 +2,7 @@ import { Configuration } from "../core/configuration";
 import { HttpTransport } from "../core/httpTransport";
 import { Monitoring } from "./monitoring";
 
-let monitoring: Monitoring | null = null;
+let monitoring: Monitoring | undefined;
 
 export function monitoringModule(configuration: Configuration) {
   const transport = new HttpTransport(configuration.monitoringEndpoint);
@@ -10,7 +10,7 @@ export function monitoringModule(configuration: Configuration) {
 }
 
 export function reset() {
-  monitoring = null;
+  monitoring = undefined;
 }
 
 export function monitor(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
