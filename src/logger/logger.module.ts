@@ -3,8 +3,8 @@ import { HttpTransport } from "../core/httpTransport";
 import { Logger } from "./logger";
 
 export function loggerModule(configuration: Configuration) {
-  const logTransport = new HttpTransport(configuration.logsEndpoint);
-  const logger = new Logger(logTransport);
+  const transport = new HttpTransport(configuration.logsEndpoint);
+  const logger = new Logger(transport);
 
   window.Datadog.log = logger.log.bind(logger);
   window.Datadog.trace = logger.trace.bind(logger);

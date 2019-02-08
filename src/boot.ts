@@ -6,8 +6,8 @@ export class Boot {
   constructor(private configuration: Configuration) {}
 
   @monitor
-  init(publicApiKey: string) {
-    this.configuration.publicAPIKey = publicApiKey;
+  init(apiKey: string) {
+    this.configuration.apiKey = apiKey;
     loggerModule(this.configuration);
   }
 }

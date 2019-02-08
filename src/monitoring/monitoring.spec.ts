@@ -12,12 +12,12 @@ describe("monitoring decorate", () => {
   };
 
   beforeEach(() => {
-    const monitoringTransport = {
+    const transport = {
       // tslint:disable-next-line no-empty
       send(_: string) {}
     };
-    sendStub = sinon.stub(monitoringTransport, "send");
-    monitoring = new Monitoring(monitoringTransport as HttpTransport);
+    sendStub = sinon.stub(transport, "send");
+    monitoring = new Monitoring(transport as HttpTransport);
   });
 
   it("should return decorated function result", () => {

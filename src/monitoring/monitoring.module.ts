@@ -5,8 +5,8 @@ import { Monitoring } from "./monitoring";
 let monitoring: Monitoring | null = null;
 
 export function monitoringModule(configuration: Configuration) {
-  const errorTransport = new HttpTransport(configuration.monitoringEndpoint);
-  monitoring = new Monitoring(errorTransport);
+  const transport = new HttpTransport(configuration.monitoringEndpoint);
+  monitoring = new Monitoring(transport);
 }
 
 export function reset() {

@@ -7,7 +7,7 @@ declare global {
 }
 
 export interface Datadog {
-  init(publicAPIKey: string): void;
+  init(apiKey: string): void;
   log(message: string, context?: any, severity?: string): void;
   trace(message: string, context?: any): void;
   debug(message: string, context?: any): void;

@@ -1,7 +1,7 @@
 import { HttpTransport } from "../core/httpTransport";
 
 export class Monitoring {
-  constructor(private monitoringTransport: HttpTransport) {}
+  constructor(private transport: HttpTransport) {}
 
   decorate(fn: any) {
     const self = this; // tslint:disable-line no-this-assignment
@@ -10,7 +10,7 @@ export class Monitoring {
         return fn.apply(this, arguments);
       } catch (e) {
         try {
-          self.monitoringTransport.send({ message: e.message });
+          self.transport.send({ message: e.message });
         } catch {
           // nothing to do
         }
