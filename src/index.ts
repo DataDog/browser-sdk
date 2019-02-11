@@ -1,14 +1,14 @@
 import { Boot } from "./boot";
 import { Configuration } from "./core/configuration";
 import { initGlobal } from "./global";
-import { monitoringModule } from "./monitoring/monitoring.module";
+import { initMonitoring } from "./monitoring/monitoring";
 
 try {
   const configuration = new Configuration();
   const boot = new Boot(configuration);
-  initGlobal();
 
-  monitoringModule(configuration);
+  initGlobal();
+  initMonitoring(configuration);
 
   window.Datadog.init = boot.init.bind(boot);
 } catch {

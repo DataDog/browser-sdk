@@ -1,48 +1,107 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { HttpTransport } from "../../core/httpTransport";
-import { Monitoring } from "../monitoring";
+import { Configuration } from "../../core/configuration";
+import { initMonitoring, monitor, monitored, resetMonitoring } from "../monitoring";
 
-describe("monitoring decorate", () => {
-  let monitoring: Monitoring;
-  let sendStub: sinon.SinonStub;
-  const notThrowing = () => "result";
-  const throwing = () => {
-    throw new Error("error");
-  };
+const configuration = {
+  monitoringEndpoint: "http://localhot/monitoring"
+};
 
-  beforeEach(() => {
-    const transport = {
-      // tslint:disable-next-line no-empty
-      send(_: string) {}
+describe("monitoring", () => {
+  describe("decorator", () => {
+    class Candidate {
+      notMonitoredThrowing() {
+        throw new Error("not monitored");
+      }
+
+      @monitored
+      monitoredThrowing() {
+        throw new Error("monitored");
+      }
+
+      @monitored
+      monitoredNotThrowing() {
+        return 1;
+      }
+    }
+
+    let candidate: Candidate;
+    beforeEach(() => {
+      candidate = new Candidate();
+    });
+
+    describe("before initialisation", () => {
+      it("should not monitor", () => {
+        expect(() => candidate.notMonitoredThrowing()).to.throw("not monitored");
+        expect(() => candidate.monitoredThrowing()).to.throw("monitored");
+        expect(candidate.monitoredNotThrowing()).to.equal(1);
+      });
+    });
+
+    describe("after initialisation", () => {
+      beforeEach(() => {
+        initMonitoring(configuration as Configuration);
+      });
+
+      afterEach(() => {
+        resetMonitoring();
+      });
+
+      it("should preserve original behavior", () => {
+        expect(candidate.monitoredNotThrowing()).to.equal(1);
+      });
+
+      it("should catch error", () => {
+        expect(() => candidate.notMonitoredThrowing()).to.throw();
+        expect(() => candidate.monitoredThrowing()).to.not.throw();
+      });
+
+      it("should report error", () => {
+        const server = sinon.fakeServer.create();
+
+        candidate.monitoredThrowing();
+
+        expect(server.requests.length).to.equal(1);
+        expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
+        expect(server.requests[0].requestBody).to.equal('{"message":"monitored"}');
+        server.restore();
+      });
+    });
+  });
+
+  describe("function", () => {
+    const notThrowing = () => 1;
+    const throwing = () => {
+      throw new Error("error");
     };
-    sendStub = sinon.stub(transport, "send");
-    monitoring = new Monitoring(transport as HttpTransport);
-  });
 
-  it("should return decorated function result", () => {
-    sendStub.returnsThis();
+    beforeEach(() => {
+      initMonitoring(configuration as Configuration);
+    });
 
-    const decorated = monitoring.decorate(notThrowing);
+    afterEach(() => {
+      resetMonitoring();
+    });
 
-    expect(decorated()).to.equal("result");
-    expect(sendStub.notCalled).to.equal(true);
-  });
+    it("should preserve original behavior", () => {
+      const decorated = monitor(notThrowing);
+      expect(decorated()).to.equal(1);
+    });
 
-  it("should send decorated function exceptions", () => {
-    sendStub.returnsThis();
+    it("should catch error", () => {
+      const decorated = monitor(throwing);
+      expect(() => decorated()).to.not.throw();
+    });
 
-    const decorated = monitoring.decorate(throwing);
+    it("should report error", () => {
+      const server = sinon.fakeServer.create();
 
-    expect(decorated()).to.be.undefined;
-    expect(sendStub.callCount).to.equal(1);
-  });
+      monitor(throwing)();
 
-  it("should swallow transport exceptions", () => {
-    sendStub.throws();
-
-    const decorated = monitoring.decorate(throwing);
-
-    expect(() => decorated()).to.not.throw();
+      expect(server.requests.length).to.equal(1);
+      expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
+      expect(server.requests[0].requestBody).to.equal('{"message":"error"}');
+      server.restore();
+    });
   });
 });
