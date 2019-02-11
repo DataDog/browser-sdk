@@ -20,7 +20,16 @@ describe("logger module", () => {
 
     expect(server.requests.length).to.equal(1);
     expect(server.requests[0].url).to.equal(configuration.logsEndpoint);
-    expect(server.requests[0].requestBody).to.equal('{"message":"message","severity":"severity","foo":"bar"}');
+
+    expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+      message: "message",
+      severity: "severity",
+      foo: "bar", // tslint:disable-line object-literal-sort-keys
+      http: {
+        url: window.location.href,
+        useragent: navigator.userAgent
+      }
+    });
 
     server.restore();
   });
@@ -33,7 +42,16 @@ describe("logger module", () => {
 
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.logsEndpoint);
-      expect(server.requests[0].requestBody).to.equal(`{"message":"message","severity":"${logLevel}"}`);
+
+      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+        message: "message",
+        severity: logLevel,
+        // tslint:disable-next-line object-literal-sort-keys
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        }
+      });
 
       server.restore();
     });

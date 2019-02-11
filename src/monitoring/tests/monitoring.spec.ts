@@ -63,7 +63,16 @@ describe("monitoring", () => {
 
         expect(server.requests.length).to.equal(1);
         expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
-        expect(server.requests[0].requestBody).to.equal('{"message":"monitored"}');
+
+        expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+          message: "monitored",
+          // tslint:disable-next-line object-literal-sort-keys
+          http: {
+            url: window.location.href,
+            useragent: navigator.userAgent
+          }
+        });
+
         server.restore();
       });
     });
@@ -100,7 +109,16 @@ describe("monitoring", () => {
 
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
-      expect(server.requests[0].requestBody).to.equal('{"message":"error"}');
+
+      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+        message: "error",
+        // tslint:disable-next-line object-literal-sort-keys
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        }
+      });
+
       server.restore();
     });
   });
