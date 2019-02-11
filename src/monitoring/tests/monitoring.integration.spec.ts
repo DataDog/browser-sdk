@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { Configuration } from "../core/configuration";
-import { monitor, monitoringModule, reset } from "./monitoring.module";
+import { Configuration } from "../../core/configuration";
+import { monitor, monitoringModule, reset } from "../monitoring.module";
 
 class Candidate {
   notMonitored() {

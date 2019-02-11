@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { Configuration } from "../core/configuration";
-import { loggerModule } from "./logger.module";
-import { LOG_LEVELS } from "./logLevel";
+import { Configuration } from "../../core/configuration";
+import { loggerModule } from "../logger.module";
+import { LOG_LEVELS } from "../logLevel";
 
 describe("logger module", () => {
   const configuration = {

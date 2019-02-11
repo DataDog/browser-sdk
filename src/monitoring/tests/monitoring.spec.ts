@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { HttpTransport } from "../core/httpTransport";
-import { Monitoring } from "./monitoring";
+import { HttpTransport } from "../../core/httpTransport";
+import { Monitoring } from "../monitoring";
 
 describe("monitoring decorate", () => {
   let monitoring: Monitoring;
