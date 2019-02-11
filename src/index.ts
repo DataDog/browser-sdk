@@ -1,16 +1,22 @@
-import { Boot } from "./boot";
 import { Configuration } from "./core/configuration";
 import { initGlobal } from "./global";
-import { initMonitoring } from "./monitoring/monitoring";
+import { loggerModule } from "./logger/logger.module";
+import { initMonitoring, monitor } from "./monitoring/monitoring";
 
 try {
   const configuration = new Configuration();
-  const boot = new Boot(configuration);
 
   initGlobal();
   initMonitoring(configuration);
 
-  window.Datadog.init = boot.init.bind(boot);
+  window.Datadog.init = makeInit(configuration);
 } catch {
   // nothing to do
+}
+
+function makeInit(configuration: Configuration) {
+  return monitor((apiKey: string) => {
+    configuration.apiKey = apiKey;
+    loggerModule(configuration);
+  });
 }
