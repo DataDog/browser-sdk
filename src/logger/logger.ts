@@ -1,11 +1,13 @@
 import { HttpTransport } from "../core/httpTransport";
+import { monitored } from "../monitoring/monitoring";
 import { LogLevel } from "./logLevel";
 
 export class Logger {
-  constructor(private logTransport: HttpTransport) {}
+  constructor(private transport: HttpTransport) {}
 
+  @monitored
   log(message: string, context = {}, severity = LogLevel.INFO) {
-    this.logTransport.send({ message, severity, ...context });
+    this.transport.send({ message, severity, ...context });
   }
 
   trace(message: string, context = {}) {

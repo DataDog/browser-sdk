@@ -18,6 +18,7 @@
     "no-console": false,
     "no-default-export": true,
     "no-implicit-dependencies": [true, "dev"],
+    "no-null-keyword": true,
     "object-literal-sort-keys": [true, "shorthand-first"],
     "ter-computed-property-spacing": false
   },
