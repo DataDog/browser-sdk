@@ -56,4 +56,58 @@ describe("logger module", () => {
       server.restore();
     });
   });
+
+  describe("global context", () => {
+    it("should be added to the request", () => {
+      const server = sinon.fakeServer.create();
+
+      window.Datadog.setGlobalContext({ bar: "foo" });
+      window.Datadog.log("message");
+
+      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+        message: "message",
+        severity: "info",
+        // tslint:disable-next-line object-literal-sort-keys
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        },
+        bar: "foo"
+      });
+
+      server.restore();
+    });
+
+    it("should be updatable", () => {
+      const server = sinon.fakeServer.create();
+
+      window.Datadog.setGlobalContext({ bar: "foo" });
+      window.Datadog.log("first");
+      window.Datadog.setGlobalContext({ foo: "bar" });
+      window.Datadog.log("second");
+
+      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+        message: "first",
+        severity: "info",
+        // tslint:disable-next-line object-literal-sort-keys
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        },
+        bar: "foo"
+      });
+      expect(JSON.parse(server.requests[1].requestBody)).to.deep.equal({
+        message: "second",
+        severity: "info",
+        // tslint:disable-next-line object-literal-sort-keys
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        },
+        foo: "bar"
+      });
+
+      server.restore();
+    });
+  });
 });

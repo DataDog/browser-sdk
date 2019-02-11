@@ -14,6 +14,7 @@ export interface Datadog {
   info(message: string, context?: any): void;
   warn(message: string, context?: any): void;
   error(message: string, context?: any): void;
+  setGlobalContext(context: any): void;
 }
 
 /**
@@ -22,7 +23,7 @@ export interface Datadog {
  */
 export function initGlobal() {
   const global: any = {};
-  ["init", "log", ...LOG_LEVELS].forEach(method => {
+  ["init", "log", ...LOG_LEVELS, "setGlobalContext"].forEach(method => {
     global[method] = () => console.log(`'${method}' not available`);
   });
   window.Datadog = global;
