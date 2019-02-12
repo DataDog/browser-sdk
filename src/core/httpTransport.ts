@@ -1,3 +1,9 @@
+interface Message {
+  message: string;
+  severity?: string;
+  [key: string]: any;
+}
+
 export class HttpTransport {
   private payloadParametersProviders: Array<(...args: any) => any> = [commonParameters];
 
@@ -5,17 +11,17 @@ export class HttpTransport {
     this.payloadParametersProviders = this.payloadParametersProviders.concat(payloadParametersProviders);
   }
 
-  send(data: any) {
+  send(message: Message) {
     const request = new XMLHttpRequest();
     request.open("POST", this.endpointUrl, true);
-    request.send(this.computePayload(data));
+    request.send(this.computePayload(message));
   }
 
-  private computePayload(data: any) {
+  private computePayload(message: Message) {
     const providersParameters = this.payloadParametersProviders
       .map(provider => provider())
       .reduce((a, b) => ({ ...a, ...b }), {});
-    return JSON.stringify({ ...data, ...providersParameters });
+    return JSON.stringify({ ...message, ...providersParameters });
   }
 }
 
