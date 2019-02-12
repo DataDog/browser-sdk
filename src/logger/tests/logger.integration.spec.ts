@@ -1,11 +1,7 @@
-import * as chai from "chai";
-import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
+import { expect } from "chai";
 import * as sinon from "sinon";
 import { loggerModule } from "../logger.module";
 import { LOG_LEVELS } from "../logLevel";
-
-chai.use(deepEqualInAnyOrder);
-const expect = chai.expect;
 
 describe("logger module", () => {
   const configuration: any = {
@@ -24,7 +20,7 @@ describe("logger module", () => {
 
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.logsEndpoint);
-      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equalInAnyOrder({
+      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
         foo: "bar",
         http: {
           url: window.location.href,
