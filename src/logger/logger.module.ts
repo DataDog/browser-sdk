@@ -3,11 +3,10 @@ import { HttpTransport } from "../core/httpTransport";
 import { Logger } from "./logger";
 
 export function loggerModule(configuration: Configuration) {
-  let globalContext = {};
-  const transport = new HttpTransport(configuration.logsEndpoint, () => globalContext);
+  const transport = new HttpTransport(configuration.logsEndpoint);
   const logger = new Logger(transport);
 
-  window.Datadog.setGlobalContext = (context: any) => (globalContext = context);
+  window.Datadog.setGlobalContext = (context: any) => (transport.extraParameters = context);
   window.Datadog.log = logger.log.bind(logger);
   window.Datadog.trace = logger.trace.bind(logger);
   window.Datadog.debug = logger.debug.bind(logger);
