@@ -7,7 +7,7 @@ import { initMonitoring, monitor, monitored, resetMonitoring } from "../monitori
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
-const configuration = {
+const configuration: any = {
   monitoringEndpoint: "http://localhot/monitoring"
 };
 
@@ -44,7 +44,7 @@ describe("monitoring", () => {
 
     describe("after initialisation", () => {
       beforeEach(() => {
-        initMonitoring(configuration as Configuration);
+        initMonitoring(configuration);
       });
 
       afterEach(() => {
@@ -65,17 +65,7 @@ describe("monitoring", () => {
 
         candidate.monitoredThrowing();
 
-        expect(server.requests.length).to.equal(1);
-        expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
-
-        expect(JSON.parse(server.requests[0].requestBody)).to.deep.equalInAnyOrder({
-          http: {
-            url: window.location.href,
-            useragent: navigator.userAgent
-          },
-          message: "monitored"
-        });
-
+        expect(JSON.parse(server.requests[0].requestBody).message).to.equal("monitored");
         server.restore();
       });
     });
@@ -88,7 +78,7 @@ describe("monitoring", () => {
     };
 
     beforeEach(() => {
-      initMonitoring(configuration as Configuration);
+      initMonitoring(configuration);
     });
 
     afterEach(() => {
@@ -110,17 +100,36 @@ describe("monitoring", () => {
 
       monitor(throwing)();
 
+      expect(JSON.parse(server.requests[0].requestBody).message).to.equal("error");
+      server.restore();
+    });
+  });
+
+  describe("request", () => {
+    beforeEach(() => {
+      initMonitoring(configuration);
+    });
+
+    afterEach(() => {
+      resetMonitoring();
+    });
+
+    it("should send the needed data", () => {
+      const server = sinon.fakeServer.create();
+
+      monitor(() => {
+        throw new Error("message");
+      })();
+
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
-
       expect(JSON.parse(server.requests[0].requestBody)).to.deep.equalInAnyOrder({
         http: {
           url: window.location.href,
           useragent: navigator.userAgent
         },
-        message: "error"
+        message: "message"
       });
-
       server.restore();
     });
   });
