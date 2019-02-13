@@ -16,7 +16,7 @@ module.exports = function(config) {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY
     },
-    browsers: [Object.keys(browsers)],
+    browsers: Object.keys(browsers),
     customLaunchers: browsers
   });
 };
