@@ -16,9 +16,12 @@ try {
 }
 
 function makeInit(configuration: Configuration) {
-  return monitor((apiKey: string) => {
+  return monitor((apiKey: string, override: Partial<Configuration> = {}) => {
     configuration.apiKey = apiKey;
+    if ("errorCollection" in override) {
+      configuration.errorCollection = override.errorCollection!;
+    }
     const logger = loggerModule(configuration);
-    errorCollectionModule(logger);
+    errorCollectionModule(configuration, logger);
   });
 }
