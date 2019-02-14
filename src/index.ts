@@ -1,4 +1,5 @@
 import { Configuration } from "./core/configuration";
+import { errorCollectionModule } from "./errorCollection/errorCollection.module";
 import { initGlobal } from "./global";
 import { loggerModule } from "./logger/logger.module";
 import { initMonitoring, monitor } from "./monitoring/monitoring";
@@ -17,6 +18,7 @@ try {
 function makeInit(configuration: Configuration) {
   return monitor((apiKey: string) => {
     configuration.apiKey = apiKey;
-    loggerModule(configuration);
+    const logger = loggerModule(configuration);
+    errorCollectionModule(logger);
   });
 }

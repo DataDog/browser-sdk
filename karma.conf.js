@@ -10,7 +10,7 @@ module.exports = function(config) {
       }
     },
     files: ["src/**/*.spec.ts"],
-    frameworks: ["mocha", "chai", "sinon"],
+    frameworks: ["mocha", "sinon-chai"],
     preprocessors: {
       "src/**/*.spec.ts": ["webpack"]
     },
