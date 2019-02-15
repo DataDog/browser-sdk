@@ -50,11 +50,10 @@ test:
   script:
     - yarn
     - yarn test
-
-browserstack:
-  stage: browserstack
-  tags: ["runner:main", "size:large"]
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - ./ci-browserstack.sh
+#browserstack:
+#  stage: browserstack
+#  tags: ["runner:main", "size:large"]
+#  image: $CI_IMAGE
+#  script:
+#    - yarn
+#    - ./ci-browserstack.sh
