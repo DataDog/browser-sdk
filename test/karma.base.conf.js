@@ -7,6 +7,11 @@ module.exports = {
   preprocessors: {
     "src/**/*.spec.ts": ["webpack"]
   },
+  reporters: ["mocha"],
+  mochaReporter: {
+    output: "minimal",
+    showDiff: true
+  },
   singleRun: true,
   webpack: {
     mode: "development",
