@@ -18,8 +18,8 @@ try {
 function makeInit(configuration: Configuration) {
   return monitor((apiKey: string, override: Partial<Configuration> = {}) => {
     configuration.apiKey = apiKey;
-    if ("errorCollection" in override) {
-      configuration.errorCollection = override.errorCollection!;
+    if ("isCollectingError" in override) {
+      configuration.isCollectingError = override.isCollectingError!;
     }
     const logger = loggerModule(configuration);
     errorCollectionModule(configuration, logger);

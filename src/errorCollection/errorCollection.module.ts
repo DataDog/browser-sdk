@@ -4,7 +4,7 @@ import { startConsoleTracking } from "./consoleTracker";
 import { startRuntimeErrorTracking } from "./runtimeErrorTracker";
 
 export function errorCollectionModule(configuration: Configuration, logger: Logger) {
-  if (configuration.errorCollection) {
+  if (configuration.isCollectingError) {
     startConsoleTracking(logger);
     startRuntimeErrorTracking(logger);
   }
