@@ -6,6 +6,7 @@ import { startRuntimeErrorTracking, stopRuntimeErrorTracking } from "../runtimeE
 use(sinonChai);
 
 describe("runtime error tracker", () => {
+  const ERROR_MESSAGE = "foo";
   let mochaHandler: ErrorEventHandler;
   let logger: any;
   let onerrorSpy: sinon.SinonSpy;
@@ -14,9 +15,10 @@ describe("runtime error tracker", () => {
     mochaHandler = window.onerror;
     onerrorSpy = sinon.spy(() => ({}));
     window.onerror = onerrorSpy;
+
     logger = {
-      // ensure that we log test error while mocha handler is disabled
-      error: (message: string) => (message.indexOf("foo") === -1 ? console.error(message) : undefined)
+      // ensure that we call mocha handler for unexpected errors
+      error: (message: string) => (message !== ERROR_MESSAGE ? mochaHandler(message) : undefined)
     };
     sinon.spy(logger, "error");
     startRuntimeErrorTracking(logger);
@@ -30,22 +32,22 @@ describe("runtime error tracker", () => {
 
   it("should log error", done => {
     setTimeout(() => {
-      throw new Error("foo");
+      throw new Error(ERROR_MESSAGE);
     }, 10);
 
     setTimeout(() => {
-      expect(logger.error.called).to.equal(true);
+      expect(logger.error).to.have.been.calledWith(ERROR_MESSAGE);
       done();
     }, 100);
   });
 
   it("should call original error handler", done => {
     setTimeout(() => {
-      throw new Error("foo");
+      throw new Error(ERROR_MESSAGE);
     }, 10);
 
     setTimeout(() => {
-      expect(onerrorSpy.called).to.equal(true);
+      expect(onerrorSpy).to.have.been.calledWith(`Uncaught Error: ${ERROR_MESSAGE}`);
       done();
     }, 100);
   });
