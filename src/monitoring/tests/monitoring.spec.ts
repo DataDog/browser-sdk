@@ -118,13 +118,17 @@ describe("monitoring", () => {
 
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
-      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
-        http: {
-          url: window.location.href,
-          useragent: navigator.userAgent
-        },
-        message: "message"
+
+      const data = JSON.parse(server.requests[0].requestBody);
+      expect(Object.keys(data)).to.deep.equal(["stack", "message", "name", "http"]);
+
+      expect(data.name).to.equal("Error");
+      expect(data.message).to.equal("message");
+      expect(data.http).to.deep.equal({
+        url: window.location.href,
+        useragent: navigator.userAgent
       });
+
       server.restore();
     });
   });

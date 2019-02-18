@@ -1,5 +1,6 @@
 import { Configuration } from "../core/configuration";
 import { HttpTransport } from "../core/httpTransport";
+import { computeStackTrace } from "../tracekit/tracekit";
 
 let transport: HttpTransport | undefined;
 
@@ -27,7 +28,7 @@ export function monitor(fn: Function) {
     } catch (e) {
       try {
         if (transport !== undefined) {
-          transport.send({ message: e.message });
+          transport.send(computeStackTrace(e));
         }
       } catch {
         // nothing to do
