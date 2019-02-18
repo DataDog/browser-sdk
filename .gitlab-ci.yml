@@ -1,12 +1,13 @@
 variables:
   APP: "browser-agent"
-  CURRENT_CI_IMAGE: 3
+  CURRENT_CI_IMAGE: 4
   BUILD_STABLE_REGISTRY: "486234852809.dkr.ecr.us-east-1.amazonaws.com"
   CI_IMAGE: "$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE"
 
 stages:
   - ci-image
   - test
+  - browserstack
 
 ci-image:
   stage: ci-image
@@ -49,3 +50,10 @@ test:
   script:
     - yarn
     - yarn test
+#browserstack:
+#  stage: browserstack
+#  tags: ["runner:main", "size:large"]
+#  image: $CI_IMAGE
+#  script:
+#    - yarn
+#    - ./ci-browserstack.sh
