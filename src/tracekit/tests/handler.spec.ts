@@ -1,78 +1,53 @@
-(function() {
-  "use strict";
+import { expect } from "chai";
+import * as sinon from "sinon";
+import { report, StackFrame, wrap } from "../tracekit";
 
-  describe("Handler", function() {
-    it("it should not go into an infinite loop", function(done) {
-      var stacks = [];
-      function handler(stackInfo) {
-        stacks.push(stackInfo);
-      }
+describe("Handler", () => {
+  it("it should not go into an infinite loop", done => {
+    const stacks = [];
 
-      function throwException() {
-        throw new Error("Boom!");
-      }
+    function handler(stackInfo: StackFrame) {
+      stacks.push(stackInfo);
+    }
 
-      TraceKit.report.subscribe(handler);
-      expect(function() {
-        TraceKit.wrap(throwException)();
-      }).toThrow();
+    function throwException() {
+      throw new Error("Boom!");
+    }
 
-      setTimeout(function() {
-        TraceKit.report.unsubscribe(handler);
-        expect(stacks.length).toBe(1);
-        done();
-      }, 1000);
-    }, 2000);
+    report.subscribe(handler);
+    expect(() => wrap(throwException)()).to.throw();
 
-    it("should get extra arguments (isWindowError and exception)", function(done) {
-      var handler = jasmine.createSpy("handler");
-
-      var exception = new Error("Boom!");
-
-      function throwException() {
-        throw exception;
-      }
-
-      TraceKit.report.subscribe(handler);
-      expect(function() {
-        TraceKit.wrap(throwException)();
-      }).toThrow();
-
-      setTimeout(function() {
-        TraceKit.report.unsubscribe(handler);
-
-        expect(handler.calls.count()).toEqual(1);
-
-        var isWindowError = handler.calls.mostRecent().args[1];
-        expect(isWindowError).toEqual(false);
-
-        var e = handler.calls.mostRecent().args[2];
-        expect(e).toEqual(exception);
-
-        done();
-      }, 1000);
-    }, 2000);
-
-    // NOTE: This will not pass currently because errors are rethrown.
-    /* it('it should call report handler once', function (done){
-            var handlerCalledCount = 0;
-            TraceKit.report.subscribe(function(stackInfo) {
-                handlerCalledCount++;
-            });
-
-            function handleAndReportException() {
-                try {
-                    a++;
-                } catch (ex) {
-                    TraceKit.report(ex);
-                }
-            }
-
-            expect(handleAndReportException).not.toThrow();
-            setTimeout(function () {
-                expect(handlerCalledCount).toBe(1);
-                done();
-            }, 1000);
-        }, 2000); */
+    setTimeout(() => {
+      report.unsubscribe(handler);
+      expect(stacks.length).to.equal(1);
+      done();
+    }, 1000);
   });
-})();
+
+  it("should get extra arguments (isWindowError and exception)", done => {
+    const handler = sinon.fake();
+
+    const exception = new Error("Boom!");
+
+    function throwException() {
+      throw exception;
+    }
+
+    report.subscribe(handler);
+    expect(() => wrap(throwException)()).to.throw();
+
+    setTimeout(() => {
+      report.unsubscribe(handler);
+
+      expect(handler.callCount).to.equal(1);
+
+      const isWindowError = handler.lastCall.args[1];
+      expect(isWindowError).to.equal(false);
+
+      const e = handler.lastCall.args[2];
+      expect(e).to.equal(exception);
+
+      done();
+    }, 1000);
+  });
+});

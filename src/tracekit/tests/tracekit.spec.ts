@@ -1,330 +1,242 @@
-(function() {
-  "use strict";
+import { expect } from "chai";
+import { computeStackTrace, Handler, report } from "../tracekit";
 
-  describe("TraceKit", function() {
-    describe("General", function() {
-      it("should not remove anonymous functions from the stack", function() {
-        // mock up an error object with a stack trace that includes both
-        // named functions and anonymous functions
-        var stack_str =
-          "" +
-          "  Error: \n" +
-          "    at new <anonymous> (http://example.com/js/test.js:63:1)\n" + // stack[0]
-          "    at namedFunc0 (http://example.com/js/script.js:10:2)\n" + // stack[1]
-          "    at http://example.com/js/test.js:65:10\n" + // stack[2]
-          "    at namedFunc2 (http://example.com/js/script.js:20:5)\n" + // stack[3]
-          "    at http://example.com/js/test.js:67:5\n" + // stack[4]
-          "    at namedFunc4 (http://example.com/js/script.js:100001:10002)"; // stack[5]
-        var mock_err = { stack: stack_str };
-        var stackFrames = TraceKit.computeStackTrace.computeStackTraceFromStackProp(mock_err);
+describe("TraceKit", () => {
+  describe("General", () => {
+    it("should not remove anonymous functions from the stack", () => {
+      // mock up an error object with a stack trace that includes both
+      // named functions and anonymous functions
+      const stack = `
+  Error: 
+    at new <anonymous> (http://example.com/js/test.js:63:1)
+    at namedFunc0 (http://example.com/js/script.js:10:2)   
+    at http://example.com/js/test.js:65:10                 
+    at namedFunc2 (http://example.com/js/script.js:20:5)   
+    at http://example.com/js/test.js:67:5                  
+    at namedFunc4 (http://example.com/js/script.js:100001:10002)`;
+      const mockErr: any = { stack };
+      const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!;
 
-        // Make sure TraceKit didn't remove the anonymous functions
-        // from the stack like it used to :)
-        expect(stackFrames).toBeTruthy();
-        expect(stackFrames.stack[0].func).toEqual("new <anonymous>");
-        expect(stackFrames.stack[0].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[0].line).toBe(63);
-        expect(stackFrames.stack[0].column).toBe(1);
+      expect(stackFrames.stack[0].func).to.equal("new <anonymous>");
+      expect(stackFrames.stack[0].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[0].line).to.equal(63);
+      expect(stackFrames.stack[0].column).to.equal(1);
 
-        expect(stackFrames.stack[1].func).toEqual("namedFunc0");
-        expect(stackFrames.stack[1].url).toEqual("http://example.com/js/script.js");
-        expect(stackFrames.stack[1].line).toBe(10);
-        expect(stackFrames.stack[1].column).toBe(2);
+      expect(stackFrames.stack[1].func).to.equal("namedFunc0");
+      expect(stackFrames.stack[1].url).to.equal("http://example.com/js/script.js");
+      expect(stackFrames.stack[1].line).to.equal(10);
+      expect(stackFrames.stack[1].column).to.equal(2);
 
-        expect(stackFrames.stack[2].func).toEqual("?");
-        expect(stackFrames.stack[2].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[2].line).toBe(65);
-        expect(stackFrames.stack[2].column).toBe(10);
+      expect(stackFrames.stack[2].func).to.equal("?");
+      expect(stackFrames.stack[2].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[2].line).to.equal(65);
+      expect(stackFrames.stack[2].column).to.equal(10);
 
-        expect(stackFrames.stack[3].func).toEqual("namedFunc2");
-        expect(stackFrames.stack[3].url).toEqual("http://example.com/js/script.js");
-        expect(stackFrames.stack[3].line).toBe(20);
-        expect(stackFrames.stack[3].column).toBe(5);
+      expect(stackFrames.stack[3].func).to.equal("namedFunc2");
+      expect(stackFrames.stack[3].url).to.equal("http://example.com/js/script.js");
+      expect(stackFrames.stack[3].line).to.equal(20);
+      expect(stackFrames.stack[3].column).to.equal(5);
 
-        expect(stackFrames.stack[4].func).toEqual("?");
-        expect(stackFrames.stack[4].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[4].line).toBe(67);
-        expect(stackFrames.stack[4].column).toBe(5);
+      expect(stackFrames.stack[4].func).to.equal("?");
+      expect(stackFrames.stack[4].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[4].line).to.equal(67);
+      expect(stackFrames.stack[4].column).to.equal(5);
 
-        expect(stackFrames.stack[5].func).toEqual("namedFunc4");
-        expect(stackFrames.stack[5].url).toEqual("http://example.com/js/script.js");
-        expect(stackFrames.stack[5].line).toBe(100001);
-        expect(stackFrames.stack[5].column).toBe(10002);
-      });
+      expect(stackFrames.stack[5].func).to.equal("namedFunc4");
+      expect(stackFrames.stack[5].url).to.equal("http://example.com/js/script.js");
+      expect(stackFrames.stack[5].line).to.equal(100001);
+      expect(stackFrames.stack[5].column).to.equal(10002);
+    });
 
-      it("should handle eval/anonymous strings in Chrome 46", function() {
-        var stack_str =
-          "" +
-          "ReferenceError: baz is not defined\n" +
-          "   at bar (http://example.com/js/test.js:19:7)\n" +
-          "   at foo (http://example.com/js/test.js:23:7)\n" +
-          "   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).toBe(<anonymous>:1:26)\n";
+    it("should handle eval/anonymous strings in Chrome 46", () => {
+      const stack = `
+ReferenceError: baz is not defined
+   at bar (http://example.com/js/test.js:19:7)
+   at foo (http://example.com/js/test.js:23:7)
+   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).to.equal(<anonymous>:1:26)
+`;
 
-        var mock_err = { stack: stack_str };
-        var stackFrames = TraceKit.computeStackTrace.computeStackTraceFromStackProp(mock_err);
-        expect(stackFrames).toBeTruthy();
-        expect(stackFrames.stack[0].func).toEqual("bar");
-        expect(stackFrames.stack[0].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[0].line).toBe(19);
-        expect(stackFrames.stack[0].column).toBe(7);
+      const mockErr: any = { stack };
+      const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!;
 
-        expect(stackFrames.stack[1].func).toEqual("foo");
-        expect(stackFrames.stack[1].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[1].line).toBe(23);
-        expect(stackFrames.stack[1].column).toBe(7);
+      expect(stackFrames.stack[0].func).to.equal("bar");
+      expect(stackFrames.stack[0].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[0].line).to.equal(19);
+      expect(stackFrames.stack[0].column).to.equal(7);
 
-        expect(stackFrames.stack[2].func).toEqual("eval");
-        // TODO: fix nested evals
-        expect(stackFrames.stack[2].url).toEqual("http://example.com/js/test.js");
-        expect(stackFrames.stack[2].line).toBe(26);
-        expect(stackFrames.stack[2].column).toBe(5);
+      expect(stackFrames.stack[1].func).to.equal("foo");
+      expect(stackFrames.stack[1].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[1].line).to.equal(23);
+      expect(stackFrames.stack[1].column).to.equal(7);
+
+      expect(stackFrames.stack[2].func).to.equal("eval");
+      // TODO: fix nested evals
+      expect(stackFrames.stack[2].url).to.equal("http://example.com/js/test.js");
+      expect(stackFrames.stack[2].line).to.equal(26);
+      expect(stackFrames.stack[2].column).to.equal(5);
+    });
+  });
+
+  describe(".computeStackTrace", () => {
+    it("should handle a native error object", () => {
+      const ex = new Error("test");
+      const stack = computeStackTrace(ex);
+      expect(stack.name).to.equal("Error");
+      expect(stack.message).to.equal("test");
+    });
+
+    it("should handle a native error object stack from Chrome", () => {
+      const stackStr = `
+Error: foo
+    at <anonymous>:2:11
+    at Object.InjectedScript._evaluateOn (<anonymous>:904:140)
+    at Object.InjectedScript._evaluateAndWrap (<anonymous>:837:34)
+    at Object.InjectedScript.evaluate (<anonymous>:693:21)`;
+      const mockErr = {
+        message: "foo",
+        name: "Error",
+        stack: stackStr
+      };
+      const stackFrames = computeStackTrace(mockErr);
+
+      expect(stackFrames.stack[0].url).to.equal("<anonymous>");
+    });
+  });
+
+  describe("error notifications", () => {
+    const testMessage = "__mocha_ignore__";
+    const testLineNo = 1337;
+
+    let subscriptionHandler: Handler | undefined;
+
+    describe("with undefined arguments", () => {
+      it("should pass undefined:undefined", done => {
+        // this is probably not good behavior;  just writing this test to verify
+        // that it doesn't change unintentionally
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal(undefined);
+          expect(stack.message).to.equal(undefined);
+          done();
+        };
+        report.subscribe(subscriptionHandler);
+        report.traceKitWindowOnError(undefined!, undefined, testLineNo);
       });
     });
 
-    describe(".computeStackTrace", function() {
-      it("should handle a native error object", function() {
-        var ex = new Error("test");
-        var stack = TraceKit.computeStackTrace(ex);
-        expect(stack.name).toEqual("Error");
-        expect(stack.message).toEqual("test");
+    describe("when no 5th argument (error object)", () => {
+      it("should separate name, message for default error types (e.g. ReferenceError)", done => {
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal("ReferenceError");
+          expect(stack.message).to.equal("foo is undefined");
+          done();
+        };
+        report.subscribe(subscriptionHandler);
+        report.traceKitWindowOnError("ReferenceError: foo is undefined", "http://example.com", testLineNo);
       });
 
-      it("should handle a native error object stack from Chrome", function() {
-        var stackStr =
-          "" +
-          "Error: foo\n" +
-          "    at <anonymous>:2:11\n" +
-          "    at Object.InjectedScript._evaluateOn (<anonymous>:904:140)\n" +
-          "    at Object.InjectedScript._evaluateAndWrap (<anonymous>:837:34)\n" +
-          "    at Object.InjectedScript.evaluate (<anonymous>:693:21)";
-        var mockErr = {
-          name: "Error",
-          message: "foo",
-          stack: stackStr
+      it("should separate name, message for default error types (e.g. Uncaught ReferenceError)", done => {
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal("ReferenceError");
+          expect(stack.message).to.equal("foo is undefined");
+          done();
         };
-        var stackFrames = TraceKit.computeStackTrace(mockErr);
-        expect(stackFrames).toBeTruthy();
-        expect(stackFrames.stack[0].url).toEqual("<anonymous>");
+        report.subscribe(subscriptionHandler);
+        // should work with/without 'Uncaught'
+        report.traceKitWindowOnError("Uncaught ReferenceError: foo is undefined", "http://example.com", testLineNo);
+      });
+
+      it("should separate name, message for default error types on Opera Mini", done => {
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal("ReferenceError");
+          expect(stack.message).to.equal("Undefined variable: foo");
+          done();
+        };
+        report.subscribe(subscriptionHandler);
+        report.traceKitWindowOnError(
+          "Uncaught exception: ReferenceError: Undefined variable: foo",
+          "http://example.com",
+          testLineNo
+        );
+      });
+
+      it("should ignore unknown error types", done => {
+        // TODO: should we attempt to parse this?
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal(undefined);
+          expect(stack.message).to.equal("CustomError: woo scary");
+          done();
+        };
+        report.subscribe(subscriptionHandler);
+        report.traceKitWindowOnError("CustomError: woo scary", "http://example.com", testLineNo);
+      });
+
+      it("should ignore arbitrary messages passed through onerror", done => {
+        subscriptionHandler = (stack, isWindowError, error) => {
+          expect(stack.name).to.equal(undefined);
+          expect(stack.message).to.equal("all work and no play makes homer: something something");
+          done();
+        };
+        report.subscribe(subscriptionHandler);
+        report.traceKitWindowOnError(
+          "all work and no play makes homer: something something",
+          "http://example.com",
+          testLineNo
+        );
       });
     });
 
-    describe("error notifications", function() {
-      var testMessage = "__mocha_ignore__";
-      var testLineNo = 1337;
+    function testErrorNotification(
+      collectWindowErrors: boolean,
+      callOnError: boolean,
+      numReports: number,
+      done: Mocha.Done
+    ) {
+      let numDone = 0;
 
-      var subscriptionHandler;
-      var oldOnErrorHandler;
-
-      // TraceKit waits 2000ms for window.onerror to fire, so give the tests
-      // some extra time.
-      //this.timeout(3000);
-
-      beforeEach(function() {
-        // Prevent the onerror call that's part of our tests from getting to
-        // mocha's handler, which would treat it as a test failure.
-        //
-        // We set this up here and don't ever restore the old handler, because
-        // we can't do that without clobbering TraceKit's handler, which can only
-        // be installed once.
-        oldOnErrorHandler = window.onerror;
-        window.onerror = function(message, url, lineNo, error) {
-          if (message === testMessage || lineNo === testLineNo) {
-            return true;
-          }
-          return oldOnErrorHandler.apply(this, arguments);
-        };
-      });
-
-      afterEach(function() {
-        window.onerror = oldOnErrorHandler;
-        if (subscriptionHandler) {
-          TraceKit.report.unsubscribe(subscriptionHandler);
-          subscriptionHandler = null;
+      subscriptionHandler = (stack, isWindowError, error) => {
+        numDone += 1;
+        if (numDone === numReports) {
+          done();
         }
-      });
+      };
+      report.subscribe(subscriptionHandler);
 
-      describe("with undefined arguments", function() {
-        it("should pass undefined:undefined", function(done) {
-          // this is probably not good behavior;  just writing this test to verify
-          // that it doesn't change unintentionally
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toBe(undefined);
-            expect(stack.message).toBe(undefined);
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          window.onerror(undefined, undefined, testLineNo);
-        });
-      });
-
-      describe("when no 5th argument (error object)", function() {
-        it("should separate name, message for default error types (e.g. ReferenceError)", function(done) {
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toEqual("ReferenceError");
-            expect(stack.message).toEqual("foo is undefined");
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          window.onerror("ReferenceError: foo is undefined", "http://example.com", testLineNo);
-        });
-
-        it("should separate name, message for default error types (e.g. Uncaught ReferenceError)", function(done) {
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toEqual("ReferenceError");
-            expect(stack.message).toEqual("foo is undefined");
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          // should work with/without 'Uncaught'
-          window.onerror("Uncaught ReferenceError: foo is undefined", "http://example.com", testLineNo);
-        });
-
-        it("should separate name, message for default error types on Opera Mini", function(done) {
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toEqual("ReferenceError");
-            expect(stack.message).toEqual("Undefined variable: foo");
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          window.onerror(
-            "Uncaught exception: ReferenceError: Undefined variable: foo",
-            "http://example.com",
-            testLineNo
-          );
-        });
-
-        it("should ignore unknown error types", function(done) {
-          // TODO: should we attempt to parse this?
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toBe(undefined);
-            expect(stack.message).toEqual("CustomError: woo scary");
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          window.onerror("CustomError: woo scary", "http://example.com", testLineNo);
-        });
-
-        it("should ignore arbitrary messages passed through onerror", function(done) {
-          subscriptionHandler = function(stack, isWindowError, error) {
-            expect(stack.name).toBe(undefined);
-            expect(stack.message).toEqual("all work and no play makes homer: something something");
-            done();
-          };
-          TraceKit.report.subscribe(subscriptionHandler);
-          window.onerror("all work and no play makes homer: something something", "http://example.com", testLineNo);
-        });
-      });
-
-      function testErrorNotification(collectWindowErrors, callOnError, numReports, done) {
-        var numDone = 0;
-        // TraceKit's collectWindowErrors flag shouldn't affect direct calls
-        // to TraceKit.report, so we parameterize it for the tests.
-        TraceKit.collectWindowErrors = collectWindowErrors;
-
-        subscriptionHandler = function(stack, isWindowError, error) {
-          numDone++;
-          if (numDone == numReports) {
-            done();
-          }
-        };
-        TraceKit.report.subscribe(subscriptionHandler);
-
-        // TraceKit.report always throws an exception in order to trigger
-        // window.onerror so it can gather more stack data. Mocha treats
-        // uncaught exceptions as errors, so we catch it via assert.throws
-        // here (and manually call window.onerror later if appropriate).
-        //
-        // We test multiple reports because TraceKit has special logic for when
-        // report() is called a second time before either a timeout elapses or
-        // window.onerror is called (which is why we always call window.onerror
-        // only once below, after all calls to report()).
-        for (var i = 0; i < numReports; i++) {
-          var e = new Error("testing");
-          expect(function() {
-            TraceKit.report(e);
-          }).toThrow(e);
-        }
-        // The call to report should work whether or not window.onerror is
-        // triggered, so we parameterize it for the tests. We only call it
-        // once, regardless of numReports, because the case we want to test for
-        // multiple reports is when window.onerror is *not* called between them.
-        if (callOnError) {
-          window.onerror(testMessage);
-        }
+      // report always throws an exception in order to trigger
+      // window.onerror so it can gather more stack data. Mocha treats
+      // uncaught exceptions as errors, so we catch it via assert.throws
+      // here (and manually call window.onerror later if appropriate).
+      //
+      // We test multiple reports because TraceKit has special logic for when
+      // report() is called a second time before either a timeout elapses or
+      // window.onerror is called (which is why we always call window.onerror
+      // only once below, after all calls to report()).
+      for (let i = 0; i < numReports; i += 1) {
+        const e = new Error("testing");
+        expect(() => {
+          report(e);
+        }).to.throw(e);
       }
+      // The call to report should work whether or not window.onerror is
+      // triggered, so we parameterize it for the tests. We only call it
+      // once, regardless of numReports, because the case we want to test for
+      // multiple reports is when window.onerror is *not* called between them.
+      if (callOnError) {
+        report.traceKitWindowOnError(testMessage);
+      }
+    }
 
-      [false, true].forEach(function(collectWindowErrors) {
-        [false, true].forEach(function(callOnError) {
-          [1, 2].forEach(function(numReports) {
-            it(
-              "it should receive arguments from report() when" +
-                " collectWindowErrors is " +
-                collectWindowErrors +
-                " and callOnError is " +
-                callOnError +
-                " and numReports is " +
-                numReports,
-              function(done) {
-                testErrorNotification(collectWindowErrors, callOnError, numReports, done);
-              }
-            );
+    [false, true].forEach(collectWindowErrors => {
+      [false, true].forEach(callOnError => {
+        [1, 2].forEach(numReports => {
+          let title = "it should receive arguments from report() when";
+          title += ` collectWindowErrors is ${collectWindowErrors}`;
+          title += ` and callOnError is ${callOnError}`;
+          title += ` and numReports is ${numReports}`;
+          it(title, done => {
+            testErrorNotification(collectWindowErrors, callOnError, numReports, done);
           });
         });
       });
     });
-
-    describe("globalHandlers", function() {
-      var oldOnErrorHandler;
-      var oldOnUnhandledRejectionHandler;
-
-      var onErrorHandler;
-      var onUnhandledRejectionHandler;
-
-      beforeEach(function() {
-        oldOnErrorHandler = window.onerror;
-        oldOnUnhandledRejectionHandler = window.onunhandledrejection;
-
-        onErrorHandler = function() {};
-        onUnhandledRejectionHandler = function() {};
-
-        window.onerror = onErrorHandler;
-        window.onunhandledrejection = onUnhandledRejectionHandler;
-      });
-
-      afterEach(function() {
-        window.onerror = oldOnErrorHandler;
-        window.onunhandledrejection = oldOnUnhandledRejectionHandler;
-      });
-
-      describe("cleanup after unsubscribing", function() {
-        var testHandler;
-
-        beforeEach(function() {
-          testHandler = function() {
-            return true;
-          };
-        });
-
-        it("should should restore original `window.onerror` once unsubscribed", function() {
-          expect(window.onerror).toBe(onErrorHandler);
-
-          TraceKit.report.subscribe(testHandler);
-          expect(window.onerror).not.toBe(onErrorHandler);
-
-          TraceKit.report.unsubscribe(testHandler);
-          expect(window.onerror).toBe(onErrorHandler);
-        });
-
-        it("should should restore original `window.onunhandledrejection` once unsubscribed", function() {
-          expect(window.onunhandledrejection).toBe(onUnhandledRejectionHandler);
-
-          TraceKit.report.subscribe(testHandler);
-          expect(window.onunhandledrejection).not.toBe(onUnhandledRejectionHandler);
-
-          TraceKit.report.unsubscribe(testHandler);
-          expect(window.onunhandledrejection).toBe(onUnhandledRejectionHandler);
-        });
-      });
-    });
   });
-})();
+});
