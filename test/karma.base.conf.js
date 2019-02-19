@@ -3,7 +3,7 @@ const webpackConfig = require("../webpack.config")(null, "development");
 module.exports = {
   basePath: "..",
   files: ["src/**/*.spec.ts"],
-  frameworks: ["mocha", "chai", "sinon"],
+  frameworks: ["mocha", "sinon-chai"],
   preprocessors: {
     "src/**/*.spec.ts": ["webpack"]
   },

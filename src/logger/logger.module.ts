@@ -13,4 +13,6 @@ export function loggerModule(configuration: Configuration) {
   window.Datadog.info = logger.info.bind(logger);
   window.Datadog.warn = logger.warn.bind(logger);
   window.Datadog.error = logger.error.bind(logger);
+
+  return logger;
 }
