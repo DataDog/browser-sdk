@@ -1,17 +1,13 @@
 import { Logger } from "../logger/logger";
+import { report, StackTrace } from "../tracekit/tracekit";
 
-let original: ErrorEventHandler;
+let handler: (stack: StackTrace) => void;
 
 export function startRuntimeErrorTracking(logger: Logger) {
-  original = window.onerror;
-  window.onerror = (event: Event | string, source?: string, fileno?: number, columnNumber?: number, error?: Error) => {
-    if (original) {
-      original.call(undefined, event, source, fileno, columnNumber, error);
-    }
-    logger.error(JSON.stringify(event));
-  };
+  handler = (stack: StackTrace) => logger.error(stack.message, stack);
+  report.subscribe(handler);
 }
 
 export function stopRuntimeErrorTracking() {
-  window.onerror = original;
+  report.unsubscribe(handler);
 }

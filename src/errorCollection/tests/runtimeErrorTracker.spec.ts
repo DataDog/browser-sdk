@@ -1,22 +1,28 @@
 import { expect, use } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { isAndroid } from "../../tests/browserHelper";
 import { startRuntimeErrorTracking, stopRuntimeErrorTracking } from "../runtimeErrorTracker";
 
 use(sinonChai);
 
 describe("runtime error tracker", () => {
+  const ERROR_MESSAGE = "foo";
   let mochaHandler: ErrorEventHandler;
   let logger: any;
   let onerrorSpy: sinon.SinonSpy;
 
-  beforeEach(() => {
+  beforeEach(function() {
+    if (isAndroid()) {
+      this.skip();
+    }
     mochaHandler = window.onerror;
     onerrorSpy = sinon.spy(() => ({}));
     window.onerror = onerrorSpy;
+
     logger = {
-      // ensure that we log test error while mocha handler is disabled
-      error: (message: string) => (message.indexOf("foo") === -1 ? console.error(message) : undefined)
+      // ensure that we call mocha handler for unexpected errors
+      error: (message: string) => (message !== ERROR_MESSAGE ? mochaHandler(message) : undefined)
     };
     sinon.spy(logger, "error");
     startRuntimeErrorTracking(logger);
@@ -30,22 +36,22 @@ describe("runtime error tracker", () => {
 
   it("should log error", done => {
     setTimeout(() => {
-      throw new Error("foo");
+      throw new Error(ERROR_MESSAGE);
     }, 10);
 
     setTimeout(() => {
-      expect(logger.error.called).to.equal(true);
+      expect(logger.error).to.have.been.calledWith(ERROR_MESSAGE);
       done();
     }, 100);
   });
 
   it("should call original error handler", done => {
     setTimeout(() => {
-      throw new Error("foo");
+      throw new Error(ERROR_MESSAGE);
     }, 10);
 
     setTimeout(() => {
-      expect(onerrorSpy.called).to.equal(true);
+      expect(onerrorSpy).to.have.been.calledWithMatch(sinon.match(ERROR_MESSAGE));
       done();
     }, 100);
   });

@@ -17,7 +17,8 @@ module.exports = function(config) {
       accessKey: process.env.BS_ACCESS_KEY
     },
     browsers: Object.keys(browsers),
-    customLaunchers: browsers
+    customLaunchers: browsers,
+    concurrency: 5
   });
 };
 
