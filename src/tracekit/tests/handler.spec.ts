@@ -1,8 +1,15 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
+import { isIE } from "../../tests/browserHelper";
 import { report, StackFrame, wrap } from "../tracekit";
 
 describe("Handler", () => {
+  beforeEach(function() {
+    if (isIE(9)) {
+      this.skip();
+    }
+  });
+
   it("it should not go into an infinite loop", done => {
     const stacks = [];
 

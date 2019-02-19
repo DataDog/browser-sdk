@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { isIE, isSafari } from "../../tests/browserHelper";
 import { computeStackTrace } from "../tracekit";
 import * as CapturedExceptions from "./fixtures/capturedExceptions";
 
@@ -15,7 +16,10 @@ describe("Parser", () => {
     return computeStackTrace.ofCaller();
   }
 
-  it("should get the order of functions called right", () => {
+  it("should get the order of functions called right", function() {
+    if (isSafari() || isIE(9)) {
+      this.skip();
+    }
     const trace = foo();
     const expected = ["baz", "bar", "foo"];
 
@@ -536,7 +540,11 @@ describe("Parser", () => {
     });
   });
 
-  it("should parse empty IE 9 error", () => {
+  it("should parse empty IE 9 error", function() {
+    if (isIE(9)) {
+      this.skip();
+    }
+
     const stackFrames = computeStackTrace(CapturedExceptions.IE_9 as Error);
 
     if (stackFrames.stack) {

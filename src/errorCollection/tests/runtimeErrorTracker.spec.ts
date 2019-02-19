@@ -1,6 +1,7 @@
 import { expect, use } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
+import { isAndroid } from "../../tests/browserHelper";
 import { startRuntimeErrorTracking, stopRuntimeErrorTracking } from "../runtimeErrorTracker";
 
 use(sinonChai);
@@ -11,7 +12,10 @@ describe("runtime error tracker", () => {
   let logger: any;
   let onerrorSpy: sinon.SinonSpy;
 
-  beforeEach(() => {
+  beforeEach(function() {
+    if (isAndroid()) {
+      this.skip();
+    }
     mochaHandler = window.onerror;
     onerrorSpy = sinon.spy(() => ({}));
     window.onerror = onerrorSpy;
@@ -47,7 +51,7 @@ describe("runtime error tracker", () => {
     }, 10);
 
     setTimeout(() => {
-      expect(onerrorSpy).to.have.been.calledWith(`Uncaught Error: ${ERROR_MESSAGE}`);
+      expect(onerrorSpy).to.have.been.calledWithMatch(sinon.match(ERROR_MESSAGE));
       done();
     }, 100);
   });

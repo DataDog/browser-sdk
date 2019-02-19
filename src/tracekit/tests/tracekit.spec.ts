@@ -185,15 +185,10 @@ Error: foo
       });
     });
 
-    function testErrorNotification(
-      collectWindowErrors: boolean,
-      callOnError: boolean,
-      numReports: number,
-      done: Mocha.Done
-    ) {
+    function testErrorNotification(callOnError: boolean, numReports: number, done: Mocha.Done) {
       let numDone = 0;
 
-      subscriptionHandler = (stack, isWindowError, error) => {
+      subscriptionHandler = () => {
         numDone += 1;
         if (numDone === numReports) {
           done();
@@ -225,16 +220,14 @@ Error: foo
       }
     }
 
-    [false, true].forEach(collectWindowErrors => {
-      [false, true].forEach(callOnError => {
-        [1, 2].forEach(numReports => {
-          let title = "it should receive arguments from report() when";
-          title += ` collectWindowErrors is ${collectWindowErrors}`;
-          title += ` and callOnError is ${callOnError}`;
-          title += ` and numReports is ${numReports}`;
-          it(title, done => {
-            testErrorNotification(collectWindowErrors, callOnError, numReports, done);
-          });
+    [false, true].forEach(callOnError => {
+      [1, 2].forEach(numReports => {
+        let title = "it should receive arguments from report() when";
+        title += ` callOnError is ${callOnError}`;
+        title += ` and numReports is ${numReports}`;
+        it(title, function(done) {
+          this.timeout(5000);
+          testErrorNotification(callOnError, numReports, done);
         });
       });
     });

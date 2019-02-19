@@ -16,6 +16,7 @@
     "@types/sinon": "7.0.5",
     "@types/sinon-chai": "3.2.2",
     "chai": "4.2.0",
+    "chai-shallow-deep-equal": "1.4.6",
     "js-polyfills": "0.1.42",
     "karma": "4.0.0",
     "karma-browserstack-launcher": "1.4.0",

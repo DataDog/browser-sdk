@@ -1,6 +1,9 @@
-import { expect } from "chai";
+import { expect, use } from "chai";
+import * as shallowDeepEqual from "chai-shallow-deep-equal";
 import * as sinon from "sinon";
 import { initMonitoring, monitor, monitored, resetMonitoring } from "../monitoring";
+
+use(shallowDeepEqual);
 
 const configuration: any = {
   monitoringEndpoint: "http://localhot/monitoring"
@@ -119,16 +122,14 @@ describe("monitoring", () => {
       expect(server.requests.length).to.equal(1);
       expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
 
-      const data = JSON.parse(server.requests[0].requestBody);
-      expect(Object.keys(data)).to.deep.equal(["stack", "message", "name", "http"]);
-
-      expect(data.name).to.equal("Error");
-      expect(data.message).to.equal("message");
-      expect(data.http).to.deep.equal({
-        url: window.location.href,
-        useragent: navigator.userAgent
+      expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
+        http: {
+          url: window.location.href,
+          useragent: navigator.userAgent
+        },
+        message: "message",
+        name: "Error"
       });
-
       server.restore();
     });
   });
