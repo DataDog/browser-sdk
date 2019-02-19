@@ -3,7 +3,6 @@ import { LOG_LEVELS } from "./logger/logLevel";
 declare global {
   interface Window {
     Datadog: Datadog;
-    [key: string]: any;
   }
 }
 
