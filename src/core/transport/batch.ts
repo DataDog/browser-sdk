@@ -1,6 +1,6 @@
-import { Message } from "../../logger/logger.module";
-import { monitor } from "../../monitoring/monitoring";
 import { Context } from "../context";
+import { Message } from "../logger/logger.module";
+import { monitor } from "../monitoring/monitoring";
 import { HttpTransport } from "./httpTransport";
 
 export class Batch {

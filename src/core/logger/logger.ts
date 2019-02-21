@@ -1,6 +1,6 @@
-import { Batch } from "../core/transport/batch";
 import { monitored } from "../monitoring/monitoring";
-import { LogLevel } from "./logLevel";
+import { Batch } from "../transport/batch";
+import { LogLevel } from "./logger.module";
 
 export class Logger {
   constructor(private batch: Batch) {}

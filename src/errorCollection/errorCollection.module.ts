@@ -1,5 +1,5 @@
 import { Configuration } from "../core/configuration";
-import { Logger } from "../logger/logger";
+import { Logger } from "../core/logger/logger";
 import { startConsoleTracking } from "./consoleTracker";
 import { startRuntimeErrorTracking } from "./runtimeErrorTracker";
 

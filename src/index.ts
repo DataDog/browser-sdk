@@ -1,8 +1,8 @@
 import { Configuration } from "./core/configuration";
+import { loggerModule } from "./core/logger/logger.module";
+import { initMonitoring, monitor } from "./core/monitoring/monitoring";
 import { errorCollectionModule } from "./errorCollection/errorCollection.module";
 import { initGlobal } from "./global";
-import { loggerModule } from "./logger/logger.module";
-import { initMonitoring, monitor } from "./monitoring/monitoring";
 
 try {
   const configuration = new Configuration();

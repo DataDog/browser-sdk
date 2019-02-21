@@ -1,7 +1,7 @@
-import { Configuration } from "../core/configuration";
-import { getCommonContext } from "../core/context";
-import { HttpTransport } from "../core/transport/httpTransport";
-import { computeStackTrace } from "../tracekit/tracekit";
+import { computeStackTrace } from "../../tracekit/tracekit";
+import { Configuration } from "../configuration";
+import { getCommonContext } from "../context";
+import { HttpTransport } from "../transport/httpTransport";
 
 let transport: HttpTransport | undefined;
 

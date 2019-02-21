@@ -1,4 +1,4 @@
-import { Logger } from "../logger/logger";
+import { Logger } from "../core/logger/logger";
 
 let original: (message?: any, ...optionalParams: any[]) => void;
 

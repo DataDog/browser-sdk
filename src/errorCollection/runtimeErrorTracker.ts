@@ -1,4 +1,4 @@
-import { Logger } from "../logger/logger";
+import { Logger } from "../core/logger/logger";
 import { report, StackTrace } from "../tracekit/tracekit";
 
 let handler: (stack: StackTrace) => void;

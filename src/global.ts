@@ -1,5 +1,5 @@
 import { Context } from "./core/context";
-import { LOG_LEVELS } from "./logger/logLevel";
+import { LOG_LEVELS } from "./core/logger/logger.module";
 
 declare global {
   interface Window {
