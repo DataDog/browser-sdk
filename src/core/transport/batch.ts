@@ -6,10 +6,19 @@ import { HttpTransport } from "./httpTransport";
 export class Batch {
   private buffer: Message[] = [];
 
-  constructor(private transport: HttpTransport, private maxSize: number, private contextProvider: () => Context) {}
+  constructor(
+    private transport: HttpTransport,
+    private maxSize: number,
+    private bytesLimit: number,
+    private contextProvider: () => Context
+  ) {}
 
   add(message: Message) {
-    this.buffer.push({ ...message, ...this.contextProvider() });
+    const contextualizedMessage = { ...message, ...this.contextProvider() };
+    if (this.willOverflowWith(contextualizedMessage)) {
+      this.flush();
+    }
+    this.buffer.push(contextualizedMessage);
     if (this.buffer.length === this.maxSize) {
       this.flush();
     }
@@ -21,6 +30,15 @@ export class Batch {
       this.buffer = [];
     }
   }
+
+  private willOverflowWith(message: Message) {
+    return sizeInBytes(this.buffer) + sizeInBytes(message) > this.bytesLimit;
+  }
+}
+
+function sizeInBytes(candidate: Message | Message[]) {
+  // tslint:disable-next-line no-bitwise
+  return ~-encodeURI(JSON.stringify(candidate)).split(/%..|./).length;
 }
 
 export function flushOnPageHide(batch: Batch) {

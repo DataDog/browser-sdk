@@ -7,6 +7,7 @@ use(sinonChai);
 
 describe("batch", () => {
   const MAX_SIZE = 3;
+  const BYTES_LIMIT = 100;
   const CONTEXT = { foo: "bar" };
   let batch: Batch;
   let transport: any;
@@ -15,7 +16,7 @@ describe("batch", () => {
     transport = { send: () => ({}) };
     sinon.spy(transport, "send");
 
-    batch = new Batch(transport, MAX_SIZE, () => CONTEXT);
+    batch = new Batch(transport, MAX_SIZE, BYTES_LIMIT, () => CONTEXT);
   });
 
   it("should add context to message", () => {
@@ -61,6 +62,31 @@ describe("batch", () => {
         {
           foo: "bar",
           message: "3"
+        }
+      ])
+    );
+  });
+
+  it("should flush when new message will overflow bytes limit", () => {
+    batch.add({ message: "50 bytes - xxxxxxxxxxxxx" });
+    expect(transport.send.notCalled).to.equal(true);
+
+    batch.add({ message: "60 bytes - xxxxxxxxxxxxxxxxxxxxxxx" });
+    expect(transport.send).to.have.been.calledWith(
+      sinon.match([
+        {
+          foo: "bar",
+          message: "50 bytes - xxxxxxxxxxxxx"
+        }
+      ])
+    );
+
+    batch.flush();
+    expect(transport.send).to.have.been.calledWith(
+      sinon.match([
+        {
+          foo: "bar",
+          message: "60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"
         }
       ])
     );

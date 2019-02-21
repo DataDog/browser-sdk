@@ -8,6 +8,11 @@ export class Configuration {
    */
   maxBatchSize = 50;
 
+  /**
+   * beacon payload max size implementation is 64kb
+   */
+  batchBytesLimit = 64 * 1024;
+
   set apiKey(apiKey: string) {
     this.logsEndpoint = this.logsEndpoint.replace("<KEY>", apiKey);
   }

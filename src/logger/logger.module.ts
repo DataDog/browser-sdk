@@ -12,7 +12,7 @@ export interface Message {
 
 export function loggerModule(configuration: Configuration) {
   const transport = new HttpTransport(configuration.logsEndpoint);
-  const batch = new Batch(transport, configuration.maxBatchSize, () => ({
+  const batch = new Batch(transport, configuration.maxBatchSize, configuration.batchBytesLimit, () => ({
     ...getCommonContext(),
     ...getGlobalContext()
   }));
