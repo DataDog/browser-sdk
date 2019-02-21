@@ -1,6 +1,6 @@
 import { Configuration } from "../core/configuration";
 import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from "../core/context";
-import { Batch } from "../core/transport/batch";
+import { Batch, flushOnPageHide } from "../core/transport/batch";
 import { HttpTransport } from "../core/transport/httpTransport";
 import { Logger } from "./logger";
 
@@ -16,6 +16,7 @@ export function loggerModule(configuration: Configuration) {
     ...getCommonContext(),
     ...getGlobalContext()
   }));
+  flushOnPageHide(batch);
   const logger = new Logger(batch);
 
   window.Datadog.setGlobalContext = setGlobalContext;
