@@ -3,7 +3,7 @@
  * avoid CORS preflight requests
  *
  * multiple elements are sent separated by \n in order
- * to be pared correctly without content type header
+ * to be parsed correctly without content type header
  */
 export class HttpTransport {
   constructor(private endpointUrl: string) {}

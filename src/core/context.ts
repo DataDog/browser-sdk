@@ -16,6 +16,7 @@ export function getGlobalContext() {
 
 export function getCommonContext() {
   return {
+    date: new Date().getTime(),
     http: {
       url: window.location.href,
       useragent: navigator.userAgent
