@@ -1,4 +1,4 @@
-import { Configuration } from "./core/configuration";
+import { Configuration, ConfigurationOverride } from "./core/configuration";
 import { loggerModule } from "./core/logger/logger.module";
 import { initMonitoring, monitor } from "./core/monitoring/monitoring";
 import { errorCollectionModule } from "./errorCollection/errorCollection.module";
@@ -16,11 +16,9 @@ try {
 }
 
 function makeInit(configuration: Configuration) {
-  return monitor((apiKey: string, override: Partial<Configuration> = {}) => {
+  return monitor((apiKey: string, override: ConfigurationOverride = {}) => {
     configuration.apiKey = apiKey;
-    if ("isCollectingError" in override) {
-      configuration.isCollectingError = override.isCollectingError!;
-    }
+    configuration.apply(override);
     const logger = loggerModule(configuration);
     errorCollectionModule(configuration, logger);
   });

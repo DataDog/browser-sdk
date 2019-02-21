@@ -1,3 +1,4 @@
+import { ConfigurationOverride } from "./core/configuration";
 import { Context } from "./core/context";
 import { LOG_LEVELS, LogLevel } from "./core/logger/logger.module";
 
@@ -8,7 +9,7 @@ declare global {
 }
 
 export interface Datadog {
-  init(apiKey: string): void;
+  init(apiKey: string, override?: ConfigurationOverride): void;
   log(message: string, context?: Context, severity?: LogLevel): void;
   trace(message: string, context?: Context): void;
   debug(message: string, context?: Context): void;

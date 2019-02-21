@@ -16,4 +16,17 @@ export class Configuration {
   set apiKey(apiKey: string) {
     this.logsEndpoint = this.logsEndpoint.replace("<KEY>", apiKey);
   }
+
+  apply(override: ConfigurationOverride) {
+    if ("isCollectingError" in override) {
+      this.isCollectingError = override.isCollectingError!;
+    }
+  }
+}
+
+/**
+ * List configuration options that can be overridden by the user
+ */
+export interface ConfigurationOverride {
+  isCollectingError?: boolean;
 }

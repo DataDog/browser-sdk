@@ -22,8 +22,8 @@ export function monitored(target: any, propertyKey: string, descriptor: Property
 }
 
 // tslint:disable-next-line ban-types
-export function monitor(fn: Function) {
-  return function(this: any) {
+export function monitor<T extends Function>(fn: T): T {
+  return (function(this: any) {
     try {
       return fn.apply(this, arguments);
     } catch (e) {
@@ -35,5 +35,5 @@ export function monitor(fn: Function) {
         // nothing to do
       }
     }
-  };
+  } as unknown) as T; // consider output type has input type
 }
