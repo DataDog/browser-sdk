@@ -1,4 +1,6 @@
 const path = require("path");
+const webpack = require("webpack");
+const packageJson = require("./package.json");
 
 module.exports = (env, argv) => ({
   entry: "./src/index.ts",
@@ -15,6 +17,13 @@ module.exports = (env, argv) => ({
       }
     ]
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      buildEnv: {
+        VERSION: JSON.stringify(argv.mode === "development" ? "dev" : packageJson.version)
+      }
+    })
+  ],
   resolve: {
     extensions: [".ts", ".js"]
   },

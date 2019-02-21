@@ -20,6 +20,7 @@ export function getCommonContext() {
     http: {
       url: window.location.href,
       useragent: navigator.userAgent
-    }
+    },
+    version: buildEnv.VERSION
   };
 }

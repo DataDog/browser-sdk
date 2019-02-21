@@ -1,4 +1,4 @@
-const webpackConfig = require("../webpack.config")(null, "development");
+const webpackConfig = require("../webpack.config")(null, { mode: "development" });
 
 module.exports = {
   basePath: "..",
@@ -17,6 +17,7 @@ module.exports = {
     mode: "development",
     stats: "minimal",
     module: webpackConfig.module,
+    plugins: webpackConfig.plugins,
     resolve: webpackConfig.resolve
   },
   webpackMiddleware: {
