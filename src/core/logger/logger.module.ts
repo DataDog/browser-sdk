@@ -10,15 +10,17 @@ export interface Message {
   [key: string]: any;
 }
 
-export enum LogLevel {
-  TRACE = "trace",
-  DEBUG = "debug",
-  INFO = "info",
-  WARN = "warn",
-  ERROR = "error"
+export enum LogLevelEnum {
+  trace = "trace",
+  debug = "debug",
+  info = "info",
+  warn = "warn",
+  error = "error"
 }
 
-export const LOG_LEVELS = Object.keys(LogLevel).map(key => LogLevel[key as keyof typeof LogLevel]);
+export type LogLevel = keyof typeof LogLevelEnum;
+
+export const LOG_LEVELS = Object.keys(LogLevelEnum);
 
 export function loggerModule(configuration: Configuration) {
   const transport = new HttpTransport(configuration.logsEndpoint);
