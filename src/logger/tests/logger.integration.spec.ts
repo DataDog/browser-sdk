@@ -5,7 +5,8 @@ import { LOG_LEVELS } from "../logLevel";
 
 describe("logger module", () => {
   const configuration: any = {
-    logsEndpoint: "https://localhost/log"
+    logsEndpoint: "https://localhost/log",
+    maxBatchSize: 1
   };
 
   beforeEach(() => {

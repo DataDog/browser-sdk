@@ -1,13 +1,13 @@
-import { HttpTransport } from "../core/httpTransport";
+import { Batch } from "../core/transport/batch";
 import { monitored } from "../monitoring/monitoring";
 import { LogLevel } from "./logLevel";
 
 export class Logger {
-  constructor(private transport: HttpTransport) {}
+  constructor(private batch: Batch) {}
 
   @monitored
   log(message: string, context = {}, severity = LogLevel.INFO) {
-    this.transport.send({ message, severity, ...context });
+    this.batch.add({ message, severity, ...context });
   }
 
   trace(message: string, context = {}) {

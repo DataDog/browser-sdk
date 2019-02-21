@@ -1,12 +1,12 @@
 import { Configuration } from "../core/configuration";
 import { getCommonContext } from "../core/context";
-import { HttpTransport } from "../core/httpTransport";
+import { HttpTransport } from "../core/transport/httpTransport";
 import { computeStackTrace } from "../tracekit/tracekit";
 
 let transport: HttpTransport | undefined;
 
 export function initMonitoring(configuration: Configuration) {
-  transport = new HttpTransport(configuration.monitoringEndpoint, getCommonContext);
+  transport = new HttpTransport(configuration.monitoringEndpoint);
 }
 
 export function resetMonitoring() {
@@ -29,7 +29,7 @@ export function monitor(fn: Function) {
     } catch (e) {
       try {
         if (transport !== undefined) {
-          transport.send(computeStackTrace(e));
+          transport.send({ ...computeStackTrace(e), ...getCommonContext() });
         }
       } catch {
         // nothing to do
