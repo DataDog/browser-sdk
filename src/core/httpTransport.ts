@@ -1,3 +1,5 @@
+import { Context } from "./context";
+
 interface Message {
   message: string;
   severity?: string;
@@ -5,9 +7,7 @@ interface Message {
 }
 
 export class HttpTransport {
-  extraParameters = {};
-
-  constructor(private endpointUrl: string) {}
+  constructor(private endpointUrl: string, private contextProvider: () => Context) {}
 
   send(message: Message) {
     const request = new XMLHttpRequest();
@@ -16,15 +16,6 @@ export class HttpTransport {
   }
 
   private computePayload(message: Message) {
-    return JSON.stringify({ ...message, ...commonParameters(), ...this.extraParameters });
+    return JSON.stringify({ ...message, ...this.contextProvider() });
   }
-}
-
-function commonParameters() {
-  return {
-    http: {
-      url: window.location.href,
-      useragent: navigator.userAgent
-    }
-  };
 }

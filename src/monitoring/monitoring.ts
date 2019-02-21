@@ -1,11 +1,12 @@
 import { Configuration } from "../core/configuration";
+import { getCommonContext } from "../core/context";
 import { HttpTransport } from "../core/httpTransport";
 import { computeStackTrace } from "../tracekit/tracekit";
 
 let transport: HttpTransport | undefined;
 
 export function initMonitoring(configuration: Configuration) {
-  transport = new HttpTransport(configuration.monitoringEndpoint);
+  transport = new HttpTransport(configuration.monitoringEndpoint, getCommonContext);
 }
 
 export function resetMonitoring() {
