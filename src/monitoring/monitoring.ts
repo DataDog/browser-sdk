@@ -1,5 +1,6 @@
 import { Configuration } from "../core/configuration";
-import { HttpTransport } from "../core/httpTransport";
+import { getCommonContext } from "../core/context";
+import { HttpTransport } from "../core/transport/httpTransport";
 import { computeStackTrace } from "../tracekit/tracekit";
 
 let transport: HttpTransport | undefined;
@@ -28,7 +29,7 @@ export function monitor(fn: Function) {
     } catch (e) {
       try {
         if (transport !== undefined) {
-          transport.send(computeStackTrace(e));
+          transport.send({ ...computeStackTrace(e), ...getCommonContext() });
         }
       } catch {
         // nothing to do

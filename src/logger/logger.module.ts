@@ -1,12 +1,26 @@
 import { Configuration } from "../core/configuration";
-import { HttpTransport } from "../core/httpTransport";
+import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from "../core/context";
+import { Batch, flushOnPageHide } from "../core/transport/batch";
+import { HttpTransport } from "../core/transport/httpTransport";
 import { Logger } from "./logger";
+
+export interface Message {
+  message: string;
+  severity?: string;
+  [key: string]: any;
+}
 
 export function loggerModule(configuration: Configuration) {
   const transport = new HttpTransport(configuration.logsEndpoint);
-  const logger = new Logger(transport);
+  const batch = new Batch(transport, configuration.maxBatchSize, configuration.batchBytesLimit, () => ({
+    ...getCommonContext(),
+    ...getGlobalContext()
+  }));
+  flushOnPageHide(batch);
+  const logger = new Logger(batch);
 
-  window.Datadog.setGlobalContext = (context: any) => (transport.extraParameters = context);
+  window.Datadog.setGlobalContext = setGlobalContext;
+  window.Datadog.addGlobalContext = addGlobalContext;
   window.Datadog.log = logger.log.bind(logger);
   window.Datadog.trace = logger.trace.bind(logger);
   window.Datadog.debug = logger.debug.bind(logger);

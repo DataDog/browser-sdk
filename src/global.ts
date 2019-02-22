@@ -1,3 +1,4 @@
+import { Context } from "./core/context";
 import { LOG_LEVELS } from "./logger/logLevel";
 
 declare global {
@@ -5,8 +6,6 @@ declare global {
     Datadog: Datadog;
   }
 }
-
-type Context = any;
 
 export interface Datadog {
   init(apiKey: string): void;
@@ -17,6 +16,7 @@ export interface Datadog {
   warn(message: string, context?: Context): void;
   error(message: string, context?: Context): void;
   setGlobalContext(context: Context): void;
+  addGlobalContext(key: string, value: any): void;
 }
 
 /**

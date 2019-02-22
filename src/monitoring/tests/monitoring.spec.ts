@@ -104,17 +104,23 @@ describe("monitoring", () => {
   });
 
   describe("request", () => {
+    const FAKE_DATE = 123456;
+    let clock: sinon.SinonFakeTimers;
+    let server: sinon.SinonFakeServer;
+
     beforeEach(() => {
       initMonitoring(configuration);
+      server = sinon.fakeServer.create();
+      clock = sinon.useFakeTimers(FAKE_DATE);
     });
 
     afterEach(() => {
       resetMonitoring();
+      server.restore();
+      clock.restore();
     });
 
     it("should send the needed data", () => {
-      const server = sinon.fakeServer.create();
-
       monitor(() => {
         throw new Error("message");
       })();
@@ -123,6 +129,7 @@ describe("monitoring", () => {
       expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint);
 
       expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
+        date: FAKE_DATE,
         http: {
           url: window.location.href,
           useragent: navigator.userAgent
@@ -130,7 +137,6 @@ describe("monitoring", () => {
         message: "message",
         name: "Error"
       });
-      server.restore();
     });
   });
 });
