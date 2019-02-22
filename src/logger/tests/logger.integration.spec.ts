@@ -37,7 +37,8 @@ describe("logger module", () => {
           useragent: navigator.userAgent
         },
         message: "message",
-        severity: "severity"
+        severity: "severity",
+        version: "dev"
       });
     });
   });

@@ -135,7 +135,8 @@ describe("monitoring", () => {
           useragent: navigator.userAgent
         },
         message: "message",
-        name: "Error"
+        name: "Error",
+        version: "dev"
       });
     });
   });
