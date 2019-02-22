@@ -1,6 +1,6 @@
-import { initGlobal } from "../global";
+import { stubDatadog } from "../index";
 
 beforeEach(() => {
   (navigator.sendBeacon as any) = false;
-  initGlobal();
+  stubDatadog();
 });

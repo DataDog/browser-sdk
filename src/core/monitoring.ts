@@ -1,12 +1,12 @@
-import { Configuration } from "../core/configuration";
-import { getCommonContext } from "../core/context";
-import { HttpTransport } from "../core/transport/httpTransport";
 import { computeStackTrace } from "../tracekit/tracekit";
+import { Configuration } from "./configuration";
+import { getCommonContext } from "./context";
+import { HttpRequest } from "./transport";
 
-let transport: HttpTransport | undefined;
+let transport: HttpRequest | undefined;
 
 export function initMonitoring(configuration: Configuration) {
-  transport = new HttpTransport(configuration.monitoringEndpoint);
+  transport = new HttpRequest(configuration.monitoringEndpoint);
 }
 
 export function resetMonitoring() {
@@ -22,8 +22,8 @@ export function monitored(target: any, propertyKey: string, descriptor: Property
 }
 
 // tslint:disable-next-line ban-types
-export function monitor(fn: Function) {
-  return function(this: any) {
+export function monitor<T extends Function>(fn: T): T {
+  return (function(this: any) {
     try {
       return fn.apply(this, arguments);
     } catch (e) {
@@ -35,5 +35,5 @@ export function monitor(fn: Function) {
         // nothing to do
       }
     }
-  };
+  } as unknown) as T; // consider output type has input type
 }

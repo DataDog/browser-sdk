@@ -1,14 +1,43 @@
-import { Message } from "../../logger/logger.module";
-import { monitor } from "../../monitoring/monitoring";
-import { Context } from "../context";
-import { HttpTransport } from "./httpTransport";
+import { Context } from "./context";
+import { Message } from "./logger";
+import { monitor } from "./monitoring";
+
+/**
+ * Use POST request without content type to:
+ * - avoid CORS preflight requests
+ * - allow usage of sendBeacon
+ *
+ * multiple elements are sent separated by \n in order
+ * to be parsed correctly without content type header
+ */
+export class HttpRequest {
+  constructor(private endpointUrl: string) {}
+
+  send(payload: object | object[]) {
+    const data = this.serialize(payload);
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(this.endpointUrl, data);
+    } else {
+      const request = new XMLHttpRequest();
+      request.open("POST", this.endpointUrl, true);
+      request.send(data);
+    }
+  }
+
+  private serialize(payload: object | string[]) {
+    if (!Array.isArray(payload)) {
+      return JSON.stringify(payload);
+    }
+    return payload.join("\n");
+  }
+}
 
 export class Batch {
   private buffer: string[] = [];
   private bufferBytesSize = 0;
 
   constructor(
-    private transport: HttpTransport,
+    private request: HttpRequest,
     private maxSize: number,
     private bytesLimit: number,
     private contextProvider: () => Context
@@ -27,7 +56,7 @@ export class Batch {
 
   flush() {
     if (this.buffer.length !== 0) {
-      this.transport.send(this.buffer);
+      this.request.send(this.buffer);
       this.buffer = [];
       this.bufferBytesSize = 0;
     }

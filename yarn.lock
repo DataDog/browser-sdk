@@ -5191,6 +5191,11 @@ ts-loader@5.3.3:
     micromatch "^3.1.4"
     semver "^5.0.1"
 
+ts-transformer-keys@0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/ts-transformer-keys/-/ts-transformer-keys-0.3.4.tgz#b54051ba9e6d5f2320b3c41ad861dbe27d38a4b4"
+  integrity sha512-Or2lLODKfg5n03MzC9RfSAeg+l0LrT8r6p8z5JuH0AcCoPVht6+SFCZcKgoN5O/4d9bL6RTqC2lGNTBujUMUaA==
+
 tslib@1.9.0:
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.0.tgz#e37a86fda8cbbaf23a057f473c9f4dc64e5fc2e8"
