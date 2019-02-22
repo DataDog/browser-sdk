@@ -1,9 +1,39 @@
 import { expect, use } from "chai";
 import * as sinon from "sinon";
 import * as sinonChai from "sinon-chai";
-import { Batch } from "../batch";
+import { Batch, HttpRequest } from "../transport";
 
 use(sinonChai);
+
+describe("request", () => {
+  const ENDPOINT_URL = "http://my.website";
+  let server: sinon.SinonFakeServer;
+  let request: HttpRequest;
+
+  beforeEach(() => {
+    server = sinon.fakeServer.create();
+    request = new HttpRequest(ENDPOINT_URL);
+  });
+
+  afterEach(() => {
+    server.restore();
+  });
+
+  it("should send object", () => {
+    request.send({ foo: "bar" });
+
+    expect(server.requests.length).to.equal(1);
+    expect(server.requests[0].url).to.equal(ENDPOINT_URL);
+  });
+
+  it("should send string array", () => {
+    request.send(['{"foo":"bar1"}', '{"foo":"bar2"}']);
+
+    expect(server.requests.length).to.equal(1);
+    expect(server.requests[0].url).to.equal(ENDPOINT_URL);
+    expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}');
+  });
+});
 
 describe("batch", () => {
   const MAX_SIZE = 3;

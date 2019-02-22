@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import * as sinon from "sinon";
-import { LOG_LEVELS, loggerModule } from "../logger.module";
+import { LOG_LEVELS, loggerModule } from "../logger";
 
 describe("logger module", () => {
   const FAKE_DATE = 123456;

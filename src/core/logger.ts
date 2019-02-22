@@ -1,8 +1,7 @@
-import { Configuration } from "../configuration";
-import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from "../context";
-import { Batch, flushOnPageHide } from "../transport/batch";
-import { HttpTransport } from "../transport/httpTransport";
-import { Logger } from "./logger";
+import { Configuration } from "./configuration";
+import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from "./context";
+import { monitored } from "./monitoring";
+import { Batch, flushOnPageHide, HttpRequest } from "./transport";
 
 export interface Message {
   message: string;
@@ -23,7 +22,7 @@ export type LogLevel = keyof typeof LogLevelEnum;
 export const LOG_LEVELS = Object.keys(LogLevelEnum);
 
 export function loggerModule(configuration: Configuration) {
-  const transport = new HttpTransport(configuration.logsEndpoint);
+  const transport = new HttpRequest(configuration.logsEndpoint);
   const batch = new Batch(transport, configuration.maxBatchSize, configuration.batchBytesLimit, () => ({
     ...getCommonContext(),
     ...getGlobalContext()
@@ -41,4 +40,33 @@ export function loggerModule(configuration: Configuration) {
 
   window.Datadog.error = logger.error.bind(logger);
   return logger;
+}
+
+export class Logger {
+  constructor(private batch: Batch) {}
+
+  @monitored
+  log(message: string, context = {}, severity = LogLevelEnum.info) {
+    this.batch.add({ message, severity, ...context });
+  }
+
+  trace(message: string, context = {}) {
+    this.log(message, context, LogLevelEnum.trace);
+  }
+
+  debug(message: string, context = {}) {
+    this.log(message, context, LogLevelEnum.debug);
+  }
+
+  info(message: string, context = {}) {
+    this.log(message, context, LogLevelEnum.info);
+  }
+
+  warn(message: string, context = {}) {
+    this.log(message, context, LogLevelEnum.warn);
+  }
+
+  error(message: string, context = {}) {
+    this.log(message, context, LogLevelEnum.error);
+  }
 }
