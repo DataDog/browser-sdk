@@ -2,12 +2,12 @@ import { Configuration, ConfigurationOverride } from "./core/configuration";
 import { loggerModule } from "./core/logger/logger.module";
 import { initMonitoring, monitor } from "./core/monitoring/monitoring";
 import { errorCollectionModule } from "./errorCollection/errorCollection.module";
-import { initGlobal } from "./global";
+import { stubDatadog } from "./global";
 
 try {
   const configuration = new Configuration();
 
-  initGlobal();
+  stubDatadog();
   initMonitoring(configuration);
 
   window.Datadog.init = makeInit(configuration);

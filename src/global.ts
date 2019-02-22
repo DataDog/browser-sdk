@@ -1,6 +1,7 @@
+import { keys } from "ts-transformer-keys";
 import { ConfigurationOverride } from "./core/configuration";
 import { Context } from "./core/context";
-import { LOG_LEVELS, LogLevel } from "./core/logger/logger.module";
+import { LogLevel } from "./core/logger/logger.module";
 
 declare global {
   interface Window {
@@ -24,10 +25,11 @@ export interface Datadog {
  * Avoid `TypeError: xxx is not a function`
  * if a method is not exposed
  */
-export function initGlobal() {
-  const global: any = {};
-  ["init", "log", ...LOG_LEVELS, "setGlobalContext"].forEach(method => {
-    global[method] = () => console.log(`'${method}' not available`);
+export function stubDatadog() {
+  const publicMethods = keys<Datadog>();
+  const datadog: any = {};
+  publicMethods.forEach(method => {
+    datadog[method] = () => console.log(`'${method}' not available`);
   });
-  window.Datadog = global;
+  window.Datadog = datadog;
 }
