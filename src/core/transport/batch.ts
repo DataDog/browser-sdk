@@ -42,6 +42,9 @@ function sizeInBytes(candidate: Message | Message[]) {
 }
 
 export function flushOnPageHide(batch: Batch) {
+  /**
+   * With sendBeacon, requests are guaranteed to be successfully sent during document unload
+   */
   if (navigator.sendBeacon) {
     /**
      * Only event that guarantee to fire on mobile devices when the page transitions to background state
