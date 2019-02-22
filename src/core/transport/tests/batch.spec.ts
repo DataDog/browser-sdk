@@ -24,14 +24,7 @@ describe("batch", () => {
 
     batch.flush();
 
-    expect(transport.send).to.have.been.calledWith(
-      sinon.match([
-        {
-          foo: "bar",
-          message: "hello"
-        }
-      ])
-    );
+    expect(transport.send).to.have.been.calledWith(['{"message":"hello","foo":"bar"}']);
   });
 
   it("should empty the batch after a flush", () => {
@@ -49,22 +42,11 @@ describe("batch", () => {
     batch.add({ message: "2" });
     batch.add({ message: "3" });
 
-    expect(transport.send).to.have.been.calledWith(
-      sinon.match([
-        {
-          foo: "bar",
-          message: "1"
-        },
-        {
-          foo: "bar",
-          message: "2"
-        },
-        {
-          foo: "bar",
-          message: "3"
-        }
-      ])
-    );
+    expect(transport.send).to.have.been.calledWith([
+      '{"message":"1","foo":"bar"}',
+      '{"message":"2","foo":"bar"}',
+      '{"message":"3","foo":"bar"}'
+    ]);
   });
 
   it("should flush when new message will overflow bytes limit", () => {
@@ -72,23 +54,20 @@ describe("batch", () => {
     expect(transport.send.notCalled).to.equal(true);
 
     batch.add({ message: "60 bytes - xxxxxxxxxxxxxxxxxxxxxxx" });
-    expect(transport.send).to.have.been.calledWith(
-      sinon.match([
-        {
-          foo: "bar",
-          message: "50 bytes - xxxxxxxxxxxxx"
-        }
-      ])
-    );
+    expect(transport.send).to.have.been.calledWith(['{"message":"50 bytes - xxxxxxxxxxxxx","foo":"bar"}']);
 
     batch.flush();
-    expect(transport.send).to.have.been.calledWith(
-      sinon.match([
-        {
-          foo: "bar",
-          message: "60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"
-        }
-      ])
-    );
+    expect(transport.send).to.have.been.calledWith(['{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx","foo":"bar"}']);
+  });
+
+  it("should consider separator size when computing the size", () => {
+    batch.add({ message: "30 b" }); // batch: 30 sep: 0
+    batch.add({ message: "30 b" }); // batch: 60 sep: 1
+    batch.add({ message: "39 bytes - xx" }); // batch: 99 sep: 2
+
+    expect(transport.send).to.have.been.calledWith([
+      '{"message":"30 b","foo":"bar"}',
+      '{"message":"30 b","foo":"bar"}'
+    ]);
   });
 });

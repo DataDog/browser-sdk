@@ -4,7 +4,8 @@ import { Context } from "../context";
 import { HttpTransport } from "./httpTransport";
 
 export class Batch {
-  private buffer: Message[] = [];
+  private buffer: string[] = [];
+  private bufferBytesSize = 0;
 
   constructor(
     private transport: HttpTransport,
@@ -14,12 +15,12 @@ export class Batch {
   ) {}
 
   add(message: Message) {
-    const contextualizedMessage = { ...message, ...this.contextProvider() };
-    if (this.willOverflowWith(contextualizedMessage)) {
+    const { processedMessage, messageBytesSize } = this.process(message);
+    if (this.willReachedBytesLimitWith(messageBytesSize)) {
       this.flush();
     }
-    this.buffer.push(contextualizedMessage);
-    if (this.buffer.length === this.maxSize) {
+    this.push(processedMessage, messageBytesSize);
+    if (this.isFull()) {
       this.flush();
     }
   }
@@ -28,17 +29,35 @@ export class Batch {
     if (this.buffer.length !== 0) {
       this.transport.send(this.buffer);
       this.buffer = [];
+      this.bufferBytesSize = 0;
     }
   }
 
-  private willOverflowWith(message: Message) {
-    return sizeInBytes(this.buffer) + sizeInBytes(message) > this.bytesLimit;
+  private process(message: Message) {
+    const processedMessage = JSON.stringify({ ...message, ...this.contextProvider() });
+    const messageBytesSize = sizeInBytes(processedMessage);
+    return { processedMessage, messageBytesSize };
+  }
+
+  private push(processedMessage: string, messageBytesSize: number) {
+    this.buffer.push(processedMessage);
+    this.bufferBytesSize += messageBytesSize;
+  }
+
+  private willReachedBytesLimitWith(messageBytesSize: number) {
+    // n + 1 elements, n bytes of separator
+    const separatorsBytesSize = this.buffer.length;
+    return this.bufferBytesSize + messageBytesSize + separatorsBytesSize >= this.bytesLimit;
+  }
+
+  private isFull() {
+    return this.buffer.length === this.maxSize;
   }
 }
 
-function sizeInBytes(candidate: Message | Message[]) {
+function sizeInBytes(candidate: string) {
   // tslint:disable-next-line no-bitwise
-  return ~-encodeURI(JSON.stringify(candidate)).split(/%..|./).length;
+  return ~-encodeURI(candidate).split(/%..|./).length;
 }
 
 export function flushOnPageHide(batch: Batch) {

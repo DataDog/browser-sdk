@@ -23,8 +23,8 @@ describe("http transport", () => {
     expect(server.requests[0].url).to.equal(ENDPOINT_URL);
   });
 
-  it("should send array", () => {
-    transport.send([{ foo: "bar1" }, { foo: "bar2" }]);
+  it("should send string array", () => {
+    transport.send(['{"foo":"bar1"}', '{"foo":"bar2"}']);
 
     expect(server.requests.length).to.equal(1);
     expect(server.requests[0].url).to.equal(ENDPOINT_URL);

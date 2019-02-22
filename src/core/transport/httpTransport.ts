@@ -9,7 +9,7 @@
 export class HttpTransport {
   constructor(private endpointUrl: string) {}
 
-  send(payload: object | object[]) {
+  send(payload: object | string[]) {
     const data = this.serialize(payload);
     if (navigator.sendBeacon) {
       navigator.sendBeacon(this.endpointUrl, data);
@@ -20,10 +20,10 @@ export class HttpTransport {
     }
   }
 
-  private serialize(payload: object | object[]) {
+  private serialize(payload: object | string[]) {
     if (!Array.isArray(payload)) {
       return JSON.stringify(payload);
     }
-    return payload.map(element => JSON.stringify(element)).join("\n");
+    return payload.join("\n");
   }
 }
