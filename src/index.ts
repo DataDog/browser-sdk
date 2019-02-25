@@ -4,6 +4,7 @@ import { Context } from "./core/context";
 import { loggerModule, LogLevel } from "./core/logger";
 import { initMonitoring, monitor } from "./core/monitoring";
 import { errorCollectionModule } from "./errorCollection/errorCollection";
+import { rumModule } from "./rum/rum";
 
 declare global {
   interface Window {
@@ -53,5 +54,6 @@ function makeInit(configuration: Configuration) {
     configuration.apply(override);
     const logger = loggerModule(configuration);
     errorCollectionModule(configuration, logger);
+    rumModule(logger);
   });
 }
