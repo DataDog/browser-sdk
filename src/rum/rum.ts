@@ -27,6 +27,7 @@ const RUM_EVENT_PREFIX = `[RUM Event]`;
 export function rumModule(logger: Logger) {
   trackPerformanceTiming(logger);
   trackFirstIdle(logger);
+  trackFirstInput(logger);
   trackInputDelay(logger);
 }
 
@@ -56,6 +57,30 @@ function trackFirstIdle(logger: Logger) {
         });
       })
     );
+  }
+}
+
+function trackFirstInput(logger: Logger) {
+  const options = { capture: true, passive: true };
+  document.addEventListener("click", logFirstInputData, options);
+  document.addEventListener("keydown", logFirstInputData, options);
+  document.addEventListener("scroll", logFirstInputData, options);
+
+  function logFirstInputData(event: Event) {
+    document.removeEventListener("click", logFirstInputData, options);
+    document.removeEventListener("keydown", logFirstInputData, options);
+    document.removeEventListener("scroll", logFirstInputData, options);
+
+    const startTime = performance.now();
+    const delay = startTime - event.timeStamp;
+
+    logger.log(`${RUM_EVENT_PREFIX} first input`, {
+      data: {
+        delay,
+        startTime,
+        entryType: "firstInput"
+      }
+    });
   }
 }
 
