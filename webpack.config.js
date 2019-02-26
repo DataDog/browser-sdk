@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const keysTransformer = require("ts-transformer-keys/transformer").default;
 const packageJson = require("./package.json");
 
 module.exports = (env, argv) => ({
@@ -15,11 +14,6 @@ module.exports = (env, argv) => ({
         test: /\.ts$/,
         loader: "ts-loader",
         exclude: /node_modules/,
-        options: {
-          getCustomTransformers: program => ({
-            before: [keysTransformer(program)]
-          })
-        }
       }
     ]
   },
