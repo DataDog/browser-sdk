@@ -1,17 +1,17 @@
-export type Context = any;
+export type Context = any
 
-let globalContext: Context = {};
+let globalContext: Context = {}
 
 export function setGlobalContext(context: Context) {
-  globalContext = context;
+  globalContext = context
 }
 
 export function addGlobalContext(key: string, value: any) {
-  globalContext[key] = value;
+  globalContext[key] = value
 }
 
 export function getGlobalContext() {
-  return globalContext;
+  return globalContext
 }
 
 export function getCommonContext() {
@@ -19,8 +19,8 @@ export function getCommonContext() {
     date: new Date().getTime(),
     http: {
       url: window.location.href,
-      useragent: navigator.userAgent
+      useragent: navigator.userAgent,
     },
-    version: buildEnv.VERSION
-  };
+    version: buildEnv.VERSION,
+  }
 }

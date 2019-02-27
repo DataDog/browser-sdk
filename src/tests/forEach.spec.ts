@@ -1,6 +1,5 @@
-import { stubDatadog } from "../index";
+import '../index'
 
 beforeEach(() => {
-  (navigator.sendBeacon as any) = false;
-  stubDatadog();
-});
+  ;(navigator.sendBeacon as any) = false
+})

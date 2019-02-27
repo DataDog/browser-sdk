@@ -6,15 +6,15 @@
 
 declare global {
   interface Error {
-    sourceURL?: string;
-    fileName?: string;
-    line?: string | number;
-    lineNumber?: string | number;
-    description?: string;
+    sourceURL?: string
+    fileName?: string
+    line?: string | number
+    lineNumber?: string | number
+    description?: string
   }
 }
 
-export type Handler = (...params: any[]) => any;
+export type Handler = (...params: any[]) => any
 
 /**
  * An object representing a single stack frame.
@@ -28,12 +28,12 @@ export type Handler = (...params: any[]) => any;
  * @memberof TraceKit
  */
 export interface StackFrame {
-  url?: string;
-  func?: string;
-  args?: string[];
-  line?: number;
-  column?: number;
-  context?: string[];
+  url?: string
+  func?: string
+  args?: string[]
+  line?: number
+  column?: number
+  context?: string[]
 }
 
 /**
@@ -46,19 +46,19 @@ export interface StackFrame {
  * @memberof TraceKit
  */
 export interface StackTrace {
-  name?: string;
-  message: string;
-  url?: string;
-  stack: StackFrame[];
-  incomplete?: boolean;
-  partial?: boolean;
+  name?: string
+  message: string
+  url?: string
+  stack: StackFrame[]
+  incomplete?: boolean
+  partial?: boolean
 }
 
-const UNKNOWN_FUNCTION = "?";
+const UNKNOWN_FUNCTION = '?'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
 // tslint:disable-next-line max-line-length
-const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/;
+const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/
 
 /**
  * A better form of hasOwnProperty<br/>
@@ -69,7 +69,7 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * @return {Boolean} true if the object has the key and it is not inherited
  */
 function has(object: object, key: string) {
-  return Object.prototype.hasOwnProperty.call(object, key);
+  return Object.prototype.hasOwnProperty.call(object, key)
 }
 
 /**
@@ -80,7 +80,7 @@ function has(object: object, key: string) {
  * @return {Boolean} true if undefined and false otherwise
  */
 function isUndefined(what: any) {
-  return typeof what === "undefined";
+  return typeof what === 'undefined'
 }
 
 /**
@@ -95,13 +95,13 @@ function isUndefined(what: any) {
 export function wrap(func: Function) {
   function wrapped(this: any) {
     try {
-      return func.apply(this, arguments);
+      return func.apply(this, arguments)
     } catch (e) {
-      report(e);
-      throw e;
+      report(e)
+      throw e
     }
   }
-  return wrapped;
+  return wrapped
 }
 
 /**
@@ -149,9 +149,9 @@ export function wrap(func: Function) {
  * @namespace
  */
 export const report = (function reportModuleWrapper() {
-  const handlers: Handler[] = [];
-  let lastException: Error | undefined;
-  let lastExceptionStack: StackTrace | undefined;
+  const handlers: Handler[] = []
+  let lastException: Error | undefined
+  let lastExceptionStack: StackTrace | undefined
 
   /**
    * Add a crash handler.
@@ -159,9 +159,9 @@ export const report = (function reportModuleWrapper() {
    * @memberof report
    */
   function subscribe(handler: Handler) {
-    installGlobalHandler();
-    installGlobalUnhandledRejectionHandler();
-    handlers.push(handler);
+    installGlobalHandler()
+    installGlobalUnhandledRejectionHandler()
+    handlers.push(handler)
   }
 
   /**
@@ -172,13 +172,13 @@ export const report = (function reportModuleWrapper() {
   function unsubscribe(handler: Handler) {
     for (let i = handlers.length - 1; i >= 0; i -= 1) {
       if (handlers[i] === handler) {
-        handlers.splice(i, 1);
+        handlers.splice(i, 1)
       }
     }
 
     if (handlers.length === 0) {
-      uninstallGlobalHandler();
-      uninstallGlobalUnhandledRejectionHandler();
+      uninstallGlobalHandler()
+      uninstallGlobalUnhandledRejectionHandler()
     }
   }
 
@@ -191,26 +191,26 @@ export const report = (function reportModuleWrapper() {
    * @throws An exception if an error occurs while calling an handler.
    */
   function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: Error) {
-    let exception;
+    let exception
     for (const i in handlers) {
       if (has(handlers, i)) {
         try {
-          handlers[i](stack, isWindowError, error);
+          handlers[i](stack, isWindowError, error)
         } catch (inner) {
-          exception = inner;
+          exception = inner
         }
       }
     }
 
     if (exception) {
-      throw exception;
+      throw exception
     }
   }
 
-  let oldOnerrorHandler: Handler | undefined;
-  let onErrorHandlerInstalled: boolean;
-  let oldOnunhandledrejectionHandler: Handler | undefined;
-  let onUnhandledRejectionHandlerInstalled: boolean;
+  let oldOnerrorHandler: Handler | undefined
+  let onErrorHandlerInstalled: boolean
+  let oldOnunhandledrejectionHandler: Handler | undefined
+  let onUnhandledRejectionHandlerInstalled: boolean
 
   /**
    * Ensures all global unhandled exceptions are recorded.
@@ -230,45 +230,45 @@ export const report = (function reportModuleWrapper() {
     columnNo?: number,
     errorObj?: Error
   ) {
-    let stack: StackTrace;
+    let stack: StackTrace
 
     if (lastExceptionStack) {
-      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, `${message}`);
-      processLastException();
+      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, `${message}`)
+      processLastException()
     } else if (errorObj) {
-      stack = computeStackTrace(errorObj);
-      notifyHandlers(stack, true, errorObj);
+      stack = computeStackTrace(errorObj)
+      notifyHandlers(stack, true, errorObj)
     } else {
       const location = {
         url,
         column: columnNo,
-        line: lineNo
-      };
+        line: lineNo,
+      }
 
-      let name;
-      let msg = message;
-      if ({}.toString.call(message) === "[object String]") {
-        const groups = (msg as string).match(ERROR_TYPES_RE);
+      let name
+      let msg = message
+      if ({}.toString.call(message) === '[object String]') {
+        const groups = (msg as string).match(ERROR_TYPES_RE)
         if (groups) {
-          name = groups[1];
-          msg = groups[2];
+          name = groups[1]
+          msg = groups[2]
         }
       }
 
       stack = {
         name,
         message: msg as string,
-        stack: [location]
-      };
+        stack: [location],
+      }
 
-      notifyHandlers(stack, true);
+      notifyHandlers(stack, true)
     }
 
     if (oldOnerrorHandler) {
-      return oldOnerrorHandler.apply(this, arguments as any);
+      return oldOnerrorHandler.apply(this, arguments as any)
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -279,8 +279,8 @@ export const report = (function reportModuleWrapper() {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent
    */
   function traceKitWindowOnUnhandledRejection(e: PromiseRejectionEvent) {
-    const stack = computeStackTrace(e.reason);
-    notifyHandlers(stack, true, e.reason);
+    const stack = computeStackTrace(e.reason)
+    notifyHandlers(stack, true, e.reason)
   }
 
   /**
@@ -289,12 +289,12 @@ export const report = (function reportModuleWrapper() {
    */
   function installGlobalHandler() {
     if (onErrorHandlerInstalled) {
-      return;
+      return
     }
 
-    oldOnerrorHandler = window.onerror;
-    window.onerror = traceKitWindowOnError;
-    onErrorHandlerInstalled = true;
+    oldOnerrorHandler = window.onerror
+    window.onerror = traceKitWindowOnError
+    onErrorHandlerInstalled = true
   }
 
   /**
@@ -303,8 +303,8 @@ export const report = (function reportModuleWrapper() {
    */
   function uninstallGlobalHandler() {
     if (onErrorHandlerInstalled) {
-      window.onerror = oldOnerrorHandler!;
-      onErrorHandlerInstalled = false;
+      window.onerror = oldOnerrorHandler!
+      onErrorHandlerInstalled = false
     }
   }
 
@@ -314,12 +314,12 @@ export const report = (function reportModuleWrapper() {
    */
   function installGlobalUnhandledRejectionHandler() {
     if (onUnhandledRejectionHandlerInstalled) {
-      return;
+      return
     }
 
-    oldOnunhandledrejectionHandler = window.onunhandledrejection !== null ? window.onunhandledrejection : undefined;
-    window.onunhandledrejection = traceKitWindowOnUnhandledRejection;
-    onUnhandledRejectionHandlerInstalled = true;
+    oldOnunhandledrejectionHandler = window.onunhandledrejection !== null ? window.onunhandledrejection : undefined
+    window.onunhandledrejection = traceKitWindowOnUnhandledRejection
+    onUnhandledRejectionHandlerInstalled = true
   }
 
   /**
@@ -328,8 +328,8 @@ export const report = (function reportModuleWrapper() {
    */
   function uninstallGlobalUnhandledRejectionHandler() {
     if (onUnhandledRejectionHandlerInstalled) {
-      window.onunhandledrejection = oldOnunhandledrejectionHandler as any;
-      onUnhandledRejectionHandlerInstalled = false;
+      window.onunhandledrejection = oldOnunhandledrejectionHandler as any
+      onUnhandledRejectionHandlerInstalled = false
     }
   }
 
@@ -338,11 +338,11 @@ export const report = (function reportModuleWrapper() {
    * @memberof report
    */
   function processLastException() {
-    const currentLastExceptionStack = lastExceptionStack!;
-    const currentLastException = lastException!;
-    lastExceptionStack = undefined;
-    lastException = undefined;
-    notifyHandlers(currentLastExceptionStack, false, currentLastException);
+    const currentLastExceptionStack = lastExceptionStack!
+    const currentLastException = lastException!
+    lastExceptionStack = undefined
+    lastException = undefined
+    notifyHandlers(currentLastExceptionStack, false, currentLastException)
   }
 
   /**
@@ -354,14 +354,14 @@ export const report = (function reportModuleWrapper() {
   function doReport(ex: Error) {
     if (lastExceptionStack) {
       if (lastException === ex) {
-        return; // already caught by an inner catch block, ignore
+        return // already caught by an inner catch block, ignore
       }
-      processLastException();
+      processLastException()
     }
 
-    const stack = computeStackTrace(ex);
-    lastExceptionStack = stack;
-    lastException = ex;
+    const stack = computeStackTrace(ex)
+    lastExceptionStack = stack
+    lastException = ex
 
     // If the stack trace is incomplete, wait for 2 seconds for
     // slow slow IE to see if onerror occurs or not before reporting
@@ -370,21 +370,21 @@ export const report = (function reportModuleWrapper() {
     setTimeout(
       () => {
         if (lastException === ex) {
-          processLastException();
+          processLastException()
         }
       },
       stack.incomplete ? 2000 : 0
-    );
+    )
 
-    throw ex; // re-throw to propagate to the top level (and cause window.onerror)
+    throw ex // re-throw to propagate to the top level (and cause window.onerror)
   }
 
-  doReport.subscribe = subscribe;
-  doReport.unsubscribe = unsubscribe;
-  doReport.traceKitWindowOnError = traceKitWindowOnError;
+  doReport.subscribe = subscribe
+  doReport.unsubscribe = unsubscribe
+  doReport.traceKitWindowOnError = traceKitWindowOnError
 
-  return doReport;
-})();
+  return doReport
+})()
 
 /**
  * computeStackTrace: cross-browser stack traces in JavaScript
@@ -450,7 +450,7 @@ export const report = (function reportModuleWrapper() {
  * @namespace
  */
 export const computeStackTrace = (function computeStackTraceWrapper() {
-  const debug = false;
+  const debug = false
 
   // Contents of Exception in various browsers.
   //
@@ -498,96 +498,96 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    */
   function computeStackTraceFromStackProp(ex: Error) {
     if (!ex.stack) {
-      return;
+      return
     }
 
     // tslint:disable-next-line max-line-length
-    const chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i;
+    const chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
     // tslint:disable-next-line max-line-length
-    const gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i;
+    const gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
     // tslint:disable-next-line max-line-length
-    const winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i;
+    const winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i
 
     // Used to additionally parse URL/line/column from eval frames
-    let isEval;
-    const geckoEval = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i;
-    const chromeEval = /\((\S*)(?::(\d+))(?::(\d+))\)/;
-    const lines = ex.stack.split("\n");
-    const stack = [];
-    let submatch;
-    let parts;
-    let element;
+    let isEval
+    const geckoEval = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
+    const chromeEval = /\((\S*)(?::(\d+))(?::(\d+))\)/
+    const lines = ex.stack.split('\n')
+    const stack = []
+    let submatch
+    let parts
+    let element
 
     for (let i = 0, j = lines.length; i < j; i += 1) {
       if (chrome.exec(lines[i])) {
-        parts = chrome.exec(lines[i])!;
-        const isNative = parts[2] && parts[2].indexOf("native") === 0; // start of line
-        isEval = parts[2] && parts[2].indexOf("eval") === 0; // start of line
-        submatch = chromeEval.exec(parts[2]);
+        parts = chrome.exec(lines[i])!
+        const isNative = parts[2] && parts[2].indexOf('native') === 0 // start of line
+        isEval = parts[2] && parts[2].indexOf('eval') === 0 // start of line
+        submatch = chromeEval.exec(parts[2])
         if (isEval && submatch) {
           // throw out eval line/column and use top-most line/column number
-          parts[2] = submatch[1]; // url
-          parts[3] = submatch[2]; // line
-          parts[4] = submatch[3]; // column
+          parts[2] = submatch[1] // url
+          parts[3] = submatch[2] // line
+          parts[4] = submatch[3] // column
         }
         element = {
           args: isNative ? [parts[2]] : [],
           column: parts[4] ? +parts[4] : undefined,
           func: parts[1] || UNKNOWN_FUNCTION,
           line: parts[3] ? +parts[3] : undefined,
-          url: !isNative ? parts[2] : undefined
-        };
+          url: !isNative ? parts[2] : undefined,
+        }
       } else if (winjs.exec(lines[i])) {
-        parts = winjs.exec(lines[i])!;
+        parts = winjs.exec(lines[i])!
         element = {
           args: [],
           column: parts[4] ? +parts[4] : undefined,
           func: parts[1] || UNKNOWN_FUNCTION,
           line: +parts[3],
-          url: parts[2]
-        };
+          url: parts[2],
+        }
       } else if (gecko.exec(lines[i])) {
-        parts = gecko.exec(lines[i])!;
-        isEval = parts[3] && parts[3].indexOf(" > eval") > -1;
-        submatch = geckoEval.exec(parts[3]);
+        parts = gecko.exec(lines[i])!
+        isEval = parts[3] && parts[3].indexOf(' > eval') > -1
+        submatch = geckoEval.exec(parts[3])
         if (isEval && submatch) {
           // throw out eval line/column and use top-most line number
-          parts[3] = submatch[1];
-          parts[4] = submatch[2];
-          parts[5] = undefined!; // no column when eval
+          parts[3] = submatch[1]
+          parts[4] = submatch[2]
+          parts[5] = undefined! // no column when eval
         } else if (i === 0 && !parts[5] && !isUndefined((ex as any).columnNumber)) {
           // FireFox uses this awesome columnNumber property for its top frame
           // Also note, Firefox's column number is 0-based and everything else expects 1-based,
           // so adding 1
           // NOTE: this hack doesn't work if top-most frame is eval
-          stack[0].column = (ex as any).columnNumber + 1;
+          stack[0].column = (ex as any).columnNumber + 1
         }
         element = {
-          args: parts[2] ? parts[2].split(",") : [],
+          args: parts[2] ? parts[2].split(',') : [],
           column: parts[5] ? +parts[5] : undefined,
           func: parts[1] || UNKNOWN_FUNCTION,
           line: parts[4] ? +parts[4] : undefined,
-          url: parts[3]
-        };
+          url: parts[3],
+        }
       } else {
-        continue;
+        continue
       }
 
       if (!element.func && element.line) {
-        element.func = UNKNOWN_FUNCTION;
+        element.func = UNKNOWN_FUNCTION
       }
-      stack.push(element);
+      stack.push(element)
     }
 
     if (!stack.length) {
-      return;
+      return
     }
 
     return {
       stack,
       message: ex.message,
-      name: ex.name
-    };
+      name: ex.name,
+    }
   }
 
   /**
@@ -601,59 +601,59 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     // Access and store the stacktrace property before doing ANYTHING
     // else to it because Opera is not very good at providing it
     // reliably in other circumstances.
-    const stacktrace = (ex as any).stacktrace;
+    const stacktrace = (ex as any).stacktrace
     if (!stacktrace) {
-      return;
+      return
     }
 
-    const opera10Regex = / line (\d+).*script (?:in )?(\S+)(?:: in function (\S+))?$/i;
+    const opera10Regex = / line (\d+).*script (?:in )?(\S+)(?:: in function (\S+))?$/i
     // tslint:disable-next-line max-line-length
-    const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\))? in (.*):\s*$/i;
-    const lines = stacktrace.split("\n");
-    const stack = [];
-    let parts;
+    const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\))? in (.*):\s*$/i
+    const lines = stacktrace.split('\n')
+    const stack = []
+    let parts
 
     for (let line = 0; line < lines.length; line += 2) {
-      let element: StackFrame | undefined;
+      let element: StackFrame | undefined
       if (opera10Regex.exec(lines[line])) {
-        parts = opera10Regex.exec(lines[line])!;
+        parts = opera10Regex.exec(lines[line])!
         element = {
           args: [],
           column: undefined,
           func: parts[3],
           line: +parts[1],
-          url: parts[2]
-        };
+          url: parts[2],
+        }
       } else if (opera11Regex.exec(lines[line])) {
-        parts = opera11Regex.exec(lines[line])!;
+        parts = opera11Regex.exec(lines[line])!
         element = {
-          args: parts[5] ? parts[5].split(",") : [],
+          args: parts[5] ? parts[5].split(',') : [],
           column: +parts[2],
           func: parts[3] || parts[4],
           line: +parts[1],
-          url: parts[6]
-        };
+          url: parts[6],
+        }
       }
 
       if (element) {
         if (!element.func && element.line) {
-          element.func = UNKNOWN_FUNCTION;
+          element.func = UNKNOWN_FUNCTION
         }
-        element.context = [lines[line + 1]];
+        element.context = [lines[line + 1]]
 
-        stack.push(element);
+        stack.push(element)
       }
     }
 
     if (!stack.length) {
-      return;
+      return
     }
 
     return {
       stack,
       message: ex.message,
-      name: ex.name
-    };
+      name: ex.name,
+    }
   }
 
   /**
@@ -685,74 +685,74 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     //     try { xxx('hi'); return false; } catch(ex) { report(ex); }
     //   ...
 
-    const lines = ex.message.split("\n");
+    const lines = ex.message.split('\n')
     if (lines.length < 4) {
-      return;
+      return
     }
 
-    const lineRE1 = /^\s*Line (\d+) of linked script ((?:file|https?|blob)\S+)(?:: in function (\S+))?\s*$/i;
-    const lineRE2 = /^\s*Line (\d+) of inline#(\d+) script in ((?:file|https?|blob)\S+)(?:: in function (\S+))?\s*$/i;
-    const lineRE3 = /^\s*Line (\d+) of function script\s*$/i;
-    const stack = [];
-    const scripts = window && window.document && window.document.getElementsByTagName("script");
-    const inlineScriptBlocks = [];
-    let parts;
+    const lineRE1 = /^\s*Line (\d+) of linked script ((?:file|https?|blob)\S+)(?:: in function (\S+))?\s*$/i
+    const lineRE2 = /^\s*Line (\d+) of inline#(\d+) script in ((?:file|https?|blob)\S+)(?:: in function (\S+))?\s*$/i
+    const lineRE3 = /^\s*Line (\d+) of function script\s*$/i
+    const stack = []
+    const scripts = window && window.document && window.document.getElementsByTagName('script')
+    const inlineScriptBlocks = []
+    let parts
 
     for (const s in scripts) {
       if (has(scripts, s) && !scripts[s].src) {
-        inlineScriptBlocks.push(scripts[s]);
+        inlineScriptBlocks.push(scripts[s])
       }
     }
 
     for (let line = 2; line < lines.length; line += 2) {
-      let item: StackFrame | undefined;
+      let item: StackFrame | undefined
       if (lineRE1.exec(lines[line])) {
-        parts = lineRE1.exec(lines[line])!;
+        parts = lineRE1.exec(lines[line])!
         item = {
           args: [],
           column: undefined,
           func: parts[3],
           line: +parts[1],
-          url: parts[2]
-        };
+          url: parts[2],
+        }
       } else if (lineRE2.exec(lines[line])) {
-        parts = lineRE2.exec(lines[line])!;
+        parts = lineRE2.exec(lines[line])!
         item = {
           args: [],
           column: undefined, // TODO: Check to see if inline#1 (+parts[2]) points to the script number or column number.
           func: parts[4],
           line: +parts[1],
-          url: parts[3]
-        };
+          url: parts[3],
+        }
       } else if (lineRE3.exec(lines[line])) {
-        parts = lineRE3.exec(lines[line])!;
-        const url = window.location.href.replace(/#.*$/, "");
+        parts = lineRE3.exec(lines[line])!
+        const url = window.location.href.replace(/#.*$/, '')
         item = {
           url,
           args: [],
           column: undefined,
-          func: "",
-          line: +parts[1]
-        };
+          func: '',
+          line: +parts[1],
+        }
       }
 
       if (item) {
         if (!item.func) {
-          item.func = UNKNOWN_FUNCTION;
+          item.func = UNKNOWN_FUNCTION
         }
-        item.context = [lines[line + 1]];
-        stack.push(item);
+        item.context = [lines[line + 1]]
+        stack.push(item)
       }
     }
     if (!stack.length) {
-      return; // could not parse multiline exception message as Opera stack trace
+      return // could not parse multiline exception message as Opera stack trace
     }
 
     return {
       stack,
       message: lines[0],
-      name: ex.name
-    };
+      name: ex.name,
+    }
   }
 
   /**
@@ -777,33 +777,33 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
   ) {
     const initial: StackFrame = {
       url,
-      line: lineNo ? +lineNo : undefined
-    };
+      line: lineNo ? +lineNo : undefined,
+    }
 
     if (initial.url && initial.line) {
-      stackInfo.incomplete = false;
+      stackInfo.incomplete = false
 
-      const stack = stackInfo.stack;
+      const stack = stackInfo.stack
       if (stack.length > 0) {
         if (stack[0].url === initial.url) {
           if (stack[0].line === initial.line) {
-            return false; // already in stack trace
+            return false // already in stack trace
           }
           if (!stack[0].line && stack[0].func === initial.func) {
-            stack[0].line = initial.line;
-            stack[0].context = initial.context;
-            return false;
+            stack[0].line = initial.line
+            stack[0].context = initial.context
+            return false
           }
         }
       }
 
-      stack.unshift(initial);
-      stackInfo.partial = true;
-      return true;
+      stack.unshift(initial)
+      stackInfo.partial = true
+      return true
     }
-    stackInfo.incomplete = true;
+    stackInfo.incomplete = true
 
-    return false;
+    return false
   }
 
   /**
@@ -818,16 +818,16 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @memberof computeStackTrace
    */
   function computeStackTraceByWalkingCallerChain(ex: Error, depth: number) {
-    const functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i;
-    const stack = [];
-    const funcs: any = {};
-    let recursion = false;
-    let parts;
-    let item: StackFrame;
+    const functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i
+    const stack = []
+    const funcs: any = {}
+    let recursion = false
+    let parts
+    let item: StackFrame
 
     for (let curr = computeStackTraceByWalkingCallerChain.caller; curr && !recursion; curr = curr.caller) {
       if (curr === computeStackTrace || curr === report) {
-        continue;
+        continue
       }
 
       item = {
@@ -835,45 +835,45 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
         column: undefined,
         func: UNKNOWN_FUNCTION,
         line: undefined,
-        url: undefined
-      };
-
-      parts = functionName.exec(curr.toString());
-      if ((curr as any).name) {
-        item.func = (curr as any).name;
-      } else if (parts) {
-        item.func = parts[1];
+        url: undefined,
       }
 
-      if (typeof item.func === "undefined") {
-        item.func = parts ? parts.input.substring(0, parts.input.indexOf("{")) : undefined;
+      parts = functionName.exec(curr.toString())
+      if ((curr as any).name) {
+        item.func = (curr as any).name
+      } else if (parts) {
+        item.func = parts[1]
+      }
+
+      if (typeof item.func === 'undefined') {
+        item.func = parts ? parts.input.substring(0, parts.input.indexOf('{')) : undefined
       }
 
       if (funcs[`${curr}`]) {
-        recursion = true;
+        recursion = true
       } else {
-        funcs[`${curr}`] = true;
+        funcs[`${curr}`] = true
       }
 
-      stack.push(item);
+      stack.push(item)
     }
 
     if (depth) {
-      stack.splice(0, depth);
+      stack.splice(0, depth)
     }
 
     const result: StackTrace = {
       stack,
       message: ex.message,
-      name: ex.name
-    };
+      name: ex.name,
+    }
     augmentStackTraceWithInitialElement(
       result,
       ex.sourceURL || ex.fileName,
       ex.line || ex.lineNumber,
       ex.message || ex.description
-    );
-    return result;
+    )
+    return result
   }
 
   /**
@@ -883,61 +883,61 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @memberof computeStackTrace
    */
   function doComputeStackTrace(ex: Error, depth?: string | number): StackTrace {
-    let stack;
-    const normalizedDepth = depth === undefined ? 0 : +depth;
+    let stack
+    const normalizedDepth = depth === undefined ? 0 : +depth
 
     try {
       // This must be tried first because Opera 10 *destroys*
       // its stacktrace property if you try to access the stack
       // property first!!
-      stack = computeStackTraceFromStacktraceProp(ex);
+      stack = computeStackTraceFromStacktraceProp(ex)
       if (stack) {
-        return stack;
+        return stack
       }
     } catch (e) {
       if (debug) {
-        throw e;
+        throw e
       }
     }
 
     try {
-      stack = computeStackTraceFromStackProp(ex);
+      stack = computeStackTraceFromStackProp(ex)
       if (stack) {
-        return stack;
+        return stack
       }
     } catch (e) {
       if (debug) {
-        throw e;
+        throw e
       }
     }
 
     try {
-      stack = computeStackTraceFromOperaMultiLineMessage(ex);
+      stack = computeStackTraceFromOperaMultiLineMessage(ex)
       if (stack) {
-        return stack;
+        return stack
       }
     } catch (e) {
       if (debug) {
-        throw e;
+        throw e
       }
     }
 
     try {
-      stack = computeStackTraceByWalkingCallerChain(ex, normalizedDepth + 1);
+      stack = computeStackTraceByWalkingCallerChain(ex, normalizedDepth + 1)
       if (stack) {
-        return stack;
+        return stack
       }
     } catch (e) {
       if (debug) {
-        throw e;
+        throw e
       }
     }
 
     return {
       message: ex.message,
       name: ex.name,
-      stack: []
-    };
+      stack: [],
+    }
   }
 
   /**
@@ -947,20 +947,20 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @memberof computeStackTrace
    */
   function computeStackTraceOfCaller(depth?: number) {
-    const currentDepth = (depth === undefined ? 0 : +depth) + 1; // "+ 1" because "ofCaller" should drop one frame
+    const currentDepth = (depth === undefined ? 0 : +depth) + 1 // "+ 1" because "ofCaller" should drop one frame
     try {
-      throw new Error();
+      throw new Error()
     } catch (ex) {
-      return computeStackTrace(ex, currentDepth + 1);
+      return computeStackTrace(ex, currentDepth + 1)
     }
   }
 
-  doComputeStackTrace.augmentStackTraceWithInitialElement = augmentStackTraceWithInitialElement;
-  doComputeStackTrace.computeStackTraceFromStackProp = computeStackTraceFromStackProp;
-  doComputeStackTrace.ofCaller = computeStackTraceOfCaller;
+  doComputeStackTrace.augmentStackTraceWithInitialElement = augmentStackTraceWithInitialElement
+  doComputeStackTrace.computeStackTraceFromStackProp = computeStackTraceFromStackProp
+  doComputeStackTrace.ofCaller = computeStackTraceOfCaller
 
-  return doComputeStackTrace;
-})();
+  return doComputeStackTrace
+})()
 
 /**
  * Extends support for global error handling for asynchronous browser
@@ -969,24 +969,24 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
  */
 export function extendToAsynchronousCallbacks() {
   function helper(fnName: any) {
-    const originalFn = (window as any)[fnName];
-    (window as any)[fnName] = function traceKitAsyncExtension() {
+    const originalFn = (window as any)[fnName]
+    ;(window as any)[fnName] = function traceKitAsyncExtension() {
       // Make a copy of the arguments
-      const args: any[] = [].slice.call(arguments);
-      const originalCallback = args[0];
-      if (typeof originalCallback === "function") {
-        args[0] = wrap(originalCallback);
+      const args: any[] = [].slice.call(arguments)
+      const originalCallback = args[0]
+      if (typeof originalCallback === 'function') {
+        args[0] = wrap(originalCallback)
       }
       // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
       // also only supports 2 argument and doesn't care what "this" is, so we
       // can just call the original function directly.
       if (originalFn.apply) {
-        return originalFn.apply(this, args);
+        return originalFn.apply(this, args)
       }
-      return originalFn(args[0], args[1]);
-    };
+      return originalFn(args[0], args[1])
+    }
   }
 
-  helper("setTimeout");
-  helper("setInterval");
+  helper('setTimeout')
+  helper('setInterval')
 }

@@ -1,27 +1,27 @@
-const webpackConfig = require("../webpack.config")(null, { mode: "development" });
+const webpackConfig = require('../webpack.config')(null, { mode: 'development' })
 
 module.exports = {
-  basePath: "..",
-  files: ["src/**/*.spec.ts"],
-  frameworks: ["mocha", "sinon-chai"],
+  basePath: '..',
+  files: ['src/**/*.spec.ts'],
+  frameworks: ['mocha', 'sinon-chai'],
   preprocessors: {
-    "src/**/*.spec.ts": ["webpack"]
+    'src/**/*.spec.ts': ['webpack'],
   },
-  reporters: ["mocha"],
+  reporters: ['mocha'],
   mochaReporter: {
-    output: "minimal",
-    showDiff: true
+    output: 'minimal',
+    showDiff: true,
   },
   singleRun: true,
   webpack: {
-    mode: "development",
-    stats: "minimal",
+    mode: 'development',
+    stats: 'minimal',
     module: webpackConfig.module,
     plugins: webpackConfig.plugins,
-    resolve: webpackConfig.resolve
+    resolve: webpackConfig.resolve,
   },
   webpackMiddleware: {
-    stats: "errors-only",
-    logLevel: "warn"
-  }
-};
+    stats: 'errors-only',
+    logLevel: 'warn',
+  },
+}
