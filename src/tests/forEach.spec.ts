@@ -1,5 +1,5 @@
-import "../index";
+import '../index'
 
 beforeEach(() => {
-  (navigator.sendBeacon as any) = false;
-});
+  ;(navigator.sendBeacon as any) = false
+})

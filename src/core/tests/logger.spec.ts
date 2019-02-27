@@ -1,80 +1,80 @@
-import { expect } from "chai";
-import * as sinon from "sinon";
-import { LOG_LEVELS, loggerModule } from "../logger";
+import { expect } from 'chai'
+import * as sinon from 'sinon'
+import { LOG_LEVELS, loggerModule } from '../logger'
 
-describe("logger module", () => {
-  const FAKE_DATE = 123456;
+describe('logger module', () => {
+  const FAKE_DATE = 123456
   const configuration: any = {
-    logsEndpoint: "https://localhost/log",
-    maxBatchSize: 1
-  };
-  let server: sinon.SinonFakeServer;
-  let clock: sinon.SinonFakeTimers;
+    logsEndpoint: 'https://localhost/log',
+    maxBatchSize: 1,
+  }
+  let server: sinon.SinonFakeServer
+  let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    loggerModule(configuration);
-    server = sinon.fakeServer.create();
-    clock = sinon.useFakeTimers(FAKE_DATE);
-  });
+    loggerModule(configuration)
+    server = sinon.fakeServer.create()
+    clock = sinon.useFakeTimers(FAKE_DATE)
+  })
 
   afterEach(() => {
-    server.restore();
-    clock.restore();
-  });
+    server.restore()
+    clock.restore()
+  })
 
-  describe("request", () => {
-    it("should send the needed data", () => {
-      window.Datadog.log("message", { foo: "bar" }, "warn");
+  describe('request', () => {
+    it('should send the needed data', () => {
+      window.Datadog.log('message', { foo: 'bar' }, 'warn')
 
-      expect(server.requests.length).to.equal(1);
-      expect(server.requests[0].url).to.equal(configuration.logsEndpoint);
+      expect(server.requests.length).to.equal(1)
+      expect(server.requests[0].url).to.equal(configuration.logsEndpoint)
       expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
         date: FAKE_DATE,
-        foo: "bar",
+        foo: 'bar',
         http: {
           url: window.location.href,
-          useragent: navigator.userAgent
+          useragent: navigator.userAgent,
         },
-        message: "message",
-        severity: "warn",
-        version: "dev"
-      });
-    });
-  });
+        message: 'message',
+        severity: 'warn',
+        version: 'dev',
+      })
+    })
+  })
 
-  describe("log method", () => {
+  describe('log method', () => {
     it("'log' should have info severity by default", () => {
-      window.Datadog.log("message");
+      window.Datadog.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).severity).to.equal("info");
-    });
+      expect(JSON.parse(server.requests[0].requestBody).severity).to.equal('info')
+    })
 
-    LOG_LEVELS.forEach(logLevel => {
+    LOG_LEVELS.forEach((logLevel) => {
       it(`'${logLevel}' should have ${logLevel} severity`, () => {
-        (window.Datadog as any)[logLevel]("message");
+        ;(window.Datadog as any)[logLevel]('message')
 
-        expect(JSON.parse(server.requests[0].requestBody).severity).to.equal(logLevel);
-      });
-    });
-  });
+        expect(JSON.parse(server.requests[0].requestBody).severity).to.equal(logLevel)
+      })
+    })
+  })
 
-  describe("global context", () => {
-    it("should be added to the request", () => {
-      window.Datadog.setGlobalContext({ bar: "foo" });
-      window.Datadog.log("message");
+  describe('global context', () => {
+    it('should be added to the request', () => {
+      window.Datadog.setGlobalContext({ bar: 'foo' })
+      window.Datadog.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal("foo");
-    });
+      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
+    })
 
-    it("should be updatable", () => {
-      window.Datadog.setGlobalContext({ bar: "foo" });
-      window.Datadog.log("first");
-      window.Datadog.setGlobalContext({ foo: "bar" });
-      window.Datadog.log("second");
+    it('should be updatable', () => {
+      window.Datadog.setGlobalContext({ bar: 'foo' })
+      window.Datadog.log('first')
+      window.Datadog.setGlobalContext({ foo: 'bar' })
+      window.Datadog.log('second')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal("foo");
-      expect(JSON.parse(server.requests[1].requestBody).foo).to.equal("bar");
-      expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined;
-    });
-  });
-});
+      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
+      expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
+      expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined
+    })
+  })
+})

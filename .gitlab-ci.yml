@@ -1,8 +1,8 @@
 variables:
-  APP: "browser-agent"
+  APP: 'browser-agent'
   CURRENT_CI_IMAGE: 4
-  BUILD_STABLE_REGISTRY: "486234852809.dkr.ecr.us-east-1.amazonaws.com"
-  CI_IMAGE: "$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE"
+  BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
+  CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
 
 stages:
   - ci-image
@@ -13,7 +13,7 @@ ci-image:
   stage: ci-image
   when: manual
   except: [tags, schedules]
-  tags: ["runner:docker", "size:large"]
+  tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
     - docker build --tag $CI_IMAGE .
@@ -21,7 +21,7 @@ ci-image:
 
 format:
   stage: test
-  tags: ["runner:main", "size:large"]
+  tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
@@ -29,7 +29,7 @@ format:
 
 lint:
   stage: test
-  tags: ["runner:main", "size:large"]
+  tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
@@ -37,7 +37,7 @@ lint:
 
 build:
   stage: test
-  tags: ["runner:main", "size:large"]
+  tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
@@ -45,7 +45,7 @@ build:
 
 test:
   stage: test
-  tags: ["runner:main", "size:large"]
+  tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn

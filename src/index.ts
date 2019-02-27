@@ -1,69 +1,67 @@
-import { Configuration, ConfigurationOverride } from "./core/configuration";
-import { Context } from "./core/context";
-import { loggerModule, LogLevel } from "./core/logger";
-import { initMonitoring, monitor } from "./core/monitoring";
-import { errorCollectionModule } from "./errorCollection/errorCollection";
+import { Configuration, ConfigurationOverride } from './core/configuration'
+import { Context } from './core/context'
+import { loggerModule, LogLevel } from './core/logger'
+import { initMonitoring, monitor } from './core/monitoring'
+import { errorCollectionModule } from './errorCollection/errorCollection'
 
 declare global {
   interface Window {
-    Datadog: Datadog;
+    Datadog: Datadog
   }
 }
 
 function makeStub(methodName: string) {
-  return () => {
-    console.warn(`'${methodName}' not yet available, please call '.init()' first.`);
-  };
+  console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
 }
 
 const STUBBED_DATADOG = {
   init(apiKey: string, override?: ConfigurationOverride) {
-    makeStub("init");
+    makeStub('init')
   },
   error(message: string, context?: Context) {
-    makeStub("error");
+    makeStub('error')
   },
   debug(message: string, context?: Context) {
-    makeStub("debug");
+    makeStub('debug')
   },
   log(message: string, context?: Context, severity?: LogLevel) {
-    makeStub("log");
+    makeStub('log')
   },
   info(message: string, context?: Context) {
-    makeStub("info");
+    makeStub('info')
   },
   trace(message: string, context?: Context) {
-    makeStub("trace");
+    makeStub('trace')
   },
   warn(message: string, context?: Context) {
-    makeStub("warn");
+    makeStub('warn')
   },
   addGlobalContext(key: string, value: any) {
-    makeStub("addGlobalContext");
+    makeStub('addGlobalContext')
   },
   setGlobalContext(context: Context) {
-    makeStub("setGlobalContext");
-  }
-};
+    makeStub('setGlobalContext')
+  },
+}
 
-export type Datadog = typeof STUBBED_DATADOG;
+export type Datadog = typeof STUBBED_DATADOG
 
 try {
-  const configuration = new Configuration();
+  const configuration = new Configuration()
 
-  window.Datadog = STUBBED_DATADOG;
-  initMonitoring(configuration);
+  window.Datadog = STUBBED_DATADOG
+  initMonitoring(configuration)
 
-  window.Datadog.init = makeInit(configuration);
+  window.Datadog.init = makeInit(configuration)
 } catch {
   // nothing to do
 }
 
 function makeInit(configuration: Configuration) {
   return monitor((apiKey: string, override: ConfigurationOverride = {}) => {
-    configuration.apiKey = apiKey;
-    configuration.apply(override);
-    const logger = loggerModule(configuration);
-    errorCollectionModule(configuration, logger);
-  });
+    configuration.apiKey = apiKey
+    configuration.apply(override)
+    const logger = loggerModule(configuration)
+    errorCollectionModule(configuration, logger)
+  })
 }
