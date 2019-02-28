@@ -1,11 +1,13 @@
 import { Configuration } from '../core/configuration'
 import { Logger } from '../core/logger'
+import { monitor } from '../core/monitoring'
 import { report, StackTrace } from '../tracekit/tracekit'
 
 export function errorCollectionModule(configuration: Configuration, logger: Logger) {
   if (configuration.isCollectingError) {
     startConsoleTracking(logger)
     startRuntimeErrorTracking(logger)
+    trackXhrError(logger)
   }
 }
 
@@ -32,4 +34,51 @@ export function startRuntimeErrorTracking(logger: Logger) {
 
 export function stopRuntimeErrorTracking() {
   report.unsubscribe(traceKitReporthandler)
+}
+
+interface XhrInfo {
+  method?: string
+  url?: string
+  status?: number
+  statusText?: string
+}
+
+export function trackXhrError(logger: Logger) {
+  const originalXHR = XMLHttpRequest
+
+  // tslint:disable-next-line only-arrow-functions
+  const proxyXHR = function() {
+    const xhrInfo: XhrInfo = {}
+    const xhr = new originalXHR()
+
+    const originalOpen = xhr.open
+    xhr.open = function(method: string, url: string) {
+      xhrInfo.method = method
+      xhrInfo.url = url
+
+      return originalOpen.apply(this, arguments as any)
+    }
+
+    xhr.addEventListener(
+      'load',
+      monitor(() => {
+        if (xhr.status < 200 || xhr.status >= 400) {
+          reportXhrError()
+        }
+      })
+    )
+    xhr.addEventListener('error', monitor(reportXhrError))
+
+    function reportXhrError() {
+      xhrInfo.status = xhr.status
+      xhrInfo.statusText = xhr.status === 0 ? 'Network Error' : xhr.statusText
+      logger.error('XHR error', { xhr: xhrInfo })
+    }
+
+    return xhr
+  }
+
+  proxyXHR.prototype = originalXHR.prototype
+
+  XMLHttpRequest = proxyXHR as any
 }
