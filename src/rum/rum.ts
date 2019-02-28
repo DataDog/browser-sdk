@@ -29,6 +29,7 @@ export function rumModule(logger: Logger) {
   trackFirstIdle(logger)
   trackFirstInput(logger)
   trackInputDelay(logger)
+  trackPageDuration(logger)
 }
 
 function trackPerformanceTiming(logger: Logger) {
@@ -146,4 +147,19 @@ function trackInputDelay(logger: Logger) {
       return
     } as unknown) as T // consider output type has input type
   }
+}
+
+/**
+ * Data batch is flushed on visibility change event
+ * page hide guarantee that this event is pushed before the flush
+ */
+function trackPageDuration(logger: Logger) {
+  window.addEventListener('pagehide', () => {
+    logger.log(`${RUM_EVENT_PREFIX} page hide`, {
+      data: {
+        duration: performance.now(),
+        entryType: 'page hide',
+      },
+    })
+  })
 }
