@@ -1,5 +1,6 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
+import { beforeFlushOnUnload } from '../core/transport'
 
 type RequestIdleCallbackHandle = number
 
@@ -149,16 +150,12 @@ function trackInputDelay(logger: Logger) {
   }
 }
 
-/**
- * Data batch is flushed on visibility change event
- * page hide guarantee that this event is pushed before the flush
- */
 function trackPageDuration(logger: Logger) {
-  window.addEventListener('pagehide', () => {
-    logger.log(`${RUM_EVENT_PREFIX} page hide`, {
+  beforeFlushOnUnload(() => {
+    logger.log(`${RUM_EVENT_PREFIX} page unload`, {
       data: {
         duration: performance.now(),
-        entryType: 'page hide',
+        entryType: 'page unload',
       },
     })
   })
