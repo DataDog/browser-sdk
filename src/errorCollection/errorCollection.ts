@@ -44,20 +44,14 @@ interface XhrInfo {
 }
 
 export function trackXhrError(logger: Logger) {
-  const originalXHR = XMLHttpRequest
-
-  // tslint:disable-next-line only-arrow-functions
-  const proxyXHR = function() {
+  const originalOpen = XMLHttpRequest.prototype.open
+  XMLHttpRequest.prototype.open = function(method: string, url: string) {
     const xhrInfo: XhrInfo = {}
-    const xhr = new originalXHR()
+    // tslint:disable-next-line no-this-assignment
+    const xhr = this
 
-    const originalOpen = xhr.open
-    xhr.open = function(method: string, url: string) {
-      xhrInfo.method = method
-      xhrInfo.url = url
-
-      return originalOpen.apply(this, arguments as any)
-    }
+    xhrInfo.method = method
+    xhrInfo.url = url
 
     xhr.addEventListener(
       'load',
@@ -75,10 +69,6 @@ export function trackXhrError(logger: Logger) {
       logger.error('XHR error', { xhr: xhrInfo })
     }
 
-    return xhr
+    return originalOpen.apply(this, arguments as any)
   }
-
-  proxyXHR.prototype = originalXHR.prototype
-
-  XMLHttpRequest = proxyXHR as any
 }
