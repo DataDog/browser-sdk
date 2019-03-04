@@ -7,14 +7,21 @@
     "dev": "webpack-dev-server --mode=development",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json",
-    "test": "karma start ./test/karma.unit.conf.js",
-    "test:browserstack": "karma start ./test/karma.browserstack.conf.js"
+    "test": "karma start ./test/unit/karma.unit.conf.js",
+    "test:browserstack": "karma start ./test/unit/karma.browserstack.conf.js",
+    "test:e2e": "wdio test/e2e/wdio.conf.js"
   },
   "devDependencies": {
     "@types/chai": "4.1.7",
     "@types/mocha": "5.2.5",
     "@types/sinon": "7.0.5",
     "@types/sinon-chai": "3.2.2",
+    "@wdio/cli": "5.6.6",
+    "@wdio/local-runner": "5.6.6",
+    "@wdio/mocha-framework": "5.6.4",
+    "@wdio/selenium-standalone-service": "5.6.4",
+    "@wdio/spec-reporter": "5.6.4",
+    "@wdio/sync": "5.6.4",
     "chai": "4.2.0",
     "chai-shallow-deep-equal": "1.4.6",
     "js-polyfills": "0.1.42",
@@ -37,6 +44,7 @@
     "tslint-eslint-rules": "5.4.0",
     "tslint-no-unused-expression-chai": "0.1.4",
     "typescript": "3.2.4",
+    "webdriverio": "5.6.6",
     "webpack": "4.29.0",
     "webpack-cli": "3.2.1",
     "webpack-dev-server": "3.1.14"
