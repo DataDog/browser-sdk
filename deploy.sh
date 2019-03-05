@@ -2,11 +2,27 @@
 
 set -ex
 
-AWS_ACCOUNT_ID=727006795293
-DISTRIBUTION_ID="E2FP11ZSCFD3EU"
-BUCKET_NAME="browser-agent-artifacts-staging"
-FILE_NAME="browser-agent.js"
+env=$1
+
+case "${env}" in
+"prod")
+    AWS_ACCOUNT_ID=464622532012
+    BUCKET_NAME="browser-agent-artifacts"
+    DISTRIBUTION_ID="TBD"
+    ;;
+"staging")
+    AWS_ACCOUNT_ID=727006795293
+    BUCKET_NAME="browser-agent-artifacts-staging"
+    DISTRIBUTION_ID="E2FP11ZSCFD3EU"
+    ;;
+* )
+    echo "Usage: ./deploy.sh staging|prod"
+    exit 1
+    ;;
+esac
+
 BROWSER_CACHE=900
+FILE_NAME="browser-agent.js"
 
 main() {
   in-isolation upload-to-s3
