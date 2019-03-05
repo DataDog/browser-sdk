@@ -26,11 +26,21 @@ declare global {
 const RUM_EVENT_PREFIX = `[RUM Event]`
 
 export function rumModule(logger: Logger) {
+  trackDisplay(logger)
   trackPerformanceTiming(logger)
   trackFirstIdle(logger)
   trackFirstInput(logger)
   trackInputDelay(logger)
   trackPageDuration(logger)
+}
+
+function trackDisplay(logger: Logger) {
+  logger.log(`${RUM_EVENT_PREFIX} display`, {
+    data: {
+      entryType: 'display',
+      startTime: performance.now(),
+    },
+  })
 }
 
 function trackPerformanceTiming(logger: Logger) {
