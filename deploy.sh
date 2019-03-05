@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+set -ex
 
 AWS_ACCOUNT_ID=727006795293
 DISTRIBUTION_ID="E2FP11ZSCFD3EU"
@@ -11,7 +11,6 @@ BROWSER_CACHE=900
 main() {
   in-isolation upload-to-s3
   in-isolation invalidate-cloudfront
-  exit 0
 }
 
 upload-to-s3() {
@@ -30,9 +29,6 @@ in-isolation() {
     (
         ${function}
     )
-    command_status=$?
-    # ensure to stop the script if the function fails
-    [[ "${command_status}" -ne "0" ]] && exit ${command_status}
 }
 
 assume-role() {
