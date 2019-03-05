@@ -89,11 +89,29 @@ function sizeInBytes(candidate: string) {
   return ~-encodeURI(candidate).split(/%..|./).length
 }
 
-export function flushOnPageHide(batch: Batch) {
+const beforeFlushOnUnloadHandlers: Array<() => void> = []
+
+export function beforeFlushOnUnload(handler: () => void) {
+  beforeFlushOnUnloadHandlers.push(handler)
+}
+
+export function flushOnVisibilityHidden(batch: Batch) {
   /**
    * With sendBeacon, requests are guaranteed to be successfully sent during document unload
    */
   if (navigator.sendBeacon) {
+    /**
+     * beforeunload is called before visibilitychange
+     * register first to be sure to be called before flush on beforeunload
+     * caveat: unload can still be canceled by another listener
+     */
+    window.addEventListener(
+      'beforeunload',
+      monitor(() => {
+        beforeFlushOnUnloadHandlers.forEach((handler) => handler())
+      })
+    )
+
     /**
      * Only event that guarantee to fire on mobile devices when the page transitions to background state
      * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.

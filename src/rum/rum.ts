@@ -1,5 +1,6 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
+import { beforeFlushOnUnload } from '../core/transport'
 
 type RequestIdleCallbackHandle = number
 
@@ -29,6 +30,7 @@ export function rumModule(logger: Logger) {
   trackFirstIdle(logger)
   trackFirstInput(logger)
   trackInputDelay(logger)
+  trackPageDuration(logger)
 }
 
 function trackPerformanceTiming(logger: Logger) {
@@ -146,4 +148,15 @@ function trackInputDelay(logger: Logger) {
       return
     } as unknown) as T // consider output type has input type
   }
+}
+
+function trackPageDuration(logger: Logger) {
+  beforeFlushOnUnload(() => {
+    logger.log(`${RUM_EVENT_PREFIX} page unload`, {
+      data: {
+        duration: performance.now(),
+        entryType: 'page unload',
+      },
+    })
+  })
 }

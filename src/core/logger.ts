@@ -1,7 +1,7 @@
 import { Configuration } from './configuration'
 import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from './context'
 import { monitored } from './monitoring'
-import { Batch, flushOnPageHide, HttpRequest } from './transport'
+import { Batch, flushOnVisibilityHidden, HttpRequest } from './transport'
 
 export interface Message {
   message: string
@@ -27,7 +27,7 @@ export function loggerModule(configuration: Configuration) {
     ...getCommonContext(),
     ...getGlobalContext(),
   }))
-  flushOnPageHide(batch)
+  flushOnVisibilityHidden(batch)
 
   const logger = new Logger(batch)
   window.Datadog.setGlobalContext = setGlobalContext
