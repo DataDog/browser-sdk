@@ -11,24 +11,16 @@ import { monitor } from './monitoring'
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointUrl: string) {}
+  constructor(private endpointUrl: string, private bytesLimit: number) {}
 
-  send(payload: object | object[]) {
-    const data = this.serialize(payload)
-    if (navigator.sendBeacon) {
+  send(data: string, size: number) {
+    if (navigator.sendBeacon && size < this.bytesLimit) {
       navigator.sendBeacon(this.endpointUrl, data)
     } else {
       const request = new XMLHttpRequest()
       request.open('POST', this.endpointUrl, true)
       request.send(data)
     }
-  }
-
-  private serialize(payload: object | string[]) {
-    if (!Array.isArray(payload)) {
-      return JSON.stringify(payload)
-    }
-    return payload.join('\n')
   }
 }
 
@@ -40,8 +32,12 @@ export class Batch {
     private request: HttpRequest,
     private maxSize: number,
     private bytesLimit: number,
+    private flushTimeout: number,
     private contextProvider: () => Context
-  ) {}
+  ) {
+    flushOnVisibilityHidden(this)
+    this.flushTic(this)
+  }
 
   add(message: Message) {
     const { processedMessage, messageBytesSize } = this.process(message)
@@ -56,10 +52,17 @@ export class Batch {
 
   flush() {
     if (this.buffer.length !== 0) {
-      this.request.send(this.buffer)
+      this.request.send(this.buffer.join('\n'), this.bufferBytesSize + this.buffer.length - 1)
       this.buffer = []
       this.bufferBytesSize = 0
     }
+  }
+
+  async flushTic(batch: Batch) {
+    return setTimeout(() => {
+      batch.flush()
+      this.flushTic(batch)
+    }, this.flushTimeout)
   }
 
   private process(message: Message) {
@@ -80,7 +83,7 @@ export class Batch {
   }
 
   private isFull() {
-    return this.buffer.length === this.maxSize
+    return this.buffer.length === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
 }
 
