@@ -36,7 +36,7 @@ export class Batch {
     private contextProvider: () => Context
   ) {
     flushOnVisibilityHidden(this)
-    this.flushTic(this)
+    this.flushTic()
   }
 
   add(message: Message) {
@@ -58,10 +58,10 @@ export class Batch {
     }
   }
 
-  async flushTic(batch: Batch) {
-    return setTimeout(() => {
-      batch.flush()
-      this.flushTic(batch)
+  private flushTic() {
+    setTimeout(() => {
+      this.flush()
+      this.flushTic()
     }, this.flushTimeout)
   }
 
