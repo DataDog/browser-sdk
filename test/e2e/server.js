@@ -24,7 +24,7 @@ app.post('/monitoring', (req, res) => {
 })
 app.get('/monitoring', (req, res) => res.send(monitoring))
 
-app.post('/reset', (req, res) => {
+app.get('/reset', (req, res) => {
   logs = []
   monitoring = []
   res.send('ok')
