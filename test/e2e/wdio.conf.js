@@ -1,3 +1,6 @@
+const { exec } = require('child_process')
+let serverProcess
+
 exports.config = {
   //
   // ====================
@@ -47,6 +50,9 @@ exports.config = {
   capabilities: [
     {
       browserName: 'chrome',
+      'goog:chromeOptions': {
+        args: ['--headless', '--no-sandbox'],
+      },
     },
   ],
   //
@@ -134,8 +140,9 @@ exports.config = {
    * @param {Object} config wdio configuration object
    * @param {Array.<Object>} capabilities list of capabilities details
    */
-  // onPrepare: function (config, capabilities) {
-  // },
+  onPrepare: function(config, capabilities) {
+    serverProcess = exec('ts-node --project test/e2e/tsconfig.e2e.json test/e2e/server')
+  },
   /**
    * Gets executed just before initialising the webdriver session and test framework. It allows you
    * to manipulate configurations depending on the capability or spec.
@@ -235,8 +242,9 @@ exports.config = {
    * @param {Array.<Object>} capabilities list of capabilities details
    * @param {<Object>} results object containing test results
    */
-  // onComplete: function(exitCode, config, capabilities, results) {
-  // },
+  onComplete: function(exitCode, config, capabilities, results) {
+    serverProcess.kill()
+  },
   /**
    * Gets executed when a refresh happens.
    * @param {String} oldSessionId session ID of the old session
