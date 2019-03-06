@@ -1,5 +1,6 @@
-const expect = require('chai').expect
-const request = require('request').defaults({ baseUrl: 'http://localhost:3000' })
+import { expect } from 'chai'
+import * as request from 'request'
+const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
 describe('rum', () => {
   afterEach(async () => {
@@ -20,20 +21,20 @@ function flushLogs() {
 }
 
 function retrieveLogTypes() {
-  return fetch('/logs').then((logs) => JSON.parse(logs).map((log) => log.data.entryType))
+  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.data.entryType))
 }
 
 function retrieveMonitoringErrors() {
-  return fetch('/monitoring').then((monitoringErrors) => JSON.parse(monitoringErrors))
+  return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors))
 }
 
 function resetServerState() {
   return fetch('/reset')
 }
 
-function fetch(url) {
-  return new Promise(function(resolve, reject) {
-    request.get(url, (err, response, body) => {
+function fetch(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    baseRequest.get(url, (err: any, response: any, body: string) => {
       if (err) {
         reject(err)
       }

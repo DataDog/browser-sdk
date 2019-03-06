@@ -1,6 +1,7 @@
-const bodyParser = require('body-parser')
-const express = require('express')
-const path = require('path')
+import * as bodyParser from 'body-parser'
+import * as express from 'express'
+import * as path from 'path'
+
 const app = express()
 const port = 3000
 
@@ -8,15 +9,15 @@ app.use(express.static(path.join(__dirname, 'static')))
 app.use(express.static(path.join(__dirname, '../../dist')))
 app.use(bodyParser.text())
 
-let logs = []
+let logs: object[] = []
 
 app.post('/logs', (req, res) => {
-  req.body.split('\n').forEach((log) => logs.push(JSON.parse(log)))
+  req.body.split('\n').forEach((log: string) => logs.push(JSON.parse(log)))
   res.send('ok')
 })
 app.get('/logs', (req, res) => res.send(logs))
 
-let monitoring = []
+let monitoring: object[] = []
 
 app.post('/monitoring', (req, res) => {
   monitoring.push(JSON.parse(req.body))
