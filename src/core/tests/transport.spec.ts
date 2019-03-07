@@ -135,7 +135,7 @@ describe('batch', () => {
     clock.restore()
   })
 
-  it('should not send the message', () => {
+  it('should not send a message with a size above the limit', () => {
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 

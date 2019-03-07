@@ -45,6 +45,7 @@ export class Batch {
   add(message: Message) {
     const { processedMessage, messageBytesSize } = this.process(message)
     if (messageBytesSize >= this.maxMessageSize) {
+      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
       return
     }
     if (this.willReachedBytesLimitWith(messageBytesSize)) {
@@ -93,7 +94,7 @@ export class Batch {
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
-    //
+    // byte of the seperator at the end of the message
     return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
   }
 
