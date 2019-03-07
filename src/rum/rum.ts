@@ -1,7 +1,6 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
-import { beforeFlushOnUnload } from '../core/transport'
-
+import { Batch } from '../core/transport'
 type RequestIdleCallbackHandle = number
 
 interface RequestIdleCallbackOptions {
@@ -25,13 +24,13 @@ declare global {
 
 const RUM_EVENT_PREFIX = `[RUM Event]`
 
-export function rumModule(logger: Logger) {
+export function rumModule(batch: Batch, logger: Logger) {
   trackDisplay(logger)
   trackPerformanceTiming(logger)
   trackFirstIdle(logger)
   trackFirstInput(logger)
   trackInputDelay(logger)
-  trackPageDuration(logger)
+  trackPageDuration(batch, logger)
 }
 
 function trackDisplay(logger: Logger) {
@@ -160,8 +159,8 @@ function trackInputDelay(logger: Logger) {
   }
 }
 
-function trackPageDuration(logger: Logger) {
-  beforeFlushOnUnload(() => {
+function trackPageDuration(batch: Batch, logger: Logger) {
+  batch.beforeFlushOnUnload(() => {
     logger.log(`${RUM_EVENT_PREFIX} page unload`, {
       data: {
         duration: performance.now(),

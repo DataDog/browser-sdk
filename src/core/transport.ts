@@ -25,6 +25,7 @@ export class HttpRequest {
 }
 
 export class Batch {
+  private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private buffer: string = ''
   private bufferBytesSize = 0
   private bufferMessageCount = 0
@@ -38,7 +39,7 @@ export class Batch {
     private contextProvider: () => Context
   ) {
     this.flushOnVisibilityHidden()
-    this.flushTick()
+    this.flushPeriodically()
   }
 
   add(message: Message) {
@@ -55,6 +56,10 @@ export class Batch {
     }
   }
 
+  beforeFlushOnUnload(handler: () => void) {
+    this.beforeFlushOnUnloadHandlers.push(handler)
+  }
+
   flush() {
     if (this.buffer.length !== 0) {
       this.request.send(this.buffer, this.bufferBytesSize)
@@ -64,10 +69,10 @@ export class Batch {
     }
   }
 
-  private flushTick() {
+  private flushPeriodically() {
     setTimeout(() => {
       this.flush()
-      this.flushTick()
+      this.flushPeriodically()
     }, this.flushTimeout)
   }
 
@@ -88,7 +93,8 @@ export class Batch {
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
-    return this.bufferBytesSize + messageBytesSize + (this.buffer ? 1 : 0) >= this.bytesLimit
+    //
+    return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
   }
 
   private isFull() {
@@ -113,7 +119,7 @@ export class Batch {
       window.addEventListener(
         'beforeunload',
         monitor(() => {
-          beforeFlushOnUnloadHandlers.forEach((handler) => handler())
+          this.beforeFlushOnUnloadHandlers.forEach((handler) => handler())
         })
       )
 
@@ -137,10 +143,4 @@ export class Batch {
       window.addEventListener('beforeunload', monitor(() => this.flush()))
     }
   }
-}
-
-const beforeFlushOnUnloadHandlers: Array<() => void> = []
-
-export function beforeFlushOnUnload(handler: () => void) {
-  beforeFlushOnUnloadHandlers.push(handler)
 }
