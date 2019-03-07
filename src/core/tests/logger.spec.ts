@@ -71,6 +71,7 @@ describe('logger module', () => {
       window.Datadog.log('first')
       window.Datadog.setGlobalContext({ foo: 'bar' })
       window.Datadog.log('second')
+
       expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
       expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
       expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined
