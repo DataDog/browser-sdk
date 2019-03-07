@@ -12,6 +12,7 @@ export class Configuration {
    * Logs intake limit
    */
   maxBatchSize = 50
+  maxMessageSize = 256 * 1024
 
   /**
    * beacon payload max size implementation is 64kb

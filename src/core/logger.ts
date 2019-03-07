@@ -26,6 +26,7 @@ export function loggerModule(configuration: Configuration) {
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
+    configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),

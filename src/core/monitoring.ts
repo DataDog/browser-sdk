@@ -10,6 +10,7 @@ export function initMonitoring(configuration: Configuration) {
     new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
+    configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),

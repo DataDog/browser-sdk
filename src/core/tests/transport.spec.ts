@@ -7,13 +7,13 @@ use(sinonChai)
 
 describe('request', () => {
   const ENDPOINT_URL = 'http://my.website'
-  const BYTES_LIMIT = 100
+  const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
   let request: HttpRequest
 
   beforeEach(() => {
     server = sinon.fakeServer.create()
-    request = new HttpRequest(ENDPOINT_URL, BYTES_LIMIT)
+    request = new HttpRequest(ENDPOINT_URL, BATCH_BYTES_LIMIT)
   })
 
   afterEach(() => {
@@ -41,7 +41,7 @@ describe('request', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
-    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BYTES_LIMIT)
+    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
 
     expect(server.requests.length).to.equal(1)
     expect(server.requests[0].url).to.equal(ENDPOINT_URL)
@@ -51,7 +51,8 @@ describe('request', () => {
 
 describe('batch', () => {
   const MAX_SIZE = 3
-  const BYTES_LIMIT = 100
+  const BATCH_BYTES_LIMIT = 100
+  const MESSAGE_BYTES_LIMIT = 50 * 1024
   const CONTEXT = { foo: 'bar' }
   const FLUSH_TIMEOUT = 60 * 1000
   let batch: Batch
@@ -60,7 +61,7 @@ describe('batch', () => {
   beforeEach(() => {
     transport = { send: () => ({}) }
     sinon.spy(transport, 'send')
-    batch = new Batch(transport, MAX_SIZE, BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
+    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
   })
 
   it('should add context to message', () => {
@@ -125,12 +126,19 @@ describe('batch', () => {
 
   it('should flush after timeout', () => {
     const clock = sinon.useFakeTimers()
-    batch = new Batch(transport, MAX_SIZE, BYTES_LIMIT, 10, () => CONTEXT)
+    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, 10, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     clock.tick(100)
 
     expect(transport.send.called).to.equal(true)
 
     clock.restore()
+  })
+
+  it('should not send the message', () => {
+    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
+    batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
+
+    expect(transport.send.called).to.equal(false)
   })
 })

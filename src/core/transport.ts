@@ -33,6 +33,7 @@ export class Batch {
     private request: HttpRequest,
     private maxSize: number,
     private bytesLimit: number,
+    private maxMessageSize: number,
     private flushTimeout: number,
     private contextProvider: () => Context
   ) {
@@ -42,6 +43,9 @@ export class Batch {
 
   add(message: Message) {
     const { processedMessage, messageBytesSize } = this.process(message)
+    if (messageBytesSize >= this.maxMessageSize) {
+      return
+    }
     if (this.willReachedBytesLimitWith(messageBytesSize)) {
       this.flush()
     }
