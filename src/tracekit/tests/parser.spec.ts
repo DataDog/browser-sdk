@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { isIE, isSafari } from '../../tests/browserHelper'
+import { isIE, isSafari } from '../../tests/specHelper'
 import { computeStackTrace } from '../tracekit'
 import * as CapturedExceptions from './fixtures/capturedExceptions'
 

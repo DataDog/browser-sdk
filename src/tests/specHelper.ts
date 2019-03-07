@@ -10,3 +10,9 @@ export function isIE(version: number) {
 export function isAndroid() {
   return /android/i.test(navigator.userAgent)
 }
+
+export function clearAllCookies() {
+  document.cookie.split(';').forEach((c) => {
+    document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+  })
+}

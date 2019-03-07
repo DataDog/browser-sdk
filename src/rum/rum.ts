@@ -1,6 +1,7 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
 import { beforeFlushOnUnload } from '../core/transport'
+import { throttle } from '../core/util'
 
 type RequestIdleCallbackHandle = number
 
@@ -144,19 +145,6 @@ function trackInputDelay(logger: Logger) {
         })
       }
     }
-  }
-
-  // tslint:disable-next-line ban-types
-  function throttle<T extends Function>(fn: T, wait: number): T {
-    let lastCall = 0
-    return (function(this: any) {
-      const now = new Date().getTime()
-      if (lastCall + wait < now) {
-        lastCall = now
-        return fn.apply(this, arguments)
-      }
-      return
-    } as unknown) as T // consider output type has input type
   }
 }
 
