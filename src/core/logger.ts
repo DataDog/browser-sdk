@@ -22,9 +22,8 @@ export type LogLevel = keyof typeof LogLevelEnum
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
 export function loggerModule(configuration: Configuration) {
-  const transport = new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit)
   const batch = new Batch(
-    transport,
+    new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.flushTimeout,

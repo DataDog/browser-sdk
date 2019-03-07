@@ -3,13 +3,11 @@ import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { Batch, HttpRequest } from './transport'
 
-let transport: HttpRequest | undefined
 let batch: Batch | undefined
 
 export function initMonitoring(configuration: Configuration) {
-  transport = new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit)
   batch = new Batch(
-    transport,
+    new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.flushTimeout,
@@ -20,14 +18,13 @@ export function initMonitoring(configuration: Configuration) {
 }
 
 export function resetMonitoring() {
-  transport = undefined
   batch = undefined
 }
 
 export function monitored(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
   descriptor.value = function() {
-    const decorated = !transport ? originalMethod : monitor(originalMethod)
+    const decorated = !batch ? originalMethod : monitor(originalMethod)
     return decorated.apply(this, arguments)
   }
 }

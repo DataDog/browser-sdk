@@ -28,7 +28,7 @@ describe('request', () => {
     expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
-  it('should use sendBeacon', () => {
+  it('should use sendBeacon over HttpRequest because the size is correct', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
@@ -37,7 +37,7 @@ describe('request', () => {
     expect(navigator.sendBeacon).have.been.called
   })
 
-  it('should use HttpRequest', () => {
+  it('should use HttpRequest over sendBeacon because the size too high', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 

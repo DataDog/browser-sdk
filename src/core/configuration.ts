@@ -1,8 +1,12 @@
 export class Configuration {
-  flushTimeout = 60 * 1000
   isCollectingError = true
   logsEndpoint = 'https://http-intake.logs.datadoghq.com/v1/input/<KEY>?ddsource=browser-agent'
   monitoringEndpoint = 'https://http-intake.logs.datadoghq.com/v1/input/<KEY>'
+
+  /**
+   * flush automatically, the value is arbitrary.
+   */
+  flushTimeout = 60 * 1000
 
   /**
    * Logs intake limit
