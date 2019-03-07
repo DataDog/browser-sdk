@@ -21,6 +21,12 @@ export class Configuration {
     if ('isCollectingError' in override) {
       this.isCollectingError = override.isCollectingError!
     }
+    if ('logsEndpoint' in override) {
+      this.logsEndpoint = override.logsEndpoint!
+    }
+    if ('monitoringEndpoint' in override) {
+      this.monitoringEndpoint = override.monitoringEndpoint!
+    }
   }
 }
 
@@ -29,4 +35,6 @@ export class Configuration {
  */
 export interface ConfigurationOverride {
   isCollectingError?: boolean
+  logsEndpoint?: string
+  monitoringEndpoint?: string
 }
