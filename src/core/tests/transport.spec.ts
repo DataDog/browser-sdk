@@ -20,7 +20,7 @@ describe('request', () => {
     server.restore()
   })
 
-  it('should use HttpRequest because sendBeacon is not defined', () => {
+  it('should use HttpRequest when sendBeacon is not defined', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
     expect(server.requests.length).to.equal(1)
@@ -28,7 +28,7 @@ describe('request', () => {
     expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
-  it('should use sendBeacon over HttpRequest because the size is correct', () => {
+  it('should use sendBeacon over HttpRequest when the size is correct', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
@@ -37,7 +37,7 @@ describe('request', () => {
     expect(navigator.sendBeacon).have.been.called
   })
 
-  it('should use HttpRequest over sendBeacon because the size too high', () => {
+  it('should use HttpRequest over sendBeacon when the size too high', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
@@ -116,7 +116,7 @@ describe('batch', () => {
     expect(transport.send).to.have.been.calledWith(`{"message":"${message}","foo":"bar"}`, 101)
   })
 
-  it('should flush the batch and send the message ', () => {
+  it('should flush the batch and send the message when the message is too heavy', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
