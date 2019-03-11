@@ -6,6 +6,9 @@ import { initMonitoring, monitor, monitored, resetMonitoring } from '../monitori
 use(shallowDeepEqual)
 
 const configuration: any = {
+  batchBytesLimit: 100,
+  flushTimeout: 60 * 1000,
+  maxBatchSize: 1,
   monitoringEndpoint: 'http://localhot/monitoring',
 }
 

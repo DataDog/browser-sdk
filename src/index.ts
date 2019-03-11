@@ -64,8 +64,8 @@ function makeInit(configuration: Configuration) {
     configuration.apply(override)
     configuration.apiKey = apiKey
     trackSession()
-    const logger = loggerModule(configuration)
+    const { batch, logger } = loggerModule(configuration)
     errorCollectionModule(configuration, logger)
-    rumModule(logger)
+    rumModule(batch, logger)
   })
 }

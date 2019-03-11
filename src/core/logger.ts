@@ -1,7 +1,7 @@
 import { Configuration } from './configuration'
 import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from './context'
 import { monitored } from './monitoring'
-import { Batch, flushOnVisibilityHidden, HttpRequest } from './transport'
+import { Batch, HttpRequest } from './transport'
 
 export interface Message {
   message: string
@@ -22,12 +22,17 @@ export type LogLevel = keyof typeof LogLevelEnum
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
 export function loggerModule(configuration: Configuration) {
-  const transport = new HttpRequest(configuration.logsEndpoint)
-  const batch = new Batch(transport, configuration.maxBatchSize, configuration.batchBytesLimit, () => ({
-    ...getCommonContext(),
-    ...getGlobalContext(),
-  }))
-  flushOnVisibilityHidden(batch)
+  const batch = new Batch(
+    new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () => ({
+      ...getCommonContext(),
+      ...getGlobalContext(),
+    })
+  )
 
   const logger = new Logger(batch)
   window.Datadog.setGlobalContext = setGlobalContext
@@ -39,7 +44,7 @@ export function loggerModule(configuration: Configuration) {
   window.Datadog.warn = logger.warn.bind(logger)
 
   window.Datadog.error = logger.error.bind(logger)
-  return logger
+  return { batch, logger }
 }
 
 export class Logger {

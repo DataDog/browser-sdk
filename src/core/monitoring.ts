@@ -1,22 +1,31 @@
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
-import { HttpRequest } from './transport'
+import { Batch, HttpRequest } from './transport'
 
-let transport: HttpRequest | undefined
+let batch: Batch | undefined
 
 export function initMonitoring(configuration: Configuration) {
-  transport = new HttpRequest(configuration.monitoringEndpoint)
+  batch = new Batch(
+    new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () => ({
+      ...getCommonContext(),
+    })
+  )
 }
 
 export function resetMonitoring() {
-  transport = undefined
+  batch = undefined
 }
 
 export function monitored(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
   descriptor.value = function() {
-    const decorated = !transport ? originalMethod : monitor(originalMethod)
+    const decorated = !batch ? originalMethod : monitor(originalMethod)
     return decorated.apply(this, arguments)
   }
 }
@@ -28,8 +37,8 @@ export function monitor<T extends Function>(fn: T): T {
       return fn.apply(this, arguments)
     } catch (e) {
       try {
-        if (transport !== undefined) {
-          transport.send({ ...computeStackTrace(e), ...getCommonContext() })
+        if (batch !== undefined) {
+          batch.add(computeStackTrace(e))
         }
       } catch {
         // nothing to do

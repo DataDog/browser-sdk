@@ -11,11 +11,10 @@ import { monitor } from './monitoring'
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointUrl: string) {}
+  constructor(private endpointUrl: string, private bytesLimit: number) {}
 
-  send(payload: object | object[]) {
-    const data = this.serialize(payload)
-    if (navigator.sendBeacon) {
+  send(data: string, size: number) {
+    if (navigator.sendBeacon && size < this.bytesLimit) {
       navigator.sendBeacon(this.endpointUrl, data)
     } else {
       const request = new XMLHttpRequest()
@@ -23,28 +22,32 @@ export class HttpRequest {
       request.send(data)
     }
   }
-
-  private serialize(payload: object | string[]) {
-    if (!Array.isArray(payload)) {
-      return JSON.stringify(payload)
-    }
-    return payload.join('\n')
-  }
 }
 
 export class Batch {
-  private buffer: string[] = []
+  private beforeFlushOnUnloadHandlers: Array<() => void> = []
+  private buffer: string = ''
   private bufferBytesSize = 0
+  private bufferMessageCount = 0
 
   constructor(
     private request: HttpRequest,
     private maxSize: number,
     private bytesLimit: number,
+    private maxMessageSize: number,
+    private flushTimeout: number,
     private contextProvider: () => Context
-  ) {}
+  ) {
+    this.flushOnVisibilityHidden()
+    this.flushPeriodically()
+  }
 
   add(message: Message) {
     const { processedMessage, messageBytesSize } = this.process(message)
+    if (messageBytesSize >= this.maxMessageSize) {
+      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
+      return
+    }
     if (this.willReachedBytesLimitWith(messageBytesSize)) {
       this.flush()
     }
@@ -54,81 +57,91 @@ export class Batch {
     }
   }
 
+  beforeFlushOnUnload(handler: () => void) {
+    this.beforeFlushOnUnloadHandlers.push(handler)
+  }
+
   flush() {
     if (this.buffer.length !== 0) {
-      this.request.send(this.buffer)
-      this.buffer = []
+      this.request.send(this.buffer, this.bufferBytesSize)
+      this.buffer = ''
       this.bufferBytesSize = 0
+      this.bufferMessageCount = 0
     }
+  }
+
+  private flushPeriodically() {
+    setTimeout(() => {
+      this.flush()
+      this.flushPeriodically()
+    }, this.flushTimeout)
   }
 
   private process(message: Message) {
     const processedMessage = JSON.stringify({ ...message, ...this.contextProvider() })
-    const messageBytesSize = sizeInBytes(processedMessage)
+    const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }
 
   private push(processedMessage: string, messageBytesSize: number) {
-    this.buffer.push(processedMessage)
+    if (this.buffer) {
+      this.buffer += '\n'
+      this.bufferBytesSize += 1
+    }
+    this.buffer += processedMessage
     this.bufferBytesSize += messageBytesSize
+    this.bufferMessageCount += 1
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
-    // n + 1 elements, n bytes of separator
-    const separatorsBytesSize = this.buffer.length
-    return this.bufferBytesSize + messageBytesSize + separatorsBytesSize >= this.bytesLimit
+    // byte of the seperator at the end of the message
+    return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
   }
 
   private isFull() {
-    return this.buffer.length === this.maxSize
+    return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
-}
 
-function sizeInBytes(candidate: string) {
-  // tslint:disable-next-line no-bitwise
-  return ~-encodeURI(candidate).split(/%..|./).length
-}
+  private sizeInBytes(candidate: string) {
+    // tslint:disable-next-line no-bitwise
+    return ~-encodeURI(candidate).split(/%..|./).length
+  }
 
-const beforeFlushOnUnloadHandlers: Array<() => void> = []
-
-export function beforeFlushOnUnload(handler: () => void) {
-  beforeFlushOnUnloadHandlers.push(handler)
-}
-
-export function flushOnVisibilityHidden(batch: Batch) {
-  /**
-   * With sendBeacon, requests are guaranteed to be successfully sent during document unload
-   */
-  if (navigator.sendBeacon) {
+  private flushOnVisibilityHidden() {
     /**
-     * beforeunload is called before visibilitychange
-     * register first to be sure to be called before flush on beforeunload
-     * caveat: unload can still be canceled by another listener
+     * With sendBeacon, requests are guaranteed to be successfully sent during document unload
      */
-    window.addEventListener(
-      'beforeunload',
-      monitor(() => {
-        beforeFlushOnUnloadHandlers.forEach((handler) => handler())
-      })
-    )
+    if (navigator.sendBeacon) {
+      /**
+       * beforeunload is called before visibilitychange
+       * register first to be sure to be called before flush on beforeunload
+       * caveat: unload can still be canceled by another listener
+       */
+      window.addEventListener(
+        'beforeunload',
+        monitor(() => {
+          this.beforeFlushOnUnloadHandlers.forEach((handler) => handler())
+        })
+      )
 
-    /**
-     * Only event that guarantee to fire on mobile devices when the page transitions to background state
-     * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
-     */
-    document.addEventListener(
-      'visibilitychange',
-      monitor(() => {
-        if (document.visibilityState === 'hidden') {
-          batch.flush()
-        }
-      })
-    )
-    /**
-     * Safari does not support yet to send a request during:
-     * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
-     * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
-     */
-    window.addEventListener('beforeunload', monitor(() => batch.flush()))
+      /**
+       * Only event that guarantee to fire on mobile devices when the page transitions to background state
+       * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
+       */
+      document.addEventListener(
+        'visibilitychange',
+        monitor(() => {
+          if (document.visibilityState === 'hidden') {
+            this.flush()
+          }
+        })
+      )
+      /**
+       * Safari does not support yet to send a request during:
+       * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
+       * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
+       */
+      window.addEventListener('beforeunload', monitor(() => this.flush()))
+    }
   }
 }
