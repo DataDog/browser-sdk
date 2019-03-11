@@ -36,14 +36,6 @@ lint:
     - yarn
     - yarn lint
 
-build:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn build
-
 unit:
   stage: test
   tags: ['runner:main', 'size:large']
@@ -78,5 +70,5 @@ deploy:
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn build
+    - TARGET_ENV=staging yarn build
     - ./deploy.sh staging

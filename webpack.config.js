@@ -20,6 +20,7 @@ module.exports = (env, argv) => ({
   plugins: [
     new webpack.DefinePlugin({
       buildEnv: {
+        TARGET_ENV: JSON.stringify(process.env.TARGET_ENV || 'staging'),
         VERSION: JSON.stringify(argv.mode === 'development' ? 'dev' : packageJson.version),
       },
     }),

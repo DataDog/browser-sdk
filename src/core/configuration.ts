@@ -1,7 +1,10 @@
+const domain = buildEnv.TARGET_ENV === 'production' ? 'datadoghq.com' : 'datad0g.com'
+const key = '<KEY>'
+
 export class Configuration {
   isCollectingError = true
-  logsEndpoint = 'https://http-intake.logs.datadoghq.com/v1/input/<KEY>?ddsource=browser-agent'
-  monitoringEndpoint = 'https://http-intake.logs.datadoghq.com/v1/input/<KEY>'
+  logsEndpoint = `https://http-intake.logs.${domain}/v1/input/${key}?ddsource=browser-agent`
+  monitoringEndpoint = `https://http-intake.logs.${domain}/v1/input/${key}`
 
   /**
    * Logs intake limit
@@ -14,7 +17,7 @@ export class Configuration {
   batchBytesLimit = 64 * 1024
 
   set apiKey(apiKey: string) {
-    this.logsEndpoint = this.logsEndpoint.replace('<KEY>', apiKey)
+    this.logsEndpoint = this.logsEndpoint.replace(key, apiKey)
   }
 
   apply(override: ConfigurationOverride) {
