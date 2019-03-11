@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
-import { isIE } from '../../tests/browserHelper'
+import { isIE } from '../../tests/specHelper'
 import { report, StackFrame, wrap } from '../tracekit'
 
 describe('Handler', () => {

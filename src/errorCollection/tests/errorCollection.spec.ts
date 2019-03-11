@@ -1,7 +1,7 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
-import { isAndroid } from '../../tests/browserHelper'
+import { isAndroid } from '../../tests/specHelper'
 import {
   startConsoleTracking,
   startRuntimeErrorTracking,

@@ -136,9 +136,11 @@ describe('batch', () => {
   })
 
   it('should not send a message with a size above the limit', () => {
+    const warnStub = sinon.stub(console, 'warn')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
     expect(transport.send.called).to.equal(false)
+    warnStub.restore()
   })
 })

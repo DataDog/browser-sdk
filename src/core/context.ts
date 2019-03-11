@@ -1,3 +1,5 @@
+import { getSessionId } from './session'
+
 export type Context = any
 
 let globalContext: Context = {}
@@ -21,6 +23,7 @@ export function getCommonContext() {
       url: window.location.href,
       useragent: navigator.userAgent,
     },
+    sessionId: getSessionId(),
     version: buildEnv.VERSION,
   }
 }
