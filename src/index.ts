@@ -62,8 +62,8 @@ function makeInit(configuration: Configuration) {
   return monitor((apiKey: string, override: ConfigurationOverride = {}) => {
     configuration.apply(override)
     configuration.apiKey = apiKey
-    const logger = loggerModule(configuration)
+    const { batch, logger } = loggerModule(configuration)
     errorCollectionModule(configuration, logger)
-    rumModule(logger)
+    rumModule(batch, logger)
   })
 }

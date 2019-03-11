@@ -4,9 +4,15 @@ export class Configuration {
   monitoringEndpoint = 'https://http-intake.logs.datadoghq.com/v1/input/<KEY>'
 
   /**
+   * flush automatically, the value is arbitrary.
+   */
+  flushTimeout = 60 * 1000
+
+  /**
    * Logs intake limit
    */
   maxBatchSize = 50
+  maxMessageSize = 256 * 1024
 
   /**
    * beacon payload max size implementation is 64kb
