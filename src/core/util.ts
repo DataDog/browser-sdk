@@ -11,18 +11,17 @@ export function throttle<T extends Function>(fn: T, wait: number): T {
   } as unknown) as T // consider output type has input type
 }
 
-// tslint:disable-next-line ban-types
-export function cache<T extends Function>(fn: T, duration: number): T {
+export function cache<T>(fn: () => T, duration: number): () => T {
   let value: any
   let expired = true
-  return (function(this: any) {
+  return () => {
     if (expired) {
       value = fn()
       expired = false
       setTimeout(() => (expired = true), duration)
     }
     return value
-  } as unknown) as T // consider output type has input type
+  }
 }
 
 /**
