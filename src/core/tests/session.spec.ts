@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 import { clearAllCookies } from '../../tests/specHelper'
-import { COOKIE_ACCESS_DELAY, COOKIE_NAME, getCookie, trackSession, setCookie } from '../session'
+import { COOKIE_ACCESS_DELAY, COOKIE_NAME, getCookie, setCookie, trackSession } from '../session'
 
 describe('session', () => {
   const DURATION = 123456
