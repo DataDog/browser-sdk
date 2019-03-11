@@ -2,7 +2,7 @@ import { Configuration, ConfigurationOverride } from './core/configuration'
 import { Context } from './core/context'
 import { loggerModule, LogLevel } from './core/logger'
 import { initMonitoring, monitor } from './core/monitoring'
-import { initSession } from './core/session'
+import { trackSession } from './core/session'
 import { errorCollectionModule } from './errorCollection/errorCollection'
 import { rumModule } from './rum/rum'
 
@@ -63,7 +63,7 @@ function makeInit(configuration: Configuration) {
   return monitor((apiKey: string, override: ConfigurationOverride = {}) => {
     configuration.apply(override)
     configuration.apiKey = apiKey
-    initSession()
+    trackSession()
     const logger = loggerModule(configuration)
     errorCollectionModule(configuration, logger)
     rumModule(logger)

@@ -1,4 +1,4 @@
-import { cache, throttle } from './util'
+import { cache, generateUUID, throttle } from './util'
 
 export const COOKIE_NAME = '_dd'
 const EXPIRATION_DELAY = 15 * 60 * 1000
@@ -8,7 +8,7 @@ const EXPIRATION_DELAY = 15 * 60 * 1000
  */
 export const COOKIE_ACCESS_DELAY = 1000
 
-export function initSession() {
+export function trackSession() {
   expandOrRenewSession()
   trackActivity()
 }
@@ -17,7 +17,7 @@ export const getSessionId = cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DE
 
 const expandOrRenewSession = throttle(() => {
   const sessionId = getSessionId()
-  setCookie(COOKIE_NAME, sessionId !== undefined ? sessionId : generateUUID(), EXPIRATION_DELAY)
+  setCookie(COOKIE_NAME, sessionId || generateUUID(), EXPIRATION_DELAY)
 }, COOKIE_ACCESS_DELAY)
 
 function trackActivity() {
@@ -27,18 +27,7 @@ function trackActivity() {
   )
 }
 
-/**
- * UUID v4
- * from https://gist.github.com/jed/982883
- */
-function generateUUID(placeholder?: any): string {
-  return placeholder
-    ? // tslint:disable-next-line no-bitwise
-      (placeholder ^ ((Math.random() * 16) >> (placeholder / 4))).toString(16)
-    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
-}
-
-export function setCookie(name: string, value: any, expireDelay: number) {
+export function setCookie(name: string, value: string, expireDelay: number) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
