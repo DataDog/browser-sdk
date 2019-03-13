@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>e2e tests page</title>
-    <script type="text/javascript" src="./browser-agent.js"></script>
+    <script type="text/javascript" src="./browser-agent-e2e.js"></script>
     <script type="text/javascript">
-      window.Datadog.init('key', {
+      window.Datadog.init({
+        apiKey: 'key',
         logsEndpoint: '/logs',
         monitoringEndpoint: '/monitoring'
+        rumApplicationId: 'rumApplicationId',
       })
     </script>
 </head>

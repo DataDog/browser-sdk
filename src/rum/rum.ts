@@ -26,7 +26,7 @@ declare global {
 
 const RUM_EVENT_PREFIX = `[RUM Event]`
 
-export function rumModule(batch: Batch, logger: Logger) {
+export function startRum(batch: Batch, logger: Logger) {
   trackDisplay(logger)
   trackPerformanceTiming(logger)
   trackFirstIdle(logger)

@@ -3,9 +3,9 @@ import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { Batch, HttpRequest } from './transport'
 
-let batch: Batch | undefined
+export let batch: Batch | undefined
 
-export function initMonitoring(configuration: Configuration) {
+export function startMonitoring(configuration: Configuration) {
   batch = new Batch(
     new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,

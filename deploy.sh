@@ -22,7 +22,8 @@ case "${env}" in
 esac
 
 BROWSER_CACHE=900
-FILE_NAME="browser-agent.js"
+CORE_FILE_NAME="browser-agent-core.js"
+RUM_FILE_NAME="browser-agent.js"
 
 main() {
   in-isolation upload-to-s3
@@ -31,12 +32,14 @@ main() {
 
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
-    aws s3 cp --cache-control max-age=${BROWSER_CACHE} dist/${FILE_NAME} s3://${BUCKET_NAME}/${FILE_NAME}
+    aws s3 cp --cache-control max-age=${BROWSER_CACHE} dist/${CORE_FILE_NAME} s3://${BUCKET_NAME}/${CORE_FILE_NAME}
+    aws s3 cp --cache-control max-age=${BROWSER_CACHE} dist/${RUM_FILE_NAME} s3://${BUCKET_NAME}/${RUM_FILE_NAME}
 }
 
 invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
-    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${FILE_NAME}
+    # TODO do not invalidate CORE_FILE_NAME if only RUM_FILE_NAME changed.
+    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${CORE_FILE_NAME} /${RUM_FILE_NAME}
 }
 
 in-isolation() {
