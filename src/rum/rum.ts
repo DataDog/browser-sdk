@@ -26,6 +26,23 @@ declare global {
 
 const RUM_EVENT_PREFIX = `[RUM Event]`
 
+type EntryType =
+  | 'animationDelay'
+  | 'display'
+  | 'firstIdle'
+  | 'firstInput'
+  | 'longtask'
+  | 'navigation'
+  | 'pageUnload'
+  | 'paint'
+  | 'responseDelay'
+  | 'resource'
+
+interface Message {
+  data: any
+  entryType: EntryType
+}
+
 export function rumModule(batch: Batch, logger: Logger) {
   trackDisplay(logger)
   trackPerformanceTiming(logger)
@@ -35,7 +52,7 @@ export function rumModule(batch: Batch, logger: Logger) {
   trackPageDuration(batch, logger)
 }
 
-function log(logger: Logger, message: { data: any; entryType: string }) {
+function log(logger: Logger, message: Message) {
   logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
 }
 
@@ -53,7 +70,7 @@ function trackPerformanceTiming(logger: Logger) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
-          log(logger, { data: entry.toJSON(), entryType: entry.entryType })
+          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
         })
       })
     )
@@ -102,14 +119,14 @@ function trackFirstInput(logger: Logger) {
 }
 
 interface Delay {
-  entryType: string
+  entryType: EntryType
   threshold: number
 }
 
 /**
  * cf https://developers.google.com/web/fundamentals/performance/rail
  */
-const DELAYS = {
+const DELAYS: {[key: string]: Delay} = {
   ANIMATION: {
     entryType: 'animationDelay',
     threshold: 10,
