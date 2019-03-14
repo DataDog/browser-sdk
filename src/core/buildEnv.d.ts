@@ -4,6 +4,6 @@
 declare const buildEnv: BuildEnv
 
 declare interface BuildEnv {
-  TARGET_ENV: 'staging' | 'production'
+  TARGET_ENV: 'e2e-test' | 'staging' | 'production'
   VERSION: string
 }

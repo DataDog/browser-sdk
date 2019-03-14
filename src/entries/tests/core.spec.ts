@@ -10,17 +10,16 @@ describe('core module', () => {
   })
 
   it('init should log an error with no api key', () => {
-    let errorCount = 0
-    sinon.replace(console, 'error', () => (errorCount += 1))
+    const errorStub = sinon.stub(console, 'error')
 
     window.Datadog.init(undefined as any)
-    expect(errorCount).to.eq(1)
+    expect(errorStub.callCount).to.eq(1)
 
     window.Datadog.init({ stillNoApiKey: true } as any)
-    expect(errorCount).to.eq(2)
+    expect(errorStub.callCount).to.eq(2)
 
     window.Datadog.init({ apiKey: 'yeah' })
-    expect(errorCount).to.eq(2)
+    expect(errorStub.callCount).to.eq(2)
 
     sinon.restore()
   })

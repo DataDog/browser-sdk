@@ -3,7 +3,7 @@ import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { Batch, HttpRequest } from './transport'
 
-export let batch: Batch | undefined
+let batch: Batch | undefined
 
 export function startMonitoring(configuration: Configuration) {
   batch = new Batch(

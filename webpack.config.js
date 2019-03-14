@@ -5,7 +5,6 @@ const packageJson = require('./package.json')
 module.exports = (env, argv) => ({
   entry: {
     core: './src/entries/core.ts',
-    e2e: './src/entries/e2e.ts',
     rum: './src/entries/rum.ts',
   },
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
@@ -37,8 +36,6 @@ module.exports = (env, argv) => ({
       switch (chunkData.chunk.name) {
         case 'core':
           return 'browser-agent-core.js'
-        case 'e2e':
-          return 'browser-agent-e2e.js'
         default:
           return 'browser-agent.js'
       }

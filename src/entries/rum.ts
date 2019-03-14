@@ -13,9 +13,10 @@ export interface RUMUserConfiguration extends UserConfiguration {
 function postInit(userConfiguration: RUMUserConfiguration, batch: Batch, logger: Logger) {
   if (!userConfiguration.rumApplicationId) {
     console.error('RUM application id is not configured, no RUM data will be collected')
+    return
   }
 
-  addGlobalContext('rum_app_id', userConfiguration.rumApplicationId)
+  addGlobalContext('rumAppId', userConfiguration.rumApplicationId)
 
   startRum(batch, logger)
 }

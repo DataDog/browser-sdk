@@ -50,7 +50,7 @@ e2e:
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn build
+    - TARGET_ENV=e2e-test yarn build
     - yarn test:e2e
 
 #browserstack:

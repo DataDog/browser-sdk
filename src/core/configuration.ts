@@ -26,15 +26,26 @@ export const DEFAULT_CONFIGURATION = {
 export interface UserConfiguration {
   apiKey: string
   isCollectingError?: boolean
+  logsEndpoint?: string
+  monitoringEndpoint?: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION
 
-export function getConfiguration(userConfiguration: UserConfiguration): Configuration {
+export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration = { ...DEFAULT_CONFIGURATION }
   configuration.logsEndpoint = configuration.logsEndpoint.replace(key, userConfiguration.apiKey)
   if ('isCollectingError' in userConfiguration) {
     configuration.isCollectingError = !!userConfiguration.isCollectingError
+  }
+
+  if (buildEnv.TARGET_ENV === 'e2e-test') {
+    if (userConfiguration.logsEndpoint) {
+      configuration.logsEndpoint = userConfiguration.logsEndpoint
+    }
+    if (userConfiguration.monitoringEndpoint) {
+      configuration.monitoringEndpoint = userConfiguration.monitoringEndpoint
+    }
   }
 
   return configuration

@@ -1,7 +1,7 @@
-import { Configuration, getConfiguration, UserConfiguration } from '../core/configuration'
+import { buildConfiguration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
 import { Logger, LogLevel, startLogger } from '../core/logger'
-import { startMonitoring } from '../core/monitoring'
+import { monitor, startMonitoring } from '../core/monitoring'
 import { startSessionTracking } from '../core/session'
 import { Batch } from '../core/transport'
 import { startErrorCollection } from '../errorCollection/errorCollection'
@@ -59,15 +59,18 @@ export function buildInit<T extends UserConfiguration>(
       return
     }
 
-    const configuration = getConfiguration(userConfiguration)
+    const configuration = buildConfiguration(userConfiguration)
     startMonitoring(configuration)
-    startSessionTracking()
 
-    const { batch, logger } = startLogger(configuration)
-    startErrorCollection(configuration, logger)
+    monitor(() => {
+      startSessionTracking()
 
-    if (postInit) {
-      postInit(userConfiguration, batch, logger)
-    }
+      const { batch, logger } = startLogger(configuration)
+      startErrorCollection(configuration, logger)
+
+      if (postInit) {
+        postInit(userConfiguration, batch, logger)
+      }
+    })()
   }) as Datadog['init']
 }
