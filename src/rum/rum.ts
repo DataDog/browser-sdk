@@ -126,7 +126,7 @@ interface Delay {
 /**
  * cf https://developers.google.com/web/fundamentals/performance/rail
  */
-const DELAYS: {[key: string]: Delay} = {
+const DELAYS: { [key: string]: Delay } = {
   ANIMATION: {
     entryType: 'animationDelay',
     threshold: 10,
