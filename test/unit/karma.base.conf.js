@@ -2,10 +2,6 @@ const webpackConfig = require('../../webpack.config')(null, { mode: 'development
 
 module.exports = {
   basePath: '../..',
-  browserConsoleLogOptions: {
-    level: 'log',
-    terminal: true,
-  },
   files: ['src/**/*.spec.ts'],
   frameworks: ['mocha', 'sinon-chai'],
   preprocessors: {

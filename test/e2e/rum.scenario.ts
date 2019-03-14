@@ -5,6 +5,7 @@ const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 afterEach(async () => {
   const logs = await browser.getLogs('browser')
   logs.forEach(console.log)
+  expect(logs.filter((l: any) => l.level === 'SEVERE')).to.be.empty
 })
 
 describe('rum', () => {
@@ -26,7 +27,7 @@ function flushLogs() {
 }
 
 function retrieveLogTypes() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.data.entryType))
+  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.entryType))
 }
 
 function retrieveMonitoringErrors() {

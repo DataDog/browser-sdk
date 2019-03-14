@@ -26,6 +26,23 @@ declare global {
 
 const RUM_EVENT_PREFIX = `[RUM Event]`
 
+type EntryType =
+  | 'animationDelay'
+  | 'display'
+  | 'firstIdle'
+  | 'firstInput'
+  | 'longtask'
+  | 'navigation'
+  | 'pageUnload'
+  | 'paint'
+  | 'responseDelay'
+  | 'resource'
+
+interface Message {
+  data: any
+  entryType: EntryType
+}
+
 export function startRum(batch: Batch, logger: Logger) {
   trackDisplay(logger)
   trackPerformanceTiming(logger)
@@ -35,12 +52,16 @@ export function startRum(batch: Batch, logger: Logger) {
   trackPageDuration(batch, logger)
 }
 
+function log(logger: Logger, message: Message) {
+  logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
+}
+
 function trackDisplay(logger: Logger) {
-  logger.log(`${RUM_EVENT_PREFIX} display`, {
+  log(logger, {
     data: {
-      entryType: 'display',
       startTime: performance.now(),
     },
+    entryType: 'display',
   })
 }
 
@@ -48,9 +69,9 @@ function trackPerformanceTiming(logger: Logger) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        const entries = list.getEntries()
-        const data = entries.map((e) => e.toJSON())
-        logger.log(`${RUM_EVENT_PREFIX} ${entries[0].entryType}`, { data })
+        list.getEntries().forEach((entry) => {
+          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+        })
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
@@ -62,11 +83,11 @@ function trackFirstIdle(logger: Logger) {
     const handle = window.requestIdleCallback(
       monitor(() => {
         window.cancelIdleCallback(handle)
-        logger.log(`${RUM_EVENT_PREFIX} first idle`, {
+        log(logger, {
           data: {
-            entryType: 'firstIdle',
             startTime: performance.now(),
           },
+          entryType: 'firstIdle',
         })
       })
     )
@@ -87,31 +108,31 @@ function trackFirstInput(logger: Logger) {
     const startTime = performance.now()
     const delay = startTime - event.timeStamp
 
-    logger.log(`${RUM_EVENT_PREFIX} first input`, {
+    log(logger, {
       data: {
         delay,
         startTime,
-        entryType: 'firstInput',
       },
+      entryType: 'firstInput',
     })
   }
 }
 
 interface Delay {
-  entryType: string
+  entryType: EntryType
   threshold: number
 }
 
 /**
  * cf https://developers.google.com/web/fundamentals/performance/rail
  */
-const DELAYS = {
+const DELAYS: { [key: string]: Delay } = {
   ANIMATION: {
-    entryType: 'animation delay',
+    entryType: 'animationDelay',
     threshold: 10,
   },
   RESPONSE: {
-    entryType: 'response delay',
+    entryType: 'responseDelay',
     threshold: 100,
   },
 }
@@ -136,10 +157,10 @@ function trackInputDelay(logger: Logger) {
       const startTime = performance.now()
       const duration = startTime - event.timeStamp
       if (duration > threshold) {
-        logger.log(`${RUM_EVENT_PREFIX} ${entryType}`, {
+        log(logger, {
+          entryType,
           data: {
             duration,
-            entryType,
             startTime,
           },
         })
@@ -150,11 +171,11 @@ function trackInputDelay(logger: Logger) {
 
 function trackPageDuration(batch: Batch, logger: Logger) {
   batch.beforeFlushOnUnload(() => {
-    logger.log(`${RUM_EVENT_PREFIX} page unload`, {
+    log(logger, {
       data: {
         duration: performance.now(),
-        entryType: 'page unload',
       },
+      entryType: 'pageUnload',
     })
   })
 }
