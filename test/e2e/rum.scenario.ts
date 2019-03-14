@@ -21,7 +21,7 @@ function flushLogs() {
 }
 
 function retrieveLogTypes() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.data.entryType))
+  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.entryType))
 }
 
 function retrieveMonitoringErrors() {
