@@ -43,7 +43,7 @@ interface Message {
   entryType: EntryType
 }
 
-export function rumModule(batch: Batch, logger: Logger) {
+export function startRum(batch: Batch, logger: Logger) {
   trackDisplay(logger)
   trackPerformanceTiming(logger)
   trackFirstIdle(logger)

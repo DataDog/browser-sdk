@@ -1,10 +1,12 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
-import { LOG_LEVELS, loggerModule } from '../logger'
+
+import { Configuration } from '../configuration'
+import { LOG_LEVELS, startLogger } from '../logger'
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
-  const configuration: any = {
+  const configuration: Partial<Configuration> = {
     logsEndpoint: 'https://localhost/log',
     maxBatchSize: 1,
   }
@@ -12,7 +14,7 @@ describe('logger module', () => {
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    loggerModule(configuration)
+    startLogger(configuration as Configuration)
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })

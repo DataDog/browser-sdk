@@ -5,7 +5,7 @@ import { Batch, HttpRequest } from './transport'
 
 let batch: Batch | undefined
 
-export function initMonitoring(configuration: Configuration) {
+export function startMonitoring(configuration: Configuration) {
   batch = new Batch(
     new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,

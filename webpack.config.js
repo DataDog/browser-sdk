@@ -3,7 +3,10 @@ const webpack = require('webpack')
 const packageJson = require('./package.json')
 
 module.exports = (env, argv) => ({
-  entry: './src/index.ts',
+  entry: {
+    core: './src/entries/core.ts',
+    rum: './src/entries/rum.ts',
+  },
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
   devServer: {
     contentBase: './dist',
@@ -29,7 +32,14 @@ module.exports = (env, argv) => ({
     extensions: ['.ts', '.js'],
   },
   output: {
-    filename: 'browser-agent.js',
+    filename: (chunkData) => {
+      switch (chunkData.chunk.name) {
+        case 'core':
+          return 'browser-agent-core.js'
+        default:
+          return 'browser-agent.js'
+      }
+    },
     path: path.resolve(__dirname, 'dist'),
   },
 })

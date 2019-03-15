@@ -8,7 +8,7 @@ const EXPIRATION_DELAY = 15 * 60 * 1000
  */
 export const COOKIE_ACCESS_DELAY = 1000
 
-export function trackSession() {
+export function startSessionTracking() {
   expandOrRenewSession()
   trackActivity()
 }

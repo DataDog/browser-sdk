@@ -3,7 +3,7 @@ import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
 import { report, StackTrace } from '../tracekit/tracekit'
 
-export function errorCollectionModule(configuration: Configuration, logger: Logger) {
+export function startErrorCollection(configuration: Configuration, logger: Logger) {
   if (configuration.isCollectingError) {
     startConsoleTracking(logger)
     startRuntimeErrorTracking(logger)

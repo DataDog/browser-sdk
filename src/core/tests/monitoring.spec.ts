@@ -1,7 +1,7 @@
 import { expect, use } from 'chai'
 import * as shallowDeepEqual from 'chai-shallow-deep-equal'
 import * as sinon from 'sinon'
-import { initMonitoring, monitor, monitored, resetMonitoring } from '../monitoring'
+import { monitor, monitored, resetMonitoring, startMonitoring } from '../monitoring'
 
 use(shallowDeepEqual)
 
@@ -45,7 +45,7 @@ describe('monitoring', () => {
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        initMonitoring(configuration)
+        startMonitoring(configuration)
       })
 
       afterEach(() => {
@@ -79,7 +79,7 @@ describe('monitoring', () => {
     }
 
     beforeEach(() => {
-      initMonitoring(configuration)
+      startMonitoring(configuration)
     })
 
     afterEach(() => {
@@ -112,7 +112,7 @@ describe('monitoring', () => {
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      initMonitoring(configuration)
+      startMonitoring(configuration)
       server = sinon.fakeServer.create()
       clock = sinon.useFakeTimers(FAKE_DATE)
     })

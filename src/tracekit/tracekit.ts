@@ -1,9 +1,3 @@
-/**
- * https://github.com/csnover/TraceKit
- * @license MIT
- * @namespace TraceKit
- */
-
 declare global {
   interface Error {
     sourceURL?: string

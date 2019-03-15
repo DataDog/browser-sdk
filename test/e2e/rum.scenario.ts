@@ -2,6 +2,12 @@ import { expect } from 'chai'
 import * as request from 'request'
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
+afterEach(async () => {
+  const logs = await browser.getLogs('browser')
+  logs.forEach(console.log)
+  expect(logs.filter((l: any) => l.level === 'SEVERE')).to.be.empty
+})
+
 describe('rum', () => {
   afterEach(async () => {
     expect(await retrieveMonitoringErrors()).to.be.empty
