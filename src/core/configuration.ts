@@ -5,6 +5,7 @@ function getEndpoint(apiKey: string, source: string) {
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
+  maxMonitoringMessagesPerPage: 15,
 
   /**
    * flush automatically, the value is arbitrary.
