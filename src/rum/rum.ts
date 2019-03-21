@@ -70,7 +70,9 @@ function trackPerformanceTiming(logger: Logger) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
-          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+          if (isPerformanceEntryAllowed(logger, entry)) {
+            log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+          }
         })
       })
     )
@@ -78,7 +80,21 @@ function trackPerformanceTiming(logger: Logger) {
   }
 }
 
-function trackFirstIdle(logger: Logger) {
+function isResourceEntryTiming(entry: PerformanceEntry): entry is PerformanceResourceTiming {
+  return entry.entryType === 'resource'
+}
+
+export function isPerformanceEntryAllowed(logger: Logger, entry: PerformanceEntry) {
+  if (isResourceEntryTiming(entry)) {
+    if (entry.name.startsWith(logger.getEndpoint())) {
+      return false
+    }
+  }
+
+  return true
+}
+
+export function trackFirstIdle(logger: Logger) {
   if (window.requestIdleCallback) {
     const handle = window.requestIdleCallback(
       monitor(() => {
