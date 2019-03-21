@@ -85,13 +85,8 @@ function isResourceEntryTiming(entry: PerformanceEntry): entry is PerformanceRes
 }
 
 export function isPerformanceEntryAllowed(logger: Logger, entry: PerformanceEntry) {
-  if (isResourceEntryTiming(entry)) {
-    if (entry.name.startsWith(logger.getEndpoint())) {
-      return false
-    }
-  }
-
-  return true
+  const isBlacklisted = isResourceEntryTiming(entry) && entry.name.startsWith(logger.getEndpoint())
+  return !isBlacklisted
 }
 
 export function trackFirstIdle(logger: Logger) {
