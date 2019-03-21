@@ -5,7 +5,7 @@ import { Batch, HttpRequest } from './transport'
 
 export interface Message {
   message: string
-  severity?: string
+  severity?: LogLevelEnum
   [key: string]: any
 }
 

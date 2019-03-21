@@ -142,5 +142,25 @@ describe('monitoring', () => {
         version: 'dev',
       })
     })
+
+    it('should cap the data sent', () => {
+      const max = 5
+      let sentMessageCount = 0
+      const increaseMessageCount = () => {
+        if (sentMessageCount < max) {
+          sentMessageCount += 1
+          return true
+        }
+        return false
+      }
+
+      for (let i = 0; i < max + 3; i += 1) {
+        monitor(() => {
+          throw new Error('message')
+        }, increaseMessageCount)()
+      }
+
+      expect(sentMessageCount).eq(max)
+    })
   })
 })
