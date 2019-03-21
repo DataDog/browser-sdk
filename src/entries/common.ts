@@ -58,11 +58,10 @@ export function buildInit<T extends UserConfiguration>(
       console.error('API Key is not configured, we will not send any data.')
       return
     }
-
-    const configuration = buildConfiguration(userConfiguration)
-    startMonitoring(configuration)
-
     monitor(() => {
+      const configuration = buildConfiguration(userConfiguration)
+      startMonitoring(configuration)
+
       startSessionTracking()
 
       const { batch, logger } = startLogger(configuration)

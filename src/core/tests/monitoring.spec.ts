@@ -9,6 +9,7 @@ const configuration: any = {
   batchBytesLimit: 100,
   flushTimeout: 60 * 1000,
   maxBatchSize: 1,
+  maxMonitoringMessagesPerPage: 7,
   monitoringEndpoint: 'http://localhot/monitoring',
 }
 
@@ -141,6 +142,17 @@ describe('monitoring', () => {
         name: 'Error',
         version: 'dev',
       })
+    })
+
+    it('should cap the data sent', () => {
+      const max = configuration.maxMonitoringMessagesPerPage
+      for (let i = 0; i < max + 3; i += 1) {
+        monitor(() => {
+          throw new Error('message')
+        })()
+      }
+
+      expect(server.requests.length).to.equal(max)
     })
   })
 })

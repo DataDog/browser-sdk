@@ -1,10 +1,11 @@
-const domain = buildEnv.TARGET_ENV === 'production' ? 'datadoghq.com' : 'datad0g.com'
-const key = '<KEY>'
+function getEndpoint(apiKey: string, source: string) {
+  const domain = buildEnv.TARGET_ENV === 'production' ? 'datadoghq.com' : 'datad0g.com'
+  return `https://http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}`
+}
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
-  logsEndpoint: `https://http-intake.logs.${domain}/v1/input/${key}?ddsource=browser-agent`,
-  monitoringEndpoint: `https://http-intake.logs.${domain}/v1/input/${key}`,
+  maxMonitoringMessagesPerPage: 15,
 
   /**
    * flush automatically, the value is arbitrary.
@@ -25,16 +26,26 @@ export const DEFAULT_CONFIGURATION = {
 
 export interface UserConfiguration {
   apiKey: string
+  monitoringApiKey?: string
+  monitoringEndpoint?: string
   isCollectingError?: boolean
   logsEndpoint?: string
+}
+
+export type Configuration = typeof DEFAULT_CONFIGURATION & {
+  logsEndpoint: string
   monitoringEndpoint?: string
 }
 
-export type Configuration = typeof DEFAULT_CONFIGURATION
-
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
-  const configuration = { ...DEFAULT_CONFIGURATION }
-  configuration.logsEndpoint = configuration.logsEndpoint.replace(key, userConfiguration.apiKey)
+  const configuration: Configuration = {
+    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
+    ...DEFAULT_CONFIGURATION,
+  }
+  if (userConfiguration.monitoringApiKey) {
+    configuration.monitoringEndpoint = getEndpoint(userConfiguration.monitoringApiKey, 'browser-agent-monitoring')
+  }
+
   if ('isCollectingError' in userConfiguration) {
     configuration.isCollectingError = !!userConfiguration.isCollectingError
   }
