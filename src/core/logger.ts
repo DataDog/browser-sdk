@@ -50,6 +50,10 @@ export function startLogger(configuration: Configuration) {
 export class Logger {
   constructor(private batch: Batch) {}
 
+  getEndpoint() {
+    return this.batch.getEndpoint()
+  }
+
   @monitored
   log(message: string, context = {}, severity = LogLevelEnum.info) {
     this.batch.add({ message, severity, ...context })

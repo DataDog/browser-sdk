@@ -13,6 +13,10 @@ import { monitor } from './monitoring'
 export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number) {}
 
+  getEndpoint() {
+    return this.endpointUrl
+  }
+
   send(data: string, size: number) {
     if (navigator.sendBeacon && size < this.bytesLimit) {
       navigator.sendBeacon(this.endpointUrl, data)
@@ -59,6 +63,10 @@ export class Batch {
 
   beforeFlushOnUnload(handler: () => void) {
     this.beforeFlushOnUnloadHandlers.push(handler)
+  }
+
+  getEndpoint() {
+    return this.request.getEndpoint()
   }
 
   flush() {
