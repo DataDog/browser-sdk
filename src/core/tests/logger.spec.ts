@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import * as sinon from 'sinon'
 
 import { Configuration } from '../configuration'
-import { LOG_LEVELS, startLogger } from '../logger'
+import { LOG_LEVELS, Logger, startLogger } from '../logger'
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
@@ -12,9 +12,10 @@ describe('logger module', () => {
   }
   let server: sinon.SinonFakeServer
   let clock: sinon.SinonFakeTimers
+  let logger: Logger
 
   beforeEach(() => {
-    startLogger(configuration as Configuration)
+    logger = startLogger(configuration as Configuration).logger
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })
@@ -57,6 +58,11 @@ describe('logger module', () => {
 
         expect(JSON.parse(server.requests[0].requestBody).severity).to.equal(logLevel)
       })
+    })
+
+    it('log should count the number of error', () => {
+      window.Datadog.error('error message')
+      expect(logger.errorCount).to.equal(1)
     })
   })
 
