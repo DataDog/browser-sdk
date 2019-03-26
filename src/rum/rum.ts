@@ -5,6 +5,10 @@ import { throttle } from '../core/util'
 
 type RequestIdleCallbackHandle = number
 
+interface Data {
+  xhrCount: number
+}
+
 interface RequestIdleCallbackOptions {
   timeout: number
 }
@@ -44,39 +48,46 @@ interface Message {
 }
 
 export function startRum(batch: Batch, logger: Logger) {
+  const currentData: Data = { xhrCount: 0 }
   trackDisplay(logger)
-  trackPerformanceTiming(logger)
+  trackPerformanceTiming(logger, currentData)
   trackFirstIdle(logger)
   trackFirstInput(logger)
   trackInputDelay(logger)
-  trackPageDuration(batch, logger)
+  trackPageUnload(batch, logger, currentData)
 }
 
-function log(logger: Logger, message: Message) {
+export function log(logger: Logger, message: Message) {
   logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
 }
 
 function trackDisplay(logger: Logger) {
   log(logger, {
     data: {
+      display: 1,
       startTime: performance.now(),
     },
     entryType: 'display',
   })
 }
 
-function trackPerformanceTiming(logger: Logger) {
+export function trackPerformanceTiming(logger: Logger, currentData: Data) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry) => {
-          if (isPerformanceEntryAllowed(logger, entry)) {
-            log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
-          }
+          incrementIfXhrRequest(entry)
+          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
         })
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
+  }
+
+  function incrementIfXhrRequest(entry: PerformanceEntry) {
+    if (isResourceEntryTiming(entry) && entry.initiatorType === 'xmlhttprequest') {
+      currentData.xhrCount += 1
+    }
   }
 }
 
@@ -180,11 +191,15 @@ function trackInputDelay(logger: Logger) {
   }
 }
 
-function trackPageDuration(batch: Batch, logger: Logger) {
+function trackPageUnload(batch: Batch, logger: Logger, currentData: Data) {
   batch.beforeFlushOnUnload(() => {
+    const duration = performance.now()
+
     log(logger, {
       data: {
-        duration: performance.now(),
+        duration,
+        errorCount: logger.errorCount,
+        throughput: currentData.xhrCount / duration,
       },
       entryType: 'pageUnload',
     })

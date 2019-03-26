@@ -42,12 +42,13 @@ export function startLogger(configuration: Configuration) {
   window.Datadog.debug = logger.debug.bind(logger)
   window.Datadog.info = logger.info.bind(logger)
   window.Datadog.warn = logger.warn.bind(logger)
-
   window.Datadog.error = logger.error.bind(logger)
+
   return { batch, logger }
 }
 
 export class Logger {
+  public errorCount: number = 0
   constructor(private batch: Batch) {}
 
   getEndpoint() {
@@ -56,6 +57,10 @@ export class Logger {
 
   @monitored
   log(message: string, context = {}, severity = LogLevelEnum.info) {
+    if (severity === LogLevelEnum.error) {
+      this.errorCount += 1
+    }
+
     this.batch.add({ message, severity, ...context })
   }
 
