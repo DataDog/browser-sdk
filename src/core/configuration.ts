@@ -1,5 +1,6 @@
 function getEndpoint(apiKey: string, source: string) {
-  const domain = buildEnv.TARGET_ENV === 'production' ? 'datadoghq.com' : 'datad0g.com'
+  const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
+  const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   return `https://http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}`
 }
 

@@ -69,5 +69,6 @@ deploy:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_ENV=staging yarn build
+    - TARGET_DC=eu TARGET_ENV=staging yarn build
+    - TARGET_DC=us TARGET_ENV=staging yarn build
     - ./deploy.sh staging
