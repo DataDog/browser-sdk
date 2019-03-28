@@ -1,16 +1,17 @@
+import { formatStackTraceToContext } from '../errorCollection/errorCollection'
 import { computeStackTrace } from '../tracekit/tracekit'
+
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { LogLevelEnum } from './logger'
 import { Batch, HttpRequest } from './transport'
 
-let monitoringConfiguration:
-  | {
-      batch: Batch
-      maxMessagesPerPage: number
-      sentMessageCount: number
-    }
-  | undefined
+const monitoringConfiguration: {
+  batch?: Batch
+  debugMode?: boolean
+  maxMessagesPerPage: number
+  sentMessageCount: number
+} = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
 export function startMonitoring(configuration: Configuration) {
   if (!configuration.monitoringEndpoint) {
@@ -28,21 +29,21 @@ export function startMonitoring(configuration: Configuration) {
     })
   )
 
-  monitoringConfiguration = {
+  Object.assign(monitoringConfiguration, {
     batch,
     maxMessagesPerPage: configuration.maxMonitoringMessagesPerPage,
     sentMessageCount: 0,
-  }
+  })
 }
 
 export function resetMonitoring() {
-  monitoringConfiguration = undefined
+  monitoringConfiguration.batch = undefined
 }
 
 export function monitored(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
   descriptor.value = function() {
-    const decorated = monitoringConfiguration ? monitor(originalMethod) : originalMethod
+    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, arguments)
   }
 }
@@ -53,21 +54,35 @@ export function monitor<T extends Function>(fn: T): T {
     try {
       return fn.apply(this, arguments)
     } catch (e) {
+      logErrorIfDebug(e)
       try {
         if (
-          monitoringConfiguration &&
+          monitoringConfiguration.batch &&
           monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
         ) {
           monitoringConfiguration.sentMessageCount += 1
+          const stackTrace = computeStackTrace(e)
           monitoringConfiguration.batch.add({
-            ...computeStackTrace(e),
             entryType: 'internal',
+            message: stackTrace.message,
             severity: LogLevelEnum.error,
+            ...formatStackTraceToContext(stackTrace),
           })
         }
-      } catch {
-        // nothing to do
+      } catch (e) {
+        logErrorIfDebug(e)
       }
     }
   } as unknown) as T // consider output type has input type
+}
+
+export function setDebugMode(debugMode: boolean) {
+  monitoringConfiguration.debugMode = debugMode
+}
+
+function logErrorIfDebug(e: any) {
+  if (monitoringConfiguration.debugMode) {
+    // Log as warn to not forward the logs.
+    console.warn('[INTERNAL ERROR]', e)
+  }
 }

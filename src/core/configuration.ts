@@ -1,7 +1,8 @@
 function getEndpoint(apiKey: string, source: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
-  return `https://http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}`
+  const tags = `version:${buildEnv.VERSION}`
+  return `https://http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}&ddtags=${tags}`
 }
 
 export const DEFAULT_CONFIGURATION = {
@@ -28,9 +29,10 @@ export const DEFAULT_CONFIGURATION = {
 export interface UserConfiguration {
   apiKey: string
   monitoringApiKey?: string
-  monitoringEndpoint?: string
   isCollectingError?: boolean
+  // Below is only taken into account for e2e-test bundle.
   logsEndpoint?: string
+  monitoringEndpoint?: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {

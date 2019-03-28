@@ -10,7 +10,6 @@ export interface Message {
 }
 
 export enum LogLevelEnum {
-  trace = 'trace',
   debug = 'debug',
   info = 'info',
   warn = 'warn',
@@ -38,7 +37,6 @@ export function startLogger(configuration: Configuration) {
   window.Datadog.setGlobalContext = setGlobalContext
   window.Datadog.addGlobalContext = addGlobalContext
   window.Datadog.log = logger.log.bind(logger)
-  window.Datadog.trace = logger.trace.bind(logger)
   window.Datadog.debug = logger.debug.bind(logger)
   window.Datadog.info = logger.info.bind(logger)
   window.Datadog.warn = logger.warn.bind(logger)
@@ -62,10 +60,6 @@ export class Logger {
     }
 
     this.batch.add({ message, severity, ...context })
-  }
-
-  trace(message: string, context = {}) {
-    this.log(message, context, LogLevelEnum.trace)
   }
 
   debug(message: string, context = {}) {
