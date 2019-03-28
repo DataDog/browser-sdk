@@ -34,3 +34,12 @@ export function generateUUID(placeholder?: any): string {
       (placeholder ^ ((Math.random() * 16) >> (placeholder / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
+
+export function getTimeSinceLoading() {
+  return Math.floor(performance.now())
+}
+
+export function round(num: number, decimals: 0 | 1 | 2 | 3) {
+  const tenWithSomeZeroes = Math.pow(10, decimals)
+  return Math.round(num * tenWithSomeZeroes) / tenWithSomeZeroes
+}
