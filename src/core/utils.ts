@@ -40,6 +40,5 @@ export function getTimeSinceLoading() {
 }
 
 export function round(num: number, decimals: 0 | 1 | 2 | 3) {
-  const tenWithSomeZeroes = Math.pow(10, decimals)
-  return Math.round(num * tenWithSomeZeroes) / tenWithSomeZeroes
+  return +num.toFixed(decimals)
 }
