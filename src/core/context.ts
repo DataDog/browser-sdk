@@ -24,6 +24,5 @@ export function getCommonContext() {
       useragent: navigator.userAgent,
     },
     sessionId: getSessionId(),
-    version: buildEnv.VERSION,
   }
 }

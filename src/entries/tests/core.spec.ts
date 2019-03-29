@@ -1,6 +1,8 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 
+import { monitor } from '../../core/monitoring'
+
 import '../core'
 
 describe('core module', () => {
@@ -21,6 +23,26 @@ describe('core module', () => {
     window.Datadog.init({ apiKey: 'yeah' })
     expect(errorStub.callCount).to.eq(2)
 
+    sinon.restore()
+  })
+
+  it('should add a `_setDebug` that works', () => {
+    const setDebug = (window.Datadog as any)._setDebug
+    expect(!!setDebug).true
+
+    const errorStub = sinon.stub(console, 'warn')
+    monitor(() => {
+      throw new Error()
+    })()
+    expect(errorStub.callCount).to.eq(0)
+
+    setDebug(true)
+    monitor(() => {
+      throw new Error()
+    })()
+    expect(errorStub.callCount).to.eq(1)
+
+    setDebug(false)
     sinon.restore()
   })
 })

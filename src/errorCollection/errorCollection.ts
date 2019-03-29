@@ -25,10 +25,19 @@ export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
+export function formatStackTraceToContext(stack: StackTrace) {
+  return {
+    error: {
+      kind: stack.name,
+      stack: JSON.stringify(stack.stack, undefined, 2),
+    },
+  }
+}
+
 let traceKitReporthandler: (stack: StackTrace) => void
 
 export function startRuntimeErrorTracking(logger: Logger) {
-  traceKitReporthandler = (stack: StackTrace) => logger.error(stack.message, stack)
+  traceKitReporthandler = (stack: StackTrace) => logger.error(stack.message, formatStackTraceToContext(stack))
   report.subscribe(traceKitReporthandler)
 }
 
@@ -37,37 +46,23 @@ export function stopRuntimeErrorTracking() {
 }
 
 interface XhrInfo {
-  method?: string
-  url?: string
-  status?: number
-  statusText?: string
+  method: string
+  url: string
+  status: number
 }
 
 export function trackXhrError(logger: Logger) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = function(method: string, url: string) {
-    const xhrInfo: XhrInfo = {}
-    // tslint:disable-next-line no-this-assignment
-    const xhr = this
-
-    xhrInfo.method = method
-    xhrInfo.url = url
-
-    xhr.addEventListener(
-      'load',
-      monitor(() => {
-        if (xhr.status < 200 || xhr.status >= 400) {
-          reportXhrError()
-        }
-      })
-    )
-    xhr.addEventListener('error', monitor(reportXhrError))
-
-    function reportXhrError() {
-      xhrInfo.status = xhr.status
-      xhrInfo.statusText = xhr.status === 0 ? 'Network Error' : xhr.statusText
-      logger.error('XHR error', { xhr: xhrInfo })
+    const reportXhrError = () => {
+      if (this.status === 0 || this.status >= 500) {
+        const xhrInfo: XhrInfo = { method, url, status: this.status }
+        logger.error(`XHR error ${url}`, { xhr: xhrInfo })
+      }
     }
+
+    this.addEventListener('load', monitor(reportXhrError))
+    this.addEventListener('error', monitor(reportXhrError))
 
     return originalOpen.apply(this, arguments as any)
   }

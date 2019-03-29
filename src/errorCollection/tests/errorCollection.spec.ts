@@ -1,8 +1,12 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
+
 import { isAndroid } from '../../tests/specHelper'
+import { computeStackTrace } from '../../tracekit/tracekit'
+
 import {
+  formatStackTraceToContext,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -88,5 +92,13 @@ describe('runtime error tracker', () => {
       expect(onerrorSpy).to.have.been.calledWithMatch(sinon.match(ERROR_MESSAGE))
       done()
     }, 100)
+  })
+
+  it('should format the error with right context', () => {
+    const error = new Error('abcd')
+    const context = formatStackTraceToContext(computeStackTrace(error))
+    expect(!!context.error).true
+    expect(!!context.error.stack).true
+    expect(context.error.kind).eq('Error')
   })
 })

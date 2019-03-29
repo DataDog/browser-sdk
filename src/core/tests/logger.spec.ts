@@ -40,7 +40,6 @@ describe('logger module', () => {
         },
         message: 'message',
         severity: 'warn',
-        version: 'dev',
       })
     })
   })

@@ -134,13 +134,12 @@ describe('monitoring', () => {
 
       expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
         date: FAKE_DATE,
+        entryType: 'internal',
         http: {
           url: window.location.href,
           useragent: navigator.userAgent,
         },
         message: 'message',
-        name: 'Error',
-        version: 'dev',
       })
     })
 
