@@ -1,4 +1,4 @@
-import { cache, generateUUID, throttle } from './util'
+import * as utils from './utils'
 
 export const COOKIE_NAME = '_dd'
 const EXPIRATION_DELAY = 15 * 60 * 1000
@@ -13,11 +13,11 @@ export function startSessionTracking() {
   trackActivity()
 }
 
-export const getSessionId = cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
+export const getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
 
-const expandOrRenewSession = throttle(() => {
+const expandOrRenewSession = utils.throttle(() => {
   const sessionId = getSessionId()
-  setCookie(COOKIE_NAME, sessionId || generateUUID(), EXPIRATION_DELAY)
+  setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
 }, COOKIE_ACCESS_DELAY)
 
 function trackActivity() {

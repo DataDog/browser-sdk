@@ -1,7 +1,7 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
 import { Batch } from '../core/transport'
-import { throttle } from '../core/util'
+import * as utils from '../core/utils'
 
 type RequestIdleCallbackHandle = number
 
@@ -65,7 +65,7 @@ function trackDisplay(logger: Logger) {
   log(logger, {
     data: {
       display: 1,
-      startTime: performance.now(),
+      startTime: utils.getTimeSinceLoading(),
     },
     entryType: 'display',
   })
@@ -107,7 +107,7 @@ export function trackFirstIdle(logger: Logger) {
         window.cancelIdleCallback(handle)
         log(logger, {
           data: {
-            startTime: performance.now(),
+            startTime: utils.getTimeSinceLoading(),
           },
           entryType: 'firstIdle',
         })
@@ -127,7 +127,7 @@ function trackFirstInput(logger: Logger) {
     document.removeEventListener('keydown', logFirstInputData, options)
     document.removeEventListener('scroll', logFirstInputData, options)
 
-    const startTime = performance.now()
+    const startTime = utils.getTimeSinceLoading()
     const delay = startTime - event.timeStamp
 
     log(logger, {
@@ -170,13 +170,13 @@ function trackInputDelay(logger: Logger) {
   document.addEventListener('keydown', logIfAboveThreshold(DELAYS.RESPONSE), options)
   document.addEventListener(
     'scroll',
-    throttle(logIfAboveThreshold(DELAYS.ANIMATION), DELAY_BETWEEN_DISTINCT_SCROLL),
+    utils.throttle(logIfAboveThreshold(DELAYS.ANIMATION), DELAY_BETWEEN_DISTINCT_SCROLL),
     options
   )
 
   function logIfAboveThreshold({ entryType, threshold }: Delay) {
     return (event: Event) => {
-      const startTime = performance.now()
+      const startTime = utils.getTimeSinceLoading()
       const duration = startTime - event.timeStamp
       if (duration > threshold) {
         log(logger, {
@@ -193,13 +193,15 @@ function trackInputDelay(logger: Logger) {
 
 function trackPageUnload(batch: Batch, logger: Logger, currentData: Data) {
   batch.beforeFlushOnUnload(() => {
-    const duration = performance.now()
+    const duration = utils.getTimeSinceLoading()
+    // We want a throughput per minute to have meaningful data.
+    const throughput = (currentData.xhrCount / duration) * 1000 * 60
 
     log(logger, {
       data: {
         duration,
         errorCount: logger.errorCount,
-        throughput: currentData.xhrCount / duration,
+        throughput: utils.round(throughput, 1),
       },
       entryType: 'pageUnload',
     })

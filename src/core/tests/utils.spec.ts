@@ -1,13 +1,14 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
-import { cache, throttle } from '../util'
+
+import { cache, round, throttle } from '../utils'
 
 use(sinonChai)
 let clock: sinon.SinonFakeTimers
 
-describe('throttle', () => {
-  it('should call function only once by given period', () => {
+describe('utils', () => {
+  it('should throttle only once by given period', () => {
     clock = sinon.useFakeTimers(123456)
     const spy = sinon.spy(() => ({}))
 
@@ -27,9 +28,7 @@ describe('throttle', () => {
 
     clock.restore()
   })
-})
 
-describe('cache', () => {
   it('should cache function result for a given duration', () => {
     clock = sinon.useFakeTimers(123456)
     let result: number | undefined = 1
@@ -51,5 +50,12 @@ describe('cache', () => {
     expect(spy.callCount).to.equal(2)
 
     clock.restore()
+  })
+
+  it('should round', () => {
+    expect(round(10.12591, 0)).eq(10)
+    expect(round(10.12591, 1)).eq(10.1)
+    expect(round(10.12591, 2)).eq(10.13)
+    expect(round(10.12591, 3)).eq(10.126)
   })
 })
