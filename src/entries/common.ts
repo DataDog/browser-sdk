@@ -17,23 +17,20 @@ function makeStub(methodName: string) {
 }
 
 const STUBBED_DATADOG = {
+  debug(message: string, context?: Context) {
+    makeStub('debug')
+  },
   init<T extends UserConfiguration>(userConfiguration: T) {
     makeStub('init')
   },
   error(message: string, context?: Context) {
     makeStub('error')
   },
-  debug(message: string, context?: Context) {
-    makeStub('debug')
-  },
-  log(message: string, context?: Context, severity?: LogLevel) {
-    makeStub('log')
-  },
   info(message: string, context?: Context) {
     makeStub('info')
   },
-  trace(message: string, context?: Context) {
-    makeStub('trace')
+  log(message: string, context?: Context, severity?: LogLevel) {
+    makeStub('log')
   },
   warn(message: string, context?: Context) {
     makeStub('warn')
