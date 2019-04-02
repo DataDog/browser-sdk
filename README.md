@@ -2,8 +2,8 @@
 
 The browser agent is used to collect logs and RUM data from the browser.
 It's bundled into four files which are distributed through Cloudfront (TODO: add custom domain):
-  - browser-agent-core(eu|us).js
-  - browser-agent-(eu|us).js
+  - `browser-agent-core(eu|us).js`
+  - `browser-agent-(eu|us).js`
 
 ## The `core` bundle
 
