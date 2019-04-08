@@ -3,8 +3,8 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { buildConfiguration } from '../../core/configuration'
-import { startLogger } from '../../core/logger'
-import { isPerformanceEntryAllowed, trackFirstIdle, trackPerformanceTiming } from '../rum'
+import { Logger, startLogger } from '../../core/logger'
+import { handlePerformanceEntry, trackFirstIdle, trackPerformanceTiming } from '../rum'
 
 use(sinonChai)
 
@@ -20,54 +20,90 @@ function getLogger() {
   return { logger, logStub }
 }
 
+function buildEntry(entry: Partial<PerformanceEntry>) {
+  const result: Partial<PerformanceEntry> = {
+    ...entry,
+    toJSON: () => ({}),
+  }
+  return result as PerformanceEntry
+}
+
 function getEntryType(logStub: sinon.SinonStub) {
   const message = logStub.getCall(0).args[1] as any
   return message.entryType
 }
 
 describe('rum', () => {
-  it('should filter rightfully performance entries', () => {
-    const { logger } = getLogger()
-    expect(isPerformanceEntryAllowed(logger, { name: 'ok' } as any)).true
-    expect(isPerformanceEntryAllowed(logger, { entryType: 'resource', name: 'ok' } as any)).true
-    expect(isPerformanceEntryAllowed(logger, { entryType: 'resource', name: logger.getEndpoint() } as any)).false
-  })
+  describe('handle performance entry', () => {
+    let onEntry: (entry: PerformanceEntry) => void
+    let logger: Logger
+    let logStub: sinon.SinonSpy
 
-  it('should track first idle', async () => {
-    const { logger, logStub } = getLogger()
+    beforeEach(() => {
+      ;({ logger, logStub } = getLogger())
+      const currentData = { xhrCount: 0 }
+      onEntry = handlePerformanceEntry(logger, currentData)
+    })
 
-    // Stub that because otherwise with all the tests running, it's never idle.
-    const stub = sinon.stub(window, 'requestIdleCallback')
-    stub.yields((func: () => void) => func())
-    trackFirstIdle(logger)
-    stub.restore()
+    it('should filter rightfully performance entries', () => {
+      onEntry(buildEntry({ name: 'ok' }))
+      expect(logStub.callCount).to.equal(1)
 
-    expect(logStub.callCount).to.be.equal(1)
-    expect(getEntryType(logStub)).eq('firstIdle')
+      onEntry(buildEntry({ entryType: 'resource', name: 'ok' }))
+      expect(logStub.callCount).to.equal(2)
 
-    logStub.restore()
-  })
-})
+      onEntry(buildEntry({ entryType: 'resource', name: logger.getEndpoint() }))
+      expect(logStub.callCount).to.equal(2)
+    })
 
-describe('rum performanceObserver callback', () => {
-  it('should detect resource', (done) => {
-    const { logger } = startLogger(
-      buildConfiguration({
-        apiKey: 'key',
+    it('should rewrite paint entries', () => {
+      onEntry(buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }))
+      expect(logStub.getCall(0).args[1]).to.deep.equal({
+        data: {
+          'first-paint': 123456,
+        },
+        entryType: 'paint',
       })
-    )
+    })
+  })
 
-    const currentData = { xhrCount: 0 }
+  describe('first idle', () => {
+    it('should track first idle', async () => {
+      const { logger, logStub } = getLogger()
 
-    trackPerformanceTiming(logger, currentData)
-    const request = new XMLHttpRequest()
-    request.open('GET', './', true)
-    request.send()
+      // Stub that because otherwise with all the tests running, it's never idle.
+      const stub = sinon.stub(window, 'requestIdleCallback')
+      stub.yields((func: () => void) => func())
+      trackFirstIdle(logger)
+      stub.restore()
 
-    // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
-    setTimeout(() => {
-      expect(currentData.xhrCount).to.be.equal(1)
-      done()
-    }, 0)
+      expect(logStub.callCount).to.be.equal(1)
+      expect(getEntryType(logStub)).eq('firstIdle')
+
+      logStub.restore()
+    })
+  })
+
+  describe('performanceObserver callback', () => {
+    it('should detect resource', (done) => {
+      const { logger } = startLogger(
+        buildConfiguration({
+          apiKey: 'key',
+        })
+      )
+
+      const currentData = { xhrCount: 0 }
+
+      trackPerformanceTiming(logger, currentData)
+      const request = new XMLHttpRequest()
+      request.open('GET', './', true)
+      request.send()
+
+      // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
+      setTimeout(() => {
+        expect(currentData.xhrCount).to.be.equal(1)
+        done()
+      }, 0)
+    })
   })
 })

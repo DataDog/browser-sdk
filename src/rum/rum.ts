@@ -61,6 +61,10 @@ export function log(logger: Logger, message: Message) {
   logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
 }
 
+function logEntry(logger: Logger, entry: PerformanceEntry) {
+  log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+}
+
 function trackDisplay(logger: Logger) {
   log(logger, {
     data: {
@@ -75,29 +79,36 @@ export function trackPerformanceTiming(logger: Logger, currentData: Data) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry) => {
-          incrementIfXhrRequest(entry)
-          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
-        })
+        list.getEntries().forEach(handlePerformanceEntry(logger, currentData))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
+}
 
-  function incrementIfXhrRequest(entry: PerformanceEntry) {
-    if (isResourceEntryTiming(entry) && entry.initiatorType === 'xmlhttprequest') {
-      currentData.xhrCount += 1
+export function handlePerformanceEntry(logger: Logger, currentData: Data) {
+  return (entry: PerformanceEntry) => {
+    const entryType = entry.entryType
+    switch (entryType) {
+      case 'paint':
+        const data: { [key: string]: number } = {}
+        data[entry.name] = entry.startTime
+
+        log(logger, { data, entryType })
+        break
+      case 'resource':
+        if (entry.name.startsWith(logger.getEndpoint())) {
+          break
+        }
+        if ((entry as PerformanceResourceTiming).initiatorType === 'xmlhttprequest') {
+          currentData.xhrCount += 1
+        }
+        logEntry(logger, entry)
+        break
+      default:
+        logEntry(logger, entry)
     }
   }
-}
-
-function isResourceEntryTiming(entry: PerformanceEntry): entry is PerformanceResourceTiming {
-  return entry.entryType === 'resource'
-}
-
-export function isPerformanceEntryAllowed(logger: Logger, entry: PerformanceEntry) {
-  const isBlacklisted = isResourceEntryTiming(entry) && entry.name.startsWith(logger.getEndpoint())
-  return !isBlacklisted
 }
 
 export function trackFirstIdle(logger: Logger) {
