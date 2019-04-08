@@ -2,7 +2,7 @@ function getEndpoint(apiKey: string, source: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${buildEnv.VERSION}`
-  return `https://http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}&ddtags=${tags}`
+  return `https://browser-http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}&ddtags=${tags}`
 }
 
 export const DEFAULT_CONFIGURATION = {
@@ -42,7 +42,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
+    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent-logs'),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.monitoringApiKey) {
