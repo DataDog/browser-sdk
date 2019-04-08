@@ -2,8 +2,9 @@
 
 The browser agent is used to collect logs and RUM data from the browser.
 It's bundled into four files which are distributed through Cloudfront (TODO: add custom domain):
-  - `browser-agent-core(eu|us).js`
-  - `browser-agent-(eu|us).js`
+
+- `browser-agent-core(eu|us).js`
+- `browser-agent-(eu|us).js`
 
 ## The `core` bundle
 
@@ -11,6 +12,7 @@ It contains everything needed to send logs. When loaded, it exposes a `window.Da
 contains all the public APIs.
 
 ### Typical use
+
 ```
 <script src = 'https://XXX/browser-agent-core-us.js'>
 <script>
@@ -22,14 +24,18 @@ contains all the public APIs.
 ```
 
 ### API exposed in `window.Datadog`
+
 What we call `Context` is a map `{key: value}` that will be added to the message context.
+
 - Init must be called before other methods. Only `apiKey` and `isCollectingError` are configurable by the user.
   If `isCollectingError` is truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+
   ```
   init(configuration: {apiKey: string, isCollectingError?: boolean})
   ```
 
 - Manually log messages
+
   ```
   debug | info | warn | error (message: string, context = Context)`
   log (message: string, context: Context, severity? = 'debug' | 'info' | 'warn' | 'error')
@@ -47,6 +53,7 @@ It's the core bundle + the RUM related stuff, so you'll end up with the same
 `window.Datadog` but with an additional `rumApplicationId` in the `init` method.
 
 ### Typical use
+
 ```
 <script src = 'https://XXX/browser-agent-us.js'>
 <script>
@@ -58,5 +65,6 @@ It's the core bundle + the RUM related stuff, so you'll end up with the same
 ```
 
 ### API exposed in `window.Datadog`
+
 Right now, we don't expose any features to customize the RUM collection.
 This may change at some point.
