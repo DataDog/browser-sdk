@@ -65,7 +65,7 @@ export function startRum(errorReporting: Observable<ErrorMessage>, configuration
 
   trackErrorCount(errorReporting, currentData)
   trackDisplay(batch)
-  trackPerformanceTiming(batch, currentData)
+  trackPerformanceTiming(batch, currentData, configuration)
   trackFirstIdle(batch)
   trackFirstInput(batch)
   trackInputDelay(batch)
@@ -88,27 +88,33 @@ function trackDisplay(batch: Batch<RumMessage>) {
   })
 }
 
-export function trackPerformanceTiming(batch: Batch<RumMessage>, currentData: Data) {
+export function trackPerformanceTiming(batch: Batch<RumMessage>, currentData: Data, configuration: Configuration) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, currentData))
+        list
+          .getEntries()
+          .forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, currentData, configuration))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
 }
 
-export function handlePerformanceEntry(entry: PerformanceEntry, batch: Batch<RumMessage>, currentData: Data) {
+export function handlePerformanceEntry(
+  entry: PerformanceEntry,
+  batch: Batch<RumMessage>,
+  currentData: Data,
+  configuration: Configuration
+) {
   const entryType = entry.entryType
   if (entryType === 'paint') {
     batch.add({ entryType, data: { [entry.name]: entry.startTime } })
     return
   }
 
-
   if (isResourceEntry(entry)) {
-    if (entry.name.startsWith(batch.getEndpoint())) {
+    if (isBrowserAgentRequest(entry.name, configuration)) {
       return
     }
     if (entry.initiatorType === 'xmlhttprequest') {
@@ -121,6 +127,14 @@ export function handlePerformanceEntry(entry: PerformanceEntry, batch: Batch<Rum
 
 function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
   return entry.entryType === 'resource'
+}
+
+function isBrowserAgentRequest(url: string, configuration: Configuration) {
+  return (
+    url.startsWith(configuration.logsEndpoint) ||
+    url.startsWith(configuration.rumEndpoint) ||
+    (configuration.monitoringEndpoint && url.startsWith(configuration.monitoringEndpoint))
+  )
 }
 
 export function trackFirstIdle(batch: Batch<RumMessage>) {
