@@ -58,11 +58,6 @@ describe('logger module', () => {
         expect(JSON.parse(server.requests[0].requestBody).severity).to.equal(logLevel)
       })
     })
-
-    it('log should count the number of error', () => {
-      window.Datadog.error('error message')
-      expect(logger.errorCount).to.equal(1)
-    })
   })
 
   describe('global context', () => {

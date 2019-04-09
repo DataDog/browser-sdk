@@ -1,12 +1,15 @@
 import { Logger } from '../core/logger'
 import { monitor } from '../core/monitoring'
+import { Observable } from '../core/observable'
 import { Batch } from '../core/transport'
 import * as utils from '../core/utils'
+import { ErrorMessage } from '../errorCollection/errorCollection'
 
 type RequestIdleCallbackHandle = number
 
 interface Data {
   xhrCount: number
+  errorCount: number
 }
 
 interface RequestIdleCallbackOptions {
@@ -47,8 +50,9 @@ interface Message {
   entryType: EntryType
 }
 
-export function startRum(batch: Batch, logger: Logger) {
-  const currentData: Data = { xhrCount: 0 }
+export function startRum(errorReporting: Observable<ErrorMessage>, batch: Batch, logger: Logger) {
+  const currentData: Data = { xhrCount: 0, errorCount: 0 }
+  trackErrorCount(errorReporting, currentData)
   trackDisplay(logger)
   trackPerformanceTiming(logger, currentData)
   trackFirstIdle(logger)
@@ -63,6 +67,12 @@ export function log(logger: Logger, message: Message) {
 
 function logPerformanceEntry(logger: Logger, entry: PerformanceEntry) {
   log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+}
+
+function trackErrorCount(errorReporting: Observable<ErrorMessage>, currentData: Data) {
+  errorReporting.subscribe(() => {
+    currentData.errorCount += 1
+  })
 }
 
 function trackDisplay(logger: Logger) {
@@ -209,7 +219,7 @@ function trackPageUnload(batch: Batch, logger: Logger, currentData: Data) {
     log(logger, {
       data: {
         duration,
-        errorCount: logger.errorCount,
+        errorCount: currentData.errorCount,
         throughput: utils.round(throughput, 1),
       },
       entryType: 'pageUnload',

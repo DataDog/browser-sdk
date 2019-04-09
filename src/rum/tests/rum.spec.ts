@@ -53,7 +53,7 @@ describe('rum', () => {
 describe('rum handle performance entry', () => {
   let logger: Logger
   let logStub: sinon.SinonSpy
-  const currentData = { xhrCount: 0 }
+  const currentData = { xhrCount: 0, errorCount: 0 }
 
   beforeEach(() => {
     ;({ logger, logStub } = getLogger())
@@ -93,14 +93,14 @@ describe('rum performanceObserver callback', () => {
       })
     )
 
-    const currentData = { xhrCount: 0 }
+    const currentData = { xhrCount: 0, errorCount: 0 }
 
     trackPerformanceTiming(logger, currentData)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
 
-    // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
+    // put expect at the end of the execution queue in order to insure that PerformanceObserver callback is called.
     setTimeout(() => {
       expect(currentData.xhrCount).to.be.equal(1)
       done()

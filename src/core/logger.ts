@@ -46,7 +46,6 @@ export function startLogger(configuration: Configuration) {
 }
 
 export class Logger {
-  public errorCount: number = 0
   constructor(private batch: Batch) {}
 
   getEndpoint() {
@@ -55,10 +54,6 @@ export class Logger {
 
   @monitored
   log(message: string, context = {}, severity = LogLevelEnum.info) {
-    if (severity === LogLevelEnum.error) {
-      this.errorCount += 1
-    }
-
     this.batch.add({ message, severity, ...context })
   }
 

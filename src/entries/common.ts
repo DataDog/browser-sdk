@@ -2,9 +2,10 @@ import { buildConfiguration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
 import { Logger, LogLevel, startLogger } from '../core/logger'
 import { monitor, setDebugMode, startMonitoring } from '../core/monitoring'
+import { Observable } from '../core/observable'
 import { startSessionTracking } from '../core/session'
 import { Batch } from '../core/transport'
-import { startErrorCollection } from '../errorCollection/errorCollection'
+import { ErrorMessage, startErrorCollection } from '../errorCollection/errorCollection'
 
 declare global {
   interface Window {
@@ -46,7 +47,7 @@ const STUBBED_DATADOG = {
 export type Datadog = typeof STUBBED_DATADOG
 
 export function buildInit<T extends UserConfiguration>(
-  postInit?: (userConfiguration: T, batch: Batch, logger: Logger) => void
+  postInit?: (userConfiguration: T, errorReporting: Observable<ErrorMessage>, batch: Batch, logger: Logger) => void
 ) {
   window.Datadog = STUBBED_DATADOG
   // Add an "hidden" property to set debug mode. We define it that way to hide it
@@ -71,10 +72,10 @@ export function buildInit<T extends UserConfiguration>(
       startSessionTracking()
 
       const { batch, logger } = startLogger(configuration)
-      startErrorCollection(configuration, logger)
+      const errorReporting = startErrorCollection(configuration, logger)
 
       if (postInit) {
-        postInit(userConfiguration, batch, logger)
+        postInit(userConfiguration, errorReporting, batch, logger)
       }
     })()
   }) as Datadog['init']

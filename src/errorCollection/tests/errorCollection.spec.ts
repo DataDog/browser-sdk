@@ -6,6 +6,7 @@ import { isAndroid } from '../../tests/specHelper'
 import { computeStackTrace } from '../../tracekit/tracekit'
 
 import {
+  ErrorMessage,
   formatStackTraceToContext,
   startConsoleTracking,
   startRuntimeErrorTracking,
@@ -17,15 +18,12 @@ use(sinonChai)
 
 describe('console tracker', () => {
   let consoleErrorStub: sinon.SinonStub
-  let logger: any
+  let notifyError: any
   beforeEach(() => {
-    logger = {
-      error: () => ({}),
-    }
     consoleErrorStub = sinon.stub(console, 'error')
     consoleErrorStub.returnsThis()
-    sinon.spy(logger, 'error')
-    startConsoleTracking(logger)
+    notifyError = sinon.spy()
+    startConsoleTracking(notifyError)
   })
 
   afterEach(() => {
@@ -40,14 +38,14 @@ describe('console tracker', () => {
 
   it('should log error', () => {
     console.error('foo', 'bar')
-    expect(logger.error).to.have.been.calledWithExactly('foo bar')
+    expect(notifyError).to.have.been.calledWithExactly({ message: 'foo bar' })
   })
 })
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
   let mochaHandler: ErrorEventHandler
-  let logger: any
+  let notifyError: sinon.SinonSpy
   let onerrorSpy: sinon.SinonSpy
 
   beforeEach(function() {
@@ -58,12 +56,11 @@ describe('runtime error tracker', () => {
     onerrorSpy = sinon.spy(() => ({}))
     window.onerror = onerrorSpy
 
-    logger = {
-      // ensure that we call mocha handler for unexpected errors
-      error: (message: string) => (message !== ERROR_MESSAGE ? mochaHandler(message) : undefined),
-    }
-    sinon.spy(logger, 'error')
-    startRuntimeErrorTracking(logger)
+    notifyError = sinon.spy()
+    // ensure that we call mocha handler for unexpected errors
+    const notifyErrorProxy = (e: ErrorMessage) =>
+      e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : notifyError(e)
+    startRuntimeErrorTracking(notifyErrorProxy)
   })
 
   afterEach(() => {
@@ -78,7 +75,7 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(logger.error).to.have.been.calledWith(ERROR_MESSAGE)
+      expect(notifyError.getCall(0).args[0].message).to.equal(ERROR_MESSAGE)
       done()
     }, 100)
   })
