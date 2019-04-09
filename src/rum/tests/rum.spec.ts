@@ -34,76 +34,76 @@ function getEntryType(logStub: sinon.SinonStub) {
 }
 
 describe('rum', () => {
-  describe('handle performance entry', () => {
-    let onEntry: (entry: PerformanceEntry) => void
-    let logger: Logger
-    let logStub: sinon.SinonSpy
+  it('should track first idle', async () => {
+    const { logger, logStub } = getLogger()
 
-    beforeEach(() => {
-      ;({ logger, logStub } = getLogger())
-      const currentData = { xhrCount: 0 }
-      onEntry = handlePerformanceEntry(logger, currentData)
+    // Stub that because otherwise with all the tests running, it's never idle.
+    const stub = sinon.stub(window, 'requestIdleCallback')
+    stub.yields((func: () => void) => func())
+    trackFirstIdle(logger)
+    stub.restore()
+
+    expect(logStub.callCount).to.be.equal(1)
+    expect(getEntryType(logStub)).eq('firstIdle')
+
+    logStub.restore()
+  })
+})
+
+describe('rum handle performance entry', () => {
+  let logger: Logger
+  let logStub: sinon.SinonSpy
+  const currentData = { xhrCount: 0 }
+
+  beforeEach(() => {
+    ;({ logger, logStub } = getLogger())
+  })
+
+  it('should filter rightfully performance entries', () => {
+    handlePerformanceEntry(buildEntry({ name: 'ok' }), logger, currentData)
+    expect(logStub.callCount).to.equal(1)
+
+    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: 'ok' }), logger, currentData)
+    expect(logStub.callCount).to.equal(2)
+
+    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: logger.getEndpoint() }), logger, currentData)
+    expect(logStub.callCount).to.equal(2)
+  })
+
+  it('should rewrite paint entries', () => {
+    handlePerformanceEntry(
+      buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
+      logger,
+      currentData
+    )
+    expect(logStub.getCall(0).args[1]).to.deep.equal({
+      data: {
+        'first-paint': 123456,
+      },
+      entryType: 'paint',
     })
+  })
+})
 
-    it('should filter rightfully performance entries', () => {
-      onEntry(buildEntry({ name: 'ok' }))
-      expect(logStub.callCount).to.equal(1)
-
-      onEntry(buildEntry({ entryType: 'resource', name: 'ok' }))
-      expect(logStub.callCount).to.equal(2)
-
-      onEntry(buildEntry({ entryType: 'resource', name: logger.getEndpoint() }))
-      expect(logStub.callCount).to.equal(2)
-    })
-
-    it('should rewrite paint entries', () => {
-      onEntry(buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }))
-      expect(logStub.getCall(0).args[1]).to.deep.equal({
-        data: {
-          'first-paint': 123456,
-        },
-        entryType: 'paint',
+describe('rum performanceObserver callback', () => {
+  it('should detect resource', (done) => {
+    const { logger } = startLogger(
+      buildConfiguration({
+        apiKey: 'key',
       })
-    })
-  })
+    )
 
-  describe('first idle', () => {
-    it('should track first idle', async () => {
-      const { logger, logStub } = getLogger()
+    const currentData = { xhrCount: 0 }
 
-      // Stub that because otherwise with all the tests running, it's never idle.
-      const stub = sinon.stub(window, 'requestIdleCallback')
-      stub.yields((func: () => void) => func())
-      trackFirstIdle(logger)
-      stub.restore()
+    trackPerformanceTiming(logger, currentData)
+    const request = new XMLHttpRequest()
+    request.open('GET', './', true)
+    request.send()
 
-      expect(logStub.callCount).to.be.equal(1)
-      expect(getEntryType(logStub)).eq('firstIdle')
-
-      logStub.restore()
-    })
-  })
-
-  describe('performanceObserver callback', () => {
-    it('should detect resource', (done) => {
-      const { logger } = startLogger(
-        buildConfiguration({
-          apiKey: 'key',
-        })
-      )
-
-      const currentData = { xhrCount: 0 }
-
-      trackPerformanceTiming(logger, currentData)
-      const request = new XMLHttpRequest()
-      request.open('GET', './', true)
-      request.send()
-
-      // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
-      setTimeout(() => {
-        expect(currentData.xhrCount).to.be.equal(1)
-        done()
-      }, 0)
-    })
+    // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
+    setTimeout(() => {
+      expect(currentData.xhrCount).to.be.equal(1)
+      done()
+    }, 0)
   })
 })

@@ -61,7 +61,7 @@ export function log(logger: Logger, message: Message) {
   logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
 }
 
-function logEntry(logger: Logger, entry: PerformanceEntry) {
+function logPerformanceEntry(logger: Logger, entry: PerformanceEntry) {
   log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
 }
 
@@ -79,36 +79,34 @@ export function trackPerformanceTiming(logger: Logger, currentData: Data) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach(handlePerformanceEntry(logger, currentData))
+        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, logger, currentData))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
 }
 
-export function handlePerformanceEntry(logger: Logger, currentData: Data) {
-  return (entry: PerformanceEntry) => {
-    const entryType = entry.entryType
-    switch (entryType) {
-      case 'paint':
-        const data: { [key: string]: number } = {}
-        data[entry.name] = entry.startTime
+export function handlePerformanceEntry(entry: PerformanceEntry, logger: Logger, currentData: Data) {
+  const entryType = entry.entryType
+  if (entryType === 'paint') {
+    log(logger, { entryType, data: { [entry.name]: entry.startTime } })
+    return
+  }
 
-        log(logger, { data, entryType })
-        break
-      case 'resource':
-        if (entry.name.startsWith(logger.getEndpoint())) {
-          break
-        }
-        if ((entry as PerformanceResourceTiming).initiatorType === 'xmlhttprequest') {
-          currentData.xhrCount += 1
-        }
-        logEntry(logger, entry)
-        break
-      default:
-        logEntry(logger, entry)
+  if (isResourceEntry(entry)) {
+    if (entry.name.startsWith(logger.getEndpoint())) {
+      return
+    }
+    if (entry.initiatorType === 'xmlhttprequest') {
+      currentData.xhrCount += 1
     }
   }
+
+  logPerformanceEntry(logger, entry)
+}
+
+function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
+  return entry.entryType === 'resource'
 }
 
 export function trackFirstIdle(logger: Logger) {
