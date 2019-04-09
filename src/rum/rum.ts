@@ -61,6 +61,10 @@ export function log(logger: Logger, message: Message) {
   logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
 }
 
+function logPerformanceEntry(logger: Logger, entry: PerformanceEntry) {
+  log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+}
+
 function trackDisplay(logger: Logger) {
   log(logger, {
     data: {
@@ -75,29 +79,34 @@ export function trackPerformanceTiming(logger: Logger, currentData: Data) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry) => {
-          incrementIfXhrRequest(entry)
-          log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
-        })
+        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, logger, currentData))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
+}
 
-  function incrementIfXhrRequest(entry: PerformanceEntry) {
-    if (isResourceEntryTiming(entry) && entry.initiatorType === 'xmlhttprequest') {
+export function handlePerformanceEntry(entry: PerformanceEntry, logger: Logger, currentData: Data) {
+  const entryType = entry.entryType
+  if (entryType === 'paint') {
+    log(logger, { entryType, data: { [entry.name]: entry.startTime } })
+    return
+  }
+
+  if (isResourceEntry(entry)) {
+    if (entry.name.startsWith(logger.getEndpoint())) {
+      return
+    }
+    if (entry.initiatorType === 'xmlhttprequest') {
       currentData.xhrCount += 1
     }
   }
+
+  logPerformanceEntry(logger, entry)
 }
 
-function isResourceEntryTiming(entry: PerformanceEntry): entry is PerformanceResourceTiming {
+function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
   return entry.entryType === 'resource'
-}
-
-export function isPerformanceEntryAllowed(logger: Logger, entry: PerformanceEntry) {
-  const isBlacklisted = isResourceEntryTiming(entry) && entry.name.startsWith(logger.getEndpoint())
-  return !isBlacklisted
 }
 
 export function trackFirstIdle(logger: Logger) {
