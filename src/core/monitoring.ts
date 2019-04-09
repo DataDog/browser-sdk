@@ -6,8 +6,14 @@ import { getCommonContext } from './context'
 import { LogLevelEnum } from './logger'
 import { Batch, HttpRequest } from './transport'
 
+interface MonitoringMessage {
+  entryType: 'internal'
+  message: string
+  severity: LogLevelEnum.error
+}
+
 const monitoringConfiguration: {
-  batch?: Batch
+  batch?: Batch<MonitoringMessage>
   debugMode?: boolean
   maxMessagesPerPage: number
   sentMessageCount: number
@@ -18,7 +24,7 @@ export function startMonitoring(configuration: Configuration) {
     return
   }
 
-  const batch = new Batch(
+  const batch = new Batch<MonitoringMessage>(
     new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,

@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import * as sinon from 'sinon'
 
 import { Configuration } from '../configuration'
-import { LOG_LEVELS, Logger, startLogger } from '../logger'
+import { LOG_LEVELS, startLogger } from '../logger'
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
@@ -12,10 +12,9 @@ describe('logger module', () => {
   }
   let server: sinon.SinonFakeServer
   let clock: sinon.SinonFakeTimers
-  let logger: Logger
 
   beforeEach(() => {
-    logger = startLogger(configuration as Configuration).logger
+    startLogger(configuration as Configuration)
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })

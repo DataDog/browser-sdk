@@ -55,7 +55,7 @@ describe('batch', () => {
   const MESSAGE_BYTES_LIMIT = 50 * 1024
   const CONTEXT = { foo: 'bar' }
   const FLUSH_TIMEOUT = 60 * 1000
-  let batch: Batch
+  let batch: Batch<{ message: string }>
   let transport: any
 
   beforeEach(() => {

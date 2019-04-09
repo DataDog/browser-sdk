@@ -3,7 +3,7 @@ import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext 
 import { monitored } from './monitoring'
 import { Batch, HttpRequest } from './transport'
 
-export interface Message {
+export interface LogsMessage {
   message: string
   severity?: LogLevelEnum
   [key: string]: any
@@ -21,7 +21,7 @@ export type LogLevel = keyof typeof LogLevelEnum
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
 export function startLogger(configuration: Configuration) {
-  const batch = new Batch(
+  const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
@@ -42,15 +42,11 @@ export function startLogger(configuration: Configuration) {
   window.Datadog.warn = logger.warn.bind(logger)
   window.Datadog.error = logger.error.bind(logger)
 
-  return { batch, logger }
+  return logger
 }
 
 export class Logger {
-  constructor(private batch: Batch) {}
-
-  getEndpoint() {
-    return this.batch.getEndpoint()
-  }
+  constructor(private batch: Batch<LogsMessage>) {}
 
   @monitored
   log(message: string, context = {}, severity = LogLevelEnum.info) {

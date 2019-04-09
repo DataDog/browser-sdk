@@ -2,23 +2,9 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
-import { buildConfiguration } from '../../core/configuration'
-import { Logger, startLogger } from '../../core/logger'
 import { handlePerformanceEntry, trackFirstIdle, trackPerformanceTiming } from '../rum'
 
 use(sinonChai)
-
-function getLogger() {
-  const { logger } = startLogger(
-    buildConfiguration({
-      apiKey: 'key',
-    })
-  )
-
-  const logStub = sinon.stub(logger, 'log')
-
-  return { logger, logStub }
-}
 
 function buildEntry(entry: Partial<PerformanceEntry>) {
   const result: Partial<PerformanceEntry> = {
@@ -28,55 +14,57 @@ function buildEntry(entry: Partial<PerformanceEntry>) {
   return result as PerformanceEntry
 }
 
-function getEntryType(logStub: sinon.SinonStub) {
-  const message = logStub.getCall(0).args[1] as any
+function getEntryType(spy: sinon.SinonSpy) {
+  const message = spy.getCall(0).args[0] as any
   return message.entryType
 }
 
 describe('rum', () => {
   it('should track first idle', async () => {
-    const { logger, logStub } = getLogger()
+    const batch = {
+      add: sinon.spy(),
+    }
 
     // Stub that because otherwise with all the tests running, it's never idle.
     const stub = sinon.stub(window, 'requestIdleCallback')
     stub.yields((func: () => void) => func())
-    trackFirstIdle(logger)
+    trackFirstIdle(batch as any)
     stub.restore()
 
-    expect(logStub.callCount).to.be.equal(1)
-    expect(getEntryType(logStub)).eq('firstIdle')
-
-    logStub.restore()
+    expect(batch.add.callCount).to.be.equal(1)
+    expect(getEntryType(batch.add)).eq('firstIdle')
   })
 })
 
 describe('rum handle performance entry', () => {
-  let logger: Logger
-  let logStub: sinon.SinonSpy
+  let batch: any
   const currentData = { xhrCount: 0, errorCount: 0 }
 
   beforeEach(() => {
-    ;({ logger, logStub } = getLogger())
+    batch = {
+      add: sinon.spy(),
+      getEndpoint: () => 'endpoint',
+    }
   })
 
   it('should filter rightfully performance entries', () => {
-    handlePerformanceEntry(buildEntry({ name: 'ok' }), logger, currentData)
-    expect(logStub.callCount).to.equal(1)
+    handlePerformanceEntry(buildEntry({ name: 'ok' }), batch, currentData)
+    expect(batch.add.callCount).to.equal(1)
 
-    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: 'ok' }), logger, currentData)
-    expect(logStub.callCount).to.equal(2)
+    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: 'ok' }), batch, currentData)
+    expect(batch.add.callCount).to.equal(2)
 
-    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: logger.getEndpoint() }), logger, currentData)
-    expect(logStub.callCount).to.equal(2)
+    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: batch.getEndpoint() }), batch, currentData)
+    expect(batch.add.callCount).to.equal(2)
   })
 
   it('should rewrite paint entries', () => {
     handlePerformanceEntry(
       buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
-      logger,
+      batch,
       currentData
     )
-    expect(logStub.getCall(0).args[1]).to.deep.equal({
+    expect(batch.add.getCall(0).args[0]).to.deep.equal({
       data: {
         'first-paint': 123456,
       },
@@ -87,23 +75,18 @@ describe('rum handle performance entry', () => {
 
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
-    const { logger } = startLogger(
-      buildConfiguration({
-        apiKey: 'key',
-      })
-    )
-
     const currentData = { xhrCount: 0, errorCount: 0 }
+    const batch = {
+      add: () => {
+        expect(currentData.xhrCount).to.be.equal(1)
+        done()
+      },
+      getEndpoint: () => 'endpoint',
+    }
 
-    trackPerformanceTiming(logger, currentData)
+    trackPerformanceTiming(batch as any, currentData)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
-
-    // put expect at the end of the execution queue in order to insure that PerformanceObserver callback is called.
-    setTimeout(() => {
-      expect(currentData.xhrCount).to.be.equal(1)
-      done()
-    }, 0)
   })
 })

@@ -1,7 +1,8 @@
-import { Logger } from '../core/logger'
+import { Configuration } from '../core/configuration'
+import { getCommonContext, getGlobalContext } from '../core/context'
 import { monitor } from '../core/monitoring'
 import { Observable } from '../core/observable'
-import { Batch } from '../core/transport'
+import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
 import { ErrorMessage } from '../errorCollection/errorCollection'
 
@@ -31,8 +32,6 @@ declare global {
   }
 }
 
-const RUM_EVENT_PREFIX = `[RUM Event]`
-
 type EntryType =
   | 'animationDelay'
   | 'display'
@@ -45,28 +44,32 @@ type EntryType =
   | 'responseDelay'
   | 'resource'
 
-interface Message {
+export interface RumMessage {
   data: any
   entryType: EntryType
 }
 
-export function startRum(errorReporting: Observable<ErrorMessage>, batch: Batch, logger: Logger) {
+export function startRum(errorReporting: Observable<ErrorMessage>, configuration: Configuration) {
+  const batch = new Batch<RumMessage>(
+    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () => ({
+      ...getCommonContext(),
+      ...getGlobalContext(),
+    })
+  )
   const currentData: Data = { xhrCount: 0, errorCount: 0 }
+
   trackErrorCount(errorReporting, currentData)
-  trackDisplay(logger)
-  trackPerformanceTiming(logger, currentData)
-  trackFirstIdle(logger)
-  trackFirstInput(logger)
-  trackInputDelay(logger)
-  trackPageUnload(batch, logger, currentData)
-}
-
-export function log(logger: Logger, message: Message) {
-  logger.log(`${RUM_EVENT_PREFIX} ${message.entryType}`, message)
-}
-
-function logPerformanceEntry(logger: Logger, entry: PerformanceEntry) {
-  log(logger, { data: entry.toJSON(), entryType: entry.entryType as EntryType })
+  trackDisplay(batch)
+  trackPerformanceTiming(batch, currentData)
+  trackFirstIdle(batch)
+  trackFirstInput(batch)
+  trackInputDelay(batch)
+  trackPageUnload(batch, currentData)
 }
 
 function trackErrorCount(errorReporting: Observable<ErrorMessage>, currentData: Data) {
@@ -75,8 +78,8 @@ function trackErrorCount(errorReporting: Observable<ErrorMessage>, currentData: 
   })
 }
 
-function trackDisplay(logger: Logger) {
-  log(logger, {
+function trackDisplay(batch: Batch<RumMessage>) {
+  batch.add({
     data: {
       display: 1,
       startTime: utils.getTimeSinceLoading(),
@@ -85,26 +88,27 @@ function trackDisplay(logger: Logger) {
   })
 }
 
-export function trackPerformanceTiming(logger: Logger, currentData: Data) {
+export function trackPerformanceTiming(batch: Batch<RumMessage>, currentData: Data) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, logger, currentData))
+        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, currentData))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
 }
 
-export function handlePerformanceEntry(entry: PerformanceEntry, logger: Logger, currentData: Data) {
+export function handlePerformanceEntry(entry: PerformanceEntry, batch: Batch<RumMessage>, currentData: Data) {
   const entryType = entry.entryType
   if (entryType === 'paint') {
-    log(logger, { entryType, data: { [entry.name]: entry.startTime } })
+    batch.add({ entryType, data: { [entry.name]: entry.startTime } })
     return
   }
 
+
   if (isResourceEntry(entry)) {
-    if (entry.name.startsWith(logger.getEndpoint())) {
+    if (entry.name.startsWith(batch.getEndpoint())) {
       return
     }
     if (entry.initiatorType === 'xmlhttprequest') {
@@ -112,19 +116,19 @@ export function handlePerformanceEntry(entry: PerformanceEntry, logger: Logger, 
     }
   }
 
-  logPerformanceEntry(logger, entry)
+  batch.add({ data: entry.toJSON(), entryType: entry.entryType as EntryType })
 }
 
 function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
   return entry.entryType === 'resource'
 }
 
-export function trackFirstIdle(logger: Logger) {
+export function trackFirstIdle(batch: Batch<RumMessage>) {
   if (window.requestIdleCallback) {
     const handle = window.requestIdleCallback(
       monitor(() => {
         window.cancelIdleCallback(handle)
-        log(logger, {
+        batch.add({
           data: {
             startTime: utils.getTimeSinceLoading(),
           },
@@ -135,7 +139,7 @@ export function trackFirstIdle(logger: Logger) {
   }
 }
 
-function trackFirstInput(logger: Logger) {
+function trackFirstInput(batch: Batch<RumMessage>) {
   const options = { capture: true, passive: true }
   document.addEventListener('click', logFirstInputData, options)
   document.addEventListener('keydown', logFirstInputData, options)
@@ -149,7 +153,7 @@ function trackFirstInput(logger: Logger) {
     const startTime = utils.getTimeSinceLoading()
     const delay = startTime - event.timeStamp
 
-    log(logger, {
+    batch.add({
       data: {
         delay,
         startTime,
@@ -183,7 +187,7 @@ const DELAYS: { [key: string]: Delay } = {
  */
 const DELAY_BETWEEN_DISTINCT_SCROLL = 2000
 
-function trackInputDelay(logger: Logger) {
+function trackInputDelay(batch: Batch<RumMessage>) {
   const options = { capture: true, passive: true }
   document.addEventListener('click', logIfAboveThreshold(DELAYS.RESPONSE), options)
   document.addEventListener('keydown', logIfAboveThreshold(DELAYS.RESPONSE), options)
@@ -198,7 +202,7 @@ function trackInputDelay(logger: Logger) {
       const startTime = utils.getTimeSinceLoading()
       const duration = startTime - event.timeStamp
       if (duration > threshold) {
-        log(logger, {
+        batch.add({
           entryType,
           data: {
             duration,
@@ -210,13 +214,13 @@ function trackInputDelay(logger: Logger) {
   }
 }
 
-function trackPageUnload(batch: Batch, logger: Logger, currentData: Data) {
+function trackPageUnload(batch: Batch<RumMessage>, currentData: Data) {
   batch.beforeFlushOnUnload(() => {
     const duration = utils.getTimeSinceLoading()
     // We want a throughput per minute to have meaningful data.
     const throughput = (currentData.xhrCount / duration) * 1000 * 60
 
-    log(logger, {
+    batch.add({
       data: {
         duration,
         errorCount: currentData.errorCount,

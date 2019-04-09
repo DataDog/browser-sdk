@@ -37,12 +37,14 @@ export interface UserConfiguration {
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
+  rumEndpoint: string
   monitoringEndpoint?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
     logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent-logs'),
+    rumEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.monitoringApiKey) {
