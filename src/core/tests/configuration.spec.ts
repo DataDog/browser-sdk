@@ -5,7 +5,7 @@ import { buildConfiguration } from '../configuration'
 describe('configuration module', () => {
   const apiKey = 'some_api_key'
 
-  it('build the configuration correct log endpoint', () => {
+  it('build the configuration correct endpoints', () => {
     let configuration = buildConfiguration({ apiKey })
     expect(configuration.logsEndpoint).includes(apiKey)
 
@@ -14,8 +14,8 @@ describe('configuration module', () => {
     // mock the `buildEnv` since it's provided by Webpack and having an extra series of tests on the other bundle
     // seems overkill given the few lines of code involved.
     const endpoint = 'bbbbbbbbbbbbbbb'
-    configuration = buildConfiguration({ apiKey, logsEndpoint: endpoint, monitoringEndpoint: endpoint })
-    expect(configuration.logsEndpoint).not.equal(endpoint)
+    configuration = buildConfiguration({ apiKey, rumEndpoint: endpoint, monitoringEndpoint: endpoint })
+    expect(configuration.rumEndpoint).not.equal(endpoint)
     expect(configuration.monitoringEndpoint).not.equal(endpoint)
   })
 

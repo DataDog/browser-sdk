@@ -9,13 +9,13 @@ app.use(express.static(path.join(__dirname, 'static')))
 app.use(express.static(path.join(__dirname, '../../dist')))
 app.use(bodyParser.text())
 
-let logs: object[] = []
+let rumEvents: object[] = []
 
-app.post('/logs', (req, res) => {
-  req.body.split('\n').forEach((log: string) => logs.push(JSON.parse(log)))
+app.post('/rum', (req, res) => {
+  req.body.split('\n').forEach((rumEvent: string) => rumEvents.push(JSON.parse(rumEvent)))
   res.send('ok')
 })
-app.get('/logs', (req, res) => res.send(logs))
+app.get('/rum', (req, res) => res.send(rumEvents))
 
 let monitoring: object[] = []
 
@@ -26,7 +26,7 @@ app.post('/monitoring', (req, res) => {
 app.get('/monitoring', (req, res) => res.send(monitoring))
 
 app.get('/reset', (req, res) => {
-  logs = []
+  rumEvents = []
   monitoring = []
   res.send('ok')
 })
