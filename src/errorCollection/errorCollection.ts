@@ -16,23 +16,20 @@ export function startErrorCollection(configuration: Configuration, logger: Logge
   const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
     errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
-    const notifyError = (e: ErrorMessage) => {
-      errorObservable.notify(e)
-    }
-    startConsoleTracking(notifyError)
-    startRuntimeErrorTracking(notifyError)
-    trackXhrError(notifyError)
+    startConsoleTracking(errorObservable)
+    startRuntimeErrorTracking(errorObservable)
+    trackXhrError(errorObservable)
   }
   return errorObservable
 }
 
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
 
-export function startConsoleTracking(notifyError: (e: ErrorMessage) => any) {
+export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = (message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
-    notifyError({ message: [message, ...optionalParams].join(' ') })
+    errorObservable.notify({ message: [message, ...optionalParams].join(' ') })
   }
 }
 
@@ -51,9 +48,9 @@ export function formatStackTraceToContext(stack: StackTrace) {
 
 let traceKitReportHandler: (stack: StackTrace) => void
 
-export function startRuntimeErrorTracking(notifyError: (e: ErrorMessage) => any) {
+export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
   traceKitReportHandler = (stack: StackTrace) =>
-    notifyError({ message: stack.message, context: formatStackTraceToContext(stack) })
+    errorObservable.notify({ message: stack.message, context: formatStackTraceToContext(stack) })
   report.subscribe(traceKitReportHandler)
 }
 
@@ -67,13 +64,13 @@ interface XhrInfo {
   status: number
 }
 
-export function trackXhrError(notifyError: (e: ErrorMessage) => any) {
+export function trackXhrError(errorObservable: ErrorObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = function(method: string, url: string) {
     const reportXhrError = () => {
       if (this.status === 0 || this.status >= 500) {
         const xhrInfo: XhrInfo = { method, url, status: this.status }
-        notifyError({ message: `XHR error ${url}`, context: { xhr: xhrInfo } })
+        errorObservable.notify({ message: `XHR error ${url}`, context: { xhr: xhrInfo } })
       }
     }
 

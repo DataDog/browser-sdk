@@ -1,6 +1,7 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
+import { Observable } from '../../core/observable'
 
 import { isAndroid } from '../../tests/specHelper'
 import { computeStackTrace } from '../../tracekit/tracekit'
@@ -18,12 +19,15 @@ use(sinonChai)
 
 describe('console tracker', () => {
   let consoleErrorStub: sinon.SinonStub
-  let notifyError: any
+  let notifyError: sinon.SinonSpy
+
   beforeEach(() => {
     consoleErrorStub = sinon.stub(console, 'error')
     consoleErrorStub.returnsThis()
     notifyError = sinon.spy()
-    startConsoleTracking(notifyError)
+    const errorObservable = new Observable<ErrorMessage>()
+    errorObservable.subscribe(notifyError)
+    startConsoleTracking(errorObservable)
   })
 
   afterEach(() => {
@@ -36,7 +40,7 @@ describe('console tracker', () => {
     expect(consoleErrorStub).to.have.been.calledWithExactly('foo', 'bar')
   })
 
-  it('should log error', () => {
+  it('should notify error', () => {
     console.error('foo', 'bar')
     expect(notifyError).to.have.been.calledWithExactly({ message: 'foo bar' })
   })
@@ -57,10 +61,13 @@ describe('runtime error tracker', () => {
     window.onerror = onerrorSpy
 
     notifyError = sinon.spy()
+    const errorObservable = new Observable<ErrorMessage>()
     // ensure that we call mocha handler for unexpected errors
-    const notifyErrorProxy = (e: ErrorMessage) =>
+    errorObservable.subscribe((e: ErrorMessage) =>
       e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : notifyError(e)
-    startRuntimeErrorTracking(notifyErrorProxy)
+    )
+
+    startRuntimeErrorTracking(errorObservable)
   })
 
   afterEach(() => {
@@ -69,7 +76,7 @@ describe('runtime error tracker', () => {
     window.onerror = mochaHandler
   })
 
-  it('should log error', (done) => {
+  it('should notify error', (done) => {
     setTimeout(() => {
       throw new Error(ERROR_MESSAGE)
     }, 10)
