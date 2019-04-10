@@ -16,18 +16,18 @@ describe('rum', () => {
 
   it('should send display event on load', async () => {
     browser.url('/page.html')
-    flushLogs()
-    const logs = await retrieveLogTypes()
-    expect(logs).to.contain('display')
+    flushRumEvents()
+    const types = await retrieveRumEventsTypes()
+    expect(types).to.contain('display')
   })
 })
 
-function flushLogs() {
+function flushRumEvents() {
   browser.url('/empty.html')
 }
 
-function retrieveLogTypes() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.entryType))
+function retrieveRumEventsTypes() {
+  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents).map((rumEvent: any) => rumEvent.entryType))
 }
 
 function retrieveMonitoringErrors() {

@@ -2,23 +2,11 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
-import { buildConfiguration } from '../../core/configuration'
-import { Logger, startLogger } from '../../core/logger'
+import { Configuration } from '../../core/configuration'
+
 import { handlePerformanceEntry, trackFirstIdle, trackPerformanceTiming } from '../rum'
 
 use(sinonChai)
-
-function getLogger() {
-  const { logger } = startLogger(
-    buildConfiguration({
-      apiKey: 'key',
-    })
-  )
-
-  const logStub = sinon.stub(logger, 'log')
-
-  return { logger, logStub }
-}
 
 function buildEntry(entry: Partial<PerformanceEntry>) {
   const result: Partial<PerformanceEntry> = {
@@ -28,55 +16,94 @@ function buildEntry(entry: Partial<PerformanceEntry>) {
   return result as PerformanceEntry
 }
 
-function getEntryType(logStub: sinon.SinonStub) {
-  const message = logStub.getCall(0).args[1] as any
+function getEntryType(spy: sinon.SinonSpy) {
+  const message = spy.getCall(0).args[0] as any
   return message.entryType
+}
+
+const configuration = {
+  logsEndpoint: 'logs',
+  monitoringEndpoint: 'monitoring',
+  rumEndpoint: 'rum',
 }
 
 describe('rum', () => {
   it('should track first idle', async () => {
-    const { logger, logStub } = getLogger()
+    const batch = {
+      add: sinon.spy(),
+    }
 
     // Stub that because otherwise with all the tests running, it's never idle.
     const stub = sinon.stub(window, 'requestIdleCallback')
     stub.yields((func: () => void) => func())
-    trackFirstIdle(logger)
+    trackFirstIdle(batch as any)
     stub.restore()
 
-    expect(logStub.callCount).to.be.equal(1)
-    expect(getEntryType(logStub)).eq('firstIdle')
-
-    logStub.restore()
+    expect(batch.add.callCount).to.be.equal(1)
+    expect(getEntryType(batch.add)).eq('firstIdle')
   })
 })
 
 describe('rum handle performance entry', () => {
-  let logger: Logger
-  let logStub: sinon.SinonSpy
-  const currentData = { xhrCount: 0 }
+  let batch: any
+  const currentData = { xhrCount: 0, errorCount: 0 }
 
   beforeEach(() => {
-    ;({ logger, logStub } = getLogger())
+    batch = {
+      add: sinon.spy(),
+    }
   })
-
-  it('should filter rightfully performance entries', () => {
-    handlePerformanceEntry(buildEntry({ name: 'ok' }), logger, currentData)
-    expect(logStub.callCount).to.equal(1)
-
-    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: 'ok' }), logger, currentData)
-    expect(logStub.callCount).to.equal(2)
-
-    handlePerformanceEntry(buildEntry({ entryType: 'resource', name: logger.getEndpoint() }), logger, currentData)
-    expect(logStub.callCount).to.equal(2)
-  })
+  ;[
+    {
+      description: 'without entry type + allowed url',
+      entry: { name: 'ok' },
+      expectEntryToBeAdded: true,
+    },
+    {
+      description: 'without entry type + allowed url',
+      entry: { name: 'ok' },
+      expectEntryToBeAdded: true,
+    },
+    {
+      description: 'type resource + logs endpoint',
+      entry: { entryType: 'resource', name: configuration.logsEndpoint },
+      expectEntryToBeAdded: false,
+    },
+    {
+      description: 'type resource + monitoring endpoint',
+      entry: { entryType: 'resource', name: configuration.monitoringEndpoint },
+      expectEntryToBeAdded: false,
+    },
+    {
+      description: 'type resource + rum endpoint',
+      entry: { entryType: 'resource', name: configuration.rumEndpoint },
+      expectEntryToBeAdded: false,
+    },
+  ].forEach(
+    ({
+      description,
+      entry,
+      expectEntryToBeAdded,
+    }: {
+      description: string
+      entry: any
+      expectEntryToBeAdded: boolean
+    }) => {
+      it(description, () => {
+        handlePerformanceEntry(buildEntry(entry), batch, currentData, configuration as Configuration)
+        expect(batch.add.called).to.equal(expectEntryToBeAdded)
+      })
+    }
+  )
 
   it('should rewrite paint entries', () => {
     handlePerformanceEntry(
       buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
-      logger,
-      currentData
+      batch,
+      currentData,
+      configuration as Configuration
     )
-    expect(logStub.getCall(0).args[1]).to.deep.equal({
+    expect(batch.add.getCall(0).args[0]).to.deep.equal({
       data: {
         'first-paint': 123456,
       },
@@ -87,23 +114,17 @@ describe('rum handle performance entry', () => {
 
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
-    const { logger } = startLogger(
-      buildConfiguration({
-        apiKey: 'key',
-      })
-    )
+    const currentData = { xhrCount: 0, errorCount: 0 }
+    const batch = {
+      add: () => {
+        expect(currentData.xhrCount).to.be.equal(1)
+        done()
+      },
+    }
 
-    const currentData = { xhrCount: 0 }
-
-    trackPerformanceTiming(logger, currentData)
+    trackPerformanceTiming(batch as any, currentData, configuration as Configuration)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
-
-    // put expect at the end of the execution queue in order to insure that PerFormanceObserver callback is called.
-    setTimeout(() => {
-      expect(currentData.xhrCount).to.be.equal(1)
-      done()
-    }, 0)
   })
 })

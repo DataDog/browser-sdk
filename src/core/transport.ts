@@ -1,5 +1,4 @@
 import { Context } from './context'
-import { Message } from './logger'
 import { monitor } from './monitoring'
 
 /**
@@ -28,7 +27,7 @@ export class HttpRequest {
   }
 }
 
-export class Batch {
+export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private buffer: string = ''
   private bufferBytesSize = 0
@@ -46,7 +45,7 @@ export class Batch {
     this.flushPeriodically()
   }
 
-  add(message: Message) {
+  add(message: T) {
     const { processedMessage, messageBytesSize } = this.process(message)
     if (messageBytesSize >= this.maxMessageSize) {
       console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
@@ -85,7 +84,7 @@ export class Batch {
     }, this.flushTimeout)
   }
 
-  private process(message: Message) {
+  private process(message: T) {
     const processedMessage = JSON.stringify({ ...message, ...this.contextProvider() })
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
