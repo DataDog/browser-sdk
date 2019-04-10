@@ -10,18 +10,20 @@ export interface ErrorMessage {
   context?: Context
 }
 
+export type ErrorObservable = Observable<ErrorMessage>
+
 export function startErrorCollection(configuration: Configuration, logger: Logger) {
-  const errorReporting = new Observable<ErrorMessage>()
+  const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
-    errorReporting.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
+    errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
     const notifyError = (e: ErrorMessage) => {
-      errorReporting.notify(e)
+      errorObservable.notify(e)
     }
     startConsoleTracking(notifyError)
     startRuntimeErrorTracking(notifyError)
     trackXhrError(notifyError)
   }
-  return errorReporting
+  return errorObservable
 }
 
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
@@ -47,16 +49,16 @@ export function formatStackTraceToContext(stack: StackTrace) {
   }
 }
 
-let traceKitReporthandler: (stack: StackTrace) => void
+let traceKitReportHandler: (stack: StackTrace) => void
 
 export function startRuntimeErrorTracking(notifyError: (e: ErrorMessage) => any) {
-  traceKitReporthandler = (stack: StackTrace) =>
+  traceKitReportHandler = (stack: StackTrace) =>
     notifyError({ message: stack.message, context: formatStackTraceToContext(stack) })
-  report.subscribe(traceKitReporthandler)
+  report.subscribe(traceKitReportHandler)
 }
 
 export function stopRuntimeErrorTracking() {
-  report.unsubscribe(traceKitReporthandler)
+  report.unsubscribe(traceKitReportHandler)
 }
 
 interface XhrInfo {

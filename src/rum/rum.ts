@@ -1,10 +1,9 @@
 import { Configuration } from '../core/configuration'
 import { getCommonContext, getGlobalContext } from '../core/context'
 import { monitor } from '../core/monitoring'
-import { Observable } from '../core/observable'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
-import { ErrorMessage } from '../errorCollection/errorCollection'
+import { ErrorObservable } from '../errorCollection/errorCollection'
 
 type RequestIdleCallbackHandle = number
 
@@ -32,6 +31,13 @@ declare global {
   }
 }
 
+export interface RumMessage {
+  data: any
+  entryType: EntryType
+}
+
+type RumBatch = Batch<RumMessage>
+
 type EntryType =
   | 'animationDelay'
   | 'display'
@@ -44,12 +50,7 @@ type EntryType =
   | 'responseDelay'
   | 'resource'
 
-export interface RumMessage {
-  data: any
-  entryType: EntryType
-}
-
-export function startRum(errorReporting: Observable<ErrorMessage>, configuration: Configuration) {
+export function startRum(errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = new Batch<RumMessage>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -63,7 +64,7 @@ export function startRum(errorReporting: Observable<ErrorMessage>, configuration
   )
   const currentData: Data = { xhrCount: 0, errorCount: 0 }
 
-  trackErrorCount(errorReporting, currentData)
+  trackErrorCount(errorObservable, currentData)
   trackDisplay(batch)
   trackPerformanceTiming(batch, currentData, configuration)
   trackFirstIdle(batch)
@@ -72,13 +73,13 @@ export function startRum(errorReporting: Observable<ErrorMessage>, configuration
   trackPageUnload(batch, currentData)
 }
 
-function trackErrorCount(errorReporting: Observable<ErrorMessage>, currentData: Data) {
-  errorReporting.subscribe(() => {
+function trackErrorCount(errorObservable: ErrorObservable, currentData: Data) {
+  errorObservable.subscribe(() => {
     currentData.errorCount += 1
   })
 }
 
-function trackDisplay(batch: Batch<RumMessage>) {
+function trackDisplay(batch: RumBatch) {
   batch.add({
     data: {
       display: 1,
@@ -88,7 +89,7 @@ function trackDisplay(batch: Batch<RumMessage>) {
   })
 }
 
-export function trackPerformanceTiming(batch: Batch<RumMessage>, currentData: Data, configuration: Configuration) {
+export function trackPerformanceTiming(batch: RumBatch, currentData: Data, configuration: Configuration) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
@@ -103,7 +104,7 @@ export function trackPerformanceTiming(batch: Batch<RumMessage>, currentData: Da
 
 export function handlePerformanceEntry(
   entry: PerformanceEntry,
-  batch: Batch<RumMessage>,
+  batch: RumBatch,
   currentData: Data,
   configuration: Configuration
 ) {
@@ -137,7 +138,7 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   )
 }
 
-export function trackFirstIdle(batch: Batch<RumMessage>) {
+export function trackFirstIdle(batch: RumBatch) {
   if (window.requestIdleCallback) {
     const handle = window.requestIdleCallback(
       monitor(() => {
@@ -153,7 +154,7 @@ export function trackFirstIdle(batch: Batch<RumMessage>) {
   }
 }
 
-function trackFirstInput(batch: Batch<RumMessage>) {
+function trackFirstInput(batch: RumBatch) {
   const options = { capture: true, passive: true }
   document.addEventListener('click', logFirstInputData, options)
   document.addEventListener('keydown', logFirstInputData, options)
@@ -201,7 +202,7 @@ const DELAYS: { [key: string]: Delay } = {
  */
 const DELAY_BETWEEN_DISTINCT_SCROLL = 2000
 
-function trackInputDelay(batch: Batch<RumMessage>) {
+function trackInputDelay(batch: RumBatch) {
   const options = { capture: true, passive: true }
   document.addEventListener('click', logIfAboveThreshold(DELAYS.RESPONSE), options)
   document.addEventListener('keydown', logIfAboveThreshold(DELAYS.RESPONSE), options)
@@ -228,7 +229,7 @@ function trackInputDelay(batch: Batch<RumMessage>) {
   }
 }
 
-function trackPageUnload(batch: Batch<RumMessage>, currentData: Data) {
+function trackPageUnload(batch: RumBatch, currentData: Data) {
   batch.beforeFlushOnUnload(() => {
     const duration = utils.getTimeSinceLoading()
     // We want a throughput per minute to have meaningful data.
