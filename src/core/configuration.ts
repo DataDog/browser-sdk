@@ -43,7 +43,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent-logs'),
+    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser'),
     rumEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
     ...DEFAULT_CONFIGURATION,
   }
