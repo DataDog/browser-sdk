@@ -6,10 +6,10 @@ describe('rum module', () => {
     require('../rum')
 
     const errorStub = sinon.stub(console, 'error')
-    window.Datadog.init({ apiKey: 'yes' })
+    window.Datadog.init({ publicApiKey: 'yes' })
     expect(errorStub.callCount).to.eq(1)
 
-    window.Datadog.init({ apiKey: 'yes', rumApplicationId: 'yes' })
+    window.Datadog.init({ publicApiKey: 'yes', rumApplicationId: 'yes' })
     expect(errorStub.callCount).to.eq(1)
 
     sinon.restore()

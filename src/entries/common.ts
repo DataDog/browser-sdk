@@ -58,8 +58,8 @@ export function buildInit<T extends UserConfiguration>(
   })
 
   window.Datadog.init = ((userConfiguration: T) => {
-    if (!userConfiguration || !userConfiguration.apiKey) {
-      console.error('API Key is not configured, we will not send any data.')
+    if (!userConfiguration || !userConfiguration.publicApiKey) {
+      console.error('Public API Key is not configured, we will not send any data.')
       return
     }
 

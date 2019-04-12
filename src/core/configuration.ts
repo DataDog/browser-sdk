@@ -27,7 +27,7 @@ export const DEFAULT_CONFIGURATION = {
 }
 
 export interface UserConfiguration {
-  apiKey: string
+  publicApiKey: string
   monitoringApiKey?: string
   isCollectingError?: boolean
   // Below is only taken into account for e2e-test bundle.
@@ -43,8 +43,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser'),
-    rumEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
+    logsEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser'),
+    rumEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser-agent'),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.monitoringApiKey) {
