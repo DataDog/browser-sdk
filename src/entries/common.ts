@@ -1,7 +1,7 @@
 import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
+import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
 import { LogLevel, startLogger } from '../core/logger'
-import { monitor, setDebugMode, startMonitoring } from '../core/monitoring'
 import { startSessionTracking } from '../core/session'
 import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
 
@@ -65,7 +65,7 @@ export function buildInit<T extends UserConfiguration>(
 
     monitor(() => {
       const configuration = buildConfiguration(userConfiguration)
-      startMonitoring(configuration)
+      startInternalMonitoring(configuration)
 
       startSessionTracking()
 

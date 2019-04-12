@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 
-import { monitor } from '../../core/monitoring'
+import { monitor } from '../../core/internalMonitoring'
 
 import '../core'
 

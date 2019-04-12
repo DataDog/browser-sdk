@@ -1,6 +1,6 @@
 import { Configuration } from '../core/configuration'
 import { getCommonContext, getGlobalContext } from '../core/context'
-import { monitor } from '../core/monitoring'
+import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
 import { ErrorObservable } from '../errorCollection/errorCollection'
@@ -134,7 +134,7 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   return (
     url.startsWith(configuration.logsEndpoint) ||
     url.startsWith(configuration.rumEndpoint) ||
-    (configuration.monitoringEndpoint && url.startsWith(configuration.monitoringEndpoint))
+    (configuration.internalMonitoringEndpoint && url.startsWith(configuration.internalMonitoringEndpoint))
   )
 }
 
