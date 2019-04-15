@@ -1,12 +1,12 @@
 # Datadog Browser Agent
 
 The browser agent is used to collect logs and RUM data from the browser.
-It's bundled into four files which are distributed through Cloudfront (TODO: add custom domain):
+It's bundled into four files which are distributed through Cloudfront:
 
-- `browser-agent-core(eu|us).js`
-- `browser-agent-(eu|us).js`
+- `https://www.datadoghq-browser-agent.com/datadog-logs-(eu|us).js`
+- `https://www.datadoghq-browser-agent.com/datadog-rum-(eu|us).js`
 
-## The `core` bundle
+## The `logs` bundle
 
 It contains everything needed to send logs. When loaded, it exposes a `window.Datadog` that
 contains all the public APIs.
@@ -14,7 +14,7 @@ contains all the public APIs.
 ### Typical use
 
 ```
-<script src = 'https://XXX/browser-agent-core-us.js'>
+<script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
 <script>
     window.Datadog.init({
         apiKey: 'XXX',
@@ -47,15 +47,15 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   setGlobalContext (context: Context)  # entirely replace the default context
   ```
 
-## The full bundle
+## The `rum` bundle
 
-It's the core bundle + the RUM related stuff, so you'll end up with the same
+It's the logs bundle + the RUM related stuff, so you'll end up with the same
 `window.Datadog` but with an additional `rumApplicationId` in the `init` method.
 
 ### Typical use
 
 ```
-<script src = 'https://XXX/browser-agent-us.js'>
+<script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
 <script>
     window.Datadog.init({
         apiKey: 'XXX',
