@@ -22,10 +22,10 @@ case "${env}" in
 esac
 
 BROWSER_CACHE=900
-EU_CORE_FILE_NAME="browser-agent-core-eu.js"
-US_CORE_FILE_NAME="browser-agent-core-us.js"
-EU_RUM_FILE_NAME="browser-agent-eu.js"
-US_RUM_FILE_NAME="browser-agent-us.js"
+EU_LOGS_FILE_NAME="datadog-logs-eu.js"
+US_LOGS_FILE_NAME="datadog-logs-us.js"
+EU_RUM_FILE_NAME="datadog-rum-eu.js"
+US_RUM_FILE_NAME="datadog-rum-us.js"
 
 main() {
   in-isolation upload-to-s3
@@ -34,7 +34,7 @@ main() {
 
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
-    for file_name in $EU_CORE_FILE_NAME $US_CORE_FILE_NAME $EU_RUM_FILE_NAME $US_RUM_FILE_NAME; do
+    for file_name in ${EU_LOGS_FILE_NAME} ${US_LOGS_FILE_NAME} ${EU_RUM_FILE_NAME} ${US_RUM_FILE_NAME}; do
       echo "Upload ${file_name}"
       aws s3 cp --cache-control max-age=${BROWSER_CACHE} dist/${file_name} s3://${BUCKET_NAME}/${file_name};
     done
@@ -43,7 +43,7 @@ upload-to-s3() {
 invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
-    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${EU_CORE_FILE_NAME} /${US_CORE_FILE_NAME} /${EU_RUM_FILE_NAME} /${US_RUM_FILE_NAME}
+    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${EU_LOGS_FILE_NAME} /${US_LOGS_FILE_NAME} /${EU_RUM_FILE_NAME} /${US_RUM_FILE_NAME}
 }
 
 in-isolation() {

@@ -6,7 +6,7 @@ const targetDC = process.env.TARGET_DC || 'us'
 
 module.exports = (env, argv) => ({
   entry: {
-    core: './src/entries/core.ts',
+    logs: './src/entries/logs.ts',
     rum: './src/entries/rum.ts',
   },
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
@@ -38,10 +38,10 @@ module.exports = (env, argv) => ({
     filename: (chunkData) => {
       const dc = process.env
       switch (chunkData.chunk.name) {
-        case 'core':
-          return `browser-agent-core-${targetDC}.js`
+        case 'logs':
+          return `datadog-logs-${targetDC}.js`
         default:
-          return `browser-agent-${targetDC}.js`
+          return `datadog-rum-${targetDC}.js`
       }
     },
     path: path.resolve(__dirname, 'dist'),

@@ -3,9 +3,9 @@ import * as sinon from 'sinon'
 
 import { monitor } from '../../core/internalMonitoring'
 
-import '../core'
+import '../logs'
 
-describe('core module', () => {
+describe('logs module', () => {
   it('should set Datadog global with init', () => {
     expect(!!window.Datadog).to.be.true
     expect(!!window.Datadog.init).to.be.true
