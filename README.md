@@ -50,7 +50,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 ## The full bundle
 
 It's the core bundle + the RUM related stuff, so you'll end up with the same
-`window.Datadog` but with an additional `rumApplicationId` in the `init` method.
+`window.Datadog` but with an additional `rumProjectId` in the `init` method.
 
 ### Typical use
 
@@ -59,7 +59,7 @@ It's the core bundle + the RUM related stuff, so you'll end up with the same
 <script>
     window.Datadog.init({
         publicApiKey: 'XXX',
-        rumApplicationId: 'XXX',
+        rumProjectId: 'XXX',
     });
 </script>
 ```
