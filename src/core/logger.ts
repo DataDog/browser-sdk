@@ -1,6 +1,6 @@
 import { Configuration } from './configuration'
 import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from './context'
-import { monitored } from './monitoring'
+import { monitored } from './internalMonitoring'
 import { Batch, HttpRequest } from './transport'
 
 export interface LogsMessage {

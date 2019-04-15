@@ -1,7 +1,7 @@
 import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
+import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
 import { LogLevel, startLogger } from '../core/logger'
-import { monitor, setDebugMode, startMonitoring } from '../core/monitoring'
 import { startSessionTracking } from '../core/session'
 import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
 
@@ -58,14 +58,14 @@ export function buildInit<T extends UserConfiguration>(
   })
 
   window.Datadog.init = ((userConfiguration: T) => {
-    if (!userConfiguration || !userConfiguration.apiKey) {
-      console.error('API Key is not configured, we will not send any data.')
+    if (!userConfiguration || !userConfiguration.publicApiKey) {
+      console.error('Public API Key is not configured, we will not send any data.')
       return
     }
 
     monitor(() => {
       const configuration = buildConfiguration(userConfiguration)
-      startMonitoring(configuration)
+      startInternalMonitoring(configuration)
 
       startSessionTracking()
 

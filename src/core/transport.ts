@@ -1,5 +1,5 @@
 import { Context } from './context'
-import { monitor } from './monitoring'
+import { monitor } from './internalMonitoring'
 
 /**
  * Use POST request without content type to:
