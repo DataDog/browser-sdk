@@ -1,19 +1,19 @@
 import { expect, use } from 'chai'
 import * as shallowDeepEqual from 'chai-shallow-deep-equal'
 import * as sinon from 'sinon'
-import { monitor, monitored, resetMonitoring, startMonitoring } from '../monitoring'
+import { monitor, monitored, resetInternalMonitoring, startInternalMonitoring } from '../internalMonitoring'
 
 use(shallowDeepEqual)
 
 const configuration: any = {
   batchBytesLimit: 100,
   flushTimeout: 60 * 1000,
+  internalMonitoringEndpoint: 'http://localhot/monitoring',
   maxBatchSize: 1,
-  maxMonitoringMessagesPerPage: 7,
-  monitoringEndpoint: 'http://localhot/monitoring',
+  maxInternalMonitoringMessagesPerPage: 7,
 }
 
-describe('monitoring', () => {
+describe('internal monitoring', () => {
   describe('decorator', () => {
     class Candidate {
       notMonitoredThrowing() {
@@ -46,11 +46,11 @@ describe('monitoring', () => {
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        startMonitoring(configuration)
+        startInternalMonitoring(configuration)
       })
 
       afterEach(() => {
-        resetMonitoring()
+        resetInternalMonitoring()
       })
 
       it('should preserve original behavior', () => {
@@ -80,11 +80,11 @@ describe('monitoring', () => {
     }
 
     beforeEach(() => {
-      startMonitoring(configuration)
+      startInternalMonitoring(configuration)
     })
 
     afterEach(() => {
-      resetMonitoring()
+      resetInternalMonitoring()
     })
 
     it('should preserve original behavior', () => {
@@ -113,13 +113,13 @@ describe('monitoring', () => {
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      startMonitoring(configuration)
+      startInternalMonitoring(configuration)
       server = sinon.fakeServer.create()
       clock = sinon.useFakeTimers(FAKE_DATE)
     })
 
     afterEach(() => {
-      resetMonitoring()
+      resetInternalMonitoring()
       server.restore()
       clock.restore()
     })
@@ -130,7 +130,7 @@ describe('monitoring', () => {
       })()
 
       expect(server.requests.length).to.equal(1)
-      expect(server.requests[0].url).to.equal(configuration.monitoringEndpoint)
+      expect(server.requests[0].url).to.equal(configuration.internalMonitoringEndpoint)
 
       expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
         date: FAKE_DATE,
@@ -144,7 +144,7 @@ describe('monitoring', () => {
     })
 
     it('should cap the data sent', () => {
-      const max = configuration.maxMonitoringMessagesPerPage
+      const max = configuration.maxInternalMonitoringMessagesPerPage
       for (let i = 0; i < max + 3; i += 1) {
         monitor(() => {
           throw new Error('message')

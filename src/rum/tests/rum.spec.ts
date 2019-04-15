@@ -22,8 +22,8 @@ function getEntryType(spy: sinon.SinonSpy) {
 }
 
 const configuration = {
+  internalMonitoringEndpoint: 'monitoring',
   logsEndpoint: 'logs',
-  monitoringEndpoint: 'monitoring',
   rumEndpoint: 'rum',
 }
 
@@ -70,8 +70,8 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: false,
     },
     {
-      description: 'type resource + monitoring endpoint',
-      entry: { entryType: 'resource', name: configuration.monitoringEndpoint },
+      description: 'type resource + internal monitoring endpoint',
+      entry: { entryType: 'resource', name: configuration.internalMonitoringEndpoint },
       expectEntryToBeAdded: false,
     },
     {

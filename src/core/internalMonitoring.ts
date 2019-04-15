@@ -19,13 +19,13 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startMonitoring(configuration: Configuration) {
-  if (!configuration.monitoringEndpoint) {
+export function startInternalMonitoring(configuration: Configuration) {
+  if (!configuration.internalMonitoringEndpoint) {
     return
   }
 
   const batch = new Batch<MonitoringMessage>(
-    new HttpRequest(configuration.monitoringEndpoint, configuration.batchBytesLimit),
+    new HttpRequest(configuration.internalMonitoringEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
@@ -37,12 +37,12 @@ export function startMonitoring(configuration: Configuration) {
 
   Object.assign(monitoringConfiguration, {
     batch,
-    maxMessagesPerPage: configuration.maxMonitoringMessagesPerPage,
+    maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
     sentMessageCount: 0,
   })
 }
 
-export function resetMonitoring() {
+export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
 }
 

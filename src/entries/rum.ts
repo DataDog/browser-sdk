@@ -6,7 +6,7 @@ import { startRum } from '../rum/rum'
 import { buildInit } from './common'
 
 export interface RUMUserConfiguration extends UserConfiguration {
-  rumApplicationId: string
+  rumProjectId: string
 }
 
 function postInit(
@@ -14,12 +14,12 @@ function postInit(
   configuration: Configuration,
   errorObservable: ErrorObservable
 ) {
-  if (!userConfiguration.rumApplicationId) {
-    console.error('RUM application id is not configured, no RUM data will be collected')
+  if (!userConfiguration.rumProjectId) {
+    console.error('RUM project id is not configured, no RUM data will be collected')
     return
   }
 
-  addGlobalContext('rumAppId', userConfiguration.rumApplicationId)
+  addGlobalContext('rumProjectId', userConfiguration.rumProjectId)
 
   startRum(errorObservable, configuration)
 }

@@ -7,7 +7,7 @@ function getEndpoint(apiKey: string, source: string) {
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
-  maxMonitoringMessagesPerPage: 15,
+  maxInternalMonitoringMessagesPerPage: 15,
 
   /**
    * flush automatically, the value is arbitrary.
@@ -27,28 +27,31 @@ export const DEFAULT_CONFIGURATION = {
 }
 
 export interface UserConfiguration {
-  apiKey: string
-  monitoringApiKey?: string
+  publicApiKey: string
+  internalMonitoringApiKey?: string
   isCollectingError?: boolean
   // Below is only taken into account for e2e-test bundle.
-  monitoringEndpoint?: string
+  internalMonitoringEndpoint?: string
   rumEndpoint?: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
   rumEndpoint: string
-  monitoringEndpoint?: string
+  internalMonitoringEndpoint?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint(userConfiguration.apiKey, 'browser'),
-    rumEndpoint: getEndpoint(userConfiguration.apiKey, 'browser-agent'),
+    logsEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser'),
+    rumEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser-agent'),
     ...DEFAULT_CONFIGURATION,
   }
-  if (userConfiguration.monitoringApiKey) {
-    configuration.monitoringEndpoint = getEndpoint(userConfiguration.monitoringApiKey, 'browser-agent-monitoring')
+  if (userConfiguration.internalMonitoringApiKey) {
+    configuration.internalMonitoringEndpoint = getEndpoint(
+      userConfiguration.internalMonitoringApiKey,
+      'browser-agent-internal-monitoring'
+    )
   }
 
   if ('isCollectingError' in userConfiguration) {
@@ -56,8 +59,8 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
   }
 
   if (buildEnv.TARGET_ENV === 'e2e-test') {
-    if (userConfiguration.monitoringEndpoint) {
-      configuration.monitoringEndpoint = userConfiguration.monitoringEndpoint
+    if (userConfiguration.internalMonitoringEndpoint) {
+      configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
     if (userConfiguration.rumEndpoint) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint

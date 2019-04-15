@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 
-import { monitor } from '../../core/monitoring'
+import { monitor } from '../../core/internalMonitoring'
 
 import '../core'
 
@@ -11,7 +11,7 @@ describe('core module', () => {
     expect(!!window.Datadog.init).to.be.true
   })
 
-  it('init should log an error with no api key', () => {
+  it('init should log an error with no public api key', () => {
     const errorStub = sinon.stub(console, 'error')
 
     window.Datadog.init(undefined as any)
@@ -20,7 +20,7 @@ describe('core module', () => {
     window.Datadog.init({ stillNoApiKey: true } as any)
     expect(errorStub.callCount).to.eq(2)
 
-    window.Datadog.init({ apiKey: 'yeah' })
+    window.Datadog.init({ publicApiKey: 'yeah' })
     expect(errorStub.callCount).to.eq(2)
 
     sinon.restore()

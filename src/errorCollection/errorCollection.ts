@@ -1,7 +1,7 @@
 import { Configuration } from '../core/configuration'
 import { Context } from '../core/context'
+import { monitor } from '../core/internalMonitoring'
 import { Logger } from '../core/logger'
-import { monitor } from '../core/monitoring'
 import { Observable } from '../core/observable'
 import { report, StackTrace } from '../tracekit/tracekit'
 
