@@ -127,4 +127,24 @@ describe('rum performanceObserver callback', () => {
     request.open('GET', './', true)
     request.send()
   })
+
+  it('should compute timing durations for resource', (done) => {
+    const batch = {
+      add: (message: any) => {
+        expect(message.data).to.have.property('redirectDuration')
+        expect(message.data).to.have.property('domainLookupDuration')
+        expect(message.data).to.have.property('connectionDuration')
+        expect(message.data).to.have.property('secureConnectionDuration')
+        expect(message.data).to.have.property('requestDuration')
+        expect(message.data).to.have.property('responseDuration')
+
+        done()
+      },
+    }
+
+    trackPerformanceTiming(batch as any, {} as any, configuration as Configuration)
+    const request = new XMLHttpRequest()
+    request.open('GET', './', true)
+    request.send()
+  })
 })

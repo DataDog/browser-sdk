@@ -121,9 +121,25 @@ export function handlePerformanceEntry(
     if (entry.initiatorType === 'xmlhttprequest') {
       currentData.xhrCount += 1
     }
+
+    batch.add({ data: formatResourceEntry(entry), entryType: entry.entryType as EntryType })
+    return
   }
 
   batch.add({ data: entry.toJSON(), entryType: entry.entryType as EntryType })
+}
+
+function formatResourceEntry(entry: PerformanceResourceTiming) {
+  const resourceEntry = entry.toJSON()
+  resourceEntry.redirectDuration = entry.redirectEnd - entry.redirectStart
+  resourceEntry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
+  resourceEntry.connectionDuration = entry.connectEnd - entry.connectStart
+  resourceEntry.secureConnectionDuration =
+    entry.secureConnectionStart > 0 ? entry.connectEnd - entry.secureConnectionStart : 0
+  resourceEntry.requestDuration = entry.responseStart - entry.requestStart
+  resourceEntry.responseDuration = entry.responseEnd - entry.responseStart
+
+  return resourceEntry
 }
 
 function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
