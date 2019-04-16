@@ -128,7 +128,7 @@ describe('rum performanceObserver callback', () => {
     request.send()
   })
 
-  it('resource type output should have certain properties', (done) => {
+  it('should compute timing durations for resource', (done) => {
     const batch = {
       add: (message: any) => {
         expect(message.data).to.have.property('redirectDuration')
