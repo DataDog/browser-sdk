@@ -1,12 +1,13 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 
-import { Configuration } from '../configuration'
-import { LOG_LEVELS, startLogger } from '../logger'
+import { Configuration, DEFAULT_CONFIGURATION } from '../configuration'
+import { LOG_LEVELS, LogLevelEnum, startLogger } from '../logger'
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
   const configuration: Partial<Configuration> = {
+    ...DEFAULT_CONFIGURATION,
     logsEndpoint: 'https://localhost/log',
     maxBatchSize: 1,
   }
@@ -14,7 +15,6 @@ describe('logger module', () => {
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    startLogger(configuration as Configuration)
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })
@@ -25,6 +25,10 @@ describe('logger module', () => {
   })
 
   describe('request', () => {
+    beforeEach(() => {
+      startLogger(configuration as Configuration)
+    })
+
     it('should send the needed data', () => {
       window.Datadog.log('message', { foo: 'bar' }, 'warn')
 
@@ -60,6 +64,10 @@ describe('logger module', () => {
   })
 
   describe('global context', () => {
+    beforeEach(() => {
+      startLogger(configuration as Configuration)
+    })
+
     it('should be added to the request', () => {
       window.Datadog.setGlobalContext({ bar: 'foo' })
       window.Datadog.log('message')
@@ -76,6 +84,25 @@ describe('logger module', () => {
       expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
       expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
       expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined
+    })
+  })
+
+  describe('log level', () => {
+    it('should be debug by default', () => {
+      startLogger(configuration as Configuration)
+
+      window.Datadog.debug('message')
+
+      expect(server.requests.length).to.equal(1)
+    })
+
+    it('should be configurable', () => {
+      const customConfiguration = { ...configuration, logLevel: LogLevelEnum.info }
+      startLogger(customConfiguration as Configuration)
+
+      window.Datadog.debug('message')
+
+      expect(server.requests.length).to.equal(0)
     })
   })
 })
