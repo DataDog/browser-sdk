@@ -5,7 +5,7 @@ import { Batch, HttpRequest } from './transport'
 
 export interface LogsMessage {
   message: string
-  severity?: LogLevelEnum
+  severity: LogLevelEnum
   [key: string]: any
 }
 
@@ -27,20 +27,34 @@ const LOG_LEVEL_PRIORITIES: { [key in LogLevelEnum]: number } = {
 
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
-export function startLogger(configuration: Configuration) {
-  const batch = new Batch<LogsMessage>(
-    new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () => ({
-      ...getCommonContext(),
-      ...getGlobalContext(),
-    })
-  )
+export enum LogSendStrategyEnum {
+  api = 'api',
+  console = 'console',
+  silent = 'silent',
+}
 
-  const logger = new Logger(batch, configuration.logLevel)
+export function startLogger(configuration: Configuration) {
+  let sendStrategy: (message: LogsMessage) => void = () => undefined
+  if (configuration.logSendStrategy === LogSendStrategyEnum.api) {
+    const batch = new Batch<LogsMessage>(
+      new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
+      configuration.maxBatchSize,
+      configuration.batchBytesLimit,
+      configuration.maxMessageSize,
+      configuration.flushTimeout,
+      () => ({
+        ...getCommonContext(),
+        ...getGlobalContext(),
+      })
+    )
+    sendStrategy = (message: LogsMessage) => batch.add(message)
+  } else if (configuration.logSendStrategy === LogSendStrategyEnum.console) {
+    sendStrategy = (message: LogsMessage) => {
+      console.log(`${message.severity}: ${message.message}`)
+    }
+  }
+
+  const logger = new Logger(sendStrategy, configuration.logLevel)
   window.Datadog.setGlobalContext = setGlobalContext
   window.Datadog.addGlobalContext = addGlobalContext
   window.Datadog.log = logger.log.bind(logger)
@@ -53,12 +67,12 @@ export function startLogger(configuration: Configuration) {
 }
 
 export class Logger {
-  constructor(private batch: Batch<LogsMessage>, private logLevel: LogLevelEnum) {}
+  constructor(private send: (message: LogsMessage) => void, private logLevel: LogLevelEnum) {}
 
   @monitored
   log(message: string, context = {}, severity = LogLevelEnum.info) {
     if (LOG_LEVEL_PRIORITIES[severity] >= LOG_LEVEL_PRIORITIES[this.logLevel]) {
-      this.batch.add({ message, severity, ...context })
+      this.send({ message, severity, ...context })
     }
   }
 
