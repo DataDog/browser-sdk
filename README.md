@@ -27,12 +27,18 @@ contains all the public APIs.
 
 What we call `Context` is a map `{key: value}` that will be added to the message context.
 
-- Init must be called before other methods. Only `publicApiKey` and `isCollectingError` are configurable by the user.
-  If `isCollectingError` is truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+- Init must be called before other methods. Only `publicApiKey`, `isCollectingError` and `logLevel` are configurable by the user.
 
   ```
-  init(configuration: {publicApiKey: string, isCollectingError?: boolean})
+  init(configuration: {
+      publicApiKey: string,
+      isCollectingError?: boolean,
+      logLevel?: 'debug' | 'info' | 'warn' | 'error'
+  })
   ```
+
+  - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+  - `logLevel`: minimal log level to report (default: 'debug')
 
 - Manually log messages
 
