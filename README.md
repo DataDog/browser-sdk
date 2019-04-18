@@ -31,14 +31,14 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
   - `logLevel`: minimal log level to report (default: 'debug')
-  - `logSendStrategy`: define how to send logs (default: 'api')
+  - `logSender`: define where to send logs (default: 'api')
 
   ```
   init(configuration: {
       publicApiKey: string,
       isCollectingError?: boolean,
       logLevel?: 'debug' | 'info' | 'warn' | 'error',
-      logSendStrategy?: 'api' | 'console' | 'silent'
+      logSender?: 'api' | 'console' | 'silent'
   })
   ```
 

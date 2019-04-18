@@ -1,4 +1,4 @@
-import { LogLevelEnum, LogSendStrategyEnum } from './logger'
+import { LogLevelEnum, LogSenderEnum } from './logger'
 
 function getEndpoint(apiKey: string, source: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
@@ -10,7 +10,7 @@ function getEndpoint(apiKey: string, source: string) {
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
   logLevel: LogLevelEnum.debug,
-  logSendStrategy: LogSendStrategyEnum.api,
+  logSender: LogSenderEnum.api,
   maxInternalMonitoringMessagesPerPage: 15,
 
   /**
@@ -35,7 +35,7 @@ export interface UserConfiguration {
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
   logLevel?: LogLevelEnum
-  logSendStrategy?: LogSendStrategyEnum
+  logSender?: LogSenderEnum
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string

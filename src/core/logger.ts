@@ -27,15 +27,15 @@ const LOG_LEVEL_PRIORITIES: { [key in LogLevelEnum]: number } = {
 
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
-export enum LogSendStrategyEnum {
+export enum LogSenderEnum {
   api = 'api',
   console = 'console',
   silent = 'silent',
 }
 
 export function startLogger(configuration: Configuration) {
-  let sendStrategy: (message: LogsMessage) => void = () => undefined
-  if (configuration.logSendStrategy === LogSendStrategyEnum.api) {
+  let sender: (message: LogsMessage) => void = () => undefined
+  if (configuration.logSender === LogSenderEnum.api) {
     const batch = new Batch<LogsMessage>(
       new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
       configuration.maxBatchSize,
@@ -47,14 +47,14 @@ export function startLogger(configuration: Configuration) {
         ...getGlobalContext(),
       })
     )
-    sendStrategy = (message: LogsMessage) => batch.add(message)
-  } else if (configuration.logSendStrategy === LogSendStrategyEnum.console) {
-    sendStrategy = (message: LogsMessage) => {
+    sender = (message: LogsMessage) => batch.add(message)
+  } else if (configuration.logSender === LogSenderEnum.console) {
+    sender = (message: LogsMessage) => {
       console.log(`${message.severity}: ${message.message}`)
     }
   }
 
-  const logger = new Logger(sendStrategy, configuration.logLevel)
+  const logger = new Logger(sender, configuration.logLevel)
   window.Datadog.setGlobalContext = setGlobalContext
   window.Datadog.addGlobalContext = addGlobalContext
   window.Datadog.log = logger.log.bind(logger)
