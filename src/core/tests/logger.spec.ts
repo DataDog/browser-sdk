@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../configuration'
-import { LOG_LEVELS, LogLevelEnum, LogSenderEnum, startLogger } from '../logger'
+import { LOG_LEVELS, LogHandlerType, LogLevelType, startLogger } from '../logger'
 
 use(sinonChai)
 
@@ -100,7 +100,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable', () => {
-      const customConfiguration = { ...configuration, logLevel: LogLevelEnum.info }
+      const customConfiguration = { ...configuration, logLevel: LogLevelType.info }
       startLogger(customConfiguration as Configuration)
 
       window.Datadog.debug('message')
@@ -109,7 +109,7 @@ describe('logger module', () => {
     })
   })
 
-  describe('log sender', () => {
+  describe('log handler type', () => {
     let consoleSpy: sinon.SinonSpy
 
     beforeEach(() => {
@@ -120,7 +120,7 @@ describe('logger module', () => {
       consoleSpy.restore()
     })
 
-    it('should be api by default', () => {
+    it('should be "http" by default', () => {
       startLogger(configuration as Configuration)
 
       window.Datadog.debug('message')
@@ -130,7 +130,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "console"', () => {
-      const customConfiguration = { ...configuration, logSender: LogSenderEnum.console }
+      const customConfiguration = { ...configuration, logHandler: LogHandlerType.console }
       startLogger(customConfiguration as Configuration)
 
       window.Datadog.error('message')
@@ -140,7 +140,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "silent"', () => {
-      const customConfiguration = { ...configuration, logSender: LogSenderEnum.silent }
+      const customConfiguration = { ...configuration, logHandler: LogHandlerType.silent }
       startLogger(customConfiguration as Configuration)
 
       window.Datadog.error('message')

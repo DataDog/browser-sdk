@@ -3,13 +3,13 @@ import { computeStackTrace } from '../tracekit/tracekit'
 
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
-import { LogLevelEnum } from './logger'
+import { LogLevelType } from './logger'
 import { Batch, HttpRequest } from './transport'
 
 interface MonitoringMessage {
   entryType: 'internal'
   message: string
-  severity: LogLevelEnum.error
+  severity: LogLevelType.error
 }
 
 const monitoringConfiguration: {
@@ -71,7 +71,7 @@ export function monitor<T extends Function>(fn: T): T {
           monitoringConfiguration.batch.add({
             entryType: 'internal',
             message: stackTrace.message,
-            severity: LogLevelEnum.error,
+            severity: LogLevelType.error,
             ...formatStackTraceToContext(stackTrace),
           })
         }
