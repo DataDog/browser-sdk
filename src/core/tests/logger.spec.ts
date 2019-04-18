@@ -1,8 +1,11 @@
-import { expect } from 'chai'
+import { expect, use } from 'chai'
 import * as sinon from 'sinon'
+import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../configuration'
-import { LOG_LEVELS, LogLevelEnum, startLogger } from '../logger'
+import { LOG_LEVELS, LogHandlerType, LogLevelType, startLogger } from '../logger'
+
+use(sinonChai)
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
@@ -97,12 +100,53 @@ describe('logger module', () => {
     })
 
     it('should be configurable', () => {
-      const customConfiguration = { ...configuration, logLevel: LogLevelEnum.info }
+      const customConfiguration = { ...configuration, logLevel: LogLevelType.info }
       startLogger(customConfiguration as Configuration)
 
       window.Datadog.debug('message')
 
       expect(server.requests.length).to.equal(0)
+    })
+  })
+
+  describe('log handler type', () => {
+    let consoleSpy: sinon.SinonSpy
+
+    beforeEach(() => {
+      consoleSpy = sinon.stub(console, 'log')
+    })
+
+    afterEach(() => {
+      consoleSpy.restore()
+    })
+
+    it('should be "http" by default', () => {
+      startLogger(configuration as Configuration)
+
+      window.Datadog.debug('message')
+
+      expect(server.requests.length).to.equal(1)
+      expect(consoleSpy).not.called
+    })
+
+    it('should be configurable to "console"', () => {
+      const customConfiguration = { ...configuration, logHandler: LogHandlerType.console }
+      startLogger(customConfiguration as Configuration)
+
+      window.Datadog.error('message')
+
+      expect(server.requests.length).to.equal(0)
+      expect(consoleSpy).calledWith('error: message')
+    })
+
+    it('should be configurable to "silent"', () => {
+      const customConfiguration = { ...configuration, logHandler: LogHandlerType.silent }
+      startLogger(customConfiguration as Configuration)
+
+      window.Datadog.error('message')
+
+      expect(server.requests.length).to.equal(0)
+      expect(consoleSpy).not.called
     })
   })
 })
