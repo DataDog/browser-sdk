@@ -18,11 +18,12 @@ export enum LogLevelEnum {
 
 export type LogLevel = keyof typeof LogLevelEnum
 
-const LOG_LEVEL_PRIORITIES: { [key: string]: number } = {}
-LOG_LEVEL_PRIORITIES[LogLevelEnum.debug] = 0
-LOG_LEVEL_PRIORITIES[LogLevelEnum.info] = 1
-LOG_LEVEL_PRIORITIES[LogLevelEnum.warn] = 2
-LOG_LEVEL_PRIORITIES[LogLevelEnum.error] = 3
+const LOG_LEVEL_PRIORITIES: { [key in LogLevelEnum]: number } = {
+  [LogLevelEnum.debug]: 0,
+  [LogLevelEnum.info]: 1,
+  [LogLevelEnum.warn]: 2,
+  [LogLevelEnum.error]: 3,
+}
 
 export const LOG_LEVELS = Object.keys(LogLevelEnum)
 
