@@ -18,6 +18,7 @@ describe('logger module', () => {
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
+    startLogger(configuration as Configuration)
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })
@@ -28,10 +29,6 @@ describe('logger module', () => {
   })
 
   describe('request', () => {
-    beforeEach(() => {
-      startLogger(configuration as Configuration)
-    })
-
     it('should send the needed data', () => {
       window.Datadog.logger.log('message', { foo: 'bar' }, 'warn')
 
@@ -67,10 +64,6 @@ describe('logger module', () => {
   })
 
   describe('global context', () => {
-    beforeEach(() => {
-      startLogger(configuration as Configuration)
-    })
-
     it('should be added to the request', () => {
       window.Datadog.setLoggerGlobalContext({ bar: 'foo' })
       window.Datadog.logger.log('message')
@@ -91,10 +84,6 @@ describe('logger module', () => {
   })
 
   describe('logger context', () => {
-    beforeEach(() => {
-      startLogger(configuration as Configuration)
-    })
-
     it('should be added to the request', () => {
       window.Datadog.logger.setContext({ bar: 'foo' })
       window.Datadog.logger.log('message')
@@ -115,10 +104,6 @@ describe('logger module', () => {
   })
 
   describe('log level', () => {
-    beforeEach(() => {
-      startLogger(configuration as Configuration)
-    })
-
     it('should be debug by default', () => {
       window.Datadog.logger.debug('message')
 
@@ -139,7 +124,6 @@ describe('logger module', () => {
 
     beforeEach(() => {
       consoleSpy = sinon.stub(console, 'log')
-      startLogger(configuration as Configuration)
     })
 
     afterEach(() => {

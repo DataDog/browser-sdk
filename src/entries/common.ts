@@ -61,7 +61,7 @@ export type Datadog = typeof STUBBED_DATADOG
 export function buildInit<T extends UserConfiguration>(
   postInit?: (userConfiguration: T, configuration: Configuration, errorObservable: ErrorObservable) => void
 ) {
-  window.Datadog = STUBBED_DATADOG
+  window.Datadog = { ...STUBBED_DATADOG }
   // Add an "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
   Object.defineProperty(window.Datadog, '_setDebug', {
