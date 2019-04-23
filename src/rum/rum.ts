@@ -1,5 +1,5 @@
 import { Configuration } from '../core/configuration'
-import { getCommonContext, getGlobalContext } from '../core/context'
+import { getCommonContext, getLoggerGlobalContext } from '../core/context'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
@@ -59,7 +59,7 @@ export function startRum(errorObservable: ErrorObservable, configuration: Config
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
-      ...getGlobalContext(),
+      ...getLoggerGlobalContext(),
     })
   )
   const currentData: Data = { xhrCount: 0, errorCount: 0 }

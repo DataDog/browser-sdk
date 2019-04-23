@@ -1,5 +1,3 @@
-import { LogHandlerType, LogLevelType } from './logger'
-
 function getEndpoint(apiKey: string, source: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
@@ -9,8 +7,6 @@ function getEndpoint(apiKey: string, source: string) {
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
-  logHandler: LogHandlerType.http,
-  logLevel: LogLevelType.debug,
   maxInternalMonitoringMessagesPerPage: 15,
 
   /**
@@ -34,8 +30,6 @@ export interface UserConfiguration {
   publicApiKey: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
-  logHandler?: LogHandlerType
-  logLevel?: LogLevelType
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string

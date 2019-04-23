@@ -1,7 +1,7 @@
 import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
 import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
-import { LogLevel, startLogger } from '../core/logger'
+import { LogHandlerType, LogLevel, LogLevelType, startLogger } from '../core/logger'
 import { startSessionTracking } from '../core/session'
 import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
 
@@ -16,29 +16,43 @@ function makeStub(methodName: string) {
 }
 
 const STUBBED_DATADOG = {
-  debug(message: string, context?: Context) {
-    makeStub('debug')
+  logger: {
+    debug(message: string, context?: Context) {
+      makeStub('logger.debug')
+    },
+    error(message: string, context?: Context) {
+      makeStub('logger.error')
+    },
+    info(message: string, context?: Context) {
+      makeStub('logger.info')
+    },
+    log(message: string, context?: Context, severity?: LogLevel) {
+      makeStub('logger.log')
+    },
+    warn(message: string, context?: Context) {
+      makeStub('logger.warn')
+    },
+    setContext(context: Context) {
+      makeStub('logger.setContext')
+    },
+    addContext(key: string, value: any) {
+      makeStub('logger.addContext')
+    },
+    setLogHandler(logHandler: LogHandlerType) {
+      makeStub('logger.setLogHandler')
+    },
+    setLogLevel(logLevel: LogLevelType) {
+      makeStub('logger.setLogLevel')
+    },
   },
   init<T extends UserConfiguration>(userConfiguration: T) {
     makeStub('init')
   },
-  error(message: string, context?: Context) {
-    makeStub('error')
+  addLoggerGlobalContext(key: string, value: any) {
+    makeStub('addLoggerGlobalContext')
   },
-  info(message: string, context?: Context) {
-    makeStub('info')
-  },
-  log(message: string, context?: Context, severity?: LogLevel) {
-    makeStub('log')
-  },
-  warn(message: string, context?: Context) {
-    makeStub('warn')
-  },
-  addGlobalContext(key: string, value: any) {
-    makeStub('addGlobalContext')
-  },
-  setGlobalContext(context: Context) {
-    makeStub('setGlobalContext')
+  setLoggerGlobalContext(context: Context) {
+    makeStub('setLoggerGlobalContext')
   },
 }
 
