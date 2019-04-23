@@ -49,7 +49,20 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   logger.setContext (context: Context)  # entirely replace the logger context
   ```
 
-- Modify the default context for each message
+- Custom loggers
+
+  Custom loggers have the same API than the default logger
+
+  ```
+  createLogger (name: string, conf?: {
+      logLevel?: 'debug' | 'info' | 'warn' | 'error'
+      logHandler?: 'http' | 'console' | 'silent'
+      context?: Context
+  })  # create a new logger
+  getLogger (name: string)  # retrive a previously created logger
+  ```
+
+- Modify the global context for all loggers
   ```
   addLoggerGlobalContext (key: string, value: any)  # add one key-value to the default context
   setLoggerGlobalContext (context: Context)  # entirely replace the default context

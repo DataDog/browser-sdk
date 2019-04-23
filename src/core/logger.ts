@@ -15,6 +15,12 @@ export interface LogsMessage {
   [key: string]: any
 }
 
+export interface LoggerConfiguration {
+  logLevel?: LogLevelType
+  logHandler?: LogHandlerType
+  context?: Context
+}
+
 export enum LogLevelType {
   debug = 'debug',
   info = 'info',
@@ -39,6 +45,8 @@ export enum LogHandlerType {
   silent = 'silent',
 }
 
+type LogHandlers = { [key in LogHandlerType]: (message: LogsMessage) => void }
+
 export function startLogger(configuration: Configuration) {
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
@@ -56,11 +64,27 @@ export function startLogger(configuration: Configuration) {
     [LogHandlerType.silent]: () => undefined,
   }
   const logger = new Logger(logHandlers)
+  customLoggers = {}
   window.Datadog.setLoggerGlobalContext = setLoggerGlobalContext
   window.Datadog.addLoggerGlobalContext = addLoggerGlobalContext
+  window.Datadog.createLogger = makeCreateLogger(logHandlers)
+  window.Datadog.getLogger = getLogger
   window.Datadog.logger = logger
 
   return logger
+}
+
+let customLoggers: { [name: string]: Logger }
+
+function makeCreateLogger(logHandlers: LogHandlers) {
+  return (name: string, conf: LoggerConfiguration = {}) => {
+    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.logLevel, conf.context)
+    return customLoggers[name]
+  }
+}
+
+function getLogger(name: string) {
+  return customLoggers[name]
 }
 
 export class Logger {

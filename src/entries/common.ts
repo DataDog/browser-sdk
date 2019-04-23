@@ -1,7 +1,7 @@
 import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
 import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
-import { LogHandlerType, LogLevel, LogLevelType, startLogger } from '../core/logger'
+import { Logger, LoggerConfiguration, LogHandlerType, LogLevel, LogLevelType, startLogger } from '../core/logger'
 import { startSessionTracking } from '../core/session'
 import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
 
@@ -15,36 +15,38 @@ function makeStub(methodName: string) {
   console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
 }
 
-const STUBBED_DATADOG = {
-  logger: {
-    debug(message: string, context?: Context) {
-      makeStub('logger.debug')
-    },
-    error(message: string, context?: Context) {
-      makeStub('logger.error')
-    },
-    info(message: string, context?: Context) {
-      makeStub('logger.info')
-    },
-    log(message: string, context?: Context, severity?: LogLevel) {
-      makeStub('logger.log')
-    },
-    warn(message: string, context?: Context) {
-      makeStub('logger.warn')
-    },
-    setContext(context: Context) {
-      makeStub('logger.setContext')
-    },
-    addContext(key: string, value: any) {
-      makeStub('logger.addContext')
-    },
-    setLogHandler(logHandler: LogHandlerType) {
-      makeStub('logger.setLogHandler')
-    },
-    setLogLevel(logLevel: LogLevelType) {
-      makeStub('logger.setLogLevel')
-    },
+const LOGGER_STUB = {
+  debug(message: string, context?: Context) {
+    makeStub('logger.debug')
   },
+  error(message: string, context?: Context) {
+    makeStub('logger.error')
+  },
+  info(message: string, context?: Context) {
+    makeStub('logger.info')
+  },
+  log(message: string, context?: Context, severity?: LogLevel) {
+    makeStub('logger.log')
+  },
+  warn(message: string, context?: Context) {
+    makeStub('logger.warn')
+  },
+  setContext(context: Context) {
+    makeStub('logger.setContext')
+  },
+  addContext(key: string, value: any) {
+    makeStub('logger.addContext')
+  },
+  setLogHandler(logHandler: LogHandlerType) {
+    makeStub('logger.setLogHandler')
+  },
+  setLogLevel(logLevel: LogLevelType) {
+    makeStub('logger.setLogLevel')
+  },
+}
+
+const STUBBED_DATADOG = {
+  logger: LOGGER_STUB,
   init<T extends UserConfiguration>(userConfiguration: T) {
     makeStub('init')
   },
@@ -53,6 +55,14 @@ const STUBBED_DATADOG = {
   },
   setLoggerGlobalContext(context: Context) {
     makeStub('setLoggerGlobalContext')
+  },
+  createLogger(name: string, conf?: LoggerConfiguration): Logger {
+    makeStub('createLogger')
+    return LOGGER_STUB as Logger
+  },
+  getLogger(name: string): Logger | undefined {
+    makeStub('getLogger')
+    return undefined
   },
 }
 
