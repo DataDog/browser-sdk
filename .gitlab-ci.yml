@@ -60,7 +60,7 @@ e2e:
 #    - yarn
 #    - ./ci-browserstack.sh
 
-deploy:
+deploy-staging:
   only:
     refs:
       - master
@@ -73,7 +73,7 @@ deploy:
     - TARGET_DC=us TARGET_ENV=staging yarn build
     - ./deploy.sh staging
 
-deployp:
+deploy-prod:
   only:
     refs:
       - prod
