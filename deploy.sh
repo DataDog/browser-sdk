@@ -7,8 +7,8 @@ env=$1
 case "${env}" in
 "prod")
     AWS_ACCOUNT_ID=464622532012
-    BUCKET_NAME="browser-agent-artifacts"
-    DISTRIBUTION_ID="TBD"
+    BUCKET_NAME="browser-agent-artifacts-prod"
+    DISTRIBUTION_ID="EGB08BYCT1DD9"
     ;;
 "staging")
     AWS_ACCOUNT_ID=727006795293

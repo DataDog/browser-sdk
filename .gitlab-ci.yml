@@ -72,3 +72,16 @@ deploy:
     - TARGET_DC=eu TARGET_ENV=staging yarn build
     - TARGET_DC=us TARGET_ENV=staging yarn build
     - ./deploy.sh staging
+
+deployp:
+  only:
+    refs:
+      - prod
+  stage: deploy
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - TARGET_DC=eu TARGET_ENV=production yarn build
+    - TARGET_DC=us TARGET_ENV=production yarn build
+    - ./deploy.sh prod
