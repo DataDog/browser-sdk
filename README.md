@@ -76,3 +76,17 @@ It's the logs bundle + the RUM related stuff, so you'll end up with the same
 
 Right now, we don't expose any features to customize the RUM collection.
 This may change at some point.
+
+## Deploy
+
+### Staging
+
+Each commit on `master` branch is deployed to staging:
+
+`https://www.datad0g-browser-agent.com/datadog-(logs|rum)-(eu|us).js`
+
+### Prod
+
+Each commit on `prod` branch is deployed to prod:
+
+`https://www.datadoghq-browser-agent.com/datadog-(logs|rum)-(eu|us).js`
