@@ -1,0 +1,46 @@
+Component,Origin,License,Copyright
+require,tslib,Apache-2.0,Copyright Microsoft Corporation
+file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
+dev,@types/body-parser,MIT,Copyright Microsoft Corporation
+dev,@types/chai,MIT,Copyright Microsoft Corporation
+dev,@types/express,MIT,Copyright Microsoft Corporation
+dev,@types/mocha,MIT,Copyright Microsoft Corporation
+dev,@types/request,MIT,Copyright Microsoft Corporation
+dev,@types/sinon-chai,MIT,Copyright Microsoft Corporation
+dev,@types/sinon,MIT,Copyright Microsoft Corporation
+dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/mocha-framework,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
+dev,body-parser,MIT,Copyright 2014 Jonathan Ong 2014-2015 Douglas Christopher Wilson
+dev,chai-shallow-deep-equal,MIT,
+dev,chai,MIT,Copyright 2017 Chai.js Assertion Library
+dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
+dev,js-polyfills,Unlicense,
+dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google Inc.
+dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
+dev,karma-mocha-reporter,MIT,Copyright 2013-2016 Litixsoft GmbH
+dev,karma-mocha,MIT,Copyright 2011-2013 Google Inc.
+dev,karma-sinon-chai,MIT,Copyright 2015 Cleiton Gomes Loiola
+dev,karma-typescript-preprocessor2,MIT,Copyright 2015 Cleiton Gomes Loiola
+dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
+dev,karma,MIT,Copyright 2011-2019 Google Inc.
+dev,mocha,MIT,Copyright 2011-2018 JS Foundation and contributors
+dev,prettier,MIT,Copyright James Long and contributors
+dev,request,Apache-2.0,Copyright 2012–2017 Domenic Denicola
+dev,sinon-chai,WTFPL and BSD-2-Clause,Copyright 2004 Sam Hocevar 2012–2017 Domenic Denicola
+dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
+dev,ts-loader,MIT,Copyright 2015 TypeStrong
+dev,ts-node,MIT,Copyright 2014 Blake Embrey
+dev,tslint-config-airbnb,Apache-2.0,Copyright 2017 Progre
+dev,tslint-config-prettier,MIT,Copyright 2017 Alex Jover Morales
+dev,tslint-eslint-rules,MIT,Copyright 2015 Vitor Buzinaro Victor Schiavi
+dev,tslint-no-unused-expression-chai,MIT,Copyright 2017 OJ Kwon
+dev,tslint,Apache-2.0,
+dev,typescript,Apache-2.0,Copyright Microsoft Corporation
+dev,webdriverio,MIT,Copyright JS Foundation and other contributors
+dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
+dev,webpack-dev-server,MIT,Copyright JS Foundation and other contributors
+dev,webpack,MIT,Copyright JS Foundation and other contributors
