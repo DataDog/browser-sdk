@@ -1,5 +1,11 @@
 import { Configuration } from './configuration'
-import { addGlobalContext, getCommonContext, getGlobalContext, setGlobalContext } from './context'
+import {
+  addLoggerGlobalContext,
+  Context,
+  getCommonContext,
+  getLoggerGlobalContext,
+  setLoggerGlobalContext,
+} from './context'
 import { monitored } from './internalMonitoring'
 import { Batch, HttpRequest } from './transport'
 
@@ -7,6 +13,12 @@ export interface LogsMessage {
   message: string
   severity: LogLevelType
   [key: string]: any
+}
+
+export interface LoggerConfiguration {
+  logLevel?: LogLevelType
+  logHandler?: LogHandlerType
+  context?: Context
 }
 
 export enum LogLevelType {
@@ -33,62 +45,96 @@ export enum LogHandlerType {
   silent = 'silent',
 }
 
-export function startLogger(configuration: Configuration) {
-  let handler: (message: LogsMessage) => void = () => undefined
-  if (configuration.logHandler === LogHandlerType.http) {
-    const batch = new Batch<LogsMessage>(
-      new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout,
-      () => ({
-        ...getCommonContext(),
-        ...getGlobalContext(),
-      })
-    )
-    handler = (message: LogsMessage) => batch.add(message)
-  } else if (configuration.logHandler === LogHandlerType.console) {
-    handler = (message: LogsMessage) => {
-      console.log(`${message.severity}: ${message.message}`)
-    }
-  }
+type LogHandlers = { [key in LogHandlerType]: (message: LogsMessage) => void }
 
-  const logger = new Logger(handler, configuration.logLevel)
-  window.Datadog.setGlobalContext = setGlobalContext
-  window.Datadog.addGlobalContext = addGlobalContext
-  window.Datadog.log = logger.log.bind(logger)
-  window.Datadog.debug = logger.debug.bind(logger)
-  window.Datadog.info = logger.info.bind(logger)
-  window.Datadog.warn = logger.warn.bind(logger)
-  window.Datadog.error = logger.error.bind(logger)
+export function startLogger(configuration: Configuration) {
+  const batch = new Batch<LogsMessage>(
+    new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () => ({
+      ...getCommonContext(),
+    })
+  )
+  const logHandlers = {
+    [LogHandlerType.console]: (message: LogsMessage) => console.log(`${message.severity}: ${message.message}`),
+    [LogHandlerType.http]: (message: LogsMessage) => batch.add(message),
+    [LogHandlerType.silent]: () => undefined,
+  }
+  const logger = new Logger(logHandlers)
+  customLoggers = {}
+  window.Datadog.setLoggerGlobalContext = setLoggerGlobalContext
+  window.Datadog.addLoggerGlobalContext = addLoggerGlobalContext
+  window.Datadog.createLogger = makeCreateLogger(logHandlers)
+  window.Datadog.getLogger = getLogger
+  window.Datadog.logger = logger
 
   return logger
 }
 
+let customLoggers: { [name: string]: Logger }
+
+function makeCreateLogger(logHandlers: LogHandlers) {
+  return (name: string, conf: LoggerConfiguration = {}) => {
+    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.logLevel, conf.context)
+    return customLoggers[name]
+  }
+}
+
+function getLogger(name: string) {
+  return customLoggers[name]
+}
+
 export class Logger {
-  constructor(private handler: (message: LogsMessage) => void, private logLevel: LogLevelType) {}
+  private handler: (message: LogsMessage) => void
+
+  constructor(
+    private logHandlers: { [key in LogHandlerType]: (message: LogsMessage) => void },
+    logHandler = LogHandlerType.http,
+    private logLevel = LogLevelType.debug,
+    private loggerContext: Context = {}
+  ) {
+    this.handler = this.logHandlers[logHandler]
+  }
 
   @monitored
-  log(message: string, context = {}, severity = LogLevelType.info) {
+  log(message: string, messageContext = {}, severity = LogLevelType.info) {
     if (LOG_LEVEL_PRIORITIES[severity] >= LOG_LEVEL_PRIORITIES[this.logLevel]) {
-      this.handler({ message, severity, ...context })
+      this.handler({ message, severity, ...getLoggerGlobalContext(), ...this.loggerContext, ...messageContext })
     }
   }
 
-  debug(message: string, context = {}) {
-    this.log(message, context, LogLevelType.debug)
+  debug(message: string, messageContext = {}) {
+    this.log(message, messageContext, LogLevelType.debug)
   }
 
-  info(message: string, context = {}) {
-    this.log(message, context, LogLevelType.info)
+  info(message: string, messageContext = {}) {
+    this.log(message, messageContext, LogLevelType.info)
   }
 
-  warn(message: string, context = {}) {
-    this.log(message, context, LogLevelType.warn)
+  warn(message: string, messageContext = {}) {
+    this.log(message, messageContext, LogLevelType.warn)
   }
 
-  error(message: string, context = {}) {
-    this.log(message, context, LogLevelType.error)
+  error(message: string, messageContext = {}) {
+    this.log(message, messageContext, LogLevelType.error)
+  }
+
+  setContext(context: Context) {
+    this.loggerContext = context
+  }
+
+  addContext(key: string, value: any) {
+    this.loggerContext[key] = value
+  }
+
+  setLogHandler(logHandler: LogHandlerType) {
+    this.handler = this.logHandlers[logHandler]
+  }
+
+  setLogLevel(logLevel: LogLevelType) {
+    this.logLevel = logLevel
   }
 }

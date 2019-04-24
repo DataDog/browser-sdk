@@ -1,5 +1,5 @@
 import { Configuration, UserConfiguration } from '../core/configuration'
-import { addGlobalContext } from '../core/context'
+import { addLoggerGlobalContext } from '../core/context'
 import { ErrorObservable } from '../errorCollection/errorCollection'
 import { startRum } from '../rum/rum'
 
@@ -19,7 +19,7 @@ function postInit(
     return
   }
 
-  addGlobalContext('rumProjectId', userConfiguration.rumProjectId)
+  addLoggerGlobalContext('rumProjectId', userConfiguration.rumProjectId)
 
   startRum(errorObservable, configuration)
 }

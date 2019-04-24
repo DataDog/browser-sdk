@@ -1,7 +1,7 @@
 import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
 import { Context } from '../core/context'
 import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
-import { LogLevel, startLogger } from '../core/logger'
+import { Logger, LoggerConfiguration, LogHandlerType, LogLevel, LogLevelType, startLogger } from '../core/logger'
 import { startSessionTracking } from '../core/session'
 import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
 
@@ -15,30 +15,54 @@ function makeStub(methodName: string) {
   console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
 }
 
-const STUBBED_DATADOG = {
+const LOGGER_STUB = {
   debug(message: string, context?: Context) {
-    makeStub('debug')
+    makeStub('logger.debug')
   },
+  error(message: string, context?: Context) {
+    makeStub('logger.error')
+  },
+  info(message: string, context?: Context) {
+    makeStub('logger.info')
+  },
+  log(message: string, context?: Context, severity?: LogLevel) {
+    makeStub('logger.log')
+  },
+  warn(message: string, context?: Context) {
+    makeStub('logger.warn')
+  },
+  setContext(context: Context) {
+    makeStub('logger.setContext')
+  },
+  addContext(key: string, value: any) {
+    makeStub('logger.addContext')
+  },
+  setLogHandler(logHandler: LogHandlerType) {
+    makeStub('logger.setLogHandler')
+  },
+  setLogLevel(logLevel: LogLevelType) {
+    makeStub('logger.setLogLevel')
+  },
+}
+
+const STUBBED_DATADOG = {
+  logger: LOGGER_STUB,
   init<T extends UserConfiguration>(userConfiguration: T) {
     makeStub('init')
   },
-  error(message: string, context?: Context) {
-    makeStub('error')
+  addLoggerGlobalContext(key: string, value: any) {
+    makeStub('addLoggerGlobalContext')
   },
-  info(message: string, context?: Context) {
-    makeStub('info')
+  setLoggerGlobalContext(context: Context) {
+    makeStub('setLoggerGlobalContext')
   },
-  log(message: string, context?: Context, severity?: LogLevel) {
-    makeStub('log')
+  createLogger(name: string, conf?: LoggerConfiguration): Logger {
+    makeStub('createLogger')
+    return LOGGER_STUB as Logger
   },
-  warn(message: string, context?: Context) {
-    makeStub('warn')
-  },
-  addGlobalContext(key: string, value: any) {
-    makeStub('addGlobalContext')
-  },
-  setGlobalContext(context: Context) {
-    makeStub('setGlobalContext')
+  getLogger(name: string): Logger | undefined {
+    makeStub('getLogger')
+    return undefined
   },
 }
 
@@ -47,7 +71,7 @@ export type Datadog = typeof STUBBED_DATADOG
 export function buildInit<T extends UserConfiguration>(
   postInit?: (userConfiguration: T, configuration: Configuration, errorObservable: ErrorObservable) => void
 ) {
-  window.Datadog = STUBBED_DATADOG
+  window.Datadog = { ...STUBBED_DATADOG }
   // Add an "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
   Object.defineProperty(window.Datadog, '_setDebug', {

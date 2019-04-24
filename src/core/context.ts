@@ -4,15 +4,15 @@ export type Context = any
 
 let globalContext: Context = {}
 
-export function setGlobalContext(context: Context) {
+export function setLoggerGlobalContext(context: Context) {
   globalContext = context
 }
 
-export function addGlobalContext(key: string, value: any) {
+export function addLoggerGlobalContext(key: string, value: any) {
   globalContext[key] = value
 }
 
-export function getGlobalContext() {
+export function getLoggerGlobalContext() {
   return globalContext
 }
 

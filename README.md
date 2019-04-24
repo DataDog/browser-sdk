@@ -30,29 +30,42 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 - Init must be called before other methods. Configurable options:
 
   - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
-  - `logLevel`: minimal log level to report (default: 'debug')
-  - `logHandler`: define where to send logs (default: 'http')
 
   ```
   init(configuration: {
       publicApiKey: string,
       isCollectingError?: boolean,
-      logLevel?: 'debug' | 'info' | 'warn' | 'error',
-      logHandler?: 'http' | 'console' | 'silent'
   })
   ```
 
-- Manually log messages
+- Default logger
 
   ```
-  debug | info | warn | error (message: string, context = Context)`
-  log (message: string, context: Context, severity? = 'debug' | 'info' | 'warn' | 'error')
+  logger.debug | info | warn | error (message: string, messageContext = Context)`
+  logger.log (message: string, messageContext: Context, severity? = 'debug' | 'info' | 'warn' | 'error')
+  logger.setLogLevel (logLevel?: 'debug' | 'info' | 'warn' | 'error')
+  logger.setLogHandler (logHandler?: 'http' | 'console' | 'silent')
+  logger.addContext (key: string, value: any)  # add one key-value to the logger context
+  logger.setContext (context: Context)  # entirely replace the logger context
   ```
 
-- Modify the default context for each message
+- Custom loggers
+
+  Custom loggers have the same API than the default logger
+
   ```
-  addGlobalContext (key: string, value: any)  # add one key-value to the default context
-  setGlobalContext (context: Context)  # entirely replace the default context
+  createLogger (name: string, conf?: {
+      logLevel?: 'debug' | 'info' | 'warn' | 'error'
+      logHandler?: 'http' | 'console' | 'silent'
+      context?: Context
+  })  # create a new logger
+  getLogger (name: string)  # retrive a previously created logger
+  ```
+
+- Modify the global context for all loggers
+  ```
+  addLoggerGlobalContext (key: string, value: any)  # add one key-value to the default context
+  setLoggerGlobalContext (context: Context)  # entirely replace the default context
   ```
 
 ## The `rum` bundle
