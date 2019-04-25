@@ -59,7 +59,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
       logHandler?: 'http' | 'console' | 'silent'
       context?: Context
   })  # create a new logger
-  getLogger (name: string)  # retrive a previously created logger
+  getLogger (name: string)  # retrieve a previously created logger
   ```
 
 - Modify the global context for all loggers
