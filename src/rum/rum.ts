@@ -7,9 +7,14 @@ import { ErrorObservable } from '../errorCollection/errorCollection'
 
 type RequestIdleCallbackHandle = number
 
-interface Data {
-  xhrCount: number
+export interface Data {
+  xhrDetails: XhrDetails
   errorCount: number
+}
+
+export interface XhrDetails {
+  total: number
+  resources: { [name: string]: number }
 }
 
 interface RequestIdleCallbackOptions {
@@ -62,7 +67,7 @@ export function startRum(errorObservable: ErrorObservable, configuration: Config
       ...getLoggerGlobalContext(),
     })
   )
-  const currentData: Data = { xhrCount: 0, errorCount: 0 }
+  const currentData: Data = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
 
   trackErrorCount(errorObservable, currentData)
   trackDisplay(batch)
@@ -119,7 +124,7 @@ export function handlePerformanceEntry(
       return
     }
     if (entry.initiatorType === 'xmlhttprequest') {
-      currentData.xhrCount += 1
+      computeXhrDetails(entry, currentData)
     }
 
     batch.add({ data: formatResourceEntry(entry), entryType: entry.entryType as EntryType })
@@ -127,6 +132,14 @@ export function handlePerformanceEntry(
   }
 
   batch.add({ data: entry.toJSON(), entryType: entry.entryType as EntryType })
+}
+
+function computeXhrDetails(entry: PerformanceEntry, currentData: Data) {
+  currentData.xhrDetails.total += 1
+  if (!currentData.xhrDetails.resources[entry.name]) {
+    currentData.xhrDetails.resources[entry.name] = 0
+  }
+  currentData.xhrDetails.resources[entry.name] += 1
 }
 
 function formatResourceEntry(entry: PerformanceResourceTiming) {
@@ -248,16 +261,28 @@ function trackInputDelay(batch: RumBatch) {
 function trackPageUnload(batch: RumBatch, currentData: Data) {
   batch.beforeFlushOnUnload(() => {
     const duration = utils.getTimeSinceLoading()
-    // We want a throughput per minute to have meaningful data.
-    const throughput = (currentData.xhrCount / duration) * 1000 * 60
-
+    Object.keys(currentData.xhrDetails.resources).forEach((name) => {
+      batch.add({
+        data: {
+          name,
+          initiatorType: 'xhrDetails',
+          throughput: toThroughput(currentData.xhrDetails.resources[name], duration),
+        },
+        entryType: 'resource',
+      })
+    })
     batch.add({
       data: {
         duration,
         errorCount: currentData.errorCount,
-        throughput: utils.round(throughput, 1),
+        totalThroughput: toThroughput(currentData.xhrDetails.total, duration),
       },
       entryType: 'pageUnload',
     })
   })
+}
+
+function toThroughput(requestCount: number, duration: number) {
+  // We want a throughput per minute to have meaningful data.
+  return utils.round((requestCount / duration) * 1000 * 60, 1)
 }
