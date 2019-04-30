@@ -4,7 +4,7 @@ import * as sinonChai from 'sinon-chai'
 
 import { Configuration } from '../../core/configuration'
 
-import { handlePerformanceEntry, trackFirstIdle, trackPerformanceTiming } from '../rum'
+import { Data, handlePerformanceEntry, RumMessage, trackFirstIdle, trackPerformanceTiming } from '../rum'
 
 use(sinonChai)
 
@@ -46,9 +46,10 @@ describe('rum', () => {
 
 describe('rum handle performance entry', () => {
   let batch: any
-  const currentData = { xhrCount: 0, errorCount: 0 }
+  let currentData: Data
 
   beforeEach(() => {
+    currentData = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
     batch = {
       add: sinon.spy(),
     }
@@ -113,11 +114,18 @@ describe('rum handle performance entry', () => {
 })
 
 describe('rum performanceObserver callback', () => {
+  let currentData: Data
+
+  beforeEach(() => {
+    currentData = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
+  })
+
   it('should detect resource', (done) => {
-    const currentData = { xhrCount: 0, errorCount: 0 }
     const batch = {
-      add: () => {
-        expect(currentData.xhrCount).to.be.equal(1)
+      add: (message: RumMessage) => {
+        expect(currentData.xhrDetails.total).to.be.equal(1)
+        expect(Object.keys(currentData.xhrDetails.resources).length).to.be.equal(1)
+        expect(currentData.xhrDetails.resources[message.data.name]).to.be.equal(1)
         done()
       },
     }
@@ -142,7 +150,7 @@ describe('rum performanceObserver callback', () => {
       },
     }
 
-    trackPerformanceTiming(batch as any, {} as any, configuration as Configuration)
+    trackPerformanceTiming(batch as any, currentData, configuration as Configuration)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
