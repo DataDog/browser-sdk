@@ -55,7 +55,19 @@ type EntryType =
   | 'responseDelay'
   | 'resource'
 
-const RESOURCE_TYPES: Array<[string, (initiatorType: string, path: string) => boolean]> = [
+type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
+
+interface PerformanceResourceData extends PerformanceResourceTiming {
+  connectionDuration: number
+  domainLookupDuration: number
+  redirectDuration: number
+  requestDuration: number
+  responseDuration: number
+  secureConnectionDuration: number
+  resourceType: ResourceType
+}
+
+const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
   ['request', (initiatorType: string) => ['xmlhttprequest', 'beacon', 'fetch', 'xhrDetails'].includes(initiatorType)],
   ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
   ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
@@ -163,7 +175,7 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   )
 }
 
-function addTimingDurations(entry: any) {
+function addTimingDurations(entry: PerformanceResourceData) {
   entry.redirectDuration = entry.redirectEnd - entry.redirectStart
   entry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
   entry.connectionDuration = entry.connectEnd - entry.connectStart
@@ -172,7 +184,7 @@ function addTimingDurations(entry: any) {
   entry.responseDuration = entry.responseEnd - entry.responseStart
 }
 
-function addResourceType(entry: any) {
+function addResourceType(entry: PerformanceResourceData) {
   const path = new URL(entry.name).pathname
   for (const [type, isType] of RESOURCE_TYPES) {
     if (isType(entry.initiatorType, path)) {
