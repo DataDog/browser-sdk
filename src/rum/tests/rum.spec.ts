@@ -8,12 +8,12 @@ import { Data, handlePerformanceEntry, RumMessage, trackFirstIdle, trackPerforma
 
 use(sinonChai)
 
-function buildEntry(entry: Partial<PerformanceEntry>) {
-  const result: Partial<PerformanceEntry> = {
+function buildEntry(entry: Partial<PerformanceResourceTiming>) {
+  const result: Partial<PerformanceResourceTiming> = {
     ...entry,
-    toJSON: () => ({}),
+    toJSON: () => ({ ...entry }),
   }
-  return result as PerformanceEntry
+  return result as PerformanceResourceTiming
 }
 
 function getEntryType(spy: sinon.SinonSpy) {
@@ -111,6 +111,51 @@ describe('rum handle performance entry', () => {
       entryType: 'paint',
     })
   })
+  ;[
+    {
+      description: 'file extension with query params',
+      expected: 'js',
+      url: 'http://localhost/test.js?from=foo.css',
+    },
+    {
+      description: 'css extension',
+      expected: 'css',
+      url: 'http://localhost/test.css',
+    },
+    {
+      description: 'image initiator',
+      expected: 'image',
+      initiatorType: 'img',
+      url: 'http://localhost/test',
+    },
+    {
+      description: 'image extension',
+      expected: 'image',
+      url: 'http://localhost/test.jpg',
+    },
+  ].forEach(
+    ({
+      description,
+      url,
+      initiatorType,
+      expected,
+    }: {
+      description: string
+      url: string
+      initiatorType?: string
+      expected: string
+    }) => {
+      it(`should compute resource type: ${description}`, () => {
+        handlePerformanceEntry(
+          buildEntry({ initiatorType, name: url, entryType: 'resource' }),
+          batch,
+          currentData,
+          configuration as Configuration
+        )
+        expect(batch.add.getCall(0).args[0].data.resourceType).to.equal(expected)
+      })
+    }
+  )
 })
 
 describe('rum performanceObserver callback', () => {
