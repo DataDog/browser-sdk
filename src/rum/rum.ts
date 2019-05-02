@@ -55,6 +55,35 @@ type EntryType =
   | 'responseDelay'
   | 'resource'
 
+type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
+
+interface PerformanceResourceData extends PerformanceResourceTiming {
+  connectionDuration: number
+  domainLookupDuration: number
+  redirectDuration: number
+  requestDuration: number
+  responseDuration: number
+  secureConnectionDuration: number
+  resourceType: ResourceType
+}
+
+const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
+  ['request', (initiatorType: string) => ['xmlhttprequest', 'beacon', 'fetch', 'xhrDetails'].includes(initiatorType)],
+  ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
+  ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
+  [
+    'image',
+    (initiatorType: string, path: string) =>
+      ['image', 'img', 'icon'].includes(initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
+  ],
+  ['font', (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [
+    'media',
+    (initiatorType: string, path: string) =>
+      ['audio', 'video'].includes(initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
+  ],
+]
+
 export function startRum(errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = new Batch<RumMessage>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
@@ -119,40 +148,19 @@ export function handlePerformanceEntry(
     return
   }
 
+  const data = entry.toJSON()
   if (isResourceEntry(entry)) {
     if (isBrowserAgentRequest(entry.name, configuration)) {
       return
     }
+    addTimingDurations(data)
+    addResourceType(data)
     if (entry.initiatorType === 'xmlhttprequest') {
       computeXhrDetails(entry, currentData)
     }
-
-    batch.add({ data: formatResourceEntry(entry), entryType: entry.entryType as EntryType })
-    return
   }
 
-  batch.add({ data: entry.toJSON(), entryType: entry.entryType as EntryType })
-}
-
-function computeXhrDetails(entry: PerformanceEntry, currentData: Data) {
-  currentData.xhrDetails.total += 1
-  if (!currentData.xhrDetails.resources[entry.name]) {
-    currentData.xhrDetails.resources[entry.name] = 0
-  }
-  currentData.xhrDetails.resources[entry.name] += 1
-}
-
-function formatResourceEntry(entry: PerformanceResourceTiming) {
-  const resourceEntry = entry.toJSON()
-  resourceEntry.redirectDuration = entry.redirectEnd - entry.redirectStart
-  resourceEntry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
-  resourceEntry.connectionDuration = entry.connectEnd - entry.connectStart
-  resourceEntry.secureConnectionDuration =
-    entry.secureConnectionStart > 0 ? entry.connectEnd - entry.secureConnectionStart : 0
-  resourceEntry.requestDuration = entry.responseStart - entry.requestStart
-  resourceEntry.responseDuration = entry.responseEnd - entry.responseStart
-
-  return resourceEntry
+  batch.add({ data, entryType: entry.entryType as EntryType })
 }
 
 function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
@@ -165,6 +173,34 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
     url.startsWith(configuration.rumEndpoint) ||
     (configuration.internalMonitoringEndpoint && url.startsWith(configuration.internalMonitoringEndpoint))
   )
+}
+
+function addTimingDurations(entry: PerformanceResourceData) {
+  entry.redirectDuration = entry.redirectEnd - entry.redirectStart
+  entry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
+  entry.connectionDuration = entry.connectEnd - entry.connectStart
+  entry.secureConnectionDuration = entry.secureConnectionStart > 0 ? entry.connectEnd - entry.secureConnectionStart : 0
+  entry.requestDuration = entry.responseStart - entry.requestStart
+  entry.responseDuration = entry.responseEnd - entry.responseStart
+}
+
+function addResourceType(entry: PerformanceResourceData) {
+  const path = new URL(entry.name).pathname
+  for (const [type, isType] of RESOURCE_TYPES) {
+    if (isType(entry.initiatorType, path)) {
+      entry.resourceType = type
+      return
+    }
+  }
+  entry.resourceType = 'other'
+}
+
+function computeXhrDetails(entry: PerformanceEntry, currentData: Data) {
+  currentData.xhrDetails.total += 1
+  if (!currentData.xhrDetails.resources[entry.name]) {
+    currentData.xhrDetails.resources[entry.name] = 0
+  }
+  currentData.xhrDetails.resources[entry.name] += 1
 }
 
 export function trackFirstIdle(batch: RumBatch) {
