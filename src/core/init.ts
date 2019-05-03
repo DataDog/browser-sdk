@@ -1,9 +1,9 @@
-import { buildConfiguration, Configuration, UserConfiguration } from '../core/configuration'
-import { Context } from '../core/context'
-import { monitor, setDebugMode, startInternalMonitoring } from '../core/internalMonitoring'
-import { Logger, LoggerConfiguration, LogHandlerType, LogLevel, LogLevelType, startLogger } from '../core/logger'
-import { startSessionTracking } from '../core/session'
-import { ErrorObservable, startErrorCollection } from '../errorCollection/errorCollection'
+import { ErrorObservable, startErrorCollection } from '../logs/errorCollection'
+import { Logger, LoggerConfiguration, LogHandlerType, LogLevel, LogLevelType, startLogger } from '../logs/logger'
+import { buildConfiguration, Configuration, UserConfiguration } from './configuration'
+import { Context } from './context'
+import { monitor, setDebugMode, startInternalMonitoring } from './internalMonitoring'
+import { startSessionTracking } from './session'
 
 declare global {
   interface Window {
@@ -17,38 +17,38 @@ function makeStub(methodName: string) {
 
 const LOGGER_STUB = {
   debug(message: string, context?: Context) {
-    makeStub('logger.debug')
+    makeStub('logs.logger.debug')
   },
   error(message: string, context?: Context) {
-    makeStub('logger.error')
+    makeStub('logs.logger.error')
   },
   info(message: string, context?: Context) {
-    makeStub('logger.info')
+    makeStub('logs.logger.info')
   },
   log(message: string, context?: Context, severity?: LogLevel) {
-    makeStub('logger.log')
+    makeStub('logs.logger.log')
   },
   warn(message: string, context?: Context) {
-    makeStub('logger.warn')
+    makeStub('logs.logger.warn')
   },
   setContext(context: Context) {
-    makeStub('logger.setContext')
+    makeStub('logs.logger.setContext')
   },
   addContext(key: string, value: any) {
-    makeStub('logger.addContext')
+    makeStub('logs.logger.addContext')
   },
   setLogHandler(logHandler: LogHandlerType) {
-    makeStub('logger.setLogHandler')
+    makeStub('logs.logger.setLogHandler')
   },
   setLogLevel(logLevel: LogLevelType) {
-    makeStub('logger.setLogLevel')
+    makeStub('logs.logger.setLogLevel')
   },
 }
 
 const STUBBED_DATADOG = {
   logger: LOGGER_STUB,
   init<T extends UserConfiguration>(userConfiguration: T) {
-    makeStub('init')
+    makeStub('core.init')
   },
   addLoggerGlobalContext(key: string, value: any) {
     makeStub('addLoggerGlobalContext')
@@ -66,7 +66,7 @@ const STUBBED_DATADOG = {
   },
 }
 
-export type Datadog = typeof STUBBED_DATADOG
+type Datadog = typeof STUBBED_DATADOG
 
 export function buildInit<T extends UserConfiguration>(
   postInit?: (userConfiguration: T, configuration: Configuration, errorObservable: ErrorObservable) => void

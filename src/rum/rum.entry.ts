@@ -1,9 +1,9 @@
 import { Configuration, UserConfiguration } from '../core/configuration'
 import { addLoggerGlobalContext } from '../core/context'
-import { ErrorObservable } from '../errorCollection/errorCollection'
-import { startRum } from '../rum/rum'
+import { ErrorObservable } from '../logs/errorCollection'
+import { startRum } from './rum'
 
-import { buildInit } from './common'
+import { buildInit } from '../core/init'
 
 export interface RUMUserConfiguration extends UserConfiguration {
   rumProjectId: string

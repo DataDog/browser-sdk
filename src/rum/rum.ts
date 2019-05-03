@@ -3,7 +3,7 @@ import { getCommonContext, getLoggerGlobalContext } from '../core/context'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
-import { ErrorObservable } from '../errorCollection/errorCollection'
+import { ErrorObservable } from '../logs/errorCollection'
 
 type RequestIdleCallbackHandle = number
 
