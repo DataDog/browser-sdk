@@ -2,7 +2,7 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
-import { Configuration, DEFAULT_CONFIGURATION } from '../configuration'
+import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { LOG_LEVELS, LogHandlerType, LogLevelType, startLogger } from '../logger'
 
 use(sinonChai)

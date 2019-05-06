@@ -1,13 +1,13 @@
-import { Configuration } from './configuration'
+import { Configuration } from '../core/configuration'
 import {
   addLoggerGlobalContext,
   Context,
   getCommonContext,
   getLoggerGlobalContext,
   setLoggerGlobalContext,
-} from './context'
-import { monitored } from './internalMonitoring'
-import { Batch, HttpRequest } from './transport'
+} from '../core/context'
+import { monitored } from '../core/internalMonitoring'
+import { Batch, HttpRequest } from '../core/transport'
 
 export interface LogsMessage {
   message: string

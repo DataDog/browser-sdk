@@ -20,7 +20,6 @@
     "no-default-export": true,
     "no-implicit-dependencies": [true, "dev"],
     "no-null-keyword": true,
-    "no-unused-variable": true,
     "object-literal-sort-keys": [true, "shorthand-first"],
     "prefer-array-literal": [true, { "allow-type-parameters": true }],
     "ter-computed-property-spacing": false

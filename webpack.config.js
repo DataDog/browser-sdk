@@ -6,8 +6,8 @@ const targetDC = process.env.TARGET_DC || 'us'
 
 module.exports = (env, argv) => ({
   entry: {
-    logs: './src/entries/logs.ts',
-    rum: './src/entries/rum.ts',
+    logs: './src/logs/logs.entry.ts',
+    rum: './src/rum/rum.entry.ts',
   },
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
   devServer: {
@@ -36,7 +36,6 @@ module.exports = (env, argv) => ({
   },
   output: {
     filename: (chunkData) => {
-      const dc = process.env
       switch (chunkData.chunk.name) {
         case 'logs':
           return `datadog-logs-${targetDC}.js`

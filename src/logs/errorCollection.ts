@@ -1,9 +1,9 @@
 import { Configuration } from '../core/configuration'
 import { Context } from '../core/context'
 import { monitor } from '../core/internalMonitoring'
-import { Logger } from '../core/logger'
 import { Observable } from '../core/observable'
 import { report, StackTrace } from '../tracekit/tracekit'
+import { Logger } from './logger'
 
 export interface ErrorMessage {
   message: string

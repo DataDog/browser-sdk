@@ -3,10 +3,10 @@ import * as sinon from 'sinon'
 
 import { monitor } from '../../core/internalMonitoring'
 
-describe('logs module', () => {
+describe('logs entry', () => {
   beforeEach(() => {
-    require('../logs')
-    delete require.cache[require.resolve('../logs')]
+    require('../logs.entry')
+    delete require.cache[require.resolve('../logs.entry')]
   })
 
   it('should set Datadog global with init', () => {
