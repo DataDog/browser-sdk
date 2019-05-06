@@ -11,33 +11,34 @@ import { Batch, HttpRequest } from '../core/transport'
 
 export interface LogsMessage {
   message: string
-  severity: LogLevelType
+  status: LogStatusType
   [key: string]: any
 }
 
 export interface LoggerConfiguration {
-  logLevel?: LogLevelType
+  logStatus?: LogStatusType
+  logLevel?: LogStatusType // DEPRECATED
   logHandler?: LogHandlerType
   context?: Context
 }
 
-export enum LogLevelType {
+export enum LogStatusType {
   debug = 'debug',
   info = 'info',
   warn = 'warn',
   error = 'error',
 }
 
-export type LogLevel = keyof typeof LogLevelType
+export type LogStatus = keyof typeof LogStatusType
 
-const LOG_LEVEL_PRIORITIES: { [key in LogLevelType]: number } = {
-  [LogLevelType.debug]: 0,
-  [LogLevelType.info]: 1,
-  [LogLevelType.warn]: 2,
-  [LogLevelType.error]: 3,
+const LOG_STATUS_PRIORITIES: { [key in LogStatusType]: number } = {
+  [LogStatusType.debug]: 0,
+  [LogStatusType.info]: 1,
+  [LogStatusType.warn]: 2,
+  [LogStatusType.error]: 3,
 }
 
-export const LOG_LEVELS = Object.keys(LogLevelType)
+export const LOG_STATUSES = Object.keys(LogStatusType)
 
 export enum LogHandlerType {
   http = 'http',
@@ -59,7 +60,7 @@ export function startLogger(configuration: Configuration) {
     })
   )
   const logHandlers = {
-    [LogHandlerType.console]: (message: LogsMessage) => console.log(`${message.severity}: ${message.message}`),
+    [LogHandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
     [LogHandlerType.http]: (message: LogsMessage) => batch.add(message),
     [LogHandlerType.silent]: () => undefined,
   }
@@ -78,7 +79,7 @@ let customLoggers: { [name: string]: Logger }
 
 function makeCreateLogger(logHandlers: LogHandlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.logLevel, conf.context)
+    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.logStatus || conf.logLevel, conf.context)
     return customLoggers[name]
   }
 }
@@ -93,33 +94,33 @@ export class Logger {
   constructor(
     private logHandlers: { [key in LogHandlerType]: (message: LogsMessage) => void },
     logHandler = LogHandlerType.http,
-    private logLevel = LogLevelType.debug,
+    private logStatus = LogStatusType.debug,
     private loggerContext: Context = {}
   ) {
     this.handler = this.logHandlers[logHandler]
   }
 
   @monitored
-  log(message: string, messageContext = {}, severity = LogLevelType.info) {
-    if (LOG_LEVEL_PRIORITIES[severity] >= LOG_LEVEL_PRIORITIES[this.logLevel]) {
-      this.handler({ message, severity, ...getLoggerGlobalContext(), ...this.loggerContext, ...messageContext })
+  log(message: string, messageContext = {}, status = LogStatusType.info) {
+    if (LOG_STATUS_PRIORITIES[status] >= LOG_STATUS_PRIORITIES[this.logStatus]) {
+      this.handler({ message, status, ...getLoggerGlobalContext(), ...this.loggerContext, ...messageContext })
     }
   }
 
   debug(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogLevelType.debug)
+    this.log(message, messageContext, LogStatusType.debug)
   }
 
   info(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogLevelType.info)
+    this.log(message, messageContext, LogStatusType.info)
   }
 
   warn(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogLevelType.warn)
+    this.log(message, messageContext, LogStatusType.warn)
   }
 
   error(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogLevelType.error)
+    this.log(message, messageContext, LogStatusType.error)
   }
 
   setContext(context: Context) {
@@ -134,7 +135,12 @@ export class Logger {
     this.handler = this.logHandlers[logHandler]
   }
 
-  setLogLevel(logLevel: LogLevelType) {
-    this.logLevel = logLevel
+  // DEPRECATED
+  setLogLevel(logStatus: LogStatusType) {
+    this.logStatus = logStatus
+  }
+
+  setLogStatus(logStatus: LogStatusType) {
+    this.logStatus = logStatus
   }
 }

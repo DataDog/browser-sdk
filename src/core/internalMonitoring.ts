@@ -1,5 +1,5 @@
 import { formatStackTraceToContext } from '../logs/errorCollection'
-import { LogLevelType } from '../logs/logger'
+import { LogStatusType } from '../logs/logger'
 import { computeStackTrace } from '../tracekit/tracekit'
 
 import { Configuration } from './configuration'
@@ -9,7 +9,7 @@ import { Batch, HttpRequest } from './transport'
 interface MonitoringMessage {
   entryType: 'internal'
   message: string
-  severity: LogLevelType.error
+  status: LogStatusType.error
 }
 
 const monitoringConfiguration: {
@@ -71,7 +71,7 @@ export function monitor<T extends Function>(fn: T): T {
           monitoringConfiguration.batch.add({
             entryType: 'internal',
             message: stackTrace.message,
-            severity: LogLevelType.error,
+            status: LogStatusType.error,
             ...formatStackTraceToContext(stackTrace),
           })
         }

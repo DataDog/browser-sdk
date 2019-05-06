@@ -1,5 +1,5 @@
 import { ErrorObservable, startErrorCollection } from '../logs/errorCollection'
-import { Logger, LoggerConfiguration, LogHandlerType, LogLevel, LogLevelType, startLogger } from '../logs/logger'
+import { Logger, LoggerConfiguration, LogHandlerType, LogStatus, LogStatusType, startLogger } from '../logs/logger'
 import { buildConfiguration, Configuration, UserConfiguration } from './configuration'
 import { Context } from './context'
 import { monitor, setDebugMode, startInternalMonitoring } from './internalMonitoring'
@@ -25,7 +25,7 @@ const LOGGER_STUB = {
   info(message: string, context?: Context) {
     makeStub('logs.logger.info')
   },
-  log(message: string, context?: Context, severity?: LogLevel) {
+  log(message: string, context?: Context, logStatus?: LogStatus) {
     makeStub('logs.logger.log')
   },
   warn(message: string, context?: Context) {
@@ -40,8 +40,11 @@ const LOGGER_STUB = {
   setLogHandler(logHandler: LogHandlerType) {
     makeStub('logs.logger.setLogHandler')
   },
-  setLogLevel(logLevel: LogLevelType) {
-    makeStub('logs.logger.setLogLevel')
+  setLogLevel(logStatus: LogStatusType) {
+    makeStub('DEPRECATED logs.logger.setLogLevel')
+  },
+  setLogStatus(logStatus: LogStatusType) {
+    makeStub('logs.logger.setLogStatus')
   },
 }
 
