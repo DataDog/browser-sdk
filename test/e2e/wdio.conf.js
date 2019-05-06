@@ -26,7 +26,7 @@ exports.config = {
     timeout: 60000,
   },
   onPrepare: function() {
-    serverProcess = exec('ts-node --project test/e2e/tsconfig.e2e.json test/e2e/server')
+    serverProcess = exec('ts-node --project test/e2e/tsconfig.e2e.json test/e2e/server/server')
   },
   before: function() {
     require('ts-node').register({

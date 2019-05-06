@@ -5,9 +5,17 @@ import * as path from 'path'
 const app = express()
 const port = 3000
 
-app.use(express.static(path.join(__dirname, 'static')))
-app.use(express.static(path.join(__dirname, '../../dist')))
+app.use(express.static(path.join(__dirname, '../static')))
+app.use(express.static(path.join(__dirname, '../../../dist')))
 app.use(bodyParser.text())
+
+let logs: object[] = []
+
+app.post('/logs', (req, res) => {
+  req.body.split('\n').forEach((log: string) => logs.push(JSON.parse(log)))
+  res.send('ok')
+})
+app.get('/logs', (req, res) => res.send(logs))
 
 let rumEvents: object[] = []
 
@@ -26,6 +34,7 @@ app.post('/monitoring', (req, res) => {
 app.get('/monitoring', (req, res) => res.send(monitoring))
 
 app.get('/reset', (req, res) => {
+  logs = []
   rumEvents = []
   monitoring = []
   res.send('ok')

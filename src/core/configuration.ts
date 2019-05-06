@@ -33,6 +33,7 @@ export interface UserConfiguration {
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
+  logsEndpoint?: string
   rumEndpoint?: string
 }
 
@@ -62,6 +63,9 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
   if (buildEnv.TARGET_ENV === 'e2e-test') {
     if (userConfiguration.internalMonitoringEndpoint) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
+    }
+    if (userConfiguration.logsEndpoint) {
+      configuration.logsEndpoint = userConfiguration.logsEndpoint
     }
     if (userConfiguration.rumEndpoint) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
