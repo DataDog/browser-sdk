@@ -206,6 +206,15 @@
     deepmerge "^2.0.1"
     glob "^7.1.2"
 
+"@wdio/config@^5.8.1":
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/@wdio/config/-/config-5.8.1.tgz#c7a4f2706017bd7834aef8351ef4fd4075bac522"
+  integrity sha512-/1DTXXnsJa04fQXRQz0uwqlkE3Vc9hY9c8P6LJ5vIQOL4tK1MuiHWHpdfywPZlc1Kr8g5oJLSygX9WrSFCZHsA==
+  dependencies:
+    "@wdio/logger" "^5.8.0"
+    deepmerge "^2.0.1"
+    glob "^7.1.2"
+
 "@wdio/interface@^5.6.4":
   version "5.6.4"
   resolved "https://registry.yarnpkg.com/@wdio/interface/-/interface-5.6.4.tgz#8112a2d86c8ad462754e285da8ea4f2893aaac63"
@@ -235,6 +244,16 @@
     loglevel-plugin-prefix "^0.5.3"
     strip-ansi "^4.0.0"
 
+"@wdio/logger@^5.8.0":
+  version "5.8.0"
+  resolved "https://registry.yarnpkg.com/@wdio/logger/-/logger-5.8.0.tgz#9d69dec2eaaee011c03de0f9239f8c520dfe8260"
+  integrity sha512-YQ6fybKvWEZPBVf/rrhedohj6g4U1cb9w/6IkHOOhDYbiwwvmAVk7h7QTCsdVc1pxO7Y4/5gI46bmoASgPsrnw==
+  dependencies:
+    chalk "^2.3.0"
+    loglevel "^1.6.0"
+    loglevel-plugin-prefix "^0.5.3"
+    strip-ansi "^4.0.0"
+
 "@wdio/mocha-framework@5.6.4":
   version "5.6.4"
   resolved "https://registry.yarnpkg.com/@wdio/mocha-framework/-/mocha-framework-5.6.4.tgz#cb98cb33b4ae681226a17fc791b40b39d992a84f"
@@ -251,6 +270,13 @@
   integrity sha512-TmEnZGLbn5iiatYEU5QMftBTiYfXaGGiRNSDwkFeY7QlHRnrtz7xCXOchFWi/cfe9wys/hp+JGixTMb0g/wMCA==
   dependencies:
     "@wdio/config" "^5.6.4"
+
+"@wdio/repl@^5.8.1":
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/@wdio/repl/-/repl-5.8.1.tgz#8bd9c4f4132a530d51440b02ae0cca6c225fa9cd"
+  integrity sha512-vbX3tCeNjav07N5wYbeJQT5wM1VUoMk0++dQNCP8H05j0Hyqs1Z8K4VpLa1JCieWxQIUFgY703y6cZ6+YhDJEg==
+  dependencies:
+    "@wdio/config" "^5.8.1"
 
 "@wdio/reporter@^5.6.4":
   version "5.6.4"
@@ -4062,6 +4088,11 @@ lodash.isobject@^3.0.2:
   resolved "https://registry.yarnpkg.com/lodash.isobject/-/lodash.isobject-3.0.2.tgz#3c8fb8d5b5bf4bf90ae06e14f2a530a4ed935e1d"
   integrity sha1-PI+41bW/S/kK4G4U8qUwpO2TXh0=
 
+lodash.isplainobject@^4.0.6:
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz#7c526a52d89b45c45cc690b88163be0497f550cb"
+  integrity sha1-fFJqUtibRcRcxpC4gWO+BJf1UMs=
+
 lodash.keys@^3.0.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/lodash.keys/-/lodash.keys-3.1.2.tgz#4dbc0472b156be50a0b286855d1bd0b0c656098a"
@@ -5578,6 +5609,13 @@ resolve@^1.10.0, resolve@^1.3.2:
   dependencies:
     path-parse "^1.0.6"
 
+resq@^1.4.0-rc.1:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/resq/-/resq-1.4.0.tgz#6833236a6b3e270062913279c5dc5dfc3d061591"
+  integrity sha512-Am0l5BD6mkzFsavqXMsIg19BpjCtq/GKTIly15JhWkwUaeM78cpFoYkdPGiKpAkbGEw8W9h/aBklgpItZgc0ZQ==
+  dependencies:
+    fast-deep-equal "^2.0.1"
+
 restore-cursor@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/restore-cursor/-/restore-cursor-2.0.0.tgz#9f7ee287f82fd326d4fd162923d62129eee0dfaf"
@@ -6838,7 +6876,37 @@ webdriver@^5.6.5:
     lodash.merge "^4.6.1"
     request "^2.83.0"
 
-webdriverio@5.6.6, webdriverio@^5.6.6:
+webdriver@^5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/webdriver/-/webdriver-5.8.1.tgz#f3a86e6cd8bb6eb1fecdc9437e9770155d8c9de3"
+  integrity sha512-YDi6FD1w62KaG1BTEbCpmZlwkNWjEFLys8ecTxVEKwLQQMYMj2dNZAen1yrd6qFrpQQ8MaM/1xX4eRblE52Uwg==
+  dependencies:
+    "@wdio/config" "^5.8.1"
+    "@wdio/logger" "^5.8.0"
+    deepmerge "^2.0.1"
+    lodash.merge "^4.6.1"
+    request "^2.83.0"
+
+webdriverio@5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/webdriverio/-/webdriverio-5.8.1.tgz#6da3d7b888beca9297dc7730d22d274976191988"
+  integrity sha512-Nt3Dg4PZIE1da5dyjjU2fZGoIJ/QOyrsOKuMsgR9/tPX6wN6N1XwMjZyXj8v4cjZnp10GZ1idWZ9HmTybeiqYA==
+  dependencies:
+    "@wdio/config" "^5.8.1"
+    "@wdio/logger" "^5.8.0"
+    "@wdio/repl" "^5.8.1"
+    css-value "^0.0.1"
+    grapheme-splitter "^1.0.2"
+    lodash.isobject "^3.0.2"
+    lodash.isplainobject "^4.0.6"
+    lodash.merge "^4.6.1"
+    lodash.zip "^4.2.0"
+    resq "^1.4.0-rc.1"
+    rgb2hex "^0.1.0"
+    serialize-error "^3.0.0"
+    webdriver "^5.8.1"
+
+webdriverio@^5.6.6:
   version "5.6.6"
   resolved "https://registry.yarnpkg.com/webdriverio/-/webdriverio-5.6.6.tgz#cf890062af4ab9066c860b7414f5e52cf3645f14"
   integrity sha512-3aJzOwk51E+rdvebv9Pst7opaI7w2pCsT8DJuweTWhQvG21pjSb9mmCUxCYI0KnFcID4NElS74YIdg6UkqEzeg==
