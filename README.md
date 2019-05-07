@@ -42,8 +42,8 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   ```
   logger.debug | info | warn | error (message: string, messageContext = Context)`
-  logger.log (message: string, messageContext: Context, logStatus? = 'debug' | 'info' | 'warn' | 'error')
-  logger.setLogStatus (logStatus?: 'debug' | 'info' | 'warn' | 'error')
+  logger.log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
+  logger.setLevel (level?: 'debug' | 'info' | 'warn' | 'error')
   logger.setLogHandler (logHandler?: 'http' | 'console' | 'silent')
   logger.addContext (key: string, value: any)  # add one key-value to the logger context
   logger.setContext (context: Context)  # entirely replace the logger context
@@ -55,7 +55,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   ```
   createLogger (name: string, conf?: {
-      logStatus?: 'debug' | 'info' | 'warn' | 'error'
+      level?: 'debug' | 'info' | 'warn' | 'error'
       logHandler?: 'http' | 'console' | 'silent'
       context?: Context
   })  # create a new logger

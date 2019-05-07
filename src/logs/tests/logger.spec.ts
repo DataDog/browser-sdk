@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
-import { LOG_STATUSES, LogHandlerType, LogStatusType, startLogger } from '../logger'
+import { STATUSES, LogHandlerType, StatusType, startLogger } from '../logger'
 
 use(sinonChai)
 
@@ -54,11 +54,11 @@ describe('logger module', () => {
       expect(JSON.parse(server.requests[0].requestBody).status).to.equal('info')
     })
 
-    LOG_STATUSES.forEach((logStatus) => {
-      it(`'logger.${logStatus}' should have ${logStatus} status`, () => {
-        ;(window.Datadog.logger as any)[logStatus]('message')
+    STATUSES.forEach((status) => {
+      it(`'logger.${status}' should have ${status} status`, () => {
+        ;(window.Datadog.logger as any)[status]('message')
 
-        expect(JSON.parse(server.requests[0].requestBody).status).to.equal(logStatus)
+        expect(JSON.parse(server.requests[0].requestBody).status).to.equal(status)
       })
     })
   })
@@ -115,7 +115,7 @@ describe('logger module', () => {
     })
   })
 
-  describe('log status', () => {
+  describe('log level', () => {
     it('should be debug by default', () => {
       window.Datadog.logger.debug('message')
 
@@ -123,7 +123,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable', () => {
-      window.Datadog.logger.setLogStatus(LogStatusType.info)
+      window.Datadog.logger.setLevel(StatusType.info)
 
       window.Datadog.logger.debug('message')
 
@@ -191,7 +191,7 @@ describe('logger module', () => {
     it('should be configurable', () => {
       const logger = window.Datadog.createLogger('foo', {
         logHandler: LogHandlerType.console,
-        logStatus: LogStatusType.info,
+        level: StatusType.info,
       })
 
       logger.debug('ignored')

@@ -11,34 +11,34 @@ import { Batch, HttpRequest } from '../core/transport'
 
 export interface LogsMessage {
   message: string
-  status: LogStatusType
+  status: StatusType
   [key: string]: any
 }
 
 export interface LoggerConfiguration {
-  logStatus?: LogStatusType
-  logLevel?: LogStatusType // DEPRECATED
+  level?: StatusType
+  logLevel?: StatusType // DEPRECATED
   logHandler?: LogHandlerType
   context?: Context
 }
 
-export enum LogStatusType {
+export enum StatusType {
   debug = 'debug',
   info = 'info',
   warn = 'warn',
   error = 'error',
 }
 
-export type LogStatus = keyof typeof LogStatusType
+export type Status = keyof typeof StatusType
 
-const LOG_STATUS_PRIORITIES: { [key in LogStatusType]: number } = {
-  [LogStatusType.debug]: 0,
-  [LogStatusType.info]: 1,
-  [LogStatusType.warn]: 2,
-  [LogStatusType.error]: 3,
+const STATUS_PRIORITIES: { [key in StatusType]: number } = {
+  [StatusType.debug]: 0,
+  [StatusType.info]: 1,
+  [StatusType.warn]: 2,
+  [StatusType.error]: 3,
 }
 
-export const LOG_STATUSES = Object.keys(LogStatusType)
+export const STATUSES = Object.keys(StatusType)
 
 export enum LogHandlerType {
   http = 'http',
@@ -79,7 +79,7 @@ let customLoggers: { [name: string]: Logger }
 
 function makeCreateLogger(logHandlers: LogHandlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.logStatus || conf.logLevel, conf.context)
+    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.level || conf.logLevel, conf.context)
     return customLoggers[name]
   }
 }
@@ -94,33 +94,33 @@ export class Logger {
   constructor(
     private logHandlers: { [key in LogHandlerType]: (message: LogsMessage) => void },
     logHandler = LogHandlerType.http,
-    private logStatus = LogStatusType.debug,
+    private level = StatusType.debug,
     private loggerContext: Context = {}
   ) {
     this.handler = this.logHandlers[logHandler]
   }
 
   @monitored
-  log(message: string, messageContext = {}, status = LogStatusType.info) {
-    if (LOG_STATUS_PRIORITIES[status] >= LOG_STATUS_PRIORITIES[this.logStatus]) {
+  log(message: string, messageContext = {}, status = StatusType.info) {
+    if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       this.handler({ message, status, ...getLoggerGlobalContext(), ...this.loggerContext, ...messageContext })
     }
   }
 
   debug(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogStatusType.debug)
+    this.log(message, messageContext, StatusType.debug)
   }
 
   info(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogStatusType.info)
+    this.log(message, messageContext, StatusType.info)
   }
 
   warn(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogStatusType.warn)
+    this.log(message, messageContext, StatusType.warn)
   }
 
   error(message: string, messageContext = {}) {
-    this.log(message, messageContext, LogStatusType.error)
+    this.log(message, messageContext, StatusType.error)
   }
 
   setContext(context: Context) {
@@ -136,11 +136,11 @@ export class Logger {
   }
 
   // DEPRECATED
-  setLogLevel(logStatus: LogStatusType) {
-    this.logStatus = logStatus
+  setLogLevel(level: StatusType) {
+    this.level = level
   }
 
-  setLogStatus(logStatus: LogStatusType) {
-    this.logStatus = logStatus
+  setLevel(level: StatusType) {
+    this.level = level
   }
 }
