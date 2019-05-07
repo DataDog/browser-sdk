@@ -1,5 +1,5 @@
 import { ErrorObservable, startErrorCollection } from '../logs/errorCollection'
-import { Logger, LoggerConfiguration, LogHandlerType, Status, StatusType, startLogger } from '../logs/logger'
+import { HandlerType, Logger, LoggerConfiguration, startLogger, Status, StatusType } from '../logs/logger'
 import { buildConfiguration, Configuration, UserConfiguration } from './configuration'
 import { Context } from './context'
 import { monitor, setDebugMode, startInternalMonitoring } from './internalMonitoring'
@@ -37,8 +37,11 @@ const LOGGER_STUB = {
   addContext(key: string, value: any) {
     makeStub('logs.logger.addContext')
   },
-  setLogHandler(logHandler: LogHandlerType) {
-    makeStub('logs.logger.setLogHandler')
+  setLogHandler(handler: HandlerType) {
+    makeStub('DEPRECATED logs.logger.setHandler')
+  },
+  setHandler(handler: HandlerType) {
+    makeStub('logs.logger.setHandler')
   },
   setLogLevel(level: StatusType) {
     makeStub('DEPRECATED logs.logger.setLogLevel')

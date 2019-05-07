@@ -18,7 +18,8 @@ export interface LogsMessage {
 export interface LoggerConfiguration {
   level?: StatusType
   logLevel?: StatusType // DEPRECATED
-  logHandler?: LogHandlerType
+  handler?: HandlerType
+  logHandler?: HandlerType // DEPRECATED
   context?: Context
 }
 
@@ -40,13 +41,13 @@ const STATUS_PRIORITIES: { [key in StatusType]: number } = {
 
 export const STATUSES = Object.keys(StatusType)
 
-export enum LogHandlerType {
+export enum HandlerType {
   http = 'http',
   console = 'console',
   silent = 'silent',
 }
 
-type LogHandlers = { [key in LogHandlerType]: (message: LogsMessage) => void }
+type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
 export function startLogger(configuration: Configuration) {
   const batch = new Batch<LogsMessage>(
@@ -59,16 +60,16 @@ export function startLogger(configuration: Configuration) {
       ...getCommonContext(),
     })
   )
-  const logHandlers = {
-    [LogHandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
-    [LogHandlerType.http]: (message: LogsMessage) => batch.add(message),
-    [LogHandlerType.silent]: () => undefined,
+  const handlers = {
+    [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
+    [HandlerType.http]: (message: LogsMessage) => batch.add(message),
+    [HandlerType.silent]: () => undefined,
   }
-  const logger = new Logger(logHandlers)
+  const logger = new Logger(handlers)
   customLoggers = {}
   window.Datadog.setLoggerGlobalContext = setLoggerGlobalContext
   window.Datadog.addLoggerGlobalContext = addLoggerGlobalContext
-  window.Datadog.createLogger = makeCreateLogger(logHandlers)
+  window.Datadog.createLogger = makeCreateLogger(handlers)
   window.Datadog.getLogger = getLogger
   window.Datadog.logger = logger
 
@@ -77,9 +78,14 @@ export function startLogger(configuration: Configuration) {
 
 let customLoggers: { [name: string]: Logger }
 
-function makeCreateLogger(logHandlers: LogHandlers) {
+function makeCreateLogger(handlers: Handlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(logHandlers, conf.logHandler, conf.level || conf.logLevel, conf.context)
+    customLoggers[name] = new Logger(
+      handlers,
+      conf.handler || conf.logHandler,
+      conf.level || conf.logLevel,
+      conf.context
+    )
     return customLoggers[name]
   }
 }
@@ -92,12 +98,12 @@ export class Logger {
   private handler: (message: LogsMessage) => void
 
   constructor(
-    private logHandlers: { [key in LogHandlerType]: (message: LogsMessage) => void },
-    logHandler = LogHandlerType.http,
+    private handlers: { [key in HandlerType]: (message: LogsMessage) => void },
+    handler = HandlerType.http,
     private level = StatusType.debug,
     private loggerContext: Context = {}
   ) {
-    this.handler = this.logHandlers[logHandler]
+    this.handler = this.handlers[handler]
   }
 
   @monitored
@@ -131,8 +137,13 @@ export class Logger {
     this.loggerContext[key] = value
   }
 
-  setLogHandler(logHandler: LogHandlerType) {
-    this.handler = this.logHandlers[logHandler]
+  // DEPRECATED
+  setLogHandler(handler: HandlerType) {
+    this.handler = this.handlers[handler]
+  }
+
+  setHandler(handler: HandlerType) {
+    this.handler = this.handlers[handler]
   }
 
   // DEPRECATED

@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
-import { STATUSES, LogHandlerType, StatusType, startLogger } from '../logger'
+import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
 
 use(sinonChai)
 
@@ -150,7 +150,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "console"', () => {
-      window.Datadog.logger.setLogHandler(LogHandlerType.console)
+      window.Datadog.logger.setHandler(HandlerType.console)
 
       window.Datadog.logger.error('message')
 
@@ -159,7 +159,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "silent"', () => {
-      window.Datadog.logger.setLogHandler(LogHandlerType.silent)
+      window.Datadog.logger.setHandler(HandlerType.silent)
 
       window.Datadog.logger.error('message')
 
@@ -190,7 +190,7 @@ describe('logger module', () => {
 
     it('should be configurable', () => {
       const logger = window.Datadog.createLogger('foo', {
-        logHandler: LogHandlerType.console,
+        handler: HandlerType.console,
         level: StatusType.info,
       })
 
