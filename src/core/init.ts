@@ -37,14 +37,8 @@ const LOGGER_STUB = {
   addContext(key: string, value: any) {
     makeStub('logs.logger.addContext')
   },
-  setLogHandler(handler: HandlerType) {
-    makeStub('DEPRECATED logs.logger.setHandler')
-  },
   setHandler(handler: HandlerType) {
     makeStub('logs.logger.setHandler')
-  },
-  setLogLevel(level: StatusType) {
-    makeStub('DEPRECATED logs.logger.setLogLevel')
   },
   setLevel(level: StatusType) {
     makeStub('logs.logger.setLevel')
