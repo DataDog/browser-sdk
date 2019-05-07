@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
-import { LOG_LEVELS, LogHandlerType, LogLevelType, startLogger } from '../logger'
+import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
 
 use(sinonChai)
 
@@ -42,23 +42,23 @@ describe('logger module', () => {
           useragent: navigator.userAgent,
         },
         message: 'message',
-        severity: 'warn',
+        status: 'warn',
       })
     })
   })
 
   describe('log method', () => {
-    it("'logger.log' should have info severity by default", () => {
+    it("'logger.log' should have info status by default", () => {
       window.Datadog.logger.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).severity).to.equal('info')
+      expect(JSON.parse(server.requests[0].requestBody).status).to.equal('info')
     })
 
-    LOG_LEVELS.forEach((logLevel) => {
-      it(`'logger.${logLevel}' should have ${logLevel} severity`, () => {
-        ;(window.Datadog.logger as any)[logLevel]('message')
+    STATUSES.forEach((status) => {
+      it(`'logger.${status}' should have ${status} status`, () => {
+        ;(window.Datadog.logger as any)[status]('message')
 
-        expect(JSON.parse(server.requests[0].requestBody).severity).to.equal(logLevel)
+        expect(JSON.parse(server.requests[0].requestBody).status).to.equal(status)
       })
     })
   })
@@ -123,7 +123,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable', () => {
-      window.Datadog.logger.setLogLevel(LogLevelType.info)
+      window.Datadog.logger.setLevel(StatusType.info)
 
       window.Datadog.logger.debug('message')
 
@@ -150,7 +150,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "console"', () => {
-      window.Datadog.logger.setLogHandler(LogHandlerType.console)
+      window.Datadog.logger.setHandler(HandlerType.console)
 
       window.Datadog.logger.error('message')
 
@@ -159,7 +159,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable to "silent"', () => {
-      window.Datadog.logger.setLogHandler(LogHandlerType.silent)
+      window.Datadog.logger.setHandler(HandlerType.silent)
 
       window.Datadog.logger.error('message')
 
@@ -190,8 +190,8 @@ describe('logger module', () => {
 
     it('should be configurable', () => {
       const logger = window.Datadog.createLogger('foo', {
-        logHandler: LogHandlerType.console,
-        logLevel: LogLevelType.info,
+        handler: HandlerType.console,
+        level: StatusType.info,
       })
 
       logger.debug('ignored')
