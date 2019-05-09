@@ -78,7 +78,10 @@ let customLoggers: { [name: string]: Logger }
 
 function makeCreateLogger(handlers: Handlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(handlers, conf.handler, conf.level, conf.context)
+    customLoggers[name] = new Logger(handlers, conf.handler, conf.level, {
+      ...conf.context,
+      logger: { name },
+    })
     return customLoggers[name]
   }
 }

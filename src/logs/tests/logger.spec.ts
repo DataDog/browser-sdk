@@ -7,6 +7,10 @@ import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
 
 use(sinonChai)
 
+function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
+  return JSON.parse(server.requests[index].requestBody)
+}
+
 describe('logger module', () => {
   const FAKE_DATE = 123456
   const configuration: Partial<Configuration> = {
@@ -34,7 +38,7 @@ describe('logger module', () => {
 
       expect(server.requests.length).to.equal(1)
       expect(server.requests[0].url).to.equal(configuration.logsEndpoint)
-      expect(JSON.parse(server.requests[0].requestBody)).to.deep.equal({
+      expect(getLoggedMessage(server, 0)).to.deep.equal({
         date: FAKE_DATE,
         foo: 'bar',
         http: {
@@ -51,14 +55,14 @@ describe('logger module', () => {
     it("'logger.log' should have info status by default", () => {
       window.Datadog.logger.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).status).to.equal('info')
+      expect(getLoggedMessage(server, 0).status).to.equal('info')
     })
 
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
         ;(window.Datadog.logger as any)[status]('message')
 
-        expect(JSON.parse(server.requests[0].requestBody).status).to.equal(status)
+        expect(getLoggedMessage(server, 0).status).to.equal(status)
       })
     })
   })
@@ -68,7 +72,7 @@ describe('logger module', () => {
       window.Datadog.setLoggerGlobalContext({ bar: 'foo' })
       window.Datadog.logger.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
+      expect(getLoggedMessage(server, 0).bar).to.equal('foo')
     })
 
     it('should be updatable', () => {
@@ -77,9 +81,9 @@ describe('logger module', () => {
       window.Datadog.setLoggerGlobalContext({ foo: 'bar' })
       window.Datadog.logger.log('second')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
-      expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
-      expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined
+      expect(getLoggedMessage(server, 0).bar).to.equal('foo')
+      expect(getLoggedMessage(server, 1).foo).to.equal('bar')
+      expect(getLoggedMessage(server, 1).bar).to.be.undefined
     })
 
     it('should be used by all loggers', () => {
@@ -90,8 +94,8 @@ describe('logger module', () => {
       logger1.debug('message')
       logger2.debug('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).foo).to.equal('bar')
-      expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
+      expect(getLoggedMessage(server, 0).foo).to.equal('bar')
+      expect(getLoggedMessage(server, 1).foo).to.equal('bar')
     })
   })
 
@@ -100,7 +104,7 @@ describe('logger module', () => {
       window.Datadog.logger.setContext({ bar: 'foo' })
       window.Datadog.logger.log('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
+      expect(getLoggedMessage(server, 0).bar).to.equal('foo')
     })
 
     it('should be updatable', () => {
@@ -109,9 +113,9 @@ describe('logger module', () => {
       window.Datadog.logger.setContext({ foo: 'bar' })
       window.Datadog.logger.log('second')
 
-      expect(JSON.parse(server.requests[0].requestBody).bar).to.equal('foo')
-      expect(JSON.parse(server.requests[1].requestBody).foo).to.equal('bar')
-      expect(JSON.parse(server.requests[1].requestBody).bar).to.be.undefined
+      expect(getLoggedMessage(server, 0).bar).to.equal('foo')
+      expect(getLoggedMessage(server, 1).foo).to.equal('bar')
+      expect(getLoggedMessage(server, 1).bar).to.be.undefined
     })
   })
 
@@ -201,6 +205,14 @@ describe('logger module', () => {
       expect(consoleSpy).calledWith('error: message')
     })
 
+    it('should have their name in their context', () => {
+      const logger = window.Datadog.createLogger('foo')
+
+      logger.debug('message')
+
+      expect(getLoggedMessage(server, 0).logger.name).to.equal('foo')
+    })
+
     it('could be initialized with a dedicated context', () => {
       const logger = window.Datadog.createLogger('context', {
         context: { foo: 'bar' },
@@ -208,7 +220,7 @@ describe('logger module', () => {
 
       logger.debug('message')
 
-      expect(JSON.parse(server.requests[0].requestBody).foo).to.equal('bar')
+      expect(getLoggedMessage(server, 0).foo).to.equal('bar')
     })
 
     it('should be retrievable', () => {
