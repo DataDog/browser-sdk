@@ -38,7 +38,7 @@ describe('logger module', () => {
         date: FAKE_DATE,
         foo: 'bar',
         http: {
-          url: window.location.href,
+          referer: window.location.href,
           useragent: navigator.userAgent,
         },
         message: 'message',
