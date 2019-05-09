@@ -57,8 +57,24 @@ type EntryType =
 
 type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
 
+// cf https://www.w3.org/TR/resource-timing-2/#sec-cross-origin-resources
+const TIMING_ALLOWED_ATTRIBUTES = [
+  'redirectStart',
+  'redirectEnd',
+  'domainLookupStart',
+  'domainLookupEnd',
+  'connectStart',
+  'connectEnd',
+  'requestStart',
+  'responseStart',
+  'secureConnectionStart',
+  'transferSize',
+  'encodedBodySize',
+  'decodedBodySize',
+]
+
 interface PerformanceResourceData extends PerformanceResourceTiming {
-  connectionDuration: number
+  connectDuration: number
   domainLookupDuration: number
   redirectDuration: number
   requestDuration: number
@@ -153,7 +169,7 @@ export function handlePerformanceEntry(
     if (isBrowserAgentRequest(entry.name, configuration)) {
       return
     }
-    addTimingDurations(data)
+    processTimingAttributes(data)
     addResourceType(data)
     if (entry.initiatorType === 'xmlhttprequest') {
       computeXhrDetails(entry, currentData)
@@ -175,13 +191,25 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   )
 }
 
-function addTimingDurations(entry: PerformanceResourceData) {
-  entry.redirectDuration = entry.redirectEnd - entry.redirectStart
-  entry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
-  entry.connectionDuration = entry.connectEnd - entry.connectStart
-  entry.secureConnectionDuration = entry.secureConnectionStart > 0 ? entry.connectEnd - entry.secureConnectionStart : 0
-  entry.requestDuration = entry.responseStart - entry.requestStart
-  entry.responseDuration = entry.responseEnd - entry.responseStart
+function processTimingAttributes(entry: PerformanceResourceData) {
+  if (hasTimingAllowedAttributes(entry)) {
+    entry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
+    entry.connectDuration = entry.connectEnd - entry.connectStart
+    entry.requestDuration = entry.responseStart - entry.requestStart
+    entry.responseDuration = entry.responseEnd - entry.responseStart
+    if (entry.redirectStart > 0) {
+      entry.redirectDuration = entry.redirectEnd - entry.redirectStart
+    }
+    if (entry.secureConnectionStart > 0) {
+      entry.secureConnectionDuration = entry.connectEnd - entry.secureConnectionStart
+    }
+  } else {
+    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: string) => delete (entry as any)[attribute])
+  }
+}
+
+function hasTimingAllowedAttributes(entry: PerformanceResourceData) {
+  return entry.responseStart > 0
 }
 
 function addResourceType(entry: PerformanceResourceData) {
