@@ -17,9 +17,7 @@ export interface LogsMessage {
 
 export interface LoggerConfiguration {
   level?: StatusType
-  logLevel?: StatusType // DEPRECATED
   handler?: HandlerType
-  logHandler?: HandlerType // DEPRECATED
   context?: Context
 }
 
@@ -80,12 +78,7 @@ let customLoggers: { [name: string]: Logger }
 
 function makeCreateLogger(handlers: Handlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(
-      handlers,
-      conf.handler || conf.logHandler,
-      conf.level || conf.logLevel,
-      conf.context
-    )
+    customLoggers[name] = new Logger(handlers, conf.handler, conf.level, conf.context)
     return customLoggers[name]
   }
 }
@@ -137,18 +130,8 @@ export class Logger {
     this.loggerContext[key] = value
   }
 
-  // DEPRECATED
-  setLogHandler(handler: HandlerType) {
-    this.handler = this.handlers[handler]
-  }
-
   setHandler(handler: HandlerType) {
     this.handler = this.handlers[handler]
-  }
-
-  // DEPRECATED
-  setLogLevel(level: StatusType) {
-    this.level = level
   }
 
   setLevel(level: StatusType) {
