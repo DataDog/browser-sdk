@@ -136,7 +136,7 @@ describe('internal monitoring', () => {
         date: FAKE_DATE,
         entryType: 'internal',
         http: {
-          url: window.location.href,
+          referer: window.location.href,
           useragent: navigator.userAgent,
         },
         message: 'message',
