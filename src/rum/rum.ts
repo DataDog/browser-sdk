@@ -58,7 +58,7 @@ type EntryType =
 type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
 
 // cf https://www.w3.org/TR/resource-timing-2/#sec-cross-origin-resources
-const TIMING_ALLOWED_ATTRIBUTES = [
+const TIMING_ALLOWED_ATTRIBUTES: Array<keyof PerformanceResourceTiming> = [
   'redirectStart',
   'redirectEnd',
   'domainLookupStart',
@@ -204,7 +204,7 @@ function processTimingAttributes(entry: PerformanceResourceData) {
       entry.secureConnectionDuration = entry.connectEnd - entry.secureConnectionStart
     }
   } else {
-    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: string) => delete (entry as any)[attribute])
+    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: keyof PerformanceResourceTiming) => delete entry[attribute])
   }
 }
 

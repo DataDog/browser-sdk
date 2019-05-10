@@ -179,7 +179,7 @@ describe('rum handle performance entry', () => {
     expect(getEntry(batch, 0).data.responseDuration).to.equal(75)
   })
 
-  it.only('should remove unavailable attributes', () => {
+  it('should remove unavailable attributes', () => {
     handlePerformanceEntry(
       buildEntry({
         connectEnd: 0,
