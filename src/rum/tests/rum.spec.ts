@@ -21,6 +21,10 @@ function getEntryType(spy: sinon.SinonSpy) {
   return message.entryType
 }
 
+function getEntry(batch: any, index: number) {
+  return batch.add.getCall(index).args[0]
+}
+
 const configuration = {
   internalMonitoringEndpoint: 'monitoring',
   logsEndpoint: 'logs',
@@ -104,7 +108,7 @@ describe('rum handle performance entry', () => {
       currentData,
       configuration as Configuration
     )
-    expect(batch.add.getCall(0).args[0]).to.deep.equal({
+    expect(getEntry(batch, 0)).to.deep.equal({
       data: {
         'first-paint': 123456,
       },
@@ -152,10 +156,47 @@ describe('rum handle performance entry', () => {
           currentData,
           configuration as Configuration
         )
-        expect(batch.add.getCall(0).args[0].data.resourceType).to.equal(expected)
+        expect(getEntry(batch, 0).data.resourceType).to.equal(expected)
       })
     }
   )
+
+  it('should add timing durations', () => {
+    handlePerformanceEntry(
+      buildEntry({
+        connectEnd: 10,
+        connectStart: 3,
+        entryType: 'resource',
+        name: 'http://localhost/test',
+        responseEnd: 100,
+        responseStart: 25,
+      }),
+      batch,
+      currentData,
+      configuration as Configuration
+    )
+    expect(getEntry(batch, 0).data.connectDuration).to.equal(7)
+    expect(getEntry(batch, 0).data.responseDuration).to.equal(75)
+  })
+
+  it('should remove unavailable attributes', () => {
+    handlePerformanceEntry(
+      buildEntry({
+        connectEnd: 0,
+        connectStart: 0,
+        entryType: 'resource',
+        name: 'http://localhost/test',
+        responseEnd: 100,
+        responseStart: 0,
+      }),
+      batch,
+      currentData,
+      configuration as Configuration
+    )
+    expect(getEntry(batch, 0).data.connectStart).undefined
+    expect(getEntry(batch, 0).data.connectEnd).undefined
+    expect(getEntry(batch, 0).data.responseStart).undefined
+  })
 })
 
 describe('rum performanceObserver callback', () => {
@@ -171,26 +212,6 @@ describe('rum performanceObserver callback', () => {
         expect(currentData.xhrDetails.total).to.be.equal(1)
         expect(Object.keys(currentData.xhrDetails.resources).length).to.be.equal(1)
         expect(currentData.xhrDetails.resources[message.data.name]).to.be.equal(1)
-        done()
-      },
-    }
-
-    trackPerformanceTiming(batch as any, currentData, configuration as Configuration)
-    const request = new XMLHttpRequest()
-    request.open('GET', './', true)
-    request.send()
-  })
-
-  it('should compute timing durations for resource', (done) => {
-    const batch = {
-      add: (message: any) => {
-        expect(message.data).to.have.property('redirectDuration')
-        expect(message.data).to.have.property('domainLookupDuration')
-        expect(message.data).to.have.property('connectionDuration')
-        expect(message.data).to.have.property('secureConnectionDuration')
-        expect(message.data).to.have.property('requestDuration')
-        expect(message.data).to.have.property('responseDuration')
-
         done()
       },
     }
