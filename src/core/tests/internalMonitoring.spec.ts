@@ -137,7 +137,6 @@ describe('internal monitoring', () => {
         entryType: 'internal',
         http: {
           referer: window.location.href,
-          useragent: navigator.userAgent,
         },
         message: 'message',
       })
