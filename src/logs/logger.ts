@@ -1,11 +1,5 @@
 import { Configuration } from '../core/configuration'
-import {
-  addLoggerGlobalContext,
-  Context,
-  getCommonContext,
-  getLoggerGlobalContext,
-  setLoggerGlobalContext,
-} from '../core/context'
+import { Context, getCommonContext } from '../core/context'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 
@@ -48,6 +42,7 @@ export enum HandlerType {
 type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
 export function startLogger(configuration: Configuration) {
+  let globalContext: Context = {}
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -56,6 +51,7 @@ export function startLogger(configuration: Configuration) {
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
+      ...globalContext,
     })
   )
   const handlers = {
@@ -65,8 +61,12 @@ export function startLogger(configuration: Configuration) {
   }
   const logger = new Logger(handlers)
   customLoggers = {}
-  window.Datadog.setLoggerGlobalContext = setLoggerGlobalContext
-  window.Datadog.addLoggerGlobalContext = addLoggerGlobalContext
+  window.Datadog.setLoggerGlobalContext = (context: Context) => {
+    globalContext = context
+  }
+  window.Datadog.addLoggerGlobalContext = (key: string, value: any) => {
+    globalContext[key] = value
+  }
   window.Datadog.createLogger = makeCreateLogger(handlers)
   window.Datadog.getLogger = getLogger
   window.Datadog.logger = logger
@@ -105,7 +105,7 @@ export class Logger {
   @monitored
   log(message: string, messageContext = {}, status = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      this.handler({ message, status, ...getLoggerGlobalContext(), ...this.loggerContext, ...messageContext })
+      this.handler({ message, status, ...this.loggerContext, ...messageContext })
     }
   }
 

@@ -1,5 +1,5 @@
 import { Configuration } from '../core/configuration'
-import { getCommonContext, getLoggerGlobalContext } from '../core/context'
+import { getCommonContext } from '../core/context'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
@@ -100,7 +100,7 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
-export function startRum(errorObservable: ErrorObservable, configuration: Configuration) {
+export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = new Batch<RumMessage>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -109,7 +109,7 @@ export function startRum(errorObservable: ErrorObservable, configuration: Config
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
-      ...getLoggerGlobalContext(),
+      rumProjectId,
     })
   )
   const currentData: Data = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }

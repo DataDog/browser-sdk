@@ -69,7 +69,7 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).to.have.been.calledWith('{"message":"hello","foo":"bar"}')
+    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"hello"}')
   })
 
   it('should empty the batch after a flush', () => {
@@ -87,7 +87,7 @@ describe('batch', () => {
     batch.add({ message: '2' })
     batch.add({ message: '3' })
     expect(transport.send).to.have.been.calledWith(
-      '{"message":"1","foo":"bar"}\n{"message":"2","foo":"bar"}\n{"message":"3","foo":"bar"}'
+      '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"2"}\n{"foo":"bar","message":"3"}'
     )
   })
 
@@ -96,10 +96,10 @@ describe('batch', () => {
     expect(transport.send.notCalled).to.equal(true)
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(transport.send).to.have.been.calledWith('{"message":"50 bytes - xxxxxxxxxxxxx","foo":"bar"}', 50)
+    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
 
     batch.flush()
-    expect(transport.send).to.have.been.calledWith('{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx","foo":"bar"}', 60)
+    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
   it('should consider separator size when computing the size', () => {
@@ -107,13 +107,13 @@ describe('batch', () => {
     batch.add({ message: '30 b' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xx' }) // batch: 99 sep: 2
 
-    expect(transport.send).to.have.been.calledWith('{"message":"30 b","foo":"bar"}\n{"message":"30 b","foo":"bar"}', 61)
+    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).to.have.been.calledWith(`{"message":"${message}","foo":"bar"}`, 101)
+    expect(transport.send).to.have.been.calledWith(`{"foo":"bar","message":"${message}"}`, 101)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {

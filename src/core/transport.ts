@@ -85,7 +85,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    const processedMessage = JSON.stringify({ ...message, ...this.contextProvider() })
+    const processedMessage = JSON.stringify({ ...this.contextProvider(), ...message })
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }
@@ -101,7 +101,7 @@ export class Batch<T> {
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
-    // byte of the seperator at the end of the message
+    // byte of the separator at the end of the message
     return this.bufferBytesSize + messageBytesSize + 1 >= this.bytesLimit
   }
 
