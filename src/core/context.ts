@@ -21,7 +21,6 @@ export function getCommonContext() {
     date: new Date().getTime(),
     http: {
       referer: window.location.href,
-      useragent: navigator.userAgent,
     },
     sessionId: getSessionId(),
   }

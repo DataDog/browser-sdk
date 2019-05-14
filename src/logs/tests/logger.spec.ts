@@ -43,7 +43,6 @@ describe('logger module', () => {
         foo: 'bar',
         http: {
           referer: window.location.href,
-          useragent: navigator.userAgent,
         },
         message: 'message',
         status: 'warn',
