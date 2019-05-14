@@ -73,10 +73,16 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
     console.error('Public API Key is not configured, we will not send any data.')
     return
   }
+  // DEPRECATED isCollectingError configuration
+  const isCollectingError =
+    userConfiguration.isCollectingError !== false && userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {
     ...userConfiguration,
-    isCollectingError: userConfiguration.forwardErrorsToLogs !== false,
+    isCollectingError,
   }
   const { errorObservable, configuration } = commonInit(logsUserConfiguration)
   startLogger(errorObservable, configuration)
 })
+
+// DEPRECATED
+;(window as any).Datadog = window.DD_LOGS
