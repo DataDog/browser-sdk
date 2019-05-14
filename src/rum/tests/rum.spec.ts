@@ -53,7 +53,7 @@ describe('rum handle performance entry', () => {
   let currentData: Data
 
   beforeEach(() => {
-    currentData = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
+    currentData = { xhrDetails: { total: 0, resources: {} } }
     batch = {
       add: sinon.spy(),
     }
@@ -203,7 +203,7 @@ describe('rum performanceObserver callback', () => {
   let currentData: Data
 
   beforeEach(() => {
-    currentData = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
+    currentData = { xhrDetails: { total: 0, resources: {} } }
   })
 
   it('should detect resource', (done) => {

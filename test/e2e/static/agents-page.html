@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>e2e tests page</title>
+    <script type="text/javascript" src="./datadog-logs-us.js"></script>
+    <script type="text/javascript">
+      window.DD_LOGS.init({
+        publicApiKey: 'key',
+        internalMonitoringEndpoint: '/monitoring',
+        logsEndpoint: '/logs',
+        forwardErrorsToLogs: true
+      })
+    </script>
     <script type="text/javascript" src="./datadog-rum-us.js"></script>
     <script type="text/javascript">
-      window.Datadog.init({
+      window.DD_RUM.init({
         publicApiKey: 'key',
         internalMonitoringEndpoint: '/monitoring',
         rumProjectId: 'rumProjectId',

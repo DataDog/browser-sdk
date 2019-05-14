@@ -1,5 +1,6 @@
 import { Configuration } from '../core/configuration'
 import { Context, getCommonContext } from '../core/context'
+import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 
@@ -41,7 +42,7 @@ export enum HandlerType {
 
 type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
-export function startLogger(configuration: Configuration) {
+export function startLogger(errorObservable: ErrorObservable, configuration: Configuration) {
   let globalContext: Context = {}
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
@@ -61,17 +62,17 @@ export function startLogger(configuration: Configuration) {
   }
   const logger = new Logger(handlers)
   customLoggers = {}
-  window.Datadog.setLoggerGlobalContext = (context: Context) => {
+  window.DD_LOGS.setLoggerGlobalContext = (context: Context) => {
     globalContext = context
   }
-  window.Datadog.addLoggerGlobalContext = (key: string, value: any) => {
+  window.DD_LOGS.addLoggerGlobalContext = (key: string, value: any) => {
     globalContext[key] = value
   }
-  window.Datadog.createLogger = makeCreateLogger(handlers)
-  window.Datadog.getLogger = getLogger
-  window.Datadog.logger = logger
+  window.DD_LOGS.createLogger = makeCreateLogger(handlers)
+  window.DD_LOGS.getLogger = getLogger
+  window.DD_LOGS.logger = logger
 
-  return logger
+  errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
 }
 
 let customLoggers: { [name: string]: Logger }

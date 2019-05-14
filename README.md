@@ -8,7 +8,7 @@ It's bundled into four files which are distributed through Cloudfront:
 
 ## The `logs` bundle
 
-It contains everything needed to send logs. When loaded, it exposes a `window.Datadog` that
+It contains everything needed to send logs. When loaded, it exposes a `window.DD_LOGS` that
 contains all the public APIs.
 
 ### Typical use
@@ -16,14 +16,14 @@ contains all the public APIs.
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
 <script>
-    window.Datadog.init({
+    window.DD_LOGS.init({
         publicApiKey: 'XXX',
-        isCollectingError: true,
+        forwardErrorsToLogs: true,
     });
 </script>
 ```
 
-### API exposed in `window.Datadog`
+### API exposed in `window.DD_LOGS`
 
 What we call `Context` is a map `{key: value}` that will be added to the message context.
 
@@ -70,22 +70,22 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
 ## The `rum` bundle
 
-It's the logs bundle + the RUM related stuff, so you'll end up with the same
-`window.Datadog` but with an additional `rumProjectId` in the `init` method.
+It contains everything related to RUM stuff. When loaded, it exposes a `window.DD_RUM` that
+contains all the public APIs.
 
 ### Typical use
 
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
 <script>
-    window.Datadog.init({
+    window.DD_RUM.init({
         publicApiKey: 'XXX',
         rumProjectId: 'XXX',
     });
 </script>
 ```
 
-### API exposed in `window.Datadog`
+### API exposed in `window.DD_RUM`
 
 Right now, we don't expose any features to customize the RUM collection.
 This may change at some point.

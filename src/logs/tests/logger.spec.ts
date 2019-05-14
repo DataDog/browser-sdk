@@ -3,6 +3,8 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
+import { ErrorMessage } from '../../core/errorCollection'
+import { Observable } from '../../core/observable'
 import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
 
 use(sinonChai)
@@ -10,6 +12,7 @@ use(sinonChai)
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody)
 }
+const errorObservable = new Observable<ErrorMessage>()
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
@@ -22,7 +25,7 @@ describe('logger module', () => {
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    startLogger(configuration as Configuration)
+    startLogger(errorObservable, configuration as Configuration)
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })
@@ -34,7 +37,7 @@ describe('logger module', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      window.Datadog.logger.log('message', { foo: 'bar' }, 'warn')
+      window.DD_LOGS.logger.log('message', { foo: 'bar' }, 'warn')
 
       expect(server.requests.length).to.equal(1)
       expect(server.requests[0].url).to.equal(configuration.logsEndpoint)
@@ -52,14 +55,14 @@ describe('logger module', () => {
 
   describe('log method', () => {
     it("'logger.log' should have info status by default", () => {
-      window.Datadog.logger.log('message')
+      window.DD_LOGS.logger.log('message')
 
       expect(getLoggedMessage(server, 0).status).to.equal('info')
     })
 
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
-        ;(window.Datadog.logger as any)[status]('message')
+        ;(window.DD_LOGS.logger as any)[status]('message')
 
         expect(getLoggedMessage(server, 0).status).to.equal(status)
       })
@@ -68,17 +71,17 @@ describe('logger module', () => {
 
   describe('global context', () => {
     it('should be added to the request', () => {
-      window.Datadog.setLoggerGlobalContext({ bar: 'foo' })
-      window.Datadog.logger.log('message')
+      window.DD_LOGS.setLoggerGlobalContext({ bar: 'foo' })
+      window.DD_LOGS.logger.log('message')
 
       expect(getLoggedMessage(server, 0).bar).to.equal('foo')
     })
 
     it('should be updatable', () => {
-      window.Datadog.setLoggerGlobalContext({ bar: 'foo' })
-      window.Datadog.logger.log('first')
-      window.Datadog.setLoggerGlobalContext({ foo: 'bar' })
-      window.Datadog.logger.log('second')
+      window.DD_LOGS.setLoggerGlobalContext({ bar: 'foo' })
+      window.DD_LOGS.logger.log('first')
+      window.DD_LOGS.setLoggerGlobalContext({ foo: 'bar' })
+      window.DD_LOGS.logger.log('second')
 
       expect(getLoggedMessage(server, 0).bar).to.equal('foo')
       expect(getLoggedMessage(server, 1).foo).to.equal('bar')
@@ -86,9 +89,9 @@ describe('logger module', () => {
     })
 
     it('should be used by all loggers', () => {
-      window.Datadog.setLoggerGlobalContext({ foo: 'bar' })
-      const logger1 = window.Datadog.createLogger('1')
-      const logger2 = window.Datadog.createLogger('2')
+      window.DD_LOGS.setLoggerGlobalContext({ foo: 'bar' })
+      const logger1 = window.DD_LOGS.createLogger('1')
+      const logger2 = window.DD_LOGS.createLogger('2')
 
       logger1.debug('message')
       logger2.debug('message')
@@ -100,17 +103,17 @@ describe('logger module', () => {
 
   describe('logger context', () => {
     it('should be added to the request', () => {
-      window.Datadog.logger.setContext({ bar: 'foo' })
-      window.Datadog.logger.log('message')
+      window.DD_LOGS.logger.setContext({ bar: 'foo' })
+      window.DD_LOGS.logger.log('message')
 
       expect(getLoggedMessage(server, 0).bar).to.equal('foo')
     })
 
     it('should be updatable', () => {
-      window.Datadog.logger.setContext({ bar: 'foo' })
-      window.Datadog.logger.log('first')
-      window.Datadog.logger.setContext({ foo: 'bar' })
-      window.Datadog.logger.log('second')
+      window.DD_LOGS.logger.setContext({ bar: 'foo' })
+      window.DD_LOGS.logger.log('first')
+      window.DD_LOGS.logger.setContext({ foo: 'bar' })
+      window.DD_LOGS.logger.log('second')
 
       expect(getLoggedMessage(server, 0).bar).to.equal('foo')
       expect(getLoggedMessage(server, 1).foo).to.equal('bar')
@@ -120,15 +123,15 @@ describe('logger module', () => {
 
   describe('log level', () => {
     it('should be debug by default', () => {
-      window.Datadog.logger.debug('message')
+      window.DD_LOGS.logger.debug('message')
 
       expect(server.requests.length).to.equal(1)
     })
 
     it('should be configurable', () => {
-      window.Datadog.logger.setLevel(StatusType.info)
+      window.DD_LOGS.logger.setLevel(StatusType.info)
 
-      window.Datadog.logger.debug('message')
+      window.DD_LOGS.logger.debug('message')
 
       expect(server.requests.length).to.equal(0)
     })
@@ -146,25 +149,25 @@ describe('logger module', () => {
     })
 
     it('should be "http" by default', () => {
-      window.Datadog.logger.debug('message')
+      window.DD_LOGS.logger.debug('message')
 
       expect(server.requests.length).to.equal(1)
       expect(consoleSpy).not.called
     })
 
     it('should be configurable to "console"', () => {
-      window.Datadog.logger.setHandler(HandlerType.console)
+      window.DD_LOGS.logger.setHandler(HandlerType.console)
 
-      window.Datadog.logger.error('message')
+      window.DD_LOGS.logger.error('message')
 
       expect(server.requests.length).to.equal(0)
       expect(consoleSpy).calledWith('error: message')
     })
 
     it('should be configurable to "silent"', () => {
-      window.Datadog.logger.setHandler(HandlerType.silent)
+      window.DD_LOGS.logger.setHandler(HandlerType.silent)
 
-      window.Datadog.logger.error('message')
+      window.DD_LOGS.logger.error('message')
 
       expect(server.requests.length).to.equal(0)
       expect(consoleSpy).not.called
@@ -183,7 +186,7 @@ describe('logger module', () => {
     })
 
     it('should have a default configuration', () => {
-      const logger = window.Datadog.createLogger('foo')
+      const logger = window.DD_LOGS.createLogger('foo')
 
       logger.debug('message')
 
@@ -192,7 +195,7 @@ describe('logger module', () => {
     })
 
     it('should be configurable', () => {
-      const logger = window.Datadog.createLogger('foo', {
+      const logger = window.DD_LOGS.createLogger('foo', {
         handler: HandlerType.console,
         level: StatusType.info,
       })
@@ -205,7 +208,7 @@ describe('logger module', () => {
     })
 
     it('should have their name in their context', () => {
-      const logger = window.Datadog.createLogger('foo')
+      const logger = window.DD_LOGS.createLogger('foo')
 
       logger.debug('message')
 
@@ -213,7 +216,7 @@ describe('logger module', () => {
     })
 
     it('could be initialized with a dedicated context', () => {
-      const logger = window.Datadog.createLogger('context', {
+      const logger = window.DD_LOGS.createLogger('context', {
         context: { foo: 'bar' },
       })
 
@@ -223,19 +226,19 @@ describe('logger module', () => {
     })
 
     it('should be retrievable', () => {
-      const logger = window.Datadog.createLogger('foo')
-      expect(window.Datadog.getLogger('foo')).to.equal(logger)
-      expect(window.Datadog.getLogger('bar')).undefined
+      const logger = window.DD_LOGS.createLogger('foo')
+      expect(window.DD_LOGS.getLogger('foo')).to.equal(logger)
+      expect(window.DD_LOGS.getLogger('bar')).undefined
     })
 
     it('should all use the same batch', () => {
       const customConf = { ...configuration, maxBatchSize: 3 }
-      startLogger(customConf as Configuration)
+      startLogger(errorObservable, customConf as Configuration)
 
-      const logger1 = window.Datadog.createLogger('1')
-      const logger2 = window.Datadog.createLogger('2')
+      const logger1 = window.DD_LOGS.createLogger('1')
+      const logger2 = window.DD_LOGS.createLogger('2')
 
-      window.Datadog.logger.debug('message from default')
+      window.DD_LOGS.logger.debug('message from default')
       logger1.debug('message from logger1')
       logger2.debug('message from logger2')
 
