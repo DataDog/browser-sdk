@@ -9,28 +9,28 @@ describe('logs entry', () => {
     delete require.cache[require.resolve('../logs.entry')]
   })
 
-  it('should set Datadog global with init', () => {
-    expect(!!window.Datadog).to.be.true
-    expect(!!window.Datadog.init).to.be.true
+  it('should set global with init', () => {
+    expect(!!window.DD_LOGS).to.be.true
+    expect(!!window.DD_LOGS.init).to.be.true
   })
 
   it('init should log an error with no public api key', () => {
     const errorStub = sinon.stub(console, 'error')
 
-    window.Datadog.init(undefined as any)
+    window.DD_LOGS.init(undefined as any)
     expect(errorStub.callCount).to.eq(1)
 
-    window.Datadog.init({ stillNoApiKey: true } as any)
+    window.DD_LOGS.init({ stillNoApiKey: true } as any)
     expect(errorStub.callCount).to.eq(2)
 
-    window.Datadog.init({ publicApiKey: 'yeah' })
+    window.DD_LOGS.init({ publicApiKey: 'yeah' })
     expect(errorStub.callCount).to.eq(2)
 
     sinon.restore()
   })
 
   it('should add a `_setDebug` that works', () => {
-    const setDebug = (window.Datadog as any)._setDebug
+    const setDebug = (window.DD_LOGS as any)._setDebug
     expect(!!setDebug).true
 
     const errorStub = sinon.stub(console, 'warn')
@@ -47,5 +47,13 @@ describe('logs entry', () => {
 
     setDebug(false)
     sinon.restore()
+  })
+
+  it('should always keep the same global reference', () => {
+    const global = window.DD_LOGS
+
+    global.init({ publicApiKey: 'yeah' })
+
+    expect(window.DD_LOGS).to.eq(global)
   })
 })

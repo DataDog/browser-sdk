@@ -1,15 +1,14 @@
 import { Configuration } from '../core/configuration'
 import { getCommonContext } from '../core/context'
+import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
-import { ErrorObservable } from '../logs/errorCollection'
 
 type RequestIdleCallbackHandle = number
 
 export interface Data {
   xhrDetails: XhrDetails
-  errorCount: number
 }
 
 export interface XhrDetails {
@@ -46,6 +45,7 @@ type RumBatch = Batch<RumMessage>
 type EntryType =
   | 'animationDelay'
   | 'display'
+  | 'error'
   | 'firstIdle'
   | 'firstInput'
   | 'longtask'
@@ -112,9 +112,9 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
       rumProjectId,
     })
   )
-  const currentData: Data = { xhrDetails: { total: 0, resources: {} }, errorCount: 0 }
+  const currentData: Data = { xhrDetails: { total: 0, resources: {} } }
 
-  trackErrorCount(errorObservable, currentData)
+  trackErrors(batch, errorObservable)
   trackDisplay(batch)
   trackPerformanceTiming(batch, currentData, configuration)
   trackFirstIdle(batch)
@@ -123,9 +123,12 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
   trackPageUnload(batch, currentData)
 }
 
-function trackErrorCount(errorObservable: ErrorObservable, currentData: Data) {
-  errorObservable.subscribe(() => {
-    currentData.errorCount += 1
+function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
+  errorObservable.subscribe((data: ErrorMessage) => {
+    batch.add({
+      data,
+      entryType: 'error',
+    })
   })
 }
 
@@ -338,7 +341,6 @@ function trackPageUnload(batch: RumBatch, currentData: Data) {
     batch.add({
       data: {
         duration,
-        errorCount: currentData.errorCount,
         totalThroughput: toThroughput(currentData.xhrDetails.total, duration),
       },
       entryType: 'pageUnload',

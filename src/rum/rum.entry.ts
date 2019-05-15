@@ -1,24 +1,38 @@
-import { Configuration, UserConfiguration } from '../core/configuration'
-import { ErrorObservable } from '../logs/errorCollection'
+import { UserConfiguration } from '../core/configuration'
+
+import { commonInit, makeGlobal, makeStub } from '../core/init'
+import { monitor } from '../core/internalMonitoring'
 import { startRum } from './rum'
 
-import { buildInit } from '../core/init'
+declare global {
+  interface Window {
+    DD_RUM: RumGlobal
+  }
+}
 
-export interface RUMUserConfiguration extends UserConfiguration {
+export interface RumUserConfiguration extends UserConfiguration {
   rumProjectId: string
 }
 
-function postInit(
-  userConfiguration: RUMUserConfiguration,
-  configuration: Configuration,
-  errorObservable: ErrorObservable
-) {
+const STUBBED_RUM = {
+  init(userConfiguration: RumUserConfiguration) {
+    makeStub('core.init')
+  },
+}
+
+export type RumGlobal = typeof STUBBED_RUM
+
+window.DD_RUM = makeGlobal(STUBBED_RUM)
+window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
+  if (!userConfiguration || !userConfiguration.publicApiKey) {
+    console.error('Public API Key is not configured, we will not send any data.')
+    return
+  }
   if (!userConfiguration.rumProjectId) {
     console.error('RUM project id is not configured, no RUM data will be collected')
     return
   }
-
-  startRum(userConfiguration.rumProjectId, errorObservable, configuration)
-}
-
-buildInit(postInit)
+  const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
+  const { errorObservable, configuration } = commonInit(rumUserConfiguration)
+  startRum(rumUserConfiguration.rumProjectId, errorObservable, configuration)
+})

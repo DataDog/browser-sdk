@@ -3,6 +3,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  // reset Datadog object
-  ;(window.Datadog as any) = {}
+  // reset globals
+  ;(window.DD_LOGS as any) = {}
+  ;(window.DD_RUM as any) = {}
 })

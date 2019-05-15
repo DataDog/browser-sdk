@@ -1,9 +1,8 @@
-import { Configuration } from '../core/configuration'
-import { Context } from '../core/context'
-import { monitor } from '../core/internalMonitoring'
-import { Observable } from '../core/observable'
 import { report, StackTrace } from '../tracekit/tracekit'
-import { Logger } from './logger'
+import { Configuration } from './configuration'
+import { Context } from './context'
+import { monitor } from './internalMonitoring'
+import { Observable } from './observable'
 
 export interface ErrorMessage {
   message: string
@@ -12,10 +11,9 @@ export interface ErrorMessage {
 
 export type ErrorObservable = Observable<ErrorMessage>
 
-export function startErrorCollection(configuration: Configuration, logger: Logger) {
+export function startErrorCollection(configuration: Configuration) {
   const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
-    errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     trackXhrError(errorObservable)

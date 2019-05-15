@@ -42,3 +42,5 @@ export function getTimeSinceLoading() {
 export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
+
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>

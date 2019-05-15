@@ -1,9 +1,8 @@
-import { formatStackTraceToContext } from '../logs/errorCollection'
 import { StatusType } from '../logs/logger'
 import { computeStackTrace } from '../tracekit/tracekit'
-
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
+import { formatStackTraceToContext } from './errorCollection'
 import { Batch, HttpRequest } from './transport'
 
 interface MonitoringMessage {

@@ -1,11 +1,9 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
-import { Observable } from '../../core/observable'
 
 import { isAndroid } from '../../tests/specHelper'
 import { computeStackTrace } from '../../tracekit/tracekit'
-
 import {
   ErrorMessage,
   formatStackTraceToContext,
@@ -14,6 +12,7 @@ import {
   stopConsoleTracking,
   stopRuntimeErrorTracking,
 } from '../errorCollection'
+import { Observable } from '../observable'
 
 use(sinonChai)
 
