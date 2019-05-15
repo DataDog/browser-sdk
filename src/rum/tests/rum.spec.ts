@@ -4,7 +4,7 @@ import * as sinonChai from 'sinon-chai'
 
 import { Configuration } from '../../core/configuration'
 
-import { Data, handlePerformanceEntry, RumMessage, trackFirstIdle, trackPerformanceTiming } from '../rum'
+import { handlePerformanceEntry, RumMessage, trackFirstIdle, trackPerformanceTiming } from '../rum'
 
 use(sinonChai)
 
@@ -50,10 +50,8 @@ describe('rum', () => {
 
 describe('rum handle performance entry', () => {
   let batch: any
-  let currentData: Data
 
   beforeEach(() => {
-    currentData = { xhrDetails: { total: 0, resources: {} } }
     batch = {
       add: sinon.spy(),
     }
@@ -95,7 +93,7 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handlePerformanceEntry(buildEntry(entry), batch, currentData, configuration as Configuration)
+        handlePerformanceEntry(buildEntry(entry), batch, configuration as Configuration)
         expect(batch.add.called).to.equal(expectEntryToBeAdded)
       })
     }
@@ -105,7 +103,6 @@ describe('rum handle performance entry', () => {
     handlePerformanceEntry(
       buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
       batch,
-      currentData,
       configuration as Configuration
     )
     expect(getEntry(batch, 0)).to.deep.equal({
@@ -153,7 +150,6 @@ describe('rum handle performance entry', () => {
         handlePerformanceEntry(
           buildEntry({ initiatorType, name: url, entryType: 'resource' }),
           batch,
-          currentData,
           configuration as Configuration
         )
         expect(getEntry(batch, 0).data.resourceType).to.equal(expected)
@@ -172,7 +168,6 @@ describe('rum handle performance entry', () => {
         responseStart: 25,
       }),
       batch,
-      currentData,
       configuration as Configuration
     )
     expect(getEntry(batch, 0).data.connectDuration).to.equal(7)
@@ -190,7 +185,6 @@ describe('rum handle performance entry', () => {
         responseStart: 0,
       }),
       batch,
-      currentData,
       configuration as Configuration
     )
     expect(getEntry(batch, 0).data.connectStart).undefined
@@ -200,23 +194,15 @@ describe('rum handle performance entry', () => {
 })
 
 describe('rum performanceObserver callback', () => {
-  let currentData: Data
-
-  beforeEach(() => {
-    currentData = { xhrDetails: { total: 0, resources: {} } }
-  })
-
   it('should detect resource', (done) => {
     const batch = {
       add: (message: RumMessage) => {
-        expect(currentData.xhrDetails.total).to.be.equal(1)
-        expect(Object.keys(currentData.xhrDetails.resources).length).to.be.equal(1)
-        expect(currentData.xhrDetails.resources[message.data.name]).to.be.equal(1)
+        expect(message.data.initiatorType).to.equal('xmlhttprequest')
         done()
       },
     }
 
-    trackPerformanceTiming(batch as any, currentData, configuration as Configuration)
+    trackPerformanceTiming(batch as any, configuration as Configuration)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()

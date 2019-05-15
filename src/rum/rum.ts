@@ -7,15 +7,6 @@ import * as utils from '../core/utils'
 
 type RequestIdleCallbackHandle = number
 
-export interface Data {
-  xhrDetails: XhrDetails
-}
-
-export interface XhrDetails {
-  total: number
-  resources: { [name: string]: number }
-}
-
 interface RequestIdleCallbackOptions {
   timeout: number
 }
@@ -44,6 +35,7 @@ type RumBatch = Batch<RumMessage>
 
 type EntryType =
   | 'animationDelay'
+  | 'bufferedData'
   | 'display'
   | 'error'
   | 'firstIdle'
@@ -112,21 +104,23 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
       rumProjectId,
     })
   )
-  const currentData: Data = { xhrDetails: { total: 0, resources: {} } }
 
   trackErrors(batch, errorObservable)
   trackDisplay(batch)
-  trackPerformanceTiming(batch, currentData, configuration)
+  trackPerformanceTiming(batch, configuration)
   trackFirstIdle(batch)
   trackFirstInput(batch)
   trackInputDelay(batch)
-  trackPageUnload(batch, currentData)
+  trackPageUnload(batch)
 }
 
 function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
   errorObservable.subscribe((data: ErrorMessage) => {
     batch.add({
-      data,
+      data: {
+        ...data,
+        error_count: 1,
+      },
       entryType: 'error',
     })
   })
@@ -142,25 +136,18 @@ function trackDisplay(batch: RumBatch) {
   })
 }
 
-export function trackPerformanceTiming(batch: RumBatch, currentData: Data, configuration: Configuration) {
+export function trackPerformanceTiming(batch: RumBatch, configuration: Configuration) {
   if (PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list
-          .getEntries()
-          .forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, currentData, configuration))
+        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, configuration))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
   }
 }
 
-export function handlePerformanceEntry(
-  entry: PerformanceEntry,
-  batch: RumBatch,
-  currentData: Data,
-  configuration: Configuration
-) {
+export function handlePerformanceEntry(entry: PerformanceEntry, batch: RumBatch, configuration: Configuration) {
   const entryType = entry.entryType
   if (entryType === 'paint') {
     batch.add({ entryType, data: { [entry.name]: entry.startTime } })
@@ -175,7 +162,7 @@ export function handlePerformanceEntry(
     processTimingAttributes(data)
     addResourceType(data)
     if (entry.initiatorType === 'xmlhttprequest') {
-      computeXhrDetails(entry, currentData)
+      data.xhr_count = 1
     }
   }
 
@@ -224,14 +211,6 @@ function addResourceType(entry: PerformanceResourceData) {
     }
   }
   entry.resourceType = 'other'
-}
-
-function computeXhrDetails(entry: PerformanceEntry, currentData: Data) {
-  currentData.xhrDetails.total += 1
-  if (!currentData.xhrDetails.resources[entry.name]) {
-    currentData.xhrDetails.resources[entry.name] = 0
-  }
-  currentData.xhrDetails.resources[entry.name] += 1
 }
 
 export function trackFirstIdle(batch: RumBatch) {
@@ -325,30 +304,13 @@ function trackInputDelay(batch: RumBatch) {
   }
 }
 
-function trackPageUnload(batch: RumBatch, currentData: Data) {
+function trackPageUnload(batch: RumBatch) {
   batch.beforeFlushOnUnload(() => {
-    const duration = utils.getTimeSinceLoading()
-    Object.keys(currentData.xhrDetails.resources).forEach((name) => {
-      batch.add({
-        data: {
-          name,
-          initiatorType: 'xhrDetails',
-          throughput: toThroughput(currentData.xhrDetails.resources[name], duration),
-        },
-        entryType: 'resource',
-      })
-    })
     batch.add({
       data: {
-        duration,
-        totalThroughput: toThroughput(currentData.xhrDetails.total, duration),
+        duration: utils.getTimeSinceLoading(),
       },
       entryType: 'pageUnload',
     })
   })
-}
-
-function toThroughput(requestCount: number, duration: number) {
-  // We want a throughput per minute to have meaningful data.
-  return utils.round((requestCount / duration) * 1000 * 60, 1)
 }
