@@ -48,4 +48,12 @@ describe('logs entry', () => {
     setDebug(false)
     sinon.restore()
   })
+
+  it('should always keep the same global reference', () => {
+    const global = window.DD_LOGS
+
+    global.init({ publicApiKey: 'yeah' })
+
+    expect(window.DD_LOGS).to.eq(global)
+  })
 })

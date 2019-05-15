@@ -5,6 +5,7 @@ import * as sinonChai from 'sinon-chai'
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
+import { Omit } from '../../core/utils'
 import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
 import { LogsGlobal } from '../logs.entry'
 
@@ -14,6 +15,7 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody)
 }
 const errorObservable = new Observable<ErrorMessage>()
+type LogsApi = Omit<LogsGlobal, 'init'>
 
 describe('logger module', () => {
   const FAKE_DATE = 123456
@@ -22,13 +24,12 @@ describe('logger module', () => {
     logsEndpoint: 'https://localhost/log',
     maxBatchSize: 1,
   }
-  let LOGS: LogsGlobal
+  let LOGS: LogsApi
   let server: sinon.SinonFakeServer
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    startLogger(errorObservable, configuration as Configuration)
-    LOGS = window.DD_LOGS
+    LOGS = startLogger(errorObservable, configuration as Configuration) as LogsApi
     server = sinon.fakeServer.create()
     clock = sinon.useFakeTimers(FAKE_DATE)
   })
@@ -236,7 +237,7 @@ describe('logger module', () => {
 
     it('should all use the same batch', () => {
       const customConf = { ...configuration, maxBatchSize: 3 }
-      startLogger(errorObservable, customConf as Configuration)
+      LOGS = startLogger(errorObservable, customConf as Configuration) as LogsApi
 
       const logger1 = LOGS.createLogger('1')
       const logger2 = LOGS.createLogger('2')

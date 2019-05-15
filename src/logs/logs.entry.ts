@@ -81,7 +81,8 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
     isCollectingError,
   }
   const { errorObservable, configuration } = commonInit(logsUserConfiguration)
-  startLogger(errorObservable, configuration)
+  const globalApi = startLogger(errorObservable, configuration)
+  Object.assign(window.DD_LOGS, globalApi)
 })
 
 // DEPRECATED

@@ -3,6 +3,7 @@ import { Context, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
+import { LogsGlobal } from './logs.entry'
 
 export interface LogsMessage {
   message: string
@@ -62,17 +63,19 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
   }
   const logger = new Logger(handlers)
   customLoggers = {}
-  window.DD_LOGS.setLoggerGlobalContext = (context: Context) => {
+  errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
+
+  const globalApi: Partial<LogsGlobal> = {}
+  globalApi.setLoggerGlobalContext = (context: Context) => {
     globalContext = context
   }
-  window.DD_LOGS.addLoggerGlobalContext = (key: string, value: any) => {
+  globalApi.addLoggerGlobalContext = (key: string, value: any) => {
     globalContext[key] = value
   }
-  window.DD_LOGS.createLogger = makeCreateLogger(handlers)
-  window.DD_LOGS.getLogger = getLogger
-  window.DD_LOGS.logger = logger
-
-  errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
+  globalApi.createLogger = makeCreateLogger(handlers)
+  globalApi.getLogger = getLogger
+  globalApi.logger = logger
+  return globalApi
 }
 
 let customLoggers: { [name: string]: Logger }
