@@ -1,3 +1,5 @@
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
 // tslint:disable-next-line ban-types
 export function throttle<T extends Function>(fn: T, wait: number): T {
   let lastCall = 0
@@ -43,4 +45,25 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+export function withSnakeCaseKeys(candidate: any): any {
+  if (Array.isArray(candidate)) {
+    return candidate.map((value: any) => withSnakeCaseKeys(value))
+  }
+  if (typeof candidate === 'object') {
+    const result: any = {}
+    Object.keys(candidate).forEach((key: string) => {
+      result[toSnakeCase(key)] = withSnakeCaseKeys(candidate[key])
+    })
+    return result
+  }
+  return candidate
+}
+
+export function toSnakeCase(word: string) {
+  return word
+    .replace(
+      /[A-Z]/g,
+      (uppercaseLetter: string, index: number) => `${index !== 0 ? '_' : ''}${uppercaseLetter.toLowerCase()}`
+    )
+    .replace(/-/g, '_')
+}
