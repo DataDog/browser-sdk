@@ -44,7 +44,7 @@ describe('rum', () => {
     stub.restore()
 
     expect(batch.add.callCount).to.be.equal(1)
-    expect(getEntryType(batch.add)).eq('firstIdle')
+    expect(getEntryType(batch.add)).eq('first_idle')
   })
 })
 
