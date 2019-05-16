@@ -134,7 +134,7 @@ describe('internal monitoring', () => {
 
       expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
         date: FAKE_DATE,
-        entryType: 'internal',
+        entry_type: 'internal',
         http: {
           referer: window.location.href,
         },
