@@ -130,7 +130,7 @@ describe('runtime error tracker', () => {
 
     expect(context.error.kind).eq('TypeError')
     expect(context.error.stack).eq(`TypeError: oh snap!
-  at foo(1,bar) @ http://path/to/file.js:52:15
+  at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
   })
