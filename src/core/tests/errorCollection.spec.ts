@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import * as sinonChai from 'sinon-chai'
 
 import { isAndroid } from '../../tests/specHelper'
-import { computeStackTrace } from '../../tracekit/tracekit'
+import { StackTrace } from '../../tracekit/tracekit'
 import {
   ErrorMessage,
   formatStackTraceToContext,
@@ -98,10 +98,40 @@ describe('runtime error tracker', () => {
   })
 
   it('should format the error with right context', () => {
-    const error = new Error('abcd')
-    const context = formatStackTraceToContext(computeStackTrace(error))
-    expect(!!context.error).true
-    expect(!!context.error.stack).true
-    expect(context.error.kind).eq('Error')
+    const stack: StackTrace = {
+      message: 'oh snap!',
+      name: 'TypeError',
+      stack: [
+        {
+          args: ['1', 'bar'],
+          column: 15,
+          func: 'foo',
+          line: 52,
+          url: 'http://path/to/file.js',
+        },
+        {
+          args: [],
+          column: undefined,
+          func: '?',
+          line: 12,
+          url: 'http://path/to/file.js',
+        },
+        {
+          args: ['baz'],
+          column: undefined,
+          func: '?',
+          line: undefined,
+          url: 'http://path/to/file.js',
+        },
+      ],
+    }
+
+    const context = formatStackTraceToContext(stack)
+
+    expect(context.error.kind).eq('TypeError')
+    expect(context.error.stack).eq(`TypeError: oh snap!
+  at foo(1, bar) @ http://path/to/file.js:52:15
+  at <anonymous> @ http://path/to/file.js:12
+  at <anonymous>(baz) @ http://path/to/file.js`)
   })
 })
