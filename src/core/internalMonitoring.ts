@@ -4,6 +4,7 @@ import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { formatStackTraceToContext } from './errorCollection'
 import { Batch, HttpRequest } from './transport'
+import * as utils from './utils'
 
 interface MonitoringMessage {
   entryType: 'internal'
@@ -31,7 +32,8 @@ export function startInternalMonitoring(configuration: Configuration) {
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
-    })
+    }),
+    utils.withSnakeCaseKeys
   )
 
   Object.assign(monitoringConfiguration, {

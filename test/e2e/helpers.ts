@@ -16,7 +16,7 @@ export async function tearDown() {
 }
 
 export function retrieveRumEventsTypes() {
-  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents).map((rumEvent: any) => rumEvent.entryType))
+  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents).map((rumEvent: any) => rumEvent.entry_type))
 }
 
 export function retrieveLogsMessages() {

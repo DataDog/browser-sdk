@@ -34,17 +34,16 @@ export interface RumMessage {
 type RumBatch = Batch<RumMessage>
 
 type EntryType =
-  | 'animationDelay'
-  | 'bufferedData'
+  | 'animation_delay'
   | 'display'
   | 'error'
-  | 'firstIdle'
-  | 'firstInput'
+  | 'first_idle'
+  | 'first_input'
   | 'longtask'
   | 'navigation'
-  | 'pageUnload'
+  | 'page_unload'
   | 'paint'
-  | 'responseDelay'
+  | 'response_delay'
   | 'resource'
 
 type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
@@ -76,7 +75,7 @@ interface PerformanceResourceData extends PerformanceResourceTiming {
 }
 
 const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  ['request', (initiatorType: string) => ['xmlhttprequest', 'beacon', 'fetch', 'xhrDetails'].includes(initiatorType)],
+  ['request', (initiatorType: string) => ['xmlhttprequest', 'beacon', 'fetch'].includes(initiatorType)],
   ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
   ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
@@ -102,7 +101,8 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
     () => ({
       ...getCommonContext(),
       rumProjectId,
-    })
+    }),
+    utils.withSnakeCaseKeys
   )
 
   trackErrors(batch, errorObservable)
@@ -119,7 +119,7 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
     batch.add({
       data: {
         ...data,
-        error_count: 1,
+        errorCount: 1,
       },
       entryType: 'error',
     })
@@ -148,7 +148,7 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
 }
 
 export function handlePerformanceEntry(entry: PerformanceEntry, batch: RumBatch, configuration: Configuration) {
-  const entryType = entry.entryType
+  const entryType = entry.entryType as EntryType
   if (entryType === 'paint') {
     batch.add({ entryType, data: { [entry.name]: entry.startTime } })
     return
@@ -162,11 +162,11 @@ export function handlePerformanceEntry(entry: PerformanceEntry, batch: RumBatch,
     processTimingAttributes(data)
     addResourceType(data)
     if (entry.initiatorType === 'xmlhttprequest') {
-      data.xhr_count = 1
+      data.xhrCount = 1
     }
   }
 
-  batch.add({ data, entryType: entry.entryType as EntryType })
+  batch.add({ data, entryType })
 }
 
 function isResourceEntry(entry: PerformanceEntry): entry is PerformanceResourceTiming {
@@ -181,20 +181,20 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   )
 }
 
-function processTimingAttributes(entry: PerformanceResourceData) {
-  if (hasTimingAllowedAttributes(entry)) {
-    entry.domainLookupDuration = entry.domainLookupEnd - entry.domainLookupStart
-    entry.connectDuration = entry.connectEnd - entry.connectStart
-    entry.requestDuration = entry.responseStart - entry.requestStart
-    entry.responseDuration = entry.responseEnd - entry.responseStart
-    if (entry.redirectStart > 0) {
-      entry.redirectDuration = entry.redirectEnd - entry.redirectStart
+function processTimingAttributes(data: PerformanceResourceData) {
+  if (hasTimingAllowedAttributes(data)) {
+    data.domainLookupDuration = data.domainLookupEnd - data.domainLookupStart
+    data.connectDuration = data.connectEnd - data.connectStart
+    data.requestDuration = data.responseStart - data.requestStart
+    data.responseDuration = data.responseEnd - data.responseStart
+    if (data.redirectStart > 0) {
+      data.redirectDuration = data.redirectEnd - data.redirectStart
     }
-    if (entry.secureConnectionStart > 0) {
-      entry.secureConnectionDuration = entry.connectEnd - entry.secureConnectionStart
+    if (data.secureConnectionStart > 0) {
+      data.secureConnectionDuration = data.connectEnd - data.secureConnectionStart
     }
   } else {
-    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: keyof PerformanceResourceTiming) => delete entry[attribute])
+    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: keyof PerformanceResourceTiming) => delete data[attribute])
   }
 }
 
@@ -222,7 +222,7 @@ export function trackFirstIdle(batch: RumBatch) {
           data: {
             startTime: utils.getTimeSinceLoading(),
           },
-          entryType: 'firstIdle',
+          entryType: 'first_idle',
         })
       })
     )
@@ -248,7 +248,7 @@ function trackFirstInput(batch: RumBatch) {
         delay,
         startTime,
       },
-      entryType: 'firstInput',
+      entryType: 'first_input',
     })
   }
 }
@@ -263,11 +263,11 @@ interface Delay {
  */
 const DELAYS: { [key: string]: Delay } = {
   ANIMATION: {
-    entryType: 'animationDelay',
+    entryType: 'animation_delay',
     threshold: 10,
   },
   RESPONSE: {
-    entryType: 'responseDelay',
+    entryType: 'response_delay',
     threshold: 100,
   },
 }
@@ -310,7 +310,7 @@ function trackPageUnload(batch: RumBatch) {
       data: {
         duration: utils.getTimeSinceLoading(),
       },
-      entryType: 'pageUnload',
+      entryType: 'page_unload',
     })
   })
 }
