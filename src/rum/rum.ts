@@ -91,6 +91,8 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
+let displayId: string
+
 export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = new Batch<RumMessage>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
@@ -100,6 +102,7 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
+      displayId,
       rumProjectId,
     }),
     utils.withSnakeCaseKeys
@@ -127,9 +130,9 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
 }
 
 function trackDisplay(batch: RumBatch) {
+  displayId = utils.generateUUID()
   batch.add({
     data: {
-      display: 1,
       startTime: utils.getTimeSinceLoading(),
     },
     entryType: 'display',
