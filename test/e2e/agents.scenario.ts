@@ -29,11 +29,11 @@ describe('logs', () => {
 })
 
 describe('rum', () => {
-  it('should send display event on load', async () => {
+  it('should send page view event on load', async () => {
     browser.url('/agents-page.html')
     flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).to.contain('display')
+    expect(types).to.contain('page_view')
   })
 
   it('should track console error', async () => {
