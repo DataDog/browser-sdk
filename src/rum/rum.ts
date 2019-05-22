@@ -31,11 +31,11 @@ export interface RumMessage {
   entryType: EntryType
 }
 
-type RumBatch = Batch<RumMessage>
+export type RumBatch = Batch<RumMessage>
 
 type EntryType =
   | 'animation_delay'
-  | 'display'
+  | 'page_view'
   | 'error'
   | 'first_idle'
   | 'first_input'
@@ -91,8 +91,22 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
+let pageViewId: string
+
 export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
-  const batch = new Batch<RumMessage>(
+  const batch = initRumBatch(configuration, rumProjectId)
+
+  trackPageView(batch)
+  trackErrors(batch, errorObservable)
+  trackPerformanceTiming(batch, configuration)
+  trackFirstIdle(batch)
+  trackFirstInput(batch)
+  trackInputDelay(batch)
+  trackPageUnload(batch)
+}
+
+export function initRumBatch(configuration: Configuration, rumProjectId: string) {
+  return new Batch<RumMessage>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
@@ -100,18 +114,21 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
+      pageViewId,
       rumProjectId,
     }),
     utils.withSnakeCaseKeys
   )
+}
 
-  trackErrors(batch, errorObservable)
-  trackDisplay(batch)
-  trackPerformanceTiming(batch, configuration)
-  trackFirstIdle(batch)
-  trackFirstInput(batch)
-  trackInputDelay(batch)
-  trackPageUnload(batch)
+export function trackPageView(batch: RumBatch) {
+  pageViewId = utils.generateUUID()
+  batch.add({
+    data: {
+      startTime: utils.getTimeSinceLoading(),
+    },
+    entryType: 'page_view',
+  })
 }
 
 function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
@@ -123,16 +140,6 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
       },
       entryType: 'error',
     })
-  })
-}
-
-function trackDisplay(batch: RumBatch) {
-  batch.add({
-    data: {
-      display: 1,
-      startTime: utils.getTimeSinceLoading(),
-    },
-    entryType: 'display',
   })
 }
 

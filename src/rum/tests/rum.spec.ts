@@ -4,7 +4,15 @@ import * as sinonChai from 'sinon-chai'
 
 import { Configuration } from '../../core/configuration'
 
-import { handlePerformanceEntry, RumMessage, trackFirstIdle, trackPerformanceTiming } from '../rum'
+import {
+  handlePerformanceEntry,
+  initRumBatch,
+  RumBatch,
+  RumMessage,
+  trackFirstIdle,
+  trackPageView,
+  trackPerformanceTiming,
+} from '../rum'
 
 use(sinonChai)
 
@@ -23,6 +31,10 @@ function getEntryType(spy: sinon.SinonSpy) {
 
 function getEntry(batch: any, index: number) {
   return batch.add.getCall(index).args[0]
+}
+
+function getRumMessage(server: sinon.SinonFakeServer, index: number) {
+  return JSON.parse(server.requests[index].requestBody)
 }
 
 const configuration = {
@@ -206,5 +218,35 @@ describe('rum performanceObserver callback', () => {
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
+  })
+})
+
+describe('rum track page view', () => {
+  let batch: RumBatch
+  let server: sinon.SinonFakeServer
+
+  beforeEach(() => {
+    batch = initRumBatch(configuration as Configuration, 'rumProjectId')
+    server = sinon.fakeServer.create()
+  })
+
+  it('should send page view event with page view id', () => {
+    trackPageView(batch)
+    batch.flush()
+
+    expect(getRumMessage(server, 0).entry_type).eq('page_view')
+    expect(getRumMessage(server, 0).page_view_id).not.undefined
+  })
+
+  it('should update page view id at each page view', () => {
+    trackPageView(batch)
+    batch.flush()
+    trackPageView(batch)
+    batch.flush()
+
+    const firstId = getRumMessage(server, 0).page_view_id
+    const secondId = getRumMessage(server, 1).page_view_id
+
+    expect(firstId).not.eq(secondId)
   })
 })
