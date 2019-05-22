@@ -27,7 +27,7 @@ declare global {
 }
 
 export interface RumMessage {
-  data: any
+  data?: any
   entryType: EntryType
 }
 
@@ -35,13 +35,12 @@ export type RumBatch = Batch<RumMessage>
 
 type EntryType =
   | 'animation_delay'
-  | 'page_view'
   | 'error'
   | 'first_idle'
   | 'first_input'
   | 'longtask'
   | 'navigation'
-  | 'page_unload'
+  | 'page_view'
   | 'paint'
   | 'response_delay'
   | 'resource'
@@ -92,11 +91,13 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
 ]
 
 let pageViewId: string
+let activeLocation: Location
 
 export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = initRumBatch(configuration, rumProjectId)
 
   trackPageView(batch)
+  trackHistory(batch)
   trackErrors(batch, errorObservable)
   trackPerformanceTiming(batch, configuration)
 }
@@ -119,12 +120,36 @@ export function initRumBatch(configuration: Configuration, rumProjectId: string)
 
 export function trackPageView(batch: RumBatch) {
   pageViewId = utils.generateUUID()
+  activeLocation = { ...window.location }
   batch.add({
-    data: {
-      startTime: utils.getTimeSinceLoading(),
-    },
     entryType: 'page_view',
   })
+}
+
+function trackHistory(batch: RumBatch) {
+  const originalPushState = history.pushState
+  history.pushState = function() {
+    originalPushState.apply(this, arguments as any)
+    onUrlChange(batch)
+  }
+  const originalReplaceState = history.replaceState
+  history.replaceState = function() {
+    originalReplaceState.apply(this, arguments as any)
+    onUrlChange(batch)
+  }
+  window.addEventListener('popstate', () => {
+    onUrlChange(batch)
+  })
+}
+
+function onUrlChange(batch: RumBatch) {
+  if (areDifferentPages(activeLocation, window.location)) {
+    trackPageView(batch)
+  }
+}
+
+function areDifferentPages(previous: Location, current: Location) {
+  return previous.pathname !== current.pathname
 }
 
 function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {

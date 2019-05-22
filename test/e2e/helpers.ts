@@ -7,6 +7,11 @@ export function flushEvents() {
   browser.url('/empty.html')
 }
 
+// typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
+export function browserExecute(fn: any) {
+  browser.execute(fn)
+}
+
 export async function tearDown() {
   expect(await retrieveMonitoringErrors()).to.be.empty
   await resetServerState()
@@ -15,8 +20,12 @@ export async function tearDown() {
   expect(logs.filter((l: any) => l.level === 'SEVERE')).to.be.empty
 }
 
+export function retrieveRumEvents() {
+  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents))
+}
+
 export function retrieveRumEventsTypes() {
-  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents).map((rumEvent: any) => rumEvent.entry_type))
+  return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.entry_type))
 }
 
 export function retrieveLogsMessages() {
