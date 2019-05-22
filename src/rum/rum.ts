@@ -99,10 +99,6 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
   trackPageView(batch)
   trackErrors(batch, errorObservable)
   trackPerformanceTiming(batch, configuration)
-  trackFirstIdle(batch)
-  trackFirstInput(batch)
-  trackInputDelay(batch)
-  trackPageUnload(batch)
 }
 
 export function initRumBatch(configuration: Configuration, rumProjectId: string) {
@@ -218,106 +214,4 @@ function addResourceType(entry: PerformanceResourceData) {
     }
   }
   entry.resourceType = 'other'
-}
-
-export function trackFirstIdle(batch: RumBatch) {
-  if (window.requestIdleCallback) {
-    const handle = window.requestIdleCallback(
-      monitor(() => {
-        window.cancelIdleCallback(handle)
-        batch.add({
-          data: {
-            startTime: utils.getTimeSinceLoading(),
-          },
-          entryType: 'first_idle',
-        })
-      })
-    )
-  }
-}
-
-function trackFirstInput(batch: RumBatch) {
-  const options = { capture: true, passive: true }
-  document.addEventListener('click', logFirstInputData, options)
-  document.addEventListener('keydown', logFirstInputData, options)
-  document.addEventListener('scroll', logFirstInputData, options)
-
-  function logFirstInputData(event: Event) {
-    document.removeEventListener('click', logFirstInputData, options)
-    document.removeEventListener('keydown', logFirstInputData, options)
-    document.removeEventListener('scroll', logFirstInputData, options)
-
-    const startTime = utils.getTimeSinceLoading()
-    const delay = startTime - event.timeStamp
-
-    batch.add({
-      data: {
-        delay,
-        startTime,
-      },
-      entryType: 'first_input',
-    })
-  }
-}
-
-interface Delay {
-  entryType: EntryType
-  threshold: number
-}
-
-/**
- * cf https://developers.google.com/web/fundamentals/performance/rail
- */
-const DELAYS: { [key: string]: Delay } = {
-  ANIMATION: {
-    entryType: 'animation_delay',
-    threshold: 10,
-  },
-  RESPONSE: {
-    entryType: 'response_delay',
-    threshold: 100,
-  },
-}
-
-/**
- * Avoid to spam with scroll events
- */
-const DELAY_BETWEEN_DISTINCT_SCROLL = 2000
-
-function trackInputDelay(batch: RumBatch) {
-  const options = { capture: true, passive: true }
-  document.addEventListener('click', logIfAboveThreshold(DELAYS.RESPONSE), options)
-  document.addEventListener('keydown', logIfAboveThreshold(DELAYS.RESPONSE), options)
-  document.addEventListener(
-    'scroll',
-    utils.throttle(logIfAboveThreshold(DELAYS.ANIMATION), DELAY_BETWEEN_DISTINCT_SCROLL),
-    options
-  )
-
-  function logIfAboveThreshold({ entryType, threshold }: Delay) {
-    return (event: Event) => {
-      const startTime = utils.getTimeSinceLoading()
-      const duration = startTime - event.timeStamp
-      if (duration > threshold) {
-        batch.add({
-          entryType,
-          data: {
-            duration,
-            startTime,
-          },
-        })
-      }
-    }
-  }
-}
-
-function trackPageUnload(batch: RumBatch) {
-  batch.beforeFlushOnUnload(() => {
-    batch.add({
-      data: {
-        duration: utils.getTimeSinceLoading(),
-      },
-      entryType: 'page_unload',
-    })
-  })
 }
