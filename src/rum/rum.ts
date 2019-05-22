@@ -35,7 +35,7 @@ type RumBatch = Batch<RumMessage>
 
 type EntryType =
   | 'animation_delay'
-  | 'display'
+  | 'page_view'
   | 'error'
   | 'first_idle'
   | 'first_input'
@@ -91,7 +91,7 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
-let displayId: string
+let pageViewId: string
 
 export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = new Batch<RumMessage>(
@@ -102,14 +102,14 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
-      displayId,
+      pageViewId,
       rumProjectId,
     }),
     utils.withSnakeCaseKeys
   )
 
   trackErrors(batch, errorObservable)
-  trackDisplay(batch)
+  trackPageView(batch)
   trackPerformanceTiming(batch, configuration)
   trackFirstIdle(batch)
   trackFirstInput(batch)
@@ -129,13 +129,13 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
   })
 }
 
-function trackDisplay(batch: RumBatch) {
-  displayId = utils.generateUUID()
+function trackPageView(batch: RumBatch) {
+  pageViewId = utils.generateUUID()
   batch.add({
     data: {
       startTime: utils.getTimeSinceLoading(),
     },
-    entryType: 'display',
+    entryType: 'page_view',
   })
 }
 
