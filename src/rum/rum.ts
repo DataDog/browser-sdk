@@ -35,7 +35,7 @@ export type RumBatch = Batch<RumMessage>
 
 type EntryType = 'error' | 'navigation' | 'page_view' | 'paint' | 'resource'
 
-type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
+type ResourceType = 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
 
 // cf https://www.w3.org/TR/resource-timing-2/#sec-cross-origin-resources
 const TIMING_ALLOWED_ATTRIBUTES: Array<keyof PerformanceResourceTiming> = [
@@ -61,10 +61,13 @@ interface PerformanceResourceData extends PerformanceResourceTiming {
   responseDuration: number
   secureConnectionDuration: number
   resourceType: ResourceType
+  requestCount?: number
 }
 
 const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  ['request', (initiatorType: string) => ['xmlhttprequest', 'beacon', 'fetch'].includes(initiatorType)],
+  ['xhr', (initiatorType: string) => ['xmlhttprequest'].includes(initiatorType)],
+  ['fetch', (initiatorType: string) => ['fetch'].includes(initiatorType)],
+  ['beacon', (initiatorType: string) => ['beacon'].includes(initiatorType)],
   ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
   ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
@@ -172,15 +175,15 @@ export function handlePerformanceEntry(entry: PerformanceEntry, batch: RumBatch,
     return
   }
 
-  const data = entry.toJSON()
+  const data = entry.toJSON() as PerformanceResourceData
   if (isResourceEntry(entry)) {
     if (isBrowserAgentRequest(entry.name, configuration)) {
       return
     }
     processTimingAttributes(data)
     addResourceType(data)
-    if (entry.initiatorType === 'xmlhttprequest') {
-      data.xhrCount = 1
+    if (['xhr', 'fetch'].includes(data.resourceType)) {
+      data.requestCount = 1
     }
   }
 
@@ -220,13 +223,13 @@ function hasTimingAllowedAttributes(entry: PerformanceResourceData) {
   return entry.responseStart > 0
 }
 
-function addResourceType(entry: PerformanceResourceData) {
-  const path = new URL(entry.name).pathname
+function addResourceType(data: PerformanceResourceData) {
+  const path = new URL(data.name).pathname
   for (const [type, isType] of RESOURCE_TYPES) {
-    if (isType(entry.initiatorType, path)) {
-      entry.resourceType = type
+    if (isType(data.initiatorType, path)) {
+      data.resourceType = type
       return
     }
   }
-  entry.resourceType = 'other'
+  data.resourceType = 'other'
 }
