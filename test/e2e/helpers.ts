@@ -4,12 +4,16 @@ import * as request from 'request'
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
 export function flushEvents() {
-  browser.url('/empty.html')
+  return browser.url('/empty.html')
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
 export function browserExecute(fn: any) {
-  browser.execute(fn)
+  return browser.execute(fn)
+}
+
+export function browserExecuteAsync(fn: any) {
+  return browser.executeAsync(fn)
 }
 
 export async function tearDown() {
@@ -28,8 +32,12 @@ export function retrieveRumEventsTypes() {
   return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.entry_type))
 }
 
+export function retrieveLogs() {
+  return fetch('/logs').then((logs: string) => JSON.parse(logs))
+}
+
 export function retrieveLogsMessages() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs).map((log: any) => log.message))
+  return retrieveLogs().then((logs: any[]) => logs.map((log: any) => log.message))
 }
 
 export function retrieveMonitoringErrors() {

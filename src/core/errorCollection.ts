@@ -68,10 +68,11 @@ export function stopRuntimeErrorTracking() {
   report.unsubscribe(traceKitReportHandler)
 }
 
-interface XhrInfo {
+interface RequestDetails {
   method: string
   url: string
   status: number
+  response?: string
 }
 
 export function trackXhrError(errorObservable: ErrorObservable) {
@@ -79,8 +80,7 @@ export function trackXhrError(errorObservable: ErrorObservable) {
   XMLHttpRequest.prototype.open = function(method: string, url: string) {
     const reportXhrError = () => {
       if (this.status === 0 || this.status >= 500) {
-        const xhrInfo: XhrInfo = { method, url, status: this.status }
-        errorObservable.notify({ message: `XHR error ${url}`, context: { xhr: xhrInfo } })
+        notifyError(errorObservable, 'XHR', { method, url, status: this.status, response: this.response })
       }
     }
 
@@ -89,4 +89,20 @@ export function trackXhrError(errorObservable: ErrorObservable) {
 
     return originalOpen.apply(this, arguments as any)
   }
+}
+
+function notifyError(errorObservable: ErrorObservable, type: string, request: RequestDetails) {
+  errorObservable.notify({
+    context: {
+      error: {
+        stack: request.response || 'Failed to load',
+      },
+      http: {
+        method: request.method,
+        status_code: request.status,
+        url: request.url,
+      },
+    },
+    message: `${type} error ${request.method} ${request.url}`,
+  })
 }
