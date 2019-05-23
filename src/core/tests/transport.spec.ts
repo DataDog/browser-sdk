@@ -1,6 +1,6 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
-import * as sinonChai from 'sinon-chai'
+import sinonChai from 'sinon-chai'
 import { Batch, HttpRequest } from '../transport'
 
 use(sinonChai)
@@ -53,12 +53,13 @@ describe('batch', () => {
   const MAX_SIZE = 3
   const BATCH_BYTES_LIMIT = 100
   const MESSAGE_BYTES_LIMIT = 50 * 1024
-  const CONTEXT = { foo: 'bar' }
+  let CONTEXT: { foo: string }
   const FLUSH_TIMEOUT = 60 * 1000
-  let batch: Batch<{ message: string }>
+  let batch: Batch<{ message: string; foo?: any }>
   let transport: any
 
   beforeEach(() => {
+    CONTEXT = { foo: 'bar' }
     transport = { send: () => ({}) }
     sinon.spy(transport, 'send')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
@@ -70,6 +71,15 @@ describe('batch', () => {
     batch.flush()
 
     expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"hello"}')
+  })
+
+  it('should deep merge contexts', () => {
+    CONTEXT.foo = { bar: 'qux' } as any
+    batch.add({ message: 'hello', foo: { hello: 'qix' } })
+
+    batch.flush()
+
+    expect(transport.send).to.have.been.calledWith('{"foo":{"bar":"qux","hello":"qix"},"message":"hello"}')
   })
 
   it('should empty the batch after a flush', () => {

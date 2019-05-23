@@ -1,9 +1,9 @@
 import { expect, use } from 'chai'
-import * as shallowDeepEqual from 'chai-shallow-deep-equal'
+import chaiShallowDeepEqual from 'chai-shallow-deep-equal'
 import * as sinon from 'sinon'
 import { monitor, monitored, resetInternalMonitoring, startInternalMonitoring } from '../internalMonitoring'
 
-use(shallowDeepEqual)
+use(chaiShallowDeepEqual)
 
 const configuration: any = {
   batchBytesLimit: 100,

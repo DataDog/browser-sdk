@@ -1,10 +1,12 @@
 Component,Origin,License,Copyright
+require,lodash.merge,MIT,Copyright JS Foundation and other contributors
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 dev,@types/body-parser,MIT,Copyright Microsoft Corporation
 dev,@types/chai,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
+dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/mocha,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon-chai,MIT,Copyright Microsoft Corporation

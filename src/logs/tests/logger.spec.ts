@@ -1,6 +1,6 @@
 import { expect, use } from 'chai'
 import * as sinon from 'sinon'
-import * as sinonChai from 'sinon-chai'
+import sinonChai from 'sinon-chai'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
@@ -122,6 +122,18 @@ describe('logger module', () => {
       expect(getLoggedMessage(server, 0).bar).to.equal('foo')
       expect(getLoggedMessage(server, 1).foo).to.equal('bar')
       expect(getLoggedMessage(server, 1).bar).to.be.undefined
+    })
+
+    it('should be deep merged', () => {
+      LOGS.setLoggerGlobalContext({ foo: { bar: 'qux' } })
+      LOGS.logger.setContext({ foo: { qix: 'qux' } })
+      LOGS.logger.log('message', { foo: { qux: 'qux' } })
+
+      expect(getLoggedMessage(server, 0).foo).to.deep.equal({
+        bar: 'qux',
+        qix: 'qux',
+        qux: 'qux',
+      })
     })
   })
 

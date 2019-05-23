@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
+    "esModuleInterop": true,
     "importHelpers": true,
     "moduleResolution": "node",
     "outDir": "./dist/",

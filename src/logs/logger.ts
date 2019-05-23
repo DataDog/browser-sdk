@@ -1,3 +1,5 @@
+import lodashMerge from 'lodash.merge'
+
 import { Configuration } from '../core/configuration'
 import { Context, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
@@ -52,8 +54,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(),
-      ...globalContext,
+      ...lodashMerge(getCommonContext(), globalContext),
     })
   )
   const handlers = {
@@ -109,7 +110,7 @@ export class Logger {
   @monitored
   log(message: string, messageContext = {}, status = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      this.handler({ message, status, ...this.loggerContext, ...messageContext })
+      this.handler({ message, status, ...lodashMerge(this.loggerContext, messageContext) })
     }
   }
 
