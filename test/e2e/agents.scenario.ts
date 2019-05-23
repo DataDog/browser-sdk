@@ -139,4 +139,34 @@ describe('error collection', () => {
     expect(logs[1].http.status_code).to.equal(500)
     expect(logs[1].error.stack).to.match(/Server error/)
   })
+
+  it('should track fetch error', async () => {
+    await browserExecuteAsync((done: () => void) => {
+      let count = 0
+      fetch('http://localhost:3000/throw').then(() => (count += 1))
+      fetch('http://localhost:3000/unknown').then(() => (count += 1))
+      fetch('http://localhost:9999/unreachable').catch(() => (count += 1))
+      fetch('http://localhost:3000/ok').then(() => (count += 1))
+
+      const interval = setInterval(() => {
+        if (count === 4) {
+          clearInterval(interval)
+          done()
+        }
+      }, 500)
+    })
+    await browser.getLogs('browser')
+    await flushEvents()
+    const logs = await retrieveLogs()
+
+    expect(logs.length).eq(2)
+
+    expect(logs[0].message).to.equal('Fetch error GET http://localhost:9999/unreachable')
+    expect(logs[0].http.status_code).to.equal(0)
+    expect(logs[0].error.stack).to.equal('TypeError: Failed to fetch')
+
+    expect(logs[1].message).to.equal('Fetch error GET http://localhost:3000/throw')
+    expect(logs[1].http.status_code).to.equal(500)
+    expect(logs[1].error.stack).to.match(/Server error/)
+  })
 })

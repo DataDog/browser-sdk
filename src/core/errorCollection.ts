@@ -17,6 +17,7 @@ export function startErrorCollection(configuration: Configuration) {
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     trackXhrError(errorObservable)
+    trackFetchError(errorObservable)
   }
   return errorObservable
 }
@@ -88,6 +89,34 @@ export function trackXhrError(errorObservable: ErrorObservable) {
     this.addEventListener('error', monitor(reportXhrError))
 
     return originalOpen.apply(this, arguments as any)
+  }
+}
+
+export function trackFetchError(errorObservable: ErrorObservable) {
+  const originalFetch = window.fetch
+  window.fetch = function(input: RequestInfo, init?: RequestInit) {
+    const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
+    const reportFetchError = (response: Response | Error) => {
+      if ('stack' in response) {
+        const url = (typeof input === 'object' && input.url) || (input as string)
+        notifyError(errorObservable, 'Fetch', { method, url, response: response.stack, status: 0 })
+      } else if ('status' in response && response.status >= 500) {
+        response
+          .clone()
+          .text()
+          .then((text: string) => {
+            notifyError(errorObservable, 'Fetch', {
+              method,
+              response: text,
+              status: response.status,
+              url: response.url,
+            })
+          })
+      }
+    }
+    const responsePromise = originalFetch.apply(this, arguments as any)
+    responsePromise.then(monitor(reportFetchError)).catch(monitor(reportFetchError))
+    return responsePromise
   }
 }
 
