@@ -58,3 +58,13 @@ function fetch(url: string): Promise<string> {
     })
   })
 }
+
+export function sortByMessage(a: any, b: any) {
+  if (a.message < b.message) {
+    return -1
+  }
+  if (a.message > b.message) {
+    return 1
+  }
+  return 0
+}

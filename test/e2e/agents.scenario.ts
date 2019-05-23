@@ -8,6 +8,7 @@ import {
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
+  sortByMessage,
   tearDown,
 } from './helpers'
 
@@ -127,17 +128,17 @@ describe('error collection', () => {
     })
     await browser.getLogs('browser')
     await flushEvents()
-    const logs = await retrieveLogs()
+    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
 
     expect(logs.length).eq(2)
 
-    expect(logs[0].message).to.equal('XHR error GET http://localhost:9999/unreachable')
-    expect(logs[0].http.status_code).to.equal(0)
-    expect(logs[0].error.stack).to.equal('Failed to load')
+    expect(logs[0].message).to.equal('XHR error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).to.equal(500)
+    expect(logs[0].error.stack).to.match(/Server error/)
 
-    expect(logs[1].message).to.equal('XHR error GET http://localhost:3000/throw')
-    expect(logs[1].http.status_code).to.equal(500)
-    expect(logs[1].error.stack).to.match(/Server error/)
+    expect(logs[1].message).to.equal('XHR error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).to.equal(0)
+    expect(logs[1].error.stack).to.equal('Failed to load')
   })
 
   it('should track fetch error', async () => {
@@ -157,16 +158,16 @@ describe('error collection', () => {
     })
     await browser.getLogs('browser')
     await flushEvents()
-    const logs = await retrieveLogs()
+    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
 
     expect(logs.length).eq(2)
 
-    expect(logs[0].message).to.equal('Fetch error GET http://localhost:9999/unreachable')
-    expect(logs[0].http.status_code).to.equal(0)
-    expect(logs[0].error.stack).to.equal('TypeError: Failed to fetch')
+    expect(logs[0].message).to.equal('Fetch error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).to.equal(500)
+    expect(logs[0].error.stack).to.match(/Server error/)
 
-    expect(logs[1].message).to.equal('Fetch error GET http://localhost:3000/throw')
-    expect(logs[1].http.status_code).to.equal(500)
-    expect(logs[1].error.stack).to.match(/Server error/)
+    expect(logs[1].message).to.equal('Fetch error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).to.equal(0)
+    expect(logs[1].error.stack).to.equal('TypeError: Failed to fetch')
   })
 })
