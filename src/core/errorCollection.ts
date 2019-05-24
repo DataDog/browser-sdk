@@ -16,8 +16,8 @@ export function startErrorCollection(configuration: Configuration) {
   if (configuration.isCollectingError) {
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
-    trackXhrError(errorObservable)
-    trackFetchError(errorObservable)
+    trackXhrError(configuration, errorObservable)
+    trackFetchError(configuration, errorObservable)
   }
   return errorObservable
 }
@@ -76,12 +76,17 @@ interface RequestDetails {
   response?: string
 }
 
-export function trackXhrError(errorObservable: ErrorObservable) {
+export function trackXhrError(configuration: Configuration, errorObservable: ErrorObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = function(method: string, url: string) {
     const reportXhrError = () => {
       if (this.status === 0 || this.status >= 500) {
-        notifyError(errorObservable, 'XHR', { method, url, status: this.status, response: this.response })
+        notifyError(configuration, errorObservable, 'XHR', {
+          method,
+          url,
+          response: this.response,
+          status: this.status,
+        })
       }
     }
 
@@ -92,17 +97,17 @@ export function trackXhrError(errorObservable: ErrorObservable) {
   }
 }
 
-export function trackFetchError(errorObservable: ErrorObservable) {
+export function trackFetchError(configuration: Configuration, errorObservable: ErrorObservable) {
   const originalFetch = window.fetch
   window.fetch = async function(input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const reportFetchError = async (response: Response | Error) => {
       if ('stack' in response) {
         const url = (typeof input === 'object' && input.url) || (input as string)
-        notifyError(errorObservable, 'Fetch', { method, url, response: response.stack, status: 0 })
+        notifyError(configuration, errorObservable, 'Fetch', { method, url, response: response.stack, status: 0 })
       } else if ('status' in response && response.status >= 500) {
         const text = await response.clone().text()
-        notifyError(errorObservable, 'Fetch', {
+        notifyError(configuration, errorObservable, 'Fetch', {
           method,
           response: text,
           status: response.status,
@@ -116,11 +121,16 @@ export function trackFetchError(errorObservable: ErrorObservable) {
   }
 }
 
-function notifyError(errorObservable: ErrorObservable, type: string, request: RequestDetails) {
+function notifyError(
+  configuration: Configuration,
+  errorObservable: ErrorObservable,
+  type: string,
+  request: RequestDetails
+) {
   errorObservable.notify({
     context: {
       error: {
-        stack: request.response || 'Failed to load',
+        stack: truncateResponse(request.response, configuration) || 'Failed to load',
       },
       http: {
         method: request.method,
@@ -130,4 +140,11 @@ function notifyError(errorObservable: ErrorObservable, type: string, request: Re
     },
     message: `${type} error ${request.method} ${request.url}`,
   })
+}
+
+function truncateResponse(response: string | undefined, configuration: Configuration) {
+  if (response && response.length > configuration.requestErrorResponseLengthLimit) {
+    return `${response.substring(0, configuration.requestErrorResponseLengthLimit)}...`
+  }
+  return response
 }
