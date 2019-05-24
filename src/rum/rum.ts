@@ -33,17 +33,7 @@ export interface RumMessage {
 
 export type RumBatch = Batch<RumMessage>
 
-type EntryType =
-  | 'animation_delay'
-  | 'error'
-  | 'first_idle'
-  | 'first_input'
-  | 'longtask'
-  | 'navigation'
-  | 'page_view'
-  | 'paint'
-  | 'response_delay'
-  | 'resource'
+type EntryType = 'error' | 'navigation' | 'page_view' | 'paint' | 'resource'
 
 type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
 
