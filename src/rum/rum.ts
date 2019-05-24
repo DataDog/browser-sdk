@@ -65,9 +65,9 @@ interface PerformanceResourceData extends PerformanceResourceTiming {
 }
 
 const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  ['xhr', (initiatorType: string) => ['xmlhttprequest'].includes(initiatorType)],
-  ['fetch', (initiatorType: string) => ['fetch'].includes(initiatorType)],
-  ['beacon', (initiatorType: string) => ['beacon'].includes(initiatorType)],
+  ['xhr', (initiatorType: string) => 'xmlhttprequest' === initiatorType],
+  ['fetch', (initiatorType: string) => 'fetch' === initiatorType],
+  ['beacon', (initiatorType: string) => 'beacon' === initiatorType],
   ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
   ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
