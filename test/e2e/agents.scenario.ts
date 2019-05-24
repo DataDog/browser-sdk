@@ -69,7 +69,7 @@ describe('rum', () => {
 
     flushEvents()
     const trackedUrls = (await retrieveRumEvents())
-      .filter((rumEvent: any) => rumEvent.entry_type === 'page_view')
+      .filter((rumEvent: any) => rumEvent.type === 'page_view')
       .map((rumEvent: any) => rumEvent.http.referer.replace('http://localhost:3000', ''))
 
     expect(trackedUrls).to.deep.equal([

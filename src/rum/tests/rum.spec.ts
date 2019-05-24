@@ -9,6 +9,8 @@ import {
   initRumBatch,
   RumBatch,
   RumMessage,
+  RumPerformanceTiming,
+  RumResourceTiming,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
@@ -25,7 +27,7 @@ function buildEntry(entry: Partial<PerformanceResourceTiming>) {
 
 function getEntryType(spy: sinon.SinonSpy) {
   const message = spy.getCall(0).args[0] as any
-  return message.entryType
+  return message.type
 }
 
 function getEntry(batch: any, index: number) {
@@ -103,7 +105,7 @@ describe('rum handle performance entry', () => {
       data: {
         'first-paint': 123456,
       },
-      entryType: 'paint',
+      type: 'paint',
     })
   })
   ;[
@@ -191,7 +193,7 @@ describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
     const batch = {
       add: (message: RumMessage) => {
-        expect(message.data.initiatorType).to.equal('xmlhttprequest')
+        expect((message.data! as RumResourceTiming).resourceType).to.equal('xhr')
         done()
       },
     }
@@ -216,7 +218,7 @@ describe('rum track page view', () => {
     trackPageView(batch)
     batch.flush()
 
-    expect(getRumMessage(server, 0).entry_type).eq('page_view')
+    expect(getRumMessage(server, 0).type).eq('page_view')
     expect(getRumMessage(server, 0).page_view_id).not.undefined
   })
 

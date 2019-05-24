@@ -29,7 +29,7 @@ export async function retrieveRumEvents() {
 }
 
 export async function retrieveRumEventsTypes() {
-  return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.entry_type))
+  return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.type))
 }
 
 export async function retrieveLogs() {
