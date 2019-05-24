@@ -3,16 +3,16 @@ import * as request from 'request'
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
-export function flushEvents() {
+export async function flushEvents() {
   return browser.url('/empty.html')
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
-export function browserExecute(fn: any) {
+export async function browserExecute(fn: any) {
   return browser.execute(fn)
 }
 
-export function browserExecuteAsync(fn: any) {
+export async function browserExecuteAsync(fn: any) {
   return browser.executeAsync(fn)
 }
 
@@ -24,31 +24,31 @@ export async function tearDown() {
   expect(logs.filter((l: any) => l.level === 'SEVERE')).to.be.empty
 }
 
-export function retrieveRumEvents() {
+export async function retrieveRumEvents() {
   return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents))
 }
 
-export function retrieveRumEventsTypes() {
+export async function retrieveRumEventsTypes() {
   return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.entry_type))
 }
 
-export function retrieveLogs() {
+export async function retrieveLogs() {
   return fetch('/logs').then((logs: string) => JSON.parse(logs))
 }
 
-export function retrieveLogsMessages() {
+export async function retrieveLogsMessages() {
   return retrieveLogs().then((logs: any[]) => logs.map((log: any) => log.message))
 }
 
-export function retrieveMonitoringErrors() {
+export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors))
 }
 
-export function resetServerState() {
+export async function resetServerState() {
   return fetch('/reset')
 }
 
-function fetch(url: string): Promise<string> {
+async function fetch(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     baseRequest.get(url, (err: any, response: any, body: string) => {
       if (err) {

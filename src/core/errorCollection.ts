@@ -94,27 +94,23 @@ export function trackXhrError(errorObservable: ErrorObservable) {
 
 export function trackFetchError(errorObservable: ErrorObservable) {
   const originalFetch = window.fetch
-  window.fetch = function(input: RequestInfo, init?: RequestInit) {
+  window.fetch = async function(input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
-    const reportFetchError = (response: Response | Error) => {
+    const reportFetchError = async (response: Response | Error) => {
       if ('stack' in response) {
         const url = (typeof input === 'object' && input.url) || (input as string)
         notifyError(errorObservable, 'Fetch', { method, url, response: response.stack, status: 0 })
       } else if ('status' in response && response.status >= 500) {
-        response
-          .clone()
-          .text()
-          .then((text: string) => {
-            notifyError(errorObservable, 'Fetch', {
-              method,
-              response: text,
-              status: response.status,
-              url: response.url,
-            })
-          })
+        const text = await response.clone().text()
+        notifyError(errorObservable, 'Fetch', {
+          method,
+          response: text,
+          status: response.status,
+          url: response.url,
+        })
       }
     }
-    const responsePromise = originalFetch.apply(this, arguments as any)
+    const responsePromise = originalFetch.call(this, input, init)
     responsePromise.then(monitor(reportFetchError)).catch(monitor(reportFetchError))
     return responsePromise
   }
