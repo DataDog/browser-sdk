@@ -1,14 +1,24 @@
 import { expect } from 'chai'
 
-import { flushEvents, retrieveLogsMessages, retrieveRumEventsTypes, tearDown } from './helpers'
+import {
+  browserExecute,
+  flushEvents,
+  retrieveLogsMessages,
+  retrieveRumEvents,
+  retrieveRumEventsTypes,
+  tearDown,
+} from './helpers'
+
+beforeEach(() => {
+  browser.url('/agents-page.html')
+})
 
 afterEach(tearDown)
 
 describe('logs', () => {
   it('should send logs', async () => {
-    browser.url('/agents-page.html')
-    browser.execute(() => {
-      return (window as any).DD_LOGS.logger.log('hello')
+    browserExecute(() => {
+      ;(window as any).DD_LOGS.logger.log('hello')
     })
     flushEvents()
     const logs = await retrieveLogsMessages()
@@ -16,9 +26,8 @@ describe('logs', () => {
   })
 
   it('should track console error', async () => {
-    browser.url('/agents-page.html')
-    browser.execute(() => {
-      return console.error('oh snap') as any
+    browserExecute(() => {
+      console.error('oh snap')
     })
     flushEvents()
     const logs = await retrieveLogsMessages()
@@ -30,16 +39,50 @@ describe('logs', () => {
 
 describe('rum', () => {
   it('should send page view event on load', async () => {
-    browser.url('/agents-page.html')
     flushEvents()
     const types = await retrieveRumEventsTypes()
     expect(types).to.contain('page_view')
   })
 
+  it('should send page views during history navigation', async () => {
+    browserExecute(() => {
+      history.pushState({}, '', '/')
+
+      history.pushState({}, '', '/#push-hash')
+      history.pushState({}, '', '/?push-query')
+      history.pushState({}, '', '/push-path')
+
+      history.pushState({}, '', '/')
+
+      history.replaceState({}, '', '/#replace-hash')
+      history.replaceState({}, '', '/?replace-query')
+      history.replaceState({}, '', '/replace-path')
+
+      history.pushState({}, '', '/')
+
+      history.back()
+      history.forward()
+    })
+
+    flushEvents()
+    const trackedUrls = (await retrieveRumEvents())
+      .filter((rumEvent: any) => rumEvent.entry_type === 'page_view')
+      .map((rumEvent: any) => rumEvent.http.referer.replace('http://localhost:3000', ''))
+
+    expect(trackedUrls).to.deep.equal([
+      '/agents-page.html',
+      '/',
+      '/push-path',
+      '/',
+      '/replace-path',
+      '/',
+      '/replace-path',
+    ])
+  })
+
   it('should track console error', async () => {
-    browser.url('/agents-page.html')
-    browser.execute(() => {
-      return console.error('oh snap') as any
+    browserExecute(() => {
+      console.error('oh snap')
     })
     flushEvents()
     const types = await retrieveRumEventsTypes()

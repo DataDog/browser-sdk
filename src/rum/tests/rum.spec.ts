@@ -9,7 +9,6 @@ import {
   initRumBatch,
   RumBatch,
   RumMessage,
-  trackFirstIdle,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
@@ -42,23 +41,6 @@ const configuration = {
   logsEndpoint: 'logs',
   rumEndpoint: 'rum',
 }
-
-describe('rum', () => {
-  it('should track first idle', async () => {
-    const batch = {
-      add: sinon.spy(),
-    }
-
-    // Stub that because otherwise with all the tests running, it's never idle.
-    const stub = sinon.stub(window, 'requestIdleCallback')
-    stub.yields((func: () => void) => func())
-    trackFirstIdle(batch as any)
-    stub.restore()
-
-    expect(batch.add.callCount).to.be.equal(1)
-    expect(getEntryType(batch.add)).eq('first_idle')
-  })
-})
 
 describe('rum handle performance entry', () => {
   let batch: any

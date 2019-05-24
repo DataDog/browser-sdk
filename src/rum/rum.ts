@@ -27,24 +27,13 @@ declare global {
 }
 
 export interface RumMessage {
-  data: any
+  data?: any
   entryType: EntryType
 }
 
 export type RumBatch = Batch<RumMessage>
 
-type EntryType =
-  | 'animation_delay'
-  | 'page_view'
-  | 'error'
-  | 'first_idle'
-  | 'first_input'
-  | 'longtask'
-  | 'navigation'
-  | 'page_unload'
-  | 'paint'
-  | 'response_delay'
-  | 'resource'
+type EntryType = 'error' | 'navigation' | 'page_view' | 'paint' | 'resource'
 
 type ResourceType = 'request' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
 
@@ -92,17 +81,15 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
 ]
 
 let pageViewId: string
+let activeLocation: Location
 
 export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = initRumBatch(configuration, rumProjectId)
 
   trackPageView(batch)
+  trackHistory(batch)
   trackErrors(batch, errorObservable)
   trackPerformanceTiming(batch, configuration)
-  trackFirstIdle(batch)
-  trackFirstInput(batch)
-  trackInputDelay(batch)
-  trackPageUnload(batch)
 }
 
 export function initRumBatch(configuration: Configuration, rumProjectId: string) {
@@ -123,12 +110,36 @@ export function initRumBatch(configuration: Configuration, rumProjectId: string)
 
 export function trackPageView(batch: RumBatch) {
   pageViewId = utils.generateUUID()
+  activeLocation = { ...window.location }
   batch.add({
-    data: {
-      startTime: utils.getTimeSinceLoading(),
-    },
     entryType: 'page_view',
   })
+}
+
+function trackHistory(batch: RumBatch) {
+  const originalPushState = history.pushState
+  history.pushState = function() {
+    originalPushState.apply(this, arguments as any)
+    onUrlChange(batch)
+  }
+  const originalReplaceState = history.replaceState
+  history.replaceState = function() {
+    originalReplaceState.apply(this, arguments as any)
+    onUrlChange(batch)
+  }
+  window.addEventListener('popstate', () => {
+    onUrlChange(batch)
+  })
+}
+
+function onUrlChange(batch: RumBatch) {
+  if (areDifferentPages(activeLocation, window.location)) {
+    trackPageView(batch)
+  }
+}
+
+function areDifferentPages(previous: Location, current: Location) {
+  return previous.pathname !== current.pathname
 }
 
 function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
@@ -218,106 +229,4 @@ function addResourceType(entry: PerformanceResourceData) {
     }
   }
   entry.resourceType = 'other'
-}
-
-export function trackFirstIdle(batch: RumBatch) {
-  if (window.requestIdleCallback) {
-    const handle = window.requestIdleCallback(
-      monitor(() => {
-        window.cancelIdleCallback(handle)
-        batch.add({
-          data: {
-            startTime: utils.getTimeSinceLoading(),
-          },
-          entryType: 'first_idle',
-        })
-      })
-    )
-  }
-}
-
-function trackFirstInput(batch: RumBatch) {
-  const options = { capture: true, passive: true }
-  document.addEventListener('click', logFirstInputData, options)
-  document.addEventListener('keydown', logFirstInputData, options)
-  document.addEventListener('scroll', logFirstInputData, options)
-
-  function logFirstInputData(event: Event) {
-    document.removeEventListener('click', logFirstInputData, options)
-    document.removeEventListener('keydown', logFirstInputData, options)
-    document.removeEventListener('scroll', logFirstInputData, options)
-
-    const startTime = utils.getTimeSinceLoading()
-    const delay = startTime - event.timeStamp
-
-    batch.add({
-      data: {
-        delay,
-        startTime,
-      },
-      entryType: 'first_input',
-    })
-  }
-}
-
-interface Delay {
-  entryType: EntryType
-  threshold: number
-}
-
-/**
- * cf https://developers.google.com/web/fundamentals/performance/rail
- */
-const DELAYS: { [key: string]: Delay } = {
-  ANIMATION: {
-    entryType: 'animation_delay',
-    threshold: 10,
-  },
-  RESPONSE: {
-    entryType: 'response_delay',
-    threshold: 100,
-  },
-}
-
-/**
- * Avoid to spam with scroll events
- */
-const DELAY_BETWEEN_DISTINCT_SCROLL = 2000
-
-function trackInputDelay(batch: RumBatch) {
-  const options = { capture: true, passive: true }
-  document.addEventListener('click', logIfAboveThreshold(DELAYS.RESPONSE), options)
-  document.addEventListener('keydown', logIfAboveThreshold(DELAYS.RESPONSE), options)
-  document.addEventListener(
-    'scroll',
-    utils.throttle(logIfAboveThreshold(DELAYS.ANIMATION), DELAY_BETWEEN_DISTINCT_SCROLL),
-    options
-  )
-
-  function logIfAboveThreshold({ entryType, threshold }: Delay) {
-    return (event: Event) => {
-      const startTime = utils.getTimeSinceLoading()
-      const duration = startTime - event.timeStamp
-      if (duration > threshold) {
-        batch.add({
-          entryType,
-          data: {
-            duration,
-            startTime,
-          },
-        })
-      }
-    }
-  }
-}
-
-function trackPageUnload(batch: RumBatch) {
-  batch.beforeFlushOnUnload(() => {
-    batch.add({
-      data: {
-        duration: utils.getTimeSinceLoading(),
-      },
-      entryType: 'page_unload',
-    })
-  })
 }
