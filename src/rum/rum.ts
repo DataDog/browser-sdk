@@ -5,17 +5,15 @@ import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
 
-declare global {
-  interface PerformanceResourceTiming {
-    connectDuration: number
-    domainLookupDuration: number
-    redirectDuration: number
-    requestDuration: number
-    responseDuration: number
-    secureConnectionDuration: number
-    resourceType: ResourceType
-    requestCount?: number
-  }
+interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
+  connectDuration: number
+  domainLookupDuration: number
+  redirectDuration: number
+  requestDuration: number
+  responseDuration: number
+  secureConnectionDuration: number
+  resourceType: ResourceType
+  requestCount?: number
 }
 
 interface PerformancePaintTiming extends PerformanceEntry {
@@ -25,7 +23,10 @@ interface PerformancePaintTiming extends PerformanceEntry {
   duration: 0
 }
 
-type ObservedPerformanceTiming = PerformanceNavigationTiming | PerformancePaintTiming | PerformanceResourceTiming
+type ObservedPerformanceTiming =
+  | PerformanceNavigationTiming
+  | PerformancePaintTiming
+  | EnhancedPerformanceResourceTiming
 
 export interface RumNavigationTiming {
   domComplete: number
@@ -67,12 +68,12 @@ export type RumData = RumPerformanceTiming | RumError | RumPageView
 
 export type RumEventType = 'error' | 'navigation' | 'page_view' | 'resource' | 'paint'
 
-export interface RumMessage {
-  data: RumData
+export interface RumEvent {
+  data?: RumData
   type: RumEventType
 }
 
-export type RumBatch = Batch<RumMessage>
+export type RumBatch = Batch<RumEvent>
 
 // cf https://www.w3.org/TR/resource-timing-2/#sec-cross-origin-resources
 const TIMING_ALLOWED_ATTRIBUTES: Array<keyof PerformanceResourceTiming> = [
@@ -122,7 +123,7 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
 }
 
 export function initRumBatch(configuration: Configuration, rumProjectId: string) {
-  return new Batch<RumMessage>(
+  return new Batch<RumEvent>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
@@ -141,7 +142,6 @@ export function trackPageView(batch: RumBatch) {
   pageViewId = utils.generateUUID()
   activeLocation = { ...window.location }
   batch.add({
-    data: undefined,
     type: 'page_view',
   })
 }
@@ -208,7 +208,7 @@ function isBlacklistedTiming(timing: ObservedPerformanceTiming, configuration: C
   return isResourceTiming(timing) && isBrowserAgentRequest(timing.name, configuration)
 }
 
-function isResourceTiming(timing: ObservedPerformanceTiming): timing is PerformanceResourceTiming {
+function isResourceTiming(timing: ObservedPerformanceTiming): timing is EnhancedPerformanceResourceTiming {
   return timing.entryType === 'resource'
 }
 
@@ -235,7 +235,7 @@ function addExtraFields(timing: ObservedPerformanceTiming) {
   return timing
 }
 
-function processTimingAttributes(timing: PerformanceResourceTiming) {
+function processTimingAttributes(timing: EnhancedPerformanceResourceTiming) {
   if (hasTimingAllowedAttributes(timing)) {
     timing.domainLookupDuration = timing.domainLookupEnd - timing.domainLookupStart
     timing.connectDuration = timing.connectEnd - timing.connectStart
@@ -256,7 +256,7 @@ function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
   return timing.responseStart > 0
 }
 
-function addResourceType(timing: PerformanceResourceTiming) {
+function addResourceType(timing: EnhancedPerformanceResourceTiming) {
   const path = new URL(timing.name).pathname
   for (const [type, isType] of RESOURCE_TYPES) {
     if (isType(timing.initiatorType, path)) {
