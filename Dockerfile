@@ -42,3 +42,5 @@ RUN apt-get install -y -q --no-install-recommends g++ build-essential
 RUN mkdir -p /usr/share/man/man1
 
 RUN apt-get install -y -q --no-install-recommends default-jdk
+
+RUN apt-get -y install git

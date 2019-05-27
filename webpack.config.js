@@ -1,5 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
+const execSync = require('child_process').execSync
 const packageJson = require('./package.json')
 
 const targetDC = process.env.TARGET_DC || 'us'
@@ -27,7 +28,11 @@ module.exports = (env, argv) => ({
       buildEnv: {
         TARGET_DC: JSON.stringify(targetDC),
         TARGET_ENV: JSON.stringify(process.env.TARGET_ENV || 'staging'),
-        VERSION: JSON.stringify(argv.mode === 'development' ? 'dev' : packageJson.version),
+        VERSION: JSON.stringify(
+          `${argv.mode === 'development' ? 'dev' : packageJson.version}-${execSync('git rev-parse HEAD')
+            .toString()
+            .trim()}`
+        ),
       },
     }),
   ],
