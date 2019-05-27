@@ -99,7 +99,8 @@ export function trackXhrError(configuration: Configuration, errorObservable: Err
 
 export function trackFetchError(configuration: Configuration, errorObservable: ErrorObservable) {
   const originalFetch = window.fetch
-  window.fetch = async function(input: RequestInfo, init?: RequestInit) {
+  // tslint:disable promise-function-async
+  window.fetch = function(input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const reportFetchError = async (response: Response | Error) => {
       if ('stack' in response) {
@@ -116,7 +117,8 @@ export function trackFetchError(configuration: Configuration, errorObservable: E
       }
     }
     const responsePromise = originalFetch.call(this, input, init)
-    responsePromise.then(monitor(reportFetchError)).catch(monitor(reportFetchError))
+    responsePromise.then(monitor(reportFetchError))
+    responsePromise.catch(monitor(reportFetchError))
     return responsePromise
   }
 }
