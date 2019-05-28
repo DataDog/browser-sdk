@@ -1,9 +1,12 @@
 Component,Origin,License,Copyright
+require,lodash.merge,MIT,Copyright JS Foundation and other contributors
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 dev,@types/body-parser,MIT,Copyright Microsoft Corporation
 dev,@types/chai,MIT,Copyright Microsoft Corporation
+dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
+dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/mocha,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon-chai,MIT,Copyright Microsoft Corporation
@@ -17,6 +20,7 @@ dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
 dev,body-parser,MIT,Copyright 2014 Jonathan Ong 2014-2015 Douglas Christopher Wilson
 dev,chai-shallow-deep-equal,MIT,
 dev,chai,MIT,Copyright 2017 Chai.js Assertion Library
+dev,cors,MIT,Copyright 2013 Troy Goode
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
 dev,js-polyfills,Unlicense,
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google Inc.

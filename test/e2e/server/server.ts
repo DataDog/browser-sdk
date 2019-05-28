@@ -1,4 +1,5 @@
 import * as bodyParser from 'body-parser'
+import * as cors from 'cors'
 import * as express from 'express'
 import * as path from 'path'
 
@@ -8,6 +9,7 @@ const port = 3000
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../../../dist')))
 app.use(bodyParser.text())
+app.use(cors())
 
 let logs: object[] = []
 
@@ -37,6 +39,14 @@ app.get('/reset', (req, res) => {
   logs = []
   rumEvents = []
   monitoring = []
+  res.send('ok')
+})
+
+app.get('/throw', () => {
+  throw new Error('Server error')
+})
+
+app.get('/ok', (req, res) => {
   res.send('ok')
 })
 

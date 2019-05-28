@@ -6,7 +6,7 @@
     "build": "webpack --config webpack.config.js --mode=production",
     "dev": "webpack-dev-server --mode=development",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
-    "lint": "tslint -c ./tslint.json -p ./tsconfig.json",
+    "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/tsconfig.e2e.json",
     "test": "karma start ./test/unit/karma.unit.conf.js",
     "test:browserstack": "karma start ./test/unit/karma.browserstack.conf.js",
     "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.conf.js"
@@ -14,7 +14,9 @@
   "devDependencies": {
     "@types/body-parser": "1.17.0",
     "@types/chai": "4.1.7",
+    "@types/cors": "2.8.5",
     "@types/express": "4.16.1",
+    "@types/lodash.merge": "4.6.6",
     "@types/mocha": "5.2.5",
     "@types/request": "2.48.1",
     "@types/sinon": "7.0.5",
@@ -28,6 +30,7 @@
     "body-parser": "1.18.3",
     "chai": "4.2.0",
     "chai-shallow-deep-equal": "1.4.6",
+    "cors": "2.8.5",
     "express": "4.16.4",
     "js-polyfills": "0.1.42",
     "karma": "4.0.0",
@@ -57,6 +60,7 @@
     "webpack-dev-server": "3.1.14"
   },
   "dependencies": {
+    "lodash.merge": "4.6.1",
     "tslib": "1.9.3"
   }
 }

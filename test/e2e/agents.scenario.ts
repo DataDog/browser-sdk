@@ -2,10 +2,13 @@ import { expect } from 'chai'
 
 import {
   browserExecute,
+  browserExecuteAsync,
   flushEvents,
+  retrieveLogs,
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
+  sortByMessage,
   tearDown,
 } from './helpers'
 
@@ -25,7 +28,7 @@ describe('logs', () => {
     expect(logs).to.contain('hello')
   })
 
-  it('should track console error', async () => {
+  it('should send errors', async () => {
     browserExecute(() => {
       console.error('oh snap')
     })
@@ -80,7 +83,7 @@ describe('rum', () => {
     ])
   })
 
-  it('should track console error', async () => {
+  it('should send errors', async () => {
     browserExecute(() => {
       console.error('oh snap')
     })
@@ -89,5 +92,82 @@ describe('rum', () => {
     expect(types).to.contain('error')
     const browserLogs = await browser.getLogs('browser')
     expect(browserLogs.length).to.equal(1)
+  })
+})
+
+describe('error collection', () => {
+  it('should track xhr error', async () => {
+    await browserExecuteAsync((done: () => void) => {
+      let count = 0
+      let xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => (count += 1))
+      xhr.open('GET', 'http://localhost:3000/throw')
+      xhr.send()
+
+      xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => (count += 1))
+      xhr.open('GET', 'http://localhost:3000/unknown')
+      xhr.send()
+
+      xhr = new XMLHttpRequest()
+      xhr.addEventListener('error', () => (count += 1))
+      xhr.open('GET', 'http://localhost:9999/unreachable')
+      xhr.send()
+
+      xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => (count += 1))
+      xhr.open('GET', 'http://localhost:3000/ok')
+      xhr.send()
+
+      const interval = setInterval(() => {
+        if (count === 4) {
+          clearInterval(interval)
+          done()
+        }
+      }, 500)
+    })
+    await browser.getLogs('browser')
+    await flushEvents()
+    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
+
+    expect(logs.length).eq(2)
+
+    expect(logs[0].message).to.equal('XHR error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).to.equal(500)
+    expect(logs[0].error.stack).to.match(/Server error/)
+
+    expect(logs[1].message).to.equal('XHR error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).to.equal(0)
+    expect(logs[1].error.stack).to.equal('Failed to load')
+  })
+
+  it('should track fetch error', async () => {
+    await browserExecuteAsync((done: () => void) => {
+      let count = 0
+      fetch('http://localhost:3000/throw').then(() => (count += 1))
+      fetch('http://localhost:3000/unknown').then(() => (count += 1))
+      fetch('http://localhost:9999/unreachable').catch(() => (count += 1))
+      fetch('http://localhost:3000/ok').then(() => (count += 1))
+
+      const interval = setInterval(() => {
+        if (count === 4) {
+          clearInterval(interval)
+          done()
+        }
+      }, 500)
+    })
+    await browser.getLogs('browser')
+    await flushEvents()
+    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
+
+    expect(logs.length).eq(2)
+
+    expect(logs[0].message).to.equal('Fetch error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).to.equal(500)
+    expect(logs[0].error.stack).to.match(/Server error/)
+
+    expect(logs[1].message).to.equal('Fetch error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).to.equal(0)
+    expect(logs[1].error.stack).to.equal('TypeError: Failed to fetch')
   })
 })

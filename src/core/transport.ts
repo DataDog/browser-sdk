@@ -1,3 +1,5 @@
+import lodashMerge from 'lodash.merge'
+
 import { Context } from './context'
 import { monitor } from './internalMonitoring'
 
@@ -86,7 +88,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    let contextualizedMessage = { ...this.contextProvider(), ...message }
+    let contextualizedMessage = lodashMerge(this.contextProvider(), message)
     if (this.messageProcessor) {
       contextualizedMessage = this.messageProcessor(contextualizedMessage)
     }

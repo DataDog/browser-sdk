@@ -10,6 +10,11 @@ export const DEFAULT_CONFIGURATION = {
   maxInternalMonitoringMessagesPerPage: 15,
 
   /**
+   * arbitrary value, byte precision not needed
+   */
+  requestErrorResponseLengthLimit: 32 * 1024,
+
+  /**
    * flush automatically, the value is arbitrary.
    */
   flushTimeout: 60 * 1000,
