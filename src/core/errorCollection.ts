@@ -3,6 +3,7 @@ import { Configuration } from './configuration'
 import { Context } from './context'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
+import { ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
@@ -12,13 +13,32 @@ export interface ErrorMessage {
 export type ErrorObservable = Observable<ErrorMessage>
 
 export function startErrorCollection(configuration: Configuration) {
-  const errorObservable = new Observable<ErrorMessage>()
+  const limitedErrorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
+    const errorObservable = startLimitingErrors(configuration, limitedErrorObservable)
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     trackXhrError(configuration, errorObservable)
     trackFetchError(configuration, errorObservable)
   }
+  return limitedErrorObservable
+}
+
+export function startLimitingErrors(configuration: Configuration, limitedErrorObservable: Observable<ErrorMessage>) {
+  let errorCount = 0
+  const errorObservable = new Observable<ErrorMessage>()
+  errorObservable.subscribe((error: ErrorMessage) => {
+    if (errorCount < configuration.maxErrorsByMinute) {
+      errorCount += 1
+      limitedErrorObservable.notify(error)
+    } else if (errorCount === configuration.maxErrorsByMinute) {
+      errorCount += 1
+      limitedErrorObservable.notify({
+        message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
+      })
+    }
+  })
+  setInterval(() => (errorCount = 0), ONE_MINUTE)
   return errorObservable
 }
 
