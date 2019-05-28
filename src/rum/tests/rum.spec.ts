@@ -8,7 +8,8 @@ import {
   handlePerformanceEntry,
   initRumBatch,
   RumBatch,
-  RumMessage,
+  RumEvent,
+  RumResourceTiming,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
@@ -21,11 +22,6 @@ function buildEntry(entry: Partial<PerformanceResourceTiming>) {
     toJSON: () => ({ ...entry }),
   }
   return result as PerformanceResourceTiming
-}
-
-function getEntryType(spy: sinon.SinonSpy) {
-  const message = spy.getCall(0).args[0] as any
-  return message.entryType
 }
 
 function getEntry(batch: any, index: number) {
@@ -103,7 +99,7 @@ describe('rum handle performance entry', () => {
       data: {
         'first-paint': 123456,
       },
-      entryType: 'paint',
+      type: 'paint',
     })
   })
   ;[
@@ -190,8 +186,8 @@ describe('rum handle performance entry', () => {
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
     const batch = {
-      add: (message: RumMessage) => {
-        expect(message.data.initiatorType).to.equal('xmlhttprequest')
+      add: (message: RumEvent) => {
+        expect((message.data! as RumResourceTiming).resourceType).to.equal('xhr')
         done()
       },
     }
@@ -216,7 +212,7 @@ describe('rum track page view', () => {
     trackPageView(batch)
     batch.flush()
 
-    expect(getRumMessage(server, 0).entry_type).eq('page_view')
+    expect(getRumMessage(server, 0).type).eq('page_view')
     expect(getRumMessage(server, 0).page_view_id).not.undefined
   })
 

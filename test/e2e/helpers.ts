@@ -1,5 +1,7 @@
 import { expect } from 'chai'
 import * as request from 'request'
+import { LogsMessage } from '../../src/logs/logger'
+import { RumEvent } from '../../src/rum/rum'
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
@@ -29,7 +31,7 @@ export async function retrieveRumEvents() {
 }
 
 export async function retrieveRumEventsTypes() {
-  return retrieveRumEvents().then((rumEvents: any[]) => rumEvents.map((rumEvent: any) => rumEvent.entry_type))
+  return retrieveRumEvents().then((rumEvents: RumEvent[]) => rumEvents.map((rumEvent: RumEvent) => rumEvent.type))
 }
 
 export async function retrieveLogs() {
@@ -37,7 +39,7 @@ export async function retrieveLogs() {
 }
 
 export async function retrieveLogsMessages() {
-  return retrieveLogs().then((logs: any[]) => logs.map((log: any) => log.message))
+  return retrieveLogs().then((logs: LogsMessage[]) => logs.map((log: LogsMessage) => log.message))
 }
 
 export async function retrieveMonitoringErrors() {
@@ -59,7 +61,7 @@ async function fetch(url: string): Promise<string> {
   })
 }
 
-export function sortByMessage(a: any, b: any) {
+export function sortByMessage(a: { message: string }, b: { message: string }) {
   if (a.message < b.message) {
     return -1
   }
