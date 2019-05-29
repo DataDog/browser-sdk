@@ -14,10 +14,6 @@ import { monitor } from './internalMonitoring'
 export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number) {}
 
-  getEndpoint() {
-    return this.endpointUrl
-  }
-
   send(data: string, size: number) {
     if (navigator.sendBeacon && size < this.bytesLimit) {
       navigator.sendBeacon(this.endpointUrl, data)
@@ -29,6 +25,22 @@ export class HttpRequest {
   }
 }
 
+export class MultiHttpRequest {
+  private requests: HttpRequest[] = []
+
+  constructor(private endpointUrls: string[], private bytesLimit: number) {
+    this.endpointUrls.forEach((endpointUrl) => {
+      if (endpointUrl) {
+        this.requests.push(new HttpRequest(endpointUrl, this.bytesLimit))
+      }
+    })
+  }
+
+  send(data: string, size: number) {
+    this.requests.forEach((request) => request.send(data, size))
+  }
+}
+
 export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private buffer: string = ''
@@ -36,7 +48,7 @@ export class Batch<T> {
   private bufferMessageCount = 0
 
   constructor(
-    private request: HttpRequest,
+    private request: HttpRequest | MultiHttpRequest,
     private maxSize: number,
     private bytesLimit: number,
     private maxMessageSize: number,
@@ -65,10 +77,6 @@ export class Batch<T> {
 
   beforeFlushOnUnload(handler: () => void) {
     this.beforeFlushOnUnloadHandlers.push(handler)
-  }
-
-  getEndpoint() {
-    return this.request.getEndpoint()
   }
 
   flush() {
