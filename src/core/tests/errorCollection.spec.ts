@@ -15,6 +15,7 @@ import {
   trackFetchError,
 } from '../errorCollection'
 import { Observable } from '../observable'
+import { noop } from '../utils'
 
 use(sinonChai)
 
@@ -58,7 +59,7 @@ describe('runtime error tracker', () => {
       this.skip()
     }
     mochaHandler = window.onerror
-    onerrorSpy = sinon.spy(() => ({}))
+    onerrorSpy = sinon.spy(noop)
     window.onerror = onerrorSpy
 
     notifyError = sinon.spy()

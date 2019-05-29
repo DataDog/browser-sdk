@@ -1,5 +1,6 @@
 import { ErrorMessage } from '../core/errorCollection'
 import { Observable } from '../core/observable'
+import { noop } from '../core/utils'
 
 export function isSafari() {
   return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
@@ -23,6 +24,7 @@ export function clearAllCookies() {
 export class FetchStubBuilder {
   private messages: ErrorMessage[] = []
   private pendingFetch = 0
+  private whenAllCompleteFn: (messages: ErrorMessage[]) => void = noop
 
   constructor(observable: Observable<ErrorMessage>) {
     observable.subscribe((message: ErrorMessage) => {
@@ -62,8 +64,6 @@ export class FetchStubBuilder {
       return promise
     }) as FetchStub
   }
-
-  private whenAllCompleteFn: (messages: ErrorMessage[]) => void = () => undefined
 }
 
 export interface ResponseStub extends Partial<Response> {
