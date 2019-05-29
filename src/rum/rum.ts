@@ -2,7 +2,7 @@ import { Configuration } from '../core/configuration'
 import { getCommonContext } from '../core/context'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
-import { Batch, HttpRequest } from '../core/transport'
+import { Batch, MultiHttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
 
 interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
@@ -124,7 +124,7 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
 
 export function initRumBatch(configuration: Configuration, rumProjectId: string) {
   return new Batch<RumEvent>(
-    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
+    new MultiHttpRequest([configuration.rumEndpoint, configuration.oldRumEndpoint], configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
