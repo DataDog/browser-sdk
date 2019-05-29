@@ -1,10 +1,10 @@
 import { ONE_KILO_BYTE, ONE_MINUTE } from './utils'
 
-function getEndpoint(apiKey: string, source: string) {
+function getEndpoint(type: 'browser' | 'rum', apiKey: string, source?: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${buildEnv.VERSION}`
-  return `https://browser-http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source}&ddtags=${tags}`
+  return `https://${type}-http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source || type}&ddtags=${tags}`
 }
 
 export const DEFAULT_CONFIGURATION = {
@@ -43,22 +43,26 @@ export interface UserConfiguration {
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
+  oldRumEndpoint?: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
   rumEndpoint: string
+  oldRumEndpoint: string
   internalMonitoringEndpoint?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser'),
-    rumEndpoint: getEndpoint(userConfiguration.publicApiKey, 'browser-agent'),
+    logsEndpoint: getEndpoint('browser', userConfiguration.publicApiKey),
+    oldRumEndpoint: getEndpoint('browser', userConfiguration.publicApiKey, 'browser-agent'),
+    rumEndpoint: getEndpoint('rum', userConfiguration.publicApiKey),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
+      'browser',
       userConfiguration.internalMonitoringApiKey,
       'browser-agent-internal-monitoring'
     )
@@ -69,14 +73,17 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
   }
 
   if (buildEnv.TARGET_ENV === 'e2e-test') {
-    if (userConfiguration.internalMonitoringEndpoint) {
+    if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
-    if (userConfiguration.logsEndpoint) {
+    if (userConfiguration.logsEndpoint !== undefined) {
       configuration.logsEndpoint = userConfiguration.logsEndpoint
     }
-    if (userConfiguration.rumEndpoint) {
+    if (userConfiguration.rumEndpoint !== undefined) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
+    }
+    if (userConfiguration.oldRumEndpoint !== undefined) {
+      configuration.oldRumEndpoint = userConfiguration.oldRumEndpoint
     }
   }
 
