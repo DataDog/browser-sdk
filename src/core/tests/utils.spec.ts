@@ -2,7 +2,7 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 
-import { cache, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
+import { cache, noop, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
 
 use(sinonChai)
 let clock: sinon.SinonFakeTimers
@@ -10,7 +10,7 @@ let clock: sinon.SinonFakeTimers
 describe('utils', () => {
   it('should throttle only once by given period', () => {
     clock = sinon.useFakeTimers(123456)
-    const spy = sinon.spy(() => ({}))
+    const spy = sinon.spy(noop)
 
     const throttled = throttle(spy, 1)
 

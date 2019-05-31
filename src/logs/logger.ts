@@ -5,6 +5,7 @@ import { Context, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
+import { noop } from '../core/utils'
 import { LogsGlobal } from './logs.entry'
 
 export interface LogsMessage {
@@ -58,7 +59,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
     [HandlerType.http]: (message: LogsMessage) => batch.add(message),
-    [HandlerType.silent]: () => undefined,
+    [HandlerType.silent]: noop,
   }
   const logger = new Logger(handlers)
   customLoggers = {}

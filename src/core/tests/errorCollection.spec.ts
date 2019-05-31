@@ -15,6 +15,7 @@ import {
   trackFetchError,
 } from '../errorCollection'
 import { Observable } from '../observable'
+import { noop } from '../utils'
 
 use(sinonChai)
 
@@ -58,7 +59,7 @@ describe('runtime error tracker', () => {
       this.skip()
     }
     mochaHandler = window.onerror
-    onerrorSpy = sinon.spy(() => ({}))
+    onerrorSpy = sinon.spy(noop)
     window.onerror = onerrorSpy
 
     notifyError = sinon.spy()
@@ -154,10 +155,15 @@ describe('fetch error tracker', () => {
     const configuration = { requestErrorResponseLengthLimit: 32 }
     trackFetchError(configuration as Configuration, errorObservable)
     fetchStub = window.fetch as FetchStub
+    window.onunhandledrejection = () => {
+      throw new Error('unhandled rejected promise')
+    }
   })
 
   afterEach(() => {
     window.fetch = originalFetch
+    // tslint:disable-next-line:no-null-keyword
+    window.onunhandledrejection = null
   })
 
   it('should track server error', (done) => {

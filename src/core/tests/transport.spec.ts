@@ -2,6 +2,7 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import { Batch, HttpRequest } from '../transport'
+import { noop } from '../utils'
 
 use(sinonChai)
 
@@ -60,7 +61,7 @@ describe('batch', () => {
 
   beforeEach(() => {
     CONTEXT = { foo: 'bar' }
-    transport = { send: () => ({}) }
+    transport = { send: noop }
     sinon.spy(transport, 'send')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
   })
@@ -161,7 +162,7 @@ describe('batch', () => {
       BATCH_BYTES_LIMIT,
       MESSAGE_BYTES_LIMIT,
       FLUSH_TIMEOUT,
-      () => ({}),
+      noop,
       (message: any) => {
         message.message = `*** ${message.message} ***`
         return message
