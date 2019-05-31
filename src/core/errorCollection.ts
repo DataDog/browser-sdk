@@ -13,33 +13,32 @@ export interface ErrorMessage {
 export type ErrorObservable = Observable<ErrorMessage>
 
 export function startErrorCollection(configuration: Configuration) {
-  const limitedErrorObservable = new Observable<ErrorMessage>()
+  const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
-    const errorObservable = startLimitingErrors(configuration, limitedErrorObservable)
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     trackXhrError(configuration, errorObservable)
     trackFetchError(configuration, errorObservable)
   }
-  return limitedErrorObservable
+  return filterErrors(configuration, errorObservable)
 }
 
-export function startLimitingErrors(configuration: Configuration, limitedErrorObservable: Observable<ErrorMessage>) {
+export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {
   let errorCount = 0
-  const errorObservable = new Observable<ErrorMessage>()
+  const filteredErrorObservable = new Observable<ErrorMessage>()
   errorObservable.subscribe((error: ErrorMessage) => {
     if (errorCount < configuration.maxErrorsByMinute) {
       errorCount += 1
-      limitedErrorObservable.notify(error)
+      filteredErrorObservable.notify(error)
     } else if (errorCount === configuration.maxErrorsByMinute) {
       errorCount += 1
-      limitedErrorObservable.notify({
+      filteredErrorObservable.notify({
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
       })
     }
   })
   setInterval(() => (errorCount = 0), ONE_MINUTE)
-  return errorObservable
+  return filteredErrorObservable
 }
 
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void

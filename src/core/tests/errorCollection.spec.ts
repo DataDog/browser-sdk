@@ -7,9 +7,9 @@ import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
 import {
   ErrorMessage,
+  filterErrors,
   formatStackTraceToContext,
   startConsoleTracking,
-  startLimitingErrors,
   startRuntimeErrorTracking,
   stopConsoleTracking,
   stopRuntimeErrorTracking,
@@ -275,16 +275,16 @@ describe('fetch error tracker', () => {
 
 describe('error limitation', () => {
   let errorObservable: Observable<ErrorMessage>
-  let limitedSubscriber: sinon.SinonSpy
+  let filteredSubscriber: sinon.SinonSpy
   let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
-    const limitedErrorObservable = new Observable<ErrorMessage>()
+    errorObservable = new Observable<ErrorMessage>()
     const configuration: Partial<Configuration> = { maxErrorsByMinute: 2 }
     clock = sinon.useFakeTimers()
-    errorObservable = startLimitingErrors(configuration as Configuration, limitedErrorObservable)
-    limitedSubscriber = sinon.spy()
-    limitedErrorObservable.subscribe(limitedSubscriber)
+    const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
+    filteredSubscriber = sinon.spy()
+    filteredErrorObservable.subscribe(filteredSubscriber)
   })
 
   afterEach(() => {
@@ -296,9 +296,9 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
 
-    expect(limitedSubscriber).to.have.been.calledWith({ message: '1' })
-    expect(limitedSubscriber).to.have.been.calledWith({ message: '2' })
-    expect(limitedSubscriber).not.to.have.been.calledWith({ message: '3' })
+    expect(filteredSubscriber).to.have.been.calledWith({ message: '1' })
+    expect(filteredSubscriber).to.have.been.calledWith({ message: '2' })
+    expect(filteredSubscriber).not.to.have.been.calledWith({ message: '3' })
   })
 
   it('should send a threshold reached message', () => {
@@ -306,7 +306,7 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
 
-    expect(limitedSubscriber).to.have.been.calledWith({ message: 'Reached max number of errors by minute: 2' })
+    expect(filteredSubscriber).to.have.been.calledWith({ message: 'Reached max number of errors by minute: 2' })
   })
 
   it('should reset error count every each minute', () => {
@@ -314,12 +314,12 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
     errorObservable.notify({ message: '4' })
-    expect(limitedSubscriber.callCount).eq(3)
+    expect(filteredSubscriber.callCount).eq(3)
 
     clock.tick(ONE_MINUTE - 1)
 
     errorObservable.notify({ message: '5' })
-    expect(limitedSubscriber.callCount).eq(3)
+    expect(filteredSubscriber.callCount).eq(3)
 
     clock.tick(1)
 
@@ -327,11 +327,11 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '7' })
     errorObservable.notify({ message: '8' })
     errorObservable.notify({ message: '9' })
-    expect(limitedSubscriber.callCount).eq(6)
+    expect(filteredSubscriber.callCount).eq(6)
 
     clock.tick(ONE_MINUTE)
 
     errorObservable.notify({ message: '10' })
-    expect(limitedSubscriber.callCount).eq(7)
+    expect(filteredSubscriber.callCount).eq(7)
   })
 })
