@@ -66,3 +66,6 @@ export function toSnakeCase(word: string) {
     )
     .replace(/-/g, '_')
 }
+
+// tslint:disable-next-line:no-empty
+export function noop() {}

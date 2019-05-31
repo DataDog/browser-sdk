@@ -136,8 +136,7 @@ export function trackFetchError(configuration: Configuration, errorObservable: E
       }
     }
     const responsePromise = originalFetch.call(this, input, init)
-    responsePromise.then(monitor(reportFetchError))
-    responsePromise.catch(monitor(reportFetchError))
+    responsePromise.then(monitor(reportFetchError), monitor(reportFetchError))
     return responsePromise
   }
 }
