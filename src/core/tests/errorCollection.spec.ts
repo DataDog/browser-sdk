@@ -46,6 +46,11 @@ describe('console tracker', () => {
     console.error('foo', 'bar')
     expect(notifyError).to.have.been.calledWithExactly({ message: 'foo bar' })
   })
+
+  it('should stringify object parameters', () => {
+    console.error('Hello', { foo: 'bar' })
+    expect(notifyError).to.have.been.calledWithExactly({ message: 'Hello {\n  "foo": "bar"\n}' })
+  })
 })
 
 describe('runtime error tracker', () => {

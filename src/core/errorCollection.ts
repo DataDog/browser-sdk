@@ -28,7 +28,11 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = (message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
-    errorObservable.notify({ message: [message, ...optionalParams].join(' ') })
+    errorObservable.notify({
+      message: [message, ...optionalParams]
+        .map((param: any) => (typeof param === 'string' ? param : JSON.stringify(param, undefined, 2)))
+        .join(' '),
+    })
   }
 }
 
