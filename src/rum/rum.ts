@@ -113,8 +113,8 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
 let pageViewId: string
 let activeLocation: Location
 
-export function startRum(rumProjectId: string, errorObservable: ErrorObservable, configuration: Configuration) {
-  const batch = initRumBatch(configuration, rumProjectId)
+export function startRum(applicationId: string, errorObservable: ErrorObservable, configuration: Configuration) {
+  const batch = initRumBatch(configuration, applicationId)
 
   trackPageView(batch)
   trackHistory(batch)
@@ -122,7 +122,7 @@ export function startRum(rumProjectId: string, errorObservable: ErrorObservable,
   trackPerformanceTiming(batch, configuration)
 }
 
-export function initRumBatch(configuration: Configuration, rumProjectId: string) {
+export function initRumBatch(configuration: Configuration, applicationId: string) {
   return new Batch<RumEvent>(
     new MultiHttpRequest([configuration.rumEndpoint, configuration.oldRumEndpoint], configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -131,8 +131,8 @@ export function initRumBatch(configuration: Configuration, rumProjectId: string)
     configuration.flushTimeout,
     () => ({
       ...getCommonContext(),
+      applicationId,
       pageViewId,
-      rumProjectId,
     }),
     utils.withSnakeCaseKeys
   )
