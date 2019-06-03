@@ -3,7 +3,7 @@ import { Configuration } from './configuration'
 import { Context } from './context'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import { ONE_MINUTE } from './utils'
+import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
@@ -47,7 +47,11 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = (message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
-    errorObservable.notify({ message: [message, ...optionalParams].join(' ') })
+    errorObservable.notify({
+      message: [message, ...optionalParams]
+        .map((param: any) => (typeof param === 'string' ? param : jsonStringify(param, undefined, 2)))
+        .join(' '),
+    })
   }
 }
 

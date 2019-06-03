@@ -24,9 +24,9 @@ describe('request', () => {
   it('should use xhr when sendBeacon is not defined', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(server.requests.length).to.equal(1)
-    expect(server.requests[0].url).to.equal(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
+    expect(server.requests.length).equal(1)
+    expect(server.requests[0].url).equal(ENDPOINT_URL)
+    expect(server.requests[0].requestBody).equal('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
   it('should use sendBeacon when the size is correct', () => {
@@ -35,7 +35,7 @@ describe('request', () => {
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(navigator.sendBeacon).have.been.called
+    expect(navigator.sendBeacon).called
   })
 
   it('should use xhr over sendBeacon when the size too high', () => {
@@ -44,9 +44,9 @@ describe('request', () => {
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
 
-    expect(server.requests.length).to.equal(1)
-    expect(server.requests[0].url).to.equal(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
+    expect(server.requests.length).equal(1)
+    expect(server.requests[0].url).equal(ENDPOINT_URL)
+    expect(server.requests[0].requestBody).equal('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
   it('should fallback to xhr when sendBeacon is not queued', () => {
@@ -81,7 +81,7 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"hello"}')
+    expect(transport.send).calledWith('{"foo":"bar","message":"hello"}')
   })
 
   it('should deep merge contexts', () => {
@@ -90,7 +90,7 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).to.have.been.calledWith('{"foo":{"bar":"qux","hello":"qix"},"message":"hello"}')
+    expect(transport.send).calledWith('{"foo":{"bar":"qux","hello":"qix"},"message":"hello"}')
   })
 
   it('should empty the batch after a flush', () => {
@@ -100,27 +100,27 @@ describe('batch', () => {
     transport.send.resetHistory()
     batch.flush()
 
-    expect(transport.send.notCalled).to.equal(true)
+    expect(transport.send.notCalled).equal(true)
   })
 
   it('should flush when max size is reached', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })
     batch.add({ message: '3' })
-    expect(transport.send).to.have.been.calledWith(
+    expect(transport.send).calledWith(
       '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"2"}\n{"foo":"bar","message":"3"}'
     )
   })
 
   it('should flush when new message will overflow bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
-    expect(transport.send.notCalled).to.equal(true)
+    expect(transport.send.notCalled).equal(true)
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
+    expect(transport.send).calledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
 
     batch.flush()
-    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
+    expect(transport.send).calledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
   it('should consider separator size when computing the size', () => {
@@ -128,13 +128,13 @@ describe('batch', () => {
     batch.add({ message: '30 b' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xx' }) // batch: 99 sep: 2
 
-    expect(transport.send).to.have.been.calledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
+    expect(transport.send).calledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).to.have.been.calledWith(`{"foo":"bar","message":"${message}"}`, 101)
+    expect(transport.send).calledWith(`{"foo":"bar","message":"${message}"}`, 101)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
@@ -142,7 +142,7 @@ describe('batch', () => {
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     batch.add({ message })
-    expect(transport.send.calledTwice).to.equal(true)
+    expect(transport.send.calledTwice).equal(true)
   })
 
   it('should flush after timeout', () => {
@@ -151,7 +151,7 @@ describe('batch', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     clock.tick(100)
 
-    expect(transport.send.called).to.equal(true)
+    expect(transport.send.called).equal(true)
 
     clock.restore()
   })
@@ -161,7 +161,7 @@ describe('batch', () => {
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
-    expect(transport.send.called).to.equal(false)
+    expect(transport.send.called).equal(false)
     warnStub.restore()
   })
 
@@ -182,6 +182,6 @@ describe('batch', () => {
     batch.add({ message: 'hello' })
     batch.flush()
 
-    expect(transport.send).to.have.been.calledWith(`{"message":"*** hello ***"}`)
+    expect(transport.send).calledWith(`{"message":"*** hello ***"}`)
   })
 })

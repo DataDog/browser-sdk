@@ -130,7 +130,7 @@ describe('error collection', () => {
     await flushEvents()
     const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
 
-    expect(logs.length).eq(2)
+    expect(logs.length).equal(2)
 
     expect(logs[0].message).to.equal('XHR error GET http://localhost:3000/throw')
     expect(logs[0].http.status_code).to.equal(500)
@@ -160,7 +160,7 @@ describe('error collection', () => {
     await flushEvents()
     const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
 
-    expect(logs.length).eq(2)
+    expect(logs.length).equal(2)
 
     expect(logs[0].message).to.equal('Fetch error GET http://localhost:3000/throw')
     expect(logs[0].http.status_code).to.equal(500)

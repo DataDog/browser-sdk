@@ -9,10 +9,10 @@ describe('rum entry', () => {
     const errorStub = sinon.stub(console, 'error')
     const invalidConfiguration = { publicApiKey: 'yes' }
     window.DD_RUM.init(invalidConfiguration as RumUserConfiguration)
-    expect(errorStub.callCount).to.eq(1)
+    expect(errorStub.callCount).equal(1)
 
     window.DD_RUM.init({ publicApiKey: 'yes', applicationId: 'yes' })
-    expect(errorStub.callCount).to.eq(1)
+    expect(errorStub.callCount).equal(1)
 
     sinon.restore()
   })
