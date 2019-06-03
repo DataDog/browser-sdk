@@ -22,11 +22,11 @@ describe('Handler', () => {
     }
 
     report.subscribe(handler)
-    expect(() => wrap(throwException)()).to.throw()
+    expect(() => wrap(throwException)()).throw()
 
     setTimeout(() => {
       report.unsubscribe(handler)
-      expect(stacks.length).to.equal(1)
+      expect(stacks.length).equal(1)
       done()
     }, 1000)
   })
@@ -41,18 +41,18 @@ describe('Handler', () => {
     }
 
     report.subscribe(handler)
-    expect(() => wrap(throwException)()).to.throw()
+    expect(() => wrap(throwException)()).throw()
 
     setTimeout(() => {
       report.unsubscribe(handler)
 
-      expect(handler.callCount).to.equal(1)
+      expect(handler.callCount).equal(1)
 
       const isWindowError = handler.lastCall.args[1]
-      expect(isWindowError).to.equal(false)
+      expect(isWindowError).equal(false)
 
       const e = handler.lastCall.args[2]
-      expect(e).to.equal(exception)
+      expect(e).equal(exception)
 
       done()
     }, 1000)

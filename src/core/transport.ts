@@ -2,6 +2,7 @@ import lodashMerge from 'lodash.merge'
 
 import { Context } from './context'
 import { monitor } from './internalMonitoring'
+import { jsonStringify } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -102,7 +103,7 @@ export class Batch<T> {
     if (this.messageProcessor) {
       contextualizedMessage = this.messageProcessor(contextualizedMessage)
     }
-    const processedMessage = JSON.stringify(contextualizedMessage)
+    const processedMessage = jsonStringify(contextualizedMessage)
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }

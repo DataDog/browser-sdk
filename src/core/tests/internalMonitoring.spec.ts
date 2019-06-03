@@ -38,9 +38,9 @@ describe('internal monitoring', () => {
 
     describe('before initialisation', () => {
       it('should not monitor', () => {
-        expect(() => candidate.notMonitoredThrowing()).to.throw('not monitored')
-        expect(() => candidate.monitoredThrowing()).to.throw('monitored')
-        expect(candidate.monitoredNotThrowing()).to.equal(1)
+        expect(() => candidate.notMonitoredThrowing()).throw('not monitored')
+        expect(() => candidate.monitoredThrowing()).throw('monitored')
+        expect(candidate.monitoredNotThrowing()).equal(1)
       })
     })
 
@@ -54,12 +54,12 @@ describe('internal monitoring', () => {
       })
 
       it('should preserve original behavior', () => {
-        expect(candidate.monitoredNotThrowing()).to.equal(1)
+        expect(candidate.monitoredNotThrowing()).equal(1)
       })
 
       it('should catch error', () => {
-        expect(() => candidate.notMonitoredThrowing()).to.throw()
-        expect(() => candidate.monitoredThrowing()).to.not.throw()
+        expect(() => candidate.notMonitoredThrowing()).throw()
+        expect(() => candidate.monitoredThrowing()).not.throw()
       })
 
       it('should report error', () => {
@@ -67,7 +67,7 @@ describe('internal monitoring', () => {
 
         candidate.monitoredThrowing()
 
-        expect(JSON.parse(server.requests[0].requestBody).message).to.equal('monitored')
+        expect(JSON.parse(server.requests[0].requestBody).message).equal('monitored')
         server.restore()
       })
     })
@@ -89,12 +89,12 @@ describe('internal monitoring', () => {
 
     it('should preserve original behavior', () => {
       const decorated = monitor(notThrowing)
-      expect(decorated()).to.equal(1)
+      expect(decorated()).equal(1)
     })
 
     it('should catch error', () => {
       const decorated = monitor(throwing)
-      expect(() => decorated()).to.not.throw()
+      expect(() => decorated()).not.throw()
     })
 
     it('should report error', () => {
@@ -102,7 +102,7 @@ describe('internal monitoring', () => {
 
       monitor(throwing)()
 
-      expect(JSON.parse(server.requests[0].requestBody).message).to.equal('error')
+      expect(JSON.parse(server.requests[0].requestBody).message).equal('error')
       server.restore()
     })
   })
@@ -129,10 +129,10 @@ describe('internal monitoring', () => {
         throw new Error('message')
       })()
 
-      expect(server.requests.length).to.equal(1)
-      expect(server.requests[0].url).to.equal(configuration.internalMonitoringEndpoint)
+      expect(server.requests.length).equal(1)
+      expect(server.requests[0].url).equal(configuration.internalMonitoringEndpoint)
 
-      expect(JSON.parse(server.requests[0].requestBody)).to.shallowDeepEqual({
+      expect(JSON.parse(server.requests[0].requestBody)).shallowDeepEqual({
         date: FAKE_DATE,
         entry_type: 'internal',
         http: {
@@ -150,7 +150,7 @@ describe('internal monitoring', () => {
         })()
       }
 
-      expect(server.requests.length).to.equal(max)
+      expect(server.requests.length).equal(max)
     })
   })
 })

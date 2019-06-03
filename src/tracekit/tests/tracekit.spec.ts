@@ -17,35 +17,35 @@ describe('TraceKit', () => {
       const mockErr: any = { stack }
       const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
 
-      expect(stackFrames.stack[0].func).to.equal('new <anonymous>')
-      expect(stackFrames.stack[0].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[0].line).to.equal(63)
-      expect(stackFrames.stack[0].column).to.equal(1)
+      expect(stackFrames.stack[0].func).equal('new <anonymous>')
+      expect(stackFrames.stack[0].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[0].line).equal(63)
+      expect(stackFrames.stack[0].column).equal(1)
 
-      expect(stackFrames.stack[1].func).to.equal('namedFunc0')
-      expect(stackFrames.stack[1].url).to.equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[1].line).to.equal(10)
-      expect(stackFrames.stack[1].column).to.equal(2)
+      expect(stackFrames.stack[1].func).equal('namedFunc0')
+      expect(stackFrames.stack[1].url).equal('http://example.com/js/script.js')
+      expect(stackFrames.stack[1].line).equal(10)
+      expect(stackFrames.stack[1].column).equal(2)
 
-      expect(stackFrames.stack[2].func).to.equal('?')
-      expect(stackFrames.stack[2].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[2].line).to.equal(65)
-      expect(stackFrames.stack[2].column).to.equal(10)
+      expect(stackFrames.stack[2].func).equal('?')
+      expect(stackFrames.stack[2].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[2].line).equal(65)
+      expect(stackFrames.stack[2].column).equal(10)
 
-      expect(stackFrames.stack[3].func).to.equal('namedFunc2')
-      expect(stackFrames.stack[3].url).to.equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[3].line).to.equal(20)
-      expect(stackFrames.stack[3].column).to.equal(5)
+      expect(stackFrames.stack[3].func).equal('namedFunc2')
+      expect(stackFrames.stack[3].url).equal('http://example.com/js/script.js')
+      expect(stackFrames.stack[3].line).equal(20)
+      expect(stackFrames.stack[3].column).equal(5)
 
-      expect(stackFrames.stack[4].func).to.equal('?')
-      expect(stackFrames.stack[4].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[4].line).to.equal(67)
-      expect(stackFrames.stack[4].column).to.equal(5)
+      expect(stackFrames.stack[4].func).equal('?')
+      expect(stackFrames.stack[4].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[4].line).equal(67)
+      expect(stackFrames.stack[4].column).equal(5)
 
-      expect(stackFrames.stack[5].func).to.equal('namedFunc4')
-      expect(stackFrames.stack[5].url).to.equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[5].line).to.equal(100001)
-      expect(stackFrames.stack[5].column).to.equal(10002)
+      expect(stackFrames.stack[5].func).equal('namedFunc4')
+      expect(stackFrames.stack[5].url).equal('http://example.com/js/script.js')
+      expect(stackFrames.stack[5].line).equal(100001)
+      expect(stackFrames.stack[5].column).equal(10002)
     })
 
     it('should handle eval/anonymous strings in Chrome 46', () => {
@@ -53,27 +53,27 @@ describe('TraceKit', () => {
 ReferenceError: baz is not defined
    at bar (http://example.com/js/test.js:19:7)
    at foo (http://example.com/js/test.js:23:7)
-   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).to.equal(<anonymous>:1:26)
+   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).equal(<anonymous>:1:26)
 `
 
       const mockErr: any = { stack }
       const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
 
-      expect(stackFrames.stack[0].func).to.equal('bar')
-      expect(stackFrames.stack[0].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[0].line).to.equal(19)
-      expect(stackFrames.stack[0].column).to.equal(7)
+      expect(stackFrames.stack[0].func).equal('bar')
+      expect(stackFrames.stack[0].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[0].line).equal(19)
+      expect(stackFrames.stack[0].column).equal(7)
 
-      expect(stackFrames.stack[1].func).to.equal('foo')
-      expect(stackFrames.stack[1].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[1].line).to.equal(23)
-      expect(stackFrames.stack[1].column).to.equal(7)
+      expect(stackFrames.stack[1].func).equal('foo')
+      expect(stackFrames.stack[1].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[1].line).equal(23)
+      expect(stackFrames.stack[1].column).equal(7)
 
-      expect(stackFrames.stack[2].func).to.equal('eval')
+      expect(stackFrames.stack[2].func).equal('eval')
       // TODO: fix nested evals
-      expect(stackFrames.stack[2].url).to.equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[2].line).to.equal(26)
-      expect(stackFrames.stack[2].column).to.equal(5)
+      expect(stackFrames.stack[2].url).equal('http://example.com/js/test.js')
+      expect(stackFrames.stack[2].line).equal(26)
+      expect(stackFrames.stack[2].column).equal(5)
     })
   })
 
@@ -81,8 +81,8 @@ ReferenceError: baz is not defined
     it('should handle a native error object', () => {
       const ex = new Error('test')
       const stack = computeStackTrace(ex)
-      expect(stack.name).to.equal('Error')
-      expect(stack.message).to.equal('test')
+      expect(stack.name).equal('Error')
+      expect(stack.message).equal('test')
     })
 
     it('should handle a native error object stack from Chrome', () => {
@@ -99,7 +99,7 @@ Error: foo
       }
       const stackFrames = computeStackTrace(mockErr)
 
-      expect(stackFrames.stack[0].url).to.equal('<anonymous>')
+      expect(stackFrames.stack[0].url).equal('<anonymous>')
     })
   })
 
@@ -114,8 +114,8 @@ Error: foo
         // this is probably not good behavior;  just writing this test to verify
         // that it doesn't change unintentionally
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal(undefined)
-          expect(stack.message).to.equal(undefined)
+          expect(stack.name).equal(undefined)
+          expect(stack.message).equal(undefined)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -126,8 +126,8 @@ Error: foo
     describe('when no 5th argument (error object)', () => {
       it('should separate name, message for default error types (e.g. ReferenceError)', (done) => {
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal('ReferenceError')
-          expect(stack.message).to.equal('foo is undefined')
+          expect(stack.name).equal('ReferenceError')
+          expect(stack.message).equal('foo is undefined')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -136,8 +136,8 @@ Error: foo
 
       it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', (done) => {
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal('ReferenceError')
-          expect(stack.message).to.equal('foo is undefined')
+          expect(stack.name).equal('ReferenceError')
+          expect(stack.message).equal('foo is undefined')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -147,8 +147,8 @@ Error: foo
 
       it('should separate name, message for default error types on Opera Mini', (done) => {
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal('ReferenceError')
-          expect(stack.message).to.equal('Undefined variable: foo')
+          expect(stack.name).equal('ReferenceError')
+          expect(stack.message).equal('Undefined variable: foo')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -162,8 +162,8 @@ Error: foo
       it('should ignore unknown error types', (done) => {
         // TODO: should we attempt to parse this?
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal(undefined)
-          expect(stack.message).to.equal('CustomError: woo scary')
+          expect(stack.name).equal(undefined)
+          expect(stack.message).equal('CustomError: woo scary')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -172,8 +172,8 @@ Error: foo
 
       it('should ignore arbitrary messages passed through onerror', (done) => {
         subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).to.equal(undefined)
-          expect(stack.message).to.equal('all work and no play makes homer: something something')
+          expect(stack.name).equal(undefined)
+          expect(stack.message).equal('all work and no play makes homer: something something')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -209,7 +209,7 @@ Error: foo
         const e = new Error('testing')
         expect(() => {
           report(e)
-        }).to.throw(e)
+        }).throw(e)
       }
       // The call to report should work whether or not window.onerror is
       // triggered, so we parameterize it for the tests. We only call it
