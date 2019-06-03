@@ -21,7 +21,7 @@ describe('request', () => {
     server.restore()
   })
 
-  it('should use HttpRequest when sendBeacon is not defined', () => {
+  it('should use xhr when sendBeacon is not defined', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
     expect(server.requests.length).to.equal(1)
@@ -29,7 +29,7 @@ describe('request', () => {
     expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
-  it('should use sendBeacon over HttpRequest when the size is correct', () => {
+  it('should use sendBeacon when the size is correct', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
@@ -38,7 +38,7 @@ describe('request', () => {
     expect(navigator.sendBeacon).have.been.called
   })
 
-  it('should use HttpRequest over sendBeacon when the size too high', () => {
+  it('should use xhr over sendBeacon when the size too high', () => {
     navigator.sendBeacon = (url: string, data: string) => true
     sinon.spy(navigator, 'sendBeacon')
 
@@ -47,6 +47,16 @@ describe('request', () => {
     expect(server.requests.length).to.equal(1)
     expect(server.requests[0].url).to.equal(ENDPOINT_URL)
     expect(server.requests[0].requestBody).to.equal('{"foo":"bar1"}\n{"foo":"bar2"}')
+  })
+
+  it('should fallback to xhr when sendBeacon is not queued', () => {
+    navigator.sendBeacon = (url: string, data: string) => false
+    sinon.spy(navigator, 'sendBeacon')
+
+    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+
+    expect(navigator.sendBeacon).have.been.called
+    expect(server.requests.length).to.equal(1)
   })
 })
 
