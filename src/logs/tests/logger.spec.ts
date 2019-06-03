@@ -128,11 +128,17 @@ describe('logger module', () => {
       LOGS.setLoggerGlobalContext({ foo: { bar: 'qux' } })
       LOGS.logger.setContext({ foo: { qix: 'qux' } })
       LOGS.logger.log('message', { foo: { qux: 'qux' } })
+      LOGS.logger.log('message', { foo: { hello: 'hi' } })
 
       expect(getLoggedMessage(server, 0).foo).to.deep.equal({
         bar: 'qux',
         qix: 'qux',
         qux: 'qux',
+      })
+      expect(getLoggedMessage(server, 1).foo).to.deep.equal({
+        bar: 'qux',
+        hello: 'hi',
+        qix: 'qux',
       })
     })
   })

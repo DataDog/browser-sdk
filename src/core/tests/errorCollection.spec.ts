@@ -7,6 +7,7 @@ import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
 import {
   ErrorMessage,
+  filterErrors,
   formatStackTraceToContext,
   startConsoleTracking,
   startRuntimeErrorTracking,
@@ -15,7 +16,7 @@ import {
   trackFetchError,
 } from '../errorCollection'
 import { Observable } from '../observable'
-import { noop } from '../utils'
+import { noop, ONE_MINUTE } from '../utils'
 
 use(sinonChai)
 
@@ -279,5 +280,68 @@ describe('fetch error tracker', () => {
       expect(spy.called).to.equal(true)
       done()
     })
+  })
+})
+
+describe('error limitation', () => {
+  let errorObservable: Observable<ErrorMessage>
+  let filteredSubscriber: sinon.SinonSpy
+  let clock: sinon.SinonFakeTimers
+
+  beforeEach(() => {
+    errorObservable = new Observable<ErrorMessage>()
+    const configuration: Partial<Configuration> = { maxErrorsByMinute: 2 }
+    clock = sinon.useFakeTimers()
+    const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
+    filteredSubscriber = sinon.spy()
+    filteredErrorObservable.subscribe(filteredSubscriber)
+  })
+
+  afterEach(() => {
+    clock.restore()
+  })
+
+  it('should stop send errors if threshold is exceeded', () => {
+    errorObservable.notify({ message: '1' })
+    errorObservable.notify({ message: '2' })
+    errorObservable.notify({ message: '3' })
+
+    expect(filteredSubscriber).calledWith({ message: '1' })
+    expect(filteredSubscriber).calledWith({ message: '2' })
+    expect(filteredSubscriber).not.calledWith({ message: '3' })
+  })
+
+  it('should send a threshold reached message', () => {
+    errorObservable.notify({ message: '1' })
+    errorObservable.notify({ message: '2' })
+    errorObservable.notify({ message: '3' })
+
+    expect(filteredSubscriber).calledWith({ message: 'Reached max number of errors by minute: 2' })
+  })
+
+  it('should reset error count every each minute', () => {
+    errorObservable.notify({ message: '1' })
+    errorObservable.notify({ message: '2' })
+    errorObservable.notify({ message: '3' })
+    errorObservable.notify({ message: '4' })
+    expect(filteredSubscriber.callCount).equal(3)
+
+    clock.tick(ONE_MINUTE - 1)
+
+    errorObservable.notify({ message: '5' })
+    expect(filteredSubscriber.callCount).equal(3)
+
+    clock.tick(1)
+
+    errorObservable.notify({ message: '6' })
+    errorObservable.notify({ message: '7' })
+    errorObservable.notify({ message: '8' })
+    errorObservable.notify({ message: '9' })
+    expect(filteredSubscriber.callCount).equal(6)
+
+    clock.tick(ONE_MINUTE)
+
+    errorObservable.notify({ message: '10' })
+    expect(filteredSubscriber.callCount).equal(7)
   })
 })

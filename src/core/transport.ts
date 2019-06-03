@@ -17,12 +17,14 @@ export class HttpRequest {
 
   send(data: string, size: number) {
     if (navigator.sendBeacon && size < this.bytesLimit) {
-      navigator.sendBeacon(this.endpointUrl, data)
-    } else {
-      const request = new XMLHttpRequest()
-      request.open('POST', this.endpointUrl, true)
-      request.send(data)
+      const isQueued = navigator.sendBeacon(this.endpointUrl, data)
+      if (isQueued) {
+        return
+      }
     }
+    const request = new XMLHttpRequest()
+    request.open('POST', this.endpointUrl, true)
+    request.send(data)
   }
 }
 
@@ -97,7 +99,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    let contextualizedMessage = lodashMerge(this.contextProvider(), message)
+    let contextualizedMessage = lodashMerge({}, this.contextProvider(), message)
     if (this.messageProcessor) {
       contextualizedMessage = this.messageProcessor(contextualizedMessage)
     }

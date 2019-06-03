@@ -1,5 +1,8 @@
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
+export const ONE_MINUTE = 60 * 1000
+export const ONE_KILO_BYTE = 1024
+
 // tslint:disable-next-line ban-types
 export function throttle<T extends Function>(fn: T, wait: number): T {
   let lastCall = 0
