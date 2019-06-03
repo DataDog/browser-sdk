@@ -84,7 +84,7 @@ describe('rum handle performance entry', () => {
     }) => {
       it(description, () => {
         handlePerformanceEntry(buildEntry(entry), batch, configuration as Configuration)
-        expect(batch.add.called).to.equal(expectEntryToBeAdded)
+        expect(batch.add.called).equal(expectEntryToBeAdded)
       })
     }
   )
@@ -95,7 +95,7 @@ describe('rum handle performance entry', () => {
       batch,
       configuration as Configuration
     )
-    expect(getEntry(batch, 0)).to.deep.equal({
+    expect(getEntry(batch, 0)).deep.equal({
       data: {
         'first-paint': 123456,
       },
@@ -142,7 +142,7 @@ describe('rum handle performance entry', () => {
           batch,
           configuration as Configuration
         )
-        expect(getEntry(batch, 0).data.resourceType).to.equal(expected)
+        expect(getEntry(batch, 0).data.resourceType).equal(expected)
       })
     }
   )
@@ -160,8 +160,8 @@ describe('rum handle performance entry', () => {
       batch,
       configuration as Configuration
     )
-    expect(getEntry(batch, 0).data.connectDuration).to.equal(7)
-    expect(getEntry(batch, 0).data.responseDuration).to.equal(75)
+    expect(getEntry(batch, 0).data.connectDuration).equal(7)
+    expect(getEntry(batch, 0).data.responseDuration).equal(75)
   })
 
   it('should remove unavailable attributes', () => {
@@ -187,7 +187,7 @@ describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
     const batch = {
       add: (message: RumEvent) => {
-        expect((message.data! as RumResourceTiming).resourceType).to.equal('xhr')
+        expect((message.data! as RumResourceTiming).resourceType).equal('xhr')
         done()
       },
     }
@@ -212,7 +212,7 @@ describe('rum track page view', () => {
     trackPageView(batch)
     batch.flush()
 
-    expect(getRumMessage(server, 0).type).eq('page_view')
+    expect(getRumMessage(server, 0).type).equal('page_view')
     expect(getRumMessage(server, 0).page_view_id).not.undefined
   })
 
@@ -225,6 +225,6 @@ describe('rum track page view', () => {
     const firstId = getRumMessage(server, 0).page_view_id
     const secondId = getRumMessage(server, 1).page_view_id
 
-    expect(firstId).not.eq(secondId)
+    expect(firstId).not.equal(secondId)
   })
 })

@@ -10,21 +10,21 @@ describe('logs entry', () => {
   })
 
   it('should set global with init', () => {
-    expect(!!window.DD_LOGS).to.be.true
-    expect(!!window.DD_LOGS.init).to.be.true
+    expect(!!window.DD_LOGS).equal(true)
+    expect(!!window.DD_LOGS.init).equal(true)
   })
 
   it('init should log an error with no public api key', () => {
     const errorStub = sinon.stub(console, 'error')
 
     window.DD_LOGS.init(undefined as any)
-    expect(errorStub.callCount).to.eq(1)
+    expect(errorStub.callCount).equal(1)
 
     window.DD_LOGS.init({ stillNoApiKey: true } as any)
-    expect(errorStub.callCount).to.eq(2)
+    expect(errorStub.callCount).equal(2)
 
     window.DD_LOGS.init({ publicApiKey: 'yeah' })
-    expect(errorStub.callCount).to.eq(2)
+    expect(errorStub.callCount).equal(2)
 
     sinon.restore()
   })
@@ -37,13 +37,13 @@ describe('logs entry', () => {
     monitor(() => {
       throw new Error()
     })()
-    expect(errorStub.callCount).to.eq(0)
+    expect(errorStub.callCount).equal(0)
 
     setDebug(true)
     monitor(() => {
       throw new Error()
     })()
-    expect(errorStub.callCount).to.eq(1)
+    expect(errorStub.callCount).equal(1)
 
     setDebug(false)
     sinon.restore()
@@ -54,6 +54,6 @@ describe('logs entry', () => {
 
     global.init({ publicApiKey: 'yeah' })
 
-    expect(window.DD_LOGS).to.eq(global)
+    expect(window.DD_LOGS).equal(global)
   })
 })

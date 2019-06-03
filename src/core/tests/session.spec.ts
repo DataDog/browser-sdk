@@ -19,7 +19,7 @@ describe('session', () => {
   it('should store id in cookie', () => {
     startSessionTracking()
 
-    expect(getCookie(COOKIE_NAME)).to.match(/^[a-f0-9-]+$/)
+    expect(getCookie(COOKIE_NAME)).match(/^[a-f0-9-]+$/)
   })
 
   it('should keep existing id', () => {
@@ -27,18 +27,18 @@ describe('session', () => {
 
     startSessionTracking()
 
-    expect(getCookie(COOKIE_NAME)).to.equal('abcdef')
+    expect(getCookie(COOKIE_NAME)).equal('abcdef')
   })
 
   it('should renew session on activity after expiration', () => {
     startSessionTracking()
 
     setCookie(COOKIE_NAME, '', DURATION)
-    expect(getCookie(COOKIE_NAME)).to.be.undefined
+    expect(getCookie(COOKIE_NAME)).undefined
     clock.tick(COOKIE_ACCESS_DELAY)
 
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(getCookie(COOKIE_NAME)).to.match(/^[a-f0-9-]+$/)
+    expect(getCookie(COOKIE_NAME)).match(/^[a-f0-9-]+$/)
   })
 })

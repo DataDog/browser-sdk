@@ -40,17 +40,17 @@ describe('console tracker', () => {
 
   it('should keep original behavior', () => {
     console.error('foo', 'bar')
-    expect(consoleErrorStub).to.have.been.calledWithExactly('foo', 'bar')
+    expect(consoleErrorStub).calledWithExactly('foo', 'bar')
   })
 
   it('should notify error', () => {
     console.error('foo', 'bar')
-    expect(notifyError).to.have.been.calledWithExactly({ message: 'foo bar' })
+    expect(notifyError).calledWithExactly({ message: 'foo bar' })
   })
 
   it('should stringify object parameters', () => {
     console.error('Hello', { foo: 'bar' })
-    expect(notifyError).to.have.been.calledWithExactly({ message: 'Hello {\n  "foo": "bar"\n}' })
+    expect(notifyError).calledWithExactly({ message: 'Hello {\n  "foo": "bar"\n}' })
   })
 })
 
@@ -90,7 +90,7 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(notifyError.getCall(0).args[0].message).to.equal(ERROR_MESSAGE)
+      expect(notifyError.getCall(0).args[0].message).equal(ERROR_MESSAGE)
       done()
     }, 100)
   })
@@ -101,7 +101,7 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(onerrorSpy).to.have.been.calledWithMatch(sinon.match(ERROR_MESSAGE))
+      expect(onerrorSpy).calledWithMatch(sinon.match(ERROR_MESSAGE))
       done()
     }, 100)
   })
@@ -137,8 +137,8 @@ describe('runtime error tracker', () => {
 
     const context = formatStackTraceToContext(stack)
 
-    expect(context.error.kind).eq('TypeError')
-    expect(context.error.stack).eq(`TypeError: oh snap!
+    expect(context.error.kind).equal('TypeError')
+    expect(context.error.stack).equal(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
@@ -176,13 +176,13 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error', url: FAKE_URL })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].message).to.equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).to.deep.equal({
+      expect(messages[0].message).equal('Fetch error GET http://fake-url/')
+      expect(messages[0].context.http).deep.equal({
         method: 'GET',
         status_code: 500,
         url: FAKE_URL,
       })
-      expect(messages[0].context.error.stack).to.equal('fetch error')
+      expect(messages[0].context.error.stack).equal('fetch error')
       done()
     })
   })
@@ -191,13 +191,13 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].message).to.equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).to.deep.equal({
+      expect(messages[0].message).equal('Fetch error GET http://fake-url/')
+      expect(messages[0].context.http).deep.equal({
         method: 'GET',
         status_code: 0,
         url: FAKE_URL,
       })
-      expect(messages[0].context.error.stack).to.match(/Error: fetch error/)
+      expect(messages[0].context.error.stack).match(/Error: fetch error/)
       done()
     })
   })
@@ -206,7 +206,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 400 })
 
     setTimeout(() => {
-      expect(notifySpy.called).to.equal(false)
+      expect(notifySpy.called).equal(false)
       done()
     })
   })
@@ -220,12 +220,12 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http.method).to.equal('GET')
-      expect(messages[1].context.http.method).to.equal('GET')
-      expect(messages[2].context.http.method).to.equal('PUT')
-      expect(messages[3].context.http.method).to.equal('POST')
-      expect(messages[4].context.http.method).to.equal('POST')
-      expect(messages[5].context.http.method).to.equal('POST')
+      expect(messages[0].context.http.method).equal('GET')
+      expect(messages[1].context.http.method).equal('GET')
+      expect(messages[2].context.http.method).equal('PUT')
+      expect(messages[3].context.http.method).equal('POST')
+      expect(messages[4].context.http.method).equal('POST')
+      expect(messages[5].context.http.method).equal('POST')
       done()
     })
   })
@@ -234,8 +234,8 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http.url).to.equal(FAKE_URL)
-      expect(messages[1].context.http.url).to.equal(FAKE_URL)
+      expect(messages[0].context.http.url).equal(FAKE_URL)
+      expect(messages[1].context.http.url).equal(FAKE_URL)
       done()
     })
   })
@@ -244,7 +244,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).to.equal('Failed to load')
+      expect(messages[0].context.error.stack).equal('Failed to load')
       done()
     })
   })
@@ -253,7 +253,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).to.equal('Lorem ipsum dolor sit amet orci ...')
+      expect(messages[0].context.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
       done()
     })
   })
@@ -265,7 +265,7 @@ describe('fetch error tracker', () => {
     fetchStubPromise.resolveWith({ status: 500 })
 
     setTimeout(() => {
-      expect(spy.called).to.equal(true)
+      expect(spy.called).equal(true)
       done()
     })
   })
@@ -277,7 +277,7 @@ describe('fetch error tracker', () => {
     fetchStubPromise.rejectWith(new Error('fetch error'))
 
     setTimeout(() => {
-      expect(spy.called).to.equal(true)
+      expect(spy.called).equal(true)
       done()
     })
   })
