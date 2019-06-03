@@ -301,9 +301,9 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
 
-    expect(filteredSubscriber).to.have.been.calledWith({ message: '1' })
-    expect(filteredSubscriber).to.have.been.calledWith({ message: '2' })
-    expect(filteredSubscriber).not.to.have.been.calledWith({ message: '3' })
+    expect(filteredSubscriber).calledWith({ message: '1' })
+    expect(filteredSubscriber).calledWith({ message: '2' })
+    expect(filteredSubscriber).not.calledWith({ message: '3' })
   })
 
   it('should send a threshold reached message', () => {
@@ -311,7 +311,7 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
 
-    expect(filteredSubscriber).to.have.been.calledWith({ message: 'Reached max number of errors by minute: 2' })
+    expect(filteredSubscriber).calledWith({ message: 'Reached max number of errors by minute: 2' })
   })
 
   it('should reset error count every each minute', () => {
@@ -319,12 +319,12 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2' })
     errorObservable.notify({ message: '3' })
     errorObservable.notify({ message: '4' })
-    expect(filteredSubscriber.callCount).eq(3)
+    expect(filteredSubscriber.callCount).equal(3)
 
     clock.tick(ONE_MINUTE - 1)
 
     errorObservable.notify({ message: '5' })
-    expect(filteredSubscriber.callCount).eq(3)
+    expect(filteredSubscriber.callCount).equal(3)
 
     clock.tick(1)
 
@@ -332,11 +332,11 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '7' })
     errorObservable.notify({ message: '8' })
     errorObservable.notify({ message: '9' })
-    expect(filteredSubscriber.callCount).eq(6)
+    expect(filteredSubscriber.callCount).equal(6)
 
     clock.tick(ONE_MINUTE)
 
     errorObservable.notify({ message: '10' })
-    expect(filteredSubscriber.callCount).eq(7)
+    expect(filteredSubscriber.callCount).equal(7)
   })
 })
