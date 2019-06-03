@@ -66,3 +66,36 @@ export function toSnakeCase(word: string) {
 
 // tslint:disable-next-line:no-empty
 export function noop() {}
+
+/**
+ * Custom implementation of JSON.stringify that ignores value.toJSON.
+ * We need to do that because some sites badly override toJSON on certain objects.
+ * Note this still supposes that JSON.stringify is correct...
+ */
+export function jsonStringify(value: any, replacer?: any, space?: string | number) {
+  let originalToJSON = [false]
+  if (value.hasOwnProperty('toJSON')) {
+    // We need to add a flag and not rely on the truthiness of value.toJSON
+    // because it can be set but undefined and that's actually significant.
+    originalToJSON = [true, value.toJSON]
+    delete value.toJSON
+  }
+
+  let originalProtoToJSON = [false]
+  const prototype = Object.getPrototypeOf(value)
+  if (prototype.hasOwnProperty('toJSON')) {
+    originalProtoToJSON = [true, prototype.toJSON]
+    delete prototype.toJSON
+  }
+
+  try {
+    return JSON.stringify(value, replacer, space)
+  } finally {
+    if (originalToJSON[0]) {
+      value.toJSON = originalToJSON[1]
+    }
+    if (originalProtoToJSON[0]) {
+      prototype.toJSON = originalProtoToJSON[1]
+    }
+  }
+}

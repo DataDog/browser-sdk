@@ -2,7 +2,7 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 
-import { cache, noop, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
+import { cache, jsonStringify, noop, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
 
 use(sinonChai)
 let clock: sinon.SinonFakeTimers
@@ -75,5 +75,27 @@ describe('utils', () => {
       camel_case: 1,
       nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
     })
+  })
+
+  it('should jsonStringify an object with toJSON directly defined', () => {
+    const value = [{ 1: 'a' }]
+    const expectedJson = JSON.stringify(value)
+
+    expect(jsonStringify(value)).equal(expectedJson)
+    ;(value as any).toJSON = () => '42'
+    expect(jsonStringify(value)).equal(expectedJson)
+    expect(JSON.stringify(value)).equal('"42"')
+  })
+
+  it('should jsonStringify an object with toJSON defined on prototype', () => {
+    const value = [{ 2: 'b' }]
+    const expectedJson = JSON.stringify(value)
+
+    expect(jsonStringify(value)).equal(expectedJson)
+    ;(Array.prototype as any).toJSON = () => '42'
+    expect(jsonStringify(value)).equal(expectedJson)
+    expect(JSON.stringify(value)).equal('"42"')
+
+    delete (Array.prototype as any).toJSON
   })
 })
