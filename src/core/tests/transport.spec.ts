@@ -55,8 +55,8 @@ describe('request', () => {
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(navigator.sendBeacon).have.been.called
-    expect(server.requests.length).to.equal(1)
+    expect(navigator.sendBeacon).called
+    expect(server.requests.length).equal(1)
   })
 })
 
