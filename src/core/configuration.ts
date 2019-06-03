@@ -1,3 +1,5 @@
+import { ONE_KILO_BYTE, ONE_MINUTE } from './utils'
+
 function getEndpoint(type: 'browser' | 'rum', apiKey: string, source?: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
@@ -7,29 +9,30 @@ function getEndpoint(type: 'browser' | 'rum', apiKey: string, source?: string) {
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
+  maxErrorsByMinute: 10000,
   maxInternalMonitoringMessagesPerPage: 15,
 
   /**
    * arbitrary value, byte precision not needed
    */
-  requestErrorResponseLengthLimit: 32 * 1024,
+  requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
 
   /**
    * flush automatically, the value is arbitrary.
    */
-  flushTimeout: 60 * 1000,
+  flushTimeout: ONE_MINUTE,
 
   /**
    * Logs intake limit
    */
   maxBatchSize: 50,
-  maxMessageSize: 256 * 1024,
+  maxMessageSize: 256 * ONE_KILO_BYTE,
 
   /**
    * beacon payload max queue size implementation is 64kb
    * ensure that we leave room for logs, rum and potential other users
    */
-  batchBytesLimit: 16 * 1024,
+  batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
 export interface UserConfiguration {

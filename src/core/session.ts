@@ -1,7 +1,7 @@
 import * as utils from './utils'
 
 export const COOKIE_NAME = '_dd'
-const EXPIRATION_DELAY = 15 * 60 * 1000
+const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
 /**
  * Limit access to cookie to avoid performance issues

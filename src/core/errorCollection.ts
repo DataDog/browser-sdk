@@ -3,6 +3,7 @@ import { Configuration } from './configuration'
 import { Context } from './context'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
+import { ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
@@ -19,7 +20,25 @@ export function startErrorCollection(configuration: Configuration) {
     trackXhrError(configuration, errorObservable)
     trackFetchError(configuration, errorObservable)
   }
-  return errorObservable
+  return filterErrors(configuration, errorObservable)
+}
+
+export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {
+  let errorCount = 0
+  const filteredErrorObservable = new Observable<ErrorMessage>()
+  errorObservable.subscribe((error: ErrorMessage) => {
+    if (errorCount < configuration.maxErrorsByMinute) {
+      errorCount += 1
+      filteredErrorObservable.notify(error)
+    } else if (errorCount === configuration.maxErrorsByMinute) {
+      errorCount += 1
+      filteredErrorObservable.notify({
+        message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
+      })
+    }
+  })
+  setInterval(() => (errorCount = 0), ONE_MINUTE)
+  return filteredErrorObservable
 }
 
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
