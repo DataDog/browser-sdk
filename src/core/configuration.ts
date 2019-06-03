@@ -29,9 +29,10 @@ export const DEFAULT_CONFIGURATION = {
   maxMessageSize: 256 * ONE_KILO_BYTE,
 
   /**
-   * beacon payload max size implementation is 64kb
+   * beacon payload max queue size implementation is 64kb
+   * ensure that we leave room for logs, rum and potential other users
    */
-  batchBytesLimit: 64 * ONE_KILO_BYTE,
+  batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
 export interface UserConfiguration {
