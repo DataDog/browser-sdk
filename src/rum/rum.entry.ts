@@ -11,7 +11,8 @@ declare global {
 }
 
 export interface RumUserConfiguration extends UserConfiguration {
-  rumProjectId: string
+  applicationId?: string
+  rumProjectId?: string
 }
 
 const STUBBED_RUM = {
@@ -28,11 +29,11 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
     console.error('Public API Key is not configured, we will not send any data.')
     return
   }
-  if (!userConfiguration.rumProjectId) {
-    console.error('RUM project id is not configured, no RUM data will be collected')
+  if (!userConfiguration.applicationId && !userConfiguration.rumProjectId) {
+    console.error('application id is not configured, no RUM data will be collected')
     return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
   const { errorObservable, configuration } = commonInit(rumUserConfiguration)
-  startRum(rumUserConfiguration.rumProjectId, errorObservable, configuration)
+  startRum(rumUserConfiguration.applicationId! || rumUserConfiguration.rumProjectId!, errorObservable, configuration)
 })

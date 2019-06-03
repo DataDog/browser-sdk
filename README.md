@@ -80,7 +80,7 @@ contains all the public APIs.
 <script>
     window.DD_RUM.init({
         publicApiKey: 'XXX',
-        rumProjectId: 'XXX',
+        applicationId: 'XXX',
     });
 </script>
 ```
