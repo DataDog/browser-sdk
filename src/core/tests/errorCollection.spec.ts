@@ -45,12 +45,12 @@ describe('console tracker', () => {
 
   it('should notify error', () => {
     console.error('foo', 'bar')
-    expect(notifyError).calledWithExactly({ message: 'foo bar' })
+    expect(notifyError).calledWithExactly({ message: 'console error: foo bar' })
   })
 
   it('should stringify object parameters', () => {
     console.error('Hello', { foo: 'bar' })
-    expect(notifyError).calledWithExactly({ message: 'Hello {\n  "foo": "bar"\n}' })
+    expect(notifyError).calledWithExactly({ message: 'console error: Hello {\n  "foo": "bar"\n}' })
   })
 })
 
