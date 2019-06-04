@@ -34,7 +34,7 @@ describe('logs', () => {
     })
     flushEvents()
     const logs = await retrieveLogsMessages()
-    expect(logs).to.contain('oh snap')
+    expect(logs).to.contain('console error: oh snap')
     const browserLogs = await browser.getLogs('browser')
     expect(browserLogs.length).to.equal(1)
   })

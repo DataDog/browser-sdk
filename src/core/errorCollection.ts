@@ -48,7 +48,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   console.error = (message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
     errorObservable.notify({
-      message: [message, ...optionalParams]
+      message: ['console error:', message, ...optionalParams]
         .map((param: any) => (typeof param === 'string' ? param : jsonStringify(param, undefined, 2)))
         .join(' '),
     })
