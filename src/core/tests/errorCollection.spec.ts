@@ -21,7 +21,7 @@ import { noop, ONE_MINUTE } from '../utils'
 use(sinonChai)
 
 describe('console tracker', () => {
-  let consoleErrorStub: sinon.SinonStub
+  let consoleErrorStub: sinon.SinonStub<Parameters<typeof console.error>, ReturnType<typeof console.error>>
   let notifyError: sinon.SinonSpy
 
   beforeEach(() => {
@@ -58,7 +58,7 @@ describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
   let mochaHandler: ErrorEventHandler
   let notifyError: sinon.SinonSpy
-  let onerrorSpy: sinon.SinonSpy
+  let onerrorSpy: sinon.SinonSpy<[], void>
 
   beforeEach(function() {
     if (isAndroid()) {
@@ -150,7 +150,7 @@ describe('fetch error tracker', () => {
   let originalFetch: any
   let fetchStubBuilder: FetchStubBuilder
   let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
-  let notifySpy: sinon.SinonSpy
+  let notifySpy: sinon.SinonSpy<[ErrorMessage], void>
 
   beforeEach(() => {
     originalFetch = window.fetch
