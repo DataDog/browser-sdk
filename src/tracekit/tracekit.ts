@@ -203,7 +203,7 @@ export const report = (function reportModuleWrapper() {
     }
   }
 
-  let oldOnerrorHandler: Handler | undefined
+  let oldOnerrorHandler: OnErrorEventHandler
   let onErrorHandlerInstalled: boolean
   let oldOnunhandledrejectionHandler: Handler | undefined
   let onUnhandledRejectionHandlerInstalled: boolean

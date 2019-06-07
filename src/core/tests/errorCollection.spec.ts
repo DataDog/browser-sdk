@@ -56,7 +56,7 @@ describe('console tracker', () => {
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
-  let mochaHandler: ErrorEventHandler
+  let mochaHandler: OnErrorEventHandler
   let notifyError: sinon.SinonSpy
   let onerrorSpy: sinon.SinonSpy<[], void>
 
@@ -72,7 +72,7 @@ describe('runtime error tracker', () => {
     const errorObservable = new Observable<ErrorMessage>()
     // ensure that we call mocha handler for unexpected errors
     errorObservable.subscribe((e: ErrorMessage) =>
-      e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : (notifyError(e) as void)
+      e.message !== ERROR_MESSAGE ? (mochaHandler!(e.message) as void) : (notifyError(e) as void)
     )
 
     startRuntimeErrorTracking(errorObservable)

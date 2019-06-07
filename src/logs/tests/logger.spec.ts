@@ -5,7 +5,6 @@ import sinonChai from 'sinon-chai'
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
-import { Omit } from '../../core/utils'
 import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../logger'
 import { LogsGlobal } from '../logs.entry'
 
