@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as request from 'request'
-import { LogsMessage } from '../../src/logs/logger'
-import { RumEvent } from '../../src/rum/rum'
+import { LogsMessage } from '../../../src/logs/logger'
+import { RumEvent } from '../../../src/rum/rum'
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 

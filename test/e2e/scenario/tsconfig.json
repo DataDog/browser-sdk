@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "target": "es5",
+    "types": ["node", "@wdio/sync", "mocha"]
+  },
+  "include": ["../../../src/**/*.d.ts", "./**/*.ts"]
+}
