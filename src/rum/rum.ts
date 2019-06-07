@@ -184,7 +184,7 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
 }
 
 export function trackPerformanceTiming(batch: RumBatch, configuration: Configuration) {
-  if (PerformanceObserver) {
+  if ('PerformanceObserver' in window) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, configuration))
