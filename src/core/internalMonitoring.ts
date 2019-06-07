@@ -1,3 +1,5 @@
+// tslint:disable ban-types
+
 import { StatusType } from '../logs/logger'
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
@@ -6,7 +8,7 @@ import { formatStackTraceToContext } from './errorCollection'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
 
-interface MonitoringMessage {
+export interface MonitoringMessage {
   entryType: 'internal'
   message: string
   status: StatusType.error
@@ -47,15 +49,14 @@ export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
 }
 
-export function monitored(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
   descriptor.value = function() {
-    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
+    const decorated = (monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod) as Function
     return decorated.apply(this, arguments)
   }
 }
 
-// tslint:disable-next-line ban-types
 export function monitor<T extends Function>(fn: T): T {
   return (function(this: any) {
     try {
@@ -68,7 +69,7 @@ export function monitor<T extends Function>(fn: T): T {
           monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
         ) {
           monitoringConfiguration.sentMessageCount += 1
-          const stackTrace = computeStackTrace(e)
+          const stackTrace = computeStackTrace(e as Error)
           monitoringConfiguration.batch.add({
             entryType: 'internal',
             message: stackTrace.message,

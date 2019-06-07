@@ -1,3 +1,5 @@
+// tslint:disable no-unsafe-any
+
 import { expect } from 'chai'
 import { isIE, isSafari } from '../../tests/specHelper'
 import { computeStackTrace } from '../tracekit'

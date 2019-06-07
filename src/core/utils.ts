@@ -1,3 +1,5 @@
+import { Context, ContextArray, ContextValue } from './context'
+
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export const ONE_MINUTE = 60 * 1000
@@ -17,7 +19,7 @@ export function throttle<T extends Function>(fn: T, wait: number): T {
 }
 
 export function cache<T>(fn: () => T, duration: number): () => T {
-  let value: any
+  let value: T
   let expired = true
   return () => {
     if (expired) {
@@ -33,10 +35,10 @@ export function cache<T>(fn: () => T, duration: number): () => T {
  * UUID v4
  * from https://gist.github.com/jed/982883
  */
-export function generateUUID(placeholder?: any): string {
+export function generateUUID(placeholder?: string): string {
   return placeholder
     ? // tslint:disable-next-line no-bitwise
-      (placeholder ^ ((Math.random() * 16) >> (placeholder / 4))).toString(16)
+      (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
@@ -44,16 +46,16 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export function withSnakeCaseKeys(candidate: any): any {
+export function withSnakeCaseKeys<T extends ContextValue>(candidate: T): T {
   if (Array.isArray(candidate)) {
-    return candidate.map((value: any) => withSnakeCaseKeys(value))
+    return candidate.map((value: ContextValue) => withSnakeCaseKeys(value)) as T
   }
   if (typeof candidate === 'object') {
-    const result: any = {}
-    Object.keys(candidate).forEach((key: string) => {
+    const result: Context = {}
+    Object.keys(candidate as Context).forEach((key: string) => {
       result[toSnakeCase(key)] = withSnakeCaseKeys(candidate[key])
     })
-    return result
+    return result as T
   }
   return candidate
 }
@@ -70,23 +72,29 @@ export function toSnakeCase(word: string) {
 // tslint:disable-next-line:no-empty
 export function noop() {}
 
+interface ObjectWithToJSON {
+  toJSON: (() => object) | undefined
+}
+
+type OriginalToJSON = [boolean, undefined | (() => object)]
+
 /**
  * Custom implementation of JSON.stringify that ignores value.toJSON.
  * We need to do that because some sites badly override toJSON on certain objects.
  * Note this still supposes that JSON.stringify is correct...
  */
-export function jsonStringify(value: any, replacer?: any, space?: string | number) {
-  let originalToJSON = [false]
-  if (value.hasOwnProperty('toJSON')) {
+export function jsonStringify(value: object, replacer?: Array<string | number>, space?: string | number) {
+  let originalToJSON: OriginalToJSON = [false, undefined]
+  if (hasToJSON(value)) {
     // We need to add a flag and not rely on the truthiness of value.toJSON
     // because it can be set but undefined and that's actually significant.
     originalToJSON = [true, value.toJSON]
     delete value.toJSON
   }
 
-  let originalProtoToJSON = [false]
-  const prototype = Object.getPrototypeOf(value)
-  if (prototype.hasOwnProperty('toJSON')) {
+  let originalProtoToJSON: OriginalToJSON = [false, undefined]
+  const prototype = Object.getPrototypeOf(value) as object
+  if (hasToJSON(prototype)) {
     originalProtoToJSON = [true, prototype.toJSON]
     delete prototype.toJSON
   }
@@ -95,10 +103,14 @@ export function jsonStringify(value: any, replacer?: any, space?: string | numbe
     return JSON.stringify(value, replacer, space)
   } finally {
     if (originalToJSON[0]) {
-      value.toJSON = originalToJSON[1]
+      ;(value as ObjectWithToJSON).toJSON = originalToJSON[1]
     }
     if (originalProtoToJSON[0]) {
-      prototype.toJSON = originalProtoToJSON[1]
+      ;(prototype as ObjectWithToJSON).toJSON = originalProtoToJSON[1]
     }
   }
+}
+
+function hasToJSON(value: object): value is ObjectWithToJSON {
+  return value.hasOwnProperty('toJSON')
 }

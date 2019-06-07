@@ -1,3 +1,5 @@
+// tslint:disable no-unsafe-any
+
 declare global {
   interface Error {
     sourceURL?: string

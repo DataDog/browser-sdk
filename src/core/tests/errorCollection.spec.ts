@@ -72,7 +72,7 @@ describe('runtime error tracker', () => {
     const errorObservable = new Observable<ErrorMessage>()
     // ensure that we call mocha handler for unexpected errors
     errorObservable.subscribe((e: ErrorMessage) =>
-      e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : notifyError(e)
+      e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : (notifyError(e) as void)
     )
 
     startRuntimeErrorTracking(errorObservable)
@@ -90,7 +90,7 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(notifyError.getCall(0).args[0].message).equal(ERROR_MESSAGE)
+      expect((notifyError.getCall(0).args[0] as ErrorMessage).message).equal(ERROR_MESSAGE)
       done()
     }, 100)
   })
@@ -167,7 +167,7 @@ describe('fetch error tracker', () => {
   })
 
   afterEach(() => {
-    window.fetch = originalFetch
+    window.fetch = originalFetch as any
     // tslint:disable-next-line:no-null-keyword
     window.onunhandledrejection = null
   })
@@ -177,12 +177,12 @@ describe('fetch error tracker', () => {
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
       expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).deep.equal({
+      expect(messages[0].context!.http).deep.equal({
         method: 'GET',
         status_code: 500,
         url: FAKE_URL,
       })
-      expect(messages[0].context.error.stack).equal('fetch error')
+      expect(messages[0].context!.error.stack).equal('fetch error')
       done()
     })
   })
@@ -192,12 +192,12 @@ describe('fetch error tracker', () => {
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
       expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).deep.equal({
+      expect(messages[0].context!.http).deep.equal({
         method: 'GET',
         status_code: 0,
         url: FAKE_URL,
       })
-      expect(messages[0].context.error.stack).match(/Error: fetch error/)
+      expect(messages[0].context!.error.stack).match(/Error: fetch error/)
       done()
     })
   })
@@ -220,12 +220,12 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http.method).equal('GET')
-      expect(messages[1].context.http.method).equal('GET')
-      expect(messages[2].context.http.method).equal('PUT')
-      expect(messages[3].context.http.method).equal('POST')
-      expect(messages[4].context.http.method).equal('POST')
-      expect(messages[5].context.http.method).equal('POST')
+      expect(messages[0].context!.http!.method).equal('GET')
+      expect(messages[1].context!.http!.method).equal('GET')
+      expect(messages[2].context!.http!.method).equal('PUT')
+      expect(messages[3].context!.http!.method).equal('POST')
+      expect(messages[4].context!.http!.method).equal('POST')
+      expect(messages[5].context!.http!.method).equal('POST')
       done()
     })
   })
@@ -234,8 +234,8 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http.url).equal(FAKE_URL)
-      expect(messages[1].context.http.url).equal(FAKE_URL)
+      expect(messages[0].context!.http!.url).equal(FAKE_URL)
+      expect(messages[1].context!.http!.url).equal(FAKE_URL)
       done()
     })
   })
@@ -244,7 +244,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).equal('Failed to load')
+      expect(messages[0].context!.error.stack).equal('Failed to load')
       done()
     })
   })
@@ -253,7 +253,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
+      expect(messages[0].context!.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
       done()
     })
   })

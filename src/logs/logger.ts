@@ -1,7 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
 import { Configuration } from '../core/configuration'
-import { Context, getCommonContext } from '../core/context'
+import { Context, ContextValue, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
@@ -11,7 +11,7 @@ import { LogsGlobal } from './logs.entry'
 export interface LogsMessage {
   message: string
   status: StatusType
-  [key: string]: any
+  [key: string]: ContextValue
 }
 
 export interface LoggerConfiguration {
@@ -54,7 +54,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
     configuration.flushTimeout,
-    () => lodashMerge({}, getCommonContext(), globalContext)
+    () => lodashMerge({}, getCommonContext(), globalContext) as Context
   )
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
@@ -69,7 +69,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
   globalApi.setLoggerGlobalContext = (context: Context) => {
     globalContext = context
   }
-  globalApi.addLoggerGlobalContext = (key: string, value: any) => {
+  globalApi.addLoggerGlobalContext = (key: string, value: ContextValue) => {
     globalContext[key] = value
   }
   globalApi.createLogger = makeCreateLogger(handlers)
@@ -133,7 +133,7 @@ export class Logger {
     this.loggerContext = context
   }
 
-  addContext(key: string, value: any) {
+  addContext(key: string, value: ContextValue) {
     this.loggerContext[key] = value
   }
 

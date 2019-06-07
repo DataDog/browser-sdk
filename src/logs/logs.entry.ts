@@ -1,5 +1,5 @@
 import { UserConfiguration } from '../core/configuration'
-import { Context } from '../core/context'
+import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, Status, StatusType } from './logger'
@@ -33,7 +33,7 @@ const STUBBED_LOGGER = {
   setContext(context: Context) {
     makeStub('logs.logger.setContext')
   },
-  addContext(key: string, value: any) {
+  addContext(key: string, value: ContextValue) {
     makeStub('logs.logger.addContext')
   },
   setHandler(handler: HandlerType) {
@@ -49,7 +49,7 @@ const STUBBED_LOGS = {
   init(userConfiguration: LogsUserConfiguration) {
     makeStub('core.init')
   },
-  addLoggerGlobalContext(key: string, value: any) {
+  addLoggerGlobalContext(key: string, value: ContextValue) {
     makeStub('addLoggerGlobalContext')
   },
   setLoggerGlobalContext(context: Context) {

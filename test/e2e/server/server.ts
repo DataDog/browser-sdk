@@ -14,7 +14,7 @@ app.use(cors())
 let logs: object[] = []
 
 app.post('/logs', (req, res) => {
-  req.body.split('\n').forEach((log: string) => logs.push(JSON.parse(log)))
+  ;(req.body as string).split('\n').forEach((log: string) => logs.push(JSON.parse(log) as object))
   res.send('ok')
 })
 app.get('/logs', (req, res) => res.send(logs))
@@ -22,7 +22,7 @@ app.get('/logs', (req, res) => res.send(logs))
 let rumEvents: object[] = []
 
 app.post('/rum', (req, res) => {
-  req.body.split('\n').forEach((rumEvent: string) => rumEvents.push(JSON.parse(rumEvent)))
+  ;(req.body as string).split('\n').forEach((rumEvent: string) => rumEvents.push(JSON.parse(rumEvent) as object))
   res.send('ok')
 })
 app.get('/rum', (req, res) => res.send(rumEvents))
@@ -30,7 +30,7 @@ app.get('/rum', (req, res) => res.send(rumEvents))
 let monitoring: object[] = []
 
 app.post('/monitoring', (req, res) => {
-  monitoring.push(JSON.parse(req.body))
+  monitoring.push(JSON.parse(req.body as string) as object)
   res.send('ok')
 })
 app.get('/monitoring', (req, res) => res.send(monitoring))

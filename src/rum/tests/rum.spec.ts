@@ -9,6 +9,7 @@ import {
   initRumBatch,
   RumBatch,
   RumEvent,
+  RumEventType,
   RumResourceTiming,
   trackPageView,
   trackPerformanceTiming,
@@ -24,12 +25,17 @@ function buildEntry(entry: Partial<PerformanceResourceTiming>) {
   return result as PerformanceResourceTiming
 }
 
-function getEntry(batch: any, index: number) {
-  return batch.add.getCall(index).args[0]
+function getEntry(batch: RumBatch, index: number) {
+  return (batch.add as sinon.SinonSpy).getCall(index).args[0] as RumEvent
+}
+
+interface RumServerMessage {
+  type: RumEventType
+  page_view_id: string
 }
 
 function getRumMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody)
+  return JSON.parse(server.requests[index].requestBody) as RumServerMessage
 }
 
 const configuration = {
@@ -39,7 +45,7 @@ const configuration = {
 }
 
 describe('rum handle performance entry', () => {
-  let batch: any
+  let batch: Partial<RumBatch>
 
   beforeEach(() => {
     batch = {
@@ -79,12 +85,12 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded,
     }: {
       description: string
-      entry: any
+      entry: Partial<PerformanceResourceTiming>
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handlePerformanceEntry(buildEntry(entry), batch, configuration as Configuration)
-        expect(batch.add.called).equal(expectEntryToBeAdded)
+        handlePerformanceEntry(buildEntry(entry), batch as RumBatch, configuration as Configuration)
+        expect((batch.add as sinon.SinonSpy).called).equal(expectEntryToBeAdded)
       })
     }
   )
@@ -92,10 +98,10 @@ describe('rum handle performance entry', () => {
   it('should rewrite paint entries', () => {
     handlePerformanceEntry(
       buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
-      batch,
+      batch as RumBatch,
       configuration as Configuration
     )
-    expect(getEntry(batch, 0)).deep.equal({
+    expect(getEntry(batch as RumBatch, 0)).deep.equal({
       data: {
         'first-paint': 123456,
       },
@@ -139,10 +145,11 @@ describe('rum handle performance entry', () => {
       it(`should compute resource type: ${description}`, () => {
         handlePerformanceEntry(
           buildEntry({ initiatorType, name: url, entryType: 'resource' }),
-          batch,
+          batch as RumBatch,
           configuration as Configuration
         )
-        expect(getEntry(batch, 0).data.resourceType).equal(expected)
+        const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
+        expect(resourceTiming.resourceType).equal(expected)
       })
     }
   )
@@ -157,11 +164,12 @@ describe('rum handle performance entry', () => {
         responseEnd: 100,
         responseStart: 25,
       }),
-      batch,
+      batch as RumBatch,
       configuration as Configuration
     )
-    expect(getEntry(batch, 0).data.connectDuration).equal(7)
-    expect(getEntry(batch, 0).data.responseDuration).equal(75)
+    const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
+    expect(resourceTiming.connectDuration).equal(7)
+    expect(resourceTiming.responseDuration).equal(75)
   })
 
   it('should remove unavailable attributes', () => {
@@ -174,12 +182,13 @@ describe('rum handle performance entry', () => {
         responseEnd: 100,
         responseStart: 0,
       }),
-      batch,
+      batch as RumBatch,
       configuration as Configuration
     )
-    expect(getEntry(batch, 0).data.connectStart).undefined
-    expect(getEntry(batch, 0).data.connectEnd).undefined
-    expect(getEntry(batch, 0).data.responseStart).undefined
+    const resourceTiming = getEntry(batch as RumBatch, 0).data as PerformanceResourceTiming
+    expect(resourceTiming.connectStart).undefined
+    expect(resourceTiming.connectEnd).undefined
+    expect(resourceTiming.responseStart).undefined
   })
 })
 
@@ -192,7 +201,7 @@ describe('rum performanceObserver callback', () => {
       },
     }
 
-    trackPerformanceTiming(batch as any, configuration as Configuration)
+    trackPerformanceTiming(batch as RumBatch, configuration as Configuration)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
