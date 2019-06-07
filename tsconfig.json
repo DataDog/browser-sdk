@@ -8,7 +8,12 @@
     "strict": true,
     "module": "es6",
     "target": "es5",
-    "sourceMap": true
+    "sourceMap": true,
+    "plugins": [
+      {
+        "name": "typescript-tslint-plugin"
+      }
+    ]
   },
   "include": ["./src/**/*.ts"]
 }

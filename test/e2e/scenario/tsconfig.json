@@ -5,6 +5,11 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "target": "es5",
+    "plugins": [
+      {
+        "name": "typescript-tslint-plugin"
+      }
+    ],
     "types": ["node", "@wdio/sync", "mocha"]
   },
   "include": ["../../../src/**/*.d.ts", "./**/*.ts"]
