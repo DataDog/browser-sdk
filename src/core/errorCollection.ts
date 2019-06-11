@@ -6,22 +6,29 @@ import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
-  context?: ErrorContext & HttpContext
+  context: {
+    error: ErrorContext
+    http?: HttpContext
+  }
 }
 
 export interface ErrorContext {
-  error: {
-    kind?: string
-    stack: string
-  }
+  kind?: string
+  stack?: string
+  origin: ErrorOrigin
 }
 
 export interface HttpContext {
-  http?: {
-    url: string
-    status_code: number
-    method: string
-  }
+  url: string
+  status_code: number
+  method: string
+}
+
+export enum ErrorOrigin {
+  AGENT = 'agent',
+  CONSOLE = 'console',
+  NETWORK = 'network',
+  SOURCE = 'source',
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
@@ -47,6 +54,11 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
     } else if (errorCount === configuration.maxErrorsByMinute) {
       errorCount += 1
       filteredErrorObservable.notify({
+        context: {
+          error: {
+            origin: ErrorOrigin.AGENT,
+          },
+        },
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
       })
     }
@@ -62,6 +74,11 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   console.error = (message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
     errorObservable.notify({
+      context: {
+        error: {
+          origin: ErrorOrigin.CONSOLE,
+        },
+      },
       message: ['console error:', message, ...optionalParams]
         .map((param: unknown) => (typeof param === 'string' ? param : jsonStringify(param as object, undefined, 2)))
         .join(' '),
@@ -77,6 +94,7 @@ export function formatStackTraceToContext(stack: StackTrace) {
   return {
     error: {
       kind: stack.name,
+      origin: ErrorOrigin.SOURCE,
       stack: toStackTraceString(stack),
     },
   }
@@ -168,6 +186,7 @@ function notifyError(
   errorObservable.notify({
     context: {
       error: {
+        origin: ErrorOrigin.NETWORK,
         stack: truncateResponse(request.response, configuration) || 'Failed to load',
       },
       http: {
