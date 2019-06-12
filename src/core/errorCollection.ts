@@ -29,6 +29,7 @@ export enum ErrorOrigin {
   CONSOLE = 'console',
   NETWORK = 'network',
   SOURCE = 'source',
+  LOGGER = 'logger',
 }
 
 export type ErrorObservable = Observable<ErrorMessage>

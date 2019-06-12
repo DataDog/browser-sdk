@@ -2,7 +2,7 @@ import lodashMerge from 'lodash.merge'
 
 import { Configuration } from '../core/configuration'
 import { Context, ContextValue, getCommonContext } from '../core/context'
-import { ErrorMessage, ErrorObservable } from '../core/errorCollection'
+import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import { noop } from '../core/utils'
@@ -126,7 +126,12 @@ export class Logger {
   }
 
   error(message: string, messageContext = {}) {
-    this.log(message, messageContext, StatusType.error)
+    const errorOrigin = {
+      error: {
+        origin: ErrorOrigin.LOGGER,
+      },
+    }
+    this.log(message, lodashMerge({}, errorOrigin, messageContext), StatusType.error)
   }
 
   setContext(context: Context) {
