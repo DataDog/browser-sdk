@@ -1,3 +1,5 @@
+// tslint:disable no-unsafe-any
+
 import { expect } from 'chai'
 import { computeStackTrace, Handler, report } from '../tracekit'
 

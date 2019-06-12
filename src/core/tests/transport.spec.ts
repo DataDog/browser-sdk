@@ -67,11 +67,11 @@ describe('batch', () => {
   let CONTEXT: { foo: string }
   const FLUSH_TIMEOUT = 60 * 1000
   let batch: Batch<{ message: string; foo?: any }>
-  let transport: any
+  let transport: HttpRequest
 
   beforeEach(() => {
     CONTEXT = { foo: 'bar' }
-    transport = { send: noop }
+    transport = ({ send: noop } as unknown) as HttpRequest
     sinon.spy(transport, 'send')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
   })
@@ -97,10 +97,10 @@ describe('batch', () => {
     batch.add({ message: 'hello' })
 
     batch.flush()
-    transport.send.resetHistory()
+    ;(transport.send as sinon.SinonSpy).resetHistory()
     batch.flush()
 
-    expect(transport.send.notCalled).equal(true)
+    expect((transport.send as sinon.SinonSpy).notCalled).equal(true)
   })
 
   it('should flush when max size is reached', () => {
@@ -114,7 +114,7 @@ describe('batch', () => {
 
   it('should flush when new message will overflow bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
-    expect(transport.send.notCalled).equal(true)
+    expect((transport.send as sinon.SinonSpy).notCalled).equal(true)
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' })
     expect(transport.send).calledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
@@ -142,7 +142,7 @@ describe('batch', () => {
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     batch.add({ message })
-    expect(transport.send.calledTwice).equal(true)
+    expect((transport.send as sinon.SinonSpy).calledTwice).equal(true)
   })
 
   it('should flush after timeout', () => {
@@ -151,7 +151,7 @@ describe('batch', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     clock.tick(100)
 
-    expect(transport.send.called).equal(true)
+    expect((transport.send as sinon.SinonSpy).called).equal(true)
 
     clock.restore()
   })
@@ -161,7 +161,7 @@ describe('batch', () => {
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
-    expect(transport.send.called).equal(false)
+    expect((transport.send as sinon.SinonSpy).called).equal(false)
     warnStub.restore()
   })
 
@@ -172,8 +172,8 @@ describe('batch', () => {
       BATCH_BYTES_LIMIT,
       MESSAGE_BYTES_LIMIT,
       FLUSH_TIMEOUT,
-      noop,
-      (message: any) => {
+      () => ({}),
+      (message: { message: string }) => {
         message.message = `*** ${message.message} ***`
         return message
       }

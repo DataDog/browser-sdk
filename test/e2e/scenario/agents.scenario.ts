@@ -1,4 +1,5 @@
 import { expect } from 'chai'
+import { LogsGlobal } from '../../../src/logs/logs.entry'
 
 import {
   browserExecute,
@@ -8,6 +9,7 @@ import {
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
+  ServerRumEvent,
   sortByMessage,
   tearDown,
 } from './helpers'
@@ -21,7 +23,7 @@ afterEach(tearDown)
 describe('logs', () => {
   it('should send logs', async () => {
     browserExecute(() => {
-      ;(window as any).DD_LOGS.logger.log('hello')
+      ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
     })
     flushEvents()
     const logs = await retrieveLogsMessages()
@@ -69,8 +71,8 @@ describe('rum', () => {
 
     flushEvents()
     const trackedUrls = (await retrieveRumEvents())
-      .filter((rumEvent: any) => rumEvent.type === 'page_view')
-      .map((rumEvent: any) => rumEvent.http.referer.replace('http://localhost:3000', ''))
+      .filter((rumEvent: ServerRumEvent) => rumEvent.type === 'page_view')
+      .map((rumEvent: ServerRumEvent) => rumEvent.http.referer.replace('http://localhost:3000', ''))
 
     expect(trackedUrls).to.deep.equal([
       '/agents-page.html',
@@ -128,7 +130,7 @@ describe('error collection', () => {
     })
     await browser.getLogs('browser')
     await flushEvents()
-    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
+    const logs = (await retrieveLogs()).sort(sortByMessage)
 
     expect(logs.length).equal(2)
 
@@ -158,7 +160,7 @@ describe('error collection', () => {
     })
     await browser.getLogs('browser')
     await flushEvents()
-    const logs = ((await retrieveLogs()) as any[]).sort(sortByMessage)
+    const logs = (await retrieveLogs()).sort(sortByMessage)
 
     expect(logs.length).equal(2)
 

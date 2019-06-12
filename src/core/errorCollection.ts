@@ -1,13 +1,27 @@
-import { report, StackFrame, StackTrace } from '../tracekit/tracekit'
+import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
-import { Context } from './context'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
-  context?: Context
+  context?: ErrorContext & HttpContext
+}
+
+export interface ErrorContext {
+  error: {
+    kind?: string
+    stack: string
+  }
+}
+
+export interface HttpContext {
+  http?: {
+    url: string
+    status_code: number
+    method: string
+  }
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
@@ -49,7 +63,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     originalConsoleError.apply(console, [message, ...optionalParams])
     errorObservable.notify({
       message: ['console error:', message, ...optionalParams]
-        .map((param: any) => (typeof param === 'string' ? param : jsonStringify(param, undefined, 2)))
+        .map((param: unknown) => (typeof param === 'string' ? param : jsonStringify(param as object, undefined, 2)))
         .join(' '),
     })
   }
@@ -85,11 +99,11 @@ let traceKitReportHandler: (stack: StackTrace) => void
 export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
   traceKitReportHandler = (stack: StackTrace) =>
     errorObservable.notify({ message: stack.message, context: formatStackTraceToContext(stack) })
-  report.subscribe(traceKitReportHandler)
+  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
 export function stopRuntimeErrorTracking() {
-  report.unsubscribe(traceKitReportHandler)
+  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
 interface RequestDetails {
@@ -107,7 +121,7 @@ export function trackXhrError(configuration: Configuration, errorObservable: Err
         notifyError(configuration, errorObservable, 'XHR', {
           method,
           url,
-          response: this.response,
+          response: this.response as string | undefined,
           status: this.status,
         })
       }

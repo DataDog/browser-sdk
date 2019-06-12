@@ -6,7 +6,7 @@ import { monitor } from '../../core/internalMonitoring'
 describe('logs entry', () => {
   beforeEach(() => {
     require('../logs.entry')
-    delete require.cache[require.resolve('../logs.entry')]
+    delete (require.cache as any)[require.resolve('../logs.entry')]
   })
 
   it('should set global with init', () => {
@@ -30,7 +30,7 @@ describe('logs entry', () => {
   })
 
   it('should add a `_setDebug` that works', () => {
-    const setDebug = (window.DD_LOGS as any)._setDebug
+    const setDebug: (debug: boolean) => void = (window.DD_LOGS as any)._setDebug as any
     expect(!!setDebug).true
 
     const errorStub = sinon.stub(console, 'warn')

@@ -46,21 +46,21 @@ export class FetchStubBuilder {
   getStub() {
     return (() => {
       this.pendingFetch += 1
-      let resolve: (response: ResponseStub) => void
-      let reject: (error: Error) => void
-      const promise: any = new Promise((res, rej) => {
+      let resolve: (response: ResponseStub) => unknown
+      let reject: (error: Error) => unknown
+      const promise: unknown = new Promise((res, rej) => {
         resolve = res
         reject = rej
       })
-      promise.resolveWith = (response: ResponseStub) =>
+      ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) =>
         resolve({
           ...response,
           clone: () => {
             const cloned = { text: async () => response.responseText }
             return cloned as Response
           },
-        })
-      promise.rejectWith = (error: Error) => reject(error)
+        }) as Promise<ResponseStub>
+      ;(promise as FetchStubPromise).rejectWith = async (error: Error) => reject(error) as Promise<Error>
       return promise
     }) as FetchStub
   }

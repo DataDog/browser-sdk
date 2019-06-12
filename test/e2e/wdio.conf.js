@@ -3,7 +3,7 @@ let serverProcess
 
 exports.config = {
   runner: 'local',
-  specs: ['./test/e2e/**/*.scenario.ts'],
+  specs: ['./test/e2e/scenario/*.scenario.ts'],
   maxInstances: 1,
   capabilities: [
     {
@@ -26,12 +26,12 @@ exports.config = {
     timeout: 60000,
   },
   onPrepare: function() {
-    serverProcess = exec('ts-node --project test/e2e/tsconfig.e2e.json test/e2e/server/server')
+    serverProcess = exec('ts-node --project test/e2e/server/tsconfig.json test/e2e/server/server')
   },
   before: function() {
     require('ts-node').register({
       files: true,
-      project: 'test/e2e/tsconfig.e2e.json',
+      project: 'test/e2e/scenario/tsconfig.json',
     })
   },
   onComplete: function() {

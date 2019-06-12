@@ -1,7 +1,13 @@
 import { expect } from 'chai'
 import * as request from 'request'
-import { LogsMessage } from '../../src/logs/logger'
-import { RumEvent } from '../../src/rum/rum'
+import { CommonContext } from '../../../src/core/context'
+import { ErrorContext, HttpContext } from '../../../src/core/errorCollection'
+import { MonitoringMessage } from '../../../src/core/internalMonitoring'
+import { LogsMessage } from '../../../src/logs/logger'
+import { RumEvent } from '../../../src/rum/rum'
+
+export type ServerRumEvent = RumEvent & CommonContext
+export type ServerLogsMessage = LogsMessage & ErrorContext & HttpContext & CommonContext
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
@@ -11,11 +17,11 @@ export async function flushEvents() {
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
 export async function browserExecute(fn: any) {
-  return browser.execute(fn)
+  return browser.execute(fn as any)
 }
 
 export async function browserExecuteAsync(fn: any) {
-  return browser.executeAsync(fn)
+  return browser.executeAsync(fn as any)
 }
 
 export async function tearDown() {
@@ -23,27 +29,29 @@ export async function tearDown() {
   await resetServerState()
   const logs = await browser.getLogs('browser')
   logs.forEach(console.log)
-  expect(logs.filter((l: any) => l.level === 'SEVERE')).to.be.empty
+  expect(logs.filter((l) => (l as any).level === 'SEVERE')).to.be.empty
 }
 
 export async function retrieveRumEvents() {
-  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents))
+  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents) as ServerRumEvent[])
 }
 
 export async function retrieveRumEventsTypes() {
-  return retrieveRumEvents().then((rumEvents: RumEvent[]) => rumEvents.map((rumEvent: RumEvent) => rumEvent.type))
+  return retrieveRumEvents().then((rumEvents: ServerRumEvent[]) =>
+    rumEvents.map((rumEvent: ServerRumEvent) => rumEvent.type)
+  )
 }
 
 export async function retrieveLogs() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs))
+  return fetch('/logs').then((logs: string) => JSON.parse(logs) as ServerLogsMessage[])
 }
 
 export async function retrieveLogsMessages() {
-  return retrieveLogs().then((logs: LogsMessage[]) => logs.map((log: LogsMessage) => log.message))
+  return retrieveLogs().then((logs: ServerLogsMessage[]) => logs.map((log: ServerLogsMessage) => log.message))
 }
 
 export async function retrieveMonitoringErrors() {
-  return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors))
+  return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
 }
 
 export async function resetServerState() {

@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "strict": true,
-    "types": ["node", "webdriverio", "mocha"]
-  },
-  "include": ["./**/*.ts"]
-}

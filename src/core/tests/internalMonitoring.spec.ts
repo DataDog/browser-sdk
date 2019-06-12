@@ -1,11 +1,18 @@
 import { expect, use } from 'chai'
 import chaiShallowDeepEqual from 'chai-shallow-deep-equal'
 import * as sinon from 'sinon'
-import { monitor, monitored, resetInternalMonitoring, startInternalMonitoring } from '../internalMonitoring'
+import { Configuration } from '../configuration'
+import {
+  monitor,
+  monitored,
+  MonitoringMessage,
+  resetInternalMonitoring,
+  startInternalMonitoring,
+} from '../internalMonitoring'
 
 use(chaiShallowDeepEqual)
 
-const configuration: any = {
+const configuration: Partial<Configuration> = {
   batchBytesLimit: 100,
   flushTimeout: 60 * 1000,
   internalMonitoringEndpoint: 'http://localhot/monitoring',
@@ -46,7 +53,7 @@ describe('internal monitoring', () => {
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        startInternalMonitoring(configuration)
+        startInternalMonitoring(configuration as Configuration)
       })
 
       afterEach(() => {
@@ -67,7 +74,7 @@ describe('internal monitoring', () => {
 
         candidate.monitoredThrowing()
 
-        expect(JSON.parse(server.requests[0].requestBody).message).equal('monitored')
+        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).equal('monitored')
         server.restore()
       })
     })
@@ -80,7 +87,7 @@ describe('internal monitoring', () => {
     }
 
     beforeEach(() => {
-      startInternalMonitoring(configuration)
+      startInternalMonitoring(configuration as Configuration)
     })
 
     afterEach(() => {
@@ -102,7 +109,7 @@ describe('internal monitoring', () => {
 
       monitor(throwing)()
 
-      expect(JSON.parse(server.requests[0].requestBody).message).equal('error')
+      expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).equal('error')
       server.restore()
     })
   })
@@ -113,7 +120,7 @@ describe('internal monitoring', () => {
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      startInternalMonitoring(configuration)
+      startInternalMonitoring(configuration as Configuration)
       server = sinon.fakeServer.create()
       clock = sinon.useFakeTimers(FAKE_DATE)
     })
@@ -143,7 +150,7 @@ describe('internal monitoring', () => {
     })
 
     it('should cap the data sent', () => {
-      const max = configuration.maxInternalMonitoringMessagesPerPage
+      const max = configuration.maxInternalMonitoringMessagesPerPage!
       for (let i = 0; i < max + 3; i += 1) {
         monitor(() => {
           throw new Error('message')

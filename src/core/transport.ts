@@ -57,7 +57,7 @@ export class Batch<T> {
     private maxMessageSize: number,
     private flushTimeout: number,
     private contextProvider: () => Context,
-    private messageProcessor?: (message: T) => object
+    private messageProcessor?: (message: T & Context) => T & Context
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()

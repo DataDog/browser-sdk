@@ -6,13 +6,17 @@ import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { Omit } from '../../core/utils'
-import { HandlerType, startLogger, STATUSES, StatusType } from '../logger'
+import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../logger'
 import { LogsGlobal } from '../logs.entry'
 
 use(sinonChai)
 
+interface SentMessage extends LogsMessage {
+  logger: { name: string }
+}
+
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody)
+  return JSON.parse(server.requests[index].requestBody) as SentMessage
 }
 const errorObservable = new Observable<ErrorMessage>()
 type LogsApi = Omit<LogsGlobal, 'init'>
@@ -66,7 +70,7 @@ describe('logger module', () => {
 
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
-        ;(LOGS.logger as any)[status]('message')
+        ;((LOGS.logger as any)[status] as any)('message')
 
         expect(getLoggedMessage(server, 0).status).equal(status)
       })

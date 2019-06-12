@@ -1,19 +1,16 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "outDir": "./dist/",
-    "strict": true,
-    "module": "es6",
     "target": "es5",
-    "sourceMap": true,
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }
-    ]
+    ],
+    "types": ["node", "@wdio/sync", "mocha"]
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["../../../src/**/*.d.ts", "./**/*.ts"]
 }
