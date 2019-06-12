@@ -9,7 +9,7 @@ import {
   ErrorMessage,
   ErrorOrigin,
   filterErrors,
-  formatStackTraceToContext,
+  formatRuntimeError,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -113,8 +113,12 @@ describe('runtime error tracker', () => {
       done()
     }, 100)
   })
+})
 
-  it('should format the error with right context', () => {
+describe('runtime error formatter', () => {
+  const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
+
+  it('should format an error', () => {
     const stack: StackTrace = {
       message: 'oh snap!',
       name: 'TypeError',
@@ -143,13 +147,43 @@ describe('runtime error tracker', () => {
       ],
     }
 
-    const context = formatStackTraceToContext(stack)
+    const formatted = formatRuntimeError(stack, undefined)
 
-    expect(context.error.kind).equal('TypeError')
-    expect(context.error.stack).equal(`TypeError: oh snap!
+    expect(formatted.message).equal('oh snap!')
+    expect(formatted.context.error.kind).equal('TypeError')
+    expect(formatted.context.error.origin).equal('source')
+    expect(formatted.context.error.stack).equal(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
+  })
+
+  it('should format an error with an empty message', () => {
+    const stack: StackTrace = {
+      message: '',
+      name: 'TypeError',
+      stack: [],
+    }
+
+    const formatted = formatRuntimeError(stack, undefined)
+
+    expect(formatted.message).equal('Empty message')
+  })
+
+  it('should format a string error', () => {
+    const errorObject = 'oh snap!'
+
+    const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
+
+    expect(formatted.message).equal('Uncaught "oh snap!"')
+  })
+
+  it('should format an object error', () => {
+    const errorObject = { foo: 'bar' }
+
+    const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
+
+    expect(formatted.message).equal('Uncaught {"foo":"bar"}')
   })
 })
 
