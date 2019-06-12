@@ -7,6 +7,7 @@ import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
 import {
   ErrorMessage,
+  ErrorOrigin,
   filterErrors,
   formatStackTraceToContext,
   startConsoleTracking,
@@ -23,6 +24,13 @@ use(sinonChai)
 describe('console tracker', () => {
   let consoleErrorStub: sinon.SinonStub
   let notifyError: sinon.SinonSpy
+  const CONSOLE_CONTEXT = {
+    context: {
+      error: {
+        origin: ErrorOrigin.CONSOLE,
+      },
+    },
+  }
 
   beforeEach(() => {
     consoleErrorStub = sinon.stub(console, 'error')
@@ -45,12 +53,12 @@ describe('console tracker', () => {
 
   it('should notify error', () => {
     console.error('foo', 'bar')
-    expect(notifyError).calledWithExactly({ message: 'console error: foo bar' })
+    expect(notifyError).calledWithExactly({ ...CONSOLE_CONTEXT, message: 'console error: foo bar' })
   })
 
   it('should stringify object parameters', () => {
     console.error('Hello', { foo: 'bar' })
-    expect(notifyError).calledWithExactly({ message: 'console error: Hello {\n  "foo": "bar"\n}' })
+    expect(notifyError).calledWithExactly({ ...CONSOLE_CONTEXT, message: 'console error: Hello {\n  "foo": "bar"\n}' })
   })
 })
 
@@ -177,12 +185,12 @@ describe('fetch error tracker', () => {
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
       expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context!.http).deep.equal({
+      expect(messages[0].context.http).deep.equal({
         method: 'GET',
         status_code: 500,
         url: FAKE_URL,
       })
-      expect(messages[0].context!.error.stack).equal('fetch error')
+      expect(messages[0].context.error.stack).equal('fetch error')
       done()
     })
   })
@@ -192,12 +200,12 @@ describe('fetch error tracker', () => {
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
       expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context!.http).deep.equal({
+      expect(messages[0].context.http).deep.equal({
         method: 'GET',
         status_code: 0,
         url: FAKE_URL,
       })
-      expect(messages[0].context!.error.stack).match(/Error: fetch error/)
+      expect(messages[0].context.error.stack).match(/Error: fetch error/)
       done()
     })
   })
@@ -220,12 +228,12 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context!.http!.method).equal('GET')
-      expect(messages[1].context!.http!.method).equal('GET')
-      expect(messages[2].context!.http!.method).equal('PUT')
-      expect(messages[3].context!.http!.method).equal('POST')
-      expect(messages[4].context!.http!.method).equal('POST')
-      expect(messages[5].context!.http!.method).equal('POST')
+      expect(messages[0].context.http!.method).equal('GET')
+      expect(messages[1].context.http!.method).equal('GET')
+      expect(messages[2].context.http!.method).equal('PUT')
+      expect(messages[3].context.http!.method).equal('POST')
+      expect(messages[4].context.http!.method).equal('POST')
+      expect(messages[5].context.http!.method).equal('POST')
       done()
     })
   })
@@ -234,8 +242,8 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context!.http!.url).equal(FAKE_URL)
-      expect(messages[1].context!.http!.url).equal(FAKE_URL)
+      expect(messages[0].context.http!.url).equal(FAKE_URL)
+      expect(messages[1].context.http!.url).equal(FAKE_URL)
       done()
     })
   })
@@ -244,7 +252,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context!.error.stack).equal('Failed to load')
+      expect(messages[0].context.error.stack).equal('Failed to load')
       done()
     })
   })
@@ -253,7 +261,7 @@ describe('fetch error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
     fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context!.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
+      expect(messages[0].context.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
       done()
     })
   })
@@ -287,6 +295,13 @@ describe('error limitation', () => {
   let errorObservable: Observable<ErrorMessage>
   let filteredSubscriber: sinon.SinonSpy
   let clock: sinon.SinonFakeTimers
+  const CONTEXT = {
+    context: {
+      error: {
+        origin: ErrorOrigin.SOURCE,
+      },
+    },
+  }
 
   beforeEach(() => {
     errorObservable = new Observable<ErrorMessage>()
@@ -302,46 +317,49 @@ describe('error limitation', () => {
   })
 
   it('should stop send errors if threshold is exceeded', () => {
-    errorObservable.notify({ message: '1' })
-    errorObservable.notify({ message: '2' })
-    errorObservable.notify({ message: '3' })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
 
-    expect(filteredSubscriber).calledWith({ message: '1' })
-    expect(filteredSubscriber).calledWith({ message: '2' })
-    expect(filteredSubscriber).not.calledWith({ message: '3' })
+    expect(filteredSubscriber).calledWith({ message: '1', ...CONTEXT })
+    expect(filteredSubscriber).calledWith({ message: '2', ...CONTEXT })
+    expect(filteredSubscriber).not.calledWith({ message: '3', ...CONTEXT })
   })
 
   it('should send a threshold reached message', () => {
-    errorObservable.notify({ message: '1' })
-    errorObservable.notify({ message: '2' })
-    errorObservable.notify({ message: '3' })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
 
-    expect(filteredSubscriber).calledWith({ message: 'Reached max number of errors by minute: 2' })
+    expect(filteredSubscriber).calledWith({
+      context: { error: { origin: ErrorOrigin.AGENT } },
+      message: 'Reached max number of errors by minute: 2',
+    })
   })
 
   it('should reset error count every each minute', () => {
-    errorObservable.notify({ message: '1' })
-    errorObservable.notify({ message: '2' })
-    errorObservable.notify({ message: '3' })
-    errorObservable.notify({ message: '4' })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
+    errorObservable.notify({ message: '4', ...CONTEXT })
     expect(filteredSubscriber.callCount).equal(3)
 
     clock.tick(ONE_MINUTE - 1)
 
-    errorObservable.notify({ message: '5' })
+    errorObservable.notify({ message: '5', ...CONTEXT })
     expect(filteredSubscriber.callCount).equal(3)
 
     clock.tick(1)
 
-    errorObservable.notify({ message: '6' })
-    errorObservable.notify({ message: '7' })
-    errorObservable.notify({ message: '8' })
-    errorObservable.notify({ message: '9' })
+    errorObservable.notify({ message: '6', ...CONTEXT })
+    errorObservable.notify({ message: '7', ...CONTEXT })
+    errorObservable.notify({ message: '8', ...CONTEXT })
+    errorObservable.notify({ message: '9', ...CONTEXT })
     expect(filteredSubscriber.callCount).equal(6)
 
     clock.tick(ONE_MINUTE)
 
-    errorObservable.notify({ message: '10' })
+    errorObservable.notify({ message: '10', ...CONTEXT })
     expect(filteredSubscriber.callCount).equal(7)
   })
 })

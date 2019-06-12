@@ -7,7 +7,12 @@ import { LogsMessage } from '../../../src/logs/logger'
 import { RumEvent } from '../../../src/rum/rum'
 
 export type ServerRumEvent = RumEvent & CommonContext
-export type ServerLogsMessage = LogsMessage & ErrorContext & HttpContext & CommonContext
+export interface ServerErrorMessage {
+  error: ErrorContext
+  http: HttpContext
+  message: string
+}
+export type ServerLogsMessage = LogsMessage & ServerErrorMessage
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
