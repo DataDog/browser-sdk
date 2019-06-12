@@ -60,6 +60,11 @@ describe('console tracker', () => {
     console.error('Hello', { foo: 'bar' })
     expect(notifyError).calledWithExactly({ ...CONSOLE_CONTEXT, message: 'console error: Hello {\n  "foo": "bar"\n}' })
   })
+
+  it('should format error instance', () => {
+    console.error(new TypeError('hello'))
+    expect((notifyError.getCall(0).args[0] as ErrorMessage).message).equal('console error: TypeError: hello')
+  })
 })
 
 describe('runtime error tracker', () => {
