@@ -5,6 +5,12 @@ import { monitor } from '../core/internalMonitoring'
 import { Batch, MultiHttpRequest } from '../core/transport'
 import * as utils from '../core/utils'
 
+declare global {
+  interface Window {
+    PerformanceObserver?: PerformanceObserver
+  }
+}
+
 interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
   connectDuration: number
   domainLookupDuration: number
@@ -184,7 +190,7 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
 }
 
 export function trackPerformanceTiming(batch: RumBatch, configuration: Configuration) {
-  if ('PerformanceObserver' in window) {
+  if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
         list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, configuration))
