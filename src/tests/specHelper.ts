@@ -1,5 +1,5 @@
-import { ErrorMessage } from '../core/errorCollection'
 import { Observable } from '../core/observable'
+import { RequestDetails } from '../core/requestCollection'
 import { noop } from '../core/utils'
 
 export function isSafari() {
@@ -22,24 +22,24 @@ export function clearAllCookies() {
 }
 
 export class FetchStubBuilder {
-  private messages: ErrorMessage[] = []
+  private requests: RequestDetails[] = []
   private pendingFetch = 0
-  private whenAllCompleteFn: (messages: ErrorMessage[]) => void = noop
+  private whenAllCompleteFn: (messages: RequestDetails[]) => void = noop
 
-  constructor(observable: Observable<ErrorMessage>) {
-    observable.subscribe((message: ErrorMessage) => {
-      this.messages.push(message)
+  constructor(observable: Observable<RequestDetails>) {
+    observable.subscribe((request: RequestDetails) => {
+      this.requests.push(request)
       this.pendingFetch -= 1
       if (this.pendingFetch === 0) {
         // ensure that AssertionError are not swallowed by promise context
         setTimeout(() => {
-          this.whenAllCompleteFn(this.messages)
+          this.whenAllCompleteFn(this.requests)
         })
       }
     })
   }
 
-  whenAllComplete(onCompleteFn: (messages: ErrorMessage[]) => void) {
+  whenAllComplete(onCompleteFn: (_: RequestDetails[]) => void) {
     this.whenAllCompleteFn = onCompleteFn
   }
 

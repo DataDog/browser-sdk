@@ -1,7 +1,7 @@
 import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
-import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
+import { RequestDetails, RequestObservable } from './requestCollection'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
@@ -34,13 +34,12 @@ export enum ErrorOrigin {
 
 export type ErrorObservable = Observable<ErrorMessage>
 
-export function startErrorCollection(configuration: Configuration) {
+export function startErrorCollection(configuration: Configuration, requestObservable: RequestObservable) {
   const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
-    trackXhrError(configuration, errorObservable)
-    trackFetchError(configuration, errorObservable)
+    trackNetworkError(configuration, errorObservable, requestObservable)
   }
   return filterErrors(configuration, errorObservable)
 }
@@ -146,78 +145,28 @@ export function toStackTraceString(stack: StackTrace) {
   return result
 }
 
-interface RequestDetails {
-  method: string
-  url: string
-  status: number
-  response?: string
-}
-
-export function trackXhrError(configuration: Configuration, errorObservable: ErrorObservable) {
-  const originalOpen = XMLHttpRequest.prototype.open
-  XMLHttpRequest.prototype.open = function(method: string, url: string) {
-    const reportXhrError = () => {
-      if (this.status === 0 || this.status >= 500) {
-        notifyError(configuration, errorObservable, 'XHR', {
-          method,
-          url,
-          response: this.response as string | undefined,
-          status: this.status,
-        })
-      }
-    }
-
-    this.addEventListener('load', monitor(reportXhrError))
-    this.addEventListener('error', monitor(reportXhrError))
-
-    return originalOpen.apply(this, arguments as any)
-  }
-}
-
-export function trackFetchError(configuration: Configuration, errorObservable: ErrorObservable) {
-  const originalFetch = window.fetch
-  // tslint:disable promise-function-async
-  window.fetch = function(input: RequestInfo, init?: RequestInit) {
-    const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
-    const reportFetchError = async (response: Response | Error) => {
-      if ('stack' in response) {
-        const url = (typeof input === 'object' && input.url) || (input as string)
-        notifyError(configuration, errorObservable, 'Fetch', { method, url, response: response.stack, status: 0 })
-      } else if ('status' in response && response.status >= 500) {
-        const text = await response.clone().text()
-        notifyError(configuration, errorObservable, 'Fetch', {
-          method,
-          response: text,
-          status: response.status,
-          url: response.url,
-        })
-      }
-    }
-    const responsePromise = originalFetch.call(this, input, init)
-    responsePromise.then(monitor(reportFetchError), monitor(reportFetchError))
-    return responsePromise
-  }
-}
-
-function notifyError(
+export function trackNetworkError(
   configuration: Configuration,
   errorObservable: ErrorObservable,
-  type: string,
-  request: RequestDetails
+  requestObservable: RequestObservable
 ) {
-  errorObservable.notify({
-    context: {
-      error: {
-        origin: ErrorOrigin.NETWORK,
-        stack: truncateResponse(request.response, configuration) || 'Failed to load',
-      },
-      http: {
-        method: request.method,
-        status_code: request.status,
-        url: request.url,
-      },
-    },
-    message: `${type} error ${request.method} ${request.url}`,
+  requestObservable.subscribe((request: RequestDetails) => {
+    if (request.status === 0 || request.status >= 500) {
+      errorObservable.notify({
+        context: {
+          error: {
+            origin: ErrorOrigin.NETWORK,
+            stack: truncateResponse(request.response, configuration) || 'Failed to load',
+          },
+          http: {
+            method: request.method,
+            status_code: request.status,
+            url: request.url,
+          },
+        },
+        message: `${request.type} error ${request.method} ${request.url}`,
+      })
+    }
   })
 }
 
