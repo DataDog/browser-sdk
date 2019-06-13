@@ -1,4 +1,4 @@
-import { monitor } from '../../core/internalMonitoring'
+import { monitor, resetInternalMonitoring } from '../../core/internalMonitoring'
 
 describe('logs entry', () => {
   beforeEach(() => {
@@ -36,12 +36,14 @@ describe('logs entry', () => {
     expect(!!setDebug).toEqual(true)
 
     spyOn(console, 'warn')
+    resetInternalMonitoring()
     monitor(() => {
       throw new Error()
     })()
     expect(console.warn).toHaveBeenCalledTimes(0)
 
     setDebug(true)
+    resetInternalMonitoring()
     monitor(() => {
       throw new Error()
     })()
