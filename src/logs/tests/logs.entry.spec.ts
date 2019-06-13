@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 
-import { monitor } from '../../core/internalMonitoring'
+import { monitor, resetInternalMonitoring } from '../../core/internalMonitoring'
 
 describe('logs entry', () => {
   beforeEach(() => {
@@ -34,12 +34,14 @@ describe('logs entry', () => {
     expect(!!setDebug).true
 
     const errorStub = sinon.stub(console, 'warn')
+    resetInternalMonitoring()
     monitor(() => {
       throw new Error()
     })()
     expect(errorStub.callCount).equal(0)
 
     setDebug(true)
+    resetInternalMonitoring()
     monitor(() => {
       throw new Error()
     })()

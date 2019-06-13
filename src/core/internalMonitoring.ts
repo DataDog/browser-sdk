@@ -15,6 +15,7 @@ export interface MonitoringMessage {
 }
 
 const monitoringConfiguration: {
+  initialized?: boolean
   batch?: Batch<MonitoringMessage>
   debugMode?: boolean
   maxMessagesPerPage: number
@@ -46,6 +47,7 @@ export function startInternalMonitoring(configuration: Configuration) {
 }
 
 export function resetInternalMonitoring() {
+  monitoringConfiguration.initialized = false
   monitoringConfiguration.batch = undefined
 }
 
@@ -58,6 +60,10 @@ export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
 }
 
 export function monitor<T extends Function>(fn: T): T {
+  if (monitoringConfiguration.initialized) {
+    console.warn('Script is already initialized')
+  }
+  monitoringConfiguration.initialized = true
   return (function(this: any) {
     try {
       return fn.apply(this, arguments)
