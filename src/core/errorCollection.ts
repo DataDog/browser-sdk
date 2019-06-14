@@ -99,17 +99,42 @@ function formatConsoleParameters(param: unknown) {
   return jsonStringify(param as object, undefined, 2)
 }
 
-export function formatStackTraceToContext(stack: StackTrace) {
+let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
+
+export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
+  traceKitReportHandler = (stack: StackTrace, _: boolean, errorObject?: any) => {
+    errorObservable.notify(formatRuntimeError(stack, errorObject))
+  }
+  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
+}
+
+export function stopRuntimeErrorTracking() {
+  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
+}
+
+export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
+  let message: string
+  let stack: string
+  if (stackTrace.message === undefined && !(errorObject instanceof Error)) {
+    message = `Uncaught ${jsonStringify(errorObject as any)}`
+    stack = 'No stack, consider using an instance of Error'
+  } else {
+    message = stackTrace.message || 'Empty message'
+    stack = toStackTraceString(stackTrace)
+  }
   return {
-    error: {
-      kind: stack.name,
-      origin: ErrorOrigin.SOURCE,
-      stack: toStackTraceString(stack),
+    message,
+    context: {
+      error: {
+        stack,
+        kind: stackTrace.name,
+        origin: ErrorOrigin.SOURCE,
+      },
     },
   }
 }
 
-function toStackTraceString(stack: StackTrace) {
+export function toStackTraceString(stack: StackTrace) {
   let result = `${stack.name || 'Error'}: ${stack.message}`
   stack.stack.forEach((frame: StackFrame) => {
     const func = frame.func === '?' ? '<anonymous>' : frame.func
@@ -119,18 +144,6 @@ function toStackTraceString(stack: StackTrace) {
     result += `\n  at ${func}${args} @ ${frame.url}${line}${column}`
   })
   return result
-}
-
-let traceKitReportHandler: (stack: StackTrace) => void
-
-export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
-  traceKitReportHandler = (stack: StackTrace) =>
-    errorObservable.notify({ message: stack.message, context: formatStackTraceToContext(stack) })
-  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
-}
-
-export function stopRuntimeErrorTracking() {
-  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
 interface RequestDetails {

@@ -186,7 +186,7 @@ export const report = (function reportModuleWrapper() {
    * @memberof report
    * @throws An exception if an error occurs while calling an handler.
    */
-  function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: Error) {
+  function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: any) {
     let exception
     for (const i in handlers) {
       if (has(handlers, i)) {
