@@ -80,15 +80,23 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
           origin: ErrorOrigin.CONSOLE,
         },
       },
-      message: ['console error:', message, ...optionalParams]
-        .map((param: unknown) => (typeof param === 'string' ? param : jsonStringify(param as object, undefined, 2)))
-        .join(' '),
+      message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
     })
   }
 }
 
 export function stopConsoleTracking() {
   console.error = originalConsoleError
+}
+
+function formatConsoleParameters(param: unknown) {
+  if (typeof param === 'string') {
+    return param
+  }
+  if (param instanceof Error) {
+    return param.toString()
+  }
+  return jsonStringify(param as object, undefined, 2)
 }
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
