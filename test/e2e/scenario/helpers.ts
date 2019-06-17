@@ -6,6 +6,13 @@ import { MonitoringMessage } from '../../../src/core/internalMonitoring'
 import { LogsMessage } from '../../../src/logs/logger'
 import { RumEvent } from '../../../src/rum/rum'
 
+export interface BrowserLog {
+  level: string
+  message: string
+  source: string
+  timestamp: number
+}
+
 export type ServerRumEvent = RumEvent & CommonContext
 export interface ServerErrorMessage {
   error: ErrorContext
@@ -33,7 +40,7 @@ export async function tearDown() {
   expect(await retrieveMonitoringErrors()).to.be.empty
   await resetServerState()
   const logs = await browser.getLogs('browser')
-  logs.forEach(console.log)
+  // logs.forEach(console.log)
   expect(logs.filter((l) => (l as any).level === 'SEVERE')).to.be.empty
 }
 
@@ -82,4 +89,8 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
     return 1
   }
   return 0
+}
+
+export function filterLogsByLevel(logs: BrowserLog[], level: string) {
+  return logs.filter((e) => e.level === level)
 }

@@ -4,6 +4,8 @@ import { LogsGlobal } from '../../../src/logs/logs.entry'
 import {
   browserExecute,
   browserExecuteAsync,
+  BrowserLog,
+  filterLogsByLevel,
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
@@ -13,6 +15,8 @@ import {
   sortByMessage,
   tearDown,
 } from './helpers'
+
+import { SECOND_INIT_WARNING_MESSAGE } from '../../../src/core/internalMonitoring'
 
 beforeEach(() => {
   browser.url('/agents-page.html')
@@ -37,18 +41,26 @@ describe('logs', () => {
     flushEvents()
     const logs = await retrieveLogsMessages()
     expect(logs).to.contain('console error: oh snap')
-    const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).to.equal(1)
+    const browserLogs = await (browser.getLogs('browser') as BrowserLog[])
+    expect(filterLogsByLevel(browserLogs, 'SEVERE').length).to.equal(1)
   })
 })
 
 describe('rum', () => {
+  it('should warn of multiple call to init', async () => {
+    flushEvents()
+    const browserLogs = await (browser.getLogs('browser') as BrowserLog[])
+    const warnLogs = filterLogsByLevel(browserLogs, 'WARNING')
+    expect(warnLogs.length).to.be.above(1)
+    console.log(warnLogs[0])
+    expect(warnLogs[0].message).to.contain(SECOND_INIT_WARNING_MESSAGE)
+  })
+
   it('should send page view event on load', async () => {
     flushEvents()
     const types = await retrieveRumEventsTypes()
     expect(types).to.contain('page_view')
   })
-
   it('should send page views during history navigation', async () => {
     browserExecute(() => {
       history.pushState({}, '', '/')
@@ -92,8 +104,8 @@ describe('rum', () => {
     flushEvents()
     const types = await retrieveRumEventsTypes()
     expect(types).to.contain('error')
-    const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).to.equal(1)
+    const browserLogs = await (browser.getLogs('browser') as BrowserLog[])
+    expect(filterLogsByLevel(browserLogs, 'SEVERE').length).to.equal(1)
   })
 })
 

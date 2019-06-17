@@ -59,9 +59,11 @@ export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
   }
 }
 
+export const SECOND_INIT_WARNING_MESSAGE = 'Script was already initialized'
+
 export function monitor<T extends Function>(fn: T): T {
   if (monitoringConfiguration.initialized) {
-    console.warn('Script is already initialized')
+    console.warn(SECOND_INIT_WARNING_MESSAGE)
   }
   monitoringConfiguration.initialized = true
   return (function(this: any) {
