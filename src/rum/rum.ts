@@ -200,6 +200,9 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
           .getEntriesByType('navigation')
           .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, batch))
         list.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, batch))
+
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
+        window.performance.clearResourceTimings()
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
