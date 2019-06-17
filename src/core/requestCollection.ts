@@ -34,11 +34,11 @@ export function trackXhr(requestObservable: RequestObservable) {
       requestObservable.notify({
         method,
         startTime,
-        url,
         duration: performance.now() - startTime,
         response: this.response as string | undefined,
         status: this.status,
         type: RequestType.XHR,
+        url: normalizeUrl(url),
       })
     }
 
@@ -57,8 +57,8 @@ export function trackFetch(requestObservable: RequestObservable) {
     const startTime = performance.now()
     const reportFetchError = async (response: Response | Error) => {
       const duration = performance.now() - startTime
+      const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response) {
-        const url = (typeof input === 'object' && input.url) || (input as string)
         requestObservable.notify({
           duration,
           method,
@@ -74,10 +74,10 @@ export function trackFetch(requestObservable: RequestObservable) {
           duration,
           method,
           startTime,
+          url,
           response: text,
           status: response.status,
           type: RequestType.FETCH,
-          url: response.url,
         })
       }
     }
@@ -85,6 +85,16 @@ export function trackFetch(requestObservable: RequestObservable) {
     responsePromise.then(monitor(reportFetchError), monitor(reportFetchError))
     return responsePromise
   }
+}
+
+export function normalizeUrl(url: string) {
+  if (url.startsWith('http')) {
+    return url
+  }
+  if (url.startsWith('//')) {
+    return `${window.location.protocol}${url}`
+  }
+  return `${window.location.origin}${url}`
 }
 
 export function isRejected(request: RequestDetails) {

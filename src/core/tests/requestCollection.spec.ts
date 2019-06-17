@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import * as sinon from 'sinon'
 import { FetchStub, FetchStubBuilder, FetchStubPromise } from '../../tests/specHelper'
 import { Observable } from '../observable'
-import { RequestDetails, trackFetch } from '../requestCollection'
+import { normalizeUrl, RequestDetails, trackFetch } from '../requestCollection'
 
 describe('fetch tracker', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -19,8 +19,8 @@ describe('fetch tracker', () => {
     window.fetch = fetchStubBuilder.getStub()
     trackFetch(requestObservable)
     fetchStub = window.fetch as FetchStub
-    window.onunhandledrejection = () => {
-      throw new Error('unhandled rejected promise')
+    window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
+      throw new Error(`unhandled rejected promise \n    ${ev.reason}`)
     }
   })
 
@@ -31,7 +31,7 @@ describe('fetch tracker', () => {
   })
 
   it('should track server error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error', url: FAKE_URL })
+    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
@@ -59,7 +59,7 @@ describe('fetch tracker', () => {
   })
 
   it('should track client error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found', url: FAKE_URL })
+    fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
@@ -123,5 +123,15 @@ describe('fetch tracker', () => {
       expect(spy.called).equal(true)
       done()
     })
+  })
+})
+
+describe('normalize url', () => {
+  it('should add origin to relative path', () => {
+    expect(normalizeUrl('/my/path')).equal('http://localhost:9876/my/path')
+  })
+
+  it('should add protocol to relative url', () => {
+    expect(normalizeUrl('//localhost:9876/my/path')).equal('http://localhost:9876/my/path')
   })
 })
