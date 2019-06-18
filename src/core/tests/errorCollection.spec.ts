@@ -2,7 +2,7 @@ import { expect, use } from 'chai'
 import * as sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 
-import { FetchStub, FetchStubBuilder, FetchStubPromise, isAndroid } from '../../tests/specHelper'
+import { isAndroid } from '../../tests/specHelper'
 import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
 import {
@@ -14,10 +14,11 @@ import {
   startRuntimeErrorTracking,
   stopConsoleTracking,
   stopRuntimeErrorTracking,
-  trackFetchError,
+  trackNetworkError,
 } from '../errorCollection'
 import { Observable } from '../observable'
-import { noop, ONE_MINUTE } from '../utils'
+import { RequestDetails, RequestType } from '../requestCollection'
+import { noop, ONE_MINUTE, ResourceType } from '../utils'
 
 use(sinonChai)
 
@@ -192,141 +193,66 @@ describe('runtime error formatter', () => {
   })
 })
 
-describe('fetch error tracker', () => {
-  const FAKE_URL = 'http://fake-url/'
-  let originalFetch: any
-  let fetchStubBuilder: FetchStubBuilder
-  let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
-  let notifySpy: sinon.SinonSpy
+describe('network error tracker', () => {
+  let errorObservableSpy: sinon.SinonSpy
+  let requestObservable: Observable<RequestDetails>
+  const DEFAULT_REQUEST = {
+    duration: 10,
+    method: 'GET',
+    response: 'Server error',
+    startTime: 0,
+    status: 503,
+    type: RequestType.XHR,
+    url: 'http://fake.com',
+  }
 
   beforeEach(() => {
-    originalFetch = window.fetch
     const errorObservable = new Observable<ErrorMessage>()
-    notifySpy = sinon.spy(errorObservable, 'notify')
-    fetchStubBuilder = new FetchStubBuilder(errorObservable)
-    window.fetch = fetchStubBuilder.getStub()
+    requestObservable = new Observable<RequestDetails>()
+    errorObservableSpy = sinon.spy(errorObservable, 'notify')
     const configuration = { requestErrorResponseLengthLimit: 32 }
-    trackFetchError(configuration as Configuration, errorObservable)
-    fetchStub = window.fetch as FetchStub
-    window.onunhandledrejection = () => {
-      throw new Error('unhandled rejected promise')
-    }
+    trackNetworkError(configuration as Configuration, errorObservable, requestObservable)
   })
 
-  afterEach(() => {
-    window.fetch = originalFetch as any
-    // tslint:disable-next-line:no-null-keyword
-    window.onunhandledrejection = null
-  })
+  it('should track server error', () => {
+    requestObservable.notify(DEFAULT_REQUEST)
 
-  it('should track server error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error', url: FAKE_URL })
-
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).deep.equal({
-        method: 'GET',
-        status_code: 500,
-        url: FAKE_URL,
-      })
-      expect(messages[0].context.error.stack).equal('fetch error')
-      done()
+    expect(errorObservableSpy).calledWith({
+      context: {
+        error: { origin: 'network', stack: 'Server error' },
+        http: { method: 'GET', status_code: 503, url: 'http://fake.com' },
+      },
+      message: 'XHR error GET http://fake.com',
     })
   })
 
-  it('should track refused fetch', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
-
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].message).equal('Fetch error GET http://fake-url/')
-      expect(messages[0].context.http).deep.equal({
-        method: 'GET',
-        status_code: 0,
-        url: FAKE_URL,
-      })
-      expect(messages[0].context.error.stack).match(/Error: fetch error/)
-      done()
-    })
+  it('should track refused request', () => {
+    requestObservable.notify({ ...DEFAULT_REQUEST, status: 0 })
+    expect(errorObservableSpy.called).equal(true)
   })
 
-  it('should not track client error', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 400 })
-
-    setTimeout(() => {
-      expect(notifySpy.called).equal(false)
-      done()
-    })
+  it('should not track client error', () => {
+    requestObservable.notify({ ...DEFAULT_REQUEST, status: 400 })
+    expect(errorObservableSpy.called).equal(false)
   })
 
-  it('should get method from input', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL)).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL, { method: 'PUT' }), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
-    fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
-
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http!.method).equal('GET')
-      expect(messages[1].context.http!.method).equal('GET')
-      expect(messages[2].context.http!.method).equal('PUT')
-      expect(messages[3].context.http!.method).equal('POST')
-      expect(messages[4].context.http!.method).equal('POST')
-      expect(messages[5].context.http!.method).equal('POST')
-      done()
-    })
+  it('should not track successful request', () => {
+    requestObservable.notify({ ...DEFAULT_REQUEST, status: 200 })
+    expect(errorObservableSpy.called).equal(false)
   })
 
-  it('should get url from input', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
-    fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.http!.url).equal(FAKE_URL)
-      expect(messages[1].context.http!.url).equal(FAKE_URL)
-      done()
-    })
+  it('should add a default error response', () => {
+    requestObservable.notify({ ...DEFAULT_REQUEST, response: undefined })
+
+    const stack = (errorObservableSpy.getCall(0).args[0] as ErrorMessage).context.error.stack
+    expect(stack).equal('Failed to load')
   })
 
-  it('should add a default error response', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500 })
+  it('should truncate error response', () => {
+    requestObservable.notify({ ...DEFAULT_REQUEST, response: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).equal('Failed to load')
-      done()
-    })
-  })
-
-  it('should truncate error response', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
-
-    fetchStubBuilder.whenAllComplete((messages: ErrorMessage[]) => {
-      expect(messages[0].context.error.stack).equal('Lorem ipsum dolor sit amet orci ...')
-      done()
-    })
-  })
-
-  it('should keep promise resolved behavior', (done) => {
-    const fetchStubPromise = fetchStub(FAKE_URL)
-    const spy = sinon.spy()
-    fetchStubPromise.then(spy)
-    fetchStubPromise.resolveWith({ status: 500 })
-
-    setTimeout(() => {
-      expect(spy.called).equal(true)
-      done()
-    })
-  })
-
-  it('should keep promise rejected behavior', (done) => {
-    const fetchStubPromise = fetchStub(FAKE_URL)
-    const spy = sinon.spy()
-    fetchStubPromise.catch(spy)
-    fetchStubPromise.rejectWith(new Error('fetch error'))
-
-    setTimeout(() => {
-      expect(spy.called).equal(true)
-      done()
-    })
+    const stack = (errorObservableSpy.getCall(0).args[0] as ErrorMessage).context.error.stack
+    expect(stack).equal('Lorem ipsum dolor sit amet orci ...')
   })
 })
 

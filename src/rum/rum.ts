@@ -3,7 +3,7 @@ import { getCommonContext } from '../core/context'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, MultiHttpRequest } from '../core/transport'
-import * as utils from '../core/utils'
+import { generateUUID, ResourceType, withSnakeCaseKeys } from '../core/utils'
 
 declare global {
   interface Window {
@@ -60,8 +60,6 @@ export interface RumResourceTiming {
   secureConnectionDuration?: number
 }
 
-type ResourceType = 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other'
-
 export type RumPerformanceTiming = RumNavigationTiming | RumPaintTiming | RumResourceTiming
 
 export interface RumError {
@@ -104,19 +102,19 @@ const TIMING_ALLOWED_ATTRIBUTES: Array<keyof PerformanceResourceTiming> = [
 ]
 
 const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  ['xhr', (initiatorType: string) => 'xmlhttprequest' === initiatorType],
-  ['fetch', (initiatorType: string) => 'fetch' === initiatorType],
-  ['beacon', (initiatorType: string) => 'beacon' === initiatorType],
-  ['css', (_: string, path: string) => path.match(/\.css$/i) !== null],
-  ['js', (_: string, path: string) => path.match(/\.js$/i) !== null],
+  [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
+  [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
+  [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
+  [ResourceType.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
+  [ResourceType.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
-    'image',
+    ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
       ['image', 'img', 'icon'].includes(initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
   ],
-  ['font', (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [ResourceType.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
   [
-    'media',
+    ResourceType.MEDIA,
     (initiatorType: string, path: string) =>
       ['audio', 'video'].includes(initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
   ],
@@ -146,12 +144,12 @@ export function initRumBatch(configuration: Configuration, applicationId: string
       applicationId,
       pageViewId,
     }),
-    utils.withSnakeCaseKeys
+    withSnakeCaseKeys
   )
 }
 
 export function trackPageView(batch: RumBatch) {
-  pageViewId = utils.generateUUID()
+  pageViewId = generateUUID()
   activeLocation = { ...window.location }
   batch.add({
     type: RumEventType.PAGE_VIEW,
@@ -220,7 +218,7 @@ export function handleResourceEntry(
   if (!isBrowserAgentRequest(entry.name, configuration)) {
     processTimingAttributes(entry)
     addResourceType(entry)
-    if (['xhr', 'fetch'].includes(entry.resourceType)) {
+    if ([ResourceType.XHR, ResourceType.FETCH].includes(entry.resourceType)) {
       entry.requestCount = 1
     }
     batch.add(toResourceEvent(entry))
@@ -283,7 +281,7 @@ function addResourceType(timing: EnhancedPerformanceResourceTiming) {
       return
     }
   }
-  timing.resourceType = 'other'
+  timing.resourceType = ResourceType.OTHER
 }
 
 export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch: RumBatch) {
