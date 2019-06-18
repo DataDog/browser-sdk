@@ -88,13 +88,7 @@ export function trackFetch(requestObservable: RequestObservable) {
 }
 
 export function normalizeUrl(url: string) {
-  if (url.startsWith('http')) {
-    return url
-  }
-  if (url.startsWith('//')) {
-    return `${window.location.protocol}${url}`
-  }
-  return `${window.location.origin}${url}`
+  return new URL(url, window.location.href).href
 }
 
 export function isRejected(request: RequestDetails) {

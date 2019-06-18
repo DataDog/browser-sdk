@@ -134,4 +134,12 @@ describe('normalize url', () => {
   it('should add protocol to relative url', () => {
     expect(normalizeUrl('//localhost:9876/my/path')).equal('http://localhost:9876/my/path')
   })
+
+  it('should keep full url unchanged', () => {
+    expect(normalizeUrl('https://foo.com/my/path')).equal('https://foo.com/my/path')
+  })
+
+  it('should keep non http url unchanged', () => {
+    expect(normalizeUrl('file://foo.com/my/path')).equal('file://foo.com/my/path')
+  })
 })
