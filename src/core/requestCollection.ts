@@ -1,7 +1,11 @@
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
+import { ResourceType } from './utils'
 
-export type RequestType = 'Fetch' | 'XHR'
+export enum RequestType {
+  FETCH = ResourceType.FETCH,
+  XHR = ResourceType.XHR,
+}
 
 export interface RequestDetails {
   type: RequestType
@@ -34,7 +38,7 @@ export function trackXhr(requestObservable: RequestObservable) {
         duration: performance.now() - startTime,
         response: this.response as string | undefined,
         status: this.status,
-        type: 'XHR',
+        type: RequestType.XHR,
       })
     }
 
@@ -62,7 +66,7 @@ export function trackFetch(requestObservable: RequestObservable) {
           url,
           response: response.stack,
           status: 0,
-          type: 'Fetch',
+          type: RequestType.FETCH,
         })
       } else if ('status' in response) {
         const text = await response.clone().text()
@@ -72,7 +76,7 @@ export function trackFetch(requestObservable: RequestObservable) {
           startTime,
           response: text,
           status: response.status,
-          type: 'Fetch',
+          type: RequestType.FETCH,
           url: response.url,
         })
       }

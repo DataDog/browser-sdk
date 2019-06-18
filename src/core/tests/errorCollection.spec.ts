@@ -17,8 +17,8 @@ import {
   trackNetworkError,
 } from '../errorCollection'
 import { Observable } from '../observable'
-import { RequestDetails } from '../requestCollection'
-import { noop, ONE_MINUTE } from '../utils'
+import { RequestDetails, RequestType } from '../requestCollection'
+import { noop, ONE_MINUTE, ResourceType } from '../utils'
 
 use(sinonChai)
 
@@ -202,7 +202,7 @@ describe('network error tracker', () => {
     response: 'Server error',
     startTime: 0,
     status: 503,
-    type: 'XHR' as 'XHR',
+    type: RequestType.XHR,
     url: 'http://fake.com',
   }
 

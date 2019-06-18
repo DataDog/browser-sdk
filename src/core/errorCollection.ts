@@ -1,8 +1,8 @@
 import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { Observable } from './observable'
-import { isRejected, isServerError, RequestDetails, RequestObservable } from './requestCollection'
-import { jsonStringify, ONE_MINUTE } from './utils'
+import { isRejected, isServerError, RequestDetails, RequestObservable, RequestType } from './requestCollection'
+import { jsonStringify, ONE_MINUTE, ResourceType } from './utils'
 
 export interface ErrorMessage {
   message: string
@@ -164,7 +164,7 @@ export function trackNetworkError(
             url: request.url,
           },
         },
-        message: `${request.type} error ${request.method} ${request.url}`,
+        message: `${format(request.type)} error ${request.method} ${request.url}`,
       })
     }
   })
@@ -175,4 +175,11 @@ function truncateResponse(response: string | undefined, configuration: Configura
     return `${response.substring(0, configuration.requestErrorResponseLengthLimit)}...`
   }
   return response
+}
+
+function format(type: RequestType) {
+  if (RequestType.XHR === type) {
+    return 'XHR'
+  }
+  return 'Fetch'
 }

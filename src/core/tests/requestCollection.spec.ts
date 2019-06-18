@@ -35,7 +35,7 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('Fetch')
+      expect(request.type).equal('fetch')
       expect(request.method).equal('GET')
       expect(request.url).equal(FAKE_URL)
       expect(request.status).equal(500)
@@ -49,7 +49,7 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('Fetch')
+      expect(request.type).equal('fetch')
       expect(request.method).equal('GET')
       expect(request.url).equal(FAKE_URL)
       expect(request.status).equal(0)
@@ -63,7 +63,7 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('Fetch')
+      expect(request.type).equal('fetch')
       expect(request.method).equal('GET')
       expect(request.url).equal(FAKE_URL)
       expect(request.status).equal(400)
