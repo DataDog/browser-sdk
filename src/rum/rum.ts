@@ -72,7 +72,13 @@ export type RumPageView = undefined
 
 export type RumData = RumPerformanceTiming | RumError | RumPageView
 
-export type RumEventType = 'error' | 'navigation' | 'page_view' | 'resource' | 'paint'
+export enum RumEventType {
+  ERROR = 'error',
+  NAVIGATION = 'navigation',
+  PAGE_VIEW = 'page_view',
+  RESOURCE = 'resource',
+  PAINT = 'paint',
+}
 
 export interface RumEvent {
   data?: RumData
@@ -148,7 +154,7 @@ export function trackPageView(batch: RumBatch) {
   pageViewId = utils.generateUUID()
   activeLocation = { ...window.location }
   batch.add({
-    type: 'page_view',
+    type: RumEventType.PAGE_VIEW,
   })
 }
 
@@ -184,7 +190,7 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
       data: {
         errorCount: 1,
       },
-      type: 'error',
+      type: RumEventType.ERROR,
     })
   })
 }
@@ -236,7 +242,7 @@ function toResourceEvent(entry: EnhancedPerformanceResourceTiming) {
       responseDuration: entry.responseDuration,
       secureConnectionDuration: entry.secureConnectionDuration,
     },
-    type: 'resource' as RumEventType,
+    type: RumEventType.RESOURCE,
   }
 }
 
@@ -288,7 +294,7 @@ export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch:
       domInteractive: entry.domInteractive,
       loadEventEnd: entry.loadEventEnd,
     },
-    type: entry.entryType as RumEventType,
+    type: RumEventType.NAVIGATION,
   })
 }
 
@@ -297,6 +303,6 @@ export function handlePaintEntry(entry: PerformancePaintTiming, batch: RumBatch)
     data: {
       [entry.name]: entry.startTime,
     },
-    type: entry.entryType as RumEventType,
+    type: RumEventType.PAINT,
   })
 }
