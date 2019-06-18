@@ -1,7 +1,7 @@
 import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { Observable } from './observable'
-import { RequestDetails, RequestObservable } from './requestCollection'
+import { isRejected, isServerError, RequestDetails, RequestObservable } from './requestCollection'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
@@ -151,7 +151,7 @@ export function trackNetworkError(
   requestObservable: RequestObservable
 ) {
   requestObservable.subscribe((request: RequestDetails) => {
-    if (request.status === 0 || request.status >= 500) {
+    if (isRejected(request) || isServerError(request)) {
       errorObservable.notify({
         context: {
           error: {

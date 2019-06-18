@@ -82,3 +82,11 @@ export function trackFetch(requestObservable: RequestObservable) {
     return responsePromise
   }
 }
+
+export function isRejected(request: RequestDetails) {
+  return request.status === 0
+}
+
+export function isServerError(request: RequestDetails) {
+  return request.status >= 500
+}
