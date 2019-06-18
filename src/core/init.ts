@@ -1,6 +1,7 @@
 import { buildConfiguration, UserConfiguration } from './configuration'
 import { startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
+import { startRequestCollection } from './requestCollection'
 import { startSessionTracking } from './session'
 
 export function makeStub(methodName: string) {
@@ -26,10 +27,12 @@ export function commonInit(userConfiguration: UserConfiguration) {
   const configuration = buildConfiguration(userConfiguration)
   startInternalMonitoring(configuration)
   startSessionTracking()
-  const errorObservable = startErrorCollection(configuration)
+  const requestObservable = startRequestCollection()
+  const errorObservable = startErrorCollection(configuration, requestObservable)
 
   return {
     configuration,
     errorObservable,
+    requestObservable,
   }
 }
