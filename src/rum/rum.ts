@@ -199,7 +199,7 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
       monitor((list: PerformanceObserverEntryList) => {
         list
           .getEntriesByType('resource')
-          .forEach((entry) => handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch, configuration))
+          .forEach((entry) => handleResourceEntry(entry as PerformanceResourceTiming, batch, configuration))
         list
           .getEntriesByType('navigation')
           .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, batch))
@@ -210,11 +210,8 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
   }
 }
 
-export function handleResourceEntry(
-  entry: EnhancedPerformanceResourceTiming,
-  batch: RumBatch,
-  configuration: Configuration
-) {
+export function handleResourceEntry(timing: PerformanceResourceTiming, batch: RumBatch, configuration: Configuration) {
+  const entry = timing as EnhancedPerformanceResourceTiming
   if (!isBrowserAgentRequest(entry.name, configuration)) {
     processTimingAttributes(entry)
     addResourceType(entry)
