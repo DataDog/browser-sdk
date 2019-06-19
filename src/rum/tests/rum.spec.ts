@@ -5,8 +5,11 @@ import sinonChai from 'sinon-chai'
 import { Configuration } from '../../core/configuration'
 
 import {
-  handlePerformanceEntry,
+  EnhancedPerformanceResourceTiming,
+  handlePaintEntry,
+  handleResourceEntry,
   initRumBatch,
+  PerformancePaintTiming,
   RumBatch,
   RumEvent,
   RumEventType,
@@ -20,7 +23,6 @@ use(sinonChai)
 function buildEntry(entry: Partial<PerformanceResourceTiming>) {
   const result: Partial<PerformanceResourceTiming> = {
     ...entry,
-    toJSON: () => ({ ...entry }),
   }
   return result as PerformanceResourceTiming
 }
@@ -54,16 +56,6 @@ describe('rum handle performance entry', () => {
   })
   ;[
     {
-      description: 'without entry type + allowed url',
-      entry: { name: 'ok' },
-      expectEntryToBeAdded: true,
-    },
-    {
-      description: 'without entry type + allowed url',
-      entry: { name: 'ok' },
-      expectEntryToBeAdded: true,
-    },
-    {
       description: 'type resource + logs endpoint',
       entry: { entryType: 'resource', name: configuration.logsEndpoint },
       expectEntryToBeAdded: false,
@@ -89,25 +81,15 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handlePerformanceEntry(buildEntry(entry), batch as RumBatch, configuration as Configuration)
+        handleResourceEntry(
+          entry as EnhancedPerformanceResourceTiming,
+          batch as RumBatch,
+          configuration as Configuration
+        )
         expect((batch.add as sinon.SinonSpy).called).equal(expectEntryToBeAdded)
       })
     }
   )
-
-  it('should rewrite paint entries', () => {
-    handlePerformanceEntry(
-      buildEntry({ name: 'first-paint', startTime: 123456, entryType: 'paint' }),
-      batch as RumBatch,
-      configuration as Configuration
-    )
-    expect(getEntry(batch as RumBatch, 0)).deep.equal({
-      data: {
-        'first-paint': 123456,
-      },
-      type: 'paint',
-    })
-  })
   ;[
     {
       description: 'file extension with query params',
@@ -143,8 +125,10 @@ describe('rum handle performance entry', () => {
       expected: string
     }) => {
       it(`should compute resource type: ${description}`, () => {
-        handlePerformanceEntry(
-          buildEntry({ initiatorType, name: url, entryType: 'resource' }),
+        const entry: Partial<EnhancedPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
+
+        handleResourceEntry(
+          entry as EnhancedPerformanceResourceTiming,
           batch as RumBatch,
           configuration as Configuration
         )
@@ -155,40 +139,46 @@ describe('rum handle performance entry', () => {
   )
 
   it('should add timing durations', () => {
-    handlePerformanceEntry(
-      buildEntry({
-        connectEnd: 10,
-        connectStart: 3,
-        entryType: 'resource',
-        name: 'http://localhost/test',
-        responseEnd: 100,
-        responseStart: 25,
-      }),
-      batch as RumBatch,
-      configuration as Configuration
-    )
+    const entry: Partial<EnhancedPerformanceResourceTiming> = {
+      connectEnd: 10,
+      connectStart: 3,
+      entryType: 'resource',
+      name: 'http://localhost/test',
+      responseEnd: 100,
+      responseStart: 25,
+    }
+
+    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
     const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
     expect(resourceTiming.connectDuration).equal(7)
     expect(resourceTiming.responseDuration).equal(75)
   })
 
   it('should remove unavailable attributes', () => {
-    handlePerformanceEntry(
-      buildEntry({
-        connectEnd: 0,
-        connectStart: 0,
-        entryType: 'resource',
-        name: 'http://localhost/test',
-        responseEnd: 100,
-        responseStart: 0,
-      }),
-      batch as RumBatch,
-      configuration as Configuration
-    )
+    const entry: Partial<EnhancedPerformanceResourceTiming> = {
+      connectEnd: 0,
+      connectStart: 0,
+      entryType: 'resource',
+      name: 'http://localhost/test',
+      responseEnd: 100,
+      responseStart: 0,
+    }
+    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
     const resourceTiming = getEntry(batch as RumBatch, 0).data as PerformanceResourceTiming
     expect(resourceTiming.connectStart).undefined
     expect(resourceTiming.connectEnd).undefined
     expect(resourceTiming.responseStart).undefined
+  })
+
+  it('should rewrite paint entries', () => {
+    const entry: Partial<PerformancePaintTiming> = { name: 'first-paint', startTime: 123456, entryType: 'paint' }
+    handlePaintEntry(entry as PerformancePaintTiming, batch as RumBatch)
+    expect(getEntry(batch as RumBatch, 0)).deep.equal({
+      data: {
+        'first-paint': 123456,
+      },
+      type: 'paint',
+    })
   })
 })
 

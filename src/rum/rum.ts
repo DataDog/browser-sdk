@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
+export interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
   connectDuration: number
   domainLookupDuration: number
   redirectDuration: number
@@ -22,7 +22,7 @@ interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
   requestCount?: number
 }
 
-interface PerformancePaintTiming extends PerformanceEntry {
+export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
   name: 'first-paint' | 'first-contentful-paint'
   startTime: number
@@ -70,7 +70,13 @@ export type RumPageView = undefined
 
 export type RumData = RumPerformanceTiming | RumError | RumPageView
 
-export type RumEventType = 'error' | 'navigation' | 'page_view' | 'resource' | 'paint'
+export enum RumEventType {
+  ERROR = 'error',
+  NAVIGATION = 'navigation',
+  PAGE_VIEW = 'page_view',
+  RESOURCE = 'resource',
+  PAINT = 'paint',
+}
 
 export interface RumEvent {
   data?: RumData
@@ -146,7 +152,7 @@ export function trackPageView(batch: RumBatch) {
   pageViewId = generateUUID()
   activeLocation = { ...window.location }
   batch.add({
-    type: 'page_view',
+    type: RumEventType.PAGE_VIEW,
   })
 }
 
@@ -182,7 +188,7 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
       data: {
         errorCount: 1,
       },
-      type: 'error',
+      type: RumEventType.ERROR,
     })
   })
 }
@@ -191,33 +197,48 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry: PerformanceEntry) => handlePerformanceEntry(entry, batch, configuration))
+        list
+          .getEntriesByType('resource')
+          .forEach((entry) => handleResourceEntry(entry as PerformanceResourceTiming, batch, configuration))
+        list
+          .getEntriesByType('navigation')
+          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, batch))
+        list.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, batch))
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
   }
 }
 
-export function handlePerformanceEntry(entry: PerformanceEntry, batch: RumBatch, configuration: Configuration) {
-  const entryType = entry.entryType as RumEventType
-  const timing = entry.toJSON() as ObservedPerformanceTiming
-  if (isBlacklistedTiming(timing, configuration)) {
-    return
+export function handleResourceEntry(timing: PerformanceResourceTiming, batch: RumBatch, configuration: Configuration) {
+  const entry = timing as EnhancedPerformanceResourceTiming
+  if (!isBrowserAgentRequest(entry.name, configuration)) {
+    processTimingAttributes(entry)
+    addResourceType(entry)
+    if ([ResourceType.XHR, ResourceType.FETCH].includes(entry.resourceType)) {
+      entry.requestCount = 1
+    }
+    batch.add(toResourceEvent(entry))
   }
-  addExtraFields(timing)
-  batch.add({ type: entryType, data: toRumTiming(timing) })
 }
 
-function isBlacklistedTiming(timing: ObservedPerformanceTiming, configuration: Configuration) {
-  return isResourceTiming(timing) && isBrowserAgentRequest(timing.name, configuration)
-}
-
-function isResourceTiming(timing: ObservedPerformanceTiming): timing is EnhancedPerformanceResourceTiming {
-  return timing.entryType === 'resource'
-}
-
-function isNavigationTiming(timing: ObservedPerformanceTiming): timing is PerformanceNavigationTiming {
-  return timing.entryType === 'navigation'
+function toResourceEvent(entry: EnhancedPerformanceResourceTiming) {
+  return {
+    data: {
+      connectDuration: entry.connectDuration,
+      domainLookupDuration: entry.domainLookupDuration,
+      duration: entry.duration,
+      encodedBodySize: entry.encodedBodySize,
+      name: entry.name,
+      redirectDuration: entry.redirectDuration,
+      requestCount: entry.requestCount,
+      requestDuration: entry.requestDuration,
+      resourceType: entry.resourceType,
+      responseDuration: entry.responseDuration,
+      secureConnectionDuration: entry.secureConnectionDuration,
+    },
+    type: RumEventType.RESOURCE,
+  }
 }
 
 function isBrowserAgentRequest(url: string, configuration: Configuration) {
@@ -226,17 +247,6 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
     url.startsWith(configuration.rumEndpoint) ||
     (configuration.internalMonitoringEndpoint && url.startsWith(configuration.internalMonitoringEndpoint))
   )
-}
-
-function addExtraFields(timing: ObservedPerformanceTiming) {
-  if (isResourceTiming(timing)) {
-    processTimingAttributes(timing)
-    addResourceType(timing)
-    if ([ResourceType.XHR, ResourceType.FETCH].includes(timing.resourceType)) {
-      timing.requestCount = 1
-    }
-  }
-  return timing
 }
 
 function processTimingAttributes(timing: EnhancedPerformanceResourceTiming) {
@@ -271,31 +281,23 @@ function addResourceType(timing: EnhancedPerformanceResourceTiming) {
   timing.resourceType = ResourceType.OTHER
 }
 
-function toRumTiming(timing: ObservedPerformanceTiming): RumPerformanceTiming {
-  if (isNavigationTiming(timing)) {
-    return {
-      domComplete: timing.domComplete,
-      domContentLoadedEventEnd: timing.domContentLoadedEventEnd,
-      domInteractive: timing.domInteractive,
-      loadEventEnd: timing.loadEventEnd,
-    }
-  }
-  if (isResourceTiming(timing)) {
-    return {
-      connectDuration: timing.connectDuration,
-      domainLookupDuration: timing.domainLookupDuration,
-      duration: timing.duration,
-      encodedBodySize: timing.encodedBodySize,
-      name: timing.name,
-      redirectDuration: timing.redirectDuration,
-      requestCount: timing.requestCount,
-      requestDuration: timing.requestDuration,
-      resourceType: timing.resourceType,
-      responseDuration: timing.responseDuration,
-      secureConnectionDuration: timing.secureConnectionDuration,
-    }
-  }
-  return {
-    [timing.name]: timing.startTime,
-  }
+export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch: RumBatch) {
+  batch.add({
+    data: {
+      domComplete: entry.domComplete,
+      domContentLoadedEventEnd: entry.domContentLoadedEventEnd,
+      domInteractive: entry.domInteractive,
+      loadEventEnd: entry.loadEventEnd,
+    },
+    type: RumEventType.NAVIGATION,
+  })
+}
+
+export function handlePaintEntry(entry: PerformancePaintTiming, batch: RumBatch) {
+  batch.add({
+    data: {
+      [entry.name]: entry.startTime,
+    },
+    type: RumEventType.PAINT,
+  })
 }
