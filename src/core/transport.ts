@@ -28,22 +28,6 @@ export class HttpRequest {
   }
 }
 
-export class MultiHttpRequest {
-  private requests: HttpRequest[] = []
-
-  constructor(private endpointUrls: string[], private bytesLimit: number) {
-    this.endpointUrls.forEach((endpointUrl) => {
-      if (endpointUrl) {
-        this.requests.push(new HttpRequest(endpointUrl, this.bytesLimit))
-      }
-    })
-  }
-
-  send(data: string, size: number) {
-    this.requests.forEach((request) => request.send(data, size))
-  }
-}
-
 export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private buffer: string = ''
@@ -51,7 +35,7 @@ export class Batch<T> {
   private bufferMessageCount = 0
 
   constructor(
-    private request: HttpRequest | MultiHttpRequest,
+    private request: HttpRequest,
     private maxSize: number,
     private bytesLimit: number,
     private maxMessageSize: number,

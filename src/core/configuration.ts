@@ -44,20 +44,17 @@ export interface UserConfiguration {
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
-  oldRumEndpoint?: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
   rumEndpoint: string
-  oldRumEndpoint: string
   internalMonitoringEndpoint?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
     logsEndpoint: getEndpoint('browser', userConfiguration.publicApiKey),
-    oldRumEndpoint: getEndpoint('browser', userConfiguration.publicApiKey, 'browser-agent'),
     rumEndpoint: getEndpoint('rum', userConfiguration.publicApiKey),
     ...DEFAULT_CONFIGURATION,
   }
@@ -82,9 +79,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
     }
     if (userConfiguration.rumEndpoint !== undefined) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
-    }
-    if (userConfiguration.oldRumEndpoint !== undefined) {
-      configuration.oldRumEndpoint = userConfiguration.oldRumEndpoint
     }
   }
 
