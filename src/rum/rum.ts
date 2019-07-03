@@ -2,7 +2,7 @@ import { Configuration } from '../core/configuration'
 import { getCommonContext } from '../core/context'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
-import { Batch, MultiHttpRequest } from '../core/transport'
+import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, ResourceType, withSnakeCaseKeys } from '../core/utils'
 
 declare global {
@@ -134,7 +134,7 @@ export function startRum(applicationId: string, errorObservable: ErrorObservable
 
 export function initRumBatch(configuration: Configuration, applicationId: string) {
   return new Batch<RumEvent>(
-    new MultiHttpRequest([configuration.rumEndpoint, configuration.oldRumEndpoint], configuration.batchBytesLimit),
+    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
