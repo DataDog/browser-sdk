@@ -16,6 +16,7 @@ describe('logs entry', () => {
 
   it('init should log an error with no public api key', () => {
     const errorStub = sinon.stub(console, 'error')
+    const warnStub = sinon.stub(console, 'warn')
 
     window.DD_LOGS.init(undefined as any)
     expect(errorStub.callCount).equal(1)
@@ -23,8 +24,11 @@ describe('logs entry', () => {
     window.DD_LOGS.init({ stillNoApiKey: true } as any)
     expect(errorStub.callCount).equal(2)
 
-    window.DD_LOGS.init({ publicApiKey: 'yeah' })
+    window.DD_LOGS.init({ clientToken: 'yeah' })
     expect(errorStub.callCount).equal(2)
+
+    window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
+    expect(warnStub.callCount).equal(1)
 
     sinon.restore()
   })
@@ -52,7 +56,7 @@ describe('logs entry', () => {
   it('should always keep the same global reference', () => {
     const global = window.DD_LOGS
 
-    global.init({ publicApiKey: 'yeah' })
+    global.init({ clientToken: 'yeah' })
 
     expect(window.DD_LOGS).equal(global)
   })

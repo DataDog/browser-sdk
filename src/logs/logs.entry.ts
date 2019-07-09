@@ -69,9 +69,13 @@ export type LogsGlobal = typeof STUBBED_LOGS
 
 window.DD_LOGS = makeGlobal(STUBBED_LOGS)
 window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!userConfiguration || !userConfiguration.publicApiKey) {
-    console.error('Public API Key is not configured, we will not send any data.')
+  if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
+    console.error('Client token is not configured, we will not send any data.')
     return
+  }
+  if (userConfiguration.publicApiKey) {
+    userConfiguration.clientToken = userConfiguration.publicApiKey
+    console.warn('Public API Key is deprecated. Please use Client Token instead.')
   }
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {

@@ -7,12 +7,16 @@ describe('rum entry', () => {
     require('../rum.entry')
 
     const errorStub = sinon.stub(console, 'error')
-    const invalidConfiguration = { publicApiKey: 'yes' }
+    const warnStub = sinon.stub(console, 'warn')
+    const invalidConfiguration = { clientToken: 'yes' }
     window.DD_RUM.init(invalidConfiguration as RumUserConfiguration)
     expect(errorStub.callCount).equal(1)
 
-    window.DD_RUM.init({ publicApiKey: 'yes', applicationId: 'yes' })
+    window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes' })
     expect(errorStub.callCount).equal(1)
+
+    window.DD_RUM.init({ publicApiKey: 'yo' } as any)
+    expect(warnStub.callCount).equal(1)
 
     sinon.restore()
   })

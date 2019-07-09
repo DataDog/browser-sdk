@@ -1,10 +1,10 @@
 import { ONE_KILO_BYTE, ONE_MINUTE } from './utils'
 
-function getEndpoint(type: 'browser' | 'rum', apiKey: string, source?: string) {
+function getEndpoint(type: 'browser' | 'rum', clientToken: string, source?: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
   const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${buildEnv.VERSION}`
-  return `https://${type}-http-intake.logs.${domain}/v1/input/${apiKey}?ddsource=${source || type}&ddtags=${tags}`
+  return `https://${type}-http-intake.logs.${domain}/v1/input/${clientToken}?ddsource=${source || type}&ddtags=${tags}`
 }
 
 export const DEFAULT_CONFIGURATION = {
@@ -36,7 +36,8 @@ export const DEFAULT_CONFIGURATION = {
 }
 
 export interface UserConfiguration {
-  publicApiKey: string
+  publicApiKey?: string // deprecated
+  clientToken: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
 
@@ -54,8 +55,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
 export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint('browser', userConfiguration.publicApiKey),
-    rumEndpoint: getEndpoint('rum', userConfiguration.publicApiKey),
+    logsEndpoint: getEndpoint('browser', userConfiguration.clientToken),
+    rumEndpoint: getEndpoint('rum', userConfiguration.clientToken),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
