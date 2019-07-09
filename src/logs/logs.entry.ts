@@ -70,7 +70,7 @@ export type LogsGlobal = typeof STUBBED_LOGS
 window.DD_LOGS = makeGlobal(STUBBED_LOGS)
 window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
-    console.error('Client token is not configured, we will not send any data.')
+    console.error('Client Token is not configured, we will not send any data.')
     return
   }
   if (userConfiguration.publicApiKey) {
