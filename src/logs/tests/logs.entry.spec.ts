@@ -16,7 +16,6 @@ describe('logs entry', () => {
 
   it('init should log an error with no public api key', () => {
     const errorStub = sinon.stub(console, 'error')
-    const warnStub = sinon.stub(console, 'warn')
 
     window.DD_LOGS.init(undefined as any)
     expect(errorStub.callCount).equal(1)
@@ -26,6 +25,12 @@ describe('logs entry', () => {
 
     window.DD_LOGS.init({ clientToken: 'yeah' })
     expect(errorStub.callCount).equal(2)
+
+    sinon.restore()
+  })
+
+  it('should warn if now deprecated publicApiKey is used', () => {
+    const warnStub = sinon.stub(console, 'warn')
 
     window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
     expect(warnStub.callCount).equal(1)
