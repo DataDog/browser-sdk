@@ -40,7 +40,6 @@ export async function tearDown() {
   expect(await retrieveMonitoringErrors()).to.be.empty
   await resetServerState()
   const logs = await browser.getLogs('browser')
-  // logs.forEach(console.log)
   expect(logs.filter((l) => (l as any).level === 'SEVERE')).to.be.empty
 }
 

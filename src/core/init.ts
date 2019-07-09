@@ -22,7 +22,15 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
+export const SECOND_INIT_WARNING_MESSAGE = 'Script was already initialized'
+let initialized = false
+
 export function commonInit(userConfiguration: UserConfiguration) {
+  if (initialized) {
+    console.warn(SECOND_INIT_WARNING_MESSAGE)
+  }
+  initialized = true
+
   const configuration = buildConfiguration(userConfiguration)
   startInternalMonitoring(configuration)
   startSessionTracking()

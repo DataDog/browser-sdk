@@ -8,14 +8,6 @@ describe('rum entry', () => {
     delete (require.cache as any)[require.resolve('../rum.entry')]
   })
 
-  it('init should log a warning if called twice', () => {
-    const warnStub = sinon.stub(console, 'warn')
-
-    window.DD_RUM.init({ publicApiKey: 'yes', applicationId: 'yes' })
-    expect(warnStub.callCount).equal(1)
-
-    sinon.restore()
-  })
   it('init should log an error with no application id', () => {
     const errorStub = sinon.stub(console, 'error')
     const invalidConfiguration = { publicApiKey: 'yes' }

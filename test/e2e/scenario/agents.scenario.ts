@@ -16,8 +16,6 @@ import {
   tearDown,
 } from './helpers'
 
-import { SECOND_INIT_WARNING_MESSAGE } from '../../../src/core/internalMonitoring'
-
 beforeEach(() => {
   browser.url('/agents-page.html')
 })
@@ -47,15 +45,6 @@ describe('logs', () => {
 })
 
 describe('rum', () => {
-  it('should warn of multiple call to init', async () => {
-    flushEvents()
-    const browserLogs = await (browser.getLogs('browser') as BrowserLog[])
-    const warnLogs = filterLogsByLevel(browserLogs, 'WARNING')
-    expect(warnLogs.length).to.be.above(1)
-    console.log(warnLogs[0])
-    expect(warnLogs[0].message).to.contain(SECOND_INIT_WARNING_MESSAGE)
-  })
-
   it('should send page view event on load', async () => {
     flushEvents()
     const types = await retrieveRumEventsTypes()
