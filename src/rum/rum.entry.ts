@@ -28,6 +28,9 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
     console.error('Client Token is not configured, we will not send any data.')
     return
   }
+  if (userConfiguration.publicApiKey) {
+    userConfiguration.clientToken = userConfiguration.publicApiKey
+  }
   if (!userConfiguration.applicationId) {
     console.error('Application ID is not configured, no RUM data will be collected.')
     return
