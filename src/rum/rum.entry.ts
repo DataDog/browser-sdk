@@ -24,13 +24,9 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
+  if (!userConfiguration || !userConfiguration.clientToken) {
     console.error('Client Token is not configured, we will not send any data.')
     return
-  }
-  if (userConfiguration.publicApiKey) {
-    userConfiguration.clientToken = userConfiguration.publicApiKey
-    console.warn('Public API Key is deprecated. Please use Client Token instead.')
   }
   if (!userConfiguration.applicationId) {
     console.error('Application ID is not configured, no RUM data will be collected.')
