@@ -24,7 +24,7 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!userConfiguration || !userConfiguration.clientToken) {
+  if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
     console.error('Client Token is not configured, we will not send any data.')
     return
   }
