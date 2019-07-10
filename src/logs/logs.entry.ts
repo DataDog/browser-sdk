@@ -75,7 +75,8 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   }
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
-    console.warn('Public API Key is deprecated. Please use Client Token instead.')
+    // console.warn('Public API Key is deprecated. Please use Client Token instead.')
+    // This warning message will be effective starting 29/07
   }
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {
