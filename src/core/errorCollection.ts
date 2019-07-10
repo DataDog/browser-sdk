@@ -2,7 +2,7 @@ import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { Observable } from './observable'
 import { isRejected, isServerError, RequestDetails, RequestObservable, RequestType } from './requestCollection'
-import { jsonStringify, ONE_MINUTE, ResourceType } from './utils'
+import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
   message: string
