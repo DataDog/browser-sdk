@@ -29,14 +29,14 @@ describe('logs entry', () => {
     sinon.restore()
   })
 
-  it('should warn if now deprecated publicApiKey is used', () => {
-    const warnStub = sinon.stub(console, 'warn')
+  // it('should warn if now deprecated publicApiKey is used', () => {
+  //   const warnStub = sinon.stub(console, 'warn')
 
-    window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
-    expect(warnStub.callCount).equal(1)
+  //   window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
+  //   expect(warnStub.callCount).equal(1)
 
-    sinon.restore()
-  })
+  //   sinon.restore()
+  // })
 
   it('should add a `_setDebug` that works', () => {
     const setDebug: (debug: boolean) => void = (window.DD_LOGS as any)._setDebug as any

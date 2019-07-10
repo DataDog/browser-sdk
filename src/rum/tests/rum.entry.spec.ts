@@ -19,13 +19,4 @@ describe('rum entry', () => {
 
     sinon.restore()
   })
-
-  it('should warn if now deprecated publicApiKey is used', () => {
-    const warnStub = sinon.stub(console, 'warn')
-
-    window.DD_RUM.init({ publicApiKey: 'yo' } as any)
-    expect(warnStub.callCount).equal(1)
-
-    sinon.restore()
-  })
 })
