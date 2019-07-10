@@ -18,7 +18,7 @@ import {
 } from '../errorCollection'
 import { Observable } from '../observable'
 import { RequestDetails, RequestType } from '../requestCollection'
-import { noop, ONE_MINUTE, ResourceType } from '../utils'
+import { noop, ONE_MINUTE } from '../utils'
 
 use(sinonChai)
 
