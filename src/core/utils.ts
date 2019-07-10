@@ -1,7 +1,8 @@
-import { Context, ContextArray, ContextValue } from './context'
+import { Context, ContextValue } from './context'
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
+export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 

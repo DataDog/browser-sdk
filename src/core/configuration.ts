@@ -1,4 +1,4 @@
-import { ONE_KILO_BYTE, ONE_MINUTE } from './utils'
+import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 function getEndpoint(type: 'browser' | 'rum', clientToken: string, source?: string) {
   const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
@@ -18,9 +18,10 @@ export const DEFAULT_CONFIGURATION = {
   requestErrorResponseLengthLimit: 32 * ONE_KILO_BYTE,
 
   /**
-   * flush automatically, the value is arbitrary.
+   * flush automatically, aim to be lower than ALB connection timeout
+   * to maximize connection reuse.
    */
-  flushTimeout: ONE_MINUTE,
+  flushTimeout: 30 * ONE_SECOND,
 
   /**
    * Logs intake limit
