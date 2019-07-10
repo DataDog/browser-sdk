@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>e2e tests page</title>
     <script type="text/javascript" src="./datadog-logs-us.js"></script>
     <script type="text/javascript">
       window.DD_LOGS.init({
-        publicApiKey: 'key',
+        clientToken: 'key',
         internalMonitoringEndpoint: '/monitoring',
         logsEndpoint: '/logs',
-        forwardErrorsToLogs: true
+        forwardErrorsToLogs: true,
       })
     </script>
     <script type="text/javascript" src="./datadog-rum-us.js"></script>
     <script type="text/javascript">
       window.DD_RUM.init({
-        publicApiKey: 'key',
+        clientToken: 'key',
         internalMonitoringEndpoint: '/monitoring',
         applicationId: 'rum',
         rumEndpoint: '/rum',
       })
     </script>
-</head>
-<body>
-
-</body>
+  </head>
+  <body></body>
 </html>

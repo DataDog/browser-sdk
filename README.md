@@ -17,7 +17,7 @@ contains all the public APIs.
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
 <script>
     window.DD_LOGS.init({
-        publicApiKey: 'XXX',
+        clientToken: 'XXX',
         forwardErrorsToLogs: true,
     });
 </script>
@@ -33,7 +33,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   ```
   init(configuration: {
-      publicApiKey: string,
+      clientToken: string,
       isCollectingError?: boolean,
   })
   ```
@@ -79,7 +79,7 @@ contains all the public APIs.
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
 <script>
     window.DD_RUM.init({
-        publicApiKey: 'XXX',
+        clientToken: 'XXX',
         applicationId: 'XXX',
     });
 </script>
