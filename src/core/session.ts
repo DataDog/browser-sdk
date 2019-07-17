@@ -8,17 +8,19 @@ const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
  */
 export const COOKIE_ACCESS_DELAY = 1000
 
+let expandOrRenewSession: () => void
+export let getSessionId: () => string | undefined = () => undefined
+
 export function startSessionTracking() {
+  getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
+  expandOrRenewSession = utils.throttle(() => {
+    const sessionId = getSessionId()
+    setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
+  }, COOKIE_ACCESS_DELAY)
+
   expandOrRenewSession()
   trackActivity()
 }
-
-export const getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
-
-const expandOrRenewSession = utils.throttle(() => {
-  const sessionId = getSessionId()
-  setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
-}, COOKIE_ACCESS_DELAY)
 
 function trackActivity() {
   const options = { capture: true, passive: true }

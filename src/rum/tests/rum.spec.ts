@@ -196,6 +196,10 @@ describe('rum track page view', () => {
     server = sinon.fakeServer.create()
   })
 
+  afterEach(() => {
+    server.restore()
+  })
+
   it('should send page view event with page view id', () => {
     trackPageView(batch)
     batch.flush()

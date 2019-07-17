@@ -110,6 +110,11 @@ Error: foo
 
     let subscriptionHandler: Handler | undefined
 
+    beforeEach(() => {
+      // do not fail specs due to error being rethrown
+      spyOn(window, 'onerror')
+    })
+
     describe('with undefined arguments', () => {
       it('should pass undefined:undefined', (done) => {
         // this is probably not good behavior;  just writing this test to verify
@@ -117,6 +122,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toBeUndefined()
           expect(stack.message).toBeUndefined()
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -129,6 +135,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toEqual('ReferenceError')
           expect(stack.message).toEqual('foo is undefined')
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -139,6 +146,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toEqual('ReferenceError')
           expect(stack.message).toEqual('foo is undefined')
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -150,6 +158,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toEqual('ReferenceError')
           expect(stack.message).toEqual('Undefined variable: foo')
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -165,6 +174,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toEqual(undefined)
           expect(stack.message).toEqual('CustomError: woo scary')
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -175,6 +185,7 @@ Error: foo
         subscriptionHandler = (stack) => {
           expect(stack.name).toEqual(undefined)
           expect(stack.message).toEqual('all work and no play makes homer: something something')
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -192,6 +203,7 @@ Error: foo
       subscriptionHandler = () => {
         numDone += 1
         if (numDone === numReports) {
+          report.unsubscribe(subscriptionHandler!)
           done()
         }
       }

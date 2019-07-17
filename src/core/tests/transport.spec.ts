@@ -1,5 +1,6 @@
 import sinon from 'sinon'
 
+import { Context } from '../context'
 import { Batch, HttpRequest } from '../transport'
 import { noop } from '../utils'
 
@@ -171,7 +172,7 @@ describe('batch', () => {
       MESSAGE_BYTES_LIMIT,
       FLUSH_TIMEOUT,
       () => ({}),
-      (message: { message: string }) => {
+      (message: Context) => {
         message.message = `*** ${message.message} ***`
         return message
       }
