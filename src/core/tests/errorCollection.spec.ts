@@ -65,7 +65,7 @@ describe('console tracker', () => {
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
-  let originalHandler: ErrorEventHandler
+  let originalHandler: OnErrorEventHandler
   let notifyError: jasmine.Spy
   let onerrorSpy: jasmine.Spy
 
