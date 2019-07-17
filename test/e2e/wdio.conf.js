@@ -19,11 +19,10 @@ exports.config = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 0,
   services: ['selenium-standalone'],
-  framework: 'mocha',
+  framework: 'jasmine',
   reporters: ['spec'],
-  mochaOpts: {
-    ui: 'bdd',
-    timeout: 60000,
+  jasmineNodeOpts: {
+    defaultTimeoutInterval: 60000,
   },
   onPrepare: function() {
     serverProcess = exec('ts-node --project test/e2e/server/tsconfig.json test/e2e/server/server')

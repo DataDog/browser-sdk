@@ -3,14 +3,20 @@ const webpackConfig = require('../../webpack.config')(null, { mode: 'development
 module.exports = {
   basePath: '../..',
   files: ['src/**/*.spec.ts'],
-  frameworks: ['mocha', 'sinon-chai'],
+  frameworks: ['jasmine'],
+  client: {
+    jasmine: {
+      random: true,
+    },
+  },
   preprocessors: {
     'src/**/*.spec.ts': ['webpack'],
   },
-  reporters: ['mocha'],
-  mochaReporter: {
-    output: 'minimal',
-    showDiff: true,
+  reporters: ['spec'],
+  specReporter: {
+    suppressErrorSummary: true,
+    suppressPassed: true,
+    suppressSkipped: true,
   },
   singleRun: true,
   webpack: {
