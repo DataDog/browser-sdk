@@ -13,7 +13,9 @@ import {
   RumBatch,
   RumEvent,
   RumEventType,
+  RumLocale,
   RumResourceTiming,
+  trackLocale,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
@@ -195,6 +197,21 @@ describe('rum performanceObserver callback', () => {
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
+  })
+})
+
+describe('rum track page view', () => {
+  let batch: RumBatch
+  let server: sinon.SinonFakeServer
+
+  beforeEach(() => {
+    batch = initRumBatch(configuration as Configuration, 'applicationId')
+    server = sinon.fakeServer.create()
+  })
+  it('should send send user locale', () => {
+    trackLocale(batch)
+    batch.flush()
+    expect(getRumMessage(server, 0).type).equal(RumEventType.LOCALE)
   })
 })
 

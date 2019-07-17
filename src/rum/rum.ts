@@ -68,7 +68,9 @@ export interface RumError {
 
 export type RumPageView = undefined
 
-export type RumData = RumPerformanceTiming | RumError | RumPageView
+export type RumLocale = string
+
+export type RumData = RumPerformanceTiming | RumError | RumPageView | RumLocale
 
 export enum RumEventType {
   ERROR = 'error',
@@ -76,6 +78,7 @@ export enum RumEventType {
   PAGE_VIEW = 'page_view',
   RESOURCE = 'resource',
   PAINT = 'paint',
+  LOCALE = 'locale',
 }
 
 export interface RumEvent {
@@ -126,6 +129,7 @@ let activeLocation: Location
 export function startRum(applicationId: string, errorObservable: ErrorObservable, configuration: Configuration) {
   const batch = initRumBatch(configuration, applicationId)
 
+  trackLocale(batch)
   trackPageView(batch)
   trackHistory(batch)
   trackErrors(batch, errorObservable)
@@ -146,6 +150,14 @@ export function initRumBatch(configuration: Configuration, applicationId: string
     }),
     withSnakeCaseKeys
   )
+}
+
+export function trackLocale(batch: RumBatch) {
+  if (window.navigator.languages) {
+    batch.add({ type: RumEventType.LOCALE, data: window.navigator.languages.join(',') })
+  } else {
+    batch.add({ type: RumEventType.LOCALE, data: window.navigator.language })
+  }
 }
 
 export function trackPageView(batch: RumBatch) {
