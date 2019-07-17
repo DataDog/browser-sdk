@@ -1,6 +1,5 @@
 // tslint:disable no-unsafe-any
 
-import { expect } from 'chai'
 import { computeStackTrace, Handler, report } from '../tracekit'
 
 describe('TraceKit', () => {
@@ -19,35 +18,35 @@ describe('TraceKit', () => {
       const mockErr: any = { stack }
       const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
 
-      expect(stackFrames.stack[0].func).equal('new <anonymous>')
-      expect(stackFrames.stack[0].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[0].line).equal(63)
-      expect(stackFrames.stack[0].column).equal(1)
+      expect(stackFrames.stack[0].func).toEqual('new <anonymous>')
+      expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[0].line).toEqual(63)
+      expect(stackFrames.stack[0].column).toEqual(1)
 
-      expect(stackFrames.stack[1].func).equal('namedFunc0')
-      expect(stackFrames.stack[1].url).equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[1].line).equal(10)
-      expect(stackFrames.stack[1].column).equal(2)
+      expect(stackFrames.stack[1].func).toEqual('namedFunc0')
+      expect(stackFrames.stack[1].url).toEqual('http://example.com/js/script.js')
+      expect(stackFrames.stack[1].line).toEqual(10)
+      expect(stackFrames.stack[1].column).toEqual(2)
 
-      expect(stackFrames.stack[2].func).equal('?')
-      expect(stackFrames.stack[2].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[2].line).equal(65)
-      expect(stackFrames.stack[2].column).equal(10)
+      expect(stackFrames.stack[2].func).toEqual('?')
+      expect(stackFrames.stack[2].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[2].line).toEqual(65)
+      expect(stackFrames.stack[2].column).toEqual(10)
 
-      expect(stackFrames.stack[3].func).equal('namedFunc2')
-      expect(stackFrames.stack[3].url).equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[3].line).equal(20)
-      expect(stackFrames.stack[3].column).equal(5)
+      expect(stackFrames.stack[3].func).toEqual('namedFunc2')
+      expect(stackFrames.stack[3].url).toEqual('http://example.com/js/script.js')
+      expect(stackFrames.stack[3].line).toEqual(20)
+      expect(stackFrames.stack[3].column).toEqual(5)
 
-      expect(stackFrames.stack[4].func).equal('?')
-      expect(stackFrames.stack[4].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[4].line).equal(67)
-      expect(stackFrames.stack[4].column).equal(5)
+      expect(stackFrames.stack[4].func).toEqual('?')
+      expect(stackFrames.stack[4].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[4].line).toEqual(67)
+      expect(stackFrames.stack[4].column).toEqual(5)
 
-      expect(stackFrames.stack[5].func).equal('namedFunc4')
-      expect(stackFrames.stack[5].url).equal('http://example.com/js/script.js')
-      expect(stackFrames.stack[5].line).equal(100001)
-      expect(stackFrames.stack[5].column).equal(10002)
+      expect(stackFrames.stack[5].func).toEqual('namedFunc4')
+      expect(stackFrames.stack[5].url).toEqual('http://example.com/js/script.js')
+      expect(stackFrames.stack[5].line).toEqual(100001)
+      expect(stackFrames.stack[5].column).toEqual(10002)
     })
 
     it('should handle eval/anonymous strings in Chrome 46', () => {
@@ -55,27 +54,27 @@ describe('TraceKit', () => {
 ReferenceError: baz is not defined
    at bar (http://example.com/js/test.js:19:7)
    at foo (http://example.com/js/test.js:23:7)
-   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).equal(<anonymous>:1:26)
+   at eval (eval at <anonymous> (http://example.com/js/test.js:26:5)).toEqual(<anonymous>:1:26)
 `
 
       const mockErr: any = { stack }
       const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
 
-      expect(stackFrames.stack[0].func).equal('bar')
-      expect(stackFrames.stack[0].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[0].line).equal(19)
-      expect(stackFrames.stack[0].column).equal(7)
+      expect(stackFrames.stack[0].func).toEqual('bar')
+      expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[0].line).toEqual(19)
+      expect(stackFrames.stack[0].column).toEqual(7)
 
-      expect(stackFrames.stack[1].func).equal('foo')
-      expect(stackFrames.stack[1].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[1].line).equal(23)
-      expect(stackFrames.stack[1].column).equal(7)
+      expect(stackFrames.stack[1].func).toEqual('foo')
+      expect(stackFrames.stack[1].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[1].line).toEqual(23)
+      expect(stackFrames.stack[1].column).toEqual(7)
 
-      expect(stackFrames.stack[2].func).equal('eval')
+      expect(stackFrames.stack[2].func).toEqual('eval')
       // TODO: fix nested evals
-      expect(stackFrames.stack[2].url).equal('http://example.com/js/test.js')
-      expect(stackFrames.stack[2].line).equal(26)
-      expect(stackFrames.stack[2].column).equal(5)
+      expect(stackFrames.stack[2].url).toEqual('http://example.com/js/test.js')
+      expect(stackFrames.stack[2].line).toEqual(26)
+      expect(stackFrames.stack[2].column).toEqual(5)
     })
   })
 
@@ -83,8 +82,8 @@ ReferenceError: baz is not defined
     it('should handle a native error object', () => {
       const ex = new Error('test')
       const stack = computeStackTrace(ex)
-      expect(stack.name).equal('Error')
-      expect(stack.message).equal('test')
+      expect(stack.name).toEqual('Error')
+      expect(stack.message).toEqual('test')
     })
 
     it('should handle a native error object stack from Chrome', () => {
@@ -101,7 +100,7 @@ Error: foo
       }
       const stackFrames = computeStackTrace(mockErr)
 
-      expect(stackFrames.stack[0].url).equal('<anonymous>')
+      expect(stackFrames.stack[0].url).toEqual('<anonymous>')
     })
   })
 
@@ -115,9 +114,9 @@ Error: foo
       it('should pass undefined:undefined', (done) => {
         // this is probably not good behavior;  just writing this test to verify
         // that it doesn't change unintentionally
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal(undefined)
-          expect(stack.message).equal(undefined)
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toBeUndefined()
+          expect(stack.message).toBeUndefined()
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -127,9 +126,9 @@ Error: foo
 
     describe('when no 5th argument (error object)', () => {
       it('should separate name, message for default error types (e.g. ReferenceError)', (done) => {
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal('ReferenceError')
-          expect(stack.message).equal('foo is undefined')
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toEqual('ReferenceError')
+          expect(stack.message).toEqual('foo is undefined')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -137,9 +136,9 @@ Error: foo
       })
 
       it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', (done) => {
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal('ReferenceError')
-          expect(stack.message).equal('foo is undefined')
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toEqual('ReferenceError')
+          expect(stack.message).toEqual('foo is undefined')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -148,9 +147,9 @@ Error: foo
       })
 
       it('should separate name, message for default error types on Opera Mini', (done) => {
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal('ReferenceError')
-          expect(stack.message).equal('Undefined variable: foo')
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toEqual('ReferenceError')
+          expect(stack.message).toEqual('Undefined variable: foo')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -163,9 +162,9 @@ Error: foo
 
       it('should ignore unknown error types', (done) => {
         // TODO: should we attempt to parse this?
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal(undefined)
-          expect(stack.message).equal('CustomError: woo scary')
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toEqual(undefined)
+          expect(stack.message).toEqual('CustomError: woo scary')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -173,9 +172,9 @@ Error: foo
       })
 
       it('should ignore arbitrary messages passed through onerror', (done) => {
-        subscriptionHandler = (stack, isWindowError, error) => {
-          expect(stack.name).equal(undefined)
-          expect(stack.message).equal('all work and no play makes homer: something something')
+        subscriptionHandler = (stack) => {
+          expect(stack.name).toEqual(undefined)
+          expect(stack.message).toEqual('all work and no play makes homer: something something')
           done()
         }
         report.subscribe(subscriptionHandler)
@@ -187,7 +186,7 @@ Error: foo
       })
     })
 
-    function testErrorNotification(callOnError: boolean, numReports: number, done: Mocha.Done) {
+    function testErrorNotification(callOnError: boolean, numReports: number, done: DoneFn) {
       let numDone = 0
 
       subscriptionHandler = () => {
@@ -211,7 +210,7 @@ Error: foo
         const e = new Error('testing')
         expect(() => {
           report(e)
-        }).throw(e)
+        }).toThrow(e)
       }
       // The call to report should work whether or not window.onerror is
       // triggered, so we parameterize it for the tests. We only call it
@@ -227,10 +226,13 @@ Error: foo
         let title = 'it should receive arguments from report() when'
         title += ` callOnError is ${callOnError}`
         title += ` and numReports is ${numReports}`
-        it(title, function(done) {
-          this.timeout(5000)
-          testErrorNotification(callOnError, numReports, done)
-        })
+        it(
+          title,
+          (done) => {
+            testErrorNotification(callOnError, numReports, done)
+          },
+          5000
+        )
       })
     })
   })

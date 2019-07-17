@@ -1,6 +1,3 @@
-import { expect } from 'chai'
-import * as sinon from 'sinon'
-
 import { monitor } from '../../core/internalMonitoring'
 
 describe('logs entry', () => {
@@ -10,52 +7,47 @@ describe('logs entry', () => {
   })
 
   it('should set global with init', () => {
-    expect(!!window.DD_LOGS).equal(true)
-    expect(!!window.DD_LOGS.init).equal(true)
+    expect(!!window.DD_LOGS).toEqual(true)
+    expect(!!window.DD_LOGS.init).toEqual(true)
   })
 
   it('init should log an error with no public api key', () => {
-    const errorStub = sinon.stub(console, 'error')
+    const errorSpy = spyOn(console, 'error')
 
     window.DD_LOGS.init(undefined as any)
-    expect(errorStub.callCount).equal(1)
+    expect(console.error).toHaveBeenCalledTimes(1)
 
     window.DD_LOGS.init({ stillNoApiKey: true } as any)
-    expect(errorStub.callCount).equal(2)
+    expect(console.error).toHaveBeenCalledTimes(2)
 
     window.DD_LOGS.init({ clientToken: 'yeah' })
-    expect(errorStub.callCount).equal(2)
-
-    sinon.restore()
+    expect(errorSpy).toHaveBeenCalledTimes(2)
   })
 
   // it('should warn if now deprecated publicApiKey is used', () => {
-  //   const warnStub = sinon.stub(console, 'warn')
+  //   spyOn(console, 'warn')
 
   //   window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
-  //   expect(warnStub.callCount).equal(1)
-
-  //   sinon.restore()
+  //   expect(console.warn).toHaveBeenCalledTimes(1)
   // })
 
   it('should add a `_setDebug` that works', () => {
     const setDebug: (debug: boolean) => void = (window.DD_LOGS as any)._setDebug as any
-    expect(!!setDebug).true
+    expect(!!setDebug).toEqual(true)
 
-    const errorStub = sinon.stub(console, 'warn')
+    spyOn(console, 'warn')
     monitor(() => {
       throw new Error()
     })()
-    expect(errorStub.callCount).equal(0)
+    expect(console.warn).toHaveBeenCalledTimes(0)
 
     setDebug(true)
     monitor(() => {
       throw new Error()
     })()
-    expect(errorStub.callCount).equal(1)
+    expect(console.warn).toHaveBeenCalledTimes(1)
 
     setDebug(false)
-    sinon.restore()
   })
 
   it('should always keep the same global reference', () => {
@@ -63,6 +55,6 @@ describe('logs entry', () => {
 
     global.init({ clientToken: 'yeah' })
 
-    expect(window.DD_LOGS).equal(global)
+    expect(window.DD_LOGS).toEqual(global)
   })
 })

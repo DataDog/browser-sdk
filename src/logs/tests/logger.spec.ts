@@ -1,6 +1,4 @@
-import { expect, use } from 'chai'
-import * as sinon from 'sinon'
-import sinonChai from 'sinon-chai'
+import sinon from 'sinon'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
@@ -9,10 +7,8 @@ import { Omit } from '../../core/utils'
 import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../logger'
 import { LogsGlobal } from '../logs.entry'
 
-use(sinonChai)
-
 interface SentMessage extends LogsMessage {
-  logger: { name: string }
+  logger?: { name: string }
 }
 
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
@@ -30,33 +26,33 @@ describe('logger module', () => {
   }
   let LOGS: LogsApi
   let server: sinon.SinonFakeServer
-  let clock: sinon.SinonFakeTimers
 
   beforeEach(() => {
     LOGS = startLogger(errorObservable, configuration as Configuration) as LogsApi
     server = sinon.fakeServer.create()
-    clock = sinon.useFakeTimers(FAKE_DATE)
+    jasmine.clock().install()
+    jasmine.clock().mockDate(new Date(FAKE_DATE))
   })
 
   afterEach(() => {
     server.restore()
-    clock.restore()
+    jasmine.clock().uninstall()
   })
 
   describe('request', () => {
     it('should send the needed data', () => {
       LOGS.logger.log('message', { foo: 'bar' }, 'warn')
 
-      expect(server.requests.length).equal(1)
-      expect(server.requests[0].url).equal(configuration.logsEndpoint)
-      expect(getLoggedMessage(server, 0)).deep.equal({
+      expect(server.requests.length).toEqual(1)
+      expect(server.requests[0].url).toEqual(configuration.logsEndpoint!)
+      expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE,
         foo: 'bar',
         http: {
           referer: window.location.href,
         },
         message: 'message',
-        status: 'warn',
+        status: StatusType.warn,
       })
     })
   })
@@ -65,14 +61,14 @@ describe('logger module', () => {
     it("'logger.log' should have info status by default", () => {
       LOGS.logger.log('message')
 
-      expect(getLoggedMessage(server, 0).status).equal('info')
+      expect(getLoggedMessage(server, 0).status).toEqual(StatusType.info)
     })
 
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
         ;((LOGS.logger as any)[status] as any)('message')
 
-        expect(getLoggedMessage(server, 0).status).equal(status)
+        expect(getLoggedMessage(server, 0).status).toEqual(status)
       })
     })
   })
@@ -82,7 +78,7 @@ describe('logger module', () => {
       LOGS.setLoggerGlobalContext({ bar: 'foo' })
       LOGS.logger.log('message')
 
-      expect(getLoggedMessage(server, 0).bar).equal('foo')
+      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
     })
 
     it('should be updatable', () => {
@@ -91,9 +87,9 @@ describe('logger module', () => {
       LOGS.setLoggerGlobalContext({ foo: 'bar' })
       LOGS.logger.log('second')
 
-      expect(getLoggedMessage(server, 0).bar).equal('foo')
-      expect(getLoggedMessage(server, 1).foo).equal('bar')
-      expect(getLoggedMessage(server, 1).bar).undefined
+      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
+      expect(getLoggedMessage(server, 1).foo).toEqual('bar')
+      expect(getLoggedMessage(server, 1).bar).toBeUndefined()
     })
 
     it('should be used by all loggers', () => {
@@ -104,8 +100,8 @@ describe('logger module', () => {
       logger1.debug('message')
       logger2.debug('message')
 
-      expect(getLoggedMessage(server, 0).foo).equal('bar')
-      expect(getLoggedMessage(server, 1).foo).equal('bar')
+      expect(getLoggedMessage(server, 0).foo).toEqual('bar')
+      expect(getLoggedMessage(server, 1).foo).toEqual('bar')
     })
   })
 
@@ -114,7 +110,7 @@ describe('logger module', () => {
       LOGS.logger.setContext({ bar: 'foo' })
       LOGS.logger.log('message')
 
-      expect(getLoggedMessage(server, 0).bar).equal('foo')
+      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
     })
 
     it('should be updatable', () => {
@@ -123,9 +119,9 @@ describe('logger module', () => {
       LOGS.logger.setContext({ foo: 'bar' })
       LOGS.logger.log('second')
 
-      expect(getLoggedMessage(server, 0).bar).equal('foo')
-      expect(getLoggedMessage(server, 1).foo).equal('bar')
-      expect(getLoggedMessage(server, 1).bar).undefined
+      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
+      expect(getLoggedMessage(server, 1).foo).toEqual('bar')
+      expect(getLoggedMessage(server, 1).bar).toBeUndefined()
     })
 
     it('should be deep merged', () => {
@@ -134,12 +130,12 @@ describe('logger module', () => {
       LOGS.logger.log('message', { foo: { qux: 'qux' } })
       LOGS.logger.log('message', { foo: { hello: 'hi' } })
 
-      expect(getLoggedMessage(server, 0).foo).deep.equal({
+      expect(getLoggedMessage(server, 0).foo).toEqual({
         bar: 'qux',
         qix: 'qux',
         qux: 'qux',
       })
-      expect(getLoggedMessage(server, 1).foo).deep.equal({
+      expect(getLoggedMessage(server, 1).foo).toEqual({
         bar: 'qux',
         hello: 'hi',
         qix: 'qux',
@@ -151,7 +147,7 @@ describe('logger module', () => {
     it('should be debug by default', () => {
       LOGS.logger.debug('message')
 
-      expect(server.requests.length).equal(1)
+      expect(server.requests.length).toEqual(1)
     })
 
     it('should be configurable', () => {
@@ -159,26 +155,20 @@ describe('logger module', () => {
 
       LOGS.logger.debug('message')
 
-      expect(server.requests.length).equal(0)
+      expect(server.requests.length).toEqual(0)
     })
   })
 
   describe('log handler type', () => {
-    let consoleSpy: sinon.SinonSpy
-
     beforeEach(() => {
-      consoleSpy = sinon.stub(console, 'log')
-    })
-
-    afterEach(() => {
-      consoleSpy.restore()
+      spyOn(console, 'log')
     })
 
     it('should be "http" by default', () => {
       LOGS.logger.debug('message')
 
-      expect(server.requests.length).equal(1)
-      expect(consoleSpy).not.called
+      expect(server.requests.length).toEqual(1)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     it('should be configurable to "console"', () => {
@@ -186,8 +176,8 @@ describe('logger module', () => {
 
       LOGS.logger.error('message')
 
-      expect(server.requests.length).equal(0)
-      expect(consoleSpy).calledWith('error: message')
+      expect(server.requests.length).toEqual(0)
+      expect(console.log).toHaveBeenCalledWith('error: message')
     })
 
     it('should be configurable to "silent"', () => {
@@ -195,20 +185,14 @@ describe('logger module', () => {
 
       LOGS.logger.error('message')
 
-      expect(server.requests.length).equal(0)
-      expect(consoleSpy).not.called
+      expect(server.requests.length).toEqual(0)
+      expect(console.log).not.toHaveBeenCalled()
     })
   })
 
   describe('custom loggers', () => {
-    let consoleSpy: sinon.SinonSpy
-
     beforeEach(() => {
-      consoleSpy = sinon.stub(console, 'log')
-    })
-
-    afterEach(() => {
-      consoleSpy.restore()
+      spyOn(console, 'log')
     })
 
     it('should have a default configuration', () => {
@@ -216,8 +200,8 @@ describe('logger module', () => {
 
       logger.debug('message')
 
-      expect(server.requests.length).equal(1)
-      expect(consoleSpy).not.called
+      expect(server.requests.length).toEqual(1)
+      expect(console.log).not.toHaveBeenCalled()
     })
 
     it('should be configurable', () => {
@@ -229,8 +213,8 @@ describe('logger module', () => {
       logger.debug('ignored')
       logger.error('message')
 
-      expect(server.requests.length).equal(0)
-      expect(consoleSpy).calledWith('error: message')
+      expect(server.requests.length).toEqual(0)
+      expect(console.log).toHaveBeenCalledWith('error: message')
     })
 
     it('should have their name in their context', () => {
@@ -238,7 +222,7 @@ describe('logger module', () => {
 
       logger.debug('message')
 
-      expect(getLoggedMessage(server, 0).logger.name).equal('foo')
+      expect(getLoggedMessage(server, 0).logger!.name).toEqual('foo')
     })
 
     it('could be initialized with a dedicated context', () => {
@@ -248,13 +232,13 @@ describe('logger module', () => {
 
       logger.debug('message')
 
-      expect(getLoggedMessage(server, 0).foo).equal('bar')
+      expect(getLoggedMessage(server, 0).foo).toEqual('bar')
     })
 
     it('should be retrievable', () => {
       const logger = LOGS.createLogger('foo')
-      expect(LOGS.getLogger('foo')).equal(logger)
-      expect(LOGS.getLogger('bar')).undefined
+      expect(LOGS.getLogger('foo')).toEqual(logger)
+      expect(LOGS.getLogger('bar')).toBeUndefined()
     })
 
     it('should all use the same batch', () => {
@@ -268,7 +252,7 @@ describe('logger module', () => {
       logger1.debug('message from logger1')
       logger2.debug('message from logger2')
 
-      expect(server.requests.length).equal(1)
+      expect(server.requests.length).toEqual(1)
     })
   })
 })
