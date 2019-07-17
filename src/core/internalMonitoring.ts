@@ -5,6 +5,7 @@ import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { toStackTraceString } from './errorCollection'
+import { Session } from './session'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
 
@@ -25,7 +26,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startInternalMonitoring(configuration: Configuration) {
+export function startInternalMonitoring(configuration: Configuration, session: Session) {
   if (!configuration.internalMonitoringEndpoint) {
     return
   }
@@ -37,7 +38,7 @@ export function startInternalMonitoring(configuration: Configuration) {
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(),
+      ...getCommonContext(session),
     }),
     utils.withSnakeCaseKeys
   )

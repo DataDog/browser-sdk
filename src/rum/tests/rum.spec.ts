@@ -192,7 +192,8 @@ describe('rum track page view', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    batch = initRumBatch(configuration as Configuration, 'applicationId')
+    const session = { getId: () => undefined }
+    batch = initRumBatch(configuration as Configuration, session, 'applicationId')
     server = sinon.fakeServer.create()
   })
 

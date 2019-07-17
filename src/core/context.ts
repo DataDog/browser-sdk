@@ -1,4 +1,4 @@
-import { getSessionId } from './session'
+import { Session } from './session'
 import { withSnakeCaseKeys } from './utils'
 
 export interface Context {
@@ -17,12 +17,12 @@ export interface CommonContext {
   sessionId: string
 }
 
-export function getCommonContext() {
+export function getCommonContext(session: Session) {
   return withSnakeCaseKeys({
     date: new Date().getTime(),
     http: {
       referer: window.location.href,
     },
-    sessionId: getSessionId(),
+    sessionId: session.getId(),
   })
 }

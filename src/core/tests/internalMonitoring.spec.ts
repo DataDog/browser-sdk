@@ -50,7 +50,8 @@ describe('internal monitoring', () => {
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        startInternalMonitoring(configuration as Configuration)
+        const session = { getId: () => undefined }
+        startInternalMonitoring(configuration as Configuration, session)
       })
 
       afterEach(() => {
@@ -84,7 +85,8 @@ describe('internal monitoring', () => {
     }
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
+      const session = { getId: () => undefined }
+      startInternalMonitoring(configuration as Configuration, session)
     })
 
     afterEach(() => {
@@ -116,7 +118,8 @@ describe('internal monitoring', () => {
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
+      const session = { getId: () => undefined }
+      startInternalMonitoring(configuration as Configuration, session)
       server = sinon.fakeServer.create()
       jasmine.clock().install()
       jasmine.clock().mockDate(new Date(FAKE_DATE))

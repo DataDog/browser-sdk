@@ -28,7 +28,8 @@ describe('logger module', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    LOGS = startLogger(errorObservable, configuration as Configuration) as LogsApi
+    const session = { getId: () => undefined }
+    LOGS = startLogger(errorObservable, configuration as Configuration, session) as LogsApi
     server = sinon.fakeServer.create()
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date(FAKE_DATE))
@@ -243,7 +244,8 @@ describe('logger module', () => {
 
     it('should all use the same batch', () => {
       const customConf = { ...configuration, maxBatchSize: 3 }
-      LOGS = startLogger(errorObservable, customConf as Configuration) as LogsApi
+      const session = { getId: () => undefined }
+      LOGS = startLogger(errorObservable, customConf as Configuration, session) as LogsApi
 
       const logger1 = LOGS.createLogger('1')
       const logger2 = LOGS.createLogger('2')
