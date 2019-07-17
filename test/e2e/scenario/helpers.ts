@@ -1,4 +1,3 @@
-import { expect } from 'chai'
 import * as request from 'request'
 import { CommonContext } from '../../../src/core/context'
 import { ErrorContext, HttpContext } from '../../../src/core/errorCollection'
@@ -30,11 +29,11 @@ export async function browserExecuteAsync(fn: any) {
 }
 
 export async function tearDown() {
-  expect(await retrieveMonitoringErrors()).to.be.empty
+  expect(await retrieveMonitoringErrors()).toEqual([])
   await resetServerState()
   const logs = await browser.getLogs('browser')
   logs.forEach(console.log)
-  expect(logs.filter((l) => (l as any).level === 'SEVERE')).to.be.empty
+  expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
 }
 
 export async function retrieveRumEvents() {

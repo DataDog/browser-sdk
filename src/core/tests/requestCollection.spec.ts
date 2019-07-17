@@ -1,20 +1,18 @@
-import { expect } from 'chai'
-import * as sinon from 'sinon'
 import { FetchStub, FetchStubBuilder, FetchStubPromise } from '../../tests/specHelper'
 import { Observable } from '../observable'
-import { normalizeUrl, RequestDetails, trackFetch } from '../requestCollection'
+import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../requestCollection'
 
 describe('fetch tracker', () => {
   const FAKE_URL = 'http://fake-url/'
   let originalFetch: any
   let fetchStubBuilder: FetchStubBuilder
   let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
-  let notifySpy: sinon.SinonSpy
+  let notifySpy: jasmine.Spy
 
   beforeEach(() => {
     originalFetch = window.fetch
     const requestObservable = new Observable<RequestDetails>()
-    notifySpy = sinon.spy(requestObservable, 'notify')
+    notifySpy = spyOn(requestObservable, 'notify').and.callThrough()
     fetchStubBuilder = new FetchStubBuilder(requestObservable)
     window.fetch = fetchStubBuilder.getStub()
     trackFetch(requestObservable)
@@ -35,11 +33,11 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('fetch')
-      expect(request.method).equal('GET')
-      expect(request.url).equal(FAKE_URL)
-      expect(request.status).equal(500)
-      expect(request.response).equal('fetch error')
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(500)
+      expect(request.response).toEqual('fetch error')
       done()
     })
   })
@@ -49,11 +47,11 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('fetch')
-      expect(request.method).equal('GET')
-      expect(request.url).equal(FAKE_URL)
-      expect(request.status).equal(0)
-      expect(request.response).match(/Error: fetch error/)
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(0)
+      expect(request.response).toMatch(/Error: fetch error/)
       done()
     })
   })
@@ -63,11 +61,11 @@ describe('fetch tracker', () => {
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
       const request = requests[0]
-      expect(request.type).equal('fetch')
-      expect(request.method).equal('GET')
-      expect(request.url).equal(FAKE_URL)
-      expect(request.status).equal(400)
-      expect(request.response).equal('Not found')
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(400)
+      expect(request.response).toEqual('Not found')
       done()
     })
   })
@@ -81,12 +79,12 @@ describe('fetch tracker', () => {
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      expect(requests[0].method).equal('GET')
-      expect(requests[1].method).equal('GET')
-      expect(requests[2].method).equal('PUT')
-      expect(requests[3].method).equal('POST')
-      expect(requests[4].method).equal('POST')
-      expect(requests[5].method).equal('POST')
+      expect(requests[0].method).toEqual('GET')
+      expect(requests[1].method).toEqual('GET')
+      expect(requests[2].method).toEqual('PUT')
+      expect(requests[3].method).toEqual('POST')
+      expect(requests[4].method).toEqual('POST')
+      expect(requests[5].method).toEqual('POST')
       done()
     })
   })
@@ -95,32 +93,32 @@ describe('fetch tracker', () => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
     fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      expect(requests[0].url).equal(FAKE_URL)
-      expect(requests[1].url).equal(FAKE_URL)
+      expect(requests[0].url).toEqual(FAKE_URL)
+      expect(requests[1].url).toEqual(FAKE_URL)
       done()
     })
   })
 
   it('should keep promise resolved behavior', (done) => {
     const fetchStubPromise = fetchStub(FAKE_URL)
-    const spy = sinon.spy()
+    const spy = jasmine.createSpy()
     fetchStubPromise.then(spy)
     fetchStubPromise.resolveWith({ status: 500 })
 
     setTimeout(() => {
-      expect(spy.called).equal(true)
+      expect(spy).toHaveBeenCalled()
       done()
     })
   })
 
   it('should keep promise rejected behavior', (done) => {
     const fetchStubPromise = fetchStub(FAKE_URL)
-    const spy = sinon.spy()
+    const spy = jasmine.createSpy()
     fetchStubPromise.catch(spy)
     fetchStubPromise.rejectWith(new Error('fetch error'))
 
     setTimeout(() => {
-      expect(spy.called).equal(true)
+      expect(spy).toHaveBeenCalled()
       done()
     })
   })
@@ -128,18 +126,18 @@ describe('fetch tracker', () => {
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).equal('http://localhost:9876/my/path')
+    expect(normalizeUrl('/my/path')).toEqual('http://localhost:9876/my/path')
   })
 
   it('should add protocol to relative url', () => {
-    expect(normalizeUrl('//localhost:9876/my/path')).equal('http://localhost:9876/my/path')
+    expect(normalizeUrl('//localhost:9876/my/path')).toEqual('http://localhost:9876/my/path')
   })
 
   it('should keep full url unchanged', () => {
-    expect(normalizeUrl('https://foo.com/my/path')).equal('https://foo.com/my/path')
+    expect(normalizeUrl('https://foo.com/my/path')).toEqual('https://foo.com/my/path')
   })
 
   it('should keep non http url unchanged', () => {
-    expect(normalizeUrl('file://foo.com/my/path')).equal('file://foo.com/my/path')
+    expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
   })
 })

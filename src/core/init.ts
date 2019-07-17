@@ -25,8 +25,8 @@ export function makeGlobal<T>(stub: T): T {
 
 export function commonInit(userConfiguration: UserConfiguration) {
   const configuration = buildConfiguration(userConfiguration)
-  startInternalMonitoring(configuration)
-  startSessionTracking()
+  const session = startSessionTracking()
+  startInternalMonitoring(configuration, session)
   const requestObservable = startRequestCollection()
   const errorObservable = startErrorCollection(configuration, requestObservable)
 
@@ -34,5 +34,6 @@ export function commonInit(userConfiguration: UserConfiguration) {
     configuration,
     errorObservable,
     requestObservable,
+    session,
   }
 }

@@ -36,6 +36,6 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
     return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
-  const { errorObservable, configuration } = commonInit(rumUserConfiguration)
-  startRum(rumUserConfiguration.applicationId, errorObservable, configuration)
+  const { errorObservable, configuration, session } = commonInit(rumUserConfiguration)
+  startRum(rumUserConfiguration.applicationId, errorObservable, configuration, session)
 })

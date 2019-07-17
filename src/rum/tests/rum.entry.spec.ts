@@ -1,5 +1,3 @@
-import { expect } from 'chai'
-import * as sinon from 'sinon'
 import { RumUserConfiguration } from '../rum.entry'
 
 describe('rum entry', () => {
@@ -9,14 +7,12 @@ describe('rum entry', () => {
   })
 
   it('init should log an error with no application id', () => {
-    const errorStub = sinon.stub(console, 'error')
+    const errorSpy = spyOn(console, 'error')
     const invalidConfiguration = { clientToken: 'yes' }
     window.DD_RUM.init(invalidConfiguration as RumUserConfiguration)
-    expect(errorStub.callCount).equal(1)
+    expect(console.error).toHaveBeenCalledTimes(1)
 
     window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes' })
-    expect(errorStub.callCount).equal(1)
-
-    sinon.restore()
+    expect(errorSpy).toHaveBeenCalledTimes(1)
   })
 })

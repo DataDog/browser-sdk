@@ -8,19 +8,30 @@ const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
  */
 export const COOKIE_ACCESS_DELAY = 1000
 
-export function startSessionTracking() {
-  expandOrRenewSession()
-  trackActivity()
+export interface Session {
+  getId: () => string | undefined
 }
 
-export const getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
+export function startSessionTracking(): Session {
+  const getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
+  const expandOrRenewSession = makeExpandOrRenewSession(getSessionId)
 
-const expandOrRenewSession = utils.throttle(() => {
-  const sessionId = getSessionId()
-  setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
-}, COOKIE_ACCESS_DELAY)
+  expandOrRenewSession()
+  trackActivity(expandOrRenewSession)
 
-function trackActivity() {
+  return {
+    getId: getSessionId,
+  }
+}
+
+function makeExpandOrRenewSession(getSessionId: () => string | undefined) {
+  return utils.throttle(() => {
+    const sessionId = getSessionId()
+    setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
+  }, COOKIE_ACCESS_DELAY)
+}
+
+function trackActivity(expandOrRenewSession: () => void) {
   const options = { capture: true, passive: true }
   ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) =>
     document.addEventListener(event, expandOrRenewSession, options)

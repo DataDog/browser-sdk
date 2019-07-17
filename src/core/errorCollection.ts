@@ -108,7 +108,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
 }
 
 export function stopRuntimeErrorTracking() {
-  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
+  ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
 export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {

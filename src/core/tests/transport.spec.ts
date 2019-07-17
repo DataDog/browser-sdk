@@ -1,10 +1,8 @@
-import { expect, use } from 'chai'
-import * as sinon from 'sinon'
-import sinonChai from 'sinon-chai'
+import sinon from 'sinon'
+
+import { Context } from '../context'
 import { Batch, HttpRequest } from '../transport'
 import { noop } from '../utils'
-
-use(sinonChai)
 
 describe('request', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -24,39 +22,36 @@ describe('request', () => {
   it('should use xhr when sendBeacon is not defined', () => {
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(server.requests.length).equal(1)
-    expect(server.requests[0].url).equal(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).equal('{"foo":"bar1"}\n{"foo":"bar2"}')
+    expect(server.requests.length).toEqual(1)
+    expect(server.requests[0].url).toEqual(ENDPOINT_URL)
+    expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
   it('should use sendBeacon when the size is correct', () => {
-    navigator.sendBeacon = (url: string, data: string) => true
-    sinon.spy(navigator, 'sendBeacon')
+    spyOn(navigator, 'sendBeacon').and.callFake(() => true)
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(navigator.sendBeacon).called
+    expect(navigator.sendBeacon).toHaveBeenCalled()
   })
 
   it('should use xhr over sendBeacon when the size too high', () => {
-    navigator.sendBeacon = (url: string, data: string) => true
-    sinon.spy(navigator, 'sendBeacon')
+    spyOn(navigator, 'sendBeacon').and.callFake(() => true)
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', BATCH_BYTES_LIMIT)
 
-    expect(server.requests.length).equal(1)
-    expect(server.requests[0].url).equal(ENDPOINT_URL)
-    expect(server.requests[0].requestBody).equal('{"foo":"bar1"}\n{"foo":"bar2"}')
+    expect(server.requests.length).toEqual(1)
+    expect(server.requests[0].url).toEqual(ENDPOINT_URL)
+    expect(server.requests[0].requestBody).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
   })
 
   it('should fallback to xhr when sendBeacon is not queued', () => {
-    navigator.sendBeacon = (url: string, data: string) => false
-    sinon.spy(navigator, 'sendBeacon')
+    spyOn(navigator, 'sendBeacon').and.callFake(() => false)
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
-    expect(navigator.sendBeacon).called
-    expect(server.requests.length).equal(1)
+    expect(navigator.sendBeacon).toHaveBeenCalled()
+    expect(server.requests.length).toEqual(1)
   })
 })
 
@@ -72,7 +67,7 @@ describe('batch', () => {
   beforeEach(() => {
     CONTEXT = { foo: 'bar' }
     transport = ({ send: noop } as unknown) as HttpRequest
-    sinon.spy(transport, 'send')
+    spyOn(transport, 'send')
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
   })
 
@@ -81,7 +76,7 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).calledWith('{"foo":"bar","message":"hello"}')
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"hello"}', jasmine.any(Number))
   })
 
   it('should deep merge contexts', () => {
@@ -90,37 +85,41 @@ describe('batch', () => {
 
     batch.flush()
 
-    expect(transport.send).calledWith('{"foo":{"bar":"qux","hello":"qix"},"message":"hello"}')
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":{"bar":"qux","hello":"qix"},"message":"hello"}',
+      jasmine.any(Number)
+    )
   })
 
   it('should empty the batch after a flush', () => {
     batch.add({ message: 'hello' })
 
     batch.flush()
-    ;(transport.send as sinon.SinonSpy).resetHistory()
+    ;(transport.send as jasmine.Spy).calls.reset()
     batch.flush()
 
-    expect((transport.send as sinon.SinonSpy).notCalled).equal(true)
+    expect(transport.send).not.toHaveBeenCalled()
   })
 
   it('should flush when max size is reached', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })
     batch.add({ message: '3' })
-    expect(transport.send).calledWith(
-      '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"2"}\n{"foo":"bar","message":"3"}'
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"2"}\n{"foo":"bar","message":"3"}',
+      jasmine.any(Number)
     )
   })
 
   it('should flush when new message will overflow bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
-    expect((transport.send as sinon.SinonSpy).notCalled).equal(true)
+    expect(transport.send).not.toHaveBeenCalled()
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(transport.send).calledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
 
     batch.flush()
-    expect(transport.send).calledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
   it('should consider separator size when computing the size', () => {
@@ -128,13 +127,13 @@ describe('batch', () => {
     batch.add({ message: '30 b' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xx' }) // batch: 99 sep: 2
 
-    expect(transport.send).calledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).calledWith(`{"foo":"bar","message":"${message}"}`, 101)
+    expect(transport.send).toHaveBeenCalledWith(`{"foo":"bar","message":"${message}"}`, 101)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
@@ -142,7 +141,7 @@ describe('batch', () => {
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     batch.add({ message })
-    expect((transport.send as sinon.SinonSpy).calledTwice).equal(true)
+    expect(transport.send).toHaveBeenCalledTimes(2)
   })
 
   it('should flush after timeout', () => {
@@ -151,7 +150,7 @@ describe('batch', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
     clock.tick(100)
 
-    expect((transport.send as sinon.SinonSpy).called).equal(true)
+    expect(transport.send).toHaveBeenCalled()
 
     clock.restore()
   })
@@ -161,7 +160,7 @@ describe('batch', () => {
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT, () => CONTEXT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
-    expect((transport.send as sinon.SinonSpy).called).equal(false)
+    expect(transport.send).not.toHaveBeenCalled()
     warnStub.restore()
   })
 
@@ -173,7 +172,7 @@ describe('batch', () => {
       MESSAGE_BYTES_LIMIT,
       FLUSH_TIMEOUT,
       () => ({}),
-      (message: { message: string }) => {
+      (message: Context) => {
         message.message = `*** ${message.message} ***`
         return message
       }
@@ -182,6 +181,6 @@ describe('batch', () => {
     batch.add({ message: 'hello' })
     batch.flush()
 
-    expect(transport.send).calledWith(`{"message":"*** hello ***"}`)
+    expect(transport.send).toHaveBeenCalledWith(`{"message":"*** hello ***"}`, jasmine.any(Number))
   })
 })

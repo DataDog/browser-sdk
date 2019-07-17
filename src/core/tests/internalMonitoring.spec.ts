@@ -1,6 +1,5 @@
-import { expect, use } from 'chai'
-import chaiShallowDeepEqual from 'chai-shallow-deep-equal'
-import * as sinon from 'sinon'
+import sinon from 'sinon'
+
 import { Configuration } from '../configuration'
 import {
   monitor,
@@ -9,8 +8,6 @@ import {
   resetInternalMonitoring,
   startInternalMonitoring,
 } from '../internalMonitoring'
-
-use(chaiShallowDeepEqual)
 
 const configuration: Partial<Configuration> = {
   batchBytesLimit: 100,
@@ -45,15 +42,16 @@ describe('internal monitoring', () => {
 
     describe('before initialisation', () => {
       it('should not monitor', () => {
-        expect(() => candidate.notMonitoredThrowing()).throw('not monitored')
-        expect(() => candidate.monitoredThrowing()).throw('monitored')
-        expect(candidate.monitoredNotThrowing()).equal(1)
+        expect(() => candidate.notMonitoredThrowing()).toThrowError('not monitored')
+        expect(() => candidate.monitoredThrowing()).toThrowError('monitored')
+        expect(candidate.monitoredNotThrowing()).toEqual(1)
       })
     })
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        startInternalMonitoring(configuration as Configuration)
+        const session = { getId: () => undefined }
+        startInternalMonitoring(configuration as Configuration, session)
       })
 
       afterEach(() => {
@@ -61,12 +59,12 @@ describe('internal monitoring', () => {
       })
 
       it('should preserve original behavior', () => {
-        expect(candidate.monitoredNotThrowing()).equal(1)
+        expect(candidate.monitoredNotThrowing()).toEqual(1)
       })
 
       it('should catch error', () => {
-        expect(() => candidate.notMonitoredThrowing()).throw()
-        expect(() => candidate.monitoredThrowing()).not.throw()
+        expect(() => candidate.notMonitoredThrowing()).toThrowError()
+        expect(() => candidate.monitoredThrowing()).not.toThrowError()
       })
 
       it('should report error', () => {
@@ -74,7 +72,7 @@ describe('internal monitoring', () => {
 
         candidate.monitoredThrowing()
 
-        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).equal('monitored')
+        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('monitored')
         server.restore()
       })
     })
@@ -87,7 +85,8 @@ describe('internal monitoring', () => {
     }
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
+      const session = { getId: () => undefined }
+      startInternalMonitoring(configuration as Configuration, session)
     })
 
     afterEach(() => {
@@ -96,12 +95,12 @@ describe('internal monitoring', () => {
 
     it('should preserve original behavior', () => {
       const decorated = monitor(notThrowing)
-      expect(decorated()).equal(1)
+      expect(decorated()).toEqual(1)
     })
 
     it('should catch error', () => {
       const decorated = monitor(throwing)
-      expect(() => decorated()).not.throw()
+      expect(() => decorated()).not.toThrowError()
     })
 
     it('should report error', () => {
@@ -109,26 +108,27 @@ describe('internal monitoring', () => {
 
       monitor(throwing)()
 
-      expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).equal('error')
+      expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
       server.restore()
     })
   })
 
   describe('request', () => {
     const FAKE_DATE = 123456
-    let clock: sinon.SinonFakeTimers
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      startInternalMonitoring(configuration as Configuration)
+      const session = { getId: () => undefined }
+      startInternalMonitoring(configuration as Configuration, session)
       server = sinon.fakeServer.create()
-      clock = sinon.useFakeTimers(FAKE_DATE)
+      jasmine.clock().install()
+      jasmine.clock().mockDate(new Date(FAKE_DATE))
     })
 
     afterEach(() => {
       resetInternalMonitoring()
       server.restore()
-      clock.restore()
+      jasmine.clock().uninstall()
     })
 
     it('should send the needed data', () => {
@@ -136,16 +136,18 @@ describe('internal monitoring', () => {
         throw new Error('message')
       })()
 
-      expect(server.requests.length).equal(1)
-      expect(server.requests[0].url).equal(configuration.internalMonitoringEndpoint)
+      expect(server.requests.length).toEqual(1)
+      expect(server.requests[0].url).toEqual(configuration.internalMonitoringEndpoint!)
 
-      expect(JSON.parse(server.requests[0].requestBody)).shallowDeepEqual({
+      expect(JSON.parse(server.requests[0].requestBody)).toEqual({
         date: FAKE_DATE,
         entry_type: 'internal',
+        error: jasmine.anything(),
         http: {
           referer: window.location.href,
         },
         message: 'message',
+        status: 'error',
       })
     })
 
@@ -157,7 +159,7 @@ describe('internal monitoring', () => {
         })()
       }
 
-      expect(server.requests.length).equal(max)
+      expect(server.requests.length).toEqual(max)
     })
   })
 })

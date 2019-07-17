@@ -59,16 +59,20 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export function withSnakeCaseKeys<T extends ContextValue>(candidate: T): T {
+export function withSnakeCaseKeys(candidate: Context): Context {
+  const result: Context = {}
+  Object.keys(candidate as Context).forEach((key: string) => {
+    result[toSnakeCase(key)] = deepSnakeCase(candidate[key])
+  })
+  return result as Context
+}
+
+export function deepSnakeCase(candidate: ContextValue): ContextValue {
   if (Array.isArray(candidate)) {
-    return candidate.map((value: ContextValue) => withSnakeCaseKeys(value)) as T
+    return candidate.map((value: ContextValue) => deepSnakeCase(value))
   }
   if (typeof candidate === 'object') {
-    const result: Context = {}
-    Object.keys(candidate as Context).forEach((key: string) => {
-      result[toSnakeCase(key)] = withSnakeCaseKeys(candidate[key])
-    })
-    return result as T
+    return withSnakeCaseKeys(candidate)
   }
   return candidate
 }

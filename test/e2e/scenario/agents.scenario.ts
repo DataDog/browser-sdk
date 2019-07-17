@@ -1,5 +1,5 @@
-import { expect } from 'chai'
 import { LogsGlobal } from '../../../src/logs/logs.entry'
+import { RumEventType } from '../../../src/rum/rum'
 
 import {
   browserExecute,
@@ -22,35 +22,35 @@ afterEach(tearDown)
 
 describe('logs', () => {
   it('should send logs', async () => {
-    browserExecute(() => {
+    await browserExecute(() => {
       ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
     })
-    flushEvents()
+    await flushEvents()
     const logs = await retrieveLogsMessages()
-    expect(logs).to.contain('hello')
+    expect(logs).toContain('hello')
   })
 
   it('should send errors', async () => {
-    browserExecute(() => {
+    await browserExecute(() => {
       console.error('oh snap')
     })
-    flushEvents()
+    await flushEvents()
     const logs = await retrieveLogsMessages()
-    expect(logs).to.contain('console error: oh snap')
+    expect(logs).toContain('console error: oh snap')
     const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).to.equal(1)
+    expect(browserLogs.length).toEqual(1)
   })
 })
 
 describe('rum', () => {
   it('should send page view event on load', async () => {
-    flushEvents()
+    await flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).to.contain('page_view')
+    expect(types).toContain(RumEventType.PAGE_VIEW)
   })
 
   it('should send page views during history navigation', async () => {
-    browserExecute(() => {
+    await browserExecute(() => {
       history.pushState({}, '', '/')
 
       history.pushState({}, '', '/#push-hash')
@@ -69,31 +69,23 @@ describe('rum', () => {
       history.forward()
     })
 
-    flushEvents()
+    await flushEvents()
     const trackedUrls = (await retrieveRumEvents())
       .filter((rumEvent: ServerRumEvent) => rumEvent.type === 'page_view')
       .map((rumEvent: ServerRumEvent) => rumEvent.http.referer.replace('http://localhost:3000', ''))
 
-    expect(trackedUrls).to.deep.equal([
-      '/agents-page.html',
-      '/',
-      '/push-path',
-      '/',
-      '/replace-path',
-      '/',
-      '/replace-path',
-    ])
+    expect(trackedUrls).toEqual(['/agents-page.html', '/', '/push-path', '/', '/replace-path', '/', '/replace-path'])
   })
 
   it('should send errors', async () => {
-    browserExecute(() => {
+    await browserExecute(() => {
       console.error('oh snap')
     })
-    flushEvents()
+    await flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).to.contain('error')
+    expect(types).toContain(RumEventType.ERROR)
     const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).to.equal(1)
+    expect(browserLogs.length).toEqual(1)
   })
 })
 
@@ -132,15 +124,15 @@ describe('error collection', () => {
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
-    expect(logs.length).equal(2)
+    expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).to.equal('XHR error GET http://localhost:3000/throw')
-    expect(logs[0].http.status_code).to.equal(500)
-    expect(logs[0].error.stack).to.match(/Server error/)
+    expect(logs[0].message).toEqual('XHR error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).toEqual(500)
+    expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).to.equal('XHR error GET http://localhost:9999/unreachable')
-    expect(logs[1].http.status_code).to.equal(0)
-    expect(logs[1].error.stack).to.equal('Failed to load')
+    expect(logs[1].message).toEqual('XHR error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).toEqual(0)
+    expect(logs[1].error.stack).toEqual('Failed to load')
   })
 
   it('should track fetch error', async () => {
@@ -162,14 +154,14 @@ describe('error collection', () => {
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
-    expect(logs.length).equal(2)
+    expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).to.equal('Fetch error GET http://localhost:3000/throw')
-    expect(logs[0].http.status_code).to.equal(500)
-    expect(logs[0].error.stack).to.match(/Server error/)
+    expect(logs[0].message).toEqual('Fetch error GET http://localhost:3000/throw')
+    expect(logs[0].http.status_code).toEqual(500)
+    expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).to.equal('Fetch error GET http://localhost:9999/unreachable')
-    expect(logs[1].http.status_code).to.equal(0)
-    expect(logs[1].error.stack).to.equal('TypeError: Failed to fetch')
+    expect(logs[1].message).toEqual('Fetch error GET http://localhost:9999/unreachable')
+    expect(logs[1].http.status_code).toEqual(0)
+    expect(logs[1].error.stack).toEqual('TypeError: Failed to fetch')
   })
 })

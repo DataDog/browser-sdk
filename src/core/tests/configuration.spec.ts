@@ -1,5 +1,3 @@
-import { expect } from 'chai'
-
 import { buildConfiguration } from '../configuration'
 
 describe('configuration module', () => {
@@ -7,7 +5,7 @@ describe('configuration module', () => {
 
   it('build the configuration correct endpoints', () => {
     let configuration = buildConfiguration({ clientToken })
-    expect(configuration.logsEndpoint).includes(clientToken)
+    expect(configuration.logsEndpoint).toContain(clientToken)
 
     // TO KISS we check that rum and internal monitoring endpoints can NOT be overridden with the regular bundle
     // (a.k.a not "e2e-test"). It's not ideal since we don't test the other behavior but there's no easy way to
@@ -15,23 +13,23 @@ describe('configuration module', () => {
     // seems overkill given the few lines of code involved.
     const endpoint = 'bbbbbbbbbbbbbbb'
     configuration = buildConfiguration({ clientToken, rumEndpoint: endpoint, internalMonitoringEndpoint: endpoint })
-    expect(configuration.rumEndpoint).not.equal(endpoint)
-    expect(configuration.internalMonitoringEndpoint).not.equal(endpoint)
+    expect(configuration.rumEndpoint).not.toEqual(endpoint)
+    expect(configuration.internalMonitoringEndpoint).not.toEqual(endpoint)
   })
 
   it('build the configuration correct monitoring endpoint', () => {
     let configuration = buildConfiguration({ clientToken })
-    expect(configuration.internalMonitoringEndpoint).undefined
+    expect(configuration.internalMonitoringEndpoint).toBeUndefined()
 
     configuration = buildConfiguration({ clientToken, internalMonitoringApiKey: clientToken })
-    expect(configuration.internalMonitoringEndpoint).includes(clientToken)
+    expect(configuration.internalMonitoringEndpoint).toContain(clientToken)
   })
 
   it('build the configuration isCollectingError', () => {
     let configuration = buildConfiguration({ clientToken })
-    expect(configuration.isCollectingError).true
+    expect(configuration.isCollectingError).toEqual(true)
 
     configuration = buildConfiguration({ clientToken, isCollectingError: false })
-    expect(configuration.isCollectingError).false
+    expect(configuration.isCollectingError).toEqual(false)
   })
 })
