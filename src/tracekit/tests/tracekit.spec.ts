@@ -112,7 +112,7 @@ Error: foo
 
     beforeEach(() => {
       // do not fail specs due to error being rethrown
-      spyOn(window, 'onerror')
+      window.onerror = jasmine.createSpy()
     })
 
     describe('with undefined arguments', () => {
