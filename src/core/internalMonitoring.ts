@@ -69,27 +69,46 @@ export function monitor<T extends Function>(fn: T): T {
     } catch (e) {
       logErrorIfDebug(e)
       try {
-        if (
-          monitoringConfiguration.batch &&
-          monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
-        ) {
-          monitoringConfiguration.sentMessageCount += 1
-          const stackTrace = computeStackTrace(e as Error)
-          monitoringConfiguration.batch.add({
-            entryType: 'internal',
-            error: {
-              kind: stackTrace.name,
-              stack: toStackTraceString(stackTrace),
-            },
-            message: stackTrace.message,
-            status: StatusType.error,
-          })
-        }
+        addErrorToMonitoringBatch(e)
       } catch (e) {
         logErrorIfDebug(e)
       }
     }
   } as unknown) as T // consider output type has input type
+}
+
+function addErrorToMonitoringBatch(e: unknown) {
+  if (
+    monitoringConfiguration.batch &&
+    monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
+  ) {
+    monitoringConfiguration.sentMessageCount += 1
+
+    monitoringConfiguration.batch.add({
+      ...formatError(e),
+      entryType: 'internal',
+      status: StatusType.error,
+    })
+  }
+}
+
+function formatError(e: unknown) {
+  if (e instanceof Error) {
+    const stackTrace = computeStackTrace(e)
+    return {
+      error: {
+        kind: stackTrace.name,
+        stack: toStackTraceString(stackTrace),
+      },
+      message: stackTrace.message,
+    }
+  }
+  return {
+    error: {
+      stack: 'Not an instance of error',
+    },
+    message: `Uncaught ${utils.jsonStringify(e as any)}`,
+  }
 }
 
 export function setDebugMode(debugMode: boolean) {
