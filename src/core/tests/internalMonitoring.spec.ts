@@ -30,6 +30,17 @@ describe('internal monitoring', () => {
       }
 
       @monitored
+      monitoredStringErrorThrowing() {
+        // tslint:disable-next-line: no-string-throw
+        throw 'string error'
+      }
+
+      @monitored
+      monitoredObjectErrorThrowing() {
+        throw { foo: 'bar' }
+      }
+
+      @monitored
       monitoredNotThrowing() {
         return 1
       }
@@ -72,7 +83,31 @@ describe('internal monitoring', () => {
 
         candidate.monitoredThrowing()
 
-        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('monitored')
+        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        expect(message.message).toEqual('monitored')
+        expect(message.error.stack).toMatch('monitored')
+        server.restore()
+      })
+
+      it('should report string error', () => {
+        const server = sinon.fakeServer.create()
+
+        candidate.monitoredStringErrorThrowing()
+
+        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        expect(message.message).toEqual('Uncaught "string error"')
+        expect(message.error.stack).toMatch('Not an instance of error')
+        server.restore()
+      })
+
+      it('should report object error', () => {
+        const server = sinon.fakeServer.create()
+
+        candidate.monitoredObjectErrorThrowing()
+
+        const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
+        expect(message.message).toEqual('Uncaught {"foo":"bar"}')
+        expect(message.error.stack).toMatch('Not an instance of error')
         server.restore()
       })
     })
