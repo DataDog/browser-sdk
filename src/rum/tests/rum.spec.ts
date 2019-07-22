@@ -189,7 +189,7 @@ describe('rum performanceObserver callback', () => {
   })
 })
 
-describe('rum track page view', () => {
+describe('rum track locale', () => {
   let batch: RumBatch
   let server: sinon.SinonFakeServer
 

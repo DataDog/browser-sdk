@@ -69,7 +69,7 @@ export interface RumError {
 
 export type RumPageView = undefined
 
-export type RumLocale = string
+export type RumLocale = string[]
 
 export type RumData = RumPerformanceTiming | RumError | RumPageView | RumLocale
 
@@ -160,9 +160,9 @@ export function initRumBatch(configuration: Configuration, session: Session, app
 
 export function trackLocale(batch: RumBatch) {
   if (window.navigator.languages) {
-    batch.add({ type: RumEventType.LOCALE, data: window.navigator.languages.join(',') })
+    batch.add({ type: RumEventType.LOCALE, data: window.navigator.languages as string[] })
   } else {
-    batch.add({ type: RumEventType.LOCALE, data: window.navigator.language })
+    batch.add({ type: RumEventType.LOCALE, data: [window.navigator.language] })
   }
 }
 
