@@ -1,14 +1,12 @@
 // tslint:disable no-unsafe-any
 
-import { expect } from 'chai'
-import * as sinon from 'sinon'
 import { isIE } from '../../tests/specHelper'
 import { report, StackFrame, wrap } from '../tracekit'
 
 describe('Handler', () => {
-  beforeEach(function() {
+  beforeEach(() => {
     if (isIE(9)) {
-      this.skip()
+      pending()
     }
   })
 
@@ -24,17 +22,17 @@ describe('Handler', () => {
     }
 
     report.subscribe(handler)
-    expect(() => wrap(throwException)()).throw()
+    expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
       report.unsubscribe(handler)
-      expect(stacks.length).equal(1)
+      expect(stacks.length).toEqual(1)
       done()
     }, 1000)
   })
 
   it('should get extra arguments (isWindowError and exception)', (done) => {
-    const handler = sinon.fake()
+    const handler = jasmine.createSpy()
 
     const exception = new Error('Boom!')
 
@@ -43,18 +41,18 @@ describe('Handler', () => {
     }
 
     report.subscribe(handler)
-    expect(() => wrap(throwException)()).throw()
+    expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
       report.unsubscribe(handler)
 
-      expect(handler.callCount).equal(1)
+      expect(handler).toHaveBeenCalledTimes(1)
 
-      const isWindowError = handler.lastCall.args[1]
-      expect(isWindowError).equal(false)
+      const isWindowError = handler.calls.mostRecent().args[1]
+      expect(isWindowError).toEqual(false)
 
-      const e = handler.lastCall.args[2]
-      expect(e).equal(exception)
+      const e = handler.calls.mostRecent().args[2]
+      expect(e).toEqual(exception)
 
       done()
     }, 1000)

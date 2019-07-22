@@ -1,6 +1,4 @@
-import { expect, use } from 'chai'
-import * as sinon from 'sinon'
-import sinonChai from 'sinon-chai'
+import sinon from 'sinon'
 
 import { Configuration } from '../../core/configuration'
 
@@ -20,17 +18,8 @@ import {
   trackPerformanceTiming,
 } from '../rum'
 
-use(sinonChai)
-
-function buildEntry(entry: Partial<PerformanceResourceTiming>) {
-  const result: Partial<PerformanceResourceTiming> = {
-    ...entry,
-  }
-  return result as PerformanceResourceTiming
-}
-
 function getEntry(batch: RumBatch, index: number) {
-  return (batch.add as sinon.SinonSpy).getCall(index).args[0] as RumEvent
+  return (batch.add as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
 }
 
 interface RumServerMessage {
@@ -53,7 +42,7 @@ describe('rum handle performance entry', () => {
 
   beforeEach(() => {
     batch = {
-      add: sinon.spy(),
+      add: jasmine.createSpy(),
     }
   })
   ;[
@@ -88,7 +77,7 @@ describe('rum handle performance entry', () => {
           batch as RumBatch,
           configuration as Configuration
         )
-        expect((batch.add as sinon.SinonSpy).called).equal(expectEntryToBeAdded)
+        expect((batch.add as jasmine.Spy).calls.all.length !== 0).toEqual(expectEntryToBeAdded)
       })
     }
   )
@@ -135,7 +124,7 @@ describe('rum handle performance entry', () => {
           configuration as Configuration
         )
         const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-        expect(resourceTiming.resourceType).equal(expected)
+        expect(resourceTiming.resourceType).toEqual(expected)
       })
     }
   )
@@ -152,8 +141,8 @@ describe('rum handle performance entry', () => {
 
     handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
     const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-    expect(resourceTiming.connectDuration).equal(7)
-    expect(resourceTiming.responseDuration).equal(75)
+    expect(resourceTiming.connectDuration).toEqual(7)
+    expect(resourceTiming.responseDuration).toEqual(75)
   })
 
   it('should remove unavailable attributes', () => {
@@ -167,19 +156,19 @@ describe('rum handle performance entry', () => {
     }
     handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
     const resourceTiming = getEntry(batch as RumBatch, 0).data as PerformanceResourceTiming
-    expect(resourceTiming.connectStart).undefined
-    expect(resourceTiming.connectEnd).undefined
-    expect(resourceTiming.responseStart).undefined
+    expect(resourceTiming.connectStart).toBeUndefined()
+    expect(resourceTiming.connectEnd).toBeUndefined()
+    expect(resourceTiming.responseStart).toBeUndefined()
   })
 
   it('should rewrite paint entries', () => {
     const entry: Partial<PerformancePaintTiming> = { name: 'first-paint', startTime: 123456, entryType: 'paint' }
     handlePaintEntry(entry as PerformancePaintTiming, batch as RumBatch)
-    expect(getEntry(batch as RumBatch, 0)).deep.equal({
+    expect(getEntry(batch as RumBatch, 0)).toEqual({
       data: {
         'first-paint': 123456,
       },
-      type: 'paint',
+      type: RumEventType.PAINT,
     })
   })
 })
@@ -188,7 +177,7 @@ describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
     const batch = {
       add: (message: RumEvent) => {
-        expect((message.data! as RumResourceTiming).resourceType).equal('xhr')
+        expect((message.data! as RumResourceTiming).resourceType).toEqual('xhr')
         done()
       },
     }
@@ -205,7 +194,8 @@ describe('rum track page view', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    batch = initRumBatch(configuration as Configuration, 'applicationId')
+    const session = { getId: () => undefined }
+    batch = initRumBatch(configuration as Configuration, session, 'applicationId')
     server = sinon.fakeServer.create()
   })
   it('should send send user locale', () => {
@@ -224,12 +214,16 @@ describe('rum track page view', () => {
     server = sinon.fakeServer.create()
   })
 
+  afterEach(() => {
+    server.restore()
+  })
+
   it('should send page view event with page view id', () => {
     trackPageView(batch)
     batch.flush()
 
-    expect(getRumMessage(server, 0).type).equal('page_view')
-    expect(getRumMessage(server, 0).page_view_id).not.undefined
+    expect(getRumMessage(server, 0).type).toEqual('page_view')
+    expect(getRumMessage(server, 0).page_view_id).not.toBeUndefined()
   })
 
   it('should update page view id at each page view', () => {
@@ -241,6 +235,6 @@ describe('rum track page view', () => {
     const firstId = getRumMessage(server, 0).page_view_id
     const secondId = getRumMessage(server, 1).page_view_id
 
-    expect(firstId).not.equal(secondId)
+    expect(firstId).not.toEqual(secondId)
   })
 })

@@ -2,6 +2,7 @@ import { Configuration } from '../core/configuration'
 import { getCommonContext } from '../core/context'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
+import { Session } from '../core/session'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, ResourceType, withSnakeCaseKeys } from '../core/utils'
 
@@ -126,8 +127,13 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
 let pageViewId: string
 let activeLocation: Location
 
-export function startRum(applicationId: string, errorObservable: ErrorObservable, configuration: Configuration) {
-  const batch = initRumBatch(configuration, applicationId)
+export function startRum(
+  applicationId: string,
+  errorObservable: ErrorObservable,
+  configuration: Configuration,
+  session: Session
+) {
+  const batch = initRumBatch(configuration, session, applicationId)
 
   trackLocale(batch)
   trackPageView(batch)
@@ -136,7 +142,7 @@ export function startRum(applicationId: string, errorObservable: ErrorObservable
   trackPerformanceTiming(batch, configuration)
 }
 
-export function initRumBatch(configuration: Configuration, applicationId: string) {
+export function initRumBatch(configuration: Configuration, session: Session, applicationId: string) {
   return new Batch<RumEvent>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -144,7 +150,7 @@ export function initRumBatch(configuration: Configuration, applicationId: string
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(),
+      ...getCommonContext(session),
       applicationId,
       pageViewId,
     }),

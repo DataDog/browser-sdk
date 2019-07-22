@@ -4,6 +4,7 @@ import { Configuration } from '../core/configuration'
 import { Context, ContextValue, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
+import { Session } from '../core/session'
 import { Batch, HttpRequest } from '../core/transport'
 import { noop } from '../core/utils'
 import { LogsGlobal } from './logs.entry'
@@ -46,7 +47,7 @@ export enum HandlerType {
 
 type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
-export function startLogger(errorObservable: ErrorObservable, configuration: Configuration) {
+export function startLogger(errorObservable: ErrorObservable, configuration: Configuration, session: Session) {
   let globalContext: Context = {}
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
@@ -54,7 +55,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
     configuration.flushTimeout,
-    () => lodashMerge({}, getCommonContext(), globalContext) as Context
+    () => lodashMerge({}, getCommonContext(session), globalContext) as Context
   )
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),

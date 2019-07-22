@@ -41,7 +41,7 @@ export class Batch<T> {
     private maxMessageSize: number,
     private flushTimeout: number,
     private contextProvider: () => Context,
-    private messageProcessor?: (message: T & Context) => T & Context
+    private messageProcessor?: (message: Context) => Context
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()
@@ -83,7 +83,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    let contextualizedMessage = lodashMerge({}, this.contextProvider(), message)
+    let contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
     if (this.messageProcessor) {
       contextualizedMessage = this.messageProcessor(contextualizedMessage)
     }

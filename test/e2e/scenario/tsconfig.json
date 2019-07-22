@@ -10,7 +10,7 @@
         "name": "typescript-tslint-plugin"
       }
     ],
-    "types": ["node", "@wdio/sync", "mocha"]
+    "types": ["node", "@wdio/sync", "jasmine"]
   },
   "include": ["../../../src/**/*.d.ts", "./**/*.ts"]
 }

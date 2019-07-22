@@ -1,7 +1,3 @@
-import { expect, use } from 'chai'
-import * as sinon from 'sinon'
-import sinonChai from 'sinon-chai'
-
 import { isAndroid } from '../../tests/specHelper'
 import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
@@ -18,13 +14,11 @@ import {
 } from '../errorCollection'
 import { Observable } from '../observable'
 import { RequestDetails, RequestType } from '../requestCollection'
-import { noop, ONE_MINUTE } from '../utils'
-
-use(sinonChai)
+import { ONE_MINUTE } from '../utils'
 
 describe('console tracker', () => {
-  let consoleErrorStub: sinon.SinonStub
-  let notifyError: sinon.SinonSpy
+  let consoleErrorStub: jasmine.Spy
+  let notifyError: jasmine.Spy
   const CONSOLE_CONTEXT = {
     context: {
       error: {
@@ -34,9 +28,8 @@ describe('console tracker', () => {
   }
 
   beforeEach(() => {
-    consoleErrorStub = sinon.stub(console, 'error')
-    consoleErrorStub.returnsThis()
-    notifyError = sinon.spy()
+    consoleErrorStub = spyOn(console, 'error')
+    notifyError = jasmine.createSpy()
     const errorObservable = new Observable<ErrorMessage>()
     errorObservable.subscribe(notifyError)
     startConsoleTracking(errorObservable)
@@ -44,69 +37,56 @@ describe('console tracker', () => {
 
   afterEach(() => {
     stopConsoleTracking()
-    sinon.restore()
   })
 
   it('should keep original behavior', () => {
     console.error('foo', 'bar')
-    expect(consoleErrorStub).calledWithExactly('foo', 'bar')
+    expect(consoleErrorStub).toHaveBeenCalledWith('foo', 'bar')
   })
 
   it('should notify error', () => {
     console.error('foo', 'bar')
-    expect(notifyError).calledWithExactly({ ...CONSOLE_CONTEXT, message: 'console error: foo bar' })
+    expect(notifyError).toHaveBeenCalledWith({ ...CONSOLE_CONTEXT, message: 'console error: foo bar' })
   })
 
   it('should stringify object parameters', () => {
     console.error('Hello', { foo: 'bar' })
-    expect(notifyError).calledWithExactly({ ...CONSOLE_CONTEXT, message: 'console error: Hello {\n  "foo": "bar"\n}' })
+    expect(notifyError).toHaveBeenCalledWith({
+      ...CONSOLE_CONTEXT,
+      message: 'console error: Hello {\n  "foo": "bar"\n}',
+    })
   })
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.getCall(0).args[0] as ErrorMessage).message).equal('console error: TypeError: hello')
+    expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toEqual('console error: TypeError: hello')
   })
 })
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'
-  let mochaHandler: ErrorEventHandler
-  let notifyError: sinon.SinonSpy
-  let onerrorSpy: sinon.SinonSpy
+  let originalHandler: OnErrorEventHandler
+  let notifyError: jasmine.Spy
+  let onerrorSpy: jasmine.Spy
 
-  beforeEach(function() {
+  beforeEach(() => {
     if (isAndroid()) {
-      this.skip()
+      pending()
     }
-    mochaHandler = window.onerror
-    onerrorSpy = sinon.spy(noop)
+    originalHandler = window.onerror
+    onerrorSpy = jasmine.createSpy()
     window.onerror = onerrorSpy
 
-    notifyError = sinon.spy()
+    notifyError = jasmine.createSpy()
     const errorObservable = new Observable<ErrorMessage>()
-    // ensure that we call mocha handler for unexpected errors
-    errorObservable.subscribe((e: ErrorMessage) =>
-      e.message !== ERROR_MESSAGE ? mochaHandler(e.message) : (notifyError(e) as void)
-    )
+    errorObservable.subscribe((e: ErrorMessage) => notifyError(e) as void)
 
     startRuntimeErrorTracking(errorObservable)
   })
 
   afterEach(() => {
     stopRuntimeErrorTracking()
-    sinon.restore()
-    window.onerror = mochaHandler
-  })
-
-  it('should notify error', (done) => {
-    setTimeout(() => {
-      throw new Error(ERROR_MESSAGE)
-    }, 10)
-
-    setTimeout(() => {
-      expect((notifyError.getCall(0).args[0] as ErrorMessage).message).equal(ERROR_MESSAGE)
-      done()
-    }, 100)
+    window.onerror = originalHandler
   })
 
   it('should call original error handler', (done) => {
@@ -115,7 +95,18 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect(onerrorSpy).calledWithMatch(sinon.match(ERROR_MESSAGE))
+      expect(onerrorSpy.calls.mostRecent().args[0]).toMatch(ERROR_MESSAGE)
+      done()
+    }, 100)
+  })
+
+  it('should notify error', (done) => {
+    setTimeout(() => {
+      throw new Error(ERROR_MESSAGE)
+    }, 10)
+
+    setTimeout(() => {
+      expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toEqual(ERROR_MESSAGE)
       done()
     }, 100)
   })
@@ -155,10 +146,10 @@ describe('runtime error formatter', () => {
 
     const formatted = formatRuntimeError(stack, undefined)
 
-    expect(formatted.message).equal('oh snap!')
-    expect(formatted.context.error.kind).equal('TypeError')
-    expect(formatted.context.error.origin).equal('source')
-    expect(formatted.context.error.stack).equal(`TypeError: oh snap!
+    expect(formatted.message).toEqual('oh snap!')
+    expect(formatted.context.error.kind).toEqual('TypeError')
+    expect(formatted.context.error.origin).toEqual('source')
+    expect(formatted.context.error.stack).toEqual(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
@@ -173,7 +164,7 @@ describe('runtime error formatter', () => {
 
     const formatted = formatRuntimeError(stack, undefined)
 
-    expect(formatted.message).equal('Empty message')
+    expect(formatted.message).toEqual('Empty message')
   })
 
   it('should format a string error', () => {
@@ -181,7 +172,7 @@ describe('runtime error formatter', () => {
 
     const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
 
-    expect(formatted.message).equal('Uncaught "oh snap!"')
+    expect(formatted.message).toEqual('Uncaught "oh snap!"')
   })
 
   it('should format an object error', () => {
@@ -189,12 +180,12 @@ describe('runtime error formatter', () => {
 
     const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
 
-    expect(formatted.message).equal('Uncaught {"foo":"bar"}')
+    expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
   })
 })
 
 describe('network error tracker', () => {
-  let errorObservableSpy: sinon.SinonSpy
+  let errorObservableSpy: jasmine.Spy
   let requestObservable: Observable<RequestDetails>
   const DEFAULT_REQUEST = {
     duration: 10,
@@ -209,7 +200,7 @@ describe('network error tracker', () => {
   beforeEach(() => {
     const errorObservable = new Observable<ErrorMessage>()
     requestObservable = new Observable<RequestDetails>()
-    errorObservableSpy = sinon.spy(errorObservable, 'notify')
+    errorObservableSpy = spyOn(errorObservable, 'notify')
     const configuration = { requestErrorResponseLengthLimit: 32 }
     trackNetworkError(configuration as Configuration, errorObservable, requestObservable)
   })
@@ -217,7 +208,7 @@ describe('network error tracker', () => {
   it('should track server error', () => {
     requestObservable.notify(DEFAULT_REQUEST)
 
-    expect(errorObservableSpy).calledWith({
+    expect(errorObservableSpy).toHaveBeenCalledWith({
       context: {
         error: { origin: 'network', stack: 'Server error' },
         http: { method: 'GET', status_code: 503, url: 'http://fake.com' },
@@ -228,38 +219,37 @@ describe('network error tracker', () => {
 
   it('should track refused request', () => {
     requestObservable.notify({ ...DEFAULT_REQUEST, status: 0 })
-    expect(errorObservableSpy.called).equal(true)
+    expect(errorObservableSpy).toHaveBeenCalled()
   })
 
   it('should not track client error', () => {
     requestObservable.notify({ ...DEFAULT_REQUEST, status: 400 })
-    expect(errorObservableSpy.called).equal(false)
+    expect(errorObservableSpy).not.toHaveBeenCalled()
   })
 
   it('should not track successful request', () => {
     requestObservable.notify({ ...DEFAULT_REQUEST, status: 200 })
-    expect(errorObservableSpy.called).equal(false)
+    expect(errorObservableSpy).not.toHaveBeenCalled()
   })
 
   it('should add a default error response', () => {
     requestObservable.notify({ ...DEFAULT_REQUEST, response: undefined })
 
-    const stack = (errorObservableSpy.getCall(0).args[0] as ErrorMessage).context.error.stack
-    expect(stack).equal('Failed to load')
+    const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+    expect(stack).toEqual('Failed to load')
   })
 
   it('should truncate error response', () => {
     requestObservable.notify({ ...DEFAULT_REQUEST, response: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
-    const stack = (errorObservableSpy.getCall(0).args[0] as ErrorMessage).context.error.stack
-    expect(stack).equal('Lorem ipsum dolor sit amet orci ...')
+    const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+    expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
   })
 })
 
 describe('error limitation', () => {
   let errorObservable: Observable<ErrorMessage>
-  let filteredSubscriber: sinon.SinonSpy
-  let clock: sinon.SinonFakeTimers
+  let filteredSubscriber: jasmine.Spy
   const CONTEXT = {
     context: {
       error: {
@@ -271,14 +261,14 @@ describe('error limitation', () => {
   beforeEach(() => {
     errorObservable = new Observable<ErrorMessage>()
     const configuration: Partial<Configuration> = { maxErrorsByMinute: 2 }
-    clock = sinon.useFakeTimers()
+    jasmine.clock().install()
     const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
-    filteredSubscriber = sinon.spy()
+    filteredSubscriber = jasmine.createSpy()
     filteredErrorObservable.subscribe(filteredSubscriber)
   })
 
   afterEach(() => {
-    clock.restore()
+    jasmine.clock().uninstall()
   })
 
   it('should stop send errors if threshold is exceeded', () => {
@@ -286,9 +276,9 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2', ...CONTEXT })
     errorObservable.notify({ message: '3', ...CONTEXT })
 
-    expect(filteredSubscriber).calledWith({ message: '1', ...CONTEXT })
-    expect(filteredSubscriber).calledWith({ message: '2', ...CONTEXT })
-    expect(filteredSubscriber).not.calledWith({ message: '3', ...CONTEXT })
+    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '1', ...CONTEXT })
+    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '2', ...CONTEXT })
+    expect(filteredSubscriber).not.toHaveBeenCalledWith({ message: '3', ...CONTEXT })
   })
 
   it('should send a threshold reached message', () => {
@@ -296,7 +286,7 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2', ...CONTEXT })
     errorObservable.notify({ message: '3', ...CONTEXT })
 
-    expect(filteredSubscriber).calledWith({
+    expect(filteredSubscriber).toHaveBeenCalledWith({
       context: { error: { origin: ErrorOrigin.AGENT } },
       message: 'Reached max number of errors by minute: 2',
     })
@@ -307,24 +297,24 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '2', ...CONTEXT })
     errorObservable.notify({ message: '3', ...CONTEXT })
     errorObservable.notify({ message: '4', ...CONTEXT })
-    expect(filteredSubscriber.callCount).equal(3)
+    expect(filteredSubscriber).toHaveBeenCalledTimes(3)
 
-    clock.tick(ONE_MINUTE - 1)
+    jasmine.clock().tick(ONE_MINUTE - 1)
 
     errorObservable.notify({ message: '5', ...CONTEXT })
-    expect(filteredSubscriber.callCount).equal(3)
+    expect(filteredSubscriber).toHaveBeenCalledTimes(3)
 
-    clock.tick(1)
+    jasmine.clock().tick(1)
 
     errorObservable.notify({ message: '6', ...CONTEXT })
     errorObservable.notify({ message: '7', ...CONTEXT })
     errorObservable.notify({ message: '8', ...CONTEXT })
     errorObservable.notify({ message: '9', ...CONTEXT })
-    expect(filteredSubscriber.callCount).equal(6)
+    expect(filteredSubscriber).toHaveBeenCalledTimes(6)
 
-    clock.tick(ONE_MINUTE)
+    jasmine.clock().tick(ONE_MINUTE)
 
     errorObservable.notify({ message: '10', ...CONTEXT })
-    expect(filteredSubscriber.callCount).equal(7)
+    expect(filteredSubscriber).toHaveBeenCalledTimes(7)
   })
 })
