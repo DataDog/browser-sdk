@@ -3,8 +3,9 @@ import sinon from 'sinon'
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
+import { STATUSES, StatusType } from '../../core/status'
 import { Omit } from '../../core/utils'
-import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../logger'
+import { HandlerType, LogsMessage, startLogger } from '../logger'
 import { LogsGlobal } from '../logs.entry'
 
 interface SentMessage extends LogsMessage {

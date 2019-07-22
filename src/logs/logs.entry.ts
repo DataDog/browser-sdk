@@ -2,7 +2,8 @@ import { UserConfiguration } from '../core/configuration'
 import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
-import { HandlerType, Logger, LoggerConfiguration, startLogger, Status, StatusType } from './logger'
+import { Status, StatusType } from '../core/status'
+import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 
 declare global {
   interface Window {

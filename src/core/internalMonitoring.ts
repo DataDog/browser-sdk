@@ -1,11 +1,11 @@
 // tslint:disable ban-types
 
-import { StatusType } from '../logs/logger'
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
 import { toStackTraceString } from './errorCollection'
 import { Session } from './session'
+import { StatusType } from './status'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
 

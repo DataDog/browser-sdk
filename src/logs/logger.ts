@@ -5,6 +5,7 @@ import { Context, ContextValue, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { Session } from '../core/session'
+import { STATUS_PRIORITIES, StatusType } from '../core/status'
 import { Batch, HttpRequest } from '../core/transport'
 import { noop } from '../core/utils'
 import { LogsGlobal } from './logs.entry'
@@ -20,24 +21,6 @@ export interface LoggerConfiguration {
   handler?: HandlerType
   context?: Context
 }
-
-export enum StatusType {
-  debug = 'debug',
-  info = 'info',
-  warn = 'warn',
-  error = 'error',
-}
-
-export type Status = keyof typeof StatusType
-
-const STATUS_PRIORITIES: { [key in StatusType]: number } = {
-  [StatusType.debug]: 0,
-  [StatusType.info]: 1,
-  [StatusType.warn]: 2,
-  [StatusType.error]: 3,
-}
-
-export const STATUSES = Object.keys(StatusType)
 
 export enum HandlerType {
   http = 'http',
