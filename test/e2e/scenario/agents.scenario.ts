@@ -7,9 +7,7 @@ import {
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
-  retrieveRumEvents,
   retrieveRumEventsTypes,
-  ServerRumEvent,
   sortByMessage,
   tearDown,
 } from './helpers'
@@ -43,40 +41,6 @@ describe('logs', () => {
 })
 
 describe('rum', () => {
-  it('should send page view event on load', async () => {
-    await flushEvents()
-    const types = await retrieveRumEventsTypes()
-    expect(types).toContain(RumEventType.PAGE_VIEW)
-  })
-
-  it('should send page views during history navigation', async () => {
-    await browserExecute(() => {
-      history.pushState({}, '', '/')
-
-      history.pushState({}, '', '/#push-hash')
-      history.pushState({}, '', '/?push-query')
-      history.pushState({}, '', '/push-path')
-
-      history.pushState({}, '', '/')
-
-      history.replaceState({}, '', '/#replace-hash')
-      history.replaceState({}, '', '/?replace-query')
-      history.replaceState({}, '', '/replace-path')
-
-      history.pushState({}, '', '/')
-
-      history.back()
-      history.forward()
-    })
-
-    await flushEvents()
-    const trackedUrls = (await retrieveRumEvents())
-      .filter((rumEvent: ServerRumEvent) => rumEvent.type === 'page_view')
-      .map((rumEvent: ServerRumEvent) => rumEvent.http.referer.replace('http://localhost:3000', ''))
-
-    expect(trackedUrls).toEqual(['/agents-page.html', '/', '/push-path', '/', '/replace-path', '/', '/replace-path'])
-  })
-
   it('should send errors', async () => {
     await browserExecute(() => {
       console.error('oh snap')

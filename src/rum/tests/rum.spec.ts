@@ -6,7 +6,7 @@ import {
   EnhancedPerformanceResourceTiming,
   handlePaintEntry,
   handleResourceEntry,
-  initRumBatch,
+  pageViewId,
   PerformancePaintTiming,
   RumBatch,
   RumEvent,
@@ -188,36 +188,36 @@ describe('rum performanceObserver callback', () => {
 })
 
 describe('rum track page view', () => {
-  let batch: RumBatch
-  let server: sinon.SinonFakeServer
+  let fakeLocation: Partial<Location>
+  let initialPageViewId: string
 
   beforeEach(() => {
-    const session = { getId: () => undefined }
-    batch = initRumBatch(configuration as Configuration, session, 'applicationId')
-    server = sinon.fakeServer.create()
+    spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
+      const url = new URL(pathname, 'http://localhost')
+      fakeLocation.pathname = url.pathname
+      fakeLocation.search = url.search
+      fakeLocation.hash = url.hash
+    })
+    fakeLocation = { pathname: '/foo' }
+    trackPageView(fakeLocation as Location)
+    initialPageViewId = pageViewId
   })
 
-  afterEach(() => {
-    server.restore()
+  it('should update page view id on path change', () => {
+    history.pushState({}, '', '/bar')
+
+    expect(pageViewId).not.toEqual(initialPageViewId)
   })
 
-  it('should send page view event with page view id', () => {
-    trackPageView(batch)
-    batch.flush()
+  it('should not update page view id on search change', () => {
+    history.pushState({}, '', '/foo?bar=qux')
 
-    expect(getRumMessage(server, 0).type).toEqual('page_view')
-    expect(getRumMessage(server, 0).page_view_id).not.toBeUndefined()
+    expect(pageViewId).toEqual(initialPageViewId)
   })
 
-  it('should update page view id at each page view', () => {
-    trackPageView(batch)
-    batch.flush()
-    trackPageView(batch)
-    batch.flush()
+  it('should not update page view id on hash change', () => {
+    history.pushState({}, '', '/foo#bar')
 
-    const firstId = getRumMessage(server, 0).page_view_id
-    const secondId = getRumMessage(server, 1).page_view_id
-
-    expect(firstId).not.toEqual(secondId)
+    expect(pageViewId).toEqual(initialPageViewId)
   })
 })
