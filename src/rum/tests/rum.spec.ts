@@ -201,7 +201,7 @@ describe('rum track page view', () => {
   it('should send send user locale', () => {
     trackLocale(batch)
     batch.flush()
-    expect(getRumMessage(server, 0).type).equal(RumEventType.LOCALE)
+    expect(getRumMessage(server, 0).type).toEqual(RumEventType.LOCALE)
   })
 })
 
@@ -210,7 +210,8 @@ describe('rum track page view', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    batch = initRumBatch(configuration as Configuration, 'applicationId')
+    const session = { getId: () => undefined }
+    batch = initRumBatch(configuration as Configuration, session, 'applicationId')
     server = sinon.fakeServer.create()
   })
 
