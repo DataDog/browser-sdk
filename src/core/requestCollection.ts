@@ -1,3 +1,5 @@
+import 'url-polyfill'
+
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { ResourceType } from './utils'

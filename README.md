@@ -11,6 +11,8 @@ It's bundled into four files which are distributed through Cloudfront:
 It contains everything needed to send logs. When loaded, it exposes a `window.DD_LOGS` that
 contains all the public APIs.
 
+[Browser support](./BROWSER_SUPPORT.md#logger)
+
 ### Typical use
 
 ```

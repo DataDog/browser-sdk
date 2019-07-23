@@ -1,5 +1,7 @@
 // tslint:disable ban-types
 
+import lodashAssign from 'lodash.assign'
+
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
@@ -43,7 +45,7 @@ export function startInternalMonitoring(configuration: Configuration, session: S
     utils.withSnakeCaseKeys
   )
 
-  Object.assign(monitoringConfiguration, {
+  lodashAssign(monitoringConfiguration, {
     batch,
     maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
     sentMessageCount: 0,
