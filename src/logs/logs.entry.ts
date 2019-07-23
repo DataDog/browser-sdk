@@ -1,3 +1,4 @@
+import lodashAssign from 'lodash.assign'
 import { UserConfiguration } from '../core/configuration'
 import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
@@ -86,5 +87,5 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   }
   const { errorObservable, configuration, session } = commonInit(logsUserConfiguration)
   const globalApi = startLogger(errorObservable, configuration, session)
-  Object.assign(window.DD_LOGS, globalApi)
+  lodashAssign(window.DD_LOGS, globalApi)
 })
