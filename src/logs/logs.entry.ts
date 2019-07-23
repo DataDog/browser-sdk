@@ -1,4 +1,5 @@
 import lodashAssign from 'lodash.assign'
+
 import { UserConfiguration } from '../core/configuration'
 import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'

@@ -1,6 +1,7 @@
 // tslint:disable ban-types
 
 import lodashAssign from 'lodash.assign'
+
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { getCommonContext } from './context'
