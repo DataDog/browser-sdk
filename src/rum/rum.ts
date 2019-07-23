@@ -30,11 +30,6 @@ export interface PerformancePaintTiming extends PerformanceEntry {
   duration: 0
 }
 
-type ObservedPerformanceTiming =
-  | PerformanceNavigationTiming
-  | PerformancePaintTiming
-  | EnhancedPerformanceResourceTiming
-
 export interface RumNavigationTiming {
   domComplete: number
   domContentLoadedEventEnd: number
@@ -61,26 +56,21 @@ export interface RumResourceTiming {
   secureConnectionDuration?: number
 }
 
-export type RumPerformanceTiming = RumNavigationTiming | RumPaintTiming | RumResourceTiming
-
 export interface RumError {
   errorCount: number
 }
 
-export type RumPageView = undefined
-
-export type RumData = RumPerformanceTiming | RumError | RumPageView
+export type RumData = RumNavigationTiming | RumPaintTiming | RumResourceTiming | RumError
 
 export enum RumEventType {
   ERROR = 'error',
   NAVIGATION = 'navigation',
-  PAGE_VIEW = 'page_view',
   RESOURCE = 'resource',
   PAINT = 'paint',
 }
 
 export interface RumEvent {
-  data?: RumData
+  data: RumData
   type: RumEventType
 }
 
@@ -121,7 +111,7 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
-let pageViewId: string
+export let pageViewId: string
 let activeLocation: Location
 
 export function startRum(
@@ -132,8 +122,7 @@ export function startRum(
 ) {
   const batch = initRumBatch(configuration, session, applicationId)
 
-  trackPageView(batch)
-  trackHistory(batch)
+  trackPageView(window.location)
   trackErrors(batch, errorObservable)
   trackPerformanceTiming(batch, configuration)
 }
@@ -154,33 +143,35 @@ export function initRumBatch(configuration: Configuration, session: Session, app
   )
 }
 
-export function trackPageView(batch: RumBatch) {
-  pageViewId = generateUUID()
-  activeLocation = { ...window.location }
-  batch.add({
-    type: RumEventType.PAGE_VIEW,
-  })
+export function trackPageView(location: Location) {
+  newPageView(location)
+  trackHistory(location)
 }
 
-function trackHistory(batch: RumBatch) {
+function newPageView(location: Location) {
+  pageViewId = generateUUID()
+  activeLocation = { ...location }
+}
+
+function trackHistory(location: Location) {
   const originalPushState = history.pushState
   history.pushState = function() {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(batch)
+    onUrlChange(location)
   }
   const originalReplaceState = history.replaceState
   history.replaceState = function() {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(batch)
+    onUrlChange(location)
   }
   window.addEventListener('popstate', () => {
-    onUrlChange(batch)
+    onUrlChange(location)
   })
 }
 
-function onUrlChange(batch: RumBatch) {
-  if (areDifferentPages(activeLocation, window.location)) {
-    trackPageView(batch)
+function onUrlChange(location: Location) {
+  if (areDifferentPages(activeLocation, location)) {
+    newPageView(location)
   }
 }
 
