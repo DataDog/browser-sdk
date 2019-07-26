@@ -1,7 +1,14 @@
 import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { Observable } from './observable'
-import { isRejected, isServerError, RequestDetails, RequestObservable, RequestType } from './requestCollection'
+import {
+  isRejected,
+  isServerError,
+  RequestDetails,
+  RequestObservable,
+  RequestType,
+  startRequestCollection,
+} from './requestCollection'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
@@ -34,12 +41,13 @@ export enum ErrorOrigin {
 
 export type ErrorObservable = Observable<ErrorMessage>
 
-export function startErrorCollection(configuration: Configuration, requestObservable: RequestObservable) {
+export function startErrorCollection(configuration: Configuration) {
   const errorObservable = new Observable<ErrorMessage>()
   if (configuration.isCollectingError) {
+    const requestObservable = startRequestCollection()
+    trackNetworkError(configuration, errorObservable, requestObservable)
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
-    trackNetworkError(configuration, errorObservable, requestObservable)
   }
   return filterErrors(configuration, errorObservable)
 }

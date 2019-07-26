@@ -27,13 +27,11 @@ export function commonInit(userConfiguration: UserConfiguration) {
   const configuration = buildConfiguration(userConfiguration)
   const session = startSessionTracking()
   startInternalMonitoring(configuration, session)
-  const requestObservable = startRequestCollection()
-  const errorObservable = startErrorCollection(configuration, requestObservable)
+  const errorObservable = startErrorCollection(configuration)
 
   return {
     configuration,
     errorObservable,
-    requestObservable,
     session,
   }
 }
