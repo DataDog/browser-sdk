@@ -6,7 +6,7 @@ export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 
-export enum ResourceType {
+export enum ResourceKind {
   XHR = 'xhr',
   BEACON = 'beacon',
   FETCH = 'fetch',
@@ -57,6 +57,10 @@ export function generateUUID(placeholder?: string): string {
 
 export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
+}
+
+export function msToNs(duration: number) {
+  return round(duration * 1e6, 0)
 }
 
 export function withSnakeCaseKeys(candidate: Context): Context {
