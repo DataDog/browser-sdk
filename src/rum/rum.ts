@@ -135,9 +135,10 @@ export function initRumBatch(configuration: Configuration, session: Session, app
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(session),
+      ...getCommonContext(),
       applicationId,
       pageViewId,
+      sessionId: session.getId(),
     }),
     withSnakeCaseKeys
   )

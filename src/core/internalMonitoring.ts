@@ -28,7 +28,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startInternalMonitoring(configuration: Configuration, session: Session) {
+export function startInternalMonitoring(configuration: Configuration) {
   if (!configuration.internalMonitoringEndpoint) {
     return
   }
@@ -40,7 +40,7 @@ export function startInternalMonitoring(configuration: Configuration, session: S
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(session),
+      ...getCommonContext(),
     }),
     utils.withSnakeCaseKeys
   )

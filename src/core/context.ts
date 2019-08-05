@@ -14,15 +14,13 @@ export interface CommonContext {
   http: {
     referer: string
   }
-  sessionId: string
 }
 
-export function getCommonContext(session: Session) {
+export function getCommonContext() {
   return withSnakeCaseKeys({
     date: new Date().getTime(),
     http: {
       referer: window.location.href,
     },
-    sessionId: session.getId(),
   })
 }
