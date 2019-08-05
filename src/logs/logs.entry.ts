@@ -4,6 +4,7 @@ import { UserConfiguration } from '../core/configuration'
 import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
+import { startSessionTracking } from '../core/session'
 import { Status, StatusType } from '../core/status'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 
@@ -86,7 +87,8 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration, session } = commonInit(logsUserConfiguration)
+  const { errorObservable, configuration } = commonInit(logsUserConfiguration)
+  const session = startSessionTracking()
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(window.DD_LOGS, globalApi)
 })
