@@ -1,10 +1,10 @@
 import { Configuration } from '../core/configuration'
 import {
+  cacheCookieAccess,
   COOKIE_ACCESS_DELAY,
+  CookieCache,
   EXPIRATION_DELAY,
-  getCookie,
   SESSION_COOKIE_NAME,
-  setCookie,
   trackActivity,
 } from '../core/session'
 import * as utils from '../core/utils'
@@ -22,35 +22,31 @@ export enum LoggerSessionType {
 }
 
 export function startLoggerSession(configuration: Configuration): LoggerSession {
-  const getLoggerSession = utils.cache(() => getCookie(LOGGER_COOKIE_NAME), COOKIE_ACCESS_DELAY)
-  const getSessionId = utils.cache(() => getCookie(SESSION_COOKIE_NAME), COOKIE_ACCESS_DELAY)
+  const loggerSession = cacheCookieAccess(LOGGER_COOKIE_NAME)
+  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
 
-  const expandOrRenewSession = makeExpandOrRenewSession(configuration, getLoggerSession, getSessionId)
+  const expandOrRenewSession = makeExpandOrRenewSession(configuration, loggerSession, sessionId)
 
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
 
   return {
-    getId: getSessionId,
-    isTracked: () => getLoggerSession() === LoggerSessionType.TRACKED,
+    getId: () => sessionId.get(),
+    isTracked: () => loggerSession.get() === LoggerSessionType.TRACKED,
   }
 }
 
-function makeExpandOrRenewSession(
-  configuration: Configuration,
-  getLoggerSession: () => string | undefined,
-  getSessionId: () => string | undefined
-) {
+function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
   return utils.throttle(() => {
-    let sessionType = getLoggerSession() as LoggerSessionType | undefined
+    let sessionType = loggerSession.get() as LoggerSessionType | undefined
     if (!hasValidLoggerSession(sessionType)) {
       sessionType = utils.performDraw(configuration.sampleRate)
         ? LoggerSessionType.TRACKED
         : LoggerSessionType.NOT_TRACKED
     }
-    setCookie(LOGGER_COOKIE_NAME, sessionType as string, EXPIRATION_DELAY)
+    loggerSession.set(sessionType as string, EXPIRATION_DELAY)
     if (sessionType === LoggerSessionType.TRACKED) {
-      setCookie(SESSION_COOKIE_NAME, getSessionId() || utils.generateUUID(), EXPIRATION_DELAY)
+      sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
     }
   }, COOKIE_ACCESS_DELAY)
 }

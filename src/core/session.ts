@@ -39,6 +39,41 @@ export function trackActivity(expandOrRenewSession: () => void) {
   )
 }
 
+export interface CookieCache {
+  get: () => string | undefined
+  set: (value: string, expireDelay: number) => void
+}
+
+export function cacheCookieAccess(name: string): CookieCache {
+  let timeout: number
+  let cache: string | undefined
+  let hasCache = false
+
+  const cacheAccess = () => {
+    hasCache = true
+    window.clearTimeout(timeout)
+    timeout = window.setTimeout(() => {
+      hasCache = false
+    }, COOKIE_ACCESS_DELAY)
+  }
+
+  return {
+    get: () => {
+      if (hasCache) {
+        return cache
+      }
+      cache = getCookie(name)
+      cacheAccess()
+      return cache
+    },
+    set: (value: string, expireDelay: number) => {
+      setCookie(name, value, expireDelay)
+      cache = value
+      cacheAccess()
+    },
+  }
+}
+
 export function setCookie(name: string, value: string, expireDelay: number) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)

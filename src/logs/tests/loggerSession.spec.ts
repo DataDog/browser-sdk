@@ -9,6 +9,14 @@ describe('logger session', () => {
 
   beforeEach(() => {
     spyOn(Math, 'random').and.callFake(() => (tracked ? 0 : 1))
+    jasmine.clock().install()
+    jasmine.clock().mockDate(new Date())
+  })
+
+  afterEach(() => {
+    // flush pending callbacks to avoid random failures
+    jasmine.clock().tick(new Date().getTime())
+    jasmine.clock().uninstall()
   })
 
   it('when tracked should store session type and id', () => {
@@ -48,9 +56,6 @@ describe('logger session', () => {
   })
 
   it('should renew on activity after expiration', () => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
-
     startLoggerSession(configuration as Configuration)
 
     setCookie(LOGGER_COOKIE_NAME, '', DURATION)
@@ -65,7 +70,5 @@ describe('logger session', () => {
     expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
-
-    jasmine.clock().uninstall()
   })
 })
