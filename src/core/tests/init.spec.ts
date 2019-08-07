@@ -1,4 +1,4 @@
-import { commonInit, SECOND_INIT_WARNING_MESSAGE } from '../init'
+import { ALREADY_INITIALIZED_MESSAGE, commonInit } from '../init'
 
 describe('init', () => {
   beforeEach(() => {
@@ -8,7 +8,7 @@ describe('init', () => {
   it('should warn of multiple call to init', () => {
     commonInit({ clientToken: 'first' })
     commonInit({ clientToken: 'second' })
-    expect(console.warn).toHaveBeenCalledWith(SECOND_INIT_WARNING_MESSAGE)
+    expect(console.warn).toHaveBeenCalledWith(ALREADY_INITIALIZED_MESSAGE)
     expect(console.warn).toHaveBeenCalledTimes(1)
   })
 })

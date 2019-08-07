@@ -23,12 +23,12 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
-export const SECOND_INIT_WARNING_MESSAGE = 'Script was already initialized'
+export const ALREADY_INITIALIZED_MESSAGE = 'Script was already initialized'
 let initialized = false
 
 export function commonInit(userConfiguration: UserConfiguration) {
   if (initialized) {
-    console.warn(SECOND_INIT_WARNING_MESSAGE)
+    console.warn(ALREADY_INITIALIZED_MESSAGE)
   }
   initialized = true
 
