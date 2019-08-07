@@ -39,7 +39,7 @@ export async function tearDown() {
   expect(await retrieveMonitoringErrors()).toEqual([])
   await resetServerState()
   const logs = await browser.getLogs('browser')
-  expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
+  expect(filterLogsByLevel(logs as BrowserLog[], 'SEVERE')).toEqual([])
 }
 
 export async function retrieveRumEvents() {
