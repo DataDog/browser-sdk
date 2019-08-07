@@ -1,4 +1,4 @@
-import { COOKIE_ACCESS_DELAY, COOKIE_NAME, getCookie, setCookie, startSessionTracking } from '../session'
+import { COOKIE_ACCESS_DELAY, getCookie, SESSION_COOKIE_NAME, setCookie, startSessionTracking } from '../session'
 
 describe('session', () => {
   const DURATION = 123456
@@ -6,15 +6,15 @@ describe('session', () => {
   it('should store id in cookie', () => {
     startSessionTracking()
 
-    expect(getCookie(COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 
   it('should keep existing id', () => {
-    setCookie(COOKIE_NAME, 'abcdef', DURATION)
+    setCookie(SESSION_COOKIE_NAME, 'abcdef', DURATION)
 
     startSessionTracking()
 
-    expect(getCookie(COOKIE_NAME)).toEqual('abcdef')
+    expect(getCookie(SESSION_COOKIE_NAME)).toEqual('abcdef')
   })
 
   it('should renew session on activity after expiration', () => {
@@ -23,13 +23,13 @@ describe('session', () => {
 
     startSessionTracking()
 
-    setCookie(COOKIE_NAME, '', DURATION)
-    expect(getCookie(COOKIE_NAME)).toBeUndefined()
+    setCookie(SESSION_COOKIE_NAME, '', DURATION)
+    expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(getCookie(COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
 
     jasmine.clock().uninstall()
   })

@@ -55,6 +55,14 @@ export function generateUUID(placeholder?: string): string {
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
+/**
+ * Return true if the draw is successful
+ * @param threshold between 0 and 100
+ */
+export function performDraw(threshold: number): boolean {
+  return threshold !== 0 && Math.random() * 100 <= threshold
+}
+
 export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }

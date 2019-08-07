@@ -19,6 +19,7 @@ const errorObservable = new Observable<ErrorMessage>()
 type LogsApi = Omit<LogsGlobal, 'init'>
 
 describe('logger module', () => {
+  const TRACKED_SESSION = { getId: () => undefined, isTracked: () => true }
   const FAKE_DATE = 123456
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
@@ -29,8 +30,7 @@ describe('logger module', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    const session = { getId: () => undefined }
-    LOGS = startLogger(errorObservable, configuration as Configuration, session) as LogsApi
+    LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION) as LogsApi
     server = sinon.fakeServer.create()
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date(FAKE_DATE))
@@ -245,8 +245,7 @@ describe('logger module', () => {
 
     it('should all use the same batch', () => {
       const customConf = { ...configuration, maxBatchSize: 3 }
-      const session = { getId: () => undefined }
-      LOGS = startLogger(errorObservable, customConf as Configuration, session) as LogsApi
+      LOGS = startLogger(errorObservable, customConf as Configuration, TRACKED_SESSION) as LogsApi
 
       const logger1 = LOGS.createLogger('1')
       const logger2 = LOGS.createLogger('2')
@@ -256,6 +255,50 @@ describe('logger module', () => {
       logger2.debug('message from logger2')
 
       expect(server.requests.length).toEqual(1)
+    })
+  })
+
+  describe('logger session', () => {
+    it('when tracked should enable disable logging', () => {
+      LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION) as LogsApi
+
+      LOGS.logger.log('message')
+      expect(server.requests.length).toEqual(1)
+    })
+
+    it('when not tracked should disable logging', () => {
+      const notTrackedSession = {
+        getId: () => undefined,
+        isTracked: () => false,
+      }
+      LOGS = startLogger(errorObservable, configuration as Configuration, notTrackedSession) as LogsApi
+
+      LOGS.logger.log('message')
+      expect(server.requests.length).toEqual(0)
+    })
+
+    it('when type change should enable/disable existing loggers', () => {
+      let isTracked = true
+      const session = {
+        getId: () => undefined,
+        isTracked: () => isTracked,
+      }
+      LOGS = startLogger(errorObservable, configuration as Configuration, session) as LogsApi
+      const testLogger = LOGS.createLogger('test')
+
+      LOGS.logger.log('message')
+      testLogger.log('message')
+      expect(server.requests.length).toEqual(2)
+
+      isTracked = false
+      LOGS.logger.log('message')
+      testLogger.log('message')
+      expect(server.requests.length).toEqual(2)
+
+      isTracked = true
+      LOGS.logger.log('message')
+      testLogger.log('message')
+      expect(server.requests.length).toEqual(4)
     })
   })
 })

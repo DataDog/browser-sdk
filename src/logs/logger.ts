@@ -4,10 +4,10 @@ import { Configuration } from '../core/configuration'
 import { Context, ContextValue, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
-import { Session } from '../core/session'
 import { STATUS_PRIORITIES, StatusType } from '../core/status'
 import { Batch, HttpRequest } from '../core/transport'
 import { noop } from '../core/utils'
+import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
 
 export interface LogsMessage {
@@ -30,7 +30,7 @@ export enum HandlerType {
 
 type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
-export function startLogger(errorObservable: ErrorObservable, configuration: Configuration, session: Session) {
+export function startLogger(errorObservable: ErrorObservable, configuration: Configuration, session: LoggerSession) {
   let globalContext: Context = {}
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
@@ -45,7 +45,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     [HandlerType.http]: (message: LogsMessage) => batch.add(message),
     [HandlerType.silent]: noop,
   }
-  const logger = new Logger(handlers)
+  const logger = new Logger(session, handlers)
   customLoggers = {}
   errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
 
@@ -56,7 +56,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
   globalApi.addLoggerGlobalContext = (key: string, value: ContextValue) => {
     globalContext[key] = value
   }
-  globalApi.createLogger = makeCreateLogger(handlers)
+  globalApi.createLogger = makeCreateLogger(session, handlers)
   globalApi.getLogger = getLogger
   globalApi.logger = logger
   return globalApi
@@ -64,9 +64,9 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
 
 let customLoggers: { [name: string]: Logger }
 
-function makeCreateLogger(handlers: Handlers) {
+function makeCreateLogger(session: LoggerSession, handlers: Handlers) {
   return (name: string, conf: LoggerConfiguration = {}) => {
-    customLoggers[name] = new Logger(handlers, conf.handler, conf.level, {
+    customLoggers[name] = new Logger(session, handlers, conf.handler, conf.level, {
       ...conf.context,
       logger: { name },
     })
@@ -82,6 +82,7 @@ export class Logger {
   private handler: (message: LogsMessage) => void
 
   constructor(
+    private session: LoggerSession,
     private handlers: { [key in HandlerType]: (message: LogsMessage) => void },
     handler = HandlerType.http,
     private level = StatusType.debug,
@@ -92,7 +93,7 @@ export class Logger {
 
   @monitored
   log(message: string, messageContext = {}, status = StatusType.info) {
-    if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
+    if (this.session.isTracked() && STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       this.handler({ message, status, ...lodashMerge({}, this.loggerContext, messageContext) })
     }
   }
