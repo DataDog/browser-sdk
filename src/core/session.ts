@@ -8,30 +8,6 @@ export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
  */
 export const COOKIE_ACCESS_DELAY = 1000
 
-export interface Session {
-  getId: () => string | undefined
-}
-
-// TODO: move to RUM in next PR
-export function startSessionTracking(): Session {
-  const getSessionId = utils.cache(() => getCookie(SESSION_COOKIE_NAME), COOKIE_ACCESS_DELAY)
-  const expandOrRenewSession = makeExpandOrRenewSession(getSessionId)
-
-  expandOrRenewSession()
-  trackActivity(expandOrRenewSession)
-
-  return {
-    getId: getSessionId,
-  }
-}
-
-function makeExpandOrRenewSession(getSessionId: () => string | undefined) {
-  return utils.throttle(() => {
-    const sessionId = getSessionId()
-    setCookie(SESSION_COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
-  }, COOKIE_ACCESS_DELAY)
-}
-
 export function trackActivity(expandOrRenewSession: () => void) {
   const options = { capture: true, passive: true }
   ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) =>

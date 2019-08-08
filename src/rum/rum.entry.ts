@@ -2,8 +2,8 @@ import { UserConfiguration } from '../core/configuration'
 
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
-import { startSessionTracking } from '../core/session'
 import { startRum } from './rum'
+import { startRumSession } from './rumSession'
 
 declare global {
   interface Window {
@@ -38,6 +38,6 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
   const { errorObservable, configuration } = commonInit(rumUserConfiguration)
-  const session = startSessionTracking()
+  const session = startRumSession()
   startRum(rumUserConfiguration.applicationId, errorObservable, configuration, session)
 })

@@ -1,9 +1,9 @@
 import { Configuration } from '../core/configuration'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
-import { Session } from '../core/session'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { RumSession } from './rumSession'
 
 declare global {
   interface Window {
@@ -120,7 +120,7 @@ export function startRum(
   applicationId: string,
   errorObservable: ErrorObservable,
   configuration: Configuration,
-  session: Session
+  session: RumSession
 ) {
   const batch = initRumBatch(configuration, session, applicationId)
 
@@ -129,7 +129,7 @@ export function startRum(
   trackPerformanceTiming(batch, configuration)
 }
 
-export function initRumBatch(configuration: Configuration, session: Session, applicationId: string) {
+export function initRumBatch(configuration: Configuration, session: RumSession, applicationId: string) {
   return new Batch<RumEvent>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
