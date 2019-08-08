@@ -2,11 +2,11 @@ import 'url-polyfill'
 
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import { ResourceType } from './utils'
+import { ResourceKind } from './utils'
 
 export enum RequestType {
-  FETCH = ResourceType.FETCH,
-  XHR = ResourceType.XHR,
+  FETCH = ResourceKind.FETCH,
+  XHR = ResourceKind.XHR,
 }
 
 export interface RequestDetails {

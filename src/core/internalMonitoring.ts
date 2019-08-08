@@ -40,6 +40,9 @@ export function startInternalMonitoring(configuration: Configuration, session: S
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
+      http: {
+        referer: window.location.href,
+      },
       ...getCommonContext(session),
     }),
     utils.withSnakeCaseKeys

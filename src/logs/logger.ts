@@ -38,7 +38,16 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
     configuration.flushTimeout,
-    () => lodashMerge({}, getCommonContext(session), globalContext) as Context
+    () =>
+      lodashMerge(
+        {
+          http: {
+            referer: window.location.href,
+          },
+        },
+        getCommonContext(session),
+        globalContext
+      ) as Context
   )
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
