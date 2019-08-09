@@ -1,5 +1,5 @@
 import { LogsGlobal } from '../../../src/logs/logs.entry'
-import { RumEventType } from '../../../src/rum/rum'
+import { RumEventCategory } from '../../../src/rum/rum'
 
 import {
   browserExecute,
@@ -47,7 +47,7 @@ describe('rum', () => {
     })
     await flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).toContain(RumEventType.ERROR)
+    expect(types).toContain(RumEventCategory.ERROR)
     const browserLogs = await browser.getLogs('browser')
     expect(browserLogs.length).toEqual(1)
   })

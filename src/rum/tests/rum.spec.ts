@@ -3,30 +3,20 @@ import sinon from 'sinon'
 import { Configuration } from '../../core/configuration'
 
 import {
-  EnhancedPerformanceResourceTiming,
   handlePaintEntry,
   handleResourceEntry,
   pageViewId,
   PerformancePaintTiming,
   RumBatch,
   RumEvent,
-  RumEventType,
-  RumResourceTiming,
+  RumEventCategory,
+  RumResourceEvent,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
 
 function getEntry(batch: RumBatch, index: number) {
   return (batch.add as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
-}
-
-interface RumServerMessage {
-  type: RumEventType
-  page_view_id: string
-}
-
-function getRumMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as RumServerMessage
 }
 
 const configuration = {
@@ -70,11 +60,7 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handleResourceEntry(
-          entry as EnhancedPerformanceResourceTiming,
-          batch as RumBatch,
-          configuration as Configuration
-        )
+        handleResourceEntry(entry as PerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
         expect((batch.add as jasmine.Spy).calls.all.length !== 0).toEqual(expectEntryToBeAdded)
       })
     }
@@ -113,22 +99,18 @@ describe('rum handle performance entry', () => {
       initiatorType?: string
       expected: string
     }) => {
-      it(`should compute resource type: ${description}`, () => {
-        const entry: Partial<EnhancedPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
+      it(`should compute resource kind: ${description}`, () => {
+        const entry: Partial<PerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
-        handleResourceEntry(
-          entry as EnhancedPerformanceResourceTiming,
-          batch as RumBatch,
-          configuration as Configuration
-        )
-        const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-        expect(resourceTiming.resourceType).toEqual(expected)
+        handleResourceEntry(entry as PerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
+        const resourceEvent = getEntry(batch as RumBatch, 0) as RumResourceEvent
+        expect(resourceEvent.resource.kind).toEqual(expected)
       })
     }
   )
 
-  it('should add timing durations', () => {
-    const entry: Partial<EnhancedPerformanceResourceTiming> = {
+  it('should compute timing durations', () => {
+    const entry: Partial<PerformanceResourceTiming> = {
       connectEnd: 10,
       connectStart: 3,
       entryType: 'resource',
@@ -137,36 +119,24 @@ describe('rum handle performance entry', () => {
       responseStart: 25,
     }
 
-    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
-    const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-    expect(resourceTiming.connectDuration).toEqual(7)
-    expect(resourceTiming.responseDuration).toEqual(75)
-  })
-
-  it('should remove unavailable attributes', () => {
-    const entry: Partial<EnhancedPerformanceResourceTiming> = {
-      connectEnd: 0,
-      connectStart: 0,
-      entryType: 'resource',
-      name: 'http://localhost/test',
-      responseEnd: 100,
-      responseStart: 0,
-    }
-    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
-    const resourceTiming = getEntry(batch as RumBatch, 0).data as PerformanceResourceTiming
-    expect(resourceTiming.connectStart).toBeUndefined()
-    expect(resourceTiming.connectEnd).toBeUndefined()
-    expect(resourceTiming.responseStart).toBeUndefined()
+    handleResourceEntry(entry as PerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
+    const resourceEvent = getEntry(batch as RumBatch, 0) as RumResourceEvent
+    expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
+    expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
   })
 
   it('should rewrite paint entries', () => {
     const entry: Partial<PerformancePaintTiming> = { name: 'first-paint', startTime: 123456, entryType: 'paint' }
     handlePaintEntry(entry as PerformancePaintTiming, batch as RumBatch)
     expect(getEntry(batch as RumBatch, 0)).toEqual({
-      data: {
-        'first-paint': 123456,
+      evt: {
+        category: RumEventCategory.SCREEN_PERFORMANCE,
       },
-      type: RumEventType.PAINT,
+      screen: {
+        performance: {
+          'first-paint': 123456 * 1e6,
+        },
+      },
     })
   })
 })
@@ -174,8 +144,8 @@ describe('rum handle performance entry', () => {
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
     const batch = {
-      add: (message: RumEvent) => {
-        expect((message.data! as RumResourceTiming).resourceType).toEqual('xhr')
+      add: (message: RumResourceEvent) => {
+        expect(message.resource.kind).toEqual('xhr')
         done()
       },
     }

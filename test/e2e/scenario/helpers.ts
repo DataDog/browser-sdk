@@ -42,7 +42,7 @@ export async function retrieveRumEvents() {
 
 export async function retrieveRumEventsTypes() {
   return retrieveRumEvents().then((rumEvents: ServerRumEvent[]) =>
-    rumEvents.map((rumEvent: ServerRumEvent) => rumEvent.type)
+    rumEvents.map((rumEvent: ServerRumEvent) => rumEvent.evt.category)
   )
 }
 
