@@ -1,10 +1,10 @@
 import lodashAssign from 'lodash.assign'
 
 import { UserConfiguration } from '../core/configuration'
-import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { Status, StatusType } from '../core/status'
+import { Context, ContextValue } from '../core/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
 

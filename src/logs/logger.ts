@@ -1,12 +1,11 @@
 import lodashMerge from 'lodash.merge'
 
 import { Configuration } from '../core/configuration'
-import { Context, ContextValue, getCommonContext } from '../core/context'
 import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../core/errorCollection'
 import { monitored } from '../core/internalMonitoring'
 import { STATUS_PRIORITIES, StatusType } from '../core/status'
 import { Batch, HttpRequest } from '../core/transport'
-import { noop } from '../core/utils'
+import { Context, ContextValue, noop } from '../core/utils'
 import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
 
@@ -41,12 +40,12 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
     () =>
       lodashMerge(
         {
+          date: new Date().getTime(),
           http: {
             referer: window.location.href,
           },
           sessionId: session.getId(),
         },
-        getCommonContext(),
         globalContext
       ) as Context
   )
