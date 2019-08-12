@@ -1,5 +1,4 @@
 import { Configuration } from '../core/configuration'
-import { getCommonContext } from '../core/context'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { Session } from '../core/session'
@@ -138,12 +137,14 @@ export function initRumBatch(configuration: Configuration, session: Session, app
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(session),
       applicationId,
+      pageViewId,
+      date: new Date().getTime(),
       screen: {
         id: pageViewId,
         url: window.location.href,
       },
+      sessionId: session.getId(),
     }),
     withSnakeCaseKeys
   )

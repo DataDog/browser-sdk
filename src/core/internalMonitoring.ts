@@ -4,9 +4,7 @@ import lodashAssign from 'lodash.assign'
 
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
-import { getCommonContext } from './context'
 import { toStackTraceString } from './errorCollection'
-import { Session } from './session'
 import { StatusType } from './status'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
@@ -28,7 +26,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startInternalMonitoring(configuration: Configuration, session: Session) {
+export function startInternalMonitoring(configuration: Configuration) {
   if (!configuration.internalMonitoringEndpoint) {
     return
   }
@@ -40,10 +38,10 @@ export function startInternalMonitoring(configuration: Configuration, session: S
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
+      date: new Date().getTime(),
       http: {
         referer: window.location.href,
       },
-      ...getCommonContext(session),
     }),
     utils.withSnakeCaseKeys
   )

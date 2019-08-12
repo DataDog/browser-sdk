@@ -1,8 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
-import { Context } from './context'
 import { monitor } from './internalMonitoring'
-import { jsonStringify } from './utils'
+import { Context, jsonStringify } from './utils'
 
 /**
  * Use POST request without content type to:
