@@ -1,37 +1,74 @@
+import { Configuration } from '../../core/configuration'
 import { COOKIE_ACCESS_DELAY, getCookie, SESSION_COOKIE_NAME, setCookie } from '../../core/session'
-import { startRumSession } from '../rumSession'
+import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../rumSession'
 
-describe('session', () => {
+describe('rum session', () => {
   const DURATION = 123456
+  const configuration: Partial<Configuration> = { sampleRate: 0.5 }
+  let tracked = true
 
-  it('should store id in cookie', () => {
-    startRumSession()
+  beforeEach(() => {
+    spyOn(Math, 'random').and.callFake(() => (tracked ? 0 : 1))
+    jasmine.clock().install()
+    jasmine.clock().mockDate(new Date())
+  })
 
+  afterEach(() => {
+    // flush pending callbacks to avoid random failures
+    jasmine.clock().tick(new Date().getTime())
+    jasmine.clock().uninstall()
+  })
+
+  it('when tracked should store session type and id', () => {
+    tracked = true
+
+    startRumSession(configuration as Configuration)
+
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 
-  it('should keep existing id', () => {
+  it('when not tracked should store session type', () => {
+    tracked = false
+
+    startRumSession(configuration as Configuration)
+
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
+    expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+  })
+
+  it('when tracked should keep existing session type and id', () => {
+    setCookie(RUM_COOKIE_NAME, RumSessionType.TRACKED, DURATION)
     setCookie(SESSION_COOKIE_NAME, 'abcdef', DURATION)
 
-    startRumSession()
+    startRumSession(configuration as Configuration)
 
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toEqual('abcdef')
   })
 
-  it('should renew session on activity after expiration', () => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
+  it('when not tracked should keep existing session type', () => {
+    setCookie(RUM_COOKIE_NAME, RumSessionType.NOT_TRACKED, DURATION)
 
-    startRumSession()
+    startRumSession(configuration as Configuration)
 
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
+  })
+
+  it('should renew on activity after expiration', () => {
+    startRumSession(configuration as Configuration)
+
+    setCookie(RUM_COOKIE_NAME, '', DURATION)
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
+    expect(getCookie(RUM_COOKIE_NAME)).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
+    tracked = true
     document.dispatchEvent(new CustomEvent('click'))
 
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
-
-    jasmine.clock().uninstall()
   })
 })

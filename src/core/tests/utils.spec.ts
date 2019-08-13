@@ -1,4 +1,4 @@
-import { cache, jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
+import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
 
 describe('utils', () => {
   it('should throttle only once by given period', () => {
@@ -18,29 +18,6 @@ describe('utils', () => {
     jasmine.clock().tick(2)
     throttled()
     throttled()
-    expect(spy).toHaveBeenCalledTimes(2)
-
-    jasmine.clock().uninstall()
-  })
-
-  it('should cache function result for a given duration', () => {
-    jasmine.clock().install()
-    let result: number | undefined = 1
-    const spy = jasmine.createSpy().and.callFake(() => result)
-
-    const cached = cache(spy, 1)
-
-    expect(cached()).toEqual(result)
-    expect(spy).toHaveBeenCalledTimes(1)
-
-    expect(cached()).toEqual(result)
-    expect(cached()).toEqual(result)
-    expect(spy).toHaveBeenCalledTimes(1)
-
-    jasmine.clock().tick(1)
-    result = undefined
-    expect(cached()).toEqual(result)
-    expect(cached()).toEqual(result)
     expect(spy).toHaveBeenCalledTimes(2)
 
     jasmine.clock().uninstall()

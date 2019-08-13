@@ -76,3 +76,35 @@ export interface FetchStubPromise extends Promise<Response> {
   resolveWith: (response: ResponseStub) => Promise<ResponseStub>
   rejectWith: (error: Error) => Promise<Error>
 }
+
+export class PerformanceObserverStubBuilder {
+  public instance: any
+
+  fakeEntry(entry: PerformanceEntry, entryType: string) {
+    const asEntryList = () => [entry]
+    // tslint:disable-next-line: no-unsafe-any
+    this.instance.callback({
+      getEntries: asEntryList,
+      getEntriesByName: asEntryList,
+      getEntriesByType: (type: string) => {
+        if (type === entryType) {
+          return asEntryList()
+        }
+        return []
+      },
+    })
+  }
+
+  getStub(): PerformanceObserver {
+    // tslint:disable-next-line:no-this-assignment
+    const builder = this
+    return (class {
+      constructor(public callback: PerformanceObserverCallback) {
+        builder.instance = this
+      }
+      observe(options?: PerformanceObserverInit) {
+        // do nothing
+      }
+    } as unknown) as PerformanceObserver
+  }
+}
