@@ -1,14 +1,20 @@
-import { Configuration } from '../../core/configuration'
+import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { COOKIE_ACCESS_DELAY, getCookie, SESSION_COOKIE_NAME, setCookie } from '../../core/session'
 import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../rumSession'
 
+function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
+  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithResources ? 0 : 1)
+}
+
 describe('rum session', () => {
   const DURATION = 123456
-  const configuration: Partial<Configuration> = { sampleRate: 0.5 }
-  let tracked = true
+  const configuration: Partial<Configuration> = {
+    ...DEFAULT_CONFIGURATION,
+    resourceSampleRate: 0.5,
+    sampleRate: 0.5,
+  }
 
   beforeEach(() => {
-    spyOn(Math, 'random').and.callFake(() => (tracked ? 0 : 1))
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date())
   })
@@ -19,17 +25,26 @@ describe('rum session', () => {
     jasmine.clock().uninstall()
   })
 
-  it('when tracked should store session type and id', () => {
-    tracked = true
+  it('when tracked with resources should store session type and id', () => {
+    setupDraws({ tracked: true, trackedWithResources: true })
 
     startRumSession(configuration as Configuration)
 
-    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
+  })
+
+  it('when tracked without resources should store session type and id', () => {
+    setupDraws({ tracked: true, trackedWithResources: false })
+
+    startRumSession(configuration as Configuration)
+
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITHOUT_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 
   it('when not tracked should store session type', () => {
-    tracked = false
+    setupDraws({ tracked: false })
 
     startRumSession(configuration as Configuration)
 
@@ -38,12 +53,12 @@ describe('rum session', () => {
   })
 
   it('when tracked should keep existing session type and id', () => {
-    setCookie(RUM_COOKIE_NAME, RumSessionType.TRACKED, DURATION)
+    setCookie(RUM_COOKIE_NAME, RumSessionType.TRACKED_WITH_RESOURCES, DURATION)
     setCookie(SESSION_COOKIE_NAME, 'abcdef', DURATION)
 
     startRumSession(configuration as Configuration)
 
-    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toEqual('abcdef')
   })
 
@@ -64,11 +79,11 @@ describe('rum session', () => {
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
-    tracked = true
+    setupDraws({ tracked: true, trackedWithResources: true })
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
-    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 })

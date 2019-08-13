@@ -130,7 +130,7 @@ export function startRum(
 
   trackPageView(window.location)
   trackErrors(errorObservable, addRumEvent)
-  trackPerformanceTiming(configuration, addRumEvent)
+  trackPerformanceTiming(configuration, session, addRumEvent)
 }
 
 export function initRumBatch(configuration: Configuration, session: RumSession, applicationId: string) {
@@ -203,13 +203,19 @@ function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumE
   })
 }
 
-export function trackPerformanceTiming(configuration: Configuration, addRumEvent: (event: RumEvent) => void) {
+export function trackPerformanceTiming(
+  configuration: Configuration,
+  session: RumSession,
+  addRumEvent: (event: RumEvent) => void
+) {
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list
-          .getEntriesByType('resource')
-          .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
+        if (session.isTrackedWithResource()) {
+          list
+            .getEntriesByType('resource')
+            .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
+        }
         list
           .getEntriesByType('navigation')
           .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent))

@@ -14,11 +14,13 @@ export const RUM_COOKIE_NAME = '_dd_r'
 export interface RumSession {
   getId: () => string | undefined
   isTracked: () => boolean
+  isTrackedWithResource: () => boolean
 }
 
 export enum RumSessionType {
   NOT_TRACKED = '0',
-  TRACKED = '1',
+  TRACKED_WITH_RESOURCES = '1',
+  TRACKED_WITHOUT_RESOURCES = '2',
 }
 
 export function startRumSession(configuration: Configuration): RumSession {
@@ -32,7 +34,8 @@ export function startRumSession(configuration: Configuration): RumSession {
 
   return {
     getId: () => sessionId.get(),
-    isTracked: () => rumSession.get() === RumSessionType.TRACKED,
+    isTracked: () => isTracked(rumSession.get() as RumSessionType),
+    isTrackedWithResource: () => rumSession.get() === RumSessionType.TRACKED_WITH_RESOURCES,
   }
 }
 
@@ -40,15 +43,34 @@ function makeExpandOrRenewSession(configuration: Configuration, loggerSession: C
   return utils.throttle(() => {
     let sessionType = loggerSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
-      sessionType = utils.performDraw(configuration.sampleRate) ? RumSessionType.TRACKED : RumSessionType.NOT_TRACKED
+      sessionType = utils.performDraw(configuration.sampleRate)
+        ? RumSessionType.TRACKED_WITH_RESOURCES
+        : RumSessionType.NOT_TRACKED
+      if (sessionType === RumSessionType.TRACKED_WITH_RESOURCES) {
+        sessionType = utils.performDraw(configuration.resourceSampleRate)
+          ? RumSessionType.TRACKED_WITH_RESOURCES
+          : RumSessionType.TRACKED_WITHOUT_RESOURCES
+      }
     }
     loggerSession.set(sessionType as string, EXPIRATION_DELAY)
-    if (sessionType === RumSessionType.TRACKED) {
+    if (isTracked(sessionType)) {
       sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
     }
   }, COOKIE_ACCESS_DELAY)
 }
 
 function hasValidRumSession(type?: RumSessionType) {
-  return type !== undefined && (type === RumSessionType.NOT_TRACKED || type === RumSessionType.TRACKED)
+  return (
+    type !== undefined &&
+    (type === RumSessionType.NOT_TRACKED ||
+      type === RumSessionType.TRACKED_WITH_RESOURCES ||
+      type === RumSessionType.TRACKED_WITHOUT_RESOURCES)
+  )
+}
+
+function isTracked(rumSessionType: RumSessionType | undefined) {
+  return (
+    rumSessionType === RumSessionType.TRACKED_WITH_RESOURCES ||
+    rumSessionType === RumSessionType.TRACKED_WITHOUT_RESOURCES
+  )
 }

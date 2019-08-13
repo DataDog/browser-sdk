@@ -1,6 +1,7 @@
 import sinon from 'sinon'
 
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
+import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { PerformanceObserverStubBuilder } from '../../tests/specHelper'
 
@@ -145,12 +146,17 @@ describe('rum handle performance entry', () => {
 
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
     const addRumEvent = (message: RumEvent) => {
       expect((message as RumResourceEvent).resource.kind).toEqual('xhr')
       done()
     }
 
-    trackPerformanceTiming(configuration as Configuration, addRumEvent)
+    trackPerformanceTiming(configuration as Configuration, trackedWithResourcesSession, addRumEvent)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
@@ -193,10 +199,7 @@ describe('rum track page view', () => {
 })
 
 describe('rum session', () => {
-  const TRACKED_SESSION = {
-    getId: () => undefined,
-    isTracked: () => true,
-  }
+  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com' }
   let server: sinon.SinonFakeServer
   let original: PerformanceObserver | undefined
@@ -210,14 +213,38 @@ describe('rum session', () => {
   })
 
   afterEach(() => {
+    server.restore()
     window.PerformanceObserver = original
   })
 
-  it('when tracked should enable tracking ', () => {
-    startRum('appId', new Observable(), configuration as Configuration, TRACKED_SESSION)
+  it('when tracked with resources should enable full tracking', () => {
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, trackedWithResourcesSession)
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
 
+    expect(server.requests.length).toEqual(2)
+  })
+
+  it('when tracked without resources should not track resources', () => {
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => false,
+    }
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, trackedWithResourcesSession)
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(0)
+
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
     expect(server.requests.length).toEqual(1)
   })
 
@@ -225,10 +252,14 @@ describe('rum session', () => {
     const notTrackedSession = {
       getId: () => undefined,
       isTracked: () => false,
+      isTrackedWithResource: () => false,
     }
-    startRum('appId', new Observable(), configuration as Configuration, notTrackedSession)
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, notTrackedSession)
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+
     expect(server.requests.length).toEqual(0)
   })
 
@@ -237,6 +268,7 @@ describe('rum session', () => {
     const session = {
       getId: () => undefined,
       isTracked: () => isTracked,
+      isTrackedWithResource: () => isTracked,
     }
     startRum('appId', new Observable(), configuration as Configuration, session)
 
