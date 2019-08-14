@@ -275,8 +275,9 @@ export const report = (function reportModuleWrapper() {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent
    */
   function traceKitWindowOnUnhandledRejection(e: PromiseRejectionEvent) {
-    const stack = computeStackTrace(e.reason)
-    notifyHandlers(stack, true, e.reason)
+    const reason = e.reason || 'Empty reason'
+    const stack = computeStackTrace(reason)
+    notifyHandlers(stack, true, reason)
   }
 
   /**
