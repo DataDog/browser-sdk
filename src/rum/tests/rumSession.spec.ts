@@ -1,5 +1,11 @@
 import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
-import { COOKIE_ACCESS_DELAY, getCookie, SESSION_COOKIE_NAME, setCookie } from '../../core/session'
+import {
+  cleanupActivityTracking,
+  COOKIE_ACCESS_DELAY,
+  getCookie,
+  SESSION_COOKIE_NAME,
+  setCookie,
+} from '../../core/session'
 import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../rumSession'
 
 function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
@@ -23,6 +29,7 @@ describe('rum session', () => {
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
+    cleanupActivityTracking()
   })
 
   it('when tracked with resources should store session type and id', () => {
@@ -82,7 +89,6 @@ describe('rum session', () => {
     setupDraws({ tracked: true, trackedWithResources: true })
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })

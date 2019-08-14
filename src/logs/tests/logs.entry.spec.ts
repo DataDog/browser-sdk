@@ -1,9 +1,14 @@
 import { monitor } from '../../core/internalMonitoring'
+import { cleanupActivityTracking } from '../../core/session'
 
 describe('logs entry', () => {
   beforeEach(() => {
     require('../logs.entry')
     delete (require.cache as any)[require.resolve('../logs.entry')]
+  })
+
+  afterEach(() => {
+    cleanupActivityTracking()
   })
 
   it('should set global with init', () => {

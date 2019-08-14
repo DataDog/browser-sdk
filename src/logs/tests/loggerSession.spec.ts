@@ -1,5 +1,11 @@
 import { Configuration } from '../../core/configuration'
-import { COOKIE_ACCESS_DELAY, getCookie, SESSION_COOKIE_NAME, setCookie } from '../../core/session'
+import {
+  cleanupActivityTracking,
+  COOKIE_ACCESS_DELAY,
+  getCookie,
+  SESSION_COOKIE_NAME,
+  setCookie,
+} from '../../core/session'
 import { LOGGER_COOKIE_NAME, LoggerSessionType, startLoggerSession } from '../loggerSession'
 
 describe('logger session', () => {
@@ -17,6 +23,7 @@ describe('logger session', () => {
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
+    cleanupActivityTracking()
   })
 
   it('when tracked should store session type and id', () => {
@@ -67,7 +74,6 @@ describe('logger session', () => {
     tracked = true
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
