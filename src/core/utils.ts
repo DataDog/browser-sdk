@@ -29,19 +29,6 @@ export function throttle<T extends Function>(fn: T, wait: number): T {
   } as unknown) as T // consider output type has input type
 }
 
-export function cache<T>(fn: () => T, duration: number): () => T {
-  let value: T
-  let expired = true
-  return () => {
-    if (expired) {
-      value = fn()
-      expired = false
-      setTimeout(() => (expired = true), duration)
-    }
-    return value
-  }
-}
-
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883

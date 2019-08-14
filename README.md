@@ -86,14 +86,27 @@ contains all the public APIs.
     window.DD_RUM.init({
         clientToken: 'XXX',
         applicationId: 'XXX',
+        sampleRate: 100,
+        resourceSampleRate: 100
     });
 </script>
 ```
 
 ### API exposed in `window.DD_RUM`
 
-Right now, we don't expose any features to customize the RUM collection.
-This may change at some point.
+Init must be called to start the tracking. Configurable options:
+
+- `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
+- `resourceSampleRate`: percentage of tracked sessions with resources collection.
+
+```
+init(configuration: {
+    clientToken: 'XXX',
+    applicationId: 'XXX',
+    sampleRate: 100,
+    resourceSampleRate: 100
+})
+```
 
 ## Deploy
 

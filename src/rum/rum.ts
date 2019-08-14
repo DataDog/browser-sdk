@@ -1,9 +1,9 @@
 import { Configuration } from '../core/configuration'
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
-import { Session } from '../core/session'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { RumSession } from './rumSession'
 
 declare global {
   interface Window {
@@ -92,8 +92,6 @@ export interface RumErrorEvent {
 
 export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent
 
-export type RumBatch = Batch<RumEvent>
-
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
   [ResourceKind.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceKind.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
@@ -120,16 +118,22 @@ export function startRum(
   applicationId: string,
   errorObservable: ErrorObservable,
   configuration: Configuration,
-  session: Session
+  session: RumSession
 ) {
   const batch = initRumBatch(configuration, session, applicationId)
 
+  const addRumEvent = (event: RumEvent) => {
+    if (session.isTracked()) {
+      batch.add(event)
+    }
+  }
+
   trackPageView(window.location)
-  trackErrors(batch, errorObservable)
-  trackPerformanceTiming(batch, configuration)
+  trackErrors(errorObservable, addRumEvent)
+  trackPerformanceTiming(configuration, session, addRumEvent)
 }
 
-export function initRumBatch(configuration: Configuration, session: Session, applicationId: string) {
+export function initRumBatch(configuration: Configuration, session: RumSession, applicationId: string) {
   return new Batch<RumEvent>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -186,9 +190,9 @@ function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
+function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
   errorObservable.subscribe(() => {
-    batch.add({
+    addRumEvent({
       evt: {
         category: RumEventCategory.ERROR,
       },
@@ -199,17 +203,25 @@ function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
   })
 }
 
-export function trackPerformanceTiming(batch: RumBatch, configuration: Configuration) {
+export function trackPerformanceTiming(
+  configuration: Configuration,
+  session: RumSession,
+  addRumEvent: (event: RumEvent) => void
+) {
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list
-          .getEntriesByType('resource')
-          .forEach((entry) => handleResourceEntry(entry as PerformanceResourceTiming, batch, configuration))
+        if (session.isTrackedWithResource()) {
+          list
+            .getEntriesByType('resource')
+            .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
+        }
         list
           .getEntriesByType('navigation')
-          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, batch))
-        list.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, batch))
+          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent))
+        list
+          .getEntriesByType('paint')
+          .forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, addRumEvent))
 
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
         window.performance.clearResourceTimings()
@@ -219,11 +231,15 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
   }
 }
 
-export function handleResourceEntry(entry: PerformanceResourceTiming, batch: RumBatch, configuration: Configuration) {
+export function handleResourceEntry(
+  configuration: Configuration,
+  entry: PerformanceResourceTiming,
+  addRumEvent: (event: RumEvent) => void
+) {
   if (!isBrowserAgentRequest(entry.name, configuration)) {
     const resourceKind = computeResourceKind(entry)
     const isRequest = [ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)
-    batch.add({
+    addRumEvent({
       duration: msToNs(entry.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
@@ -295,8 +311,8 @@ function computeResourceKind(timing: PerformanceResourceTiming) {
   return ResourceKind.OTHER
 }
 
-export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch: RumBatch) {
-  batch.add({
+export function handleNavigationEntry(entry: PerformanceNavigationTiming, addRumEvent: (event: RumEvent) => void) {
+  addRumEvent({
     evt: {
       category: RumEventCategory.SCREEN_PERFORMANCE,
     },
@@ -311,11 +327,11 @@ export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch:
   })
 }
 
-export function handlePaintEntry(entry: PerformancePaintTiming, batch: RumBatch) {
+export function handlePaintEntry(entry: PerformancePaintTiming, addRumEvent: (event: RumEvent) => void) {
   const performance = {
     [entry.name]: msToNs(entry.startTime),
   }
-  batch.add({
+  addRumEvent({
     evt: {
       category: RumEventCategory.SCREEN_PERFORMANCE,
     },
