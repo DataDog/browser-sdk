@@ -7,12 +7,19 @@ export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
  * Limit access to cookie to avoid performance issues
  */
 export const COOKIE_ACCESS_DELAY = 1000
+let registeredActivityListeners: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
   const options = { capture: true, passive: true }
-  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) =>
+  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
     document.addEventListener(event, expandOrRenewSession, options)
-  )
+    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
+  })
+}
+
+export function cleanupActivityTracking() {
+  registeredActivityListeners.forEach((e) => e())
+  registeredActivityListeners = []
 }
 
 export interface CookieCache {

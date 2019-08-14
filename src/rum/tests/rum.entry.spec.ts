@@ -1,9 +1,14 @@
+import { cleanupActivityTracking } from '../../core/session'
 import { RumUserConfiguration } from '../rum.entry'
 
 describe('rum entry', () => {
   beforeEach(() => {
     require('../rum.entry')
     delete (require.cache as any)[require.resolve('../rum.entry')]
+  })
+
+  afterEach(() => {
+    cleanupActivityTracking()
   })
 
   it('init should log an error with no application id', () => {
