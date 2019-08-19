@@ -1,5 +1,7 @@
 // tslint:disable no-unsafe-any
 
+import { monitor } from '../core/internalMonitoring'
+
 declare global {
   interface Error {
     sourceURL?: string
@@ -290,7 +292,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     oldOnerrorHandler = window.onerror
-    window.onerror = traceKitWindowOnError
+    window.onerror = monitor(traceKitWindowOnError)
     onErrorHandlerInstalled = true
   }
 
@@ -315,7 +317,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     oldOnunhandledrejectionHandler = window.onunhandledrejection !== null ? window.onunhandledrejection : undefined
-    window.onunhandledrejection = traceKitWindowOnUnhandledRejection
+    window.onunhandledrejection = monitor(traceKitWindowOnUnhandledRejection)
     onUnhandledRejectionHandlerInstalled = true
   }
 
