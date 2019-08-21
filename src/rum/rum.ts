@@ -1,5 +1,5 @@
 import { Configuration } from '../core/configuration'
-import { ErrorObservable } from '../core/errorCollection'
+import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
@@ -82,9 +82,12 @@ type PerformanceScreenDetails =
     }
 
 export interface RumErrorEvent {
+  http?: HttpContext
+  error: ErrorContext
   evt: {
     category: RumEventCategory.ERROR
   }
+  message: string
   rum: {
     errorCount: number
   }
@@ -191,14 +194,16 @@ function areDifferentPages(previous: Location, current: Location) {
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
-  errorObservable.subscribe(() => {
+  errorObservable.subscribe(({ message, context }: ErrorMessage) => {
     addRumEvent({
+      message,
       evt: {
         category: RumEventCategory.ERROR,
       },
       rum: {
         errorCount: 1,
       },
+      ...context,
     })
   })
 }
