@@ -24,7 +24,7 @@ dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contribut
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
-dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google Inc.
+dev,karma-cbt-launcher,MIT,Copyright 2018 CrossBrowserTesting.com
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.

@@ -8,7 +8,7 @@
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",
     "test": "karma start ./test/unit/karma.unit.conf.js",
-    "test:browserstack": "karma start ./test/unit/karma.browserstack.conf.js",
+    "test:cbt": "karma start ./test/unit/karma.cbt.conf.js",
     "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.conf.js"
   },
   "devDependencies": {
@@ -33,7 +33,7 @@
     "jasmine-core": "3.4.0",
     "js-polyfills": "0.1.42",
     "karma": "4.2.0",
-    "karma-browserstack-launcher": "1.5.1",
+    "karma-cbt-launcher": "bcaudan/karma-cbt-launcher#remove-node-6-support",
     "karma-chrome-launcher": "3.0.0",
     "karma-coverage-istanbul-reporter": "2.0.5",
     "karma-jasmine": "2.0.1",
