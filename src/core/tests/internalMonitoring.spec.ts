@@ -84,7 +84,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('monitored')
-        expect(message.error.stack).toMatch('monitored')
+        expect(message.error!.stack).toMatch('monitored')
         server.restore()
       })
 
@@ -95,7 +95,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('Uncaught "string error"')
-        expect(message.error.stack).toMatch('Not an instance of error')
+        expect(message.error!.stack).toMatch('Not an instance of error')
         server.restore()
       })
 
@@ -106,7 +106,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('Uncaught {"foo":"bar"}')
-        expect(message.error.stack).toMatch('Not an instance of error')
+        expect(message.error!.stack).toMatch('Not an instance of error')
         server.restore()
       })
     })
