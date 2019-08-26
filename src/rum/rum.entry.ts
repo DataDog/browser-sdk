@@ -21,9 +21,16 @@ const STUBBED_RUM = {
 }
 
 export type RumGlobal = typeof STUBBED_RUM
+export const ALREADY_INITIALIZED_MESSAGE = 'DD_RUM.init() already called'
+let initialized = false
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
+  if (initialized) {
+    console.warn(ALREADY_INITIALIZED_MESSAGE)
+  }
+  initialized = true
+
   if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
     console.error('Client Token is not configured, we will not send any data.')
     return

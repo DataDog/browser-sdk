@@ -23,15 +23,7 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
-export const ALREADY_INITIALIZED_MESSAGE = 'Script was already initialized'
-let initialized = false
-
 export function commonInit(userConfiguration: UserConfiguration) {
-  if (initialized) {
-    console.warn(ALREADY_INITIALIZED_MESSAGE)
-  }
-  initialized = true
-
   const configuration = buildConfiguration(userConfiguration)
   const session = startSessionTracking()
   startInternalMonitoring(configuration, session)

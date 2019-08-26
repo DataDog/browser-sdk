@@ -1,4 +1,5 @@
 import { monitor, resetInternalMonitoring } from '../../core/internalMonitoring'
+import { ALREADY_INITIALIZED_MESSAGE } from '../logs.entry'
 
 describe('logs entry', () => {
   beforeEach(() => {
@@ -9,6 +10,13 @@ describe('logs entry', () => {
   it('should set global with init', () => {
     expect(!!window.DD_LOGS).toEqual(true)
     expect(!!window.DD_LOGS.init).toEqual(true)
+  })
+
+  it('should warn of multiple call to init', () => {
+    window.DD_LOGS.init({ clientToken: 'first' })
+    window.DD_LOGS.init({ clientToken: 'second' })
+    expect(console.warn).toHaveBeenCalledWith(ALREADY_INITIALIZED_MESSAGE)
+    expect(console.warn).toHaveBeenCalledTimes(1)
   })
 
   it('init should log an error with no public api key', () => {

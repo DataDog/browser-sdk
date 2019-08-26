@@ -70,8 +70,16 @@ const STUBBED_LOGS = {
 
 export type LogsGlobal = typeof STUBBED_LOGS
 
+export const ALREADY_INITIALIZED_MESSAGE = 'DD_LOGS.init() already called'
+let initialized = false
+
 window.DD_LOGS = makeGlobal(STUBBED_LOGS)
 window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
+  if (initialized) {
+    console.warn(ALREADY_INITIALIZED_MESSAGE)
+  }
+  initialized = true
+
   if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
     console.error('Client Token is not configured, we will not send any data.')
     return
