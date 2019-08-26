@@ -1,6 +1,6 @@
 import { Configuration } from '../core/configuration'
 import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
-import { monitor } from '../core/internalMonitoring'
+import { addMonitoringMessage, monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { RumSession } from './rumSession'
@@ -307,10 +307,18 @@ function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
 }
 
 function computeResourceKind(timing: PerformanceResourceTiming) {
-  const path = new URL(timing.name).pathname
-  for (const [type, isType] of RESOURCE_TYPES) {
-    if (isType(timing.initiatorType, path)) {
-      return type
+  let url: URL | undefined
+  try {
+    url = new URL(timing.name)
+  } catch (e) {
+    addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
+  }
+  if (url !== undefined) {
+    const path = url.pathname
+    for (const [type, isType] of RESOURCE_TYPES) {
+      if (isType(timing.initiatorType, path)) {
+        return type
+      }
     }
   }
   return ResourceKind.OTHER
