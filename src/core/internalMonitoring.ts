@@ -4,9 +4,7 @@ import lodashAssign from 'lodash.assign'
 
 import { computeStackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
-import { getCommonContext } from './context'
 import { toStackTraceString } from './errorCollection'
-import { Session } from './session'
 import { StatusType } from './status'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
@@ -14,8 +12,8 @@ import * as utils from './utils'
 export interface MonitoringMessage {
   entryType: 'internal'
   message: string
-  status: StatusType.error
-  error: {
+  status: StatusType
+  error?: {
     kind?: string
     stack: string
   }
@@ -28,7 +26,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startInternalMonitoring(configuration: Configuration, session: Session) {
+export function startInternalMonitoring(configuration: Configuration) {
   if (!configuration.internalMonitoringEndpoint) {
     return
   }
@@ -40,7 +38,10 @@ export function startInternalMonitoring(configuration: Configuration, session: S
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(session),
+      date: new Date().getTime(),
+      http: {
+        referer: window.location.href,
+      },
     }),
     utils.withSnakeCaseKeys
   )
@@ -79,18 +80,30 @@ export function monitor<T extends Function>(fn: T): T {
   } as unknown) as T // consider output type has input type
 }
 
+export function addMonitoringMessage(message: string) {
+  addToMonitoringBatch({
+    message,
+    entryType: 'internal',
+    status: StatusType.info,
+  })
+}
+
 function addErrorToMonitoringBatch(e: unknown) {
+  addToMonitoringBatch({
+    ...formatError(e),
+    entryType: 'internal',
+    status: StatusType.error,
+  })
+}
+
+function addToMonitoringBatch(message: MonitoringMessage) {
   if (
     monitoringConfiguration.batch &&
     monitoringConfiguration.sentMessageCount < monitoringConfiguration.maxMessagesPerPage
   ) {
     monitoringConfiguration.sentMessageCount += 1
 
-    monitoringConfiguration.batch.add({
-      ...formatError(e),
-      entryType: 'internal',
-      status: StatusType.error,
-    })
+    monitoringConfiguration.batch.add(message)
   }
 }
 

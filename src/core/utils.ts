@@ -1,12 +1,10 @@
-import { Context, ContextValue } from './context'
-
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 
-export enum ResourceType {
+export enum ResourceKind {
   XHR = 'xhr',
   BEACON = 'beacon',
   FETCH = 'fetch',
@@ -31,19 +29,6 @@ export function throttle<T extends Function>(fn: T, wait: number): T {
   } as unknown) as T // consider output type has input type
 }
 
-export function cache<T>(fn: () => T, duration: number): () => T {
-  let value: T
-  let expired = true
-  return () => {
-    if (expired) {
-      value = fn()
-      expired = false
-      setTimeout(() => (expired = true), duration)
-    }
-    return value
-  }
-}
-
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883
@@ -55,9 +40,29 @@ export function generateUUID(placeholder?: string): string {
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
+/**
+ * Return true if the draw is successful
+ * @param threshold between 0 and 100
+ */
+export function performDraw(threshold: number): boolean {
+  return threshold !== 0 && Math.random() * 100 <= threshold
+}
+
 export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
+
+export function msToNs(duration: number) {
+  return round(duration * 1e6, 0)
+}
+
+export interface Context {
+  [x: string]: ContextValue
+}
+
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined
+
+export interface ContextArray extends Array<ContextValue> {}
 
 export function withSnakeCaseKeys(candidate: Context): Context {
   const result: Context = {}

@@ -1,11 +1,12 @@
 import lodashAssign from 'lodash.assign'
 
 import { UserConfiguration } from '../core/configuration'
-import { Context, ContextValue } from '../core/context'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { Status, StatusType } from '../core/status'
+import { Context, ContextValue } from '../core/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
+import { startLoggerSession } from './loggerSession'
 
 declare global {
   interface Window {
@@ -86,15 +87,15 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   }
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
-    // console.warn('Public API Key is deprecated. Please use Client Token instead.')
-    // This warning message will be effective starting 29/07
+    console.warn('Public API Key is deprecated. Please use Client Token instead.')
   }
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration, session } = commonInit(logsUserConfiguration)
+  const { errorObservable, configuration } = commonInit(logsUserConfiguration)
+  const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(window.DD_LOGS, globalApi)
 })

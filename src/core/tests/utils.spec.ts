@@ -1,4 +1,4 @@
-import { cache, jsonStringify, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
+import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../utils'
 
 describe('utils', () => {
   it('should throttle only once by given period', () => {
@@ -23,27 +23,21 @@ describe('utils', () => {
     jasmine.clock().uninstall()
   })
 
-  it('should cache function result for a given duration', () => {
-    jasmine.clock().install()
-    let result: number | undefined = 1
-    const spy = jasmine.createSpy().and.callFake(() => result)
+  it('should perform a draw', () => {
+    let random = 0
+    spyOn(Math, 'random').and.callFake(() => random)
 
-    const cached = cache(spy, 1)
+    expect(performDraw(0)).toBe(false)
+    expect(performDraw(100)).toEqual(true)
 
-    expect(cached()).toEqual(result)
-    expect(spy).toHaveBeenCalledTimes(1)
+    random = 1
+    expect(performDraw(100)).toEqual(true)
 
-    expect(cached()).toEqual(result)
-    expect(cached()).toEqual(result)
-    expect(spy).toHaveBeenCalledTimes(1)
+    random = 0.0001
+    expect(performDraw(0.01)).toEqual(true)
 
-    jasmine.clock().tick(1)
-    result = undefined
-    expect(cached()).toEqual(result)
-    expect(cached()).toEqual(result)
-    expect(spy).toHaveBeenCalledTimes(2)
-
-    jasmine.clock().uninstall()
+    random = 0.1
+    expect(performDraw(0.01)).toEqual(false)
   })
 
   it('should round', () => {

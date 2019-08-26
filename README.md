@@ -21,6 +21,7 @@ contains all the public APIs.
     window.DD_LOGS.init({
         clientToken: 'XXX',
         forwardErrorsToLogs: true,
+        sampleRate: 100
     });
 </script>
 ```
@@ -32,11 +33,13 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 - Init must be called before other methods. Configurable options:
 
   - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+  - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
 
   ```
   init(configuration: {
       clientToken: string,
       isCollectingError?: boolean,
+      sampleRate?: number
   })
   ```
 
@@ -83,14 +86,27 @@ contains all the public APIs.
     window.DD_RUM.init({
         clientToken: 'XXX',
         applicationId: 'XXX',
+        sampleRate: 100,
+        resourceSampleRate: 100
     });
 </script>
 ```
 
 ### API exposed in `window.DD_RUM`
 
-Right now, we don't expose any features to customize the RUM collection.
-This may change at some point.
+Init must be called to start the tracking. Configurable options:
+
+- `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
+- `resourceSampleRate`: percentage of tracked sessions with resources collection.
+
+```
+init(configuration: {
+    clientToken: 'XXX',
+    applicationId: 'XXX',
+    sampleRate: 100,
+    resourceSampleRate: 100
+})
+```
 
 ## Deploy
 

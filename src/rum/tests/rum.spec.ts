@@ -1,47 +1,40 @@
 import sinon from 'sinon'
 
-import { Configuration } from '../../core/configuration'
+import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
+import { ErrorMessage } from '../../core/errorCollection'
+import { Observable } from '../../core/observable'
+import { PerformanceObserverStubBuilder } from '../../tests/specHelper'
 
 import {
-  EnhancedPerformanceResourceTiming,
   handlePaintEntry,
   handleResourceEntry,
   pageViewId,
   PerformancePaintTiming,
-  RumBatch,
   RumEvent,
-  RumEventType,
-  RumResourceTiming,
+  RumEventCategory,
+  RumResourceEvent,
+  startRum,
   trackPageView,
   trackPerformanceTiming,
 } from '../rum'
 
-function getEntry(batch: RumBatch, index: number) {
-  return (batch.add as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
-}
-
-interface RumServerMessage {
-  type: RumEventType
-  page_view_id: string
-}
-
-function getRumMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as RumServerMessage
+function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
+  return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
 }
 
 const configuration = {
+  ...DEFAULT_CONFIGURATION,
   internalMonitoringEndpoint: 'monitoring',
   logsEndpoint: 'logs',
+  maxBatchSize: 1,
   rumEndpoint: 'rum',
 }
 
 describe('rum handle performance entry', () => {
-  let batch: Partial<RumBatch>
+  let addRumEvent: (event: RumEvent) => void
 
   beforeEach(() => {
-    batch = {
-      add: jasmine.createSpy(),
-    }
+    addRumEvent = jasmine.createSpy()
   })
   ;[
     {
@@ -70,12 +63,8 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handleResourceEntry(
-          entry as EnhancedPerformanceResourceTiming,
-          batch as RumBatch,
-          configuration as Configuration
-        )
-        expect((batch.add as jasmine.Spy).calls.all.length !== 0).toEqual(expectEntryToBeAdded)
+        handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+        expect((addRumEvent as jasmine.Spy).calls.all.length !== 0).toEqual(expectEntryToBeAdded)
       })
     }
   )
@@ -113,22 +102,18 @@ describe('rum handle performance entry', () => {
       initiatorType?: string
       expected: string
     }) => {
-      it(`should compute resource type: ${description}`, () => {
-        const entry: Partial<EnhancedPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
+      it(`should compute resource kind: ${description}`, () => {
+        const entry: Partial<PerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
-        handleResourceEntry(
-          entry as EnhancedPerformanceResourceTiming,
-          batch as RumBatch,
-          configuration as Configuration
-        )
-        const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-        expect(resourceTiming.resourceType).toEqual(expected)
+        handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+        const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+        expect(resourceEvent.resource.kind).toEqual(expected)
       })
     }
   )
 
-  it('should add timing durations', () => {
-    const entry: Partial<EnhancedPerformanceResourceTiming> = {
+  it('should compute timing durations', () => {
+    const entry: Partial<PerformanceResourceTiming> = {
       connectEnd: 10,
       connectStart: 3,
       entryType: 'resource',
@@ -137,50 +122,41 @@ describe('rum handle performance entry', () => {
       responseStart: 25,
     }
 
-    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
-    const resourceTiming = getEntry(batch as RumBatch, 0).data as RumResourceTiming
-    expect(resourceTiming.connectDuration).toEqual(7)
-    expect(resourceTiming.responseDuration).toEqual(75)
-  })
-
-  it('should remove unavailable attributes', () => {
-    const entry: Partial<EnhancedPerformanceResourceTiming> = {
-      connectEnd: 0,
-      connectStart: 0,
-      entryType: 'resource',
-      name: 'http://localhost/test',
-      responseEnd: 100,
-      responseStart: 0,
-    }
-    handleResourceEntry(entry as EnhancedPerformanceResourceTiming, batch as RumBatch, configuration as Configuration)
-    const resourceTiming = getEntry(batch as RumBatch, 0).data as PerformanceResourceTiming
-    expect(resourceTiming.connectStart).toBeUndefined()
-    expect(resourceTiming.connectEnd).toBeUndefined()
-    expect(resourceTiming.responseStart).toBeUndefined()
+    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+    const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+    expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
+    expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
   })
 
   it('should rewrite paint entries', () => {
     const entry: Partial<PerformancePaintTiming> = { name: 'first-paint', startTime: 123456, entryType: 'paint' }
-    handlePaintEntry(entry as PerformancePaintTiming, batch as RumBatch)
-    expect(getEntry(batch as RumBatch, 0)).toEqual({
-      data: {
-        'first-paint': 123456,
+    handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
+    expect(getEntry(addRumEvent, 0)).toEqual({
+      evt: {
+        category: RumEventCategory.SCREEN_PERFORMANCE,
       },
-      type: RumEventType.PAINT,
+      screen: {
+        performance: {
+          'first-paint': 123456 * 1e6,
+        },
+      },
     })
   })
 })
 
 describe('rum performanceObserver callback', () => {
   it('should detect resource', (done) => {
-    const batch = {
-      add: (message: RumEvent) => {
-        expect((message.data! as RumResourceTiming).resourceType).toEqual('xhr')
-        done()
-      },
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const addRumEvent = (message: RumEvent) => {
+      expect((message as RumResourceEvent).resource.kind).toEqual('xhr')
+      done()
     }
 
-    trackPerformanceTiming(batch as RumBatch, configuration as Configuration)
+    trackPerformanceTiming(configuration as Configuration, trackedWithResourcesSession, addRumEvent)
     const request = new XMLHttpRequest()
     request.open('GET', './', true)
     request.send()
@@ -219,5 +195,92 @@ describe('rum track page view', () => {
     history.pushState({}, '', '/foo#bar')
 
     expect(pageViewId).toEqual(initialPageViewId)
+  })
+})
+
+describe('rum session', () => {
+  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
+  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com' }
+  let server: sinon.SinonFakeServer
+  let original: PerformanceObserver | undefined
+  let stubBuilder: PerformanceObserverStubBuilder
+
+  beforeEach(() => {
+    server = sinon.fakeServer.create()
+    original = window.PerformanceObserver
+    stubBuilder = new PerformanceObserverStubBuilder()
+    window.PerformanceObserver = stubBuilder.getStub()
+  })
+
+  afterEach(() => {
+    server.restore()
+    window.PerformanceObserver = original
+  })
+
+  it('when tracked with resources should enable full tracking', () => {
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, trackedWithResourcesSession)
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+
+    expect(server.requests.length).toEqual(2)
+  })
+
+  it('when tracked without resources should not track resources', () => {
+    const trackedWithResourcesSession = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => false,
+    }
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, trackedWithResourcesSession)
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(0)
+
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    expect(server.requests.length).toEqual(1)
+  })
+
+  it('when not tracked should disable tracking', () => {
+    const notTrackedSession = {
+      getId: () => undefined,
+      isTracked: () => false,
+      isTrackedWithResource: () => false,
+    }
+    const errorObservable = new Observable<ErrorMessage>()
+    startRum('appId', errorObservable, configuration as Configuration, notTrackedSession)
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+
+    expect(server.requests.length).toEqual(0)
+  })
+
+  it('when type change should enable/disable existing tracking', () => {
+    let isTracked = true
+    const session = {
+      getId: () => undefined,
+      isTracked: () => isTracked,
+      isTrackedWithResource: () => isTracked,
+    }
+    startRum('appId', new Observable(), configuration as Configuration, session)
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(1)
+
+    isTracked = false
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(1)
+
+    isTracked = true
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(2)
   })
 })

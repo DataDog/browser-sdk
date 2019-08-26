@@ -1,3 +1,4 @@
+import { cleanupActivityTracking } from '../../core/session'
 import { ALREADY_INITIALIZED_MESSAGE, RumUserConfiguration } from '../rum.entry'
 
 describe('rum entry', () => {
@@ -5,6 +6,9 @@ describe('rum entry', () => {
     require('../rum.entry')
     spyOn(console, 'warn')
     delete (require.cache as any)[require.resolve('../rum.entry')]
+  })
+  afterEach(() => {
+    cleanupActivityTracking()
   })
 
   it('should set global with init', () => {

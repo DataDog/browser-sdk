@@ -11,6 +11,8 @@ export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
   maxErrorsByMinute: 10000,
   maxInternalMonitoringMessagesPerPage: 15,
+  resourceSampleRate: 100,
+  sampleRate: 100,
 
   /**
    * arbitrary value, byte precision not needed
@@ -41,6 +43,8 @@ export interface UserConfiguration {
   clientToken: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
+  sampleRate?: number
+  resourceSampleRate?: number
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
@@ -70,6 +74,14 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
 
   if ('isCollectingError' in userConfiguration) {
     configuration.isCollectingError = !!userConfiguration.isCollectingError
+  }
+
+  if ('sampleRate' in userConfiguration) {
+    configuration.sampleRate = userConfiguration.sampleRate!
+  }
+
+  if ('resourceSampleRate' in userConfiguration) {
+    configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
   }
 
   if (buildEnv.TARGET_ENV === 'e2e-test') {

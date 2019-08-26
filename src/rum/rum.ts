@@ -1,26 +1,14 @@
 import { Configuration } from '../core/configuration'
-import { getCommonContext } from '../core/context'
-import { ErrorObservable } from '../core/errorCollection'
-import { monitor } from '../core/internalMonitoring'
-import { Session } from '../core/session'
+import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
+import { addMonitoringMessage, monitor } from '../core/internalMonitoring'
 import { Batch, HttpRequest } from '../core/transport'
-import { generateUUID, ResourceType, withSnakeCaseKeys } from '../core/utils'
+import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { RumSession } from './rumSession'
 
 declare global {
   interface Window {
     PerformanceObserver?: PerformanceObserver
   }
-}
-
-export interface EnhancedPerformanceResourceTiming extends PerformanceResourceTiming {
-  connectDuration: number
-  domainLookupDuration: number
-  redirectDuration: number
-  requestDuration: number
-  responseDuration: number
-  secureConnectionDuration: number
-  resourceType: ResourceType
-  requestCount?: number
 }
 
 export interface PerformancePaintTiming extends PerformanceEntry {
@@ -30,82 +18,97 @@ export interface PerformancePaintTiming extends PerformanceEntry {
   duration: 0
 }
 
-export interface RumNavigationTiming {
-  domComplete: number
-  domContentLoadedEventEnd: number
-  domInteractive: number
-  loadEventEnd: number
-}
-
-export interface RumPaintTiming {
-  'first-paint'?: number
-  'first-contentful-paint'?: number
-}
-
-export interface RumResourceTiming {
-  connectDuration: number
-  domainLookupDuration: number
-  duration: number
-  encodedBodySize: number
-  name: string
-  redirectDuration?: number
-  requestCount?: number
-  requestDuration: number
-  resourceType: ResourceType
-  responseDuration: number
-  secureConnectionDuration?: number
-}
-
-export interface RumError {
-  errorCount: number
-}
-
-export type RumData = RumNavigationTiming | RumPaintTiming | RumResourceTiming | RumError
-
-export enum RumEventType {
+export enum RumEventCategory {
   ERROR = 'error',
-  NAVIGATION = 'navigation',
+  SCREEN_PERFORMANCE = 'screen_performance',
   RESOURCE = 'resource',
-  PAINT = 'paint',
 }
 
-export interface RumEvent {
-  data: RumData
-  type: RumEventType
+interface PerformanceResourceDetailsElement {
+  duration: number
+  start: number
 }
 
-export type RumBatch = Batch<RumEvent>
+interface PerformanceResourceDetails {
+  redirect?: PerformanceResourceDetailsElement
+  dns: PerformanceResourceDetailsElement
+  connect: PerformanceResourceDetailsElement
+  ssl?: PerformanceResourceDetailsElement
+  firstByte: PerformanceResourceDetailsElement
+  download: PerformanceResourceDetailsElement
+}
 
-// cf https://www.w3.org/TR/resource-timing-2/#sec-cross-origin-resources
-const TIMING_ALLOWED_ATTRIBUTES: Array<keyof PerformanceResourceTiming> = [
-  'redirectStart',
-  'redirectEnd',
-  'domainLookupStart',
-  'domainLookupEnd',
-  'connectStart',
-  'connectEnd',
-  'requestStart',
-  'responseStart',
-  'secureConnectionStart',
-  'transferSize',
-  'encodedBodySize',
-  'decodedBodySize',
-]
+export interface RumResourceEvent {
+  duration: number
+  evt: {
+    category: RumEventCategory.RESOURCE
+  }
+  http: {
+    performance?: PerformanceResourceDetails
+    url: string
+  }
+  network: {
+    bytesWritten: number
+  }
+  resource: {
+    kind: ResourceKind
+  }
+  rum?: {
+    requestCount: number
+  }
+}
 
-const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
-  [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
-  [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
-  [ResourceType.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
-  [ResourceType.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
+export interface RumPerformanceScreenEvent {
+  evt: {
+    category: RumEventCategory.SCREEN_PERFORMANCE
+  }
+  screen: {
+    performance: PerformanceScreenDetails
+  }
+}
+
+type PerformanceScreenDetails =
+  | {
+      domComplete: number
+      domContentLoadedEventEnd: number
+      domInteractive: number
+      loadEventEnd: number
+    }
+  | {
+      'first-paint': number
+    }
+  | {
+      'first-contentful-paint': number
+    }
+
+export interface RumErrorEvent {
+  http?: HttpContext
+  error: ErrorContext
+  evt: {
+    category: RumEventCategory.ERROR
+  }
+  message: string
+  rum: {
+    errorCount: number
+  }
+}
+
+export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent
+
+const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
+  [ResourceKind.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
+  [ResourceKind.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
+  [ResourceKind.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
+  [ResourceKind.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
+  [ResourceKind.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
-    ResourceType.IMAGE,
+    ResourceKind.IMAGE,
     (initiatorType: string, path: string) =>
       ['image', 'img', 'icon'].includes(initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
   ],
-  [ResourceType.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [ResourceKind.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
   [
-    ResourceType.MEDIA,
+    ResourceKind.MEDIA,
     (initiatorType: string, path: string) =>
       ['audio', 'video'].includes(initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
   ],
@@ -118,16 +121,22 @@ export function startRum(
   applicationId: string,
   errorObservable: ErrorObservable,
   configuration: Configuration,
-  session: Session
+  session: RumSession
 ) {
   const batch = initRumBatch(configuration, session, applicationId)
 
+  const addRumEvent = (event: RumEvent) => {
+    if (session.isTracked()) {
+      batch.add(event)
+    }
+  }
+
   trackPageView(window.location)
-  trackErrors(batch, errorObservable)
-  trackPerformanceTiming(batch, configuration)
+  trackErrors(errorObservable, addRumEvent)
+  trackPerformanceTiming(configuration, session, addRumEvent)
 }
 
-export function initRumBatch(configuration: Configuration, session: Session, applicationId: string) {
+export function initRumBatch(configuration: Configuration, session: RumSession, applicationId: string) {
   return new Batch<RumEvent>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
     configuration.maxBatchSize,
@@ -135,9 +144,14 @@ export function initRumBatch(configuration: Configuration, session: Session, app
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => ({
-      ...getCommonContext(session),
       applicationId,
       pageViewId,
+      date: new Date().getTime(),
+      screen: {
+        id: pageViewId,
+        url: window.location.href,
+      },
+      sessionId: session.getId(),
     }),
     withSnakeCaseKeys
   )
@@ -179,28 +193,40 @@ function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackErrors(batch: RumBatch, errorObservable: ErrorObservable) {
-  errorObservable.subscribe(() => {
-    batch.add({
-      data: {
+function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
+  errorObservable.subscribe(({ message, context }: ErrorMessage) => {
+    addRumEvent({
+      message,
+      evt: {
+        category: RumEventCategory.ERROR,
+      },
+      rum: {
         errorCount: 1,
       },
-      type: RumEventType.ERROR,
+      ...context,
     })
   })
 }
 
-export function trackPerformanceTiming(batch: RumBatch, configuration: Configuration) {
+export function trackPerformanceTiming(
+  configuration: Configuration,
+  session: RumSession,
+  addRumEvent: (event: RumEvent) => void
+) {
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((list: PerformanceObserverEntryList) => {
-        list
-          .getEntriesByType('resource')
-          .forEach((entry) => handleResourceEntry(entry as PerformanceResourceTiming, batch, configuration))
+        if (session.isTrackedWithResource()) {
+          list
+            .getEntriesByType('resource')
+            .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
+        }
         list
           .getEntriesByType('navigation')
-          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, batch))
-        list.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, batch))
+          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent))
+        list
+          .getEntriesByType('paint')
+          .forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, addRumEvent))
 
         // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
         window.performance.clearResourceTimings()
@@ -210,34 +236,35 @@ export function trackPerformanceTiming(batch: RumBatch, configuration: Configura
   }
 }
 
-export function handleResourceEntry(timing: PerformanceResourceTiming, batch: RumBatch, configuration: Configuration) {
-  const entry = timing as EnhancedPerformanceResourceTiming
+export function handleResourceEntry(
+  configuration: Configuration,
+  entry: PerformanceResourceTiming,
+  addRumEvent: (event: RumEvent) => void
+) {
   if (!isBrowserAgentRequest(entry.name, configuration)) {
-    processTimingAttributes(entry)
-    addResourceType(entry)
-    if ([ResourceType.XHR, ResourceType.FETCH].includes(entry.resourceType)) {
-      entry.requestCount = 1
-    }
-    batch.add(toResourceEvent(entry))
-  }
-}
-
-function toResourceEvent(entry: EnhancedPerformanceResourceTiming) {
-  return {
-    data: {
-      connectDuration: entry.connectDuration,
-      domainLookupDuration: entry.domainLookupDuration,
-      duration: entry.duration,
-      encodedBodySize: entry.encodedBodySize,
-      name: entry.name,
-      redirectDuration: entry.redirectDuration,
-      requestCount: entry.requestCount,
-      requestDuration: entry.requestDuration,
-      resourceType: entry.resourceType,
-      responseDuration: entry.responseDuration,
-      secureConnectionDuration: entry.secureConnectionDuration,
-    },
-    type: RumEventType.RESOURCE,
+    const resourceKind = computeResourceKind(entry)
+    const isRequest = [ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)
+    addRumEvent({
+      duration: msToNs(entry.duration),
+      evt: {
+        category: RumEventCategory.RESOURCE,
+      },
+      http: {
+        performance: computePerformanceResourceDetails(entry),
+        url: entry.name,
+      },
+      network: {
+        bytesWritten: entry.decodedBodySize,
+      },
+      resource: {
+        kind: resourceKind,
+      },
+      rum: isRequest
+        ? {
+            requestCount: 1,
+          }
+        : undefined,
+    })
   }
 }
 
@@ -249,55 +276,80 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   )
 }
 
-function processTimingAttributes(timing: EnhancedPerformanceResourceTiming) {
-  if (hasTimingAllowedAttributes(timing)) {
-    timing.domainLookupDuration = timing.domainLookupEnd - timing.domainLookupStart
-    timing.connectDuration = timing.connectEnd - timing.connectStart
-    timing.requestDuration = timing.responseStart - timing.requestStart
-    timing.responseDuration = timing.responseEnd - timing.responseStart
-    if (timing.redirectStart > 0) {
-      timing.redirectDuration = timing.redirectEnd - timing.redirectStart
+function computePerformanceResourceDetails(entry: PerformanceResourceTiming): PerformanceResourceDetails | undefined {
+  if (hasTimingAllowedAttributes(entry)) {
+    return {
+      connect: { duration: msToNs(entry.connectEnd - entry.connectStart), start: msToNs(entry.connectStart) },
+      dns: {
+        duration: msToNs(entry.domainLookupEnd - entry.domainLookupStart),
+        start: msToNs(entry.domainLookupStart),
+      },
+      download: { duration: msToNs(entry.responseEnd - entry.responseStart), start: msToNs(entry.responseStart) },
+      firstByte: { duration: msToNs(entry.responseStart - entry.requestStart), start: msToNs(entry.requestStart) },
+      redirect:
+        entry.redirectStart > 0
+          ? { duration: msToNs(entry.redirectEnd - entry.redirectStart), start: msToNs(entry.redirectStart) }
+          : undefined,
+      ssl:
+        entry.secureConnectionStart > 0
+          ? {
+              duration: msToNs(entry.connectEnd - entry.secureConnectionStart),
+              start: msToNs(entry.secureConnectionStart),
+            }
+          : undefined,
     }
-    if (timing.secureConnectionStart > 0) {
-      timing.secureConnectionDuration = timing.connectEnd - timing.secureConnectionStart
-    }
-  } else {
-    TIMING_ALLOWED_ATTRIBUTES.forEach((attribute: keyof PerformanceResourceTiming) => delete timing[attribute])
   }
+  return undefined
 }
 
 function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
   return timing.responseStart > 0
 }
 
-function addResourceType(timing: EnhancedPerformanceResourceTiming) {
-  const path = new URL(timing.name).pathname
-  for (const [type, isType] of RESOURCE_TYPES) {
-    if (isType(timing.initiatorType, path)) {
-      timing.resourceType = type
-      return
+function computeResourceKind(timing: PerformanceResourceTiming) {
+  let url: URL | undefined
+  try {
+    url = new URL(timing.name)
+  } catch (e) {
+    addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
+  }
+  if (url !== undefined) {
+    const path = url.pathname
+    for (const [type, isType] of RESOURCE_TYPES) {
+      if (isType(timing.initiatorType, path)) {
+        return type
+      }
     }
   }
-  timing.resourceType = ResourceType.OTHER
+  return ResourceKind.OTHER
 }
 
-export function handleNavigationEntry(entry: PerformanceNavigationTiming, batch: RumBatch) {
-  batch.add({
-    data: {
-      domComplete: entry.domComplete,
-      domContentLoadedEventEnd: entry.domContentLoadedEventEnd,
-      domInteractive: entry.domInteractive,
-      loadEventEnd: entry.loadEventEnd,
+export function handleNavigationEntry(entry: PerformanceNavigationTiming, addRumEvent: (event: RumEvent) => void) {
+  addRumEvent({
+    evt: {
+      category: RumEventCategory.SCREEN_PERFORMANCE,
     },
-    type: RumEventType.NAVIGATION,
+    screen: {
+      performance: {
+        domComplete: msToNs(entry.domComplete),
+        domContentLoadedEventEnd: msToNs(entry.domContentLoadedEventEnd),
+        domInteractive: msToNs(entry.domInteractive),
+        loadEventEnd: msToNs(entry.loadEventEnd),
+      },
+    },
   })
 }
 
-export function handlePaintEntry(entry: PerformancePaintTiming, batch: RumBatch) {
-  batch.add({
-    data: {
-      [entry.name]: entry.startTime,
+export function handlePaintEntry(entry: PerformancePaintTiming, addRumEvent: (event: RumEvent) => void) {
+  const performance = {
+    [entry.name]: msToNs(entry.startTime),
+  }
+  addRumEvent({
+    evt: {
+      category: RumEventCategory.SCREEN_PERFORMANCE,
     },
-    type: RumEventType.PAINT,
+    screen: {
+      performance: performance as PerformanceScreenDetails,
+    },
   })
 }

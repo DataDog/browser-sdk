@@ -1,41 +1,60 @@
 import * as utils from './utils'
 
-export const COOKIE_NAME = '_dd'
-const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
+export const SESSION_COOKIE_NAME = '_dd'
+export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
 /**
  * Limit access to cookie to avoid performance issues
  */
 export const COOKIE_ACCESS_DELAY = 1000
+let registeredActivityListeners: Array<() => void> = []
 
-export interface Session {
-  getId: () => string | undefined
+export function trackActivity(expandOrRenewSession: () => void) {
+  const options = { capture: true, passive: true }
+  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
+    document.addEventListener(event, expandOrRenewSession, options)
+    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
+  })
 }
 
-export function startSessionTracking(): Session {
-  const getSessionId = utils.cache(() => getCookie(COOKIE_NAME), COOKIE_ACCESS_DELAY)
-  const expandOrRenewSession = makeExpandOrRenewSession(getSessionId)
+export function cleanupActivityTracking() {
+  registeredActivityListeners.forEach((e) => e())
+  registeredActivityListeners = []
+}
 
-  expandOrRenewSession()
-  trackActivity(expandOrRenewSession)
+export interface CookieCache {
+  get: () => string | undefined
+  set: (value: string, expireDelay: number) => void
+}
+
+export function cacheCookieAccess(name: string): CookieCache {
+  let timeout: number
+  let cache: string | undefined
+  let hasCache = false
+
+  const cacheAccess = () => {
+    hasCache = true
+    window.clearTimeout(timeout)
+    timeout = window.setTimeout(() => {
+      hasCache = false
+    }, COOKIE_ACCESS_DELAY)
+  }
 
   return {
-    getId: getSessionId,
+    get: () => {
+      if (hasCache) {
+        return cache
+      }
+      cache = getCookie(name)
+      cacheAccess()
+      return cache
+    },
+    set: (value: string, expireDelay: number) => {
+      setCookie(name, value, expireDelay)
+      cache = value
+      cacheAccess()
+    },
   }
-}
-
-function makeExpandOrRenewSession(getSessionId: () => string | undefined) {
-  return utils.throttle(() => {
-    const sessionId = getSessionId()
-    setCookie(COOKIE_NAME, sessionId || utils.generateUUID(), EXPIRATION_DELAY)
-  }, COOKIE_ACCESS_DELAY)
-}
-
-function trackActivity(expandOrRenewSession: () => void) {
-  const options = { capture: true, passive: true }
-  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) =>
-    document.addEventListener(event, expandOrRenewSession, options)
-  )
 }
 
 export function setCookie(name: string, value: string, expireDelay: number) {

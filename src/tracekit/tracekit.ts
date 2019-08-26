@@ -1,5 +1,7 @@
 // tslint:disable no-unsafe-any
 
+import { monitor } from '../core/internalMonitoring'
+
 declare global {
   interface Error {
     sourceURL?: string
@@ -275,8 +277,9 @@ export const report = (function reportModuleWrapper() {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/PromiseRejectionEvent
    */
   function traceKitWindowOnUnhandledRejection(e: PromiseRejectionEvent) {
-    const stack = computeStackTrace(e.reason)
-    notifyHandlers(stack, true, e.reason)
+    const reason = e.reason || 'Empty reason'
+    const stack = computeStackTrace(reason)
+    notifyHandlers(stack, true, reason)
   }
 
   /**
@@ -289,7 +292,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     oldOnerrorHandler = window.onerror
-    window.onerror = traceKitWindowOnError
+    window.onerror = monitor(traceKitWindowOnError)
     onErrorHandlerInstalled = true
   }
 
@@ -314,7 +317,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     oldOnunhandledrejectionHandler = window.onunhandledrejection !== null ? window.onunhandledrejection : undefined
-    window.onunhandledrejection = traceKitWindowOnUnhandledRejection
+    window.onunhandledrejection = monitor(traceKitWindowOnUnhandledRejection)
     onUnhandledRejectionHandlerInstalled = true
   }
 

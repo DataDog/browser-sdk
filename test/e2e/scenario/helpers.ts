@@ -1,5 +1,4 @@
 import * as request from 'request'
-import { CommonContext } from '../../../src/core/context'
 import { ErrorContext, HttpContext } from '../../../src/core/errorCollection'
 import { MonitoringMessage } from '../../../src/core/internalMonitoring'
 import { LogsMessage } from '../../../src/logs/logger'
@@ -12,7 +11,6 @@ export interface BrowserLog {
   timestamp: number
 }
 
-export type ServerRumEvent = RumEvent & CommonContext
 export interface ServerErrorMessage {
   error: ErrorContext
   http: HttpContext
@@ -43,12 +41,12 @@ export async function tearDown() {
 }
 
 export async function retrieveRumEvents() {
-  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents) as ServerRumEvent[])
+  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents) as RumEvent[])
 }
 
 export async function retrieveRumEventsTypes() {
-  return retrieveRumEvents().then((rumEvents: ServerRumEvent[]) =>
-    rumEvents.map((rumEvent: ServerRumEvent) => rumEvent.type)
+  return retrieveRumEvents().then((rumEvents: RumEvent[]) =>
+    rumEvents.map((rumEvent: RumEvent) => rumEvent.evt.category)
   )
 }
 

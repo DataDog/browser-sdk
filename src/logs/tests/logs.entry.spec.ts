@@ -1,10 +1,15 @@
 import { monitor, resetInternalMonitoring } from '../../core/internalMonitoring'
+import { cleanupActivityTracking } from '../../core/session'
 import { ALREADY_INITIALIZED_MESSAGE } from '../logs.entry'
 
 describe('logs entry', () => {
   beforeEach(() => {
     require('../logs.entry')
     delete (require.cache as any)[require.resolve('../logs.entry')]
+  })
+
+  afterEach(() => {
+    cleanupActivityTracking()
   })
 
   it('should set global with init', () => {
@@ -32,12 +37,12 @@ describe('logs entry', () => {
     expect(errorSpy).toHaveBeenCalledTimes(2)
   })
 
-  // it('should warn if now deprecated publicApiKey is used', () => {
-  //   spyOn(console, 'warn')
+  it('should warn if now deprecated publicApiKey is used', () => {
+    spyOn(console, 'warn')
 
-  //   window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
-  //   expect(console.warn).toHaveBeenCalledTimes(1)
-  // })
+    window.DD_LOGS.init({ publicApiKey: 'yo' } as any)
+    expect(console.warn).toHaveBeenCalledTimes(1)
+  })
 
   it('should add a `_setDebug` that works', () => {
     const setDebug: (debug: boolean) => void = (window.DD_LOGS as any)._setDebug as any

@@ -61,8 +61,7 @@ describe('internal monitoring', () => {
 
     describe('after initialisation', () => {
       beforeEach(() => {
-        const session = { getId: () => undefined }
-        startInternalMonitoring(configuration as Configuration, session)
+        startInternalMonitoring(configuration as Configuration)
       })
 
       afterEach(() => {
@@ -85,7 +84,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('monitored')
-        expect(message.error.stack).toMatch('monitored')
+        expect(message.error!.stack).toMatch('monitored')
         server.restore()
       })
 
@@ -96,7 +95,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('Uncaught "string error"')
-        expect(message.error.stack).toMatch('Not an instance of error')
+        expect(message.error!.stack).toMatch('Not an instance of error')
         server.restore()
       })
 
@@ -107,7 +106,7 @@ describe('internal monitoring', () => {
 
         const message = JSON.parse(server.requests[0].requestBody) as MonitoringMessage
         expect(message.message).toEqual('Uncaught {"foo":"bar"}')
-        expect(message.error.stack).toMatch('Not an instance of error')
+        expect(message.error!.stack).toMatch('Not an instance of error')
         server.restore()
       })
     })
@@ -120,8 +119,7 @@ describe('internal monitoring', () => {
     }
 
     beforeEach(() => {
-      const session = { getId: () => undefined }
-      startInternalMonitoring(configuration as Configuration, session)
+      startInternalMonitoring(configuration as Configuration)
     })
 
     afterEach(() => {
@@ -153,8 +151,7 @@ describe('internal monitoring', () => {
     let server: sinon.SinonFakeServer
 
     beforeEach(() => {
-      const session = { getId: () => undefined }
-      startInternalMonitoring(configuration as Configuration, session)
+      startInternalMonitoring(configuration as Configuration)
       server = sinon.fakeServer.create()
       jasmine.clock().install()
       jasmine.clock().mockDate(new Date(FAKE_DATE))

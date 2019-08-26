@@ -1,36 +1,35 @@
-import { COOKIE_ACCESS_DELAY, COOKIE_NAME, getCookie, setCookie, startSessionTracking } from '../session'
+import { cacheCookieAccess, CookieCache, setCookie } from '../session'
 
-describe('session', () => {
+describe('cacheCookieAccess', () => {
+  const TEST_COOKIE = 'test'
+  const TEST_DELAY = 1000
   const DURATION = 123456
+  let cookieCache: CookieCache
 
-  it('should store id in cookie', () => {
-    startSessionTracking()
-
-    expect(getCookie(COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
-  })
-
-  it('should keep existing id', () => {
-    setCookie(COOKIE_NAME, 'abcdef', DURATION)
-
-    startSessionTracking()
-
-    expect(getCookie(COOKIE_NAME)).toEqual('abcdef')
-  })
-
-  it('should renew session on activity after expiration', () => {
+  beforeEach(() => {
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date())
+    cookieCache = cacheCookieAccess(TEST_COOKIE)
+  })
 
-    startSessionTracking()
+  afterEach(() => jasmine.clock().uninstall())
 
-    setCookie(COOKIE_NAME, '', DURATION)
-    expect(getCookie(COOKIE_NAME)).toBeUndefined()
-    jasmine.clock().tick(COOKIE_ACCESS_DELAY)
+  it('should keep cookie value in cache', () => {
+    setCookie(TEST_COOKIE, 'foo', DURATION)
+    expect(cookieCache.get()).toEqual('foo')
 
-    document.dispatchEvent(new CustomEvent('click'))
+    setCookie(TEST_COOKIE, '', DURATION)
+    expect(cookieCache.get()).toEqual('foo')
 
-    expect(getCookie(COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
+    jasmine.clock().tick(TEST_DELAY)
+    expect(cookieCache.get()).toBeUndefined()
+  })
 
-    jasmine.clock().uninstall()
+  it('should invalidate cache when updating the cookie', () => {
+    setCookie(TEST_COOKIE, 'foo', DURATION)
+    expect(cookieCache.get()).toEqual('foo')
+
+    cookieCache.set('bar', DURATION)
+    expect(cookieCache.get()).toEqual('bar')
   })
 })
