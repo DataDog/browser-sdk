@@ -30,7 +30,7 @@ export function startRequestCollection() {
 
 export function trackXhr(requestObservable: RequestObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
-  XMLHttpRequest.prototype.open = function(method: string, url: string) {
+  XMLHttpRequest.prototype.open = monitor(function(this: XMLHttpRequest, method: string, url: string) {
     const startTime = performance.now()
     const reportXhr = () => {
       requestObservable.notify({
@@ -48,7 +48,7 @@ export function trackXhr(requestObservable: RequestObservable) {
     this.addEventListener('error', monitor(reportXhr))
 
     return originalOpen.apply(this, arguments as any)
-  }
+  })
 }
 
 export function trackFetch(requestObservable: RequestObservable) {
@@ -57,7 +57,7 @@ export function trackFetch(requestObservable: RequestObservable) {
   }
   const originalFetch = window.fetch
   // tslint:disable promise-function-async
-  window.fetch = function(input: RequestInfo, init?: RequestInit) {
+  window.fetch = monitor(function(this: GlobalFetch['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
     const reportFetchError = async (response: Response | Error) => {
@@ -89,7 +89,7 @@ export function trackFetch(requestObservable: RequestObservable) {
     const responsePromise = originalFetch.call(this, input, init)
     responsePromise.then(monitor(reportFetchError), monitor(reportFetchError))
     return responsePromise
-  }
+  })
 }
 
 export function normalizeUrl(url: string) {

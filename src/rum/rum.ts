@@ -169,15 +169,15 @@ function newPageView(location: Location) {
 
 function trackHistory(location: Location) {
   const originalPushState = history.pushState
-  history.pushState = function() {
+  history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
     onUrlChange(location)
-  }
+  })
   const originalReplaceState = history.replaceState
-  history.replaceState = function() {
+  history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
     onUrlChange(location)
-  }
+  })
   window.addEventListener('popstate', () => {
     onUrlChange(location)
   })
