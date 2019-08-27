@@ -86,7 +86,7 @@ export class Batch<T> {
     if (this.messageProcessor) {
       contextualizedMessage = this.messageProcessor(contextualizedMessage)
     }
-    const processedMessage = jsonStringify(contextualizedMessage)
+    const processedMessage = jsonStringify(contextualizedMessage)!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }

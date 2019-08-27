@@ -105,7 +105,14 @@ type OriginalToJSON = [boolean, undefined | (() => object)]
  * We need to do that because some sites badly override toJSON on certain objects.
  * Note this still supposes that JSON.stringify is correct...
  */
-export function jsonStringify(value: object, replacer?: Array<string | number>, space?: string | number) {
+export function jsonStringify(
+  value: unknown,
+  replacer?: Array<string | number>,
+  space?: string | number
+): string | undefined {
+  if (value === null || value === undefined) {
+    return JSON.stringify(value)
+  }
   let originalToJSON: OriginalToJSON = [false, undefined]
   if (hasToJSON(value)) {
     // We need to add a flag and not rely on the truthiness of value.toJSON
@@ -133,6 +140,6 @@ export function jsonStringify(value: object, replacer?: Array<string | number>, 
   }
 }
 
-function hasToJSON(value: object): value is ObjectWithToJSON {
-  return value.hasOwnProperty('toJSON')
+function hasToJSON(value: unknown): value is ObjectWithToJSON {
+  return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
 }

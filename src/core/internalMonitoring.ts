@@ -122,7 +122,7 @@ function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${utils.jsonStringify(e as any)}`,
+    message: `Uncaught ${utils.jsonStringify(e)}`,
   }
 }
 
