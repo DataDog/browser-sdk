@@ -52,6 +52,9 @@ export function trackXhr(requestObservable: RequestObservable) {
 }
 
 export function trackFetch(requestObservable: RequestObservable) {
+  if (!window.fetch) {
+    return
+  }
   const originalFetch = window.fetch
   // tslint:disable promise-function-async
   window.fetch = function(input: RequestInfo, init?: RequestInit) {
