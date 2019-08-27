@@ -103,7 +103,7 @@ function formatConsoleParameters(param: unknown) {
   if (param instanceof Error) {
     return param.toString()
   }
-  return jsonStringify(param as object, undefined, 2)
+  return jsonStringify(param, undefined, 2)
 }
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
@@ -123,7 +123,7 @@ export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
   let message: string
   let stack: string
   if (stackTrace.message === undefined && !(errorObject instanceof Error)) {
-    message = `Uncaught ${jsonStringify(errorObject as any)}`
+    message = `Uncaught ${jsonStringify(errorObject)}`
     stack = 'No stack, consider using an instance of Error'
   } else {
     message = stackTrace.message || 'Empty message'

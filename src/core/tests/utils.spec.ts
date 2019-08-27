@@ -86,4 +86,12 @@ describe('utils', () => {
 
     delete (Array.prototype as any).toJSON
   })
+
+  it('should jsonStringify edge cases', () => {
+    expect(jsonStringify(undefined)).toEqual(undefined)
+    // tslint:disable-next-line:no-null-keyword
+    expect(jsonStringify(null)).toEqual('null')
+    expect(jsonStringify(1)).toEqual('1')
+    expect(jsonStringify(true)).toEqual('true')
+  })
 })
