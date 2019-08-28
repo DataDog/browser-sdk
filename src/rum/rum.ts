@@ -241,31 +241,32 @@ export function handleResourceEntry(
   entry: PerformanceResourceTiming,
   addRumEvent: (event: RumEvent) => void
 ) {
-  if (!isBrowserAgentRequest(entry.name, configuration)) {
-    const resourceKind = computeResourceKind(entry)
-    const isRequest = [ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)
-    addRumEvent({
-      duration: msToNs(entry.duration),
-      evt: {
-        category: RumEventCategory.RESOURCE,
-      },
-      http: {
-        performance: computePerformanceResourceDetails(entry),
-        url: entry.name,
-      },
-      network: {
-        bytesWritten: entry.decodedBodySize,
-      },
-      resource: {
-        kind: resourceKind,
-      },
-      rum: isRequest
-        ? {
-            requestCount: 1,
-          }
-        : undefined,
-    })
+  if (!entry.name || isBrowserAgentRequest(entry.name, configuration)) {
+    return
   }
+  const resourceKind = computeResourceKind(entry)
+  const isRequest = [ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)
+  addRumEvent({
+    duration: msToNs(entry.duration),
+    evt: {
+      category: RumEventCategory.RESOURCE,
+    },
+    http: {
+      performance: computePerformanceResourceDetails(entry),
+      url: entry.name,
+    },
+    network: {
+      bytesWritten: entry.decodedBodySize,
+    },
+    resource: {
+      kind: resourceKind,
+    },
+    rum: isRequest
+      ? {
+          requestCount: 1,
+        }
+      : undefined,
+  })
 }
 
 function isBrowserAgentRequest(url: string, configuration: Configuration) {
