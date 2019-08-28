@@ -1,5 +1,6 @@
 import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
+import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import {
   isRejected,
@@ -79,7 +80,7 @@ let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
 
 export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
-  console.error = (message?: any, ...optionalParams: any[]) => {
+  console.error = monitor((message?: any, ...optionalParams: any[]) => {
     originalConsoleError.apply(console, [message, ...optionalParams])
     errorObservable.notify({
       context: {
@@ -89,7 +90,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
       },
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
     })
-  }
+  })
 }
 
 export function stopConsoleTracking() {
