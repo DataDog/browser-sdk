@@ -41,9 +41,9 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
 }
 
 export function computePerformanceResourceDetails(
-  entry: PerformanceResourceTiming
+  entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  if (hasTimingAllowedAttributes(entry)) {
+  if (entry && hasTimingAllowedAttributes(entry)) {
     return {
       connect: { duration: msToNs(entry.connectEnd - entry.connectStart), start: msToNs(entry.connectStart) },
       dns: {
@@ -68,8 +68,8 @@ export function computePerformanceResourceDetails(
   return undefined
 }
 
-export function computeSize(entry: PerformanceResourceTiming) {
-  return hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
+export function computeSize(entry?: PerformanceResourceTiming) {
+  return entry && hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
 }
 
 function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {

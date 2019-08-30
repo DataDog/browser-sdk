@@ -1,5 +1,5 @@
 import { LogsGlobal } from '../../../src/logs/logs.entry'
-import { RumEventCategory } from '../../../src/rum/rum'
+import { RumEvent, RumEventCategory, RumResourceEvent } from '../../../src/rum/rum'
 
 import {
   browserExecute,
@@ -7,6 +7,7 @@ import {
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
+  retrieveRumEvents,
   retrieveRumEventsTypes,
   sortByMessage,
   tearDown,
@@ -50,6 +51,35 @@ describe('rum', () => {
     expect(types).toContain(RumEventCategory.ERROR)
     const browserLogs = await browser.getLogs('browser')
     expect(browserLogs.length).toEqual(1)
+  })
+
+  it('should track xhr timings', async () => {
+    await browserExecuteAsync((done: () => void) => {
+      let loaded = false
+      const xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => (loaded = true))
+      xhr.open('GET', 'http://localhost:3000/ok')
+      xhr.send()
+
+      const interval = setInterval(() => {
+        if (loaded) {
+          clearInterval(interval)
+          done()
+        }
+      }, 500)
+    })
+
+    await flushEvents()
+    const timing = (await retrieveRumEvents()).find(
+      (event: RumEvent) =>
+        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === 'http://localhost:3000/ok'
+    ) as RumResourceEvent
+
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.duration).toBeGreaterThan(0)
+    expect(timing.http.performance!.download.start).toBeGreaterThan(0)
+    expect(timing.http.performance!.download.duration).toBeGreaterThan(0)
   })
 })
 

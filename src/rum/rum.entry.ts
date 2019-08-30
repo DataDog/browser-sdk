@@ -2,6 +2,7 @@ import { UserConfiguration } from '../core/configuration'
 
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
+import { startRequestCollection } from '../core/requestCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -37,7 +38,10 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
     return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
+
   const { errorObservable, configuration } = commonInit(rumUserConfiguration)
   const session = startRumSession(configuration)
-  startRum(rumUserConfiguration.applicationId, errorObservable, configuration, session)
+  const requestObservable = startRequestCollection()
+
+  startRum(rumUserConfiguration.applicationId, errorObservable, requestObservable, configuration, session)
 })
