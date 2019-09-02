@@ -1,8 +1,10 @@
 import { Configuration } from '../core/configuration'
 import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
+import { RequestDetails, RequestObservable, RequestType } from '../core/requestCollection'
 import { Batch, HttpRequest } from '../core/transport'
 import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumSession } from './rumSession'
 
@@ -46,6 +48,8 @@ export interface RumResourceEvent {
   }
   http: {
     performance?: PerformanceResourceDetails
+    method?: string
+    statusCode?: number
     url: string
   }
   network: {
@@ -102,6 +106,7 @@ let activeLocation: Location
 export function startRum(
   applicationId: string,
   errorObservable: ErrorObservable,
+  requestObservable: RequestObservable,
   configuration: Configuration,
   session: RumSession
 ) {
@@ -115,6 +120,7 @@ export function startRum(
 
   trackPageView(window.location)
   trackErrors(errorObservable, addRumEvent)
+  trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, session, addRumEvent)
 }
 
@@ -190,6 +196,45 @@ function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumE
   })
 }
 
+export function trackRequests(
+  configuration: Configuration,
+  requestObservable: RequestObservable,
+  session: RumSession,
+  addRumEvent: (event: RumEvent) => void
+) {
+  if (!session.isTrackedWithResource()) {
+    return
+  }
+  requestObservable.subscribe((requestDetails: RequestDetails) => {
+    if (!isValidResource(requestDetails.url, configuration)) {
+      return
+    }
+    const timing = matchRequestTiming(requestDetails)
+    const kind = requestDetails.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    addRumEvent({
+      duration: msToNs(timing ? timing.duration : requestDetails.duration),
+      evt: {
+        category: RumEventCategory.RESOURCE,
+      },
+      http: {
+        method: requestDetails.method,
+        performance: computePerformanceResourceDetails(timing),
+        statusCode: requestDetails.status,
+        url: requestDetails.url,
+      },
+      network: {
+        bytesWritten: computeSize(timing),
+      },
+      resource: {
+        kind,
+      },
+      rum: {
+        requestCount: 1,
+      },
+    })
+  })
+}
+
 export function trackPerformanceTiming(
   configuration: Configuration,
   session: RumSession,
@@ -230,7 +275,9 @@ export function handleResourceEntry(
     return
   }
   const resourceKind = computeResourceKind(entry)
-  const isRequest = [ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)
+  if ([ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)) {
+    return
+  }
   addRumEvent({
     duration: msToNs(entry.duration),
     evt: {
@@ -246,11 +293,6 @@ export function handleResourceEntry(
     resource: {
       kind: resourceKind,
     },
-    rum: isRequest
-      ? {
-          requestCount: 1,
-        }
-      : undefined,
   })
 }
 

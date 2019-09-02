@@ -20,20 +20,23 @@ export interface RequestDetails {
 }
 
 export type RequestObservable = Observable<RequestDetails>
+let requestObservable: Observable<RequestDetails>
 
 export function startRequestCollection() {
-  const requestObservable = new Observable<RequestDetails>()
-  trackXhr(requestObservable)
-  trackFetch(requestObservable)
+  if (!requestObservable) {
+    requestObservable = new Observable<RequestDetails>()
+    trackXhr(requestObservable)
+    trackFetch(requestObservable)
+  }
   return requestObservable
 }
 
-export function trackXhr(requestObservable: RequestObservable) {
+export function trackXhr(observable: RequestObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: XMLHttpRequest, method: string, url: string) {
     const startTime = performance.now()
     const reportXhr = () => {
-      requestObservable.notify({
+      observable.notify({
         method,
         startTime,
         duration: performance.now() - startTime,
@@ -51,7 +54,7 @@ export function trackXhr(requestObservable: RequestObservable) {
   })
 }
 
-export function trackFetch(requestObservable: RequestObservable) {
+export function trackFetch(observable: RequestObservable) {
   if (!window.fetch) {
     return
   }
@@ -64,7 +67,7 @@ export function trackFetch(requestObservable: RequestObservable) {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response) {
-        requestObservable.notify({
+        observable.notify({
           duration,
           method,
           startTime,
@@ -75,7 +78,7 @@ export function trackFetch(requestObservable: RequestObservable) {
         })
       } else if ('status' in response) {
         const text = await response.clone().text()
-        requestObservable.notify({
+        observable.notify({
           duration,
           method,
           startTime,
