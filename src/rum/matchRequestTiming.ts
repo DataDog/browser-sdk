@@ -7,10 +7,15 @@ interface Timing {
 
 /**
  * Look for corresponding timing in resource timing buffer
+ *
  * Observations:
  * - Timing (start, end) are nested inside the request (start, end)
- * - Timing for OPTIONS request can be retrieved with the actual timing request
- * - Multiple timings can be retrieved when there are concurrent requests
+ * - Browsers generate a timing entry for OPTIONS request
+ *
+ * Strategy:
+ * - if a single timing match, return the timing
+ * - if two following timings match (OPTIONS request), return the timing for the actual request
+ * - otherwise we can't decide, return undefined
  */
 export function matchRequestTiming(requestDetails: RequestDetails) {
   if (!performance || !('getEntriesByName' in performance)) {
