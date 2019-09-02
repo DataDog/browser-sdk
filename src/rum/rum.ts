@@ -212,10 +212,12 @@ export function trackPerformanceTiming(
       })
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-    performance.addEventListener('resourcetimingbufferfull', () => {
-      performance.clearResourceTimings()
-    })
+    if (performance && 'addEventListener' in performance) {
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
+      performance.addEventListener('resourcetimingbufferfull', () => {
+        performance.clearResourceTimings()
+      })
+    }
   }
 }
 
