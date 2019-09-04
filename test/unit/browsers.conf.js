@@ -13,4 +13,10 @@ module.exports = {
     version: '67',
     platform: 'Windows 10',
   },
+  SAFARI: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Safari',
+    version: '12',
+    platform: 'Mac OSX 10.14',
+  },
 }
