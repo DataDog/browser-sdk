@@ -1,4 +1,3 @@
-import { isAndroid } from '../../tests/specHelper'
 import { StackTrace } from '../../tracekit/tracekit'
 import { Configuration } from '../configuration'
 import {
@@ -70,9 +69,6 @@ describe('runtime error tracker', () => {
   let onerrorSpy: jasmine.Spy
 
   beforeEach(() => {
-    if (isAndroid()) {
-      pending()
-    }
     originalHandler = window.onerror
     onerrorSpy = jasmine.createSpy()
     window.onerror = onerrorSpy

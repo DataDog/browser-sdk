@@ -19,4 +19,11 @@ module.exports = {
     version: '12',
     platform: 'Mac OSX 10.14',
   },
+  CHROME_MOBILE: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Chrome',
+    deviceName: 'Galaxy S9',
+    platformName: 'Android',
+    platformVersion: '9.0',
+  },
 }

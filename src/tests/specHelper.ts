@@ -15,10 +15,6 @@ export function isIE(version: number) {
   return ua.indexOf('msie') !== -1 && parseInt(ua.split('msie')[1], 10) === version
 }
 
-export function isAndroid() {
-  return /android/i.test(navigator.userAgent)
-}
-
 export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
     document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
