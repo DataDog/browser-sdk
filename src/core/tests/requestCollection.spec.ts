@@ -126,11 +126,11 @@ describe('fetch tracker', () => {
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual('http://localhost:9876/my/path')
+    expect(normalizeUrl('/my/path')).toEqual(`http://${window.location.hostname}:9876/my/path`)
   })
 
   it('should add protocol to relative url', () => {
-    expect(normalizeUrl('//localhost:9876/my/path')).toEqual('http://localhost:9876/my/path')
+    expect(normalizeUrl('//foo.com:9876/my/path')).toEqual('http://foo.com:9876/my/path')
   })
 
   it('should keep full url unchanged', () => {
