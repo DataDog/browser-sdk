@@ -7,4 +7,10 @@ module.exports = {
     version: '18',
     platform: 'Windows 10',
   },
+  FIREFOX: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Firefox',
+    version: '67',
+    platform: 'Windows 10',
+  },
 }

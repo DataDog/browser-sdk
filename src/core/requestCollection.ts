@@ -1,5 +1,7 @@
 import 'url-polyfill'
 
+import { computeStackTrace } from '../tracekit/tracekit'
+import { toStackTraceString } from './errorCollection'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { ResourceKind } from './utils'
@@ -67,12 +69,13 @@ export function trackFetch(observable: RequestObservable) {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response) {
+        const stackTrace = computeStackTrace(response)
         observable.notify({
           duration,
           method,
           startTime,
           url,
-          response: response.stack,
+          response: toStackTraceString(stackTrace),
           status: 0,
           type: RequestType.FETCH,
         })

@@ -1,4 +1,4 @@
-import { FetchStub, FetchStubBuilder, FetchStubPromise } from '../../tests/specHelper'
+import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox } from '../../tests/specHelper'
 import { Observable } from '../observable'
 import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../requestCollection'
 
@@ -138,6 +138,9 @@ describe('normalize url', () => {
   })
 
   it('should keep non http url unchanged', () => {
+    if (isFirefox()) {
+      pending('https://bugzilla.mozilla.org/show_bug.cgi?id=1578787')
+    }
     expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
   })
 })
