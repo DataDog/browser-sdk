@@ -26,4 +26,11 @@ module.exports = {
     platformName: 'Android',
     platformVersion: '9.0',
   },
+  SAFARI_MOBILE: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Safari',
+    deviceName: 'iPhone XR Simulator',
+    platformName: 'iOS',
+    platformVersion: '12.0',
+  },
 }
