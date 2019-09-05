@@ -1,4 +1,4 @@
-import { FetchStub, FetchStubBuilder, FetchStubPromise } from '../../tests/specHelper'
+import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../../tests/specHelper'
 import { Observable } from '../observable'
 import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../requestCollection'
 
@@ -10,6 +10,9 @@ describe('fetch tracker', () => {
   let notifySpy: jasmine.Spy
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no fetch support')
+    }
     originalFetch = window.fetch
     const requestObservable = new Observable<RequestDetails>()
     notifySpy = spyOn(requestObservable, 'notify').and.callThrough()
@@ -126,11 +129,11 @@ describe('fetch tracker', () => {
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual('http://localhost:9876/my/path')
+    expect(normalizeUrl('/my/path')).toEqual(`${window.location.origin}/my/path`)
   })
 
   it('should add protocol to relative url', () => {
-    expect(normalizeUrl('//localhost:9876/my/path')).toEqual('http://localhost:9876/my/path')
+    expect(normalizeUrl('//foo.com:9876/my/path')).toEqual('http://foo.com:9876/my/path')
   })
 
   it('should keep full url unchanged', () => {
@@ -138,6 +141,9 @@ describe('normalize url', () => {
   })
 
   it('should keep non http url unchanged', () => {
+    if (isFirefox()) {
+      pending('https://bugzilla.mozilla.org/show_bug.cgi?id=1578787')
+    }
     expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
   })
 })

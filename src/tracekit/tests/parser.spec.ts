@@ -1,6 +1,6 @@
 // tslint:disable no-unsafe-any
 
-import { isIE, isSafari } from '../../tests/specHelper'
+import { isSafari } from '../../tests/specHelper'
 import { computeStackTrace } from '../tracekit'
 import * as CapturedExceptions from './fixtures/capturedExceptions'
 
@@ -18,7 +18,7 @@ describe('Parser', () => {
   }
 
   it('should get the order of functions called right', () => {
-    if (isSafari() || isIE(9)) {
+    if (isSafari()) {
       pending()
     }
     const trace = foo()
@@ -542,10 +542,6 @@ describe('Parser', () => {
   })
 
   it('should parse empty IE 9 error', () => {
-    if (isIE(9)) {
-      pending()
-    }
-
     const stackFrames = computeStackTrace(CapturedExceptions.IE_9 as Error)
 
     if (stackFrames.stack) {

@@ -1,4 +1,5 @@
 import { RequestDetails } from '../../core/requestCollection'
+import { isIE } from '../../tests/specHelper'
 import { matchRequestTiming } from '../matchRequestTiming'
 
 describe('matchRequestTiming', () => {
@@ -6,6 +7,9 @@ describe('matchRequestTiming', () => {
   let entries: PerformanceResourceTiming[]
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     entries = []
     spyOn(performance, 'getEntriesByName').and.returnValues(entries)
   })

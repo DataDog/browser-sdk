@@ -1,15 +1,8 @@
 // tslint:disable no-unsafe-any
 
-import { isIE } from '../../tests/specHelper'
 import { report, StackFrame, wrap } from '../tracekit'
 
 describe('Handler', () => {
-  beforeEach(() => {
-    if (isIE(9)) {
-      pending()
-    }
-  })
-
   it('it should not go into an infinite loop', (done) => {
     const stacks = []
 

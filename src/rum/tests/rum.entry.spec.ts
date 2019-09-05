@@ -1,8 +1,12 @@
 import { cleanupActivityTracking } from '../../core/session'
+import { isIE } from '../../tests/specHelper'
 import { RumUserConfiguration } from '../rum.entry'
 
 describe('rum entry', () => {
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     require('../rum.entry')
     delete (require.cache as any)[require.resolve('../rum.entry')]
   })
