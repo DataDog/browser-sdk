@@ -52,13 +52,13 @@ e2e:
     - yarn
     - yarn test:e2e
 
-#cbt:
-#  stage: cbt
-#  tags: ['runner:main', 'size:large']
-#  image: $CI_IMAGE
-#  script:
-#    - yarn
-#    - ./ci-cbt.sh
+cbt:
+  stage: cbt
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - ./ci-cbt.sh
 
 deploy-staging:
   only:

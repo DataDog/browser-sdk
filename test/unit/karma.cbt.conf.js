@@ -7,6 +7,7 @@ module.exports = function(config) {
     plugins: ['karma-*', 'karma-cbt-launcher'],
     reporters: [...karmaBaseConf.reporters, 'CrossBrowserTesting'],
     browsers: Object.keys(browsers),
+    concurrency: 1,
     cbtConfig: {
       username: process.env.CBT_USERNAME,
       authkey: process.env.CBT_AUTHKEY,
