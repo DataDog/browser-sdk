@@ -13,6 +13,10 @@ module.exports = function(config) {
     reporters: [...karmaBaseConf.reporters, 'CrossBrowserTesting'],
     browsers: Object.keys(browsers),
     concurrency: 1,
+    captureTimeout: 60000,
+    browserDisconnectTimeout: 60000,
+    browserDisconnectTolerance: 3,
+    browserNoActivityTimeout: 60000,
     cbtConfig: {
       username: process.env.CBT_USERNAME,
       authkey: process.env.CBT_AUTHKEY,

@@ -133,7 +133,6 @@ export function initRumBatch(configuration: Configuration, session: RumSession, 
     configuration.flushTimeout,
     () => ({
       applicationId,
-      pageViewId,
       date: new Date().getTime(),
       screen: {
         id: pageViewId,

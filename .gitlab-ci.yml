@@ -53,6 +53,10 @@ e2e:
     - yarn test:e2e
 
 cbt:
+  except:
+    refs:
+      - master
+      - prod
   stage: cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
