@@ -99,7 +99,7 @@ export function trackFetch(observable: RequestObservable) {
 }
 
 export function normalizeUrl(url: string) {
-  return new URL(url, window.location.href).href
+  return new URL(url, window.location.origin).href
 }
 
 export function isRejected(request: RequestDetails) {

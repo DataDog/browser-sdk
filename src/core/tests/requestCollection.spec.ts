@@ -1,4 +1,4 @@
-import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox } from '../../tests/specHelper'
+import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../../tests/specHelper'
 import { Observable } from '../observable'
 import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../requestCollection'
 
@@ -10,6 +10,9 @@ describe('fetch tracker', () => {
   let notifySpy: jasmine.Spy
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no fetch support')
+    }
     originalFetch = window.fetch
     const requestObservable = new Observable<RequestDetails>()
     notifySpy = spyOn(requestObservable, 'notify').and.callThrough()
@@ -126,7 +129,7 @@ describe('fetch tracker', () => {
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual(`http://${window.location.hostname}:9876/my/path`)
+    expect(normalizeUrl('/my/path')).toEqual(`${window.location.origin}/my/path`)
   })
 
   it('should add protocol to relative url', () => {

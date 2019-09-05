@@ -72,7 +72,7 @@ describe('logger session', () => {
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
     tracked = true
-    document.dispatchEvent(new CustomEvent('click'))
+    document.body.click()
 
     expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)

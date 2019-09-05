@@ -6,6 +6,7 @@ import {
   SESSION_COOKIE_NAME,
   setCookie,
 } from '../../core/session'
+import { isIE } from '../../tests/specHelper'
 import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../rumSession'
 
 function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
@@ -21,6 +22,9 @@ describe('rum session', () => {
   }
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date())
   })

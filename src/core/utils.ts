@@ -122,10 +122,13 @@ export function jsonStringify(
   }
 
   let originalProtoToJSON: OriginalToJSON = [false, undefined]
-  const prototype = Object.getPrototypeOf(value) as object
-  if (hasToJSON(prototype)) {
-    originalProtoToJSON = [true, prototype.toJSON]
-    delete prototype.toJSON
+  let prototype
+  if (typeof value === 'object') {
+    prototype = Object.getPrototypeOf(value) as object
+    if (hasToJSON(prototype)) {
+      originalProtoToJSON = [true, prototype.toJSON]
+      delete prototype.toJSON
+    }
   }
 
   try {

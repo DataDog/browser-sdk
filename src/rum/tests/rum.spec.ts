@@ -4,7 +4,7 @@ import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { RequestDetails } from '../../core/requestCollection'
-import { PerformanceObserverStubBuilder } from '../../tests/specHelper'
+import { isIE, PerformanceObserverStubBuilder } from '../../tests/specHelper'
 
 import {
   handlePaintEntry,
@@ -34,6 +34,9 @@ describe('rum handle performance entry', () => {
   let addRumEvent: (event: RumEvent) => void
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     addRumEvent = jasmine.createSpy()
   })
   ;[
@@ -149,6 +152,9 @@ describe('rum track page view', () => {
   let initialPageViewId: string
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
       const url = new URL(pathname, 'http://localhost')
       fakeLocation.pathname = url.pathname
@@ -188,6 +194,9 @@ describe('rum session', () => {
   let stubBuilder: PerformanceObserverStubBuilder
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     server = sinon.fakeServer.create()
     original = window.PerformanceObserver
     stubBuilder = new PerformanceObserverStubBuilder()

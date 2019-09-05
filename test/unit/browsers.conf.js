@@ -33,4 +33,16 @@ module.exports = {
     platformName: 'iOS',
     platformVersion: '12.0',
   },
+  IE_11: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Internet Explorer',
+    version: '11',
+    platform: 'Windows 10',
+  },
+  IE_10: {
+    base: 'CrossBrowserTesting',
+    browserName: 'Internet Explorer',
+    version: '10',
+    platform: 'Windows 7 64-Bit',
+  },
 }
