@@ -1,6 +1,6 @@
 import { Configuration } from '../core/configuration'
 import { addMonitoringMessage } from '../core/internalMonitoring'
-import { msToNs, ResourceKind } from '../core/utils'
+import { msToNs, ResourceKind, startsWith } from '../core/utils'
 import { PerformanceResourceDetails } from './rum'
 
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
@@ -82,8 +82,8 @@ export function isValidResource(url: string, configuration: Configuration) {
 
 function isBrowserAgentRequest(url: string, configuration: Configuration) {
   return (
-    url.startsWith(configuration.logsEndpoint) ||
-    url.startsWith(configuration.rumEndpoint) ||
-    (configuration.internalMonitoringEndpoint && url.startsWith(configuration.internalMonitoringEndpoint))
+    startsWith(url, configuration.logsEndpoint) ||
+    startsWith(url, configuration.rumEndpoint) ||
+    (configuration.internalMonitoringEndpoint && startsWith(url, configuration.internalMonitoringEndpoint))
   )
 }
