@@ -143,3 +143,7 @@ export function jsonStringify(
 function hasToJSON(value: unknown): value is ObjectWithToJSON {
   return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
 }
+
+export function startsWith(candidate: string, search: string) {
+  return candidate.indexOf(search) === 0
+}
