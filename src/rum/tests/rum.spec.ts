@@ -217,6 +217,7 @@ describe('rum session', () => {
     const errorObservable = new Observable<ErrorMessage>()
     const requestObservable = new Observable<RequestDetails>()
     startRum('appId', errorObservable, requestObservable, configuration as Configuration, trackedWithResourcesSession)
+    server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     errorObservable.notify(FAKE_ERROR as ErrorMessage)
@@ -234,6 +235,7 @@ describe('rum session', () => {
     const errorObservable = new Observable<ErrorMessage>()
     const requestObservable = new Observable<RequestDetails>()
     startRum('appId', errorObservable, requestObservable, configuration as Configuration, trackedWithResourcesSession)
+    server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     requestObservable.notify(FAKE_REQUEST as RequestDetails)
@@ -252,6 +254,7 @@ describe('rum session', () => {
     const errorObservable = new Observable<ErrorMessage>()
     const requestObservable = new Observable<RequestDetails>()
     startRum('appId', errorObservable, requestObservable, configuration as Configuration, notTrackedSession)
+    server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     requestObservable.notify(FAKE_REQUEST as RequestDetails)
@@ -268,6 +271,7 @@ describe('rum session', () => {
       isTrackedWithResource: () => isTracked,
     }
     startRum('appId', new Observable(), new Observable(), configuration as Configuration, session)
+    server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     expect(server.requests.length).toEqual(1)
@@ -279,5 +283,32 @@ describe('rum session', () => {
     isTracked = true
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     expect(server.requests.length).toEqual(2)
+  })
+})
+
+describe('rum init', () => {
+  let server: sinon.SinonFakeServer
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
+    server = sinon.fakeServer.create()
+  })
+
+  afterEach(() => {
+    server.restore()
+  })
+
+  it('should send buffered performance entries', () => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+
+    startRum('appId', new Observable(), new Observable(), configuration as Configuration, session)
+
+    expect(server.requests.length).toBeGreaterThan(0)
   })
 })

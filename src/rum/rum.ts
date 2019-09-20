@@ -235,35 +235,47 @@ export function trackRequests(
   })
 }
 
-export function trackPerformanceTiming(
+function trackPerformanceTiming(
   configuration: Configuration,
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
+  if (window.performance && 'getEntriesByType' in performance) {
+    handlePerformanceEntries(performance, session, configuration, addRumEvent)
+  }
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((list: PerformanceObserverEntryList) => {
-        if (session.isTrackedWithResource()) {
-          list
-            .getEntriesByType('resource')
-            .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
-        }
-        list
-          .getEntriesByType('navigation')
-          .forEach((entry) => handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent))
-        list
-          .getEntriesByType('paint')
-          .forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, addRumEvent))
-      })
+      monitor((entries) => handlePerformanceEntries(entries, session, configuration, addRumEvent))
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
-    if (performance && 'addEventListener' in performance) {
+    if (window.performance && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
       performance.addEventListener('resourcetimingbufferfull', () => {
         performance.clearResourceTimings()
       })
     }
   }
+}
+
+function handlePerformanceEntries(
+  entries: Performance | PerformanceObserverEntryList,
+  session: RumSession,
+  configuration: Configuration,
+  addRumEvent: (event: RumEvent) => void
+) {
+  if (session.isTrackedWithResource()) {
+    entries
+      .getEntriesByType('resource')
+      .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
+  }
+  entries
+    .getEntriesByType('navigation')
+    .forEach(
+      (entry) =>
+        (entry as PerformanceNavigationTiming).loadEventEnd > 0 &&
+        handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent)
+    )
+  entries.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, addRumEvent))
 }
 
 export function handleResourceEntry(
