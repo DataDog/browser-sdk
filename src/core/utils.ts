@@ -150,3 +150,7 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
 export function startsWith(candidate: string, search: string) {
   return candidate.indexOf(search) === 0
 }
+
+export function includes(candidate: unknown[], search: unknown) {
+  return candidate.indexOf(search) !== -1
+}
