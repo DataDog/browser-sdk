@@ -1,6 +1,6 @@
 import { Configuration } from '../core/configuration'
 import { addMonitoringMessage } from '../core/internalMonitoring'
-import { msToNs, ResourceKind, startsWith } from '../core/utils'
+import { includes, msToNs, ResourceKind, startsWith } from '../core/utils'
 import { PerformanceResourceDetails } from './rum'
 
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
@@ -12,13 +12,13 @@ const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string)
   [
     ResourceKind.IMAGE,
     (initiatorType: string, path: string) =>
-      ['image', 'img', 'icon'].includes(initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
+      includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
   ],
   [ResourceKind.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
   [
     ResourceKind.MEDIA,
     (initiatorType: string, path: string) =>
-      ['audio', 'video'].includes(initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
+      includes(['audio', 'video'], initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
   ],
 ]
 

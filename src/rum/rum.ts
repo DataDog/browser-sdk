@@ -3,7 +3,7 @@ import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../cor
 import { monitor } from '../core/internalMonitoring'
 import { RequestDetails, RequestObservable, RequestType } from '../core/requestCollection'
 import { Batch, HttpRequest } from '../core/transport'
-import { generateUUID, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { generateUUID, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumSession } from './rumSession'
@@ -286,7 +286,7 @@ export function handleResourceEntry(
     return
   }
   const resourceKind = computeResourceKind(entry)
-  if ([ResourceKind.XHR, ResourceKind.FETCH].includes(resourceKind)) {
+  if (includes([ResourceKind.XHR, ResourceKind.FETCH], resourceKind)) {
     return
   }
   addRumEvent({
