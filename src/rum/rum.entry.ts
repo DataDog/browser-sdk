@@ -3,6 +3,7 @@ import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { startRequestCollection } from '../core/requestCollection'
+import { cookieAuthorized } from '../core/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -26,6 +27,10 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
+  if (!cookieAuthorized) {
+    console.error('Cookies are not authorized, we will not send any data.')
+    return
+  }
   if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
     console.error('Client Token is not configured, we will not send any data.')
     return

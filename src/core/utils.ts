@@ -154,3 +154,13 @@ export function startsWith(candidate: string, search: string) {
 export function includes(candidate: unknown[], search: unknown) {
   return candidate.indexOf(search) !== -1
 }
+
+export function cookieAuthorized(): boolean {
+  try {
+    const _ = document.cookie
+  } catch (error) {
+    console.error(error)
+    return false
+  }
+  return true
+}
