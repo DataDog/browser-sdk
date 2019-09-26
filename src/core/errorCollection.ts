@@ -102,8 +102,7 @@ function formatConsoleParameters(param: unknown) {
     return param
   }
   if (param instanceof Error) {
-    const stackTrace = computeStackTrace(param)
-    return toStackTraceString(stackTrace)
+    return toStackTraceString(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
