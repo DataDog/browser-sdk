@@ -1,4 +1,4 @@
-import { Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
+import { computeStackTrace, Handler, report, StackFrame, StackTrace } from '../tracekit/tracekit'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
@@ -102,7 +102,7 @@ function formatConsoleParameters(param: unknown) {
     return param
   }
   if (param instanceof Error) {
-    return param.toString()
+    return toStackTraceString(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }

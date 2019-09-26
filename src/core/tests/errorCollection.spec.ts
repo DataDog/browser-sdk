@@ -58,7 +58,9 @@ describe('console tracker', () => {
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toEqual('console error: TypeError: hello')
+    expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toContain(
+      'console error: TypeError: hello'
+    )
   })
 })
 
