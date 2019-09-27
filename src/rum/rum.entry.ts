@@ -1,8 +1,10 @@
-import { UserConfiguration } from '../core/configuration'
+import lodashAssign from 'lodash.assign'
 
+import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { startRequestCollection } from '../core/requestCollection'
+import { Context, ContextValue } from '../core/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -19,6 +21,12 @@ export interface RumUserConfiguration extends UserConfiguration {
 const STUBBED_RUM = {
   init(userConfiguration: RumUserConfiguration) {
     makeStub('core.init')
+  },
+  addRumGlobalContext(key: string, value: ContextValue) {
+    makeStub('addRumGlobalContext')
+  },
+  setRumGlobalContext(context: Context) {
+    makeStub('setRumGlobalContext')
   },
 }
 
@@ -43,5 +51,12 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
   const session = startRumSession(configuration)
   const requestObservable = startRequestCollection()
 
-  startRum(rumUserConfiguration.applicationId, errorObservable, requestObservable, configuration, session)
+  const globalApi = startRum(
+    rumUserConfiguration.applicationId,
+    errorObservable,
+    requestObservable,
+    configuration,
+    session
+  )
+  lodashAssign(window.DD_RUM, globalApi)
 })

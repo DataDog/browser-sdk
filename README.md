@@ -94,19 +94,25 @@ contains all the public APIs.
 
 ### API exposed in `window.DD_RUM`
 
-Init must be called to start the tracking. Configurable options:
+- Init must be called to start the tracking. Configurable options:
 
-- `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
-- `resourceSampleRate`: percentage of tracked sessions with resources collection.
+  - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
+  - `resourceSampleRate`: percentage of tracked sessions with resources collection.
 
-```
-init(configuration: {
-    clientToken: 'XXX',
-    applicationId: 'XXX',
-    sampleRate: 100,
-    resourceSampleRate: 100
-})
-```
+  ```
+  init(configuration: {
+      clientToken: 'XXX',
+      applicationId: 'XXX',
+      sampleRate: 100,
+      resourceSampleRate: 100
+  })
+  ```
+
+- Modify the global context
+  ```
+  addRumGlobalContext (key: string, value: any)  # add one key-value to the default context
+  setRumGlobalContext (context: Context)  # entirely replace the default context
+  ```
 
 ## Deploy
 
