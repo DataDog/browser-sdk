@@ -136,6 +136,12 @@ export function startRum(
   batch.beforeFlushOnUnload(() => {
     endPageView(addRumEvent)
   })
+  session.beforeRenewal(() => {
+    // both events are sent with empty or new session id
+    // some extra work would be needed if we want to handle that properly
+    endPageView(addRumEvent)
+    newPageView(location, addRumEvent)
+  })
   trackPageView(window.location, addRumEvent)
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
