@@ -332,6 +332,7 @@ describe('rum global context', () => {
 
   beforeEach(() => {
     const session = {
+      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => true,
