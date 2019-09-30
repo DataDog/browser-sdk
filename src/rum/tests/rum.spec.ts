@@ -17,6 +17,7 @@ import {
   startRum,
   trackPageView,
 } from '../rum'
+import { RumGlobal } from '../rum.entry'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
   return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
@@ -315,5 +316,52 @@ describe('rum init', () => {
     startRum('appId', new Observable(), new Observable(), configuration as Configuration, session)
 
     expect(server.requests.length).toBeGreaterThan(0)
+  })
+})
+
+type RumApi = Omit<RumGlobal, 'init'>
+function getRumMessage(server: sinon.SinonFakeServer, index: number) {
+  return JSON.parse(server.requests[index].requestBody) as RumEvent
+}
+
+describe('rum global context', () => {
+  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
+  let errorObservable: Observable<ErrorMessage>
+  let RUM: RumApi
+  let server: sinon.SinonFakeServer
+
+  beforeEach(() => {
+    const session = {
+      beforeRenewal: () => undefined,
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    server = sinon.fakeServer.create()
+    errorObservable = new Observable<ErrorMessage>()
+    RUM = startRum('appId', errorObservable, new Observable(), configuration as Configuration, session) as RumApi
+    server.requests = []
+  })
+
+  afterEach(() => {
+    server.restore()
+  })
+
+  it('should be added to the request', () => {
+    RUM.setRumGlobalContext({ bar: 'foo' })
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+
+    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
+  })
+
+  it('should be updatable', () => {
+    RUM.setRumGlobalContext({ bar: 'foo' })
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    RUM.setRumGlobalContext({ foo: 'bar' })
+    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+
+    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
+    expect((getRumMessage(server, 1) as any).foo).toEqual('bar')
+    expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
   })
 })

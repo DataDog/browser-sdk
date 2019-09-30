@@ -1,11 +1,14 @@
+import lodashMerge from 'lodash.merge'
+
 import { Configuration } from '../core/configuration'
 import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { RequestDetails, RequestObservable, RequestType } from '../core/requestCollection'
 import { Batch, HttpRequest } from '../core/transport'
-import { generateUUID, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { Context, ContextValue, generateUUID, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
+import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 
 declare global {
@@ -125,7 +128,29 @@ export function startRum(
   configuration: Configuration,
   session: RumSession
 ) {
-  const batch = initRumBatch(configuration, session, applicationId)
+  let globalContext: Context = {}
+
+  const batch = new Batch<RumEvent>(
+    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () =>
+      lodashMerge(
+        {
+          applicationId,
+          date: new Date().getTime(),
+          screen: {
+            id: pageViewId,
+            url: window.location.href,
+          },
+          sessionId: session.getId(),
+        },
+        globalContext
+      ),
+    withSnakeCaseKeys
+  )
 
   const addRumEvent = (event: RumEvent) => {
     if (session.isTracked()) {
@@ -146,26 +171,15 @@ export function startRum(
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, session, addRumEvent)
-}
 
-export function initRumBatch(configuration: Configuration, session: RumSession, applicationId: string) {
-  return new Batch<RumEvent>(
-    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () => ({
-      applicationId,
-      date: new Date().getTime(),
-      screen: {
-        id: pageViewId,
-        url: window.location.href,
-      },
-      sessionId: session.getId(),
-    }),
-    withSnakeCaseKeys
-  )
+  const globalApi: Partial<RumGlobal> = {}
+  globalApi.setRumGlobalContext = (context: Context) => {
+    globalContext = context
+  }
+  globalApi.addRumGlobalContext = (key: string, value: ContextValue) => {
+    globalContext[key] = value
+  }
+  return globalApi
 }
 
 export function trackPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
