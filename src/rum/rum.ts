@@ -111,6 +111,11 @@ export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEv
 
 export let pageViewId: string
 export let pageViewStart: number
+/**
+ * link to binary trigger a beforeunload event
+ * choice: send premature page end instead of multiple page end
+ */
+export let pageViewEndSent: boolean
 let activeLocation: Location
 
 export function startRum(
@@ -129,12 +134,13 @@ export function startRum(
   }
 
   batch.beforeFlushOnUnload(() => {
-    addRumEvent({
-      duration: pageViewStart,
-      evt: {
-        category: RumEventCategory.PAGE_END,
-      },
-    })
+    endPageView(addRumEvent)
+  })
+  session.beforeRenewal(() => {
+    // both events are sent with empty or new session id
+    // some extra work would be needed if we want to handle that properly
+    endPageView(addRumEvent)
+    newPageView(location, addRumEvent)
   })
   trackPageView(window.location, addRumEvent)
   trackErrors(errorObservable, addRumEvent)
@@ -170,6 +176,7 @@ export function trackPageView(location: Location, addRumEvent: (event: RumEvent)
 function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
   pageViewId = generateUUID()
   pageViewStart = new Date().getTime()
+  pageViewEndSent = false
   activeLocation = { ...location }
   addRumEvent({
     duration: pageViewStart,
@@ -177,6 +184,18 @@ function newPageView(location: Location, addRumEvent: (event: RumEvent) => void)
       category: RumEventCategory.PAGE_START,
     },
   })
+}
+
+function endPageView(addRumEvent: (event: RumEvent) => void) {
+  if (!pageViewEndSent) {
+    addRumEvent({
+      duration: pageViewStart,
+      evt: {
+        category: RumEventCategory.PAGE_END,
+      },
+    })
+    pageViewEndSent = true
+  }
 }
 
 function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
@@ -197,12 +216,7 @@ function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void
 
 function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
   if (areDifferentPages(activeLocation, location)) {
-    addRumEvent({
-      duration: pageViewStart,
-      evt: {
-        category: RumEventCategory.PAGE_END,
-      },
-    })
+    endPageView(addRumEvent)
     newPageView(location, addRumEvent)
   }
 }
