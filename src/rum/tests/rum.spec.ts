@@ -211,7 +211,6 @@ describe('rum session', () => {
 
   it('when tracked with resources should enable full tracking', () => {
     const trackedWithResourcesSession = {
-      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => true,
@@ -230,7 +229,6 @@ describe('rum session', () => {
 
   it('when tracked without resources should not track resources', () => {
     const trackedWithResourcesSession = {
-      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => false,
@@ -250,7 +248,6 @@ describe('rum session', () => {
 
   it('when not tracked should disable tracking', () => {
     const notTrackedSession = {
-      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => false,
       isTrackedWithResource: () => false,
@@ -270,7 +267,6 @@ describe('rum session', () => {
   it('when type change should enable/disable existing tracking', () => {
     let isTracked = true
     const session = {
-      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => isTracked,
       isTrackedWithResource: () => isTracked,
@@ -307,7 +303,6 @@ describe('rum init', () => {
 
   it('should send buffered performance entries', () => {
     const session = {
-      beforeRenewal: () => undefined,
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => true,

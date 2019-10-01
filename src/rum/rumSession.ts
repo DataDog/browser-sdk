@@ -1,5 +1,4 @@
 import { Configuration } from '../core/configuration'
-import { Observable } from '../core/observable'
 import {
   cacheCookieAccess,
   COOKIE_ACCESS_DELAY,
@@ -13,7 +12,6 @@ import * as utils from '../core/utils'
 export const RUM_COOKIE_NAME = '_dd_r'
 
 export interface RumSession {
-  beforeRenewal: (callback: () => void) => void
   getId: () => string | undefined
   isTracked: () => boolean
   isTrackedWithResource: () => boolean
@@ -29,30 +27,22 @@ export function startRumSession(configuration: Configuration): RumSession {
   const rumSession = cacheCookieAccess(RUM_COOKIE_NAME)
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
 
-  const beforeRenewSession = new Observable<void>()
-  const expandOrRenewSession = makeExpandOrRenewSession(configuration, rumSession, sessionId, beforeRenewSession)
+  const expandOrRenewSession = makeExpandOrRenewSession(configuration, rumSession, sessionId)
 
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
 
   return {
-    beforeRenewal: (callback: () => void) => beforeRenewSession.subscribe(callback),
     getId: () => sessionId.get(),
     isTracked: () => isTracked(rumSession.get() as RumSessionType),
     isTrackedWithResource: () => rumSession.get() === RumSessionType.TRACKED_WITH_RESOURCES,
   }
 }
 
-function makeExpandOrRenewSession(
-  configuration: Configuration,
-  rumSession: CookieCache,
-  sessionId: CookieCache,
-  beforeRenewSession: Observable<void>
-) {
+function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
   return utils.throttle(() => {
-    let sessionType = rumSession.get() as RumSessionType | undefined
+    let sessionType = loggerSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
-      beforeRenewSession.notify()
       sessionType = utils.performDraw(configuration.sampleRate)
         ? RumSessionType.TRACKED_WITH_RESOURCES
         : RumSessionType.NOT_TRACKED
@@ -62,7 +52,7 @@ function makeExpandOrRenewSession(
           : RumSessionType.TRACKED_WITHOUT_RESOURCES
       }
     }
-    rumSession.set(sessionType as string, EXPIRATION_DELAY)
+    loggerSession.set(sessionType as string, EXPIRATION_DELAY)
     if (isTracked(sessionType)) {
       sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
     }
