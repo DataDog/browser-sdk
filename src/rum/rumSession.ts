@@ -39,9 +39,9 @@ export function startRumSession(configuration: Configuration): RumSession {
   }
 }
 
-function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
+function makeExpandOrRenewSession(configuration: Configuration, rumSession: CookieCache, sessionId: CookieCache) {
   return utils.throttle(() => {
-    let sessionType = loggerSession.get() as RumSessionType | undefined
+    let sessionType = rumSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
       sessionType = utils.performDraw(configuration.sampleRate)
         ? RumSessionType.TRACKED_WITH_RESOURCES
@@ -52,7 +52,7 @@ function makeExpandOrRenewSession(configuration: Configuration, loggerSession: C
           : RumSessionType.TRACKED_WITHOUT_RESOURCES
       }
     }
-    loggerSession.set(sessionType as string, EXPIRATION_DELAY)
+    rumSession.set(sessionType as string, EXPIRATION_DELAY)
     if (isTracked(sessionType)) {
       sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
     }
