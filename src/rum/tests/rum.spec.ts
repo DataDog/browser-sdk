@@ -163,7 +163,7 @@ describe('rum track page view', () => {
       fakeLocation.hash = url.hash
     })
     fakeLocation = { pathname: '/foo' }
-    trackPageView(fakeLocation as Location, jasmine.createSpy())
+    trackPageView(fakeLocation as Location)
     initialPageViewId = pageViewId
   })
 
