@@ -155,8 +155,9 @@ export function includes(candidate: unknown[], search: unknown) {
   return candidate.indexOf(search) !== -1
 }
 
-export function cookieAuthorized(): boolean {
+export function areCookiesAuthorized(): boolean {
   try {
+    document.cookie = 'test=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
     const _ = document.cookie
   } catch (error) {
     console.error(error)

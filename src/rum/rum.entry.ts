@@ -3,7 +3,7 @@ import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { startRequestCollection } from '../core/requestCollection'
-import { cookieAuthorized } from '../core/utils'
+import { areCookiesAuthorized } from '../core/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -27,7 +27,7 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!cookieAuthorized) {
+  if (!areCookiesAuthorized) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
   }
