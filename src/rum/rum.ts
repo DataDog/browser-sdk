@@ -28,8 +28,6 @@ export enum RumEventCategory {
   ERROR = 'error',
   SCREEN_PERFORMANCE = 'screen_performance',
   RESOURCE = 'resource',
-  PAGE_START = 'page_start',
-  PAGE_END = 'page_end',
 }
 
 interface PerformanceResourceDetailsElement {
@@ -103,22 +101,9 @@ export interface RumErrorEvent {
   }
 }
 
-export interface RumPageEvent {
-  evt: {
-    category: RumEventCategory.PAGE_START | RumEventCategory.PAGE_END
-  }
-  duration: number // no field available for a timestamp
-}
-
-export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent | RumPageEvent
+export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent
 
 export let pageViewId: string
-export let pageViewStart: number
-/**
- * link to binary trigger a beforeunload event
- * choice: send premature page end instead of multiple page end
- */
-export let pageViewEndSent: boolean
 let activeLocation: Location
 
 export function startRum(
@@ -158,16 +143,7 @@ export function startRum(
     }
   }
 
-  batch.beforeFlushOnUnload(() => {
-    endPageView(addRumEvent)
-  })
-  session.beforeRenewal(() => {
-    // both events are sent with empty or new session id
-    // some extra work would be needed if we want to handle that properly
-    endPageView(addRumEvent)
-    newPageView(location, addRumEvent)
-  })
-  trackPageView(window.location, addRumEvent)
+  trackPageView(window.location)
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, session, addRumEvent)
@@ -182,56 +158,35 @@ export function startRum(
   return globalApi
 }
 
-export function trackPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
-  newPageView(location, addRumEvent)
-  trackHistory(location, addRumEvent)
+export function trackPageView(location: Location) {
+  newPageView(location)
+  trackHistory(location)
 }
 
-function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
+function newPageView(location: Location) {
   pageViewId = generateUUID()
-  pageViewStart = new Date().getTime()
-  pageViewEndSent = false
   activeLocation = { ...location }
-  addRumEvent({
-    duration: pageViewStart,
-    evt: {
-      category: RumEventCategory.PAGE_START,
-    },
-  })
 }
 
-function endPageView(addRumEvent: (event: RumEvent) => void) {
-  if (!pageViewEndSent) {
-    addRumEvent({
-      duration: pageViewStart,
-      evt: {
-        category: RumEventCategory.PAGE_END,
-      },
-    })
-    pageViewEndSent = true
-  }
-}
-
-function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
+function trackHistory(location: Location) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location)
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location)
   })
   window.addEventListener('popstate', () => {
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location)
   })
 }
 
-function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
+function onUrlChange(location: Location) {
   if (areDifferentPages(activeLocation, location)) {
-    endPageView(addRumEvent)
-    newPageView(location, addRumEvent)
+    newPageView(location)
   }
 }
 
