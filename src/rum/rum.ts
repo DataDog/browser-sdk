@@ -5,8 +5,9 @@ import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../cor
 import { monitor } from '../core/internalMonitoring'
 import { RequestDetails, RequestObservable, RequestType } from '../core/requestCollection'
 import { Batch, HttpRequest } from '../core/transport'
-import { Context, ContextValue, generateUUID, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
+import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { matchRequestTiming } from './matchRequestTiming'
+import { pageViewId, trackPageView } from './pageViewTracker'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
@@ -109,17 +110,11 @@ export interface RumPageViewEvent {
     category: RumEventCategory.PAGE_VIEW
   }
   rum: {
-    document_version: number
+    documentVersion: number
   }
 }
 
 export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent | RumPageViewEvent
-
-export let pageViewId: string
-let pageViewStartTimestamp: number
-let pageViewStartOrigin: number
-let pageViewVersion: number
-let activeLocation: Location
 
 export function startRum(
   applicationId: string,
@@ -171,66 +166,6 @@ export function startRum(
     globalContext[key] = value
   }
   return globalApi
-}
-
-export function trackPageView(batch: Batch<RumEvent>, location: Location, addRumEvent: (event: RumEvent) => void) {
-  newPageView(location, addRumEvent)
-  trackHistory(location, addRumEvent)
-  batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
-}
-
-function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
-  pageViewId = generateUUID()
-  pageViewStartTimestamp = new Date().getTime()
-  pageViewStartOrigin = performance.now()
-  pageViewVersion = 1
-  activeLocation = { ...location }
-  addPageViewEvent(addRumEvent)
-}
-
-function updatePageView(addRumEvent: (event: RumEvent) => void) {
-  pageViewVersion += 1
-  addPageViewEvent(addRumEvent)
-}
-
-function addPageViewEvent(addRumEvent: (event: RumEvent) => void) {
-  addRumEvent({
-    date: pageViewStartTimestamp,
-    duration: msToNs(performance.now() - pageViewStartOrigin),
-    evt: {
-      category: RumEventCategory.PAGE_VIEW,
-    },
-    rum: {
-      document_version: pageViewVersion,
-    },
-  })
-}
-
-function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
-  const originalPushState = history.pushState
-  history.pushState = monitor(function(this: History['pushState']) {
-    originalPushState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
-  })
-  const originalReplaceState = history.replaceState
-  history.replaceState = monitor(function(this: History['replaceState']) {
-    originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
-  })
-  window.addEventListener('popstate', () => {
-    onUrlChange(location, addRumEvent)
-  })
-}
-
-function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
-  if (areDifferentPages(activeLocation, location)) {
-    updatePageView(addRumEvent)
-    newPageView(location, addRumEvent)
-  }
-}
-
-function areDifferentPages(previous: Location, current: Location) {
-  return previous.pathname !== current.pathname
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
