@@ -4,7 +4,7 @@ import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { Status, StatusType } from '../core/status'
-import { Context, ContextValue } from '../core/utils'
+import { areCookiesAuthorized, Context, ContextValue } from '../core/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
 
@@ -73,6 +73,10 @@ export type LogsGlobal = typeof STUBBED_LOGS
 
 window.DD_LOGS = makeGlobal(STUBBED_LOGS)
 window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
+  if (!areCookiesAuthorized) {
+    console.error('Cookies are not authorized, we will not send any data.')
+    return
+  }
   if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
     console.error('Client Token is not configured, we will not send any data.')
     return
