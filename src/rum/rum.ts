@@ -116,7 +116,8 @@ export interface RumPageViewEvent {
 export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent | RumPageViewEvent
 
 export let pageViewId: string
-let pageViewStart: number
+let pageViewStartTimestamp: number
+let pageViewStartOrigin: number
 let pageViewVersion: number
 let activeLocation: Location
 
@@ -180,7 +181,8 @@ export function trackPageView(batch: Batch<RumEvent>, location: Location, addRum
 
 function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
   pageViewId = generateUUID()
-  pageViewStart = performance.now()
+  pageViewStartTimestamp = new Date().getTime()
+  pageViewStartOrigin = performance.now()
   pageViewVersion = 1
   activeLocation = { ...location }
   addPageViewEvent(addRumEvent)
@@ -193,8 +195,8 @@ function updatePageView(addRumEvent: (event: RumEvent) => void) {
 
 function addPageViewEvent(addRumEvent: (event: RumEvent) => void) {
   addRumEvent({
-    date: pageViewStart,
-    duration: msToNs(performance.now() - pageViewStart),
+    date: pageViewStartTimestamp,
+    duration: msToNs(performance.now() - pageViewStartOrigin),
     evt: {
       category: RumEventCategory.PAGE_VIEW,
     },
