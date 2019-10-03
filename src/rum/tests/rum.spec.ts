@@ -4,6 +4,7 @@ import { Configuration, DEFAULT_CONFIGURATION } from '../../core/configuration'
 import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { RequestDetails } from '../../core/requestCollection'
+import { Batch } from '../../core/transport'
 import { isIE, PerformanceObserverStubBuilder } from '../../tests/specHelper'
 
 import {
@@ -148,7 +149,7 @@ describe('rum handle performance entry', () => {
   })
 })
 
-describe('rum track page view', () => {
+describe('rum track url change', () => {
   let fakeLocation: Partial<Location>
   let initialPageViewId: string
 
@@ -163,7 +164,8 @@ describe('rum track page view', () => {
       fakeLocation.hash = url.hash
     })
     fakeLocation = { pathname: '/foo' }
-    trackPageView(fakeLocation as Location)
+    const fakeBatch: Partial<Batch<RumEvent>> = { beforeFlushOnUnload: () => undefined }
+    trackPageView(fakeBatch as Batch<RumEvent>, fakeLocation as Location, () => undefined)
     initialPageViewId = pageViewId
   })
 
