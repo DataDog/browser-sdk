@@ -104,28 +104,21 @@ function areDifferentPages(previous: Location, current: Location) {
 
 function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
   performanceObservable.subscribe((entry) => {
-    switch (entry.entryType) {
-      case 'navigation':
-        const navigationEntry = entry as PerformanceNavigationTiming
-        screenPerformance = {
-          ...screenPerformance,
-          domComplete: navigationEntry.domComplete,
-          domContentLoadedEventEnd: navigationEntry.domContentLoadedEventEnd,
-          domInteractive: navigationEntry.domInteractive,
-          loadEventEnd: navigationEntry.loadEventEnd,
-        }
-        break
-      case 'paint':
-        if (entry.name === 'first-contentful-paint') {
-          const paintEntry = entry as PerformancePaintTiming
-          screenPerformance = {
-            ...screenPerformance,
-            firstContentfulPaint: paintEntry.startTime,
-          }
-        }
-        break
-      default:
-        break
+    if (entry.entryType === 'navigation') {
+      const navigationEntry = entry as PerformanceNavigationTiming
+      screenPerformance = {
+        ...screenPerformance,
+        domComplete: msToNs(navigationEntry.domComplete),
+        domContentLoadedEventEnd: msToNs(navigationEntry.domContentLoadedEventEnd),
+        domInteractive: msToNs(navigationEntry.domInteractive),
+        loadEventEnd: msToNs(navigationEntry.loadEventEnd),
+      }
+    } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+      const paintEntry = entry as PerformancePaintTiming
+      screenPerformance = {
+        ...screenPerformance,
+        firstContentfulPaint: msToNs(paintEntry.startTime),
+      }
     }
   })
 }

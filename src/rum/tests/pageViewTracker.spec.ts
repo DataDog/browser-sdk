@@ -121,11 +121,11 @@ describe('rum page view performance', () => {
 
     expect(addRumEvent.calls.count()).toEqual(3)
     expect(getPageViewEvent(1).screen.performance).toEqual({
-      domComplete: 456,
-      domContentLoadedEventEnd: 345,
-      domInteractive: 234,
-      firstContentfulPaint: 123,
-      loadEventEnd: 567,
+      domComplete: 456e6,
+      domContentLoadedEventEnd: 345e6,
+      domInteractive: 234e6,
+      firstContentfulPaint: 123e6,
+      loadEventEnd: 567e6,
     })
     expect(getPageViewEvent(2).screen.performance).toEqual({})
   })
