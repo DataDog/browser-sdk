@@ -148,7 +148,7 @@ describe('rum handle performance entry', () => {
 
 describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com' }
+  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestDetails> = { url: 'http://foo.com' }
   let server: sinon.SinonFakeServer
   let original: PerformanceObserver | undefined
