@@ -2,7 +2,7 @@ import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { Batch } from '../../core/transport'
 import { pageViewId, trackPageView } from '../pageViewTracker'
-import { PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../rum'
 
 function setup({
   addRumEvent,
@@ -58,6 +58,10 @@ describe('rum track url change', () => {
 })
 
 describe('rum page view summary', () => {
+  const FAKE_LONG_TASK = {
+    entryType: 'longtask',
+    startTime: 456,
+  }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
   function getPageViewEvent(index: number) {
@@ -82,6 +86,21 @@ describe('rum page view summary', () => {
     expect(addRumEvent.calls.count()).toEqual(3)
     expect(getPageViewEvent(1).screen.summary.errorCount).toEqual(2)
     expect(getPageViewEvent(2).screen.summary.errorCount).toEqual(0)
+  })
+
+  it('should track long task count', () => {
+    const performanceObservable = new Observable<PerformanceEntry>()
+    setup({ addRumEvent, performanceObservable })
+
+    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getPageViewEvent(0).screen.summary.longTaskCount).toEqual(0)
+
+    performanceObservable.notify(FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    history.pushState({}, '', '/bar')
+
+    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getPageViewEvent(1).screen.summary.longTaskCount).toEqual(1)
+    expect(getPageViewEvent(2).screen.summary.longTaskCount).toEqual(0)
   })
 })
 
