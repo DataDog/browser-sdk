@@ -1,7 +1,12 @@
+import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
 import { Batch } from '../core/transport'
 import { generateUUID, msToNs } from '../core/utils'
 import { RumEvent, RumEventCategory } from './rum'
+
+export interface PageViewSummary {
+  errorCount: number
+}
 
 export let pageViewId: string
 
@@ -9,10 +14,17 @@ let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
 let activeLocation: Location
+let summary: PageViewSummary
 
-export function trackPageView(batch: Batch<RumEvent>, location: Location, addRumEvent: (event: RumEvent) => void) {
+export function trackPageView(
+  batch: Batch<RumEvent>,
+  location: Location,
+  addRumEvent: (event: RumEvent) => void,
+  errorObservable: ErrorObservable
+) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
+  errorObservable.subscribe(() => (summary.errorCount += 1))
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
 
@@ -21,6 +33,9 @@ function newPageView(location: Location, addRumEvent: (event: RumEvent) => void)
   startTimestamp = new Date().getTime()
   startOrigin = performance.now()
   documentVersion = 1
+  summary = {
+    errorCount: 0,
+  }
   activeLocation = { ...location }
   addPageViewEvent(addRumEvent)
 }
@@ -39,6 +54,9 @@ function addPageViewEvent(addRumEvent: (event: RumEvent) => void) {
     },
     rum: {
       documentVersion,
+    },
+    screen: {
+      summary,
     },
   })
 }
