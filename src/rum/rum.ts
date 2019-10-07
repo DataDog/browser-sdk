@@ -8,7 +8,7 @@ import { RequestDetails, RequestObservable, RequestType } from '../core/requestC
 import { Batch, HttpRequest } from '../core/transport'
 import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { matchRequestTiming } from './matchRequestTiming'
-import { pageViewId, PageViewSummary, trackPageView } from './pageViewTracker'
+import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
@@ -114,6 +114,7 @@ export interface RumPageViewEvent {
     documentVersion: number
   }
   screen: {
+    performance: PageViewPerformance
     summary: PageViewSummary
   }
 }
@@ -159,7 +160,7 @@ export function startRum(
 
   const performanceObservable = startPerformanceCollection(session)
 
-  trackPageView(batch, window.location, addRumEvent, errorObservable)
+  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable)
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)

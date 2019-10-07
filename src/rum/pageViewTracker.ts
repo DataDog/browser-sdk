@@ -1,8 +1,17 @@
 import { ErrorObservable } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
+import { Observable } from '../core/observable'
 import { Batch } from '../core/transport'
 import { generateUUID, msToNs } from '../core/utils'
-import { RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+
+export interface PageViewPerformance {
+  firstContentfulPaint?: number
+  domInteractive?: number
+  domContentLoadedEventEnd?: number
+  domComplete?: number
+  loadEventEnd?: number
+}
 
 export interface PageViewSummary {
   errorCount: number
@@ -15,15 +24,18 @@ let startOrigin: number
 let documentVersion: number
 let activeLocation: Location
 let summary: PageViewSummary
+let screenPerformance: PageViewPerformance
 
 export function trackPageView(
   batch: Batch<RumEvent>,
   location: Location,
   addRumEvent: (event: RumEvent) => void,
-  errorObservable: ErrorObservable
+  errorObservable: ErrorObservable,
+  performanceObservable: Observable<PerformanceEntry>
 ) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
+  trackPerformance(performanceObservable)
   errorObservable.subscribe(() => (summary.errorCount += 1))
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -36,6 +48,7 @@ function newPageView(location: Location, addRumEvent: (event: RumEvent) => void)
   summary = {
     errorCount: 0,
   }
+  screenPerformance = {}
   activeLocation = { ...location }
   addPageViewEvent(addRumEvent)
 }
@@ -57,6 +70,7 @@ function addPageViewEvent(addRumEvent: (event: RumEvent) => void) {
     },
     screen: {
       summary,
+      performance: screenPerformance,
     },
   })
 }
@@ -86,4 +100,32 @@ function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void)
 
 function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
+}
+
+function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
+  performanceObservable.subscribe((entry) => {
+    switch (entry.entryType) {
+      case 'navigation':
+        const navigationEntry = entry as PerformanceNavigationTiming
+        screenPerformance = {
+          ...screenPerformance,
+          domComplete: navigationEntry.domComplete,
+          domContentLoadedEventEnd: navigationEntry.domContentLoadedEventEnd,
+          domInteractive: navigationEntry.domInteractive,
+          loadEventEnd: navigationEntry.loadEventEnd,
+        }
+        break
+      case 'paint':
+        if (entry.name === 'first-contentful-paint') {
+          const paintEntry = entry as PerformancePaintTiming
+          screenPerformance = {
+            ...screenPerformance,
+            firstContentfulPaint: paintEntry.startTime,
+          }
+        }
+        break
+      default:
+        break
+    }
+  })
 }
