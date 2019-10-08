@@ -2,11 +2,17 @@ import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { Batch } from '../../core/transport'
 import { pageViewId, trackPageView } from '../pageViewTracker'
-import { RumEvent, RumPageViewEvent } from '../rum'
+import { PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../rum'
 
-function setup(
-  { addRumEvent, errorObservable } = { addRumEvent: () => undefined, errorObservable: new Observable<ErrorMessage>() }
-) {
+function setup({
+  addRumEvent,
+  errorObservable,
+  performanceObservable,
+}: {
+  addRumEvent?: () => any
+  errorObservable?: Observable<ErrorMessage>
+  performanceObservable?: Observable<PerformanceEntry>
+} = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = new URL(pathname, 'http://localhost')
     fakeLocation.pathname = url.pathname
@@ -15,7 +21,13 @@ function setup(
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
   const fakeBatch: Partial<Batch<RumEvent>> = { beforeFlushOnUnload: () => undefined }
-  trackPageView(fakeBatch as Batch<RumEvent>, fakeLocation as Location, addRumEvent, errorObservable)
+  trackPageView(
+    fakeBatch as Batch<RumEvent>,
+    fakeLocation as Location,
+    addRumEvent || (() => undefined),
+    errorObservable || new Observable<ErrorMessage>(),
+    performanceObservable || new Observable<PerformanceEntry>()
+  )
 }
 
 describe('rum track url change', () => {
@@ -70,5 +82,51 @@ describe('rum page view summary', () => {
     expect(addRumEvent.calls.count()).toEqual(3)
     expect(getPageViewEvent(1).screen.summary.errorCount).toEqual(2)
     expect(getPageViewEvent(2).screen.summary.errorCount).toEqual(0)
+  })
+})
+
+describe('rum page view performance', () => {
+  const FAKE_PAINT_ENTRY = {
+    entryType: 'paint',
+    name: 'first-contentful-paint',
+    startTime: 123,
+  }
+  const FAKE_NAVIGATION_ENTRY = {
+    domComplete: 456,
+    domContentLoadedEventEnd: 345,
+    domInteractive: 234,
+    entryType: 'navigation',
+    loadEventEnd: 567,
+  }
+  let addRumEvent: jasmine.Spy<InferableFunction>
+
+  function getPageViewEvent(index: number) {
+    return addRumEvent.calls.argsFor(index)[0] as RumPageViewEvent
+  }
+
+  beforeEach(() => {
+    addRumEvent = jasmine.createSpy()
+  })
+
+  it('should track performance', () => {
+    const performanceObservable = new Observable<PerformanceEntry>()
+    setup({ addRumEvent, performanceObservable })
+
+    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getPageViewEvent(0).screen.performance).toEqual({})
+
+    performanceObservable.notify(FAKE_PAINT_ENTRY as PerformancePaintTiming)
+    performanceObservable.notify(FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
+    history.pushState({}, '', '/bar')
+
+    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getPageViewEvent(1).screen.performance).toEqual({
+      domComplete: 456e6,
+      domContentLoadedEventEnd: 345e6,
+      domInteractive: 234e6,
+      firstContentfulPaint: 123e6,
+      loadEventEnd: 567e6,
+    })
+    expect(getPageViewEvent(2).screen.performance).toEqual({})
   })
 })

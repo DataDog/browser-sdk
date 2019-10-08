@@ -3,11 +3,12 @@ import lodashMerge from 'lodash.merge'
 import { Configuration } from '../core/configuration'
 import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '../core/errorCollection'
 import { monitor } from '../core/internalMonitoring'
+import { Observable } from '../core/observable'
 import { RequestDetails, RequestObservable, RequestType } from '../core/requestCollection'
 import { Batch, HttpRequest } from '../core/transport'
 import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '../core/utils'
 import { matchRequestTiming } from './matchRequestTiming'
-import { pageViewId, PageViewSummary, trackPageView } from './pageViewTracker'
+import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
@@ -113,6 +114,7 @@ export interface RumPageViewEvent {
     documentVersion: number
   }
   screen: {
+    performance: PageViewPerformance
     summary: PageViewSummary
   }
 }
@@ -156,10 +158,12 @@ export function startRum(
     }
   }
 
-  trackPageView(batch, window.location, addRumEvent, errorObservable)
+  const performanceObservable = startPerformanceCollection(session)
+
+  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable)
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
-  trackPerformanceTiming(configuration, session, addRumEvent)
+  trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
 
   const globalApi: Partial<RumGlobal> = {}
   globalApi.setRumGlobalContext = (context: Context) => {
@@ -169,6 +173,42 @@ export function startRum(
     globalContext[key] = value
   }
   return globalApi
+}
+
+function startPerformanceCollection(session: RumSession) {
+  const performanceObservable = new Observable<PerformanceEntry>()
+
+  if (window.performance && 'getEntriesByType' in performance) {
+    handlePerformanceEntries(session, performanceObservable, performance)
+  }
+  if (window.PerformanceObserver) {
+    const observer = new PerformanceObserver(
+      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries))
+    )
+    observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
+    if (window.performance && 'addEventListener' in performance) {
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
+      performance.addEventListener('resourcetimingbufferfull', () => {
+        performance.clearResourceTimings()
+      })
+    }
+  }
+
+  return performanceObservable
+}
+
+function handlePerformanceEntries(
+  session: RumSession,
+  performanceObservable: Observable<PerformanceEntry>,
+  entries: Performance | PerformanceObserverEntryList
+) {
+  if (session.isTrackedWithResource()) {
+    entries.getEntriesByType('resource').forEach((entry) => performanceObservable.notify(entry))
+  }
+  entries
+    .getEntriesByType('navigation')
+    .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
+  entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
@@ -227,45 +267,24 @@ export function trackRequests(
 
 function trackPerformanceTiming(
   configuration: Configuration,
-  session: RumSession,
-  addRumEvent: (event: RumEvent) => void
+  addRumEvent: (event: RumEvent) => void,
+  performanceObservable: Observable<PerformanceEntry>
 ) {
-  if (window.performance && 'getEntriesByType' in performance) {
-    handlePerformanceEntries(performance, session, configuration, addRumEvent)
-  }
-  if (window.PerformanceObserver) {
-    const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(entries, session, configuration, addRumEvent))
-    )
-    observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
-    if (window.performance && 'addEventListener' in performance) {
-      // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      performance.addEventListener('resourcetimingbufferfull', () => {
-        performance.clearResourceTimings()
-      })
-    }
-  }
-}
-
-function handlePerformanceEntries(
-  entries: Performance | PerformanceObserverEntryList,
-  session: RumSession,
-  configuration: Configuration,
-  addRumEvent: (event: RumEvent) => void
-) {
-  if (session.isTrackedWithResource()) {
-    entries
-      .getEntriesByType('resource')
-      .forEach((entry) => handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent))
-  }
-  entries
-    .getEntriesByType('navigation')
-    .forEach(
-      (entry) =>
-        (entry as PerformanceNavigationTiming).loadEventEnd > 0 &&
+  performanceObservable.subscribe((entry) => {
+    switch (entry.entryType) {
+      case 'resource':
+        handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
+        break
+      case 'navigation':
         handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent)
-    )
-  entries.getEntriesByType('paint').forEach((entry) => handlePaintEntry(entry as PerformancePaintTiming, addRumEvent))
+        break
+      case 'paint':
+        handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
+        break
+      default:
+        break
+    }
+  })
 }
 
 export function handleResourceEntry(
