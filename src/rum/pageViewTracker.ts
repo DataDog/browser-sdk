@@ -15,6 +15,7 @@ export interface PageViewPerformance {
 
 export interface PageViewSummary {
   errorCount: number
+  longTaskCount: number
 }
 
 export let pageViewId: string
@@ -36,10 +37,10 @@ export function trackPageView(
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackPerformance(performanceObservable)
-  errorObservable.subscribe(() => (summary.errorCount += 1))
+  trackSummary(errorObservable, performanceObservable)
+
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
-
 function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
   pageViewId = generateUUID()
   startTimestamp = new Date().getTime()
@@ -47,6 +48,7 @@ function newPageView(location: Location, addRumEvent: (event: RumEvent) => void)
   documentVersion = 1
   summary = {
     errorCount: 0,
+    longTaskCount: 0,
   }
   screenPerformance = {}
   activeLocation = { ...location }
@@ -119,6 +121,15 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
         ...screenPerformance,
         firstContentfulPaint: msToNs(paintEntry.startTime),
       }
+    }
+  })
+}
+
+function trackSummary(errorObservable: ErrorObservable, performanceObservable: Observable<PerformanceEntry>) {
+  errorObservable.subscribe(() => (summary.errorCount += 1))
+  performanceObservable.subscribe((entry) => {
+    if (entry.entryType === 'longtask') {
+      summary.longTaskCount += 1
     }
   })
 }

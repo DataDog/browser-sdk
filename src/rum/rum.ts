@@ -26,8 +26,11 @@ export interface PerformancePaintTiming extends PerformanceEntry {
   duration: 0
 }
 
+export type PerformanceLongTaskTiming = PerformanceEntry
+
 export enum RumEventCategory {
   ERROR = 'error',
+  LONG_TASK = 'long_task',
   PAGE_VIEW = 'page_view',
   RESOURCE = 'resource',
   SCREEN_PERFORMANCE = 'screen_performance',
@@ -119,7 +122,19 @@ export interface RumPageViewEvent {
   }
 }
 
-export type RumEvent = RumErrorEvent | RumPerformanceScreenEvent | RumResourceEvent | RumPageViewEvent
+export interface RumLongTaskEvent {
+  duration: number
+  evt: {
+    category: RumEventCategory.LONG_TASK
+  }
+}
+
+export type RumEvent =
+  | RumErrorEvent
+  | RumPerformanceScreenEvent
+  | RumResourceEvent
+  | RumPageViewEvent
+  | RumLongTaskEvent
 
 export function startRum(
   applicationId: string,
@@ -185,7 +200,7 @@ function startPerformanceCollection(session: RumSession) {
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries))
     )
-    observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] })
+    observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
     if (window.performance && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
       performance.addEventListener('resourcetimingbufferfull', () => {
@@ -209,6 +224,7 @@ function handlePerformanceEntries(
     .getEntriesByType('navigation')
     .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
   entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
+  entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
@@ -281,6 +297,9 @@ function trackPerformanceTiming(
       case 'paint':
         handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
         break
+      case 'longtask':
+        handleLongTaskEntry(entry as PerformanceLongTaskTiming, addRumEvent)
+        break
       default:
         break
     }
@@ -343,6 +362,15 @@ export function handlePaintEntry(entry: PerformancePaintTiming, addRumEvent: (ev
     },
     screen: {
       performance: performance as PerformanceScreenDetails,
+    },
+  })
+}
+
+export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {
+  addRumEvent({
+    duration: entry.duration,
+    evt: {
+      category: RumEventCategory.LONG_TASK,
     },
   })
 }
