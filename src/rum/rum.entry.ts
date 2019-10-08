@@ -28,6 +28,9 @@ const STUBBED_RUM = {
   setRumGlobalContext(context: Context) {
     makeStub('setRumGlobalContext')
   },
+  addCustomEvent(name: string, context: Context) {
+    makeStub('addCustomEvent')
+  },
 }
 
 export type RumGlobal = typeof STUBBED_RUM

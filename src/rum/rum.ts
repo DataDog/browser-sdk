@@ -29,6 +29,7 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 export type PerformanceLongTaskTiming = PerformanceEntry
 
 export enum RumEventCategory {
+  CUSTOM = 'custom',
   ERROR = 'error',
   LONG_TASK = 'long_task',
   PAGE_VIEW = 'page_view',
@@ -129,12 +130,21 @@ export interface RumLongTaskEvent {
   }
 }
 
+export interface RumCustomEvent {
+  evt: {
+    category: RumEventCategory.CUSTOM
+    name: string
+  }
+  [key: string]: ContextValue
+}
+
 export type RumEvent =
   | RumErrorEvent
   | RumPerformanceScreenEvent
   | RumResourceEvent
   | RumPageViewEvent
   | RumLongTaskEvent
+  | RumCustomEvent
 
 export function startRum(
   applicationId: string,
@@ -186,6 +196,15 @@ export function startRum(
   }
   globalApi.addRumGlobalContext = (key: string, value: ContextValue) => {
     globalContext[key] = value
+  }
+  globalApi.addCustomEvent = (name: string, context?: Context) => {
+    addRumEvent({
+      ...context,
+      evt: {
+        name,
+        category: RumEventCategory.CUSTOM,
+      },
+    })
   }
   return globalApi
 }

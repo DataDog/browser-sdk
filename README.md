@@ -109,9 +109,16 @@ contains all the public APIs.
   ```
 
 - Modify the global context
+
   ```
   addRumGlobalContext (key: string, value: any)  # add one key-value to the default context
   setRumGlobalContext (context: Context)  # entirely replace the default context
+  ```
+
+- Add custom event
+
+  ```
+  addCustomEvent (name: string, context: Context)
   ```
 
 ## Deploy
