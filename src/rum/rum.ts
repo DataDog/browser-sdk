@@ -191,13 +191,13 @@ export function startRum(
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
 
   const globalApi: Partial<RumGlobal> = {}
-  globalApi.setRumGlobalContext = (context: Context) => {
+  globalApi.setRumGlobalContext = monitor((context: Context) => {
     globalContext = context
-  }
-  globalApi.addRumGlobalContext = (key: string, value: ContextValue) => {
+  })
+  globalApi.addRumGlobalContext = monitor((key: string, value: ContextValue) => {
     globalContext[key] = value
-  }
-  globalApi.addCustomEvent = (name: string, context?: Context) => {
+  })
+  globalApi.addCustomEvent = monitor((name: string, context?: Context) => {
     addRumEvent({
       ...context,
       evt: {
@@ -205,7 +205,7 @@ export function startRum(
         category: RumEventCategory.CUSTOM,
       },
     })
-  }
+  })
   return globalApi
 }
 
