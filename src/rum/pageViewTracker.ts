@@ -3,7 +3,7 @@ import { monitor } from '../core/internalMonitoring'
 import { Observable } from '../core/observable'
 import { Batch } from '../core/transport'
 import { generateUUID, msToNs } from '../core/utils'
-import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
 
 export interface PageViewPerformance {
   firstContentfulPaint?: number
@@ -14,6 +14,7 @@ export interface PageViewPerformance {
 }
 
 export interface PageViewSummary {
+  customEventCount: number
   errorCount: number
   longTaskCount: number
 }
@@ -32,12 +33,13 @@ export function trackPageView(
   location: Location,
   addRumEvent: (event: RumEvent) => void,
   errorObservable: ErrorObservable,
-  performanceObservable: Observable<PerformanceEntry>
+  performanceObservable: Observable<PerformanceEntry>,
+  customEventObservable: Observable<RawCustomEvent>
 ) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackPerformance(performanceObservable)
-  trackSummary(errorObservable, performanceObservable)
+  trackSummary(errorObservable, performanceObservable, customEventObservable)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -47,6 +49,7 @@ function newPageView(location: Location, addRumEvent: (event: RumEvent) => void)
   startOrigin = performance.now()
   documentVersion = 1
   summary = {
+    customEventCount: 0,
     errorCount: 0,
     longTaskCount: 0,
   }
@@ -125,8 +128,13 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
   })
 }
 
-function trackSummary(errorObservable: ErrorObservable, performanceObservable: Observable<PerformanceEntry>) {
+function trackSummary(
+  errorObservable: ErrorObservable,
+  performanceObservable: Observable<PerformanceEntry>,
+  customEventObservable: Observable<RawCustomEvent>
+) {
   errorObservable.subscribe(() => (summary.errorCount += 1))
+  customEventObservable.subscribe(() => (summary.customEventCount += 1))
   performanceObservable.subscribe((entry) => {
     if (entry.entryType === 'longtask') {
       summary.longTaskCount += 1
