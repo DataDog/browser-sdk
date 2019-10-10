@@ -175,10 +175,10 @@ describe('internal monitoring', () => {
         date: FAKE_DATE,
         entry_type: 'internal',
         error: jasmine.anything(),
-        http: {
-          referer: window.location.href,
-        },
         message: 'message',
+        screen: {
+          url: window.location.href,
+        },
         status: 'error',
       })
     })

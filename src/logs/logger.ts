@@ -42,7 +42,11 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
         {
           date: new Date().getTime(),
           http: {
+            // screen.url is preferred, but keep http.referer for retro-compatibility
             referer: window.location.href,
+          },
+          screen: {
+            url: window.location.href,
           },
           sessionId: session.getId(),
         },
