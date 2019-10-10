@@ -28,6 +28,11 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 
 export type PerformanceLongTaskTiming = PerformanceEntry
 
+export interface RawCustomEvent {
+  name: string
+  context?: Context
+}
+
 export enum RumEventCategory {
   CUSTOM = 'custom',
   ERROR = 'error',
@@ -184,28 +189,24 @@ export function startRum(
   }
 
   const performanceObservable = startPerformanceCollection(session)
+  const customEventObservable = new Observable<RawCustomEvent>()
 
-  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable)
+  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable, customEventObservable)
   trackErrors(errorObservable, addRumEvent)
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
+  trackCustomEvent(customEventObservable, addRumEvent)
 
   const globalApi: Partial<RumGlobal> = {}
-  globalApi.setRumGlobalContext = (context: Context) => {
+  globalApi.setRumGlobalContext = monitor((context: Context) => {
     globalContext = context
-  }
-  globalApi.addRumGlobalContext = (key: string, value: ContextValue) => {
+  })
+  globalApi.addRumGlobalContext = monitor((key: string, value: ContextValue) => {
     globalContext[key] = value
-  }
-  globalApi.addCustomEvent = (name: string, context?: Context) => {
-    addRumEvent({
-      ...context,
-      evt: {
-        name,
-        category: RumEventCategory.CUSTOM,
-      },
-    })
-  }
+  })
+  globalApi.addCustomEvent = monitor((name: string, context?: Context) => {
+    customEventObservable.notify({ name, context })
+  })
   return globalApi
 }
 
@@ -257,6 +258,18 @@ function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumE
         errorCount: 1,
       },
       ...context,
+    })
+  })
+}
+
+function trackCustomEvent(customEventObservable: Observable<RawCustomEvent>, addRumEvent: (event: RumEvent) => void) {
+  customEventObservable.subscribe(({ name, context }) => {
+    addRumEvent({
+      ...context,
+      evt: {
+        name,
+        category: RumEventCategory.CUSTOM,
+      },
     })
   })
 }

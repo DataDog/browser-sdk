@@ -2,16 +2,18 @@ import { ErrorMessage } from '../../core/errorCollection'
 import { Observable } from '../../core/observable'
 import { Batch } from '../../core/transport'
 import { pageViewId, trackPageView } from '../pageViewTracker'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RawCustomEvent, RumEvent, RumPageViewEvent } from '../rum'
 
 function setup({
   addRumEvent,
   errorObservable,
   performanceObservable,
+  customEventObservable,
 }: {
   addRumEvent?: () => any
   errorObservable?: Observable<ErrorMessage>
   performanceObservable?: Observable<PerformanceEntry>
+  customEventObservable?: Observable<RawCustomEvent>
 } = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = new URL(pathname, 'http://localhost')
@@ -26,7 +28,8 @@ function setup({
     fakeLocation as Location,
     addRumEvent || (() => undefined),
     errorObservable || new Observable<ErrorMessage>(),
-    performanceObservable || new Observable<PerformanceEntry>()
+    performanceObservable || new Observable<PerformanceEntry>(),
+    customEventObservable || new Observable<RawCustomEvent>()
   )
 }
 
@@ -61,6 +64,12 @@ describe('rum page view summary', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',
     startTime: 456,
+  }
+  const FAKE_CUSTOM_EVENT = {
+    context: {
+      bar: 123,
+    },
+    name: 'foo',
   }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
@@ -101,6 +110,21 @@ describe('rum page view summary', () => {
     expect(addRumEvent.calls.count()).toEqual(3)
     expect(getPageViewEvent(1).screen.summary.longTaskCount).toEqual(1)
     expect(getPageViewEvent(2).screen.summary.longTaskCount).toEqual(0)
+  })
+
+  it('should track custom event count', () => {
+    const customEventObservable = new Observable<RawCustomEvent>()
+    setup({ addRumEvent, customEventObservable })
+
+    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getPageViewEvent(0).screen.summary.customEventCount).toEqual(0)
+
+    customEventObservable.notify(FAKE_CUSTOM_EVENT as RawCustomEvent)
+    history.pushState({}, '', '/bar')
+
+    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getPageViewEvent(1).screen.summary.customEventCount).toEqual(1)
+    expect(getPageViewEvent(2).screen.summary.customEventCount).toEqual(0)
   })
 })
 
