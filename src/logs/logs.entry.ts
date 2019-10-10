@@ -4,7 +4,7 @@ import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { Status, StatusType } from '../core/status'
-import { Context, ContextValue } from '../core/utils'
+import { Context, ContextValue, isPercentage } from '../core/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
 
@@ -80,6 +80,10 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
     console.warn('Public API Key is deprecated. Please use Client Token instead.')
+  }
+  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    console.error('Sample Rate should be a number between 0 and 100')
+    return
   }
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {

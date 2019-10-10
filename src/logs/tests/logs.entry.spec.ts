@@ -62,4 +62,17 @@ describe('logs entry', () => {
 
     expect(window.DD_LOGS).toEqual(global)
   })
+
+  it('init should log an error if sampleRate is invalid', () => {
+    const errorSpy = spyOn(console, 'error')
+    window.DD_LOGS.init({ clientToken: 'yes', sampleRate: 'foo' as any })
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+
+    window.DD_LOGS.init({ clientToken: 'yes', sampleRate: 200 })
+    expect(errorSpy).toHaveBeenCalledTimes(2)
+
+    // Correct configuration shouldn't trigger any console.log
+    window.DD_LOGS.init({ clientToken: 'yes', sampleRate: 1 })
+    expect(errorSpy).toHaveBeenCalledTimes(2)
+  })
 })
