@@ -70,9 +70,11 @@ describe('logs entry', () => {
 
     window.DD_LOGS.init({ clientToken: 'yes', sampleRate: 200 })
     expect(errorSpy).toHaveBeenCalledTimes(2)
+  })
 
-    // Correct configuration shouldn't trigger any console.log
+  it("shouldn't trigger any console.log if the configuration is correct", () => {
+    const errorSpy = spyOn(console, 'error')
     window.DD_LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-    expect(errorSpy).toHaveBeenCalledTimes(2)
+    expect(errorSpy).toHaveBeenCalledTimes(0)
   })
 })

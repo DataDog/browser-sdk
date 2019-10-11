@@ -32,10 +32,6 @@ describe('rum entry', () => {
 
     window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 200 })
     expect(errorSpy).toHaveBeenCalledTimes(2)
-
-    // Correct configuration shouldn't trigger any console.log
-    window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
-    expect(errorSpy).toHaveBeenCalledTimes(2)
   })
 
   it('init should log an error if resourceSampleRate is invalid', () => {
@@ -45,9 +41,11 @@ describe('rum entry', () => {
 
     window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
     expect(errorSpy).toHaveBeenCalledTimes(2)
+  })
 
-    // Correct configuration shouldn't trigger any console.log
-    window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 1 })
-    expect(errorSpy).toHaveBeenCalledTimes(2)
+  it("shouldn't trigger any console.log if the configuration is correct", () => {
+    const errorSpy = spyOn(console, 'error')
+    window.DD_RUM.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
   })
 })
