@@ -154,3 +154,7 @@ export function startsWith(candidate: string, search: string) {
 export function includes(candidate: unknown[], search: unknown) {
   return candidate.indexOf(search) !== -1
 }
+
+export function isPercentage(value: unknown) {
+  return typeof value === 'number' && value >= 0 && value <= 100
+}

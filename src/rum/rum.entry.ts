@@ -4,7 +4,7 @@ import { UserConfiguration } from '../core/configuration'
 import { commonInit, makeGlobal, makeStub } from '../core/init'
 import { monitor } from '../core/internalMonitoring'
 import { startRequestCollection } from '../core/requestCollection'
-import { Context, ContextValue } from '../core/utils'
+import { Context, ContextValue, isPercentage } from '../core/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -46,6 +46,14 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
   }
   if (!userConfiguration.applicationId) {
     console.error('Application ID is not configured, no RUM data will be collected.')
+    return
+  }
+  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    console.error('Sample Rate should be a number between 0 and 100')
+    return
+  }
+  if (userConfiguration.resourceSampleRate !== undefined && !isPercentage(userConfiguration.resourceSampleRate)) {
+    console.error('Resource Sample Rate should be a number between 0 and 100')
     return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
