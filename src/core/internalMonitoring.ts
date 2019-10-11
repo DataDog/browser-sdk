@@ -39,8 +39,8 @@ export function startInternalMonitoring(configuration: Configuration) {
     configuration.flushTimeout,
     () => ({
       date: new Date().getTime(),
-      http: {
-        referer: window.location.href,
+      screen: {
+        url: window.location.href,
       },
     }),
     utils.withSnakeCaseKeys
