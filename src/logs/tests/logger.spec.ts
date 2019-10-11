@@ -55,6 +55,7 @@ describe('logger module', () => {
         },
         message: 'message',
         screen: {
+          referrer: document.referrer,
           url: window.location.href,
         },
         status: StatusType.warn,
