@@ -46,6 +46,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
             referer: window.location.href,
           },
           screen: {
+            referrer: document.referrer,
             url: window.location.href,
           },
           sessionId: session.getId(),

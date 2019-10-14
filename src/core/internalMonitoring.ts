@@ -40,6 +40,7 @@ export function startInternalMonitoring(configuration: Configuration) {
     () => ({
       date: new Date().getTime(),
       screen: {
+        referrer: document.referrer,
         url: window.location.href,
       },
     }),

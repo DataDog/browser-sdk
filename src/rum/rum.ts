@@ -173,6 +173,7 @@ export function startRum(
           date: new Date().getTime(),
           screen: {
             id: pageViewId,
+            referrer: document.referrer,
             url: window.location.href,
           },
           sessionId: session.getId(),
