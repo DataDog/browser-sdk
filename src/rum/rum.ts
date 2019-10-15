@@ -401,7 +401,7 @@ export function handlePaintEntry(entry: PerformancePaintTiming, addRumEvent: (ev
 
 export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {
   addRumEvent({
-    duration: entry.duration,
+    duration: msToNs(entry.duration),
     evt: {
       category: RumEventCategory.LONG_TASK,
     },
