@@ -1,8 +1,8 @@
 import * as request from 'request'
-import { ErrorContext, HttpContext } from '../../../src/core/errorCollection'
-import { MonitoringMessage } from '../../../src/core/internalMonitoring'
-import { LogsMessage } from '../../../src/logs/logger'
-import { RumEvent } from '../../../src/rum/rum'
+import { ErrorContext, HttpContext } from '../../../packages/core/src/errorCollection'
+import { MonitoringMessage } from '../../../packages/core/src/internalMonitoring'
+import { LogsMessage } from '../../../packages/logs/src/logger'
+import { RumEvent } from '../../../packages/rum/src/rum'
 
 export interface ServerErrorMessage {
   error: ErrorContext
