@@ -245,7 +245,10 @@ function handlePerformanceEntries(
     .getEntriesByType('navigation')
     .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
   entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
-  entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
+
+  if (entries !== window.performance) {
+    entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
+  }
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
