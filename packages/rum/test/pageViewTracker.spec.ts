@@ -171,7 +171,7 @@ describe('rum page view performance', () => {
     expect(addRumEvent.calls.count()).toEqual(3)
     expect(getPageViewEvent(1).screen.performance).toEqual({
       domComplete: 456e6,
-      domContentLoadedEventEnd: 345e6,
+      domContentLoaded: 345e6,
       domInteractive: 234e6,
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
