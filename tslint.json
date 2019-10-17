@@ -18,7 +18,7 @@
     "member-access": false,
     "no-console": false,
     "no-default-export": true,
-    "no-implicit-dependencies": [true, "dev"],
+    "no-implicit-dependencies": [false],
     "no-null-keyword": true,
     "no-unsafe-any": true,
     "object-literal-sort-keys": [true, "shorthand-first"],
