@@ -189,7 +189,7 @@ export function startRum(
     }
   }
 
-  const performanceObservable = startPerformanceCollection(session)
+  const performanceObservable = new Observable<PerformanceEntry>()
   const customEventObservable = new Observable<RawCustomEvent>()
 
   trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable, customEventObservable)
@@ -197,6 +197,8 @@ export function startRum(
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
   trackCustomEvent(customEventObservable, addRumEvent)
+
+  startPerformanceCollection(performanceObservable, session)
 
   const globalApi: Partial<RumGlobal> = {}
   globalApi.setRumGlobalContext = monitor((context: Context) => {
@@ -211,9 +213,7 @@ export function startRum(
   return globalApi
 }
 
-function startPerformanceCollection(session: RumSession) {
-  const performanceObservable = new Observable<PerformanceEntry>()
-
+function startPerformanceCollection(performanceObservable: Observable<PerformanceEntry>, session: RumSession) {
   if (window.performance && 'getEntriesByType' in performance) {
     handlePerformanceEntries(session, performanceObservable, performance)
   }
