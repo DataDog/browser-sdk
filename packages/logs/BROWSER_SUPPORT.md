@@ -1,7 +1,5 @@
 # Browser Support
 
-## Logger
-
 | Feature        | Chrome | Firefox | Safari | Edge | Chrome Android | Safari iOS | Android Browser (4.4) | IE11 | IE10 | IE9 | IE8 | Opera |
 | -------------- | ------ | ------- | ------ | ---- | -------------- | ---------- | --------------------- | ---- | ---- | --- | --- | ----- |
 | loading        | ✓      | ✓       | ✓      | ✓    | ✓              | ✓          | ✓                     | ✓    | ✓    | ✗   | ✗   | ✓     |
