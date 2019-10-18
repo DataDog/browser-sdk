@@ -12,12 +12,7 @@ import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from 
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-
-declare global {
-  interface Window {
-    PerformanceObserver?: PerformanceObserver
-  }
-}
+import { startPerformanceCollection } from './startPerformanceCollection'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -211,126 +206,6 @@ export function startRum(
     customEventObservable.notify({ name, context })
   })
   return globalApi
-}
-
-function supportPerformanceObject() {
-  return Boolean(window.performance && 'getEntriesByType' in performance && 'addEventListener' in performance)
-}
-
-function supportPerformanceNavigationTimingEvent() {
-  if (PerformanceObserver.supportedEntryTypes) {
-    return PerformanceObserver.supportedEntryTypes.includes('navigation')
-  }
-
-  return supportPerformanceObject() && performance.getEntriesByType('navigation').length > 0
-}
-
-function startPerformanceCollection(performanceObservable: Observable<PerformanceEntry>, session: RumSession) {
-  if (supportPerformanceObject()) {
-    handlePerformanceEntries(session, performanceObservable, performance)
-  }
-  if (window.PerformanceObserver) {
-    const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries))
-    )
-    observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
-
-    if (supportPerformanceObject()) {
-      // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      performance.addEventListener('resourcetimingbufferfull', () => {
-        performance.clearResourceTimings()
-      })
-
-      if (!supportPerformanceNavigationTimingEvent()) {
-        emulatePerformanceNavigationTiming(performanceObservable, performance)
-      }
-    }
-  }
-
-  return performanceObservable
-}
-
-const performanceNavigationTimingNames = [
-  'connectEnd' as 'connectEnd',
-  'connectStart' as 'connectStart',
-  'domComplete' as 'domComplete',
-  'domContentLoadedEventEnd' as 'domContentLoadedEventEnd',
-  'domContentLoadedEventStart' as 'domContentLoadedEventStart',
-  'domInteractive' as 'domInteractive',
-  'domainLookupEnd' as 'domainLookupEnd',
-  'domainLookupStart' as 'domainLookupStart',
-  'fetchStart' as 'fetchStart',
-  'loadEventEnd' as 'loadEventEnd',
-  'loadEventStart' as 'loadEventStart',
-  'redirectEnd' as 'redirectEnd',
-  'redirectStart' as 'redirectStart',
-  'requestStart' as 'requestStart',
-  'responseEnd' as 'responseEnd',
-  'responseStart' as 'responseStart',
-  'secureConnectionStart' as 'secureConnectionStart',
-  'unloadEventEnd' as 'unloadEventEnd',
-  'unloadEventStart' as 'unloadEventStart',
-]
-
-function emulatePerformanceNavigationTiming(
-  performanceObservable: Observable<PerformanceEntry>,
-  performance: Performance
-) {
-  function sendFakeEvent() {
-    const event: { -readonly [key in keyof PerformanceNavigationTiming]?: PerformanceNavigationTiming[key] } = {
-      decodedBodySize: 0,
-      encodedBodySize: 0,
-      entryType: 'navigation',
-      initiatorType: 'navigation',
-      name: location.toString(),
-      nextHopProtocol: 'h1',
-      redirectCount: 0,
-      startTime: 0,
-      transferSize: 0,
-      type: 'navigate',
-      workerStart: 0,
-    }
-
-    for (const timingName of performanceNavigationTimingNames) {
-      // navigationStart should be the lowest date, but make sure we don't send negative times if
-      // it's not.
-      event[timingName] = Math.max(performance.timing[timingName] - performance.timing.navigationStart, 0)
-    }
-
-    event.duration = event.loadEventEnd
-
-    performanceObservable.notify(event as PerformanceNavigationTiming)
-  }
-
-  if (document.readyState === 'complete') {
-    sendFakeEvent()
-  } else {
-    const listener = () => {
-      window.removeEventListener('load', listener)
-      // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-      setTimeout(sendFakeEvent)
-    }
-
-    window.addEventListener('load', listener)
-  }
-}
-
-function handlePerformanceEntries(
-  session: RumSession,
-  performanceObservable: Observable<PerformanceEntry>,
-  entries: Performance | PerformanceObserverEntryList
-) {
-  if (session.isTrackedWithResource()) {
-    entries.getEntriesByType('resource').forEach((entry) => performanceObservable.notify(entry))
-  }
-  entries
-    .getEntriesByType('navigation')
-    .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
-  entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
-
-  if (entries !== window.performance) {
-    entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
-  }
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
