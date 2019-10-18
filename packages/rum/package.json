@@ -1,0 +1,8 @@
+{
+  "name": "datadog-rum",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@browser-agent/core": "^0.0.1"
+  }
+}
