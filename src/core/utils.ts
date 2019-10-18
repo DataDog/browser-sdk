@@ -1,3 +1,5 @@
+import { getCookie, setCookie } from './session'
+
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export const ONE_SECOND = 1000
@@ -156,9 +158,13 @@ export function includes(candidate: unknown[], search: unknown) {
 }
 
 export function areCookiesAuthorized(): boolean {
+  if (document.cookie === undefined) {
+    return false
+  }
   try {
-    document.cookie = 'test=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    const _ = document.cookie
+    const testCookieName = 'dd_rum_test'
+    setCookie(testCookieName, 'test', 100)
+    getCookie(testCookieName)
   } catch (error) {
     console.error(error)
     return false
