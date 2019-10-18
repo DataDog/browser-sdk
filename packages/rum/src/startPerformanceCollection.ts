@@ -56,7 +56,9 @@ function getRelativePerformanceTiming<T extends Exclude<keyof PerformanceTiming,
   performance: Performance,
   name: T
 ) {
-  return performance.timing[name] - performance.timeOrigin
+  // performance.timeOrigin is undefined in WebKit, see https://bugs.webkit.org/show_bug.cgi?id=174862
+  const timeOrigin = performance.timeOrigin !== undefined ? performance.timeOrigin : performance.timing.navigationStart
+  return performance.timing[name] - timeOrigin
 }
 
 function emulatePerformanceNavigationTiming(
