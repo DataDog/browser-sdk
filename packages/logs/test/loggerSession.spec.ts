@@ -1,11 +1,11 @@
-import { Configuration } from '../../core/src/configuration'
+import { Configuration } from '@browser-agent/core/src/configuration'
 import {
   cleanupActivityTracking,
   COOKIE_ACCESS_DELAY,
   getCookie,
   SESSION_COOKIE_NAME,
   setCookie,
-} from '../../core/src/session'
+} from '@browser-agent/core/src/session'
 import { LOGGER_COOKIE_NAME, LoggerSessionType, startLoggerSession } from '../src/loggerSession'
 
 describe('logger session', () => {

@@ -1,10 +1,10 @@
 import sinon from 'sinon'
 
-import { Configuration, DEFAULT_CONFIGURATION } from '../../core/src/configuration'
-import { ErrorMessage } from '../../core/src/errorCollection'
-import { Observable } from '../../core/src/observable'
-import { STATUSES, StatusType } from '../../core/src/status'
-import { Omit } from '../../core/src/utils'
+import { Configuration, DEFAULT_CONFIGURATION } from '@browser-agent/core/src/configuration'
+import { ErrorMessage } from '@browser-agent/core/src/errorCollection'
+import { Observable } from '@browser-agent/core/src/observable'
+import { STATUSES, StatusType } from '@browser-agent/core/src/status'
+import { Omit } from '@browser-agent/core/src/utils'
 import { HandlerType, LogsMessage, startLogger } from '../src/logger'
 import { LogsGlobal } from '../src/logs.entry'
 

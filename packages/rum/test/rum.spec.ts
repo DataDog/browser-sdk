@@ -1,10 +1,10 @@
 import sinon from 'sinon'
 
-import { Configuration, DEFAULT_CONFIGURATION } from '../../core/src/configuration'
-import { ErrorMessage } from '../../core/src/errorCollection'
-import { Observable } from '../../core/src/observable'
-import { RequestDetails } from '../../core/src/requestCollection'
-import { isIE, PerformanceObserverStubBuilder } from '../../core/test/specHelper'
+import { Configuration, DEFAULT_CONFIGURATION } from '@browser-agent/core/src/configuration'
+import { ErrorMessage } from '@browser-agent/core/src/errorCollection'
+import { Observable } from '@browser-agent/core/src/observable'
+import { RequestDetails } from '@browser-agent/core/src/requestCollection'
+import { isIE, PerformanceObserverStubBuilder } from '@browser-agent/core/test/specHelper'
 
 import {
   handlePaintEntry,

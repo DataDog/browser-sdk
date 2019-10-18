@@ -1,10 +1,10 @@
 import lodashAssign from 'lodash.assign'
 
-import { UserConfiguration } from '../../core/src/configuration'
-import { commonInit, makeGlobal, makeStub } from '../../core/src/init'
-import { monitor } from '../../core/src/internalMonitoring'
-import { Status, StatusType } from '../../core/src/status'
-import { Context, ContextValue, isPercentage } from '../../core/src/utils'
+import { UserConfiguration } from '@browser-agent/core/src/configuration'
+import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
+import { monitor } from '@browser-agent/core/src/internalMonitoring'
+import { Status, StatusType } from '@browser-agent/core/src/status'
+import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
 

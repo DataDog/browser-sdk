@@ -1,5 +1,5 @@
-import { RequestDetails } from '../../core/src/requestCollection'
-import { isIE } from '../../core/test/specHelper'
+import { RequestDetails } from '@browser-agent/core/src/requestCollection'
+import { isIE } from '@browser-agent/core/test/specHelper'
 import { matchRequestTiming } from '../src/matchRequestTiming'
 
 describe('matchRequestTiming', () => {

@@ -1,8 +1,8 @@
-import { ErrorObservable } from '../../core/src/errorCollection'
-import { monitor } from '../../core/src/internalMonitoring'
-import { Observable } from '../../core/src/observable'
-import { Batch } from '../../core/src/transport'
-import { generateUUID, msToNs } from '../../core/src/utils'
+import { ErrorObservable } from '@browser-agent/core/src/errorCollection'
+import { monitor } from '@browser-agent/core/src/internalMonitoring'
+import { Observable } from '@browser-agent/core/src/observable'
+import { Batch } from '@browser-agent/core/src/transport'
+import { generateUUID, msToNs } from '@browser-agent/core/src/utils'
 import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
 
 export interface PageViewPerformance {

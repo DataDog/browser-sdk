@@ -1,6 +1,6 @@
-import { ErrorMessage } from '../../core/src/errorCollection'
-import { Observable } from '../../core/src/observable'
-import { Batch } from '../../core/src/transport'
+import { ErrorMessage } from '@browser-agent/core/src/errorCollection'
+import { Observable } from '@browser-agent/core/src/observable'
+import { Batch } from '@browser-agent/core/src/transport'
 import { pageViewId, trackPageView } from '../src/pageViewTracker'
 import {
   PerformanceLongTaskTiming,

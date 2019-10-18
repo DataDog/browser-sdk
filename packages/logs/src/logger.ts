@@ -1,11 +1,11 @@
 import lodashMerge from 'lodash.merge'
 
-import { Configuration } from '../../core/src/configuration'
-import { ErrorMessage, ErrorObservable, ErrorOrigin } from '../../core/src/errorCollection'
-import { monitored } from '../../core/src/internalMonitoring'
-import { STATUS_PRIORITIES, StatusType } from '../../core/src/status'
-import { Batch, HttpRequest } from '../../core/src/transport'
-import { Context, ContextValue, noop } from '../../core/src/utils'
+import { Configuration } from '@browser-agent/core/src/configuration'
+import { ErrorMessage, ErrorObservable, ErrorOrigin } from '@browser-agent/core/src/errorCollection'
+import { monitored } from '@browser-agent/core/src/internalMonitoring'
+import { STATUS_PRIORITIES, StatusType } from '@browser-agent/core/src/status'
+import { Batch, HttpRequest } from '@browser-agent/core/src/transport'
+import { Context, ContextValue, noop } from '@browser-agent/core/src/utils'
 import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
 

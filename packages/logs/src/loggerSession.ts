@@ -1,4 +1,4 @@
-import { Configuration } from '../../core/src/configuration'
+import { Configuration } from '@browser-agent/core/src/configuration'
 import {
   cacheCookieAccess,
   COOKIE_ACCESS_DELAY,
@@ -6,8 +6,8 @@ import {
   EXPIRATION_DELAY,
   SESSION_COOKIE_NAME,
   trackActivity,
-} from '../../core/src/session'
-import * as utils from '../../core/src/utils'
+} from '@browser-agent/core/src/session'
+import * as utils from '@browser-agent/core/src/utils'
 
 export const LOGGER_COOKIE_NAME = '_dd_l'
 
