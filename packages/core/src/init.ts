@@ -21,8 +21,8 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
-export function commonInit(userConfiguration: UserConfiguration) {
-  const configuration = buildConfiguration(userConfiguration)
+export function commonInit(userConfiguration: UserConfiguration, version: string) {
+  const configuration = buildConfiguration(userConfiguration, version)
   startInternalMonitoring(configuration)
   const errorObservable = startErrorCollection(configuration)
 

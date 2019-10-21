@@ -12,5 +12,5 @@
     ],
     "types": ["node", "@wdio/sync", "jasmine"]
   },
-  "include": ["../../../packages/**/*.d.ts", "./**/*.ts"]
+  "include": ["./**/*.ts"]
 }

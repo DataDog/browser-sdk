@@ -7,6 +7,7 @@ import { Status, StatusType } from '@browser-agent/core/src/status'
 import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
+import { version } from './version'
 
 declare global {
   interface Window {
@@ -90,7 +91,7 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration } = commonInit(logsUserConfiguration)
+  const { errorObservable, configuration } = commonInit(logsUserConfiguration, version)
   const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(window.DD_LOGS, globalApi)

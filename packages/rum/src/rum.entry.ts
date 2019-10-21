@@ -7,6 +7,7 @@ import { startRequestCollection } from '@browser-agent/core/src/requestCollectio
 import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
+import { version } from './version'
 
 declare global {
   interface Window {
@@ -58,7 +59,7 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
 
-  const { errorObservable, configuration } = commonInit(rumUserConfiguration)
+  const { errorObservable, configuration } = commonInit(rumUserConfiguration, version)
   const session = startRumSession(configuration)
   const requestObservable = startRequestCollection()
 
