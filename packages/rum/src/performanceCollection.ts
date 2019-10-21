@@ -38,7 +38,7 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
 
       if (!supportPerformanceNavigationTimingEvent()) {
         retrieveNavigationTimingWhenLoaded((timing) => {
-          handlePerformanceEntries(session, performanceObservable, [(timing as unknown) as PerformanceEntry])
+          handlePerformanceEntries(session, performanceObservable, [timing])
         })
       }
     }
@@ -55,15 +55,16 @@ interface FakePerformanceNavigationTiming {
   loadEventEnd: number
 }
 
-function retrieveNavigationTimingWhenLoaded(callback: (timing: FakePerformanceNavigationTiming) => void) {
+function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
-    callback({
+    const timing: FakePerformanceNavigationTiming = {
       domComplete: getRelativeTime(performance.timing.domComplete),
       domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
       domInteractive: getRelativeTime(performance.timing.domInteractive),
       entryType: 'navigation',
       loadEventEnd: getRelativeTime(performance.timing.loadEventEnd),
-    })
+    }
+    callback((timing as unknown) as PerformanceNavigationTiming)
   }
 
   if (document.readyState === 'complete') {
