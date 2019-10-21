@@ -8,7 +8,7 @@ import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } fr
 export interface PageViewPerformance {
   firstContentfulPaint?: number
   domInteractive?: number
-  domContentLoadedEventEnd?: number
+  domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
 }
@@ -114,7 +114,7 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
       screenPerformance = {
         ...screenPerformance,
         domComplete: msToNs(navigationEntry.domComplete),
-        domContentLoadedEventEnd: msToNs(navigationEntry.domContentLoadedEventEnd),
+        domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
         domInteractive: msToNs(navigationEntry.domInteractive),
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }

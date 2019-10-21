@@ -9,15 +9,10 @@ import { Batch, HttpRequest } from '@browser-agent/core/src/transport'
 import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '@browser-agent/core/src/utils'
 import { matchRequestTiming } from './matchRequestTiming'
 import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
+import { startPerformanceCollection } from './performanceCollection'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-
-declare global {
-  interface Window {
-    PerformanceObserver?: PerformanceObserver
-  }
-}
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -189,7 +184,7 @@ export function startRum(
     }
   }
 
-  const performanceObservable = startPerformanceCollection(session)
+  const performanceObservable = new Observable<PerformanceEntry>()
   const customEventObservable = new Observable<RawCustomEvent>()
 
   trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable, customEventObservable)
@@ -197,6 +192,8 @@ export function startRum(
   trackRequests(configuration, requestObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
   trackCustomEvent(customEventObservable, addRumEvent)
+
+  startPerformanceCollection(performanceObservable, session)
 
   const globalApi: Partial<RumGlobal> = {}
   globalApi.setRumGlobalContext = monitor((context: Context) => {
@@ -209,46 +206,6 @@ export function startRum(
     customEventObservable.notify({ name, context })
   })
   return globalApi
-}
-
-function startPerformanceCollection(session: RumSession) {
-  const performanceObservable = new Observable<PerformanceEntry>()
-
-  if (window.performance && 'getEntriesByType' in performance) {
-    handlePerformanceEntries(session, performanceObservable, performance)
-  }
-  if (window.PerformanceObserver) {
-    const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries))
-    )
-    observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
-    if (window.performance && 'addEventListener' in performance) {
-      // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
-      performance.addEventListener('resourcetimingbufferfull', () => {
-        performance.clearResourceTimings()
-      })
-    }
-  }
-
-  return performanceObservable
-}
-
-function handlePerformanceEntries(
-  session: RumSession,
-  performanceObservable: Observable<PerformanceEntry>,
-  entries: Performance | PerformanceObserverEntryList
-) {
-  if (session.isTrackedWithResource()) {
-    entries.getEntriesByType('resource').forEach((entry) => performanceObservable.notify(entry))
-  }
-  entries
-    .getEntriesByType('navigation')
-    .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
-  entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
-
-  if (entries !== window.performance) {
-    entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
-  }
 }
 
 function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {

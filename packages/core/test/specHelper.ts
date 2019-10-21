@@ -98,6 +98,7 @@ export class PerformanceObserverStubBuilder {
     // tslint:disable-next-line:no-this-assignment
     const builder = this
     return (class {
+      static supportedEntryTypes = ['navigation']
       constructor(public callback: PerformanceObserverCallback) {
         builder.instance = this
       }
