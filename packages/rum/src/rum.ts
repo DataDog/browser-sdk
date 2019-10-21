@@ -9,10 +9,10 @@ import { Batch, HttpRequest } from '@browser-agent/core/src/transport'
 import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '@browser-agent/core/src/utils'
 import { matchRequestTiming } from './matchRequestTiming'
 import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
+import { startPerformanceCollection } from './performanceCollection'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { startPerformanceCollection } from './startPerformanceCollection'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'

@@ -1,5 +1,6 @@
 import { monitor } from '@browser-agent/core/src/internalMonitoring'
 import { Observable } from '@browser-agent/core/src/observable'
+import { getRelativePerformanceTiming } from '@browser-agent/core/src/utils'
 import { RumSession } from './rumSession'
 
 declare global {
@@ -13,20 +14,19 @@ function supportPerformanceObject() {
 }
 
 function supportPerformanceNavigationTimingEvent() {
-  if (PerformanceObserver.supportedEntryTypes) {
-    return PerformanceObserver.supportedEntryTypes.includes('navigation')
-  }
-
-  return supportPerformanceObject() && performance.getEntriesByType('navigation').length > 0
+  return (
+    PerformanceObserver.supportedEntryTypes !== undefined &&
+    PerformanceObserver.supportedEntryTypes.includes('navigation')
+  )
 }
 
 export function startPerformanceCollection(performanceObservable: Observable<PerformanceEntry>, session: RumSession) {
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(session, performanceObservable, performance)
+    handlePerformanceEntries(session, performanceObservable, performance.getEntries())
   }
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries))
+      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries.getEntries()))
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
 
@@ -37,7 +37,7 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
       })
 
       if (!supportPerformanceNavigationTimingEvent()) {
-        emulatePerformanceNavigationTiming(performanceObservable, performance)
+        emulatePerformanceNavigationTiming(session, performanceObservable, performance)
       }
     }
   }
@@ -52,16 +52,8 @@ const performanceNavigationTimingNames = [
   'loadEventEnd' as 'loadEventEnd',
 ]
 
-function getRelativePerformanceTiming<T extends Exclude<keyof PerformanceTiming, 'toJSON'>>(
-  performance: Performance,
-  name: T
-) {
-  // performance.timeOrigin is undefined in WebKit, see https://bugs.webkit.org/show_bug.cgi?id=174862
-  const timeOrigin = performance.timeOrigin !== undefined ? performance.timeOrigin : performance.timing.navigationStart
-  return performance.timing[name] - timeOrigin
-}
-
 function emulatePerformanceNavigationTiming(
+  session: RumSession,
   performanceObservable: Observable<PerformanceEntry>,
   performance: Performance
 ) {
@@ -71,12 +63,10 @@ function emulatePerformanceNavigationTiming(
     }
 
     for (const timingName of performanceNavigationTimingNames) {
-      event[timingName] = getRelativePerformanceTiming(performance, timingName)
+      event[timingName] = getRelativePerformanceTiming(performance, performance.timing[timingName])
     }
 
-    event.duration = event.loadEventEnd
-
-    performanceObservable.notify(event as PerformanceNavigationTiming)
+    handlePerformanceEntries(session, performanceObservable, [event as PerformanceNavigationTiming])
   }
 
   if (document.readyState === 'complete') {
@@ -95,17 +85,22 @@ function emulatePerformanceNavigationTiming(
 function handlePerformanceEntries(
   session: RumSession,
   performanceObservable: Observable<PerformanceEntry>,
-  entries: Performance | PerformanceObserverEntryList
+  entries: PerformanceEntry[]
 ) {
-  if (session.isTrackedWithResource()) {
-    entries.getEntriesByType('resource').forEach((entry) => performanceObservable.notify(entry))
+  function notify(entry: PerformanceEntry) {
+    performanceObservable.notify(entry)
   }
-  entries
-    .getEntriesByType('navigation')
-    .forEach((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0 && performanceObservable.notify(entry))
-  entries.getEntriesByType('paint').forEach((entry) => performanceObservable.notify(entry))
 
-  if (entries !== window.performance) {
-    entries.getEntriesByType('longtask').forEach((entry) => performanceObservable.notify(entry))
+  if (session.isTrackedWithResource()) {
+    entries.filter((entry) => entry.entryType === 'resource').forEach(notify)
   }
+
+  entries
+    .filter((entry) => entry.entryType === 'navigation')
+    // Exclude incomplete navigation entries by filtering out those who have a loadEventEnd at 0
+    .filter((entry) => (entry as PerformanceNavigationTiming).loadEventEnd > 0)
+    .forEach(notify)
+
+  entries.filter((entry) => entry.entryType === 'paint').forEach(notify)
+  entries.filter((entry) => entry.entryType === 'longtask').forEach(notify)
 }
