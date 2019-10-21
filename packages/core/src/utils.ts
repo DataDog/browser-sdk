@@ -159,7 +159,7 @@ export function isPercentage(value: unknown) {
   return typeof value === 'number' && value >= 0 && value <= 100
 }
 
-export function getRelativePerformanceTiming(performance: Performance, timestamp: number) {
+export function getRelativeTime(timestamp: number) {
   // performance.timeOrigin is undefined in WebKit, see https://bugs.webkit.org/show_bug.cgi?id=174862
   const timeOrigin = performance.timeOrigin !== undefined ? performance.timeOrigin : performance.timing.navigationStart
   return timestamp - timeOrigin

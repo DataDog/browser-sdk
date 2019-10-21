@@ -1,6 +1,6 @@
 import { monitor } from '@browser-agent/core/src/internalMonitoring'
 import { Observable } from '@browser-agent/core/src/observable'
-import { getRelativePerformanceTiming } from '@browser-agent/core/src/utils'
+import { getRelativeTime } from '@browser-agent/core/src/utils'
 import { RumSession } from './rumSession'
 
 declare global {
@@ -10,7 +10,7 @@ declare global {
 }
 
 function supportPerformanceObject() {
-  return window.performance !== undefined && 'getEntriesByType' in performance && 'addEventListener' in performance
+  return window.performance !== undefined && 'getEntries' in performance && 'addEventListener' in performance
 }
 
 function supportPerformanceNavigationTimingEvent() {
@@ -37,7 +37,9 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
       })
 
       if (!supportPerformanceNavigationTimingEvent()) {
-        emulatePerformanceNavigationTiming(session, performanceObservable, performance)
+        retrieveNavigationTimingWhenLoaded((timing) => {
+          handlePerformanceEntries(session, performanceObservable, [(timing as unknown) as PerformanceEntry])
+        })
       }
     }
   }
@@ -45,37 +47,32 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
   return performanceObservable
 }
 
-const performanceNavigationTimingNames = [
-  'domComplete' as 'domComplete',
-  'domContentLoadedEventEnd' as 'domContentLoadedEventEnd',
-  'domInteractive' as 'domInteractive',
-  'loadEventEnd' as 'loadEventEnd',
-]
+interface FakePerformanceNavigationTiming {
+  entryType: 'navigation'
+  domComplete: number
+  domContentLoadedEventEnd: number
+  domInteractive: number
+  loadEventEnd: number
+}
 
-function emulatePerformanceNavigationTiming(
-  session: RumSession,
-  performanceObservable: Observable<PerformanceEntry>,
-  performance: Performance
-) {
-  function sendFakeEvent() {
-    const event: { -readonly [key in keyof PerformanceNavigationTiming]?: PerformanceNavigationTiming[key] } = {
+function retrieveNavigationTimingWhenLoaded(callback: (timing: FakePerformanceNavigationTiming) => void) {
+  function sendFakeTiming() {
+    callback({
+      domComplete: getRelativeTime(performance.timing.domComplete),
+      domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
+      domInteractive: getRelativeTime(performance.timing.domInteractive),
       entryType: 'navigation',
-    }
-
-    for (const timingName of performanceNavigationTimingNames) {
-      event[timingName] = getRelativePerformanceTiming(performance, performance.timing[timingName])
-    }
-
-    handlePerformanceEntries(session, performanceObservable, [event as PerformanceNavigationTiming])
+      loadEventEnd: getRelativeTime(performance.timing.loadEventEnd),
+    })
   }
 
   if (document.readyState === 'complete') {
-    sendFakeEvent()
+    sendFakeTiming()
   } else {
     const listener = () => {
       window.removeEventListener('load', listener)
       // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-      setTimeout(monitor(sendFakeEvent))
+      setTimeout(monitor(sendFakeTiming))
     }
 
     window.addEventListener('load', listener)
