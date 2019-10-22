@@ -18,7 +18,7 @@
     "member-access": false,
     "no-console": false,
     "no-default-export": true,
-    "no-implicit-dependencies": [false],
+    "no-implicit-dependencies": [true, "dev"],
     "no-null-keyword": true,
     "no-submodule-imports": [true, "@browser-agent/core"],
     "no-unsafe-any": true,
