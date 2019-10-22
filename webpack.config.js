@@ -2,6 +2,7 @@ const path = require('path')
 const webpack = require('webpack')
 const execSync = require('child_process').execSync
 const packageJson = require('./package.json')
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 
 const targetDC = process.env.TARGET_DC || 'us'
 
@@ -38,6 +39,7 @@ module.exports = (env, argv) => ({
   ],
   resolve: {
     extensions: ['.ts', '.js'],
+    plugins: [new TsconfigPathsPlugin()],
   },
   output: {
     filename: (chunkData) => {

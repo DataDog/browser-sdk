@@ -1,13 +1,15 @@
-import { Configuration } from '@browser-agent/core/src/configuration'
 import {
   cacheCookieAccess,
+  Configuration,
   COOKIE_ACCESS_DELAY,
   CookieCache,
   EXPIRATION_DELAY,
+  generateUUID,
+  performDraw,
   SESSION_COOKIE_NAME,
+  throttle,
   trackActivity,
-} from '@browser-agent/core/src/session'
-import * as utils from '@browser-agent/core/src/utils'
+} from '@browser-agent/core'
 
 export const RUM_COOKIE_NAME = '_dd_r'
 
@@ -40,21 +42,21 @@ export function startRumSession(configuration: Configuration): RumSession {
 }
 
 function makeExpandOrRenewSession(configuration: Configuration, rumSession: CookieCache, sessionId: CookieCache) {
-  return utils.throttle(() => {
+  return throttle(() => {
     let sessionType = rumSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
-      sessionType = utils.performDraw(configuration.sampleRate)
+      sessionType = performDraw(configuration.sampleRate)
         ? RumSessionType.TRACKED_WITH_RESOURCES
         : RumSessionType.NOT_TRACKED
       if (sessionType === RumSessionType.TRACKED_WITH_RESOURCES) {
-        sessionType = utils.performDraw(configuration.resourceSampleRate)
+        sessionType = performDraw(configuration.resourceSampleRate)
           ? RumSessionType.TRACKED_WITH_RESOURCES
           : RumSessionType.TRACKED_WITHOUT_RESOURCES
       }
     }
     rumSession.set(sessionType as string, EXPIRATION_DELAY)
     if (isTracked(sessionType)) {
-      sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
+      sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
     }
   }, COOKIE_ACCESS_DELAY)
 }

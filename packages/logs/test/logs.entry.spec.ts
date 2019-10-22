@@ -1,5 +1,4 @@
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { cleanupActivityTracking } from '@browser-agent/core/src/session'
+import { cleanupActivityTracking, monitor } from '@browser-agent/core'
 
 describe('logs entry', () => {
   beforeEach(() => {

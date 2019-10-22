@@ -1,10 +1,16 @@
+import {
+  commonInit,
+  Context,
+  ContextValue,
+  isPercentage,
+  makeGlobal,
+  makeStub,
+  monitor,
+  startRequestCollection,
+  UserConfiguration,
+} from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
-import { UserConfiguration } from '@browser-agent/core/src/configuration'
-import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { startRequestCollection } from '@browser-agent/core/src/requestCollection'
-import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { version } from './version'

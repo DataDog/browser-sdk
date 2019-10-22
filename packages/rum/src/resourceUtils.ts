@@ -1,6 +1,5 @@
-import { Configuration } from '@browser-agent/core/src/configuration'
-import { addMonitoringMessage } from '@browser-agent/core/src/internalMonitoring'
-import { includes, msToNs, ResourceKind, startsWith } from '@browser-agent/core/src/utils'
+import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@browser-agent/core'
+
 import { PerformanceResourceDetails } from './rum'
 
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [

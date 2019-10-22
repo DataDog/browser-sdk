@@ -1,19 +1,9 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "importHelpers": true,
-    "moduleResolution": "node",
+    "baseUrl": ".",
     "outDir": "./dist/",
-    "strict": true,
-    "module": "es6",
-    "target": "es5",
-    "sourceMap": true,
-    "plugins": [
-      {
-        "name": "typescript-tslint-plugin"
-      }
-    ]
+    "module": "es6"
   },
-  "include": ["./packages/**/*.ts"]
+  "include": ["./packages/*/src/**/*.ts"]
 }

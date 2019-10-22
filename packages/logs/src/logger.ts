@@ -1,13 +1,35 @@
+import {
+  Batch,
+  Configuration,
+  Context,
+  ContextValue,
+  ErrorMessage,
+  ErrorObservable,
+  ErrorOrigin,
+  HttpRequest,
+  monitored,
+  noop,
+} from '@browser-agent/core'
 import lodashMerge from 'lodash.merge'
 
-import { Configuration } from '@browser-agent/core/src/configuration'
-import { ErrorMessage, ErrorObservable, ErrorOrigin } from '@browser-agent/core/src/errorCollection'
-import { monitored } from '@browser-agent/core/src/internalMonitoring'
-import { STATUS_PRIORITIES, StatusType } from '@browser-agent/core/src/status'
-import { Batch, HttpRequest } from '@browser-agent/core/src/transport'
-import { Context, ContextValue, noop } from '@browser-agent/core/src/utils'
 import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
+
+export enum StatusType {
+  debug = 'debug',
+  info = 'info',
+  warn = 'warn',
+  error = 'error',
+}
+
+export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
+  [StatusType.debug]: 0,
+  [StatusType.info]: 1,
+  [StatusType.warn]: 2,
+  [StatusType.error]: 3,
+}
+
+export const STATUSES = Object.keys(StatusType)
 
 export interface LogsMessage {
   message: string

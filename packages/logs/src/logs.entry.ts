@@ -1,11 +1,16 @@
+import {
+  commonInit,
+  Context,
+  ContextValue,
+  isPercentage,
+  makeGlobal,
+  makeStub,
+  monitor,
+  UserConfiguration,
+} from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
-import { UserConfiguration } from '@browser-agent/core/src/configuration'
-import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { Status, StatusType } from '@browser-agent/core/src/status'
-import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
-import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
+import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'
 import { version } from './version'
 
@@ -18,6 +23,8 @@ declare global {
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
 }
+
+export type Status = keyof typeof StatusType
 
 const STUBBED_LOGGER = {
   debug(message: string, context?: Context) {
