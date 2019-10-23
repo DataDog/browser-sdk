@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "webpack --config webpack.config.js --mode=production",
+    "build:npm": "lerna run build --stream",
     "dev": "webpack-dev-server --mode=development",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",

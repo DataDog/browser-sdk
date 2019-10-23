@@ -2,6 +2,14 @@
   "name": "datadog-rum",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "scripts": {
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json"
+  },
   "dependencies": {
     "@browser-agent/core": "^0.0.1",
     "lodash.assign": "4.2.0",

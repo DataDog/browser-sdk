@@ -103,3 +103,5 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(window.DD_LOGS, globalApi)
 })
+
+export const datadogLogs = window.DD_LOGS

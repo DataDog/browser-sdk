@@ -78,3 +78,5 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
   )
   lodashAssign(window.DD_RUM, globalApi)
 })
+
+export const datadogRum = window.DD_RUM
