@@ -7,8 +7,8 @@ const targetDC = process.env.TARGET_DC || 'us'
 
 module.exports = (env, argv) => ({
   entry: {
-    logs: './src/logs/logs.entry.ts',
-    rum: './src/rum/rum.entry.ts',
+    logs: './packages/logs/src/logs.entry.ts',
+    rum: './packages/rum/src/rum.entry.ts',
   },
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
   devServer: {

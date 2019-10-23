@@ -1,5 +1,5 @@
-import { LogsGlobal } from '../../../src/logs/logs.entry'
-import { RumEvent, RumEventCategory, RumResourceEvent } from '../../../src/rum/rum'
+import { LogsGlobal } from '../../../packages/logs/src/logs.entry'
+import { RumEvent, RumEventCategory, RumResourceEvent } from '../../../packages/rum/src/rum'
 
 import {
   browserExecute,
