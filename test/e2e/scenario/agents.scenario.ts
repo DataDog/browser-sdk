@@ -1,6 +1,7 @@
 import {
   browserExecute,
   browserExecuteAsync,
+  findLastEvent,
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
@@ -9,12 +10,14 @@ import {
   sortByMessage,
   tearDown,
 } from './helpers'
+import { strictlyPositiveNumber } from './matchers'
 
 // TODO use real types
 // tslint:disable: no-unsafe-any
 type LogsGlobal = any
 type RumEvent = any
 type RumEventCategory = any
+type RumPageViewEvent = any
 type RumResourceEvent = any
 const ERROR = 'error' as any
 
@@ -85,6 +88,21 @@ describe('rum', () => {
     expect(timing.duration).toBeGreaterThan(0)
     expect(timing.http.performance!.download.start).toBeGreaterThan(0)
     expect(timing.http.performance!.download.duration).toBeGreaterThan(0)
+  })
+
+  it('should send performance timings along the page view events', async () => {
+    await flushEvents()
+    const events = await retrieveRumEvents()
+
+    const pageView = findLastEvent(events, (event) => event.evt.category === 'page_view') as RumPageViewEvent
+
+    expect(pageView as any).not.toBe(undefined)
+    expect(pageView.screen.performance).toEqual({
+      dom_complete: strictlyPositiveNumber(),
+      dom_content_loaded: strictlyPositiveNumber(),
+      dom_interactive: strictlyPositiveNumber(),
+      load_event_end: strictlyPositiveNumber(),
+    } as any)
   })
 })
 

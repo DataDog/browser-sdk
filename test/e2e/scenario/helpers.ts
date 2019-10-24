@@ -84,3 +84,7 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
   }
   return 0
 }
+
+export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) => boolean) {
+  return events.reduce<RumEvent | undefined>((olderEvent, event) => (predicate(event) ? event : olderEvent), undefined)
+}
