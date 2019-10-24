@@ -1141,6 +1141,14 @@
     deepmerge "^4.0.0"
     glob "^7.1.2"
 
+"@wdio/crossbrowsertesting-service@5.15.2":
+  version "5.15.2"
+  resolved "https://registry.yarnpkg.com/@wdio/crossbrowsertesting-service/-/crossbrowsertesting-service-5.15.2.tgz#626d7e51165c48ddc12e1ddb5cd6f94b2a56ff37"
+  integrity sha512-ob4ONaHAnzVEjswm6tkCvdJ4EYNhmqjeCpvdi5AcM8N6tnetvJmmVJOfQ/SNiMUVBumDNitZPkfcXb/V4WPFLA==
+  dependencies:
+    "@wdio/logger" "5.13.2"
+    cbt_tunnels "^0.9.12"
+
 "@wdio/jasmine-framework@5.11.0":
   version "5.11.0"
   resolved "https://registry.yarnpkg.com/@wdio/jasmine-framework/-/jasmine-framework-5.11.0.tgz#dc886fe9809d1d9529b9ae1f16d69742e4b1c10c"
@@ -1160,6 +1168,16 @@
     "@wdio/runner" "^5.11.6"
     async-exit-hook "^2.0.1"
     stream-buffers "^3.0.2"
+
+"@wdio/logger@5.13.2":
+  version "5.13.2"
+  resolved "https://registry.yarnpkg.com/@wdio/logger/-/logger-5.13.2.tgz#417f580f0882ff6d6ec2bd2c210502f2f8fa4f2b"
+  integrity sha512-F8NlP+AoN0zKv8+0iDAJxdbb488kk5LlPA6U6XPgTT/1xxPgpM4MVQoiCGtLOU9UNPX9XLfgoCXyYWMxp96Ncg==
+  dependencies:
+    chalk "^2.3.0"
+    loglevel "^1.6.0"
+    loglevel-plugin-prefix "^0.8.4"
+    strip-ansi "^5.2.0"
 
 "@wdio/logger@^5.11.0":
   version "5.11.0"
@@ -2407,7 +2425,7 @@ caseless@~0.12.0:
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
   integrity sha1-G2gcIf+EAzyCZUMJBolCDRhxUdw=
 
-cbt_tunnels@^0.9.3:
+cbt_tunnels@^0.9.12, cbt_tunnels@^0.9.3:
   version "0.9.12"
   resolved "https://registry.yarnpkg.com/cbt_tunnels/-/cbt_tunnels-0.9.12.tgz#e0a8016e07fb0246994fab13ee08f4074e681c28"
   integrity sha512-YVhbf2YbmLS+nMpDCnAjDOv9BOAc98+pFuDom0RZu0BSjc7w6q3rryF1rYgTGJRiDU9cShj10eWWKL8qh92PSg==

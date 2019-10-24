@@ -12,9 +12,11 @@
     "dev": "webpack-dev-server --mode=development",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",
-    "test": "karma start ./test/unit/karma.unit.conf.js",
-    "test:cbt": "karma start ./test/unit/karma.cbt.conf.js",
-    "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.conf.js"
+    "test": "yarn test:unit",
+    "test:unit": "karma start ./test/unit/karma.local.conf.js",
+    "test:unit:cbt": "karma start ./test/unit/karma.cbt.conf.js",
+    "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.local.conf.js",
+    "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.cbt.conf.js"
   },
   "devDependencies": {
     "@types/body-parser": "1.17.0",
@@ -23,6 +25,7 @@
     "@types/jasmine": "3.3.13",
     "@types/request": "2.48.2",
     "@wdio/cli": "5.11.6",
+    "@wdio/crossbrowsertesting-service": "5.15.2",
     "@wdio/jasmine-framework": "5.11.0",
     "@wdio/local-runner": "5.11.6",
     "@wdio/selenium-standalone-service": "5.11.2",

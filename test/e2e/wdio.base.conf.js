@@ -1,24 +1,15 @@
 const { exec } = require('child_process')
 let serverProcess
 
-exports.config = {
+module.exports = {
   runner: 'local',
   specs: ['./test/e2e/scenario/*.scenario.ts'],
   maxInstances: 1,
-  capabilities: [
-    {
-      browserName: 'chrome',
-      'goog:chromeOptions': {
-        args: ['--headless', '--no-sandbox'],
-      },
-    },
-  ],
   logLevel: 'warn',
-  baseUrl: 'http://localhost:3000',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 0,
-  services: ['selenium-standalone'],
+
   framework: 'jasmine',
   reporters: ['spec'],
   jasmineNodeOpts: {
