@@ -37,7 +37,7 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!areCookiesAuthorized) {
+  if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
   }
