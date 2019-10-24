@@ -163,8 +163,12 @@ export function areCookiesAuthorized(): boolean {
   }
   try {
     const testCookieName = 'dd_rum_test'
-    setCookie(testCookieName, 'test', 100)
-    getCookie(testCookieName)
+    const testCookieValue = 'test'
+    setCookie(testCookieName, testCookieValue, 100)
+    const cookieValue = getCookie(testCookieName)
+    if (cookieValue !== testCookieValue) {
+      return false
+    }
   } catch (error) {
     console.error(error)
     return false
