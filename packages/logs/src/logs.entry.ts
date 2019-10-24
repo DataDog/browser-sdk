@@ -4,7 +4,7 @@ import { UserConfiguration } from '@browser-agent/core/src/configuration'
 import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
 import { monitor } from '@browser-agent/core/src/internalMonitoring'
 import { Status, StatusType } from '@browser-agent/core/src/status'
-import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
+import { areCookiesAuthorized, Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
 import { startLoggerSession } from './loggerSession'
 
@@ -73,6 +73,10 @@ export type LogsGlobal = typeof STUBBED_LOGS
 
 window.DD_LOGS = makeGlobal(STUBBED_LOGS)
 window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
+  if (!areCookiesAuthorized()) {
+    console.error('Cookies are not authorized, we will not send any data.')
+    return
+  }
   if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
     console.error('Client Token is not configured, we will not send any data.')
     return

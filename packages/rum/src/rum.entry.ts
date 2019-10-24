@@ -4,7 +4,7 @@ import { UserConfiguration } from '@browser-agent/core/src/configuration'
 import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
 import { monitor } from '@browser-agent/core/src/internalMonitoring'
 import { startRequestCollection } from '@browser-agent/core/src/requestCollection'
-import { Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
+import { areCookiesAuthorized, Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 
@@ -37,6 +37,10 @@ export type RumGlobal = typeof STUBBED_RUM
 
 window.DD_RUM = makeGlobal(STUBBED_RUM)
 window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
+  if (!areCookiesAuthorized()) {
+    console.error('Cookies are not authorized, we will not send any data.')
+    return
+  }
   if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
     console.error('Client Token is not configured, we will not send any data.')
     return
