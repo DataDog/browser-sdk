@@ -164,16 +164,12 @@ export function areCookiesAuthorized(): boolean {
   try {
     const testCookieName = 'dd_rum_test'
     const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, 100)
-    const cookieValue = getCookie(testCookieName)
-    if (cookieValue !== testCookieValue) {
-      return false
-    }
+    setCookie(testCookieName, testCookieValue, 1000)
+    return getCookie(testCookieName) === testCookieValue
   } catch (error) {
     console.error(error)
     return false
   }
-  return true
 }
 
 export function isPercentage(value: unknown) {
