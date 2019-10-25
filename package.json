@@ -9,8 +9,9 @@
   "scripts": {
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
-    "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
-    "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",
+    "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!**/+(bundle|cjs|coverage|esm)/**\"",
+    "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json",
+    "dev": "ENV=development node test/server/server.js",
     "test": "karma start ./test/unit/karma.unit.conf.js",
     "test:cbt": "karma start ./test/unit/karma.cbt.conf.js",
     "test:e2e": "TARGET_ENV=e2e-test yarn build:bundle && wdio test/e2e/wdio.conf.js"
@@ -59,6 +60,6 @@
     "webdriverio": "5.11.6",
     "webpack": "4.36.1",
     "webpack-cli": "3.3.6",
-    "webpack-dev-server": "3.7.2"
+    "webpack-dev-middleware": "3.7.2"
   }
 }
