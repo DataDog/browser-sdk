@@ -1,8 +1,12 @@
 import * as request from 'request'
-import { ErrorContext, HttpContext } from '../../../packages/core/src/errorCollection'
-import { MonitoringMessage } from '../../../packages/core/src/internalMonitoring'
-import { LogsMessage } from '../../../packages/logs/src/logger'
-import { RumEvent } from '../../../packages/rum/src/rum'
+
+// TODO use real types
+// tslint:disable: no-unsafe-any
+type ErrorContext = any
+type HttpContext = any
+type MonitoringMessage = any
+type LogsMessage = any
+type RumEvent = any
 
 export interface ServerErrorMessage {
   error: ErrorContext

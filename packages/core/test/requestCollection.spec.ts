@@ -1,6 +1,6 @@
 import { Observable } from '../src/observable'
 import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../src/requestCollection'
-import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from './specHelper'
+import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
 
 describe('fetch tracker', () => {
   const FAKE_URL = 'http://fake-url/'

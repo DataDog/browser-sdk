@@ -1,5 +1,5 @@
-import { cleanupActivityTracking } from '@browser-agent/core/src/session'
-import { isIE } from '@browser-agent/core/test/specHelper'
+import { cleanupActivityTracking, isIE } from '@browser-agent/core'
+
 import { RumUserConfiguration } from '../src/rum.entry'
 
 describe('rum entry', () => {

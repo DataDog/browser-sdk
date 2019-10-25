@@ -2,8 +2,7 @@ const webpackConfig = require('../../webpack.config')(null, { mode: 'development
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/**/*.ts'],
-  exclude: ['packages/**/*.d.ts'],
+  files: ['packages/*/+(src|test)/**/*.ts'],
   frameworks: ['jasmine'],
   client: {
     jasmine: {
@@ -11,7 +10,7 @@ module.exports = {
     },
   },
   preprocessors: {
-    'packages/**/*.ts': ['webpack'],
+    'packages/*/+(src|test)/**/*.ts': ['webpack'],
   },
   reporters: ['spec'],
   specReporter: {

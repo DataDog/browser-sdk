@@ -1,13 +1,15 @@
-import { Configuration } from '@browser-agent/core/src/configuration'
 import {
   cacheCookieAccess,
+  Configuration,
   COOKIE_ACCESS_DELAY,
   CookieCache,
   EXPIRATION_DELAY,
+  generateUUID,
+  performDraw,
   SESSION_COOKIE_NAME,
+  throttle,
   trackActivity,
-} from '@browser-agent/core/src/session'
-import * as utils from '@browser-agent/core/src/utils'
+} from '@browser-agent/core'
 
 export const LOGGER_COOKIE_NAME = '_dd_l'
 
@@ -37,16 +39,14 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
 }
 
 function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
-  return utils.throttle(() => {
+  return throttle(() => {
     let sessionType = loggerSession.get() as LoggerSessionType | undefined
     if (!hasValidLoggerSession(sessionType)) {
-      sessionType = utils.performDraw(configuration.sampleRate)
-        ? LoggerSessionType.TRACKED
-        : LoggerSessionType.NOT_TRACKED
+      sessionType = performDraw(configuration.sampleRate) ? LoggerSessionType.TRACKED : LoggerSessionType.NOT_TRACKED
     }
     loggerSession.set(sessionType as string, EXPIRATION_DELAY)
     if (sessionType === LoggerSessionType.TRACKED) {
-      sessionId.set(sessionId.get() || utils.generateUUID(), EXPIRATION_DELAY)
+      sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
     }
   }, COOKIE_ACCESS_DELAY)
 }

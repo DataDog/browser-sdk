@@ -1,12 +1,14 @@
-import { Configuration, DEFAULT_CONFIGURATION } from '@browser-agent/core/src/configuration'
 import {
   cleanupActivityTracking,
+  Configuration,
   COOKIE_ACCESS_DELAY,
+  DEFAULT_CONFIGURATION,
   getCookie,
+  isIE,
   SESSION_COOKIE_NAME,
   setCookie,
-} from '@browser-agent/core/src/session'
-import { isIE } from '@browser-agent/core/test/specHelper'
+} from '@browser-agent/core'
+
 import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../src/rumSession'
 
 function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {

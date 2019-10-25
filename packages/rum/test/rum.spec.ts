@@ -1,10 +1,13 @@
+import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
+  ErrorMessage,
+  isIE,
+  Observable,
+  PerformanceObserverStubBuilder,
+  RequestDetails,
+} from '@browser-agent/core'
 import sinon from 'sinon'
-
-import { Configuration, DEFAULT_CONFIGURATION } from '@browser-agent/core/src/configuration'
-import { ErrorMessage } from '@browser-agent/core/src/errorCollection'
-import { Observable } from '@browser-agent/core/src/observable'
-import { RequestDetails } from '@browser-agent/core/src/requestCollection'
-import { isIE, PerformanceObserverStubBuilder } from '@browser-agent/core/test/specHelper'
 
 import {
   handlePaintEntry,

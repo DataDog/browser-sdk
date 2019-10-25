@@ -1,5 +1,25 @@
 {
   "name": "@browser-agent/core",
   "version": "0.0.1",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "scripts": {
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json"
+  },
+  "dependencies": {
+    "lodash.assign": "4.2.0",
+    "lodash.merge": "4.6.2",
+    "tslib": "1.10.0",
+    "url-polyfill": "1.1.7"
+  },
+  "devDependencies": {
+    "@types/lodash.assign": "4.2.6",
+    "@types/lodash.merge": "4.6.6",
+    "@types/sinon": "7.0.13",
+    "sinon": "7.3.2"
+  }
 }

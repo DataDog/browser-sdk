@@ -4,10 +4,14 @@ import lodashAssign from 'lodash.assign'
 
 import { Configuration } from './configuration'
 import { toStackTraceString } from './errorCollection'
-import { StatusType } from './status'
 import { computeStackTrace } from './tracekit'
 import { Batch, HttpRequest } from './transport'
 import * as utils from './utils'
+
+enum StatusType {
+  info = 'info',
+  error = 'error',
+}
 
 export interface MonitoringMessage {
   entryType: 'internal'

@@ -36,6 +36,15 @@ lint:
     - yarn
     - yarn lint
 
+build:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn build
+    - yarn build:npm
+
 unit:
   stage: test
   tags: ['runner:main', 'size:large']

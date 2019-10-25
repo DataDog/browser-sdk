@@ -1,6 +1,3 @@
-import { LogsGlobal } from '../../../packages/logs/src/logs.entry'
-import { RumEvent, RumEventCategory, RumResourceEvent } from '../../../packages/rum/src/rum'
-
 import {
   browserExecute,
   browserExecuteAsync,
@@ -12,6 +9,14 @@ import {
   sortByMessage,
   tearDown,
 } from './helpers'
+
+// TODO use real types
+// tslint:disable: no-unsafe-any
+type LogsGlobal = any
+type RumEvent = any
+type RumEventCategory = any
+type RumResourceEvent = any
+const ERROR = 'error' as any
 
 beforeEach(() => {
   browser.url('/agents-page.html')
@@ -48,7 +53,7 @@ describe('rum', () => {
     })
     await flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).toContain(RumEventCategory.ERROR)
+    expect(types).toContain(ERROR)
     const browserLogs = await browser.getLogs('browser')
     expect(browserLogs.length).toEqual(1)
   })

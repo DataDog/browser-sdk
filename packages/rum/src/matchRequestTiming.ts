@@ -1,4 +1,4 @@
-import { RequestDetails } from '@browser-agent/core/src/requestCollection'
+import { RequestDetails } from '@browser-agent/core'
 
 interface Timing {
   startTime: number

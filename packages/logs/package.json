@@ -2,7 +2,24 @@
   "name": "datadog-logs",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "scripts": {
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json"
+  },
   "dependencies": {
-    "@browser-agent/core": "^0.0.1"
+    "@browser-agent/core": "^0.0.1",
+    "lodash.assign": "4.2.0",
+    "lodash.merge": "4.6.2",
+    "tslib": "1.10.0"
+  },
+  "devDependencies": {
+    "@types/lodash.assign": "4.2.6",
+    "@types/lodash.merge": "4.6.6",
+    "@types/sinon": "7.0.13",
+    "sinon": "7.3.2"
   }
 }

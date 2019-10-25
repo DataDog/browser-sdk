@@ -1,16 +1,19 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "strict": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "strict": true,
     "target": "es5",
+    "sourceMap": true,
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }
     ],
-    "types": ["node", "@wdio/sync", "jasmine"]
-  },
-  "include": ["./**/*.ts"]
+    "paths": {
+      "@browser-agent/core": ["./packages/core/src"]
+    }
+  }
 }

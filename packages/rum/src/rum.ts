@@ -1,12 +1,25 @@
+import {
+  Batch,
+  Configuration,
+  Context,
+  ContextValue,
+  ErrorContext,
+  ErrorMessage,
+  ErrorObservable,
+  HttpContext,
+  HttpRequest,
+  includes,
+  monitor,
+  msToNs,
+  Observable,
+  RequestDetails,
+  RequestObservable,
+  RequestType,
+  ResourceKind,
+  withSnakeCaseKeys,
+} from '@browser-agent/core'
 import lodashMerge from 'lodash.merge'
 
-import { Configuration } from '@browser-agent/core/src/configuration'
-import { ErrorContext, ErrorMessage, ErrorObservable, HttpContext } from '@browser-agent/core/src/errorCollection'
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { Observable } from '@browser-agent/core/src/observable'
-import { RequestDetails, RequestObservable, RequestType } from '@browser-agent/core/src/requestCollection'
-import { Batch, HttpRequest } from '@browser-agent/core/src/transport'
-import { Context, ContextValue, includes, msToNs, ResourceKind, withSnakeCaseKeys } from '@browser-agent/core/src/utils'
 import { matchRequestTiming } from './matchRequestTiming'
 import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
 import { startPerformanceCollection } from './performanceCollection'

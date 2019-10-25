@@ -1,11 +1,7 @@
+import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, Observable, Omit } from '@browser-agent/core'
 import sinon from 'sinon'
 
-import { Configuration, DEFAULT_CONFIGURATION } from '@browser-agent/core/src/configuration'
-import { ErrorMessage } from '@browser-agent/core/src/errorCollection'
-import { Observable } from '@browser-agent/core/src/observable'
-import { STATUSES, StatusType } from '@browser-agent/core/src/status'
-import { Omit } from '@browser-agent/core/src/utils'
-import { HandlerType, LogsMessage, startLogger } from '../src/logger'
+import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../src/logger'
 import { LogsGlobal } from '../src/logs.entry'
 
 interface SentMessage extends LogsMessage {

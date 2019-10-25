@@ -1,6 +1,6 @@
-import { Observable } from '../src/observable'
-import { RequestDetails } from '../src/requestCollection'
-import { noop } from '../src/utils'
+import { Observable } from './observable'
+import { RequestDetails } from './requestCollection'
+import { noop } from './utils'
 
 export function isSafari() {
   return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)

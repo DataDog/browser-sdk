@@ -1,12 +1,19 @@
+import {
+  areCookiesAuthorized,
+  commonInit,
+  Context,
+  ContextValue,
+  isPercentage,
+  makeGlobal,
+  makeStub,
+  monitor,
+  UserConfiguration,
+} from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
-import { UserConfiguration } from '@browser-agent/core/src/configuration'
-import { commonInit, makeGlobal, makeStub } from '@browser-agent/core/src/init'
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { Status, StatusType } from '@browser-agent/core/src/status'
-import { areCookiesAuthorized, Context, ContextValue, isPercentage } from '@browser-agent/core/src/utils'
-import { HandlerType, Logger, LoggerConfiguration, startLogger } from './logger'
+import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'
+import { version } from './version'
 
 declare global {
   interface Window {
@@ -17,6 +24,8 @@ declare global {
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
 }
+
+export type Status = keyof typeof StatusType
 
 const STUBBED_LOGGER = {
   debug(message: string, context?: Context) {
@@ -94,8 +103,10 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration } = commonInit(logsUserConfiguration)
+  const { errorObservable, configuration } = commonInit(logsUserConfiguration, version)
   const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(window.DD_LOGS, globalApi)
 })
+
+export const datadogLogs = window.DD_LOGS

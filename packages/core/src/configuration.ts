@@ -1,11 +1,5 @@
+import { defaultEnv } from './buildEnv'
 import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
-
-function getEndpoint(type: 'browser' | 'rum', clientToken: string, source?: string) {
-  const tld = buildEnv.TARGET_DC === 'us' ? 'com' : 'eu'
-  const domain = buildEnv.TARGET_ENV === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
-  const tags = `version:${buildEnv.VERSION}`
-  return `https://${type}-http-intake.logs.${domain}/v1/input/${clientToken}?ddsource=${source || type}&ddtags=${tags}`
-}
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
@@ -58,16 +52,30 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
 }
 
-export function buildConfiguration(userConfiguration: UserConfiguration): Configuration {
+interface TransportConfiguration {
+  clientToken: string
+  datacenter: 'eu' | 'us'
+  env: 'production' | 'staging' | 'e2e-test'
+  version: string
+}
+
+export function buildConfiguration(userConfiguration: UserConfiguration, version: string): Configuration {
+  const transportConfiguration = {
+    clientToken: userConfiguration.clientToken,
+    datacenter: defaultEnv.datacenter,
+    env: defaultEnv.env,
+    version: defaultEnv.version || version,
+  }
+
   const configuration: Configuration = {
-    logsEndpoint: getEndpoint('browser', userConfiguration.clientToken),
-    rumEndpoint: getEndpoint('rum', userConfiguration.clientToken),
+    logsEndpoint: getEndpoint('browser', transportConfiguration),
+    rumEndpoint: getEndpoint('rum', transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
       'browser',
-      userConfiguration.internalMonitoringApiKey,
+      transportConfiguration,
       'browser-agent-internal-monitoring'
     )
   }
@@ -84,7 +92,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
   }
 
-  if (buildEnv.TARGET_ENV === 'e2e-test') {
+  if (transportConfiguration.env === 'e2e-test') {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
@@ -97,4 +105,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration): Config
   }
 
   return configuration
+}
+
+function getEndpoint(type: 'browser' | 'rum', conf: TransportConfiguration, source?: string) {
+  const tld = conf.datacenter === 'us' ? 'com' : 'eu'
+  const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
+  const tags = `version:${conf.version}`
+  return `https://${type}-http-intake.logs.${domain}/v1/input/${conf.clientToken}?ddsource=${source ||
+    type}&ddtags=${tags}`
 }

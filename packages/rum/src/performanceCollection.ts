@@ -1,6 +1,5 @@
-import { monitor } from '@browser-agent/core/src/internalMonitoring'
-import { Observable } from '@browser-agent/core/src/observable'
-import { getRelativeTime } from '@browser-agent/core/src/utils'
+import { getRelativeTime, monitor, Observable } from '@browser-agent/core'
+
 import { RumSession } from './rumSession'
 
 declare global {
