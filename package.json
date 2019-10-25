@@ -17,9 +17,6 @@
     "test:e2e": "TARGET_ENV=e2e-test yarn build:bundle && wdio test/e2e/wdio.conf.js"
   },
   "devDependencies": {
-    "@types/body-parser": "1.17.0",
-    "@types/cors": "2.8.5",
-    "@types/express": "4.17.0",
     "@types/jasmine": "3.3.13",
     "@types/request": "2.48.2",
     "@wdio/cli": "5.11.6",
@@ -54,7 +51,6 @@
     "tslint-config-airbnb": "5.11.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-eslint-rules": "5.4.0",
-    "tslint-no-unused-expression-chai": "0.1.4",
     "typescript": "3.5.3",
     "typescript-tslint-plugin": "0.5.4",
     "webdriverio": "5.11.6",
