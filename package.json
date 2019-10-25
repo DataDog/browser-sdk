@@ -7,14 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode=production",
-    "build:npm": "lerna run build --stream",
-    "dev": "webpack-dev-server --mode=development",
+    "build": "lerna run build --stream",
+    "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",
     "test": "karma start ./test/unit/karma.unit.conf.js",
     "test:cbt": "karma start ./test/unit/karma.cbt.conf.js",
-    "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.conf.js"
+    "test:e2e": "TARGET_ENV=e2e-test yarn build:bundle && wdio test/e2e/wdio.conf.js"
   },
   "devDependencies": {
     "@types/body-parser": "1.17.0",

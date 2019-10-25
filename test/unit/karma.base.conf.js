@@ -1,4 +1,4 @@
-const webpackConfig = require('../../webpack.config')(null, { mode: 'development' })
+const webpackConfig = require('../../webpack.base')('development')
 
 module.exports = {
   basePath: '../..',
@@ -20,7 +20,7 @@ module.exports = {
   },
   singleRun: true,
   webpack: {
-    mode: 'development',
+    mode: webpackConfig.mode,
     stats: 'minimal',
     module: webpackConfig.module,
     plugins: webpackConfig.plugins,

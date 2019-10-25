@@ -7,7 +7,8 @@ const app = express()
 const port = 3000
 
 app.use(express.static(path.join(__dirname, '../static')))
-app.use(express.static(path.join(__dirname, '../../../dist')))
+app.use(express.static(path.join(__dirname, '../../../packages/logs/bundle')))
+app.use(express.static(path.join(__dirname, '../../../packages/rum/bundle')))
 app.use(bodyParser.text())
 app.use(cors())
 
