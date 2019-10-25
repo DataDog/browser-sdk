@@ -16,12 +16,6 @@ import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { version } from './version'
 
-declare global {
-  interface Window {
-    DD_RUM: RumGlobal
-  }
-}
-
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
 }
@@ -43,8 +37,8 @@ const STUBBED_RUM = {
 
 export type RumGlobal = typeof STUBBED_RUM
 
-window.DD_RUM = makeGlobal(STUBBED_RUM)
-window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
+export const datadogRum = makeGlobal(STUBBED_RUM)
+datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
@@ -81,7 +75,5 @@ window.DD_RUM.init = monitor((userConfiguration: RumUserConfiguration) => {
     configuration,
     session
   )
-  lodashAssign(window.DD_RUM, globalApi)
+  lodashAssign(datadogRum, globalApi)
 })
-
-export const datadogRum = window.DD_RUM
