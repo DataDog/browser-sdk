@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./bundle/",
+    "module": "es6",
+    "paths": {
+      "@browser-agent/core": ["../core/src"]
+    }
+  },
+  "include": ["./src/**/*.ts"]
+}

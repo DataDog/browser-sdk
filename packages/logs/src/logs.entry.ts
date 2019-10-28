@@ -15,12 +15,6 @@ import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } fro
 import { startLoggerSession } from './loggerSession'
 import { version } from './version'
 
-declare global {
-  interface Window {
-    DD_LOGS: LogsGlobal
-  }
-}
-
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
 }
@@ -80,8 +74,8 @@ const STUBBED_LOGS = {
 
 export type LogsGlobal = typeof STUBBED_LOGS
 
-window.DD_LOGS = makeGlobal(STUBBED_LOGS)
-window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
+export const datadogLogs = makeGlobal(STUBBED_LOGS)
+datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
   if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
@@ -106,7 +100,5 @@ window.DD_LOGS.init = monitor((userConfiguration: LogsUserConfiguration) => {
   const { errorObservable, configuration } = commonInit(logsUserConfiguration, version)
   const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
-  lodashAssign(window.DD_LOGS, globalApi)
+  lodashAssign(datadogLogs, globalApi)
 })
-
-export const datadogLogs = window.DD_LOGS

@@ -1,6 +1,4 @@
 bundle
 cjs
 esm
-node_modules
 coverage
-tunnel.log
