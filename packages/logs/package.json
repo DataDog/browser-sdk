@@ -6,7 +6,8 @@
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
   "scripts": {
-    "build": "run-p build:cjs build:esm",
+    "build": "run-p build:cjs build:esm build:bundle",
+    "build:bundle": "webpack --config webpack.config.js --mode=production",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json"
   },

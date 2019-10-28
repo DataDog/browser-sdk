@@ -16,7 +16,7 @@ module.exports = {
     defaultTimeoutInterval: 60000,
   },
   onPrepare: function() {
-    serverProcess = exec('ts-node --project test/e2e/server/tsconfig.json test/e2e/server/server')
+    serverProcess = exec('node test/server/server')
   },
   before: function() {
     require('ts-node').register({

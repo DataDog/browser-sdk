@@ -22,10 +22,17 @@ case "${env}" in
 esac
 
 BROWSER_CACHE=900
+LOGS_BUNDLE_PATH="packages/logs/bundle"
+RUM_BUNDLE_PATH="packages/rum/bundle"
 EU_LOGS_FILE_NAME="datadog-logs-eu.js"
 US_LOGS_FILE_NAME="datadog-logs-us.js"
 EU_RUM_FILE_NAME="datadog-rum-eu.js"
 US_RUM_FILE_NAME="datadog-rum-us.js"
+declare -A paths
+paths[${EU_LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${EU_LOGS_FILE_NAME}"
+paths[${US_LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${US_LOGS_FILE_NAME}"
+paths[${EU_RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${EU_RUM_FILE_NAME}"
+paths[${US_RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${US_RUM_FILE_NAME}"
 
 main() {
   in-isolation upload-to-s3
@@ -36,7 +43,7 @@ upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
     for file_name in ${EU_LOGS_FILE_NAME} ${US_LOGS_FILE_NAME} ${EU_RUM_FILE_NAME} ${US_RUM_FILE_NAME}; do
       echo "Upload ${file_name}"
-      aws s3 cp --cache-control max-age=${BROWSER_CACHE} dist/${file_name} s3://${BUCKET_NAME}/${file_name};
+      aws s3 cp --cache-control max-age=${BROWSER_CACHE} ${paths[${file_name}]} s3://${BUCKET_NAME}/${file_name};
     done
 }
 

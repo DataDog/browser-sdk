@@ -7,11 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode=production",
-    "build:npm": "lerna run build --stream",
-    "dev": "webpack-dev-server --mode=development",
-    "format": "prettier --check \"**/*.{ts,js,json,md,yml}\" \"!dist/**\"",
-    "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/server/tsconfig.json",
+    "build": "lerna run build --stream",
+    "build:bundle": "lerna run build:bundle --stream",
+    "format": "prettier --check \"**/*.{ts,js,json,md,yml,html}\"",
+    "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json",
+    "dev": "ENV=development node test/server/server.js",
     "test": "yarn test:unit",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:unit:cbt": "karma start ./test/unit/karma.cbt.conf.js",
@@ -19,9 +19,6 @@
     "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.cbt.conf.js"
   },
   "devDependencies": {
-    "@types/body-parser": "1.17.0",
-    "@types/cors": "2.8.5",
-    "@types/express": "4.17.0",
     "@types/jasmine": "3.3.13",
     "@types/request": "2.48.2",
     "@wdio/cli": "5.11.6",
@@ -57,12 +54,11 @@
     "tslint-config-airbnb": "5.11.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-eslint-rules": "5.4.0",
-    "tslint-no-unused-expression-chai": "0.1.4",
     "typescript": "3.5.3",
     "typescript-tslint-plugin": "0.5.4",
     "webdriverio": "5.11.6",
     "webpack": "4.36.1",
     "webpack-cli": "3.3.6",
-    "webpack-dev-server": "3.7.2"
+    "webpack-dev-middleware": "3.7.2"
   }
 }

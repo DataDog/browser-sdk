@@ -43,7 +43,6 @@ build:
   script:
     - yarn
     - yarn build
-    - yarn build:npm
 
 unit:
   stage: test
@@ -94,8 +93,8 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DC=eu TARGET_ENV=staging yarn build
-    - TARGET_DC=us TARGET_ENV=staging yarn build
+    - TARGET_DC=eu TARGET_ENV=staging yarn build:bundle
+    - TARGET_DC=us TARGET_ENV=staging yarn build:bundle
     - ./deploy.sh staging
 
 deploy-prod:
@@ -107,6 +106,6 @@ deploy-prod:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DC=eu TARGET_ENV=production yarn build
-    - TARGET_DC=us TARGET_ENV=production yarn build
+    - TARGET_DC=eu TARGET_ENV=production yarn build:bundle
+    - TARGET_DC=us TARGET_ENV=production yarn build:bundle
     - ./deploy.sh prod
