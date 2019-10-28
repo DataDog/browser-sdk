@@ -5,21 +5,23 @@
     <title>e2e tests page</title>
     <script type="text/javascript" src="./datadog-logs-us.js"></script>
     <script type="text/javascript">
-      window.DD_LOGS && window.DD_LOGS.init({
-        clientToken: 'key',
-        internalMonitoringEndpoint: '/monitoring',
-        logsEndpoint: '/logs',
-        forwardErrorsToLogs: true,
-      })
+      window.DD_LOGS &&
+        window.DD_LOGS.init({
+          clientToken: 'key',
+          internalMonitoringEndpoint: '/monitoring',
+          logsEndpoint: '/logs',
+          forwardErrorsToLogs: true,
+        })
     </script>
     <script type="text/javascript" src="./datadog-rum-us.js"></script>
     <script type="text/javascript">
-      window.DD_RUM && window.DD_RUM.init({
-        clientToken: 'key',
-        internalMonitoringEndpoint: '/monitoring',
-        applicationId: 'rum',
-        rumEndpoint: '/rum',
-      })
+      window.DD_RUM &&
+        window.DD_RUM.init({
+          clientToken: 'key',
+          internalMonitoringEndpoint: '/monitoring',
+          applicationId: 'rum',
+          rumEndpoint: '/rum',
+        })
     </script>
   </head>
   <body></body>
