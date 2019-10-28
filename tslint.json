@@ -5,7 +5,6 @@
     "tslint:recommended",
     "tslint:latest",
     "tslint-eslint-rules",
-    "tslint-no-unused-expression-chai",
     "tslint-config-prettier"
   ],
   "jsRules": {},
