@@ -22,7 +22,7 @@ case "${env}" in
 esac
 
 BROWSER_CACHE=900
-LOGS_BUNDLE_PATH="packages/log/bundle"
+LOGS_BUNDLE_PATH="packages/logs/bundle"
 RUM_BUNDLE_PATH="packages/rum/bundle"
 EU_LOGS_FILE_NAME="datadog-logs-eu.js"
 US_LOGS_FILE_NAME="datadog-logs-us.js"
