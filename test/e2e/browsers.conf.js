@@ -15,11 +15,6 @@
 
 module.exports = [
   {
-    platform: 'Windows 10',
-    browserName: 'Chrome',
-    version: '77',
-  },
-  {
     os_api_name: 'Mac10.14',
     browserName: 'Safari',
     browser_api_name: 'Safari12',
