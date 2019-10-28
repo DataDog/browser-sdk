@@ -64,16 +64,10 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
 
-  const { errorObservable, configuration } = commonInit(rumUserConfiguration, version)
+  const { messageObservable, configuration } = commonInit(rumUserConfiguration, version)
   const session = startRumSession(configuration)
-  const requestObservable = startRequestCollection()
+  startRequestCollection(messageObservable)
 
-  const globalApi = startRum(
-    rumUserConfiguration.applicationId,
-    errorObservable,
-    requestObservable,
-    configuration,
-    session
-  )
+  const globalApi = startRum(rumUserConfiguration.applicationId, messageObservable, configuration, session)
   lodashAssign(datadogRum, globalApi)
 })

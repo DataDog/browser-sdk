@@ -1,79 +1,48 @@
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
+import { ErrorMessage, ErrorOrigin, MessageObservable, MessageType, RequestType } from './messages'
 import { Observable } from './observable'
-import {
-  isRejected,
-  isServerError,
-  RequestDetails,
-  RequestObservable,
-  RequestType,
-  startRequestCollection,
-} from './requestCollection'
+import { isRejected, isServerError, startRequestCollection } from './requestCollection'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
-export interface ErrorMessage {
-  message: string
-  context: {
-    error: ErrorContext
-    http?: HttpContext
-  }
-}
+type ErrorObservable = Observable<ErrorMessage>
 
-export interface ErrorContext {
-  kind?: string
-  stack?: string
-  origin: ErrorOrigin
-}
-
-export interface HttpContext {
-  url: string
-  status_code: number
-  method: string
-}
-
-export enum ErrorOrigin {
-  AGENT = 'agent',
-  CONSOLE = 'console',
-  NETWORK = 'network',
-  SOURCE = 'source',
-  LOGGER = 'logger',
-}
-
-export type ErrorObservable = Observable<ErrorMessage>
-
-export function startErrorCollection(configuration: Configuration) {
-  const errorObservable = new Observable<ErrorMessage>()
+export function startErrorCollection(configuration: Configuration, messageObservable: MessageObservable) {
   if (configuration.isCollectingError) {
-    const requestObservable = startRequestCollection()
-    trackNetworkError(configuration, errorObservable, requestObservable)
+    const errorObservable = new Observable<ErrorMessage>()
+    startRequestCollection(messageObservable)
+    trackNetworkError(configuration, messageObservable, errorObservable)
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
+    filterErrors(configuration, messageObservable, errorObservable)
   }
-  return filterErrors(configuration, errorObservable)
 }
 
-export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {
+export function filterErrors(
+  configuration: Configuration,
+  messageObservable: MessageObservable,
+  errorObservable: ErrorObservable
+) {
   let errorCount = 0
-  const filteredErrorObservable = new Observable<ErrorMessage>()
   errorObservable.subscribe((error: ErrorMessage) => {
     if (errorCount < configuration.maxErrorsByMinute) {
       errorCount += 1
-      filteredErrorObservable.notify(error)
+      messageObservable.notify(error)
     } else if (errorCount === configuration.maxErrorsByMinute) {
       errorCount += 1
-      filteredErrorObservable.notify({
+      messageObservable.notify({
         context: {
           error: {
             origin: ErrorOrigin.AGENT,
           },
         },
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
+        type: MessageType.error,
       })
     }
   })
   setInterval(() => (errorCount = 0), ONE_MINUTE)
-  return filteredErrorObservable
 }
 
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
@@ -89,6 +58,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
         },
       },
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
+      type: MessageType.error,
     })
   })
 }
@@ -120,7 +90,7 @@ export function stopRuntimeErrorTracking() {
   ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
-export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
+export function formatRuntimeError(stackTrace: StackTrace, errorObject: any): ErrorMessage {
   let message: string
   let stack: string
   if (stackTrace.message === undefined && !(errorObject instanceof Error)) {
@@ -139,6 +109,7 @@ export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
         origin: ErrorOrigin.SOURCE,
       },
     },
+    type: MessageType.error,
   }
 }
 
@@ -156,24 +127,25 @@ export function toStackTraceString(stack: StackTrace) {
 
 export function trackNetworkError(
   configuration: Configuration,
-  errorObservable: ErrorObservable,
-  requestObservable: RequestObservable
+  messageObservable: MessageObservable,
+  errorObservable: ErrorObservable
 ) {
-  requestObservable.subscribe((request: RequestDetails) => {
-    if (isRejected(request) || isServerError(request)) {
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.request && (isRejected(message) || isServerError(message))) {
       errorObservable.notify({
         context: {
           error: {
             origin: ErrorOrigin.NETWORK,
-            stack: truncateResponse(request.response, configuration) || 'Failed to load',
+            stack: truncateResponse(message.response, configuration) || 'Failed to load',
           },
           http: {
-            method: request.method,
-            status_code: request.status,
-            url: request.url,
+            method: message.method,
+            status_code: message.status,
+            url: message.url,
           },
         },
-        message: `${format(request.type)} error ${request.method} ${request.url}`,
+        message: `${format(message.requestType)} error ${message.method} ${message.url}`,
+        type: MessageType.error,
       })
     }
   })

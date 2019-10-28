@@ -1,5 +1,6 @@
+import { RequestMessage, RequestType } from '../src/messages'
 import { Observable } from '../src/observable'
-import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../src/requestCollection'
+import { normalizeUrl, trackFetch } from '../src/requestCollection'
 import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
 
 describe('fetch tracker', () => {
@@ -14,7 +15,7 @@ describe('fetch tracker', () => {
       pending('no fetch support')
     }
     originalFetch = window.fetch
-    const requestObservable = new Observable<RequestDetails>()
+    const requestObservable = new Observable<RequestMessage>()
     notifySpy = spyOn(requestObservable, 'notify').and.callThrough()
     fetchStubBuilder = new FetchStubBuilder(requestObservable)
     window.fetch = fetchStubBuilder.getStub()
@@ -34,9 +35,9 @@ describe('fetch tracker', () => {
   it('should track server error', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+    fetchStubBuilder.whenAllComplete((requests: RequestMessage[]) => {
       const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.requestType).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
@@ -48,9 +49,9 @@ describe('fetch tracker', () => {
   it('should track refused fetch', (done) => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+    fetchStubBuilder.whenAllComplete((requests: RequestMessage[]) => {
       const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.requestType).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
@@ -62,9 +63,9 @@ describe('fetch tracker', () => {
   it('should track client error', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+    fetchStubBuilder.whenAllComplete((requests: RequestMessage[]) => {
       const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.requestType).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(400)
@@ -81,7 +82,7 @@ describe('fetch tracker', () => {
     fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+    fetchStubBuilder.whenAllComplete((requests: RequestMessage[]) => {
       expect(requests[0].method).toEqual('GET')
       expect(requests[1].method).toEqual('GET')
       expect(requests[2].method).toEqual('PUT')
@@ -95,7 +96,7 @@ describe('fetch tracker', () => {
   it('should get url from input', (done) => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+    fetchStubBuilder.whenAllComplete((requests: RequestMessage[]) => {
       expect(requests[0].url).toEqual(FAKE_URL)
       expect(requests[1].url).toEqual(FAKE_URL)
       done()

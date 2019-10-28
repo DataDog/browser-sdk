@@ -6,18 +6,6 @@ export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 
-export enum ResourceKind {
-  XHR = 'xhr',
-  BEACON = 'beacon',
-  FETCH = 'fetch',
-  CSS = 'css',
-  JS = 'js',
-  IMAGE = 'image',
-  FONT = 'font',
-  MEDIA = 'media',
-  OTHER = 'other',
-}
-
 // tslint:disable-next-line ban-types
 export function throttle<T extends Function>(fn: T, wait: number): T {
   let lastCall = 0

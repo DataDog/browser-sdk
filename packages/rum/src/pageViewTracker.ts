@@ -1,4 +1,4 @@
-import { Batch, ErrorObservable, generateUUID, monitor, msToNs, Observable } from '@browser-agent/core'
+import { Batch, generateUUID, MessageObservable, MessageType, monitor, msToNs, Observable } from '@browser-agent/core'
 
 import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
 
@@ -29,14 +29,14 @@ export function trackPageView(
   batch: Batch<RumEvent>,
   location: Location,
   addRumEvent: (event: RumEvent) => void,
-  errorObservable: ErrorObservable,
+  messageObservable: MessageObservable,
   performanceObservable: Observable<PerformanceEntry>,
   customEventObservable: Observable<RawCustomEvent>
 ) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackPerformance(performanceObservable)
-  trackSummary(errorObservable, performanceObservable, customEventObservable)
+  trackSummary(messageObservable, performanceObservable, customEventObservable)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -126,11 +126,15 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
 }
 
 function trackSummary(
-  errorObservable: ErrorObservable,
+  messageObservable: MessageObservable,
   performanceObservable: Observable<PerformanceEntry>,
   customEventObservable: Observable<RawCustomEvent>
 ) {
-  errorObservable.subscribe(() => (summary.errorCount += 1))
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.error) {
+      summary.errorCount += 1
+    }
+  })
   customEventObservable.subscribe(() => (summary.customEventCount += 1))
   performanceObservable.subscribe((entry) => {
     if (entry.entryType === 'longtask') {

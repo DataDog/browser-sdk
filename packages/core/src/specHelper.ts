@@ -1,5 +1,5 @@
+import { RequestMessage } from './messages'
 import { Observable } from './observable'
-import { RequestDetails } from './requestCollection'
 import { noop } from './utils'
 
 export function isSafari() {
@@ -21,12 +21,12 @@ export function clearAllCookies() {
 }
 
 export class FetchStubBuilder {
-  private requests: RequestDetails[] = []
+  private requests: RequestMessage[] = []
   private pendingFetch = 0
-  private whenAllCompleteFn: (messages: RequestDetails[]) => void = noop
+  private whenAllCompleteFn: (messages: RequestMessage[]) => void = noop
 
-  constructor(observable: Observable<RequestDetails>) {
-    observable.subscribe((request: RequestDetails) => {
+  constructor(observable: Observable<RequestMessage>) {
+    observable.subscribe((request: RequestMessage) => {
       this.requests.push(request)
       this.pendingFetch -= 1
       if (this.pendingFetch === 0) {
@@ -38,7 +38,7 @@ export class FetchStubBuilder {
     })
   }
 
-  whenAllComplete(onCompleteFn: (_: RequestDetails[]) => void) {
+  whenAllComplete(onCompleteFn: (_: RequestMessage[]) => void) {
     this.whenAllCompleteFn = onCompleteFn
   }
 

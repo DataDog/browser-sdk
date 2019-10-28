@@ -2,38 +2,22 @@ import 'url-polyfill'
 
 import { toStackTraceString } from './errorCollection'
 import { monitor } from './internalMonitoring'
+import { MessageObservable, MessageType, RequestMessage, RequestType } from './messages'
 import { Observable } from './observable'
 import { computeStackTrace } from './tracekit'
-import { ResourceKind } from './utils'
 
-export enum RequestType {
-  FETCH = ResourceKind.FETCH,
-  XHR = ResourceKind.XHR,
-}
+let requestObservable: Observable<RequestMessage>
 
-export interface RequestDetails {
-  type: RequestType
-  method: string
-  url: string
-  status: number
-  response?: string
-  startTime: number
-  duration: number
-}
-
-export type RequestObservable = Observable<RequestDetails>
-let requestObservable: Observable<RequestDetails>
-
-export function startRequestCollection() {
+export function startRequestCollection(messageObservable: MessageObservable) {
   if (!requestObservable) {
-    requestObservable = new Observable<RequestDetails>()
+    requestObservable = new Observable<RequestMessage>()
     trackXhr(requestObservable)
     trackFetch(requestObservable)
   }
-  return requestObservable
+  requestObservable.subscribe((message) => messageObservable.notify(message))
 }
 
-export function trackXhr(observable: RequestObservable) {
+export function trackXhr(observable: Observable<RequestMessage>) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: XMLHttpRequest, method: string, url: string) {
     const startTime = performance.now()
@@ -42,9 +26,10 @@ export function trackXhr(observable: RequestObservable) {
         method,
         startTime,
         duration: performance.now() - startTime,
+        requestType: RequestType.XHR,
         response: this.response as string | undefined,
         status: this.status,
-        type: RequestType.XHR,
+        type: MessageType.request,
         url: normalizeUrl(url),
       })
     }
@@ -56,7 +41,7 @@ export function trackXhr(observable: RequestObservable) {
   })
 }
 
-export function trackFetch(observable: RequestObservable) {
+export function trackFetch(observable: Observable<RequestMessage>) {
   if (!window.fetch) {
     return
   }
@@ -75,9 +60,10 @@ export function trackFetch(observable: RequestObservable) {
           method,
           startTime,
           url,
+          requestType: RequestType.FETCH,
           response: toStackTraceString(stackTrace),
           status: 0,
-          type: RequestType.FETCH,
+          type: MessageType.request,
         })
       } else if ('status' in response) {
         const text = await response.clone().text()
@@ -86,9 +72,10 @@ export function trackFetch(observable: RequestObservable) {
           method,
           startTime,
           url,
+          requestType: RequestType.FETCH,
           response: text,
           status: response.status,
-          type: RequestType.FETCH,
+          type: MessageType.request,
         })
       }
     }
@@ -102,10 +89,10 @@ export function normalizeUrl(url: string) {
   return new URL(url, window.location.origin).href
 }
 
-export function isRejected(request: RequestDetails) {
+export function isRejected(request: RequestMessage) {
   return request.status === 0
 }
 
-export function isServerError(request: RequestDetails) {
+export function isServerError(request: RequestMessage) {
   return request.status >= 500
 }

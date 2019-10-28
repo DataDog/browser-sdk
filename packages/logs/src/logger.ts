@@ -3,10 +3,10 @@ import {
   Configuration,
   Context,
   ContextValue,
-  ErrorMessage,
-  ErrorObservable,
   ErrorOrigin,
   HttpRequest,
+  MessageObservable,
+  MessageType,
   monitored,
   noop,
 } from '@browser-agent/core'
@@ -51,7 +51,11 @@ export enum HandlerType {
 
 type Handlers = { [key in HandlerType]: (message: LogsMessage) => void }
 
-export function startLogger(errorObservable: ErrorObservable, configuration: Configuration, session: LoggerSession) {
+export function startLogger(
+  messageObservable: MessageObservable,
+  configuration: Configuration,
+  session: LoggerSession
+) {
   let globalContext: Context = {}
   const batch = new Batch<LogsMessage>(
     new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
@@ -83,7 +87,11 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
   }
   const logger = new Logger(session, handlers)
   customLoggers = {}
-  errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.error) {
+      logger.error(message.message, message.context)
+    }
+  })
 
   const globalApi: Partial<LogsGlobal> = {}
   globalApi.setLoggerGlobalContext = (context: Context) => {

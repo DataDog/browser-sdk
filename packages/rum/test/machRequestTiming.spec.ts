@@ -1,9 +1,9 @@
-import { isIE, RequestDetails } from '@browser-agent/core'
+import { isIE, RequestMessage } from '@browser-agent/core'
 
 import { matchRequestTiming } from '../src/matchRequestTiming'
 
 describe('matchRequestTiming', () => {
-  const FAKE_REQUEST: Partial<RequestDetails> = { startTime: 100, duration: 500 }
+  const FAKE_REQUEST: Partial<RequestMessage> = { startTime: 100, duration: 500 }
   let entries: PerformanceResourceTiming[]
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('matchRequestTiming', () => {
     const match: Partial<PerformanceResourceTiming> = { startTime: 200, duration: 300 }
     entries.push(match as PerformanceResourceTiming)
 
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestDetails)
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestMessage)
 
     expect(timing).toEqual(match as PerformanceResourceTiming)
   })
@@ -27,7 +27,7 @@ describe('matchRequestTiming', () => {
     const match: Partial<PerformanceResourceTiming> = { startTime: 0, duration: 300 }
     entries.push(match as PerformanceResourceTiming)
 
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestDetails)
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestMessage)
 
     expect(timing).toEqual(undefined)
   })
@@ -37,7 +37,7 @@ describe('matchRequestTiming', () => {
     const actualTiming: Partial<PerformanceResourceTiming> = { startTime: 300, duration: 100 }
     entries.push(optionsTiming as PerformanceResourceTiming, actualTiming as PerformanceResourceTiming)
 
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestDetails)
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestMessage)
 
     expect(timing).toEqual(actualTiming as PerformanceResourceTiming)
   })
@@ -47,7 +47,7 @@ describe('matchRequestTiming', () => {
     const match2: Partial<PerformanceResourceTiming> = { startTime: 250, duration: 100 }
     entries.push(match1 as PerformanceResourceTiming, match2 as PerformanceResourceTiming)
 
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestDetails)
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestMessage)
 
     expect(timing).toEqual(undefined)
   })
@@ -62,7 +62,7 @@ describe('matchRequestTiming', () => {
       match3 as PerformanceResourceTiming
     )
 
-    const timing = matchRequestTiming(FAKE_REQUEST as RequestDetails)
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestMessage)
 
     expect(timing).toEqual(undefined)
   })

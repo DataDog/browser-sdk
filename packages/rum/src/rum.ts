@@ -5,15 +5,15 @@ import {
   ContextValue,
   ErrorContext,
   ErrorMessage,
-  ErrorObservable,
   HttpContext,
   HttpRequest,
   includes,
+  MessageObservable,
+  MessageType,
   monitor,
   msToNs,
   Observable,
-  RequestDetails,
-  RequestObservable,
+  RequestMessage,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
@@ -161,8 +161,7 @@ export type RumEvent =
 
 export function startRum(
   applicationId: string,
-  errorObservable: ErrorObservable,
-  requestObservable: RequestObservable,
+  messageObservable: MessageObservable,
   configuration: Configuration,
   session: RumSession
 ) {
@@ -200,9 +199,9 @@ export function startRum(
   const performanceObservable = new Observable<PerformanceEntry>()
   const customEventObservable = new Observable<RawCustomEvent>()
 
-  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable, customEventObservable)
-  trackErrors(errorObservable, addRumEvent)
-  trackRequests(configuration, requestObservable, session, addRumEvent)
+  trackPageView(batch, window.location, addRumEvent, messageObservable, performanceObservable, customEventObservable)
+  trackErrors(messageObservable, addRumEvent)
+  trackRequests(configuration, messageObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
   trackCustomEvent(customEventObservable, addRumEvent)
 
@@ -221,18 +220,20 @@ export function startRum(
   return globalApi
 }
 
-function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
-  errorObservable.subscribe(({ message, context }: ErrorMessage) => {
-    addRumEvent({
-      message,
-      evt: {
-        category: RumEventCategory.ERROR,
-      },
-      rum: {
-        errorCount: 1,
-      },
-      ...context,
-    })
+function trackErrors(messageObservable: MessageObservable, addRumEvent: (event: RumEvent) => void) {
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.error) {
+      addRumEvent({
+        evt: {
+          category: RumEventCategory.ERROR,
+        },
+        message: message.message,
+        rum: {
+          errorCount: 1,
+        },
+        ...message.context,
+      })
+    }
   })
 }
 
@@ -250,29 +251,32 @@ function trackCustomEvent(customEventObservable: Observable<RawCustomEvent>, add
 
 export function trackRequests(
   configuration: Configuration,
-  requestObservable: RequestObservable,
+  messageObservable: MessageObservable,
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
   if (!session.isTrackedWithResource()) {
     return
   }
-  requestObservable.subscribe((requestDetails: RequestDetails) => {
-    if (!isValidResource(requestDetails.url, configuration)) {
+  messageObservable.subscribe((message) => {
+    if (message.type !== MessageType.request) {
       return
     }
-    const timing = matchRequestTiming(requestDetails)
-    const kind = requestDetails.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    if (!isValidResource(message.url, configuration)) {
+      return
+    }
+    const timing = matchRequestTiming(message)
+    const kind = message.requestType === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     addRumEvent({
-      duration: msToNs(timing ? timing.duration : requestDetails.duration),
+      duration: msToNs(timing ? timing.duration : message.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
       },
       http: {
-        method: requestDetails.method,
+        method: message.method,
         performance: computePerformanceResourceDetails(timing),
-        statusCode: requestDetails.status,
-        url: requestDetails.url,
+        statusCode: message.status,
+        url: message.url,
       },
       network: {
         bytesWritten: computeSize(timing),

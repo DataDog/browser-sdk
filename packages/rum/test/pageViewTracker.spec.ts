@@ -1,4 +1,4 @@
-import { Batch, ErrorMessage, Observable } from '@browser-agent/core'
+import { Batch, Message, MessageType, Observable } from '@browser-agent/core'
 
 import { pageViewId, trackPageView } from '../src/pageViewTracker'
 import {
@@ -11,12 +11,12 @@ import {
 
 function setup({
   addRumEvent,
-  errorObservable,
+  messageObservable,
   performanceObservable,
   customEventObservable,
 }: {
   addRumEvent?: () => any
-  errorObservable?: Observable<ErrorMessage>
+  messageObservable?: Observable<Message>
   performanceObservable?: Observable<PerformanceEntry>
   customEventObservable?: Observable<RawCustomEvent>
 } = {}) {
@@ -32,7 +32,7 @@ function setup({
     fakeBatch as Batch<RumEvent>,
     fakeLocation as Location,
     addRumEvent || (() => undefined),
-    errorObservable || new Observable<ErrorMessage>(),
+    messageObservable || new Observable<Message>(),
     performanceObservable || new Observable<PerformanceEntry>(),
     customEventObservable || new Observable<RawCustomEvent>()
   )
@@ -87,14 +87,14 @@ describe('rum page view summary', () => {
   })
 
   it('should track error count', () => {
-    const errorObservable = new Observable<ErrorMessage>()
-    setup({ addRumEvent, errorObservable })
+    const messageObservable = new Observable<Message>()
+    setup({ addRumEvent, messageObservable })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.errorCount).toEqual(0)
 
-    errorObservable.notify({} as any)
-    errorObservable.notify({} as any)
+    messageObservable.notify({ type: MessageType.error } as any)
+    messageObservable.notify({ type: MessageType.error } as any)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)

@@ -1,6 +1,8 @@
 import { buildConfiguration, UserConfiguration } from './configuration'
 import { startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
+import { Message } from './messages'
+import { Observable } from './observable'
 
 export function makeStub(methodName: string) {
   console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
@@ -24,10 +26,11 @@ export function makeGlobal<T>(stub: T): T {
 export function commonInit(userConfiguration: UserConfiguration, version: string) {
   const configuration = buildConfiguration(userConfiguration, version)
   startInternalMonitoring(configuration)
-  const errorObservable = startErrorCollection(configuration)
+  const messageObservable = new Observable<Message>()
+  startErrorCollection(configuration, messageObservable)
 
   return {
     configuration,
-    errorObservable,
+    messageObservable,
   }
 }

@@ -1,9 +1,20 @@
 export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration } from './configuration'
-export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
+export {
+  ErrorContext,
+  ErrorMessage,
+  ErrorOrigin,
+  HttpContext,
+  Message,
+  MessageObservable,
+  MessageType,
+  RequestMessage,
+  RequestType,
+  ResourceKind,
+} from './messages'
 export { makeStub, makeGlobal, commonInit } from './init'
 export { monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'
-export { RequestType, RequestDetails, startRequestCollection, RequestObservable } from './requestCollection'
+export { startRequestCollection } from './requestCollection'
 export {
   SESSION_COOKIE_NAME,
   EXPIRATION_DELAY,
