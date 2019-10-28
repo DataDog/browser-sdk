@@ -2,14 +2,15 @@ import {
   browserExecute,
   browserExecuteAsync,
   findLastEvent,
+  flushBrowserLogs,
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
   sortByMessage,
-  supportsBrowserLogs,
   tearDown,
+  withBrowserLogs,
 } from './helpers'
 import { strictlyPositiveNumber } from './matchers'
 
@@ -28,7 +29,7 @@ beforeEach(() => {
 
 afterEach(tearDown)
 
-const INEXISTING_URL = 'http://localhost:9999/unreachable'
+const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
 describe('logs', () => {
   it('should send logs', async () => {
@@ -47,10 +48,9 @@ describe('logs', () => {
     await flushEvents()
     const logs = await retrieveLogsMessages()
     expect(logs).toContain('console error: oh snap')
-    if (supportsBrowserLogs()) {
-      const browserLogs = await browser.getLogs('browser')
+    await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
-    }
+    })
   })
 })
 
@@ -62,10 +62,9 @@ describe('rum', () => {
     await flushEvents()
     const types = await retrieveRumEventsTypes()
     expect(types).toContain(ERROR)
-    if (supportsBrowserLogs()) {
-      const browserLogs = await browser.getLogs('browser')
+    await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
-    }
+    })
   })
 
   it('should track xhr timings', async () => {
@@ -121,8 +120,7 @@ describe('rum', () => {
 describe('error collection', () => {
   it('should track xhr error', async () => {
     await browserExecuteAsync(
-      // tslint:disable-next-line: no-shadowed-variable
-      (baseUrl, INEXISTING_URL, done) => {
+      (baseUrl, unreachableUrl, done) => {
         let count = 0
         let xhr = new XMLHttpRequest()
         xhr.addEventListener('load', () => (count += 1))
@@ -136,7 +134,7 @@ describe('error collection', () => {
 
         xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => (count += 1))
-        xhr.open('GET', INEXISTING_URL)
+        xhr.open('GET', unreachableUrl)
         xhr.send()
 
         xhr = new XMLHttpRequest()
@@ -152,12 +150,9 @@ describe('error collection', () => {
         }, 500)
       },
       browser.options.baseUrl!,
-      INEXISTING_URL
+      UNREACHABLE_URL
     )
-    if (supportsBrowserLogs()) {
-      // Flush logs
-      await browser.getLogs('browser')
-    }
+    await flushBrowserLogs()
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
@@ -167,7 +162,7 @@ describe('error collection', () => {
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).toEqual(`XHR error GET ${INEXISTING_URL}`)
+    expect(logs[1].message).toEqual(`XHR error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http.status_code).toEqual(0)
     expect(logs[1].error.stack).toEqual('Failed to load')
   })
@@ -178,12 +173,11 @@ describe('error collection', () => {
     }
 
     await browserExecuteAsync(
-      // tslint:disable-next-line: no-shadowed-variable
-      (baseUrl, INEXISTING_URL, done) => {
+      (baseUrl, unreachableUrl, done) => {
         let count = 0
         fetch(`${baseUrl}/throw`).then(() => (count += 1))
         fetch(`${baseUrl}/unknown`).then(() => (count += 1))
-        fetch(INEXISTING_URL).catch(() => (count += 1))
+        fetch(unreachableUrl).catch(() => (count += 1))
         fetch(`${baseUrl}/ok`).then(() => (count += 1))
 
         const interval = setInterval(() => {
@@ -194,12 +188,9 @@ describe('error collection', () => {
         }, 500)
       },
       browser.options.baseUrl!,
-      INEXISTING_URL
+      UNREACHABLE_URL
     )
-    if (supportsBrowserLogs()) {
-      // Flush logs
-      await browser.getLogs('browser')
-    }
+    await flushBrowserLogs()
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
@@ -209,7 +200,7 @@ describe('error collection', () => {
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).toEqual(`Fetch error GET ${INEXISTING_URL}`)
+    expect(logs[1].message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http.status_code).toEqual(0)
     expect(logs[1].error.stack).toEqual('TypeError: Failed to fetch')
   })
