@@ -1,4 +1,4 @@
-import { getRelativeTime, monitor, Observable } from '@browser-agent/core'
+import { getRelativeTime, MessageObservable, MessageType, monitor } from '@browser-agent/core'
 
 import { RumSession } from './rumSession'
 
@@ -19,13 +19,13 @@ function supportPerformanceNavigationTimingEvent() {
   )
 }
 
-export function startPerformanceCollection(performanceObservable: Observable<PerformanceEntry>, session: RumSession) {
+export function startPerformanceCollection(messageObservable: MessageObservable, session: RumSession) {
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(session, performanceObservable, performance.getEntries())
+    handlePerformanceEntries(session, messageObservable, performance.getEntries())
   }
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries.getEntries()))
+      monitor((entries) => handlePerformanceEntries(session, messageObservable, entries.getEntries()))
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
 
@@ -37,13 +37,11 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
 
       if (!supportPerformanceNavigationTimingEvent()) {
         retrieveNavigationTimingWhenLoaded((timing) => {
-          handlePerformanceEntries(session, performanceObservable, [timing])
+          handlePerformanceEntries(session, messageObservable, [timing])
         })
       }
     }
   }
-
-  return performanceObservable
 }
 
 interface FakePerformanceNavigationTiming {
@@ -81,11 +79,11 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
 
 function handlePerformanceEntries(
   session: RumSession,
-  performanceObservable: Observable<PerformanceEntry>,
+  messageObservable: MessageObservable,
   entries: PerformanceEntry[]
 ) {
   function notify(entry: PerformanceEntry) {
-    performanceObservable.notify(entry)
+    messageObservable.notify({ entry, type: MessageType.performance })
   }
 
   if (session.isTrackedWithResource()) {

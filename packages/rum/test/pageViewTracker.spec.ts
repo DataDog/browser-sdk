@@ -12,12 +12,10 @@ import {
 function setup({
   addRumEvent,
   messageObservable,
-  performanceObservable,
   customEventObservable,
 }: {
   addRumEvent?: () => any
   messageObservable?: Observable<Message>
-  performanceObservable?: Observable<PerformanceEntry>
   customEventObservable?: Observable<RawCustomEvent>
 } = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
@@ -33,7 +31,6 @@ function setup({
     fakeLocation as Location,
     addRumEvent || (() => undefined),
     messageObservable || new Observable<Message>(),
-    performanceObservable || new Observable<PerformanceEntry>(),
     customEventObservable || new Observable<RawCustomEvent>()
   )
 }
@@ -66,9 +63,13 @@ describe('rum track url change', () => {
 })
 
 describe('rum page view summary', () => {
-  const FAKE_LONG_TASK = {
-    entryType: 'longtask',
-    startTime: 456,
+  const FAKE_LONG_TASK_MESSAGE = {
+    // tslint:disable-next-line: no-object-literal-type-assertion
+    entry: {
+      entryType: 'longtask',
+      startTime: 456,
+    } as PerformanceLongTaskTiming,
+    type: MessageType.performance as MessageType.performance,
   }
   const FAKE_CUSTOM_EVENT = {
     context: {
@@ -103,13 +104,13 @@ describe('rum page view summary', () => {
   })
 
   it('should track long task count', () => {
-    const performanceObservable = new Observable<PerformanceEntry>()
-    setup({ addRumEvent, performanceObservable })
+    const messageObservable = new Observable<Message>()
+    setup({ addRumEvent, messageObservable })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.longTaskCount).toEqual(0)
 
-    performanceObservable.notify(FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    messageObservable.notify(FAKE_LONG_TASK_MESSAGE)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
@@ -134,17 +135,25 @@ describe('rum page view summary', () => {
 })
 
 describe('rum page view performance', () => {
-  const FAKE_PAINT_ENTRY = {
-    entryType: 'paint',
-    name: 'first-contentful-paint',
-    startTime: 123,
+  const FAKE_PAINT_MESSAGE = {
+    // tslint:disable-next-line: no-object-literal-type-assertion
+    entry: {
+      entryType: 'paint',
+      name: 'first-contentful-paint',
+      startTime: 123,
+    } as PerformancePaintTiming,
+    type: MessageType.performance as MessageType.performance,
   }
-  const FAKE_NAVIGATION_ENTRY = {
-    domComplete: 456,
-    domContentLoadedEventEnd: 345,
-    domInteractive: 234,
-    entryType: 'navigation',
-    loadEventEnd: 567,
+  const FAKE_NAVIGATION_MESSAGE = {
+    // tslint:disable-next-line: no-object-literal-type-assertion
+    entry: {
+      domComplete: 456,
+      domContentLoadedEventEnd: 345,
+      domInteractive: 234,
+      entryType: 'navigation',
+      loadEventEnd: 567,
+    } as PerformanceNavigationTiming,
+    type: MessageType.performance as MessageType.performance,
   }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
@@ -157,14 +166,14 @@ describe('rum page view performance', () => {
   })
 
   it('should track performance', () => {
-    const performanceObservable = new Observable<PerformanceEntry>()
-    setup({ addRumEvent, performanceObservable })
+    const messageObservable = new Observable<Message>()
+    setup({ addRumEvent, messageObservable })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.performance).toEqual({})
 
-    performanceObservable.notify(FAKE_PAINT_ENTRY as PerformancePaintTiming)
-    performanceObservable.notify(FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
+    messageObservable.notify(FAKE_PAINT_MESSAGE)
+    messageObservable.notify(FAKE_NAVIGATION_MESSAGE)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)

@@ -196,16 +196,15 @@ export function startRum(
     }
   }
 
-  const performanceObservable = new Observable<PerformanceEntry>()
   const customEventObservable = new Observable<RawCustomEvent>()
 
-  trackPageView(batch, window.location, addRumEvent, messageObservable, performanceObservable, customEventObservable)
+  trackPageView(batch, window.location, addRumEvent, messageObservable, customEventObservable)
   trackErrors(messageObservable, addRumEvent)
   trackRequests(configuration, messageObservable, session, addRumEvent)
-  trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
+  trackPerformanceTiming(configuration, addRumEvent, messageObservable)
   trackCustomEvent(customEventObservable, addRumEvent)
 
-  startPerformanceCollection(performanceObservable, session)
+  startPerformanceCollection(messageObservable, session)
 
   const globalApi: Partial<RumGlobal> = {}
   globalApi.setRumGlobalContext = monitor((context: Context) => {
@@ -294,24 +293,27 @@ export function trackRequests(
 function trackPerformanceTiming(
   configuration: Configuration,
   addRumEvent: (event: RumEvent) => void,
-  performanceObservable: Observable<PerformanceEntry>
+  messageObservable: MessageObservable
 ) {
-  performanceObservable.subscribe((entry) => {
-    switch (entry.entryType) {
-      case 'resource':
-        handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
-        break
-      case 'navigation':
-        handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent)
-        break
-      case 'paint':
-        handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
-        break
-      case 'longtask':
-        handleLongTaskEntry(entry as PerformanceLongTaskTiming, addRumEvent)
-        break
-      default:
-        break
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.performance) {
+      const entry = message.entry
+      switch (entry.entryType) {
+        case 'resource':
+          handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
+          break
+        case 'navigation':
+          handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent)
+          break
+        case 'paint':
+          handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
+          break
+        case 'longtask':
+          handleLongTaskEntry(entry as PerformanceLongTaskTiming, addRumEvent)
+          break
+        default:
+          break
+      }
     }
   })
 }

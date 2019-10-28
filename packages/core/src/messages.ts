@@ -3,6 +3,7 @@ import { Observable } from './observable'
 export enum MessageType {
   error,
   request,
+  performance,
 }
 
 export enum ErrorOrigin {
@@ -62,6 +63,11 @@ export interface RequestMessage {
   duration: number
 }
 
-export type Message = ErrorMessage | RequestMessage
+interface PerformanceMessage {
+  type: MessageType.performance
+  entry: PerformanceEntry
+}
+
+export type Message = ErrorMessage | RequestMessage | PerformanceMessage
 
 export type MessageObservable = Observable<Message>

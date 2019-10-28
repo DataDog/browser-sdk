@@ -30,13 +30,12 @@ export function trackPageView(
   location: Location,
   addRumEvent: (event: RumEvent) => void,
   messageObservable: MessageObservable,
-  performanceObservable: Observable<PerformanceEntry>,
   customEventObservable: Observable<RawCustomEvent>
 ) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
-  trackPerformance(performanceObservable)
-  trackSummary(messageObservable, performanceObservable, customEventObservable)
+  trackPerformance(messageObservable)
+  trackSummary(messageObservable, customEventObservable)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -104,41 +103,38 @@ function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
-  performanceObservable.subscribe((entry) => {
-    if (entry.entryType === 'navigation') {
-      const navigationEntry = entry as PerformanceNavigationTiming
-      screenPerformance = {
-        ...screenPerformance,
-        domComplete: msToNs(navigationEntry.domComplete),
-        domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
-        domInteractive: msToNs(navigationEntry.domInteractive),
-        loadEventEnd: msToNs(navigationEntry.loadEventEnd),
-      }
-    } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-      const paintEntry = entry as PerformancePaintTiming
-      screenPerformance = {
-        ...screenPerformance,
-        firstContentfulPaint: msToNs(paintEntry.startTime),
+function trackPerformance(messageObservable: MessageObservable) {
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.performance) {
+      const entry = message.entry
+      if (entry.entryType === 'navigation') {
+        const navigationEntry = entry as PerformanceNavigationTiming
+        screenPerformance = {
+          ...screenPerformance,
+          domComplete: msToNs(navigationEntry.domComplete),
+          domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
+          domInteractive: msToNs(navigationEntry.domInteractive),
+          loadEventEnd: msToNs(navigationEntry.loadEventEnd),
+        }
+      } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+        const paintEntry = entry as PerformancePaintTiming
+        screenPerformance = {
+          ...screenPerformance,
+          firstContentfulPaint: msToNs(paintEntry.startTime),
+        }
       }
     }
   })
 }
 
-function trackSummary(
-  messageObservable: MessageObservable,
-  performanceObservable: Observable<PerformanceEntry>,
-  customEventObservable: Observable<RawCustomEvent>
-) {
+function trackSummary(messageObservable: MessageObservable, customEventObservable: Observable<RawCustomEvent>) {
   messageObservable.subscribe((message) => {
     if (message.type === MessageType.error) {
       summary.errorCount += 1
     }
-  })
-  customEventObservable.subscribe(() => (summary.customEventCount += 1))
-  performanceObservable.subscribe((entry) => {
-    if (entry.entryType === 'longtask') {
+    if (message.type === MessageType.performance && message.entry.entryType === 'longtask') {
       summary.longTaskCount += 1
     }
   })
+  customEventObservable.subscribe(() => (summary.customEventCount += 1))
 }
