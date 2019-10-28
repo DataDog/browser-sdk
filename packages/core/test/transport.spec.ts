@@ -1,7 +1,8 @@
 import sinon from 'sinon'
 
+import { Context } from '../src/messages'
 import { Batch, HttpRequest } from '../src/transport'
-import { Context, noop } from '../src/utils'
+import { noop } from '../src/utils'
 
 describe('request', () => {
   const ENDPOINT_URL = 'http://my.website'

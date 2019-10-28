@@ -1,3 +1,4 @@
+import { Context, ContextValue } from './messages'
 import { getCookie, setCookie } from './session'
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -45,14 +46,6 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
 export function msToNs(duration: number) {
   return round(duration * 1e6, 0)
 }
-
-export interface Context {
-  [x: string]: ContextValue
-}
-
-export type ContextValue = string | number | boolean | Context | ContextArray | undefined
-
-export interface ContextArray extends Array<ContextValue> {}
 
 export function withSnakeCaseKeys(candidate: Context): Context {
   const result: Context = {}

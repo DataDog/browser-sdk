@@ -1,5 +1,7 @@
 export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration } from './configuration'
 export {
+  Context,
+  ContextValue,
   ErrorContext,
   ErrorMessage,
   ErrorOrigin,

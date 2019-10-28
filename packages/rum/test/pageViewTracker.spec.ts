@@ -1,22 +1,14 @@
 import { Batch, Message, MessageType, Observable } from '@browser-agent/core'
 
 import { pageViewId, trackPageView } from '../src/pageViewTracker'
-import {
-  PerformanceLongTaskTiming,
-  PerformancePaintTiming,
-  RawCustomEvent,
-  RumEvent,
-  RumPageViewEvent,
-} from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../src/rum'
 
 function setup({
   addRumEvent,
   messageObservable,
-  customEventObservable,
 }: {
   addRumEvent?: () => any
   messageObservable?: Observable<Message>
-  customEventObservable?: Observable<RawCustomEvent>
 } = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = new URL(pathname, 'http://localhost')
@@ -30,8 +22,7 @@ function setup({
     fakeBatch as Batch<RumEvent>,
     fakeLocation as Location,
     addRumEvent || (() => undefined),
-    messageObservable || new Observable<Message>(),
-    customEventObservable || new Observable<RawCustomEvent>()
+    messageObservable || new Observable<Message>()
   )
 }
 
@@ -76,6 +67,7 @@ describe('rum page view summary', () => {
       bar: 123,
     },
     name: 'foo',
+    type: MessageType.customEvent as MessageType.customEvent,
   }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
@@ -119,13 +111,13 @@ describe('rum page view summary', () => {
   })
 
   it('should track custom event count', () => {
-    const customEventObservable = new Observable<RawCustomEvent>()
-    setup({ addRumEvent, customEventObservable })
+    const messageObservable = new Observable<Message>()
+    setup({ addRumEvent, messageObservable })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.customEventCount).toEqual(0)
 
-    customEventObservable.notify(FAKE_CUSTOM_EVENT as RawCustomEvent)
+    messageObservable.notify(FAKE_CUSTOM_EVENT)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)

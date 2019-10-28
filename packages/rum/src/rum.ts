@@ -4,7 +4,6 @@ import {
   Context,
   ContextValue,
   ErrorContext,
-  ErrorMessage,
   HttpContext,
   HttpRequest,
   includes,
@@ -12,8 +11,6 @@ import {
   MessageType,
   monitor,
   msToNs,
-  Observable,
-  RequestMessage,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
@@ -35,11 +32,6 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 }
 
 export type PerformanceLongTaskTiming = PerformanceEntry
-
-export interface RawCustomEvent {
-  name: string
-  context?: Context
-}
 
 export enum RumEventCategory {
   CUSTOM = 'custom',
@@ -196,13 +188,11 @@ export function startRum(
     }
   }
 
-  const customEventObservable = new Observable<RawCustomEvent>()
-
-  trackPageView(batch, window.location, addRumEvent, messageObservable, customEventObservable)
+  trackPageView(batch, window.location, addRumEvent, messageObservable)
   trackErrors(messageObservable, addRumEvent)
   trackRequests(configuration, messageObservable, session, addRumEvent)
   trackPerformanceTiming(configuration, addRumEvent, messageObservable)
-  trackCustomEvent(customEventObservable, addRumEvent)
+  trackCustomEvent(messageObservable, addRumEvent)
 
   startPerformanceCollection(messageObservable, session)
 
@@ -214,7 +204,7 @@ export function startRum(
     globalContext[key] = value
   })
   globalApi.addCustomEvent = monitor((name: string, context?: Context) => {
-    customEventObservable.notify({ name, context })
+    messageObservable.notify({ name, context, type: MessageType.customEvent })
   })
   return globalApi
 }
@@ -236,15 +226,17 @@ function trackErrors(messageObservable: MessageObservable, addRumEvent: (event: 
   })
 }
 
-function trackCustomEvent(customEventObservable: Observable<RawCustomEvent>, addRumEvent: (event: RumEvent) => void) {
-  customEventObservable.subscribe(({ name, context }) => {
-    addRumEvent({
-      ...context,
-      evt: {
-        name,
-        category: RumEventCategory.CUSTOM,
-      },
-    })
+function trackCustomEvent(messageObservable: MessageObservable, addRumEvent: (event: RumEvent) => void) {
+  messageObservable.subscribe((message) => {
+    if (message.type === MessageType.customEvent) {
+      addRumEvent({
+        ...message.context,
+        evt: {
+          category: RumEventCategory.CUSTOM,
+          name: message.name,
+        },
+      })
+    }
   })
 }
 

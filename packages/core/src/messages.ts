@@ -4,6 +4,7 @@ export enum MessageType {
   error,
   request,
   performance,
+  customEvent,
 }
 
 export enum ErrorOrigin {
@@ -68,6 +69,20 @@ interface PerformanceMessage {
   entry: PerformanceEntry
 }
 
-export type Message = ErrorMessage | RequestMessage | PerformanceMessage
+export interface Context {
+  [x: string]: ContextValue
+}
+
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined
+
+export interface ContextArray extends Array<ContextValue> {}
+
+export interface CustomEventMessage {
+  type: MessageType.customEvent
+  name: string
+  context?: Context
+}
+
+export type Message = ErrorMessage | RequestMessage | PerformanceMessage | CustomEventMessage
 
 export type MessageObservable = Observable<Message>

@@ -1,6 +1,6 @@
-import { Batch, generateUUID, MessageObservable, MessageType, monitor, msToNs, Observable } from '@browser-agent/core'
+import { Batch, generateUUID, MessageObservable, MessageType, monitor, msToNs } from '@browser-agent/core'
 
-import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
 
 export interface PageViewPerformance {
   firstContentfulPaint?: number
@@ -29,13 +29,12 @@ export function trackPageView(
   batch: Batch<RumEvent>,
   location: Location,
   addRumEvent: (event: RumEvent) => void,
-  messageObservable: MessageObservable,
-  customEventObservable: Observable<RawCustomEvent>
+  messageObservable: MessageObservable
 ) {
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackPerformance(messageObservable)
-  trackSummary(messageObservable, customEventObservable)
+  trackSummary(messageObservable)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -127,7 +126,7 @@ function trackPerformance(messageObservable: MessageObservable) {
   })
 }
 
-function trackSummary(messageObservable: MessageObservable, customEventObservable: Observable<RawCustomEvent>) {
+function trackSummary(messageObservable: MessageObservable) {
   messageObservable.subscribe((message) => {
     if (message.type === MessageType.error) {
       summary.errorCount += 1
@@ -135,6 +134,8 @@ function trackSummary(messageObservable: MessageObservable, customEventObservabl
     if (message.type === MessageType.performance && message.entry.entryType === 'longtask') {
       summary.longTaskCount += 1
     }
+    if (message.type === MessageType.customEvent) {
+      summary.customEventCount += 1
+    }
   })
-  customEventObservable.subscribe(() => (summary.customEventCount += 1))
 }
