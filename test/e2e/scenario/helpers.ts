@@ -26,16 +26,40 @@ export async function browserExecute(fn: any) {
   return browser.execute(fn as any)
 }
 
-export async function browserExecuteAsync(fn: any) {
-  return browser.executeAsync(fn as any)
+export async function browserExecuteAsync<R, A, B>(
+  fn: (a: A, b: B, done: (result: R) => void) => any,
+  a: A,
+  b: B
+): Promise<R>
+export async function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
+export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
+export async function browserExecuteAsync<A extends any[]>(fn: (...args: A) => any, ...args: A) {
+  return browser.executeAsync(fn as any, ...args)
+}
+
+export async function withBrowserLogs(fn: (logs: object[]) => void) {
+  // browser.getLogs is not defined when using a remote webdriver service. We should find an
+  // alternative at some point.
+  // https://github.com/webdriverio/webdriverio/issues/4275
+  if (browser.getLogs) {
+    const logs = await browser.getLogs('browser')
+    await fn(logs)
+  }
+}
+
+export async function flushBrowserLogs() {
+  await withBrowserLogs(() => {
+    // Ignore logs
+  })
 }
 
 export async function tearDown() {
   expect(await retrieveMonitoringErrors()).toEqual([])
   await resetServerState()
-  const logs = await browser.getLogs('browser')
-  logs.forEach(console.log)
-  expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
+  await withBrowserLogs((logs) => {
+    logs.forEach(console.log)
+    expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
+  })
 }
 
 export async function retrieveRumEvents() {
@@ -83,4 +107,8 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
     return 1
   }
   return 0
+}
+
+export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) => boolean) {
+  return events.reduce<RumEvent | undefined>((olderEvent, event) => (predicate(event) ? event : olderEvent), undefined)
 }

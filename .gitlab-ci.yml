@@ -60,7 +60,7 @@ e2e:
     - yarn
     - yarn test:e2e
 
-cbt:
+unit-cbt:
   except:
     refs:
       - master
@@ -70,7 +70,19 @@ cbt:
   image: $CI_IMAGE
   script:
     - yarn
-    - ./ci-cbt.sh
+    - ./ci-cbt.sh test:unit
+
+e2e-cbt:
+  except:
+    refs:
+      - master
+      - prod
+  stage: cbt
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - ./ci-cbt.sh test:e2e
 
 deploy-staging:
   only:

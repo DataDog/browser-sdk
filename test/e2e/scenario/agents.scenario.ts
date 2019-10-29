@@ -1,6 +1,8 @@
 import {
   browserExecute,
   browserExecuteAsync,
+  findLastEvent,
+  flushBrowserLogs,
   flushEvents,
   retrieveLogs,
   retrieveLogsMessages,
@@ -8,13 +10,16 @@ import {
   retrieveRumEventsTypes,
   sortByMessage,
   tearDown,
+  withBrowserLogs,
 } from './helpers'
+import { strictlyPositiveNumber } from './matchers'
 
 // TODO use real types
 // tslint:disable: no-unsafe-any
 type LogsGlobal = any
 type RumEvent = any
 type RumEventCategory = any
+type RumPageViewEvent = any
 type RumResourceEvent = any
 const ERROR = 'error' as any
 
@@ -23,6 +28,8 @@ beforeEach(() => {
 })
 
 afterEach(tearDown)
+
+const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
 describe('logs', () => {
   it('should send logs', async () => {
@@ -41,8 +48,9 @@ describe('logs', () => {
     await flushEvents()
     const logs = await retrieveLogsMessages()
     expect(logs).toContain('console error: oh snap')
-    const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).toEqual(1)
+    await withBrowserLogs((browserLogs) => {
+      expect(browserLogs.length).toEqual(1)
+    })
   })
 })
 
@@ -54,112 +62,145 @@ describe('rum', () => {
     await flushEvents()
     const types = await retrieveRumEventsTypes()
     expect(types).toContain(ERROR)
-    const browserLogs = await browser.getLogs('browser')
-    expect(browserLogs.length).toEqual(1)
+    await withBrowserLogs((browserLogs) => {
+      expect(browserLogs.length).toEqual(1)
+    })
   })
 
   it('should track xhr timings', async () => {
-    await browserExecuteAsync((done: () => void) => {
+    if (browser.capabilities.browserName === 'Safari') {
+      pending('XHR timings is not fully supported in Safari yet')
+    }
+
+    await browserExecuteAsync((baseUrl, done) => {
       let loaded = false
       const xhr = new XMLHttpRequest()
       xhr.addEventListener('load', () => (loaded = true))
-      xhr.open('GET', 'http://localhost:3000/ok')
+      xhr.open('GET', `${baseUrl}/ok`)
       xhr.send()
 
       const interval = setInterval(() => {
         if (loaded) {
           clearInterval(interval)
-          done()
+          done(undefined)
         }
       }, 500)
-    })
+    }, browser.options.baseUrl!)
 
     await flushEvents()
     const timing = (await retrieveRumEvents()).find(
       (event: RumEvent) =>
-        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === 'http://localhost:3000/ok'
+        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
     ) as RumResourceEvent
 
+    expect(timing as any).not.toBe(undefined)
     expect(timing.http.method).toEqual('GET')
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
     expect(timing.http.performance!.download.start).toBeGreaterThan(0)
     expect(timing.http.performance!.download.duration).toBeGreaterThan(0)
   })
+
+  it('should send performance timings along the page view events', async () => {
+    await flushEvents()
+    const events = await retrieveRumEvents()
+
+    const pageView = findLastEvent(events, (event) => event.evt.category === 'page_view') as RumPageViewEvent
+
+    expect(pageView as any).not.toBe(undefined)
+    expect(pageView.screen.performance).toEqual({
+      dom_complete: strictlyPositiveNumber(),
+      dom_content_loaded: strictlyPositiveNumber(),
+      dom_interactive: strictlyPositiveNumber(),
+      load_event_end: strictlyPositiveNumber(),
+    } as any)
+  })
 })
 
 describe('error collection', () => {
   it('should track xhr error', async () => {
-    await browserExecuteAsync((done: () => void) => {
-      let count = 0
-      let xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (count += 1))
-      xhr.open('GET', 'http://localhost:3000/throw')
-      xhr.send()
+    await browserExecuteAsync(
+      (baseUrl, unreachableUrl, done) => {
+        let count = 0
+        let xhr = new XMLHttpRequest()
+        xhr.addEventListener('load', () => (count += 1))
+        xhr.open('GET', `${baseUrl}/throw`)
+        xhr.send()
 
-      xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (count += 1))
-      xhr.open('GET', 'http://localhost:3000/unknown')
-      xhr.send()
+        xhr = new XMLHttpRequest()
+        xhr.addEventListener('load', () => (count += 1))
+        xhr.open('GET', `${baseUrl}/unknown`)
+        xhr.send()
 
-      xhr = new XMLHttpRequest()
-      xhr.addEventListener('error', () => (count += 1))
-      xhr.open('GET', 'http://localhost:9999/unreachable')
-      xhr.send()
+        xhr = new XMLHttpRequest()
+        xhr.addEventListener('error', () => (count += 1))
+        xhr.open('GET', unreachableUrl)
+        xhr.send()
 
-      xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (count += 1))
-      xhr.open('GET', 'http://localhost:3000/ok')
-      xhr.send()
+        xhr = new XMLHttpRequest()
+        xhr.addEventListener('load', () => (count += 1))
+        xhr.open('GET', `${baseUrl}/ok`)
+        xhr.send()
 
-      const interval = setInterval(() => {
-        if (count === 4) {
-          clearInterval(interval)
-          done()
-        }
-      }, 500)
-    })
-    await browser.getLogs('browser')
+        const interval = setInterval(() => {
+          if (count === 4) {
+            clearInterval(interval)
+            done(undefined)
+          }
+        }, 500)
+      },
+      browser.options.baseUrl!,
+      UNREACHABLE_URL
+    )
+    await flushBrowserLogs()
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
     expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).toEqual('XHR error GET http://localhost:3000/throw')
+    expect(logs[0].message).toEqual(`XHR error GET ${browser.options.baseUrl}/throw`)
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).toEqual('XHR error GET http://localhost:9999/unreachable')
+    expect(logs[1].message).toEqual(`XHR error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http.status_code).toEqual(0)
     expect(logs[1].error.stack).toEqual('Failed to load')
   })
 
   it('should track fetch error', async () => {
-    await browserExecuteAsync((done: () => void) => {
-      let count = 0
-      fetch('http://localhost:3000/throw').then(() => (count += 1))
-      fetch('http://localhost:3000/unknown').then(() => (count += 1))
-      fetch('http://localhost:9999/unreachable').catch(() => (count += 1))
-      fetch('http://localhost:3000/ok').then(() => (count += 1))
+    if (browser.capabilities.browserName === 'Safari') {
+      pending('fetch patching is not fully supported in Safari yet')
+    }
 
-      const interval = setInterval(() => {
-        if (count === 4) {
-          clearInterval(interval)
-          done()
-        }
-      }, 500)
-    })
-    await browser.getLogs('browser')
+    await browserExecuteAsync(
+      (baseUrl, unreachableUrl, done) => {
+        let count = 0
+        fetch(`${baseUrl}/throw`).then(() => (count += 1))
+        fetch(`${baseUrl}/unknown`).then(() => (count += 1))
+        fetch(unreachableUrl).catch(() => (count += 1))
+        fetch(`${baseUrl}/ok`).then(() => (count += 1))
+
+        const interval = setInterval(() => {
+          if (count === 4) {
+            clearInterval(interval)
+            done(undefined)
+          }
+        }, 500)
+      },
+      browser.options.baseUrl!,
+      UNREACHABLE_URL
+    )
+    await flushBrowserLogs()
     await flushEvents()
     const logs = (await retrieveLogs()).sort(sortByMessage)
 
     expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).toEqual('Fetch error GET http://localhost:3000/throw')
+    expect(logs[0].message).toEqual(`Fetch error GET ${browser.options.baseUrl}/throw`)
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 
-    expect(logs[1].message).toEqual('Fetch error GET http://localhost:9999/unreachable')
+    expect(logs[1].message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http.status_code).toEqual(0)
     expect(logs[1].error.stack).toEqual('TypeError: Failed to fetch')
   })
