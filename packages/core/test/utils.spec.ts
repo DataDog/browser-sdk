@@ -1,4 +1,4 @@
-import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
+import { debounce, jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
 
 describe('utils', () => {
   describe('throttle', () => {
@@ -34,6 +34,40 @@ describe('utils', () => {
       jasmine.clock().tick(2)
       throttled()
       expect(spy).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('debounce', () => {
+    let spy: jasmine.Spy<InferableFunction>
+    let debounced: jasmine.Spy<InferableFunction>
+
+    beforeEach(() => {
+      jasmine.clock().install()
+      jasmine.clock().mockDate()
+      spy = jasmine.createSpy()
+      debounced = debounce(spy, 2)
+    })
+
+    afterEach(() => {
+      jasmine.clock().uninstall()
+    })
+
+    it('should call debounced function after the wait period', () => {
+      debounced()
+      expect(spy).toHaveBeenCalledTimes(0)
+      jasmine.clock().tick(2)
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should restart wait period for each calls made during the wait period', () => {
+      debounced()
+      jasmine.clock().tick(1)
+      debounced()
+      jasmine.clock().tick(1)
+      expect(spy).toHaveBeenCalledTimes(0)
+
+      jasmine.clock().tick(1)
+      expect(spy).toHaveBeenCalledTimes(1)
     })
   })
 

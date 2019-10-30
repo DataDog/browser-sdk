@@ -31,6 +31,20 @@ export function throttle<T extends Function>(fn: T, wait: number): T {
   } as unknown) as T // consider output type has input type
 }
 
+// tslint:disable-next-line ban-types
+export function debounce<T extends Function>(fn: T, wait: number): T {
+  let timeout: number
+  return (function(this: any) {
+    const args = arguments
+    if (timeout !== undefined) {
+      clearTimeout(timeout)
+    }
+    timeout = window.setTimeout(() => {
+      return fn.apply(this, args) as any
+    }, wait)
+  } as unknown) as T // consider output type has input type
+}
+
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883
