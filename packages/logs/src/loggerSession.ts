@@ -39,16 +39,20 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
 }
 
 function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
-  return throttle(() => {
-    let sessionType = loggerSession.get() as LoggerSessionType | undefined
-    if (!hasValidLoggerSession(sessionType)) {
-      sessionType = performDraw(configuration.sampleRate) ? LoggerSessionType.TRACKED : LoggerSessionType.NOT_TRACKED
-    }
-    loggerSession.set(sessionType as string, EXPIRATION_DELAY)
-    if (sessionType === LoggerSessionType.TRACKED) {
-      sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
-    }
-  }, COOKIE_ACCESS_DELAY)
+  return throttle(
+    () => {
+      let sessionType = loggerSession.get() as LoggerSessionType | undefined
+      if (!hasValidLoggerSession(sessionType)) {
+        sessionType = performDraw(configuration.sampleRate) ? LoggerSessionType.TRACKED : LoggerSessionType.NOT_TRACKED
+      }
+      loggerSession.set(sessionType as string, EXPIRATION_DELAY)
+      if (sessionType === LoggerSessionType.TRACKED) {
+        sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
+      }
+    },
+    COOKIE_ACCESS_DELAY,
+    { trailing: false }
+  )
 }
 
 function hasValidLoggerSession(type?: LoggerSessionType) {

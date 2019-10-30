@@ -3,37 +3,132 @@ import { debounce, jsonStringify, performDraw, round, throttle, toSnakeCase, wit
 describe('utils', () => {
   describe('throttle', () => {
     let spy: jasmine.Spy<InferableFunction>
-    let throttled: jasmine.Spy<InferableFunction>
+    let throttled: () => void
 
     beforeEach(() => {
       jasmine.clock().install()
       jasmine.clock().mockDate()
       spy = jasmine.createSpy()
-      throttled = throttle(spy, 1)
     })
 
     afterEach(() => {
       jasmine.clock().uninstall()
     })
 
-    it('should call throttled function immediately', () => {
-      throttled()
-      expect(spy).toHaveBeenCalledTimes(1)
+    describe('when {leading: false, trailing:false}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { leading: false, trailing: false })
+      })
+
+      it('should not call throttled function', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
+
+      it('should not called throttled function after the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
+
+      it('should not called throttled function performed after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
     })
 
-    it('should dismiss calls made during the wait period', () => {
-      throttled()
-      throttled()
-      expect(spy).toHaveBeenCalledTimes(1)
-      jasmine.clock().tick(2)
-      expect(spy).toHaveBeenCalledTimes(1)
+    describe('when {leading: false, trailing:true}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { leading: false })
+      })
+
+      it('should call throttled function after the wait period', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should dismiss calls made during the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
     })
 
-    it('should perform calls made after the wait period', () => {
-      throttled()
-      jasmine.clock().tick(2)
-      throttled()
-      expect(spy).toHaveBeenCalledTimes(2)
+    describe('when {leading: true, trailing:false}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { trailing: false })
+      })
+
+      it('should call throttled function immediately', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should dismiss calls made during the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    describe('when {leading: true, trailing:true}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2)
+      })
+
+      it('should call throttled function immediately', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should postpone calls made during the wait period to after the period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
     })
   })
 
