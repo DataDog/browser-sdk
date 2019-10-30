@@ -1,4 +1,4 @@
-import { Batch, debounce, ErrorObservable, generateUUID, monitor, msToNs, Observable } from '@browser-agent/core'
+import { Batch, ErrorObservable, generateUUID, monitor, msToNs, Observable, throttle } from '@browser-agent/core'
 
 import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
 
@@ -18,7 +18,7 @@ export interface PageViewSummary {
 
 export let pageViewId: string
 
-const DEBOUNCE_PAGE_VIEW_UPDATE_PERIOD = 3000
+const THROTTLE_PAGE_VIEW_UPDATE_PERIOD = 3000
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -34,7 +34,11 @@ export function trackPageView(
   performanceObservable: Observable<PerformanceEntry>,
   customEventObservable: Observable<RawCustomEvent>
 ) {
-  const schedulePageViewUpdate = debounce(monitor(() => updatePageView(addRumEvent)), DEBOUNCE_PAGE_VIEW_UPDATE_PERIOD)
+  const schedulePageViewUpdate = throttle(
+    monitor(() => updatePageView(addRumEvent)),
+    THROTTLE_PAGE_VIEW_UPDATE_PERIOD,
+    { leading: false }
+  )
 
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
