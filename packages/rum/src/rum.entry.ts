@@ -12,12 +12,19 @@ import {
 } from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { version } from './version'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
+}
+
+export interface RawCustomEvent {
+  name: string
+  context?: Context
 }
 
 const STUBBED_RUM = {
@@ -63,17 +70,25 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
     return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
+  const lifeCycle = new LifeCycle()
 
   const { errorObservable, configuration } = commonInit(rumUserConfiguration, version)
   const session = startRumSession(configuration)
   const requestObservable = startRequestCollection()
+  startPerformanceCollection(lifeCycle, session)
 
-  const globalApi = startRum(
-    rumUserConfiguration.applicationId,
-    errorObservable,
-    requestObservable,
-    configuration,
-    session
-  )
+  errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.error, errorMessage))
+  requestObservable.subscribe((requestDetails) => lifeCycle.notify(LifeCycleEventType.request, requestDetails))
+
+  const partialApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
+
+  const globalApi = {
+    ...partialApi,
+    addCustomEvent: monitor((name: string, context?: Context) => {
+      lifeCycle.notify(LifeCycleEventType.customEvent, { name, context })
+    }),
+  }
+
   lodashAssign(datadogRum, globalApi)
+  return globalApi
 })

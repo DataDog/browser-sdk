@@ -1,5 +1,6 @@
-import { getRelativeTime, monitor, Observable } from '@browser-agent/core'
+import { getRelativeTime, monitor } from '@browser-agent/core'
 
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
 
 declare global {
@@ -19,13 +20,13 @@ function supportPerformanceNavigationTimingEvent() {
   )
 }
 
-export function startPerformanceCollection(performanceObservable: Observable<PerformanceEntry>, session: RumSession) {
+export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSession) {
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(session, performanceObservable, performance.getEntries())
+    handlePerformanceEntries(session, lifeCycle, performance.getEntries())
   }
   if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, performanceObservable, entries.getEntries()))
+      monitor((entries) => handlePerformanceEntries(session, lifeCycle, entries.getEntries()))
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
 
@@ -37,13 +38,11 @@ export function startPerformanceCollection(performanceObservable: Observable<Per
 
       if (!supportPerformanceNavigationTimingEvent()) {
         retrieveNavigationTimingWhenLoaded((timing) => {
-          handlePerformanceEntries(session, performanceObservable, [timing])
+          handlePerformanceEntries(session, lifeCycle, [timing])
         })
       }
     }
   }
-
-  return performanceObservable
 }
 
 interface FakePerformanceNavigationTiming {
@@ -79,13 +78,9 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
   }
 }
 
-function handlePerformanceEntries(
-  session: RumSession,
-  performanceObservable: Observable<PerformanceEntry>,
-  entries: PerformanceEntry[]
-) {
+function handlePerformanceEntries(session: RumSession, lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
   function notify(entry: PerformanceEntry) {
-    performanceObservable.notify(entry)
+    lifeCycle.notify(LifeCycleEventType.performance, entry)
   }
 
   if (session.isTrackedWithResource()) {

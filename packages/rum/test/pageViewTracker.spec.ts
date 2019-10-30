@@ -1,24 +1,16 @@
-import { Batch, ErrorMessage, Observable } from '@browser-agent/core'
+import { Batch } from '@browser-agent/core'
 
+import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { pageViewId, trackPageView } from '../src/pageViewTracker'
-import {
-  PerformanceLongTaskTiming,
-  PerformancePaintTiming,
-  RawCustomEvent,
-  RumEvent,
-  RumPageViewEvent,
-} from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../src/rum'
+import { RawCustomEvent } from '../src/rum.entry'
 
 function setup({
   addRumEvent,
-  errorObservable,
-  performanceObservable,
-  customEventObservable,
+  lifeCycle,
 }: {
   addRumEvent?: () => any
-  errorObservable?: Observable<ErrorMessage>
-  performanceObservable?: Observable<PerformanceEntry>
-  customEventObservable?: Observable<RawCustomEvent>
+  lifeCycle?: LifeCycle
 } = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = new URL(pathname, 'http://localhost')
@@ -31,10 +23,8 @@ function setup({
   trackPageView(
     fakeBatch as Batch<RumEvent>,
     fakeLocation as Location,
-    addRumEvent || (() => undefined),
-    errorObservable || new Observable<ErrorMessage>(),
-    performanceObservable || new Observable<PerformanceEntry>(),
-    customEventObservable || new Observable<RawCustomEvent>()
+    lifeCycle || new LifeCycle(),
+    addRumEvent || (() => undefined)
   )
 }
 
@@ -87,14 +77,14 @@ describe('rum page view summary', () => {
   })
 
   it('should track error count', () => {
-    const errorObservable = new Observable<ErrorMessage>()
-    setup({ addRumEvent, errorObservable })
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.errorCount).toEqual(0)
 
-    errorObservable.notify({} as any)
-    errorObservable.notify({} as any)
+    lifeCycle.notify(LifeCycleEventType.error, {} as any)
+    lifeCycle.notify(LifeCycleEventType.error, {} as any)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
@@ -103,13 +93,13 @@ describe('rum page view summary', () => {
   })
 
   it('should track long task count', () => {
-    const performanceObservable = new Observable<PerformanceEntry>()
-    setup({ addRumEvent, performanceObservable })
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.longTaskCount).toEqual(0)
 
-    performanceObservable.notify(FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
@@ -118,13 +108,13 @@ describe('rum page view summary', () => {
   })
 
   it('should track custom event count', () => {
-    const customEventObservable = new Observable<RawCustomEvent>()
-    setup({ addRumEvent, customEventObservable })
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.summary.customEventCount).toEqual(0)
 
-    customEventObservable.notify(FAKE_CUSTOM_EVENT as RawCustomEvent)
+    lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
@@ -157,14 +147,14 @@ describe('rum page view performance', () => {
   })
 
   it('should track performance', () => {
-    const performanceObservable = new Observable<PerformanceEntry>()
-    setup({ addRumEvent, performanceObservable })
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
     expect(getPageViewEvent(0).screen.performance).toEqual({})
 
-    performanceObservable.notify(FAKE_PAINT_ENTRY as PerformancePaintTiming)
-    performanceObservable.notify(FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
+    lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
+    lifeCycle.notify(LifeCycleEventType.performance, FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
