@@ -18,17 +18,36 @@ export enum ResourceKind {
   OTHER = 'other',
 }
 
-// tslint:disable-next-line ban-types
-export function throttle<T extends Function>(fn: T, wait: number): T {
-  let lastCall = 0
-  return (function(this: any) {
-    const now = new Date().getTime()
-    if (lastCall === 0 || lastCall + wait <= now) {
-      lastCall = now
-      return fn.apply(this, arguments)
+// use lodash API
+export function throttle(
+  fn: () => void,
+  wait: number,
+  options?: { leading?: boolean; trailing?: boolean }
+): () => void {
+  const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
+  const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
+  let inWaitPeriod = false
+  let hasPendingExecution = false
+
+  return function(this: any) {
+    if (inWaitPeriod) {
+      hasPendingExecution = true
+      return
     }
-    return
-  } as unknown) as T // consider output type has input type
+    if (needLeadingExecution) {
+      fn.apply(this)
+      inWaitPeriod = true
+    } else {
+      hasPendingExecution = true
+    }
+    setTimeout(() => {
+      if (needTrailingExecution && hasPendingExecution) {
+        fn.apply(this)
+      }
+      inWaitPeriod = false
+      hasPendingExecution = false
+    }, wait)
+  }
 }
 
 /**

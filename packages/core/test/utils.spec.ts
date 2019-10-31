@@ -1,26 +1,187 @@
 import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
 
 describe('utils', () => {
-  it('should throttle only once by given period', () => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate()
-    const spy = jasmine.createSpy()
+  describe('throttle', () => {
+    let spy: jasmine.Spy<InferableFunction>
+    let throttled: () => void
 
-    const throttled = throttle(spy, 1)
+    beforeEach(() => {
+      jasmine.clock().install()
+      jasmine.clock().mockDate()
+      spy = jasmine.createSpy()
+    })
 
-    throttled()
-    expect(spy).toHaveBeenCalledTimes(1)
+    afterEach(() => {
+      jasmine.clock().uninstall()
+    })
 
-    throttled()
-    throttled()
-    expect(spy).toHaveBeenCalledTimes(1)
+    describe('when {leading: false, trailing:false}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { leading: false, trailing: false })
+      })
 
-    jasmine.clock().tick(2)
-    throttled()
-    throttled()
-    expect(spy).toHaveBeenCalledTimes(2)
+      it('should not call throttled function', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
 
-    jasmine.clock().uninstall()
+      it('should not called throttled function after the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
+
+      it('should not called throttled function performed after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
+      })
+    })
+
+    describe('when {leading: false, trailing:true}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { leading: false })
+      })
+
+      it('should call throttled function after the wait period', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should dismiss calls made during the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(0)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    describe('when {leading: true, trailing:false}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2, { trailing: false })
+      })
+
+      it('should call throttled function immediately', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should dismiss calls made during the wait period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    describe('when {leading: true, trailing:true}', () => {
+      beforeEach(() => {
+        throttled = throttle(spy, 2)
+      })
+
+      it('should call throttled function immediately', () => {
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should postpone calls made during the wait period to after the period', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+
+      it('should perform calls made after the wait period', () => {
+        throttled()
+        jasmine.clock().tick(2)
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(2)
+      })
+    })
+  })
+
+  describe('format', () => {
+    it('should format a string to snake case', () => {
+      expect(toSnakeCase('camelCaseWord')).toEqual('camel_case_word')
+      expect(toSnakeCase('PascalCase')).toEqual('pascal_case')
+      expect(toSnakeCase('kebab-case')).toEqual('kebab_case')
+    })
+
+    it('should format object keys in snake case', () => {
+      expect(
+        withSnakeCaseKeys({
+          camelCase: 1,
+          nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
+        })
+      ).toEqual({
+        camel_case: 1,
+        nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
+      })
+    })
+  })
+
+  describe('jsonStringify', () => {
+    it('should jsonStringify an object with toJSON directly defined', () => {
+      const value = [{ 1: 'a' }]
+      const expectedJson = JSON.stringify(value)
+
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      ;(value as any).toJSON = () => '42'
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      expect(JSON.stringify(value)).toEqual('"42"')
+    })
+
+    it('should jsonStringify an object with toJSON defined on prototype', () => {
+      const value = [{ 2: 'b' }]
+      const expectedJson = JSON.stringify(value)
+
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      ;(Array.prototype as any).toJSON = () => '42'
+      expect(jsonStringify(value)).toEqual(expectedJson)
+      expect(JSON.stringify(value)).toEqual('"42"')
+
+      delete (Array.prototype as any).toJSON
+    })
+
+    it('should jsonStringify edge cases', () => {
+      expect(jsonStringify(undefined)).toEqual(undefined)
+      // tslint:disable-next-line:no-null-keyword
+      expect(jsonStringify(null)).toEqual('null')
+      expect(jsonStringify(1)).toEqual('1')
+      expect(jsonStringify(true)).toEqual('true')
+    })
   })
 
   it('should perform a draw', () => {
@@ -45,53 +206,5 @@ describe('utils', () => {
     expect(round(10.12591, 1)).toEqual(10.1)
     expect(round(10.12591, 2)).toEqual(10.13)
     expect(round(10.12591, 3)).toEqual(10.126)
-  })
-
-  it('should format a string to snake case', () => {
-    expect(toSnakeCase('camelCaseWord')).toEqual('camel_case_word')
-    expect(toSnakeCase('PascalCase')).toEqual('pascal_case')
-    expect(toSnakeCase('kebab-case')).toEqual('kebab_case')
-  })
-
-  it('should format object keys in snake case', () => {
-    expect(
-      withSnakeCaseKeys({
-        camelCase: 1,
-        nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
-      })
-    ).toEqual({
-      camel_case: 1,
-      nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
-    })
-  })
-
-  it('should jsonStringify an object with toJSON directly defined', () => {
-    const value = [{ 1: 'a' }]
-    const expectedJson = JSON.stringify(value)
-
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    ;(value as any).toJSON = () => '42'
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    expect(JSON.stringify(value)).toEqual('"42"')
-  })
-
-  it('should jsonStringify an object with toJSON defined on prototype', () => {
-    const value = [{ 2: 'b' }]
-    const expectedJson = JSON.stringify(value)
-
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    ;(Array.prototype as any).toJSON = () => '42'
-    expect(jsonStringify(value)).toEqual(expectedJson)
-    expect(JSON.stringify(value)).toEqual('"42"')
-
-    delete (Array.prototype as any).toJSON
-  })
-
-  it('should jsonStringify edge cases', () => {
-    expect(jsonStringify(undefined)).toEqual(undefined)
-    // tslint:disable-next-line:no-null-keyword
-    expect(jsonStringify(null)).toEqual('null')
-    expect(jsonStringify(1)).toEqual('1')
-    expect(jsonStringify(true)).toEqual('true')
   })
 })

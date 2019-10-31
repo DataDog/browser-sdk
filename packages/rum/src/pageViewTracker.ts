@@ -1,4 +1,4 @@
-import { Batch, ErrorObservable, generateUUID, monitor, msToNs, Observable } from '@browser-agent/core'
+import { Batch, ErrorObservable, generateUUID, monitor, msToNs, Observable, throttle } from '@browser-agent/core'
 
 import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
 
@@ -18,6 +18,7 @@ export interface PageViewSummary {
 
 export let pageViewId: string
 
+const THROTTLE_PAGE_VIEW_UPDATE_PERIOD = 3000
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -33,13 +34,20 @@ export function trackPageView(
   performanceObservable: Observable<PerformanceEntry>,
   customEventObservable: Observable<RawCustomEvent>
 ) {
+  const schedulePageViewUpdate = throttle(
+    monitor(() => updatePageView(addRumEvent)),
+    THROTTLE_PAGE_VIEW_UPDATE_PERIOD,
+    { leading: false }
+  )
+
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
-  trackPerformance(performanceObservable)
-  trackSummary(errorObservable, performanceObservable, customEventObservable)
+  trackPerformance(performanceObservable, schedulePageViewUpdate)
+  trackSummary(errorObservable, performanceObservable, customEventObservable, schedulePageViewUpdate)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
+
 function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
   pageViewId = generateUUID()
   startTimestamp = new Date().getTime()
@@ -104,7 +112,7 @@ function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
+function trackPerformance(performanceObservable: Observable<PerformanceEntry>, schedulePageViewUpdate: () => void) {
   performanceObservable.subscribe((entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
@@ -115,12 +123,14 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
         domInteractive: msToNs(navigationEntry.domInteractive),
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }
+      schedulePageViewUpdate()
     } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
       const paintEntry = entry as PerformancePaintTiming
       screenPerformance = {
         ...screenPerformance,
         firstContentfulPaint: msToNs(paintEntry.startTime),
       }
+      schedulePageViewUpdate()
     }
   })
 }
@@ -128,13 +138,21 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>) {
 function trackSummary(
   errorObservable: ErrorObservable,
   performanceObservable: Observable<PerformanceEntry>,
-  customEventObservable: Observable<RawCustomEvent>
+  customEventObservable: Observable<RawCustomEvent>,
+  schedulePageViewUpdate: () => void
 ) {
-  errorObservable.subscribe(() => (summary.errorCount += 1))
-  customEventObservable.subscribe(() => (summary.customEventCount += 1))
+  errorObservable.subscribe(() => {
+    summary.errorCount += 1
+    schedulePageViewUpdate()
+  })
+  customEventObservable.subscribe(() => {
+    summary.customEventCount += 1
+    schedulePageViewUpdate()
+  })
   performanceObservable.subscribe((entry) => {
     if (entry.entryType === 'longtask') {
       summary.longTaskCount += 1
+      schedulePageViewUpdate()
     }
   })
 }
