@@ -1,6 +1,7 @@
-import { Batch, ErrorObservable, generateUUID, monitor, msToNs, Observable, throttle } from '@browser-agent/core'
+import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-agent/core'
 
-import { PerformancePaintTiming, RawCustomEvent, RumEvent, RumEventCategory } from './rum'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
 
 export interface PageViewPerformance {
   firstContentfulPaint?: number
@@ -29,10 +30,8 @@ let screenPerformance: PageViewPerformance
 export function trackPageView(
   batch: Batch<RumEvent>,
   location: Location,
-  addRumEvent: (event: RumEvent) => void,
-  errorObservable: ErrorObservable,
-  performanceObservable: Observable<PerformanceEntry>,
-  customEventObservable: Observable<RawCustomEvent>
+  lifeCycle: LifeCycle,
+  addRumEvent: (event: RumEvent) => void
 ) {
   const schedulePageViewUpdate = throttle(
     monitor(() => updatePageView(addRumEvent)),
@@ -42,8 +41,8 @@ export function trackPageView(
 
   newPageView(location, addRumEvent)
   trackHistory(location, addRumEvent)
-  trackPerformance(performanceObservable, schedulePageViewUpdate)
-  trackSummary(errorObservable, performanceObservable, customEventObservable, schedulePageViewUpdate)
+  trackPerformance(lifeCycle, schedulePageViewUpdate)
+  trackSummary(lifeCycle, schedulePageViewUpdate)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -112,8 +111,8 @@ function areDifferentPages(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackPerformance(performanceObservable: Observable<PerformanceEntry>, schedulePageViewUpdate: () => void) {
-  performanceObservable.subscribe((entry) => {
+function trackPerformance(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) {
+  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
       screenPerformance = {
@@ -135,21 +134,16 @@ function trackPerformance(performanceObservable: Observable<PerformanceEntry>, s
   })
 }
 
-function trackSummary(
-  errorObservable: ErrorObservable,
-  performanceObservable: Observable<PerformanceEntry>,
-  customEventObservable: Observable<RawCustomEvent>,
-  schedulePageViewUpdate: () => void
-) {
-  errorObservable.subscribe(() => {
+function trackSummary(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) {
+  lifeCycle.subscribe(LifeCycleEventType.error, () => {
     summary.errorCount += 1
     schedulePageViewUpdate()
   })
-  customEventObservable.subscribe(() => {
+  lifeCycle.subscribe(LifeCycleEventType.customEvent, () => {
     summary.customEventCount += 1
     schedulePageViewUpdate()
   })
-  performanceObservable.subscribe((entry) => {
+  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'longtask') {
       summary.longTaskCount += 1
       schedulePageViewUpdate()

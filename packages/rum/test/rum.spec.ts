@@ -9,6 +9,8 @@ import {
 } from '@browser-agent/core'
 import sinon from 'sinon'
 
+import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { startPerformanceCollection } from '../src/performanceCollection'
 import {
   handlePaintEntry,
   handleResourceEntry,
@@ -178,14 +180,14 @@ describe('rum session', () => {
       isTracked: () => true,
       isTrackedWithResource: () => true,
     }
-    const errorObservable = new Observable<ErrorMessage>()
-    const requestObservable = new Observable<RequestDetails>()
-    startRum('appId', errorObservable, requestObservable, configuration as Configuration, trackedWithResourcesSession)
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession)
+    startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
-    requestObservable.notify(FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
 
     expect(server.requests.length).toEqual(3)
   })
@@ -196,16 +198,16 @@ describe('rum session', () => {
       isTracked: () => true,
       isTrackedWithResource: () => false,
     }
-    const errorObservable = new Observable<ErrorMessage>()
-    const requestObservable = new Observable<RequestDetails>()
-    startRum('appId', errorObservable, requestObservable, configuration as Configuration, trackedWithResourcesSession)
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession)
+    startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    requestObservable.notify(FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(0)
 
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
     expect(server.requests.length).toEqual(1)
   })
 
@@ -215,14 +217,14 @@ describe('rum session', () => {
       isTracked: () => false,
       isTrackedWithResource: () => false,
     }
-    const errorObservable = new Observable<ErrorMessage>()
-    const requestObservable = new Observable<RequestDetails>()
-    startRum('appId', errorObservable, requestObservable, configuration as Configuration, notTrackedSession)
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, notTrackedSession)
+    startPerformanceCollection(lifeCycle, notTrackedSession)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    requestObservable.notify(FAKE_REQUEST as RequestDetails)
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -234,7 +236,9 @@ describe('rum session', () => {
       isTracked: () => isTracked,
       isTrackedWithResource: () => isTracked,
     }
-    startRum('appId', new Observable(), new Observable(), configuration as Configuration, session)
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, session)
+    startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -271,7 +275,7 @@ describe('rum init', () => {
       isTrackedWithResource: () => true,
     }
 
-    startRum('appId', new Observable(), new Observable(), configuration as Configuration, session)
+    startRum('appId', new LifeCycle(), configuration as Configuration, session)
 
     expect(server.requests.length).toBeGreaterThan(0)
   })
@@ -284,7 +288,7 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
 
 describe('rum global context', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  let errorObservable: Observable<ErrorMessage>
+  let lifeCycle: LifeCycle
   let RUM: RumApi
   let server: sinon.SinonFakeServer
 
@@ -295,8 +299,8 @@ describe('rum global context', () => {
       isTrackedWithResource: () => true,
     }
     server = sinon.fakeServer.create()
-    errorObservable = new Observable<ErrorMessage>()
-    RUM = startRum('appId', errorObservable, new Observable(), configuration as Configuration, session) as RumApi
+    lifeCycle = new LifeCycle()
+    RUM = startRum('appId', lifeCycle, configuration as Configuration, session) as RumApi
     server.requests = []
   })
 
@@ -306,16 +310,16 @@ describe('rum global context', () => {
 
   it('should be added to the request', () => {
     RUM.setRumGlobalContext({ bar: 'foo' })
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
   it('should be updatable', () => {
     RUM.setRumGlobalContext({ bar: 'foo' })
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
     RUM.setRumGlobalContext({ foo: 'bar' })
-    errorObservable.notify(FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
     expect((getRumMessage(server, 1) as any).foo).toEqual('bar')

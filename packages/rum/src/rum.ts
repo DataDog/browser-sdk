@@ -5,24 +5,21 @@ import {
   ContextValue,
   ErrorContext,
   ErrorMessage,
-  ErrorObservable,
   HttpContext,
   HttpRequest,
   includes,
   monitor,
   msToNs,
-  Observable,
   RequestDetails,
-  RequestObservable,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
 } from '@browser-agent/core'
 import lodashMerge from 'lodash.merge'
 
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
-import { startPerformanceCollection } from './performanceCollection'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
@@ -161,11 +158,10 @@ export type RumEvent =
 
 export function startRum(
   applicationId: string,
-  errorObservable: ErrorObservable,
-  requestObservable: RequestObservable,
+  lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession
-) {
+): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
 
   const batch = new Batch<RumEvent>(
@@ -197,32 +193,27 @@ export function startRum(
     }
   }
 
-  const performanceObservable = new Observable<PerformanceEntry>()
-  const customEventObservable = new Observable<RawCustomEvent>()
+  trackPageView(batch, window.location, lifeCycle, addRumEvent)
+  trackErrors(lifeCycle, addRumEvent)
+  trackRequests(configuration, lifeCycle, session, addRumEvent)
+  trackPerformanceTiming(configuration, lifeCycle, addRumEvent)
+  trackCustomEvent(lifeCycle, addRumEvent)
 
-  trackPageView(batch, window.location, addRumEvent, errorObservable, performanceObservable, customEventObservable)
-  trackErrors(errorObservable, addRumEvent)
-  trackRequests(configuration, requestObservable, session, addRumEvent)
-  trackPerformanceTiming(configuration, addRumEvent, performanceObservable)
-  trackCustomEvent(customEventObservable, addRumEvent)
-
-  startPerformanceCollection(performanceObservable, session)
-
-  const globalApi: Partial<RumGlobal> = {}
-  globalApi.setRumGlobalContext = monitor((context: Context) => {
-    globalContext = context
-  })
-  globalApi.addRumGlobalContext = monitor((key: string, value: ContextValue) => {
-    globalContext[key] = value
-  })
-  globalApi.addCustomEvent = monitor((name: string, context?: Context) => {
-    customEventObservable.notify({ name, context })
-  })
-  return globalApi
+  return {
+    addCustomEvent: monitor((name: string, context?: Context) => {
+      lifeCycle.notify(LifeCycleEventType.customEvent, { name, context })
+    }),
+    addRumGlobalContext: monitor((key: string, value: ContextValue) => {
+      globalContext[key] = value
+    }),
+    setRumGlobalContext: monitor((context: Context) => {
+      globalContext = context
+    }),
+  }
 }
 
-function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumEvent) => void) {
-  errorObservable.subscribe(({ message, context }: ErrorMessage) => {
+function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.error, ({ message, context }: ErrorMessage) => {
     addRumEvent({
       message,
       evt: {
@@ -236,8 +227,8 @@ function trackErrors(errorObservable: ErrorObservable, addRumEvent: (event: RumE
   })
 }
 
-function trackCustomEvent(customEventObservable: Observable<RawCustomEvent>, addRumEvent: (event: RumEvent) => void) {
-  customEventObservable.subscribe(({ name, context }) => {
+function trackCustomEvent(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.customEvent, ({ name, context }) => {
     addRumEvent({
       ...context,
       evt: {
@@ -250,14 +241,14 @@ function trackCustomEvent(customEventObservable: Observable<RawCustomEvent>, add
 
 export function trackRequests(
   configuration: Configuration,
-  requestObservable: RequestObservable,
+  lifeCycle: LifeCycle,
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
   if (!session.isTrackedWithResource()) {
     return
   }
-  requestObservable.subscribe((requestDetails: RequestDetails) => {
+  lifeCycle.subscribe(LifeCycleEventType.request, (requestDetails: RequestDetails) => {
     if (!isValidResource(requestDetails.url, configuration)) {
       return
     }
@@ -289,10 +280,10 @@ export function trackRequests(
 
 function trackPerformanceTiming(
   configuration: Configuration,
-  addRumEvent: (event: RumEvent) => void,
-  performanceObservable: Observable<PerformanceEntry>
+  lifeCycle: LifeCycle,
+  addRumEvent: (event: RumEvent) => void
 ) {
-  performanceObservable.subscribe((entry) => {
+  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     switch (entry.entryType) {
       case 'resource':
         handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
