@@ -1,1 +1,1 @@
-export { RumUserConfiguration, RumGlobal, datadogRum } from './rum.entry'
+export { RumUserConfiguration, RumGlobal, datadogRum, InternalContext } from './rum.entry'

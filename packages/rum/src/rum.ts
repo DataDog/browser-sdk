@@ -206,6 +206,14 @@ export function startRum(
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
     }),
+    getInternalContext: monitor(() => {
+      return {
+        applicationId,
+        screen: {
+          id: pageViewId,
+        },
+      }
+    }),
     setRumGlobalContext: monitor((context: Context) => {
       globalContext = context
     }),
