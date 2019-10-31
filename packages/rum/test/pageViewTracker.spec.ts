@@ -2,8 +2,13 @@ import { Batch } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { pageViewId, trackPageView } from '../src/pageViewTracker'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumPageViewEvent } from '../src/rum'
-import { RawCustomEvent } from '../src/rum.entry'
+import {
+  PerformanceLongTaskTiming,
+  PerformancePaintTiming,
+  RawCustomEvent,
+  RumEvent,
+  RumPageViewEvent,
+} from '../src/rum'
 
 function setup({
   addRumEvent,

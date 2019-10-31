@@ -21,6 +21,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
+import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
@@ -31,6 +32,11 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 }
 
 export type PerformanceLongTaskTiming = PerformanceEntry
+
+export interface RawCustomEvent {
+  name: string
+  context?: Context
+}
 
 export enum RumEventCategory {
   CUSTOM = 'custom',
@@ -155,7 +161,7 @@ export function startRum(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession
-) {
+): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
 
   const batch = new Batch<RumEvent>(
@@ -194,6 +200,9 @@ export function startRum(
   trackCustomEvent(lifeCycle, addRumEvent)
 
   return {
+    addCustomEvent: monitor((name: string, context?: Context) => {
+      lifeCycle.notify(LifeCycleEventType.customEvent, { name, context })
+    }),
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
     }),

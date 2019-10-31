@@ -22,11 +22,6 @@ export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
 }
 
-export interface RawCustomEvent {
-  name: string
-  context?: Context
-}
-
 const STUBBED_RUM = {
   init(userConfiguration: RumUserConfiguration) {
     makeStub('core.init')
@@ -80,15 +75,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.error, errorMessage))
   requestObservable.subscribe((requestDetails) => lifeCycle.notify(LifeCycleEventType.request, requestDetails))
 
-  const partialApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
-
-  const globalApi = {
-    ...partialApi,
-    addCustomEvent: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.customEvent, { name, context })
-    }),
-  }
-
+  const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
   lodashAssign(datadogRum, globalApi)
   return globalApi
 })

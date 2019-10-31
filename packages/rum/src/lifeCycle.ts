@@ -1,5 +1,5 @@
 import { ErrorMessage, RequestDetails } from '@browser-agent/core'
-import { RawCustomEvent } from './rum.entry'
+import { RawCustomEvent } from './rum'
 
 export enum LifeCycleEventType {
   error,
