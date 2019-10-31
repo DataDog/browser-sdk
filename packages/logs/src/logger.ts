@@ -175,7 +175,7 @@ export class Logger {
 
 declare global {
   interface Window {
-    DD_RUM: {
+    DD_RUM?: {
       getInternalContext: () => object | undefined
     }
   }
