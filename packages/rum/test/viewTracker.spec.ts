@@ -1,14 +1,8 @@
 import { Batch } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { pageViewId, trackPageView } from '../src/pageViewTracker'
-import {
-  PerformanceLongTaskTiming,
-  PerformancePaintTiming,
-  RawCustomEvent,
-  RumEvent,
-  RumPageViewEvent,
-} from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RawCustomEvent, RumEvent, RumViewEvent } from '../src/rum'
+import { trackView, viewId } from '../src/viewTracker'
 
 function setup({
   addRumEvent,
@@ -25,7 +19,7 @@ function setup({
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
   const fakeBatch: Partial<Batch<RumEvent>> = { beforeFlushOnUnload: () => undefined }
-  trackPageView(
+  trackView(
     fakeBatch as Batch<RumEvent>,
     fakeLocation as Location,
     lifeCycle || new LifeCycle(),
@@ -34,33 +28,33 @@ function setup({
 }
 
 describe('rum track url change', () => {
-  let initialPageViewId: string
+  let initialView: string
 
   beforeEach(() => {
     setup()
-    initialPageViewId = pageViewId
+    initialView = viewId
   })
 
-  it('should update page view id on path change', () => {
+  it('should update view id on path change', () => {
     history.pushState({}, '', '/bar')
 
-    expect(pageViewId).not.toEqual(initialPageViewId)
+    expect(viewId).not.toEqual(initialView)
   })
 
-  it('should not update page view id on search change', () => {
+  it('should not update view id on search change', () => {
     history.pushState({}, '', '/foo?bar=qux')
 
-    expect(pageViewId).toEqual(initialPageViewId)
+    expect(viewId).toEqual(initialView)
   })
 
-  it('should not update page view id on hash change', () => {
+  it('should not update view id on hash change', () => {
     history.pushState({}, '', '/foo#bar')
 
-    expect(pageViewId).toEqual(initialPageViewId)
+    expect(viewId).toEqual(initialView)
   })
 })
 
-describe('rum page view summary', () => {
+describe('rum view summary', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',
     startTime: 456,
@@ -73,8 +67,8 @@ describe('rum page view summary', () => {
   }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
-  function getPageViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as RumPageViewEvent
+  function getViewEvent(index: number) {
+    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
   }
 
   beforeEach(() => {
@@ -86,15 +80,15 @@ describe('rum page view summary', () => {
     setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
-    expect(getPageViewEvent(0).screen.summary.errorCount).toEqual(0)
+    expect(getViewEvent(0).view.summary.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.error, {} as any)
     lifeCycle.notify(LifeCycleEventType.error, {} as any)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
-    expect(getPageViewEvent(1).screen.summary.errorCount).toEqual(2)
-    expect(getPageViewEvent(2).screen.summary.errorCount).toEqual(0)
+    expect(getViewEvent(1).view.summary.errorCount).toEqual(2)
+    expect(getViewEvent(2).view.summary.errorCount).toEqual(0)
   })
 
   it('should track long task count', () => {
@@ -102,14 +96,14 @@ describe('rum page view summary', () => {
     setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
-    expect(getPageViewEvent(0).screen.summary.longTaskCount).toEqual(0)
+    expect(getViewEvent(0).view.summary.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
-    expect(getPageViewEvent(1).screen.summary.longTaskCount).toEqual(1)
-    expect(getPageViewEvent(2).screen.summary.longTaskCount).toEqual(0)
+    expect(getViewEvent(1).view.summary.longTaskCount).toEqual(1)
+    expect(getViewEvent(2).view.summary.longTaskCount).toEqual(0)
   })
 
   it('should track custom event count', () => {
@@ -117,18 +111,18 @@ describe('rum page view summary', () => {
     setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
-    expect(getPageViewEvent(0).screen.summary.customEventCount).toEqual(0)
+    expect(getViewEvent(0).view.summary.customEventCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
-    expect(getPageViewEvent(1).screen.summary.customEventCount).toEqual(1)
-    expect(getPageViewEvent(2).screen.summary.customEventCount).toEqual(0)
+    expect(getViewEvent(1).view.summary.customEventCount).toEqual(1)
+    expect(getViewEvent(2).view.summary.customEventCount).toEqual(0)
   })
 })
 
-describe('rum page view performance', () => {
+describe('rum view performance', () => {
   const FAKE_PAINT_ENTRY = {
     entryType: 'paint',
     name: 'first-contentful-paint',
@@ -143,8 +137,8 @@ describe('rum page view performance', () => {
   }
   let addRumEvent: jasmine.Spy<InferableFunction>
 
-  function getPageViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as RumPageViewEvent
+  function getViewEvent(index: number) {
+    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
   }
 
   beforeEach(() => {
@@ -156,20 +150,20 @@ describe('rum page view performance', () => {
     setup({ addRumEvent, lifeCycle })
 
     expect(addRumEvent.calls.count()).toEqual(1)
-    expect(getPageViewEvent(0).screen.performance).toEqual({})
+    expect(getViewEvent(0).view.performance).toEqual({})
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
     history.pushState({}, '', '/bar')
 
     expect(addRumEvent.calls.count()).toEqual(3)
-    expect(getPageViewEvent(1).screen.performance).toEqual({
+    expect(getViewEvent(1).view.performance).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,
       domInteractive: 234e6,
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
     })
-    expect(getPageViewEvent(2).screen.performance).toEqual({})
+    expect(getViewEvent(2).view.performance).toEqual({})
   })
 })

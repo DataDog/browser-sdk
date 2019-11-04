@@ -64,15 +64,15 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
         {
           date: new Date().getTime(),
           http: {
-            // screen.url is preferred, but keep http.referer for retro-compatibility
+            // view.url is preferred, but keep http.referer for retro-compatibility
             referer: window.location.href,
-          },
-          screen: {
-            referrer: document.referrer,
-            url: window.location.href,
           },
           sessionId: session.getId(), // keep for retro-compatibility, could be cleaned in 12/2019
           session_id: session.getId(),
+          view: {
+            referrer: document.referrer,
+            url: window.location.href,
+          },
         },
         globalContext,
         getRUMInternalContext()

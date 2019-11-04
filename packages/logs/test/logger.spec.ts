@@ -50,7 +50,7 @@ describe('logger module', () => {
           referer: window.location.href,
         },
         message: 'message',
-        screen: {
+        view: {
           referrer: document.referrer,
           url: window.location.href,
         },

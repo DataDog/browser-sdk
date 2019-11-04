@@ -176,7 +176,7 @@ describe('internal monitoring', () => {
         entry_type: 'internal',
         error: jasmine.anything(),
         message: 'message',
-        screen: {
+        view: {
           referrer: document.referrer,
           url: window.location.href,
         },
