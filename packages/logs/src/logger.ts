@@ -73,7 +73,8 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
           },
           sessionId: session.getId(),
         },
-        globalContext
+        globalContext,
+        getRUMInternalContext()
       ) as Context
   )
   const handlers = {
@@ -170,4 +171,16 @@ export class Logger {
   setLevel(level: StatusType) {
     this.level = level
   }
+}
+
+declare global {
+  interface Window {
+    DD_RUM?: {
+      getInternalContext: () => object | undefined
+    }
+  }
+}
+
+function getRUMInternalContext(): object | undefined {
+  return window.DD_RUM && window.DD_RUM.getInternalContext ? window.DD_RUM.getInternalContext() : undefined
 }

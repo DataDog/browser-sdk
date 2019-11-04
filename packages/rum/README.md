@@ -45,3 +45,9 @@ contains all the public APIs.
   ```
   addCustomEvent (name: string, context: Context)
   ```
+
+- Get internal context
+
+  ```
+  getInternalContext () # retrieve RUM internal context (link with other products)
+  ```
