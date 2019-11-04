@@ -6,6 +6,7 @@ export enum LifeCycleEventType {
   performance,
   customEvent,
   request,
+  newSession,
 }
 
 export class LifeCycle {
@@ -15,6 +16,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.performance, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.request, data: RequestDetails): void
   notify(eventType: LifeCycleEventType.customEvent, data: RawCustomEvent): void
+  notify(eventType: LifeCycleEventType.newSession, data: undefined): void
   notify(eventType: LifeCycleEventType, data: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -26,6 +28,7 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.performance, callback: (data: PerformanceEntry) => void): void
   subscribe(eventType: LifeCycleEventType.request, callback: (data: RequestDetails) => void): void
   subscribe(eventType: LifeCycleEventType.customEvent, callback: (data: RawCustomEvent) => void): void
+  subscribe(eventType: LifeCycleEventType.newSession, callback: (data: undefined) => void): void
   subscribe(eventType: LifeCycleEventType, callback: (data: any) => void) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {

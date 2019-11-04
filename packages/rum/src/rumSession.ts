@@ -10,6 +10,7 @@ import {
   throttle,
   trackActivity,
 } from '@browser-agent/core'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_COOKIE_NAME = '_dd_r'
 
@@ -25,11 +26,11 @@ export enum RumSessionType {
   TRACKED_WITHOUT_RESOURCES = '2',
 }
 
-export function startRumSession(configuration: Configuration): RumSession {
+export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
   const rumSession = cacheCookieAccess(RUM_COOKIE_NAME)
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
 
-  const expandOrRenewSession = makeExpandOrRenewSession(configuration, rumSession, sessionId)
+  const expandOrRenewSession = makeExpandOrRenewSession(configuration, lifeCycle, rumSession, sessionId)
 
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
@@ -41,23 +42,32 @@ export function startRumSession(configuration: Configuration): RumSession {
   }
 }
 
-function makeExpandOrRenewSession(configuration: Configuration, rumSession: CookieCache, sessionId: CookieCache) {
+function makeExpandOrRenewSession(
+  configuration: Configuration,
+  lifeCycle: LifeCycle,
+  rumSession: CookieCache,
+  sessionId: CookieCache
+) {
+  let isInitializing = true
   return throttle(() => {
     let sessionType = rumSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
-      sessionType = performDraw(configuration.sampleRate)
-        ? RumSessionType.TRACKED_WITH_RESOURCES
-        : RumSessionType.NOT_TRACKED
-      if (sessionType === RumSessionType.TRACKED_WITH_RESOURCES) {
-        sessionType = performDraw(configuration.resourceSampleRate)
-          ? RumSessionType.TRACKED_WITH_RESOURCES
-          : RumSessionType.TRACKED_WITHOUT_RESOURCES
+      if (!performDraw(configuration.sampleRate)) {
+        sessionType = RumSessionType.NOT_TRACKED
+      } else if (performDraw(configuration.resourceSampleRate)) {
+        sessionType = RumSessionType.TRACKED_WITH_RESOURCES
+      } else {
+        sessionType = RumSessionType.TRACKED_WITHOUT_RESOURCES
+      }
+      if (!isInitializing) {
+        lifeCycle.notify(LifeCycleEventType.newSession, undefined)
       }
     }
     rumSession.set(sessionType as string, EXPIRATION_DELAY)
     if (isTracked(sessionType)) {
       sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
     }
+    isInitializing = false
   }, COOKIE_ACCESS_DELAY)
 }
 

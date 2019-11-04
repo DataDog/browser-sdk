@@ -43,6 +43,7 @@ export function trackPageView(
   trackHistory(location, addRumEvent)
   trackPerformance(lifeCycle, schedulePageViewUpdate)
   trackSummary(lifeCycle, schedulePageViewUpdate)
+  trackSession(location, lifeCycle, addRumEvent)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -148,5 +149,12 @@ function trackSummary(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) 
       summary.longTaskCount += 1
       schedulePageViewUpdate()
     }
+  })
+}
+
+function trackSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.newSession, () => {
+    updatePageView(addRumEvent)
+    newPageView(location, addRumEvent)
   })
 }
