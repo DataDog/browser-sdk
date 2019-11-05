@@ -60,7 +60,7 @@ describe('rum track url change', () => {
   })
 })
 
-describe('rum track session change', () => {
+describe('rum track renew session', () => {
   it('should update page view id on renew session', () => {
     const lifeCycle = new LifeCycle()
     setup({

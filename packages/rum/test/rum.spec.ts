@@ -254,11 +254,11 @@ describe('rum session', () => {
   })
 
   it('when type change should enable/disable existing request tracking', () => {
-    let isTracked = true
+    let isTrackedWithResource = true
     const session = {
       getId: () => undefined,
-      isTracked: () => isTracked,
-      isTrackedWithResource: () => isTracked,
+      isTracked: () => true,
+      isTrackedWithResource: () => isTrackedWithResource,
     }
     const lifeCycle = new LifeCycle()
     startRum('appId', lifeCycle, configuration as Configuration, session)
@@ -268,11 +268,11 @@ describe('rum session', () => {
     lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(1)
 
-    isTracked = false
+    isTrackedWithResource = false
     lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(1)
 
-    isTracked = true
+    isTrackedWithResource = true
     lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(2)
   })
