@@ -9,7 +9,7 @@ export interface ViewMeasures {
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
-  customEventCount: number
+  userActionCount: number
   errorCount: number
   longTaskCount: number
 }
@@ -46,9 +46,9 @@ function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
   startOrigin = performance.now()
   documentVersion = 1
   viewMeasures = {
-    customEventCount: 0,
     errorCount: 0,
     longTaskCount: 0,
+    userActionCount: 0,
   }
   activeLocation = { ...location }
   addViewEvent(addRumEvent)
@@ -133,8 +133,8 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
     viewMeasures.errorCount += 1
     scheduleViewUpdate()
   })
-  lifeCycle.subscribe(LifeCycleEventType.customEvent, () => {
-    viewMeasures.customEventCount += 1
+  lifeCycle.subscribe(LifeCycleEventType.userAction, () => {
+    viewMeasures.userActionCount += 1
     scheduleViewUpdate()
   })
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {

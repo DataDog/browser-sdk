@@ -1,7 +1,7 @@
 import { Batch } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RawCustomEvent, RumEvent, RumViewEvent } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, UserAction, RumEvent, RumViewEvent } from '../src/rum'
 import { trackView, viewId } from '../src/viewTracker'
 
 function setup({
@@ -59,7 +59,7 @@ describe('rum view measures', () => {
     entryType: 'longtask',
     startTime: 456,
   }
-  const FAKE_CUSTOM_EVENT = {
+  const FAKE_USER_ACTION = {
     context: {
       bar: 123,
     },
@@ -122,19 +122,19 @@ describe('rum view measures', () => {
     expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
   })
 
-  it('should track custom event count', () => {
+  it('should track user action count', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
     expect(getEventCount()).toEqual(1)
-    expect(getViewEvent(0).view.measures.customEventCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
+    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
-    expect(getViewEvent(1).view.measures.customEventCount).toEqual(1)
-    expect(getViewEvent(2).view.measures.customEventCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.userActionCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.userActionCount).toEqual(0)
   })
 
   it('should track performance timings', () => {
@@ -143,9 +143,9 @@ describe('rum view measures', () => {
 
     expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures).toEqual({
-      customEventCount: 0,
       errorCount: 0,
       longTaskCount: 0,
+      userActionCount: 0,
     })
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
@@ -154,7 +154,6 @@ describe('rum view measures', () => {
 
     expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures).toEqual({
-      customEventCount: 0,
       domComplete: 456e6,
       domContentLoaded: 345e6,
       domInteractive: 234e6,
@@ -162,11 +161,12 @@ describe('rum view measures', () => {
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
       longTaskCount: 0,
+      userActionCount: 0,
     })
     expect(getViewEvent(2).view.measures).toEqual({
-      customEventCount: 0,
       errorCount: 0,
       longTaskCount: 0,
+      userActionCount: 0,
     })
   })
 })
