@@ -3,15 +3,12 @@ import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-agent/c
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory, RumViewEvent } from './rum'
 
-export interface ViewPerformance {
+export interface ViewMeasures {
   firstContentfulPaint?: number
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
-}
-
-export interface ViewSummary {
   customEventCount: number
   errorCount: number
   longTaskCount: number
@@ -24,8 +21,7 @@ let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
 let activeLocation: Location
-let viewSummary: ViewSummary
-let viewPerformance: ViewPerformance
+let viewMeasures: ViewMeasures
 
 export function trackView(
   batch: Batch<RumEvent>,
@@ -39,8 +35,7 @@ export function trackView(
 
   newView(location, addRumEvent)
   trackHistory(location, addRumEvent)
-  trackPerformance(lifeCycle, scheduleViewUpdate)
-  trackSummary(lifeCycle, scheduleViewUpdate)
+  trackMeasures(lifeCycle, scheduleViewUpdate)
 
   batch.beforeFlushOnUnload(() => updateView(addRumEvent))
 }
@@ -50,12 +45,11 @@ function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
   startTimestamp = new Date().getTime()
   startOrigin = performance.now()
   documentVersion = 1
-  viewSummary = {
+  viewMeasures = {
     customEventCount: 0,
     errorCount: 0,
     longTaskCount: 0,
   }
-  viewPerformance = {}
   activeLocation = { ...location }
   addViewEvent(addRumEvent)
 }
@@ -76,8 +70,7 @@ function addViewEvent(addRumEvent: (event: RumEvent) => void) {
       documentVersion,
     },
     view: {
-      performance: viewPerformance,
-      summary: viewSummary,
+      measures: viewMeasures,
     },
   }
   addRumEvent(viewEvent)
@@ -115,12 +108,12 @@ function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackPerformance(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
+function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
-      viewPerformance = {
-        ...viewPerformance,
+      viewMeasures = {
+        ...viewMeasures,
         domComplete: msToNs(navigationEntry.domComplete),
         domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
         domInteractive: msToNs(navigationEntry.domInteractive),
@@ -129,27 +122,24 @@ function trackPerformance(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) 
       scheduleViewUpdate()
     } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
       const paintEntry = entry as PerformancePaintTiming
-      viewPerformance = {
-        ...viewPerformance,
+      viewMeasures = {
+        ...viewMeasures,
         firstContentfulPaint: msToNs(paintEntry.startTime),
       }
       scheduleViewUpdate()
     }
   })
-}
-
-function trackSummary(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.error, () => {
-    viewSummary.errorCount += 1
+    viewMeasures.errorCount += 1
     scheduleViewUpdate()
   })
   lifeCycle.subscribe(LifeCycleEventType.customEvent, () => {
-    viewSummary.customEventCount += 1
+    viewMeasures.customEventCount += 1
     scheduleViewUpdate()
   })
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'longtask') {
-      viewSummary.longTaskCount += 1
+      viewMeasures.longTaskCount += 1
       scheduleViewUpdate()
     }
   })

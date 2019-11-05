@@ -22,7 +22,7 @@ import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { trackView, viewId, ViewPerformance, ViewSummary } from './viewTracker'
+import { trackView, viewId, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -128,8 +128,7 @@ export interface RumViewEvent {
     documentVersion: number
   }
   view: {
-    performance: ViewPerformance
-    summary: ViewSummary
+    measures: ViewMeasures
   }
 }
 

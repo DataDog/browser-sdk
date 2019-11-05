@@ -54,7 +54,7 @@ describe('rum track url change', () => {
   })
 })
 
-describe('rum view summary', () => {
+describe('rum view measures', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',
     startTime: 456,
@@ -65,68 +65,6 @@ describe('rum view summary', () => {
     },
     name: 'foo',
   }
-  let addRumEvent: jasmine.Spy<InferableFunction>
-
-  function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index * 2)[0] as RumViewEvent
-  }
-
-  function getEventCount() {
-    return addRumEvent.calls.count() / 2
-  }
-
-  beforeEach(() => {
-    addRumEvent = jasmine.createSpy()
-  })
-
-  it('should track error count', () => {
-    const lifeCycle = new LifeCycle()
-    setup({ addRumEvent, lifeCycle })
-
-    expect(getEventCount()).toEqual(1)
-    expect(getViewEvent(0).view.summary.errorCount).toEqual(0)
-
-    lifeCycle.notify(LifeCycleEventType.error, {} as any)
-    lifeCycle.notify(LifeCycleEventType.error, {} as any)
-    history.pushState({}, '', '/bar')
-
-    expect(getEventCount()).toEqual(3)
-    expect(getViewEvent(1).view.summary.errorCount).toEqual(2)
-    expect(getViewEvent(2).view.summary.errorCount).toEqual(0)
-  })
-
-  it('should track long task count', () => {
-    const lifeCycle = new LifeCycle()
-    setup({ addRumEvent, lifeCycle })
-
-    expect(getEventCount()).toEqual(1)
-    expect(getViewEvent(0).view.summary.longTaskCount).toEqual(0)
-
-    lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
-    history.pushState({}, '', '/bar')
-
-    expect(getEventCount()).toEqual(3)
-    expect(getViewEvent(1).view.summary.longTaskCount).toEqual(1)
-    expect(getViewEvent(2).view.summary.longTaskCount).toEqual(0)
-  })
-
-  it('should track custom event count', () => {
-    const lifeCycle = new LifeCycle()
-    setup({ addRumEvent, lifeCycle })
-
-    expect(getEventCount()).toEqual(1)
-    expect(getViewEvent(0).view.summary.customEventCount).toEqual(0)
-
-    lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
-    history.pushState({}, '', '/bar')
-
-    expect(getEventCount()).toEqual(3)
-    expect(getViewEvent(1).view.summary.customEventCount).toEqual(1)
-    expect(getViewEvent(2).view.summary.customEventCount).toEqual(0)
-  })
-})
-
-describe('rum view performance', () => {
   const FAKE_PAINT_ENTRY = {
     entryType: 'paint',
     name: 'first-contentful-paint',
@@ -153,25 +91,82 @@ describe('rum view performance', () => {
     addRumEvent = jasmine.createSpy()
   })
 
-  it('should track performance', () => {
+  it('should track error count', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
     expect(getEventCount()).toEqual(1)
-    expect(getViewEvent(0).view.performance).toEqual({})
+    expect(getViewEvent(0).view.measures.errorCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.error, {} as any)
+    lifeCycle.notify(LifeCycleEventType.error, {} as any)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.errorCount).toEqual(2)
+    expect(getViewEvent(2).view.measures.errorCount).toEqual(0)
+  })
+
+  it('should track long task count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.longTaskCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.longTaskCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
+  })
+
+  it('should track custom event count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.customEventCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.customEventCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.customEventCount).toEqual(0)
+  })
+
+  it('should track performance timings', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures).toEqual({
+      customEventCount: 0,
+      errorCount: 0,
+      longTaskCount: 0,
+    })
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
-    expect(getViewEvent(1).view.performance).toEqual({
+    expect(getViewEvent(1).view.measures).toEqual({
+      customEventCount: 0,
       domComplete: 456e6,
       domContentLoaded: 345e6,
       domInteractive: 234e6,
+      errorCount: 0,
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
+      longTaskCount: 0,
     })
-    expect(getViewEvent(2).view.performance).toEqual({})
+    expect(getViewEvent(2).view.measures).toEqual({
+      customEventCount: 0,
+      errorCount: 0,
+      longTaskCount: 0,
+    })
   })
 })

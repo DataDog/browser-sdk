@@ -108,11 +108,14 @@ describe('rum', () => {
     const viewEvent = findLastEvent(events, (event) => event.evt.category === 'view') as RumViewEvent
 
     expect(viewEvent as any).not.toBe(undefined)
-    expect(viewEvent.view.performance).toEqual({
+    expect(viewEvent.view.measures).toEqual({
+      custom_event_count: 0,
       dom_complete: strictlyPositiveNumber(),
       dom_content_loaded: strictlyPositiveNumber(),
       dom_interactive: strictlyPositiveNumber(),
+      error_count: 0,
       load_event_end: strictlyPositiveNumber(),
+      long_task_count: 0,
     } as any)
   })
 })
