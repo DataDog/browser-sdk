@@ -19,10 +19,10 @@ import lodashMerge from 'lodash.merge'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
-import { pageViewId, PageViewPerformance, PageViewSummary, trackPageView } from './pageViewTracker'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
+import { trackView, viewId, ViewPerformance, ViewSummary } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -42,7 +42,7 @@ export enum RumEventCategory {
   CUSTOM = 'custom',
   ERROR = 'error',
   LONG_TASK = 'long_task',
-  PAGE_VIEW = 'page_view',
+  VIEW = 'view',
   RESOURCE = 'resource',
   SCREEN_PERFORMANCE = 'screen_performance',
 }
@@ -118,18 +118,18 @@ export interface RumErrorEvent {
   }
 }
 
-export interface RumPageViewEvent {
+export interface RumViewEvent {
   date: number
   duration: number
   evt: {
-    category: RumEventCategory.PAGE_VIEW
+    category: RumEventCategory.VIEW
   }
   rum: {
     documentVersion: number
   }
-  screen: {
-    performance: PageViewPerformance
-    summary: PageViewSummary
+  view: {
+    performance: ViewPerformance
+    summary: ViewSummary
   }
 }
 
@@ -152,7 +152,7 @@ export type RumEvent =
   | RumErrorEvent
   | RumPerformanceScreenEvent
   | RumResourceEvent
-  | RumPageViewEvent
+  | RumViewEvent
   | RumLongTaskEvent
   | RumCustomEvent
 
@@ -176,11 +176,16 @@ export function startRum(
           applicationId,
           date: new Date().getTime(),
           screen: {
-            id: pageViewId,
-            referrer: document.referrer,
+            // needed for retro compatibility
+            id: viewId,
             url: window.location.href,
           },
           sessionId: session.getId(),
+          view: {
+            id: viewId,
+            referrer: document.referrer,
+            url: window.location.href,
+          },
         },
         globalContext
       ),
@@ -193,7 +198,7 @@ export function startRum(
     }
   }
 
-  trackPageView(batch, window.location, lifeCycle, addRumEvent)
+  trackView(batch, window.location, lifeCycle, addRumEvent)
   trackErrors(lifeCycle, addRumEvent)
   trackRequests(configuration, lifeCycle, session, addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, addRumEvent)
@@ -209,8 +214,8 @@ export function startRum(
     getInternalContext: monitor(() => {
       return {
         application_id: applicationId,
-        screen: {
-          id: pageViewId,
+        view: {
+          id: viewId,
         },
       }
     }),

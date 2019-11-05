@@ -43,7 +43,7 @@ export function startInternalMonitoring(configuration: Configuration) {
     configuration.flushTimeout,
     () => ({
       date: new Date().getTime(),
-      screen: {
+      view: {
         referrer: document.referrer,
         url: window.location.href,
       },

@@ -19,7 +19,7 @@ import { strictlyPositiveNumber } from './matchers'
 type LogsGlobal = any
 type RumEvent = any
 type RumEventCategory = any
-type RumPageViewEvent = any
+type RumViewEvent = any
 type RumResourceEvent = any
 const ERROR = 'error' as any
 
@@ -101,14 +101,14 @@ describe('rum', () => {
     expect(timing.http.performance!.download.duration).toBeGreaterThan(0)
   })
 
-  it('should send performance timings along the page view events', async () => {
+  it('should send performance timings along the view events', async () => {
     await flushEvents()
     const events = await retrieveRumEvents()
 
-    const pageView = findLastEvent(events, (event) => event.evt.category === 'page_view') as RumPageViewEvent
+    const viewEvent = findLastEvent(events, (event) => event.evt.category === 'view') as RumViewEvent
 
-    expect(pageView as any).not.toBe(undefined)
-    expect(pageView.screen.performance).toEqual({
+    expect(viewEvent as any).not.toBe(undefined)
+    expect(viewEvent.view.performance).toEqual({
       dom_complete: strictlyPositiveNumber(),
       dom_content_loaded: strictlyPositiveNumber(),
       dom_interactive: strictlyPositiveNumber(),
