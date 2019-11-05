@@ -68,7 +68,11 @@ describe('rum view summary', () => {
   let addRumEvent: jasmine.Spy<InferableFunction>
 
   function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
+    return addRumEvent.calls.argsFor(index * 2)[0] as RumViewEvent
+  }
+
+  function getEventCount() {
+    return addRumEvent.calls.count() / 2
   }
 
   beforeEach(() => {
@@ -79,14 +83,14 @@ describe('rum view summary', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.summary.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.error, {} as any)
     lifeCycle.notify(LifeCycleEventType.error, {} as any)
     history.pushState({}, '', '/bar')
 
-    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.summary.errorCount).toEqual(2)
     expect(getViewEvent(2).view.summary.errorCount).toEqual(0)
   })
@@ -95,13 +99,13 @@ describe('rum view summary', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.summary.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
-    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.summary.longTaskCount).toEqual(1)
     expect(getViewEvent(2).view.summary.longTaskCount).toEqual(0)
   })
@@ -110,13 +114,13 @@ describe('rum view summary', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.summary.customEventCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.customEvent, FAKE_CUSTOM_EVENT as RawCustomEvent)
     history.pushState({}, '', '/bar')
 
-    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.summary.customEventCount).toEqual(1)
     expect(getViewEvent(2).view.summary.customEventCount).toEqual(0)
   })
@@ -138,7 +142,11 @@ describe('rum view performance', () => {
   let addRumEvent: jasmine.Spy<InferableFunction>
 
   function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
+    return addRumEvent.calls.argsFor(index * 2)[0] as RumViewEvent
+  }
+
+  function getEventCount() {
+    return addRumEvent.calls.count() / 2
   }
 
   beforeEach(() => {
@@ -149,14 +157,14 @@ describe('rum view performance', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(addRumEvent.calls.count()).toEqual(1)
+    expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.performance).toEqual({})
 
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
     lifeCycle.notify(LifeCycleEventType.performance, FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
     history.pushState({}, '', '/bar')
 
-    expect(addRumEvent.calls.count()).toEqual(3)
+    expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.performance).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,

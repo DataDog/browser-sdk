@@ -1,7 +1,7 @@
 import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming, RumEvent, RumEventCategory, RumViewEvent } from './rum'
 
 export interface ViewPerformance {
   firstContentfulPaint?: number
@@ -66,7 +66,7 @@ function updateView(addRumEvent: (event: RumEvent) => void) {
 }
 
 function addViewEvent(addRumEvent: (event: RumEvent) => void) {
-  addRumEvent({
+  const viewEvent: RumViewEvent = {
     date: startTimestamp,
     duration: msToNs(performance.now() - startOrigin),
     evt: {
@@ -79,7 +79,13 @@ function addViewEvent(addRumEvent: (event: RumEvent) => void) {
       performance: viewPerformance,
       summary: viewSummary,
     },
-  })
+  }
+  addRumEvent(viewEvent)
+
+  // clean up after migration
+  const pageViewEvent = { ...viewEvent }
+  pageViewEvent.evt.category = 'page_view' as any
+  addRumEvent(pageViewEvent)
 }
 
 function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
