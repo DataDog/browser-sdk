@@ -23,7 +23,7 @@ export interface RumUserConfiguration extends UserConfiguration {
 }
 
 export interface InternalContext {
-  applicationId: string
+  application_id: string
   screen: {
     id: string
   }

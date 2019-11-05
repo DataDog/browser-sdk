@@ -208,7 +208,7 @@ export function startRum(
     }),
     getInternalContext: monitor(() => {
       return {
-        applicationId,
+        application_id: applicationId,
         screen: {
           id: pageViewId,
         },

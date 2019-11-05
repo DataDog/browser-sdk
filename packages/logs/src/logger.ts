@@ -71,7 +71,8 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
             referrer: document.referrer,
             url: window.location.href,
           },
-          sessionId: session.getId(),
+          sessionId: session.getId(), // keep for retro-compatibility, could be cleaned in 12/2019
+          session_id: session.getId(),
         },
         globalContext,
         getRUMInternalContext()
