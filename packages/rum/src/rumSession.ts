@@ -48,7 +48,7 @@ function makeExpandOrRenewSession(
   rumSession: CookieCache,
   sessionId: CookieCache
 ) {
-  let isInitializing = true
+  let isFirstCall = true
   return throttle(() => {
     let sessionType = rumSession.get() as RumSessionType | undefined
     if (!hasValidRumSession(sessionType)) {
@@ -59,15 +59,15 @@ function makeExpandOrRenewSession(
       } else {
         sessionType = RumSessionType.TRACKED_WITHOUT_RESOURCES
       }
-      if (!isInitializing) {
-        lifeCycle.notify(LifeCycleEventType.newSession, undefined)
+      if (!isFirstCall) {
+        lifeCycle.notify(LifeCycleEventType.renewSession)
       }
     }
     rumSession.set(sessionType as string, EXPIRATION_DELAY)
     if (isTracked(sessionType)) {
       sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
     }
-    isInitializing = false
+    isFirstCall = false
   }, COOKIE_ACCESS_DELAY)
 }
 

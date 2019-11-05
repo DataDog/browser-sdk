@@ -43,7 +43,7 @@ export function trackPageView(
   trackHistory(location, addRumEvent)
   trackPerformance(lifeCycle, schedulePageViewUpdate)
   trackSummary(lifeCycle, schedulePageViewUpdate)
-  trackSession(location, lifeCycle, addRumEvent)
+  trackRenewSession(location, lifeCycle, addRumEvent)
 
   batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
 }
@@ -152,8 +152,8 @@ function trackSummary(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) 
   })
 }
 
-function trackSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.newSession, () => {
+function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.renewSession, () => {
     updatePageView(addRumEvent)
     newPageView(location, addRumEvent)
   })

@@ -24,7 +24,7 @@ describe('rum session', () => {
     sampleRate: 0.5,
   }
   let lifeCycle: LifeCycle
-  let newSessionSpy: jasmine.Spy
+  let renewSessionSpy: jasmine.Spy
 
   beforeEach(() => {
     if (isIE()) {
@@ -32,9 +32,9 @@ describe('rum session', () => {
     }
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date())
-    newSessionSpy = jasmine.createSpy('newSessionSpy')
+    renewSessionSpy = jasmine.createSpy('renewSessionSpy')
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.newSession, newSessionSpy)
+    lifeCycle.subscribe(LifeCycleEventType.renewSession, renewSessionSpy)
   })
 
   afterEach(() => {
@@ -49,7 +49,7 @@ describe('rum session', () => {
 
     startRumSession(configuration as Configuration, lifeCycle)
 
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
@@ -59,7 +59,7 @@ describe('rum session', () => {
 
     startRumSession(configuration as Configuration, lifeCycle)
 
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITHOUT_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
@@ -69,7 +69,7 @@ describe('rum session', () => {
 
     startRumSession(configuration as Configuration, lifeCycle)
 
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
@@ -80,7 +80,7 @@ describe('rum session', () => {
 
     startRumSession(configuration as Configuration, lifeCycle)
 
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toEqual('abcdef')
   })
@@ -90,7 +90,7 @@ describe('rum session', () => {
 
     startRumSession(configuration as Configuration, lifeCycle)
 
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
   })
 
@@ -101,13 +101,13 @@ describe('rum session', () => {
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
     expect(getCookie(RUM_COOKIE_NAME)).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
-    expect(newSessionSpy).not.toHaveBeenCalled()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
     setupDraws({ tracked: true, trackedWithResources: true })
     document.dispatchEvent(new CustomEvent('click'))
 
-    expect(newSessionSpy).toHaveBeenCalled()
+    expect(renewSessionSpy).toHaveBeenCalled()
     expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })

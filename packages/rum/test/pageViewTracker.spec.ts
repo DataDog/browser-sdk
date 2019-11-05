@@ -61,13 +61,13 @@ describe('rum track url change', () => {
 })
 
 describe('rum track session change', () => {
-  it('should update page view id on new session', () => {
+  it('should update page view id on renew session', () => {
     const lifeCycle = new LifeCycle()
     setup({
       lifeCycle,
     })
     const initialPageViewId = pageViewId
-    lifeCycle.notify(LifeCycleEventType.newSession, undefined)
+    lifeCycle.notify(LifeCycleEventType.renewSession)
 
     expect(pageViewId).not.toEqual(initialPageViewId)
   })

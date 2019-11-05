@@ -229,7 +229,7 @@ describe('rum session', () => {
     expect(server.requests.length).toEqual(0)
   })
 
-  it('when type change should enable/disable existing tracking', () => {
+  it('when type change should enable/disable existing resource tracking', () => {
     let isTracked = true
     const session = {
       getId: () => undefined,
@@ -250,6 +250,30 @@ describe('rum session', () => {
 
     isTracked = true
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    expect(server.requests.length).toEqual(2)
+  })
+
+  it('when type change should enable/disable existing request tracking', () => {
+    let isTracked = true
+    const session = {
+      getId: () => undefined,
+      isTracked: () => isTracked,
+      isTrackedWithResource: () => isTracked,
+    }
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, session)
+    startPerformanceCollection(lifeCycle, session)
+    server.requests = []
+
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    expect(server.requests.length).toEqual(1)
+
+    isTracked = false
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    expect(server.requests.length).toEqual(1)
+
+    isTracked = true
+    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(2)
   })
 })
