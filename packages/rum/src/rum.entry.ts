@@ -42,6 +42,9 @@ const STUBBED_RUM = {
   addCustomEvent(name: string, context: Context) {
     makeStub('addCustomEvent')
   },
+  addUserAction(name: string, context: Context) {
+    makeStub('addUserAction')
+  },
   getInternalContext(): InternalContext | undefined {
     makeStub('getInternalContext')
     return undefined

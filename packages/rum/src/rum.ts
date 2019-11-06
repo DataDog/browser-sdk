@@ -22,7 +22,7 @@ import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { trackView, viewId, ViewPerformance, ViewSummary } from './viewTracker'
+import { trackView, viewId, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -33,13 +33,13 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 
 export type PerformanceLongTaskTiming = PerformanceEntry
 
-export interface RawCustomEvent {
+export interface UserAction {
   name: string
   context?: Context
 }
 
 export enum RumEventCategory {
-  CUSTOM = 'custom',
+  USER_ACTION = 'user_action',
   ERROR = 'error',
   LONG_TASK = 'long_task',
   VIEW = 'view',
@@ -128,8 +128,7 @@ export interface RumViewEvent {
     documentVersion: number
   }
   view: {
-    performance: ViewPerformance
-    summary: ViewSummary
+    measures: ViewMeasures
   }
 }
 
@@ -140,9 +139,9 @@ export interface RumLongTaskEvent {
   }
 }
 
-export interface RumCustomEvent {
+export interface RumUserAction {
   evt: {
-    category: RumEventCategory.CUSTOM
+    category: RumEventCategory.USER_ACTION
     name: string
   }
   [key: string]: ContextValue
@@ -154,7 +153,7 @@ export type RumEvent =
   | RumResourceEvent
   | RumViewEvent
   | RumLongTaskEvent
-  | RumCustomEvent
+  | RumUserAction
 
 export function startRum(
   applicationId: string,
@@ -202,14 +201,18 @@ export function startRum(
   trackErrors(lifeCycle, addRumEvent)
   trackRequests(configuration, lifeCycle, session, addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, addRumEvent)
-  trackCustomEvent(lifeCycle, addRumEvent)
+  trackUserAction(lifeCycle, addRumEvent)
 
   return {
+    // Cleanup after migration
     addCustomEvent: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.customEvent, { name, context })
+      lifeCycle.notify(LifeCycleEventType.userAction, { name, context })
     }),
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
+    }),
+    addUserAction: monitor((name: string, context?: Context) => {
+      lifeCycle.notify(LifeCycleEventType.userAction, { name, context })
     }),
     getInternalContext: monitor(() => {
       return {
@@ -240,13 +243,13 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => voi
   })
 }
 
-function trackCustomEvent(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.customEvent, ({ name, context }) => {
+function trackUserAction(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.userAction, ({ name, context }) => {
     addRumEvent({
       ...context,
       evt: {
         name,
-        category: RumEventCategory.CUSTOM,
+        category: RumEventCategory.USER_ACTION,
       },
     })
   })
