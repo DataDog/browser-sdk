@@ -1,15 +1,4 @@
-import {
-  cacheCookieAccess,
-  Configuration,
-  COOKIE_ACCESS_DELAY,
-  CookieCache,
-  EXPIRATION_DELAY,
-  generateUUID,
-  performDraw,
-  SESSION_COOKIE_NAME,
-  throttle,
-  trackActivity,
-} from '@browser-agent/core'
+import { Configuration, initSession, performDraw } from '@browser-agent/core'
 
 export const LOGGER_COOKIE_NAME = '_dd_l'
 
@@ -24,37 +13,29 @@ export enum LoggerSessionType {
 }
 
 export function startLoggerSession(configuration: Configuration): LoggerSession {
-  const loggerSession = cacheCookieAccess(LOGGER_COOKIE_NAME)
-  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
-
-  const expandOrRenewSession = makeExpandOrRenewSession(configuration, loggerSession, sessionId)
-
-  expandOrRenewSession()
-  trackActivity(expandOrRenewSession)
+  const session = initSession(LOGGER_COOKIE_NAME, (rawType) => getSessionTypeInfo(configuration, rawType))
 
   return {
-    getId: () => sessionId.get(),
-    isTracked: () => loggerSession.get() === LoggerSessionType.TRACKED,
+    getId: session.getId,
+    isTracked: () => session.getType() === LoggerSessionType.TRACKED,
   }
 }
 
-function makeExpandOrRenewSession(configuration: Configuration, loggerSession: CookieCache, sessionId: CookieCache) {
-  return throttle(
-    () => {
-      let sessionType = loggerSession.get() as LoggerSessionType | undefined
-      if (!hasValidLoggerSession(sessionType)) {
-        sessionType = performDraw(configuration.sampleRate) ? LoggerSessionType.TRACKED : LoggerSessionType.NOT_TRACKED
-      }
-      loggerSession.set(sessionType as string, EXPIRATION_DELAY)
-      if (sessionType === LoggerSessionType.TRACKED) {
-        sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
-      }
-    },
-    COOKIE_ACCESS_DELAY,
-    { trailing: false }
-  )
+function getSessionTypeInfo(configuration: Configuration, rawSessionType?: string) {
+  let sessionType
+  if (hasValidLoggerSession(rawSessionType)) {
+    sessionType = rawSessionType
+  } else if (!performDraw(configuration.sampleRate)) {
+    sessionType = LoggerSessionType.NOT_TRACKED
+  } else {
+    sessionType = LoggerSessionType.TRACKED
+  }
+  return {
+    isTracked: sessionType === LoggerSessionType.TRACKED,
+    type: sessionType,
+  }
 }
 
-function hasValidLoggerSession(type?: LoggerSessionType) {
-  return type !== undefined && (type === LoggerSessionType.NOT_TRACKED || type === LoggerSessionType.TRACKED)
+function hasValidLoggerSession(type?: string): type is LoggerSessionType {
+  return type === LoggerSessionType.NOT_TRACKED || type === LoggerSessionType.TRACKED
 }

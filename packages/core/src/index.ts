@@ -5,13 +5,11 @@ export { monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'
 export { RequestType, RequestDetails, startRequestCollection, RequestObservable } from './requestCollection'
 export {
+  initSession,
+  // Exposed for tests
   SESSION_COOKIE_NAME,
-  EXPIRATION_DELAY,
   COOKIE_ACCESS_DELAY,
-  trackActivity,
   cleanupActivityTracking,
-  CookieCache,
-  cacheCookieAccess,
   setCookie,
   getCookie,
 } from './session'

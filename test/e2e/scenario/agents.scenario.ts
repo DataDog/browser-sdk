@@ -8,6 +8,7 @@ import {
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
+  sleep,
   sortByMessage,
   tearDown,
   withBrowserLogs,
@@ -117,6 +118,22 @@ describe('rum', () => {
       long_task_count: 0,
       user_action_count: 0,
     } as any)
+  })
+
+  it('should create a new View when the session is renewed', async () => {
+    // Expire sessionId cookie
+    browser.deleteCookies(['_dd'])
+    // Cookies are cached for 1s, wait until the cache expires
+    await sleep(1100)
+    await browser.sendKeys(['f'])
+    await flushEvents()
+
+    const events = await retrieveRumEvents()
+    const viewEvents = events.filter((event) => event.evt.category === 'view' && event.rum.document_version === 1)
+
+    expect(viewEvents.length).toBe(2)
+    expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
+    expect(viewEvents[0].view.id).not.toBe(viewEvents[1].view.id)
   })
 })
 

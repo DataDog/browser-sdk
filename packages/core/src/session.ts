@@ -1,3 +1,4 @@
+import { Observable } from './observable'
 import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd'
@@ -67,4 +68,47 @@ export function setCookie(name: string, value: string, expireDelay: number) {
 export function getCookie(name: string) {
   const matches = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`)
   return matches ? matches.pop() : undefined
+}
+
+export function initSession<Type extends string>(
+  cookieName: string,
+  getTypeInfo: (rawType?: string) => { type: Type; isTracked: boolean }
+) {
+  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
+  const sessionType = cacheCookieAccess(cookieName)
+  const renewObservable = new Observable<undefined>()
+  let currentSessionId = sessionId.get()
+
+  const expandOrRenewSession = utils.throttle(() => {
+    const { type, isTracked } = getTypeInfo(sessionType.get() as Type | undefined)
+    sessionType.set(type, EXPIRATION_DELAY)
+    if (isTracked) {
+      if (sessionId.get()) {
+        // If we already have a session id, just expand its duration
+        sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
+      } else {
+        // Else generate a new session id
+        sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
+      }
+
+      // If the session id has changed, notify that the session has been renewed
+      if (currentSessionId !== sessionId.get()) {
+        currentSessionId = sessionId.get()
+        renewObservable.notify(undefined)
+      }
+    }
+  }, COOKIE_ACCESS_DELAY)
+
+  expandOrRenewSession()
+  trackActivity(expandOrRenewSession)
+
+  return {
+    getId() {
+      return sessionId.get()
+    },
+    getType() {
+      return sessionType.get() as Type | undefined
+    },
+    renewObservable,
+  }
 }

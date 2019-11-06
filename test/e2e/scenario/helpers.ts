@@ -112,3 +112,7 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
 export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) => boolean) {
   return events.reduce<RumEvent | undefined>((olderEvent, event) => (predicate(event) ? event : olderEvent), undefined)
 }
+
+export async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}

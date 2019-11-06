@@ -1,15 +1,4 @@
-import {
-  cacheCookieAccess,
-  Configuration,
-  COOKIE_ACCESS_DELAY,
-  CookieCache,
-  EXPIRATION_DELAY,
-  generateUUID,
-  performDraw,
-  SESSION_COOKIE_NAME,
-  throttle,
-  trackActivity,
-} from '@browser-agent/core'
+import { Configuration, initSession, performDraw } from '@browser-agent/core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_COOKIE_NAME = '_dd_r'
@@ -27,56 +16,41 @@ export enum RumSessionType {
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const rumSession = cacheCookieAccess(RUM_COOKIE_NAME)
-  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
+  const session = initSession(RUM_COOKIE_NAME, (rawType) => getSessionTypeInfo(configuration, rawType))
 
-  const expandOrRenewSession = makeExpandOrRenewSession(configuration, lifeCycle, rumSession, sessionId)
-
-  expandOrRenewSession()
-  trackActivity(expandOrRenewSession)
+  session.renewObservable.subscribe(() => {
+    lifeCycle.notify(LifeCycleEventType.renewSession)
+  })
 
   return {
-    getId: () => sessionId.get(),
-    isTracked: () => isTracked(rumSession.get() as RumSessionType),
-    isTrackedWithResource: () => rumSession.get() === RumSessionType.TRACKED_WITH_RESOURCES,
+    getId: session.getId,
+    isTracked: () => isTracked(session.getType()),
+    isTrackedWithResource: () => session.getType() === RumSessionType.TRACKED_WITH_RESOURCES,
   }
 }
 
-function makeExpandOrRenewSession(
-  configuration: Configuration,
-  lifeCycle: LifeCycle,
-  rumSession: CookieCache,
-  sessionId: CookieCache
-) {
-  let isFirstCall = true
-  return throttle(() => {
-    let sessionType = rumSession.get() as RumSessionType | undefined
-    if (!hasValidRumSession(sessionType)) {
-      if (!performDraw(configuration.sampleRate)) {
-        sessionType = RumSessionType.NOT_TRACKED
-      } else if (performDraw(configuration.resourceSampleRate)) {
-        sessionType = RumSessionType.TRACKED_WITH_RESOURCES
-      } else {
-        sessionType = RumSessionType.TRACKED_WITHOUT_RESOURCES
-      }
-      if (!isFirstCall) {
-        lifeCycle.notify(LifeCycleEventType.renewSession)
-      }
-    }
-    rumSession.set(sessionType as string, EXPIRATION_DELAY)
-    if (isTracked(sessionType)) {
-      sessionId.set(sessionId.get() || generateUUID(), EXPIRATION_DELAY)
-    }
-    isFirstCall = false
-  }, COOKIE_ACCESS_DELAY)
+function getSessionTypeInfo(configuration: Configuration, rawSessionType?: string) {
+  let sessionType: RumSessionType
+  if (hasValidRumSession(rawSessionType)) {
+    sessionType = rawSessionType
+  } else if (!performDraw(configuration.sampleRate)) {
+    sessionType = RumSessionType.NOT_TRACKED
+  } else if (!performDraw(configuration.resourceSampleRate)) {
+    sessionType = RumSessionType.TRACKED_WITHOUT_RESOURCES
+  } else {
+    sessionType = RumSessionType.TRACKED_WITH_RESOURCES
+  }
+  return {
+    isTracked: isTracked(sessionType),
+    type: sessionType,
+  }
 }
 
-function hasValidRumSession(type?: RumSessionType) {
+function hasValidRumSession(type?: string): type is RumSessionType {
   return (
-    type !== undefined &&
-    (type === RumSessionType.NOT_TRACKED ||
-      type === RumSessionType.TRACKED_WITH_RESOURCES ||
-      type === RumSessionType.TRACKED_WITHOUT_RESOURCES)
+    type === RumSessionType.NOT_TRACKED ||
+    type === RumSessionType.TRACKED_WITH_RESOURCES ||
+    type === RumSessionType.TRACKED_WITHOUT_RESOURCES
   )
 }
 
