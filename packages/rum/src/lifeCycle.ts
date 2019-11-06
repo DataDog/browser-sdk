@@ -1,10 +1,10 @@
 import { ErrorMessage, RequestDetails } from '@browser-agent/core'
-import { RawCustomEvent } from './rum'
+import { UserAction } from './rum'
 
 export enum LifeCycleEventType {
   error,
   performance,
-  customEvent,
+  userAction,
   request,
   renewSession,
 }
@@ -15,7 +15,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.error, data: ErrorMessage): void
   notify(eventType: LifeCycleEventType.performance, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.request, data: RequestDetails): void
-  notify(eventType: LifeCycleEventType.customEvent, data: RawCustomEvent): void
+  notify(eventType: LifeCycleEventType.userAction, data: UserAction): void
   notify(eventType: LifeCycleEventType.renewSession): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -27,7 +27,7 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.error, callback: (data: ErrorMessage) => void): void
   subscribe(eventType: LifeCycleEventType.performance, callback: (data: PerformanceEntry) => void): void
   subscribe(eventType: LifeCycleEventType.request, callback: (data: RequestDetails) => void): void
-  subscribe(eventType: LifeCycleEventType.customEvent, callback: (data: RawCustomEvent) => void): void
+  subscribe(eventType: LifeCycleEventType.userAction, callback: (data: UserAction) => void): void
   subscribe(eventType: LifeCycleEventType.renewSession, callback: () => void): void
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     const eventCallbacks = this.callbacks[eventType]

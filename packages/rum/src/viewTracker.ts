@@ -1,88 +1,85 @@
 import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming, RumEvent, RumEventCategory, RumViewEvent } from './rum'
 
-export interface PageViewPerformance {
+export interface ViewMeasures {
   firstContentfulPaint?: number
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
-}
-
-export interface PageViewSummary {
-  customEventCount: number
+  userActionCount: number
   errorCount: number
   longTaskCount: number
 }
 
-export let pageViewId: string
+export let viewId: string
 
-const THROTTLE_PAGE_VIEW_UPDATE_PERIOD = 3000
+const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
 let activeLocation: Location
-let summary: PageViewSummary
-let screenPerformance: PageViewPerformance
+let viewMeasures: ViewMeasures
 
-export function trackPageView(
+export function trackView(
   batch: Batch<RumEvent>,
   location: Location,
   lifeCycle: LifeCycle,
   addRumEvent: (event: RumEvent) => void
 ) {
-  const schedulePageViewUpdate = throttle(
-    monitor(() => updatePageView(addRumEvent)),
-    THROTTLE_PAGE_VIEW_UPDATE_PERIOD,
-    { leading: false }
-  )
+  const scheduleViewUpdate = throttle(monitor(() => updateView(addRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
+    leading: false,
+  })
 
-  newPageView(location, addRumEvent)
+  newView(location, addRumEvent)
   trackHistory(location, addRumEvent)
-  trackPerformance(lifeCycle, schedulePageViewUpdate)
-  trackSummary(lifeCycle, schedulePageViewUpdate)
+  trackMeasures(lifeCycle, scheduleViewUpdate)
   trackRenewSession(location, lifeCycle, addRumEvent)
 
-  batch.beforeFlushOnUnload(() => updatePageView(addRumEvent))
+  batch.beforeFlushOnUnload(() => updateView(addRumEvent))
 }
 
-function newPageView(location: Location, addRumEvent: (event: RumEvent) => void) {
-  pageViewId = generateUUID()
+function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
+  viewId = generateUUID()
   startTimestamp = new Date().getTime()
   startOrigin = performance.now()
   documentVersion = 1
-  summary = {
-    customEventCount: 0,
+  viewMeasures = {
     errorCount: 0,
     longTaskCount: 0,
+    userActionCount: 0,
   }
-  screenPerformance = {}
   activeLocation = { ...location }
-  addPageViewEvent(addRumEvent)
+  addViewEvent(addRumEvent)
 }
 
-function updatePageView(addRumEvent: (event: RumEvent) => void) {
+function updateView(addRumEvent: (event: RumEvent) => void) {
   documentVersion += 1
-  addPageViewEvent(addRumEvent)
+  addViewEvent(addRumEvent)
 }
 
-function addPageViewEvent(addRumEvent: (event: RumEvent) => void) {
-  addRumEvent({
+function addViewEvent(addRumEvent: (event: RumEvent) => void) {
+  const viewEvent: RumViewEvent = {
     date: startTimestamp,
     duration: msToNs(performance.now() - startOrigin),
     evt: {
-      category: RumEventCategory.PAGE_VIEW,
+      category: RumEventCategory.VIEW,
     },
     rum: {
       documentVersion,
     },
-    screen: {
-      summary,
-      performance: screenPerformance,
+    view: {
+      measures: viewMeasures,
     },
-  })
+  }
+  addRumEvent(viewEvent)
+
+  // clean up after migration
+  const pageViewEvent = { ...viewEvent }
+  pageViewEvent.evt.category = 'page_view' as any
+  addRumEvent(pageViewEvent)
 }
 
 function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
@@ -102,59 +99,56 @@ function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void
 }
 
 function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
-  if (areDifferentPages(activeLocation, location)) {
-    updatePageView(addRumEvent)
-    newPageView(location, addRumEvent)
+  if (areDifferentViews(activeLocation, location)) {
+    updateView(addRumEvent)
+    newView(location, addRumEvent)
   }
 }
 
-function areDifferentPages(previous: Location, current: Location) {
+function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackPerformance(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) {
+function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
-      screenPerformance = {
-        ...screenPerformance,
+      viewMeasures = {
+        ...viewMeasures,
         domComplete: msToNs(navigationEntry.domComplete),
         domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
         domInteractive: msToNs(navigationEntry.domInteractive),
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }
-      schedulePageViewUpdate()
+      scheduleViewUpdate()
     } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
       const paintEntry = entry as PerformancePaintTiming
-      screenPerformance = {
-        ...screenPerformance,
+      viewMeasures = {
+        ...viewMeasures,
         firstContentfulPaint: msToNs(paintEntry.startTime),
       }
-      schedulePageViewUpdate()
+      scheduleViewUpdate()
     }
   })
-}
-
-function trackSummary(lifeCycle: LifeCycle, schedulePageViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.error, () => {
-    summary.errorCount += 1
-    schedulePageViewUpdate()
+    viewMeasures.errorCount += 1
+    scheduleViewUpdate()
   })
-  lifeCycle.subscribe(LifeCycleEventType.customEvent, () => {
-    summary.customEventCount += 1
-    schedulePageViewUpdate()
+  lifeCycle.subscribe(LifeCycleEventType.userAction, () => {
+    viewMeasures.userActionCount += 1
+    scheduleViewUpdate()
   })
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     if (entry.entryType === 'longtask') {
-      summary.longTaskCount += 1
-      schedulePageViewUpdate()
+      viewMeasures.longTaskCount += 1
+      scheduleViewUpdate()
     }
   })
 }
 
 function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
   lifeCycle.subscribe(LifeCycleEventType.renewSession, () => {
-    updatePageView(addRumEvent)
-    newPageView(location, addRumEvent)
+    updateView(addRumEvent)
+    newView(location, addRumEvent)
   })
 }

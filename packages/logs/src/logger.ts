@@ -64,16 +64,18 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
         {
           date: new Date().getTime(),
           http: {
-            // screen.url is preferred, but keep http.referer for retro-compatibility
+            // view.url is preferred, but keep http.referer for retro-compatibility
             referer: window.location.href,
           },
-          screen: {
+          sessionId: session.getId(), // keep for retro-compatibility, could be cleaned in 12/2019
+          session_id: session.getId(),
+          view: {
             referrer: document.referrer,
             url: window.location.href,
           },
-          sessionId: session.getId(),
         },
-        globalContext
+        globalContext,
+        getRUMInternalContext()
       ) as Context
   )
   const handlers = {
@@ -170,4 +172,16 @@ export class Logger {
   setLevel(level: StatusType) {
     this.level = level
   }
+}
+
+declare global {
+  interface Window {
+    DD_RUM?: {
+      getInternalContext: () => object | undefined
+    }
+  }
+}
+
+function getRUMInternalContext(): object | undefined {
+  return window.DD_RUM && window.DD_RUM.getInternalContext ? window.DD_RUM.getInternalContext() : undefined
 }

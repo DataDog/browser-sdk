@@ -6,6 +6,8 @@ const browsers = require('./browsers.conf')
 // https://github.com/sinonjs/sinon/blob/894951c/package.json#L113
 karmaBaseConf.webpack.resolve.mainFields = ['cdn', 'main']
 
+const ONE_MINUTE = 60000
+
 module.exports = function(config) {
   config.set({
     ...karmaBaseConf,
@@ -13,10 +15,10 @@ module.exports = function(config) {
     reporters: [...karmaBaseConf.reporters, 'CrossBrowserTesting'],
     browsers: Object.keys(browsers),
     concurrency: 1,
-    captureTimeout: 60000,
-    browserDisconnectTimeout: 60000,
+    captureTimeout: 3 * ONE_MINUTE,
+    browserDisconnectTimeout: ONE_MINUTE,
     browserDisconnectTolerance: 3,
-    browserNoActivityTimeout: 60000,
+    browserNoActivityTimeout: ONE_MINUTE,
     cbtConfig: {
       username: process.env.CBT_USERNAME,
       authkey: process.env.CBT_AUTHKEY,

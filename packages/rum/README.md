@@ -40,8 +40,14 @@ contains all the public APIs.
   setRumGlobalContext (context: Context)  # entirely replace the default context
   ```
 
-- Add custom event
+- Add user action
 
   ```
-  addCustomEvent (name: string, context: Context)
+  addUserAction (name: string, context: Context)
+  ```
+
+- Get internal context
+
+  ```
+  getInternalContext () # retrieve RUM internal context (link with other products)
   ```

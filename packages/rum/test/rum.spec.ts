@@ -3,7 +3,6 @@ import {
   DEFAULT_CONFIGURATION,
   ErrorMessage,
   isIE,
-  Observable,
   PerformanceObserverStubBuilder,
   RequestDetails,
 } from '@browser-agent/core'

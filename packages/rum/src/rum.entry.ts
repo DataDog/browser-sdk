@@ -22,6 +22,13 @@ export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
 }
 
+export interface InternalContext {
+  application_id: string
+  view: {
+    id: string
+  }
+}
+
 const STUBBED_RUM = {
   init(userConfiguration: RumUserConfiguration) {
     makeStub('core.init')
@@ -34,6 +41,13 @@ const STUBBED_RUM = {
   },
   addCustomEvent(name: string, context: Context) {
     makeStub('addCustomEvent')
+  },
+  addUserAction(name: string, context: Context) {
+    makeStub('addUserAction')
+  },
+  getInternalContext(): InternalContext | undefined {
+    makeStub('getInternalContext')
+    return undefined
   },
 }
 
