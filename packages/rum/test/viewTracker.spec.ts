@@ -1,7 +1,7 @@
 import { Batch } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, UserAction, RumEvent, RumViewEvent } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'
 import { trackView, viewId } from '../src/viewTracker'
 
 function setup({
