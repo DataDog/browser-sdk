@@ -36,10 +36,10 @@ export function throttle(
     }
     if (needLeadingExecution) {
       fn.apply(this)
-      inWaitPeriod = true
     } else {
       hasPendingExecution = true
     }
+    inWaitPeriod = true
     setTimeout(() => {
       if (needTrailingExecution && hasPendingExecution) {
         fn.apply(this)
