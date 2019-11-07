@@ -4,6 +4,12 @@ import * as utils from './utils'
 export const SESSION_COOKIE_NAME = '_dd'
 export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
+export interface Session<T> {
+  renewObservable: Observable<void>
+  getId(): string | undefined
+  getType(): T | undefined
+}
+
 /**
  * Limit access to cookie to avoid performance issues
  */
@@ -18,7 +24,7 @@ export function trackActivity(expandOrRenewSession: () => void) {
   })
 }
 
-export function cleanupActivityTracking() {
+export function stopSessionManagement() {
   registeredActivityListeners.forEach((e) => e())
   registeredActivityListeners = []
 }
@@ -70,32 +76,34 @@ export function getCookie(name: string) {
   return matches ? matches.pop() : undefined
 }
 
-export function initSession<Type extends string>(
+export function startSessionManagement<Type extends string>(
   cookieName: string,
-  getTypeInfo: (rawType?: string) => { type: Type; isTracked: boolean }
-) {
+  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
+): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
   const sessionType = cacheCookieAccess(cookieName)
-  const renewObservable = new Observable<undefined>()
+  const renewObservable = new Observable<void>()
   let currentSessionId = sessionId.get()
 
   const expandOrRenewSession = utils.throttle(() => {
-    const { type, isTracked } = getTypeInfo(sessionType.get() as Type | undefined)
+    const { type, isTracked } = computeSessionState(sessionType.get())
     sessionType.set(type, EXPIRATION_DELAY)
-    if (isTracked) {
-      if (sessionId.get()) {
-        // If we already have a session id, just expand its duration
-        sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
-      } else {
-        // Else generate a new session id
-        sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
-      }
+    if (!isTracked) {
+      return
+    }
 
-      // If the session id has changed, notify that the session has been renewed
-      if (currentSessionId !== sessionId.get()) {
-        currentSessionId = sessionId.get()
-        renewObservable.notify(undefined)
-      }
+    if (sessionId.get()) {
+      // If we already have a session id, just expand its duration
+      sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
+    } else {
+      // Else generate a new session id
+      sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
+    }
+
+    // If the session id has changed, notify that the session has been renewed
+    if (currentSessionId !== sessionId.get()) {
+      currentSessionId = sessionId.get()
+      renewObservable.notify(undefined)
     }
   }, COOKIE_ACCESS_DELAY)
 

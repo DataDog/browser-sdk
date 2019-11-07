@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from './session'
+import { getCookie, setCookie } from './sessionManagement'
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 

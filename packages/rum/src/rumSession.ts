@@ -1,4 +1,4 @@
-import { Configuration, initSession, performDraw } from '@browser-agent/core'
+import { Configuration, performDraw, startSessionManagement } from '@browser-agent/core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_COOKIE_NAME = '_dd_r'
@@ -16,7 +16,7 @@ export enum RumSessionType {
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const session = initSession(RUM_COOKIE_NAME, (rawType) => getSessionTypeInfo(configuration, rawType))
+  const session = startSessionManagement(RUM_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
 
   session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.renewSession)
@@ -29,7 +29,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
   }
 }
 
-function getSessionTypeInfo(configuration: Configuration, rawSessionType?: string) {
+function computeSessionState(configuration: Configuration, rawSessionType?: string) {
   let sessionType: RumSessionType
   if (hasValidRumSession(rawSessionType)) {
     sessionType = rawSessionType

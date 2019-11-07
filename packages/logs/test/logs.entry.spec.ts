@@ -1,4 +1,4 @@
-import { cleanupActivityTracking, monitor } from '@browser-agent/core'
+import { monitor, stopSessionManagement } from '@browser-agent/core'
 import { LogsGlobal } from '../src'
 
 describe('logs entry', () => {
@@ -10,7 +10,7 @@ describe('logs entry', () => {
   })
 
   afterEach(() => {
-    cleanupActivityTracking()
+    stopSessionManagement()
   })
 
   it('should set global with init', () => {

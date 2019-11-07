@@ -1,10 +1,10 @@
 import {
-  cleanupActivityTracking,
   Configuration,
   COOKIE_ACCESS_DELAY,
   getCookie,
   SESSION_COOKIE_NAME,
   setCookie,
+  stopSessionManagement,
 } from '@browser-agent/core'
 
 import { LOGGER_COOKIE_NAME, LoggerSessionType, startLoggerSession } from '../src/loggerSession'
@@ -24,7 +24,7 @@ describe('logger session', () => {
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
-    cleanupActivityTracking()
+    stopSessionManagement()
   })
 
   it('when tracked should store session type and id', () => {

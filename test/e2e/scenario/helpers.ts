@@ -84,6 +84,11 @@ export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
 }
 
+export async function retrieveInitialViewEvents() {
+  const events = await retrieveRumEvents()
+  return events.filter((event) => event.evt.category === 'view' && event.rum.document_version === 1)
+}
+
 export async function resetServerState() {
   return fetch('/reset')
 }
@@ -113,6 +118,10 @@ export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) =
   return events.reduce<RumEvent | undefined>((olderEvent, event) => (predicate(event) ? event : olderEvent), undefined)
 }
 
-export async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+export async function renewSession() {
+  // Expire sessionId cookie
+  await browser.deleteCookies(['_dd'])
+  // Cookies are cached for 1s, wait until the cache expires
+  await browser.pause(1100)
+  await browser.sendKeys(['f'])
 }

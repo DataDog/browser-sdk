@@ -1,4 +1,4 @@
-import { Configuration, initSession, performDraw } from '@browser-agent/core'
+import { Configuration, performDraw, startSessionManagement } from '@browser-agent/core'
 
 export const LOGGER_COOKIE_NAME = '_dd_l'
 
@@ -13,7 +13,7 @@ export enum LoggerSessionType {
 }
 
 export function startLoggerSession(configuration: Configuration): LoggerSession {
-  const session = initSession(LOGGER_COOKIE_NAME, (rawType) => getSessionTypeInfo(configuration, rawType))
+  const session = startSessionManagement(LOGGER_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
 
   return {
     getId: session.getId,
@@ -21,7 +21,7 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
   }
 }
 
-function getSessionTypeInfo(configuration: Configuration, rawSessionType?: string) {
+function computeSessionState(configuration: Configuration, rawSessionType?: string) {
   let sessionType
   if (hasValidLoggerSession(rawSessionType)) {
     sessionType = rawSessionType

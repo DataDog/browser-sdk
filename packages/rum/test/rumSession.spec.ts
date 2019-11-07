@@ -1,5 +1,4 @@
 import {
-  cleanupActivityTracking,
   Configuration,
   COOKIE_ACCESS_DELAY,
   DEFAULT_CONFIGURATION,
@@ -7,6 +6,7 @@ import {
   isIE,
   SESSION_COOKIE_NAME,
   setCookie,
+  stopSessionManagement,
 } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
@@ -41,7 +41,7 @@ describe('rum session', () => {
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
-    cleanupActivityTracking()
+    stopSessionManagement()
   })
 
   it('when tracked with resources should store session type and id', () => {
