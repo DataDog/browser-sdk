@@ -176,11 +176,11 @@ describe('internal monitoring', () => {
         entry_type: 'internal',
         error: jasmine.anything(),
         message: 'message',
+        status: 'error',
         view: {
           referrer: document.referrer,
           url: window.location.href,
         },
-        status: 'error',
       })
     })
 
