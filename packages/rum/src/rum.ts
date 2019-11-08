@@ -81,6 +81,7 @@ export interface RumResourceEvent {
   rum?: {
     requestCount: number
   }
+  traceId?: number
 }
 
 export interface RumPerformanceScreenEvent {
@@ -290,6 +291,7 @@ export function trackRequests(
       rum: {
         requestCount: 1,
       },
+      traceId: requestDetails.traceId,
     })
   })
 }
