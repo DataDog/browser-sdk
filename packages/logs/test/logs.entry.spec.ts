@@ -5,6 +5,7 @@ describe('logs entry', () => {
   let logsGlobal: LogsGlobal
 
   beforeEach(() => {
+    // tslint:disable-next-line: no-unsafe-any
     logsGlobal = require('../src/logs.entry').datadogLogs
     delete (require.cache as any)[require.resolve('../src/logs.entry')]
   })

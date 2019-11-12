@@ -9,6 +9,7 @@ describe('rum entry', () => {
     if (isIE()) {
       pending('no full rum support')
     }
+    // tslint:disable-next-line: no-unsafe-any
     rumGlobal = require('../src/rum.entry').datadogRum
     delete (require.cache as any)[require.resolve('../src/rum.entry')]
   })

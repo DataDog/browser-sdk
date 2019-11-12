@@ -19,6 +19,20 @@ export interface RequestDetails {
   response?: string
   startTime: number
   duration: number
+  traceId?: number
+}
+
+declare global {
+  interface Window {
+    ddtrace?: any
+  }
+
+  interface XMLHttpRequest {
+    _datadog_xhr: {
+      method: string
+      url: string
+    }
+  }
 }
 
 export type RequestObservable = Observable<RequestDetails>
@@ -36,24 +50,45 @@ export function startRequestCollection() {
 export function trackXhr(observable: RequestObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: XMLHttpRequest, method: string, url: string) {
+    this._datadog_xhr = {
+      method,
+      url,
+    }
+    return originalOpen.apply(this, arguments as any)
+  })
+
+  const originalSend = XMLHttpRequest.prototype.send
+  XMLHttpRequest.prototype.send = monitor(function(this: XMLHttpRequest, body: unknown) {
     const startTime = performance.now()
     const reportXhr = () => {
       observable.notify({
-        method,
         startTime,
         duration: performance.now() - startTime,
+        method: this._datadog_xhr.method,
         response: this.response as string | undefined,
         status: this.status,
+        traceId: getTraceId(),
         type: RequestType.XHR,
-        url: normalizeUrl(url),
+        url: normalizeUrl(this._datadog_xhr.url),
       })
     }
 
-    this.addEventListener('load', monitor(reportXhr))
-    this.addEventListener('error', monitor(reportXhr))
+    this.addEventListener('loadend', monitor(reportXhr))
 
-    return originalOpen.apply(this, arguments as any)
+    return originalSend.apply(this, arguments as any)
   })
+}
+
+function getTraceId(): number | undefined {
+  // tslint:disable-next-line: no-unsafe-any
+  return 'ddtrace' in window && window.ddtrace.tracer.scope().active()
+    ? // tslint:disable-next-line: no-unsafe-any
+      window.ddtrace.tracer
+        .scope()
+        .active()
+        .context()
+        .toTraceId()
+    : undefined
 }
 
 export function trackFetch(observable: RequestObservable) {
