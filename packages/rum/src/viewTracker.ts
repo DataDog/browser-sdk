@@ -36,6 +36,7 @@ export function trackView(
   newView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackMeasures(lifeCycle, scheduleViewUpdate)
+  trackRenewSession(location, lifeCycle, addRumEvent)
 
   batch.beforeFlushOnUnload(() => updateView(addRumEvent))
 }
@@ -142,5 +143,12 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       viewMeasures.longTaskCount += 1
       scheduleViewUpdate()
     }
+  })
+}
+
+function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.renewSession, () => {
+    updateView(addRumEvent)
+    newView(location, addRumEvent)
   })
 }

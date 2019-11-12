@@ -54,6 +54,19 @@ describe('rum track url change', () => {
   })
 })
 
+describe('rum track renew session', () => {
+  it('should update page view id on renew session', () => {
+    const lifeCycle = new LifeCycle()
+    setup({
+      lifeCycle,
+    })
+    const initialView = viewId
+    lifeCycle.notify(LifeCycleEventType.renewSession)
+
+    expect(viewId).not.toEqual(initialView)
+  })
+})
+
 describe('rum view measures', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',

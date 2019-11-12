@@ -1,5 +1,3 @@
-import { getCookie, setCookie } from './session'
-
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export const ONE_SECOND = 1000
@@ -174,21 +172,6 @@ export function startsWith(candidate: string, search: string) {
 
 export function includes(candidate: unknown[], search: unknown) {
   return candidate.indexOf(search) !== -1
-}
-
-export function areCookiesAuthorized(): boolean {
-  if (document.cookie === undefined) {
-    return false
-  }
-  try {
-    const testCookieName = 'dd_rum_test'
-    const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, 1000)
-    return getCookie(testCookieName) === testCookieValue
-  } catch (error) {
-    console.error(error)
-    return false
-  }
 }
 
 export function isPercentage(value: unknown) {

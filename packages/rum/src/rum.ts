@@ -262,10 +262,10 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  if (!session.isTrackedWithResource()) {
-    return
-  }
   lifeCycle.subscribe(LifeCycleEventType.request, (requestDetails: RequestDetails) => {
+    if (!session.isTrackedWithResource()) {
+      return
+    }
     if (!isValidResource(requestDetails.url, configuration)) {
       return
     }
