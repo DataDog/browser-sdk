@@ -205,10 +205,6 @@ export function startRum(
   trackUserAction(lifeCycle, addRumEvent)
 
   return {
-    // Cleanup after migration
-    addCustomEvent: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.userAction, { name, context })
-    }),
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
     }),

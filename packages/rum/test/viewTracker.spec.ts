@@ -80,11 +80,11 @@ describe('rum view measures', () => {
   let addRumEvent: jasmine.Spy<InferableFunction>
 
   function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index * 2)[0] as RumViewEvent
+    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
   }
 
   function getEventCount() {
-    return addRumEvent.calls.count() / 2
+    return addRumEvent.calls.count()
   }
 
   beforeEach(() => {

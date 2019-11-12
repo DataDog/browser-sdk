@@ -60,7 +60,7 @@ function updateView(addRumEvent: (event: RumEvent) => void) {
 }
 
 function addViewEvent(addRumEvent: (event: RumEvent) => void) {
-  const viewEvent: RumViewEvent = {
+  addRumEvent({
     date: startTimestamp,
     duration: msToNs(performance.now() - startOrigin),
     evt: {
@@ -72,13 +72,7 @@ function addViewEvent(addRumEvent: (event: RumEvent) => void) {
     view: {
       measures: viewMeasures,
     },
-  }
-  addRumEvent(viewEvent)
-
-  // clean up after migration
-  const pageViewEvent = { ...viewEvent }
-  pageViewEvent.evt.category = 'page_view' as any
-  addRumEvent(pageViewEvent)
+  })
 }
 
 function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {

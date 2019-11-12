@@ -39,9 +39,6 @@ const STUBBED_RUM = {
   setRumGlobalContext(context: Context) {
     makeStub('setRumGlobalContext')
   },
-  addCustomEvent(name: string, context: Context) {
-    makeStub('addCustomEvent')
-  },
   addUserAction(name: string, context: Context) {
     makeStub('addUserAction')
   },
