@@ -7,7 +7,8 @@ variables:
 stages:
   - ci-image
   - test
-  - cbt
+  - unit-cbt
+  - e2e-cbt
   - deploy
 
 ci-image:
@@ -65,7 +66,7 @@ unit-cbt:
     refs:
       - master
       - prod
-  stage: cbt
+  stage: unit-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -77,7 +78,7 @@ e2e-cbt:
     refs:
       - master
       - prod
-  stage: cbt
+  stage: e2e-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
