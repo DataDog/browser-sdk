@@ -8,12 +8,10 @@ export {
   startSessionManagement,
   // Exposed for tests
   SESSION_COOKIE_NAME,
-  COOKIE_ACCESS_DELAY,
   stopSessionManagement,
-  setCookie,
-  getCookie,
 } from './sessionManagement'
 export { HttpRequest, Batch } from './transport'
 export * from './utils'
+export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
 
 export * from './specHelper'

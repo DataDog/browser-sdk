@@ -1,3 +1,4 @@
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY } from './cookie'
 import { Observable } from './observable'
 import * as utils from './utils'
 
@@ -13,7 +14,6 @@ export interface Session<T> {
 /**
  * Limit access to cookie to avoid performance issues
  */
-export const COOKIE_ACCESS_DELAY = 1000
 let registeredActivityListeners: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
@@ -27,53 +27,6 @@ export function trackActivity(expandOrRenewSession: () => void) {
 export function stopSessionManagement() {
   registeredActivityListeners.forEach((e) => e())
   registeredActivityListeners = []
-}
-
-export interface CookieCache {
-  get: () => string | undefined
-  set: (value: string, expireDelay: number) => void
-}
-
-export function cacheCookieAccess(name: string): CookieCache {
-  let timeout: number
-  let cache: string | undefined
-  let hasCache = false
-
-  const cacheAccess = () => {
-    hasCache = true
-    window.clearTimeout(timeout)
-    timeout = window.setTimeout(() => {
-      hasCache = false
-    }, COOKIE_ACCESS_DELAY)
-  }
-
-  return {
-    get: () => {
-      if (hasCache) {
-        return cache
-      }
-      cache = getCookie(name)
-      cacheAccess()
-      return cache
-    },
-    set: (value: string, expireDelay: number) => {
-      setCookie(name, value, expireDelay)
-      cache = value
-      cacheAccess()
-    },
-  }
-}
-
-export function setCookie(name: string, value: string, expireDelay: number) {
-  const date = new Date()
-  date.setTime(date.getTime() + expireDelay)
-  const expires = `expires=${date.toUTCString()}`
-  document.cookie = `${name}=${value};${expires};path=/`
-}
-
-export function getCookie(name: string) {
-  const matches = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`)
-  return matches ? matches.pop() : undefined
 }
 
 export function startSessionManagement<Type extends string>(
@@ -103,7 +56,7 @@ export function startSessionManagement<Type extends string>(
     // If the session id has changed, notify that the session has been renewed
     if (currentSessionId !== sessionId.get()) {
       currentSessionId = sessionId.get()
-      renewObservable.notify(undefined)
+      renewObservable.notify()
     }
   }, COOKIE_ACCESS_DELAY)
 

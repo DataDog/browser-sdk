@@ -1,13 +1,5 @@
-import {
-  cacheCookieAccess,
-  COOKIE_ACCESS_DELAY,
-  CookieCache,
-  getCookie,
-  SESSION_COOKIE_NAME,
-  setCookie,
-  startSessionManagement,
-  stopSessionManagement,
-} from '../src/sessionManagement'
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, getCookie, setCookie } from '../src/cookie'
+import { SESSION_COOKIE_NAME, startSessionManagement, stopSessionManagement } from '../src/sessionManagement'
 import { isIE } from '../src/specHelper'
 
 describe('cacheCookieAccess', () => {
@@ -128,30 +120,32 @@ describe('startSessionManagement', () => {
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 
-  describe('computeSessionState should be called with the session type cookie value', () => {
+  describe('computeSessionState', () => {
+    let spy: (rawType?: string) => { type: FakeSessionType; isTracked: boolean }
+
+    beforeEach(() => {
+      spy = jasmine.createSpy().and.returnValue({ isTracked: true, type: FakeSessionType.TRACKED })
+    })
+
     it('should be called with an empty value if the cookie is not defined', () => {
-      const spy = jasmine.createSpy().and.returnValue({ isTracked: true, type: FakeSessionType.TRACKED })
       startSessionManagement(FIRST_SESSION_TYPE_COOKIE, spy)
       expect(spy).toHaveBeenCalledWith(undefined)
     })
 
     it('should be called with an invalid value if the cookie has an invalid value', () => {
       setCookie(FIRST_SESSION_TYPE_COOKIE, 'invalid', DURATION)
-      const spy = jasmine.createSpy().and.returnValue({ isTracked: true, type: FakeSessionType.TRACKED })
       startSessionManagement(FIRST_SESSION_TYPE_COOKIE, spy)
       expect(spy).toHaveBeenCalledWith('invalid')
     })
 
     it('should be called with the TRACKED type', () => {
       setCookie(FIRST_SESSION_TYPE_COOKIE, FakeSessionType.TRACKED, DURATION)
-      const spy = jasmine.createSpy().and.returnValue({ isTracked: true, type: FakeSessionType.TRACKED })
       startSessionManagement(FIRST_SESSION_TYPE_COOKIE, spy)
       expect(spy).toHaveBeenCalledWith(FakeSessionType.TRACKED)
     })
 
     it('should be called with the NOT_TRACKED type', () => {
       setCookie(FIRST_SESSION_TYPE_COOKIE, FakeSessionType.NOT_TRACKED, DURATION)
-      const spy = jasmine.createSpy().and.returnValue({ isTracked: false, type: FakeSessionType.NOT_TRACKED })
       startSessionManagement(FIRST_SESSION_TYPE_COOKIE, spy)
       expect(spy).toHaveBeenCalledWith(FakeSessionType.NOT_TRACKED)
     })
