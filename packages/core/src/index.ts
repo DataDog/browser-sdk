@@ -5,17 +5,13 @@ export { monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'
 export { RequestType, RequestDetails, startRequestCollection, RequestObservable } from './requestCollection'
 export {
+  startSessionManagement,
+  // Exposed for tests
   SESSION_COOKIE_NAME,
-  EXPIRATION_DELAY,
-  COOKIE_ACCESS_DELAY,
-  trackActivity,
-  cleanupActivityTracking,
-  CookieCache,
-  cacheCookieAccess,
-  setCookie,
-  getCookie,
-} from './session'
+  stopSessionManagement,
+} from './sessionManagement'
 export { HttpRequest, Batch } from './transport'
 export * from './utils'
+export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
 
 export * from './specHelper'

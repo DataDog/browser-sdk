@@ -1,4 +1,4 @@
-import { cleanupActivityTracking, isIE } from '@browser-agent/core'
+import { isIE, stopSessionManagement } from '@browser-agent/core'
 
 import { RumGlobal, RumUserConfiguration } from '../src/rum.entry'
 
@@ -15,7 +15,7 @@ describe('rum entry', () => {
   })
 
   afterEach(() => {
-    cleanupActivityTracking()
+    stopSessionManagement()
   })
 
   it('init should log an error with no application id', () => {

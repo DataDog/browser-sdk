@@ -79,7 +79,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const lifeCycle = new LifeCycle()
 
   const { errorObservable, configuration } = commonInit(rumUserConfiguration, version)
-  const session = startRumSession(configuration)
+  const session = startRumSession(configuration, lifeCycle)
   const requestObservable = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
 

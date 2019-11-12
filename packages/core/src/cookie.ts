@@ -1,26 +1,4 @@
-import * as utils from './utils'
-
-export const SESSION_COOKIE_NAME = '_dd'
-export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
-
-/**
- * Limit access to cookie to avoid performance issues
- */
 export const COOKIE_ACCESS_DELAY = 1000
-let registeredActivityListeners: Array<() => void> = []
-
-export function trackActivity(expandOrRenewSession: () => void) {
-  const options = { capture: true, passive: true }
-  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
-    document.addEventListener(event, expandOrRenewSession, options)
-    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
-  })
-}
-
-export function cleanupActivityTracking() {
-  registeredActivityListeners.forEach((e) => e())
-  registeredActivityListeners = []
-}
 
 export interface CookieCache {
   get: () => string | undefined
@@ -67,4 +45,19 @@ export function setCookie(name: string, value: string, expireDelay: number) {
 export function getCookie(name: string) {
   const matches = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`)
   return matches ? matches.pop() : undefined
+}
+
+export function areCookiesAuthorized(): boolean {
+  if (document.cookie === undefined) {
+    return false
+  }
+  try {
+    const testCookieName = 'dd_rum_test'
+    const testCookieValue = 'test'
+    setCookie(testCookieName, testCookieValue, 1000)
+    return getCookie(testCookieName) === testCookieValue
+  } catch (error) {
+    console.error(error)
+    return false
+  }
 }

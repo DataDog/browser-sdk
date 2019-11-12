@@ -4,6 +4,8 @@ import {
   findLastEvent,
   flushBrowserLogs,
   flushEvents,
+  renewSession,
+  retrieveInitialViewEvents,
   retrieveLogs,
   retrieveLogsMessages,
   retrieveRumEvents,
@@ -117,6 +119,17 @@ describe('rum', () => {
       long_task_count: 0,
       user_action_count: 0,
     } as any)
+  })
+
+  it('should create a new View when the session is renewed', async () => {
+    await renewSession()
+    await flushEvents()
+
+    const viewEvents = await retrieveInitialViewEvents()
+
+    expect(viewEvents.length).toBe(2)
+    expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
+    expect(viewEvents[0].view.id).not.toBe(viewEvents[1].view.id)
   })
 })
 
