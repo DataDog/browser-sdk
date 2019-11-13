@@ -53,13 +53,21 @@ unit:
     - yarn
     - yarn test
 
-e2e:
+bundle-e2e:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn test:e2e
+    - yarn test:e2e:bundle
+
+npm-e2e:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn test:e2e:npm
 
 unit-cbt:
   except:

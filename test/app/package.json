@@ -1,0 +1,19 @@
+{
+  "name": "app",
+  "version": "0.0.0",
+  "scripts": {
+    "postinstall": "webpack --mode=production"
+  },
+  "dependencies": {
+    "datadog-logs": "file:../../packages/logs",
+    "datadog-rum": "file:../../packages/rum"
+  },
+  "resolutions": {
+    "@browser-agent/core": "file:../../packages/core"
+  },
+  "devDependencies": {
+    "ts-loader": "6.2.1",
+    "typescript": "3.7.2",
+    "webpack": "4.41.2"
+  }
+}

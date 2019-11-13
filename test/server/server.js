@@ -12,6 +12,7 @@ const fakeBackend = require('./fake-backend')
 let port = 3000
 const app = express()
 app.use(express.static(path.join(__dirname, '../static')))
+app.use(express.static(path.join(__dirname, '../app/dist')))
 
 if (process.env.ENV === 'development') {
   port = 8080

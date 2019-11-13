@@ -15,7 +15,9 @@
     "test": "yarn test:unit",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:unit:cbt": "karma start ./test/unit/karma.cbt.conf.js",
-    "test:e2e": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.local.conf.js",
+    "test:e2e": "yarn run test:e2e:bundle",
+    "test:e2e:bundle": "TARGET_ENV=e2e-test yarn build && E2E_MODE=bundle wdio test/e2e/wdio.local.conf.js",
+    "test:e2e:npm": "TARGET_ENV=e2e-test yarn build && (cd test/app && yarn) && E2E_MODE=npm wdio test/e2e/wdio.local.conf.js",
     "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.cbt.conf.js"
   },
   "devDependencies": {
