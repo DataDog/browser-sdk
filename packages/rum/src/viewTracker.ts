@@ -36,6 +36,7 @@ export function trackView(
   newView(location, addRumEvent)
   trackHistory(location, addRumEvent)
   trackMeasures(lifeCycle, scheduleViewUpdate)
+  trackRenewSession(location, lifeCycle, addRumEvent)
 
   batch.beforeFlushOnUnload(() => updateView(addRumEvent))
 }
@@ -60,7 +61,7 @@ function updateView(addRumEvent: (event: RumEvent) => void) {
 }
 
 function addViewEvent(addRumEvent: (event: RumEvent) => void) {
-  const viewEvent: RumViewEvent = {
+  addRumEvent({
     date: startTimestamp,
     duration: msToNs(performance.now() - startOrigin),
     evt: {
@@ -72,13 +73,7 @@ function addViewEvent(addRumEvent: (event: RumEvent) => void) {
     view: {
       measures: viewMeasures,
     },
-  }
-  addRumEvent(viewEvent)
-
-  // clean up after migration
-  const pageViewEvent = { ...viewEvent }
-  pageViewEvent.evt.category = 'page_view' as any
-  addRumEvent(pageViewEvent)
+  })
 }
 
 function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
@@ -142,5 +137,12 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       viewMeasures.longTaskCount += 1
       scheduleViewUpdate()
     }
+  })
+}
+
+function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.renewSession, () => {
+    updateView(addRumEvent)
+    newView(location, addRumEvent)
   })
 }

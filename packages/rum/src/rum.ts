@@ -205,10 +205,6 @@ export function startRum(
   trackUserAction(lifeCycle, addRumEvent)
 
   return {
-    // Cleanup after migration
-    addCustomEvent: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.userAction, { name, context })
-    }),
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
     }),
@@ -262,10 +258,10 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  if (!session.isTrackedWithResource()) {
-    return
-  }
   lifeCycle.subscribe(LifeCycleEventType.request, (requestDetails: RequestDetails) => {
+    if (!session.isTrackedWithResource()) {
+      return
+    }
     if (!isValidResource(requestDetails.url, configuration)) {
       return
     }

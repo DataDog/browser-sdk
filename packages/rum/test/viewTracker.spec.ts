@@ -54,6 +54,19 @@ describe('rum track url change', () => {
   })
 })
 
+describe('rum track renew session', () => {
+  it('should update page view id on renew session', () => {
+    const lifeCycle = new LifeCycle()
+    setup({
+      lifeCycle,
+    })
+    const initialView = viewId
+    lifeCycle.notify(LifeCycleEventType.renewSession)
+
+    expect(viewId).not.toEqual(initialView)
+  })
+})
+
 describe('rum view measures', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',
@@ -80,11 +93,11 @@ describe('rum view measures', () => {
   let addRumEvent: jasmine.Spy<InferableFunction>
 
   function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index * 2)[0] as RumViewEvent
+    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
   }
 
   function getEventCount() {
-    return addRumEvent.calls.count() / 2
+    return addRumEvent.calls.count()
   }
 
   beforeEach(() => {
