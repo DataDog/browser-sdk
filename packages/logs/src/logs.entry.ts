@@ -102,3 +102,11 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(datadogLogs, globalApi)
 })
+
+declare global {
+  interface Window {
+    DD_LOGS?: LogsGlobal
+  }
+}
+
+window.DD_LOGS = datadogLogs

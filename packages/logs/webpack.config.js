@@ -12,7 +12,5 @@ module.exports = (env, argv) => ({
   output: {
     filename: `datadog-logs-${targetDC}.js`,
     path: path.resolve(__dirname, 'bundle'),
-    library: 'DD_LOGS',
-    libraryExport: 'datadogLogs',
   },
 })

@@ -12,7 +12,5 @@ module.exports = (env, argv) => ({
   output: {
     filename: `datadog-rum-${targetDC}.js`,
     path: path.resolve(__dirname, 'bundle'),
-    library: 'DD_RUM',
-    libraryExport: 'datadogRum',
   },
 })

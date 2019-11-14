@@ -91,3 +91,11 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   lodashAssign(datadogRum, globalApi)
   return globalApi
 })
+
+declare global {
+  interface Window {
+    DD_RUM?: RumGlobal
+  }
+}
+
+window.DD_RUM = datadogRum

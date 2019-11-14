@@ -54,6 +54,16 @@ describe('logs', () => {
       expect(browserLogs.length).toEqual(1)
     })
   })
+
+  it('should add RUM internal context to logs', async () => {
+    await browserExecute(() => {
+      ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
+    })
+    await flushEvents()
+    const log = (await retrieveLogs())[0]
+    expect(log.application_id).toBe('rum')
+    expect(log.view.id).toBeDefined()
+  })
 })
 
 describe('rum', () => {
