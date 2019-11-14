@@ -11,9 +11,9 @@ import {
 } from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
+import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'
-import { version } from './version'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
@@ -97,7 +97,7 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration } = commonInit(logsUserConfiguration, version)
+  const { errorObservable, configuration } = commonInit(logsUserConfiguration, buildEnv)
   const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(datadogLogs, globalApi)

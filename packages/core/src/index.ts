@@ -1,6 +1,6 @@
 export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration } from './configuration'
 export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
-export { makeStub, makeGlobal, commonInit } from './init'
+export { BuildEnv, makeStub, makeGlobal, commonInit } from './init'
 export { monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'
 export { RequestType, RequestDetails, startRequestCollection, RequestObservable } from './requestCollection'

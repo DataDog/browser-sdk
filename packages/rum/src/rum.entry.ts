@@ -12,11 +12,11 @@ import {
 } from '@browser-agent/core'
 import lodashAssign from 'lodash.assign'
 
+import { buildEnv } from './buildEnv'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
-import { version } from './version'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -79,7 +79,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
   const lifeCycle = new LifeCycle()
 
-  const { errorObservable, configuration } = commonInit(rumUserConfiguration, version)
+  const { errorObservable, configuration } = commonInit(rumUserConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
   const requestObservable = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
