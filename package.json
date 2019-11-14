@@ -17,7 +17,7 @@
     "test:unit:cbt": "karma start ./test/unit/karma.cbt.conf.js",
     "test:e2e": "yarn run test:e2e:bundle",
     "test:e2e:bundle": "TARGET_ENV=e2e-test yarn build && E2E_MODE=bundle wdio test/e2e/wdio.local.conf.js",
-    "test:e2e:npm": "TARGET_ENV=e2e-test yarn build && (cd test/app && yarn) && E2E_MODE=npm wdio test/e2e/wdio.local.conf.js",
+    "test:e2e:npm": "TARGET_ENV=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn) && E2E_MODE=npm wdio test/e2e/wdio.local.conf.js",
     "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && wdio test/e2e/wdio.cbt.conf.js"
   },
   "devDependencies": {
@@ -47,6 +47,7 @@
     "lerna": "3.18.1",
     "npm-run-all": "4.1.5",
     "prettier": "1.18.2",
+    "replace-in-file": "4.2.0",
     "request": "2.88.0",
     "sinon": "7.3.2",
     "ts-loader": "6.0.4",

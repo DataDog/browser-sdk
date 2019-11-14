@@ -8,5 +8,5 @@
       "@browser-agent/core": ["../core/src"]
     }
   },
-  "include": ["./**/*.ts"]
+  "include": ["src", "test"]
 }

@@ -7,8 +7,8 @@
   "types": "cjs/index.d.ts",
   "scripts": {
     "build": "run-p build:cjs build:esm",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json"
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
     "lodash.assign": "4.2.0",

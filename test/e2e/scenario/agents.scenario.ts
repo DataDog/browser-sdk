@@ -26,7 +26,7 @@ type RumResourceEvent = any
 const ERROR = 'error' as any
 
 beforeEach(() => {
-  browser.url('/agents-page.html')
+  browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
 })
 
 afterEach(tearDown)

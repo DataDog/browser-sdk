@@ -174,14 +174,10 @@ export class Logger {
   }
 }
 
-declare global {
-  interface Window {
-    DD_RUM?: {
-      getInternalContext: () => object | undefined
-    }
-  }
-}
-
 function getRUMInternalContext(): object | undefined {
-  return window.DD_RUM && window.DD_RUM.getInternalContext ? window.DD_RUM.getInternalContext() : undefined
+  // tslint:disable-next-line: no-unsafe-any
+  return (window as any).DD_RUM && (window as any).DD_RUM.getInternalContext
+    ? // tslint:disable-next-line: no-unsafe-any
+      (window as any).DD_RUM.getInternalContext()
+    : undefined
 }
