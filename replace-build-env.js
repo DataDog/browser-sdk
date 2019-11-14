@@ -1,6 +1,5 @@
-const execSync = require('child_process').execSync
-const packageJson = require('./package.json')
 const replace = require('replace-in-file')
+const buildEnv = require('./build-env')
 
 /**
  * Replace BuildEnv in build files
@@ -9,14 +8,6 @@ const replace = require('replace-in-file')
  */
 
 const buildDirectory = process.argv[2]
-
-const buildEnv = {
-  TARGET_DC: process.env.TARGET_DC || 'us',
-  TARGET_ENV: process.env.TARGET_ENV || 'staging',
-  VERSION: `${process.env.VERSION !== 'release' ? 'dev' : packageJson.version}-${execSync('git rev-parse HEAD')
-    .toString()
-    .trim()}`,
-}
 
 console.log(`Replace BuildEnv in '${buildDirectory}' with:`)
 console.log(JSON.stringify(buildEnv, null, 2))
