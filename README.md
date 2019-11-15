@@ -8,8 +8,8 @@ It's bundled into four files which are distributed through Cloudfront:
 
 ## Packages
 
-- [Logs](./packages/logs/README.md)
-- [rum](./packages/rum/README.md)
+- [Logs API](./packages/logs/README.md)
+- [RUM API](./packages/rum/README.md)
 
 ## Deploy
 

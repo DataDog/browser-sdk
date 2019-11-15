@@ -58,4 +58,16 @@ describe('configuration', () => {
       expect(configuration.isCollectingError).toEqual(false)
     })
   })
+
+  describe('datacenter', () => {
+    it('should use buildEnv value by default', () => {
+      const configuration = buildConfiguration({ clientToken }, prodEnv)
+      expect(configuration.rumEndpoint).toContain('datadoghq.com')
+    })
+
+    it('should use user value when set', () => {
+      const configuration = buildConfiguration({ clientToken, datacenter: 'eu' }, prodEnv)
+      expect(configuration.rumEndpoint).toContain('datadoghq.eu')
+    })
+  })
 })

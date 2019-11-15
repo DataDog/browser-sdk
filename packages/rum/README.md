@@ -9,10 +9,11 @@ contains all the public APIs.
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
 <script>
     window.DD_RUM.init({
-        clientToken: 'XXX',
         applicationId: 'XXX',
-        sampleRate: 100,
-        resourceSampleRate: 100
+        clientToken: 'XXX',
+        datacenter: 'us',
+        resourceSampleRate: 100,
+        sampleRate: 100
     });
 </script>
 ```
@@ -23,13 +24,15 @@ contains all the public APIs.
 
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
+  - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
 
   ```
   init(configuration: {
-      clientToken: 'XXX',
-      applicationId: 'XXX',
-      sampleRate: 100,
-      resourceSampleRate: 100
+      applicationId: string,
+      clientToken: string,
+      datacenter?: string,
+      resourceSampleRate?: number
+      sampleRate?: number
   })
   ```
 

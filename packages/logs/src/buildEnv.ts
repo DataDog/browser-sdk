@@ -1,7 +1,7 @@
-import { BuildEnv } from '@browser-agent/core'
+import { BuildEnv, Datacenter, Environment } from '@browser-agent/core'
 
 export const buildEnv: BuildEnv = {
-  datacenter: '<<< TARGET_DATACENTER >>>' as BuildEnv['datacenter'],
-  env: '<<< TARGET_ENV >>>' as BuildEnv['env'],
+  datacenter: '<<< TARGET_DATACENTER >>>' as Datacenter,
+  env: '<<< TARGET_ENV >>>' as Environment,
   version: '<<< VERSION >>>',
 }

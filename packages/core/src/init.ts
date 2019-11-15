@@ -21,9 +21,12 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
+export type Datacenter = 'eu' | 'us'
+export type Environment = 'production' | 'staging' | 'e2e-test'
+
 export interface BuildEnv {
-  datacenter: 'eu' | 'us'
-  env: 'e2e-test' | 'staging' | 'production'
+  datacenter: Datacenter
+  env: Environment
   version: string
 }
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
