@@ -214,6 +214,7 @@ export function startRum(
     getInternalContext: monitor(() => {
       return {
         application_id: applicationId,
+        session_id: session.getId(),
         view: {
           id: viewId,
         },
