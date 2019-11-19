@@ -52,7 +52,12 @@ const STUBBED_RUM = {
 export type RumGlobal = typeof STUBBED_RUM
 
 export const datadogRum = makeGlobal(STUBBED_RUM)
+let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
+  if (isAlreadyInitialized) {
+    console.error('DD_RUM is already initialized.')
+    return
+  }
   if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
@@ -89,4 +94,5 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
   lodashAssign(datadogRum, globalApi)
+  isAlreadyInitialized = true
 })

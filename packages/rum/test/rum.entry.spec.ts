@@ -46,6 +46,15 @@ describe('rum entry', () => {
     expect(errorSpy).toHaveBeenCalledTimes(2)
   })
 
+  it('should log an error if init is called several times', () => {
+    const errorSpy = spyOn(console, 'error')
+    rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
+
+    rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+  })
+
   it("shouldn't trigger any console.log if the configuration is correct", () => {
     const errorSpy = spyOn(console, 'error')
     rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
