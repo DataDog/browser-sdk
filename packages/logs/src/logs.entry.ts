@@ -75,7 +75,12 @@ const STUBBED_LOGS = {
 export type LogsGlobal = typeof STUBBED_LOGS
 
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
+let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
+  if (isAlreadyInitialized) {
+    console.error('DD_LOGS is already initialized.')
+    return
+  }
   if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return
@@ -101,4 +106,5 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
   const session = startLoggerSession(configuration)
   const globalApi = startLogger(errorObservable, configuration, session)
   lodashAssign(datadogLogs, globalApi)
+  isAlreadyInitialized = true
 })
