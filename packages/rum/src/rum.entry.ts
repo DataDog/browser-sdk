@@ -89,7 +89,6 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
   lodashAssign(datadogRum, globalApi)
-  return globalApi
 })
 
 declare global {
