@@ -7,6 +7,7 @@ module.exports = {
   client: {
     jasmine: {
       random: true,
+      oneFailurePerSpec: true,
     },
   },
   preprocessors: {
