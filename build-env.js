@@ -7,7 +7,7 @@ const commitSha1 = execSync('git rev-parse HEAD')
   .trim()
 
 module.exports = {
-  TARGET_DC: process.env.TARGET_DC || 'us',
+  TARGET_DATACENTER: process.env.TARGET_DATACENTER || 'us',
   TARGET_ENV: process.env.TARGET_ENV || 'staging',
   VERSION: `${versionPrefix}-${commitSha1}`,
 }

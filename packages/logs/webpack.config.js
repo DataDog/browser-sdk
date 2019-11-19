@@ -2,7 +2,7 @@ const path = require('path')
 
 const webpackBase = require('../../webpack.base')
 
-const targetDC = process.env.TARGET_DC || 'us'
+const datacenter = process.env.TARGET_DATACENTER || 'us'
 
 module.exports = (env, argv) => ({
   entry: {
@@ -10,7 +10,7 @@ module.exports = (env, argv) => ({
   },
   ...webpackBase(argv.mode),
   output: {
-    filename: `datadog-logs-${targetDC}.js`,
+    filename: `datadog-logs-${datacenter}.js`,
     path: path.resolve(__dirname, 'bundle'),
   },
 })
