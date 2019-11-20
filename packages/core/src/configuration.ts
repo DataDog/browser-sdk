@@ -1,4 +1,4 @@
-import { BuildEnv } from './init'
+import { BuildEnv, Datacenter, Environment } from './init'
 import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -39,6 +39,7 @@ export interface UserConfiguration {
   isCollectingError?: boolean
   sampleRate?: number
   resourceSampleRate?: number
+  datacenter?: Datacenter
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
@@ -54,15 +55,15 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
 interface TransportConfiguration {
   clientToken: string
-  datacenter: 'eu' | 'us'
-  env: 'production' | 'staging' | 'e2e-test'
+  datacenter: Datacenter
+  env: Environment
   version: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
     clientToken: userConfiguration.clientToken,
-    datacenter: buildEnv.datacenter,
+    datacenter: userConfiguration.datacenter || buildEnv.datacenter,
     env: buildEnv.env,
     version: buildEnv.version,
   }
