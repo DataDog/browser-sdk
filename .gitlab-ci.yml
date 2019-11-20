@@ -53,13 +53,21 @@ unit:
     - yarn
     - yarn test
 
-e2e:
+bundle-e2e:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn test:e2e
+    - yarn test:e2e:bundle
+
+npm-e2e:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn test:e2e:npm
 
 unit-cbt:
   except:
@@ -94,8 +102,8 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DC=eu TARGET_ENV=staging yarn build:bundle
-    - TARGET_DC=us TARGET_ENV=staging yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=release yarn build:bundle
     - ./deploy.sh staging
 
 deploy-prod:
@@ -107,6 +115,6 @@ deploy-prod:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DC=eu TARGET_ENV=production yarn build:bundle
-    - TARGET_DC=us TARGET_ENV=production yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=production VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
     - ./deploy.sh prod

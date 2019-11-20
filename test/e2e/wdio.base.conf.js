@@ -9,12 +9,12 @@ module.exports = {
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 0,
-
   framework: 'jasmine',
   reporters: ['spec'],
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
   },
+  e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
     serverProcess = exec('node test/server/server')
   },

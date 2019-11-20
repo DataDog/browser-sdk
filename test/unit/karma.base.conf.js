@@ -24,7 +24,6 @@ module.exports = {
     mode: webpackConfig.mode,
     stats: 'minimal',
     module: webpackConfig.module,
-    plugins: webpackConfig.plugins,
     resolve: webpackConfig.resolve,
   },
   webpackMiddleware: {

@@ -26,7 +26,7 @@ type RumResourceEvent = any
 const ERROR = 'error' as any
 
 beforeEach(() => {
-  browser.url('/agents-page.html')
+  browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
 })
 
 afterEach(tearDown)
@@ -53,6 +53,16 @@ describe('logs', () => {
     await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
     })
+  })
+
+  it('should add RUM internal context to logs', async () => {
+    await browserExecute(() => {
+      ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
+    })
+    await flushEvents()
+    const log = (await retrieveLogs())[0]
+    expect(log.application_id).toBe('rum')
+    expect(log.view.id).toBeDefined()
   })
 })
 

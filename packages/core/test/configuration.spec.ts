@@ -1,39 +1,61 @@
 import { buildConfiguration } from '../src/configuration'
 
-describe('configuration module', () => {
+describe('configuration', () => {
   const clientToken = 'some_client_token'
-  const version = 'some_version'
+  const prodEnv = {
+    datacenter: 'us' as 'us',
+    env: 'production' as 'production',
+    version: 'some_version',
+  }
 
-  it('build the configuration correct endpoints', () => {
-    let configuration = buildConfiguration({ clientToken }, version)
-    expect(configuration.logsEndpoint).toContain(clientToken)
+  describe('internal monitoring endpoint', () => {
+    it('should only be defined when api key is provided', () => {
+      let configuration = buildConfiguration({ clientToken }, prodEnv)
+      expect(configuration.internalMonitoringEndpoint).toBeUndefined()
 
-    // TO KISS we check that rum and internal monitoring endpoints can NOT be overridden with the regular bundle
-    // (a.k.a not "e2e-test"). It's not ideal since we don't test the other behavior but there's no easy way to
-    // mock the `buildEnv` since it's provided by Webpack and having an extra series of tests on the other bundle
-    // seems overkill given the few lines of code involved.
-    const endpoint = 'bbbbbbbbbbbbbbb'
-    configuration = buildConfiguration(
-      { clientToken, rumEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
-      version
-    )
-    expect(configuration.rumEndpoint).not.toEqual(endpoint)
-    expect(configuration.internalMonitoringEndpoint).not.toEqual(endpoint)
+      configuration = buildConfiguration({ clientToken, internalMonitoringApiKey: clientToken }, prodEnv)
+      expect(configuration.internalMonitoringEndpoint).toContain(clientToken)
+    })
   })
 
-  it('build the configuration correct monitoring endpoint', () => {
-    let configuration = buildConfiguration({ clientToken }, version)
-    expect(configuration.internalMonitoringEndpoint).toBeUndefined()
+  describe('endpoint overload', () => {
+    it('should not be available for production env', () => {
+      const endpoint = 'bbbbbbbbbbbbbbb'
+      const configuration = buildConfiguration(
+        { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
+        prodEnv
+      )
+      expect(configuration.rumEndpoint).not.toEqual(endpoint)
+      expect(configuration.logsEndpoint).not.toEqual(endpoint)
+      expect(configuration.internalMonitoringEndpoint).not.toEqual(endpoint)
+    })
 
-    configuration = buildConfiguration({ clientToken, internalMonitoringApiKey: clientToken }, version)
-    expect(configuration.internalMonitoringEndpoint).toContain(clientToken)
+    it('should be available for e2e-test env', () => {
+      const endpoint = 'bbbbbbbbbbbbbbb'
+      const e2eEnv = {
+        datacenter: 'us' as 'us',
+        env: 'e2e-test' as 'e2e-test',
+        version: 'some_version',
+      }
+      const configuration = buildConfiguration(
+        { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
+        e2eEnv
+      )
+      expect(configuration.rumEndpoint).toEqual(endpoint)
+      expect(configuration.logsEndpoint).toEqual(endpoint)
+      expect(configuration.internalMonitoringEndpoint).toEqual(endpoint)
+    })
   })
 
-  it('build the configuration isCollectingError', () => {
-    let configuration = buildConfiguration({ clientToken }, version)
-    expect(configuration.isCollectingError).toEqual(true)
+  describe('isCollectingError', () => {
+    it('should be enabled by default', () => {
+      const configuration = buildConfiguration({ clientToken }, prodEnv)
+      expect(configuration.isCollectingError).toEqual(true)
+    })
 
-    configuration = buildConfiguration({ clientToken, isCollectingError: false }, version)
-    expect(configuration.isCollectingError).toEqual(false)
+    it('should be disabled when defined to false', () => {
+      const configuration = buildConfiguration({ clientToken, isCollectingError: false }, prodEnv)
+      expect(configuration.isCollectingError).toEqual(false)
+    })
   })
 })

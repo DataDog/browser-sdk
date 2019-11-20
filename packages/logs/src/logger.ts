@@ -174,14 +174,11 @@ export class Logger {
   }
 }
 
-declare global {
-  interface Window {
-    DD_RUM?: {
-      getInternalContext: () => object | undefined
-    }
-  }
+interface Rum {
+  getInternalContext: () => object
 }
 
 function getRUMInternalContext(): object | undefined {
-  return window.DD_RUM && window.DD_RUM.getInternalContext ? window.DD_RUM.getInternalContext() : undefined
+  const rum = (window as any).DD_RUM as Rum
+  return rum && rum.getInternalContext ? rum.getInternalContext() : undefined
 }

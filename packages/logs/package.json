@@ -7,9 +7,10 @@
   "types": "cjs/index.d.ts",
   "scripts": {
     "build": "run-p build:cjs build:esm build:bundle",
-    "build:bundle": "webpack --config webpack.config.js --mode=production",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json"
+    "build:bundle": "rm -rf bundle && webpack --config webpack.config.js --mode=production && yarn replace-build-env bundle",
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
+    "replace-build-env": "node ../../replace-build-env.js"
   },
   "dependencies": {
     "@browser-agent/core": "^0.0.1",

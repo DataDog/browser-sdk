@@ -1,4 +1,4 @@
-import { defaultEnv } from './buildEnv'
+import { BuildEnv } from './init'
 import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -59,12 +59,12 @@ interface TransportConfiguration {
   version: string
 }
 
-export function buildConfiguration(userConfiguration: UserConfiguration, version: string): Configuration {
-  const transportConfiguration = {
+export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
+  const transportConfiguration: TransportConfiguration = {
     clientToken: userConfiguration.clientToken,
-    datacenter: defaultEnv.datacenter,
-    env: defaultEnv.env,
-    version: defaultEnv.version || version,
+    datacenter: buildEnv.datacenter,
+    env: buildEnv.env,
+    version: buildEnv.version,
   }
 
   const configuration: Configuration = {

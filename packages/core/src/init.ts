@@ -21,8 +21,13 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
-export function commonInit(userConfiguration: UserConfiguration, version: string) {
-  const configuration = buildConfiguration(userConfiguration, version)
+export interface BuildEnv {
+  datacenter: 'eu' | 'us'
+  env: 'e2e-test' | 'staging' | 'production'
+  version: string
+}
+export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
+  const configuration = buildConfiguration(userConfiguration, buildEnv)
   startInternalMonitoring(configuration)
   const errorObservable = startErrorCollection(configuration)
 

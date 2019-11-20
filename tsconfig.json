@@ -4,5 +4,5 @@
     "baseUrl": ".",
     "module": "es6"
   },
-  "include": ["./packages/**/*.ts"]
+  "include": ["./packages/**/src/**/*.ts", "./packages/**/test/**/*.ts"]
 }
