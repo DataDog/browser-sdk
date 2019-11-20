@@ -3,6 +3,7 @@
 set -ex
 
 env=$1
+datacenter=$2
 
 case "${env}" in
 "prod")
@@ -16,7 +17,22 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod"
+    echo "Usage: ./deploy.sh staging|prod eu|us"
+    exit 1
+    ;;
+esac
+
+case "${datacenter}" in
+"eu")
+    LOGS_FILE_NAME="datadog-logs-eu.js"
+    RUM_FILE_NAME="datadog-rum-eu.js"
+    ;;
+"us")
+    LOGS_FILE_NAME="datadog-logs-us.js"
+    RUM_FILE_NAME="datadog-rum-us.js"
+    ;;
+* )
+    echo "Usage: ./deploy.sh staging|prod eu|us"
     exit 1
     ;;
 esac
@@ -24,15 +40,9 @@ esac
 BROWSER_CACHE=900
 LOGS_BUNDLE_PATH="packages/logs/bundle"
 RUM_BUNDLE_PATH="packages/rum/bundle"
-EU_LOGS_FILE_NAME="datadog-logs-eu.js"
-US_LOGS_FILE_NAME="datadog-logs-us.js"
-EU_RUM_FILE_NAME="datadog-rum-eu.js"
-US_RUM_FILE_NAME="datadog-rum-us.js"
 declare -A paths
-paths[${EU_LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${EU_LOGS_FILE_NAME}"
-paths[${US_LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${US_LOGS_FILE_NAME}"
-paths[${EU_RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${EU_RUM_FILE_NAME}"
-paths[${US_RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${US_RUM_FILE_NAME}"
+paths[${LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${LOGS_FILE_NAME}"
+paths[${RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${RUM_FILE_NAME}"
 
 main() {
   in-isolation upload-to-s3
@@ -41,7 +51,7 @@ main() {
 
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
-    for file_name in ${EU_LOGS_FILE_NAME} ${US_LOGS_FILE_NAME} ${EU_RUM_FILE_NAME} ${US_RUM_FILE_NAME}; do
+    for file_name in ${LOGS_FILE_NAME} ${RUM_FILE_NAME}; do
       echo "Upload ${file_name}"
       aws s3 cp --cache-control max-age=${BROWSER_CACHE} ${paths[${file_name}]} s3://${BUCKET_NAME}/${file_name};
     done
@@ -50,7 +60,7 @@ upload-to-s3() {
 invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
-    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${EU_LOGS_FILE_NAME} /${US_LOGS_FILE_NAME} /${EU_RUM_FILE_NAME} /${US_RUM_FILE_NAME}
+    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${LOGS_FILE_NAME} /${RUM_FILE_NAME}
 }
 
 in-isolation() {
