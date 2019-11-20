@@ -1,3 +1,5 @@
+import { LogsGlobal } from 'datadog-logs'
+import { RumEvent, RumEventCategory, RumResourceEvent, RumViewEvent } from 'datadog-rum'
 import {
   browserExecute,
   browserExecuteAsync,
@@ -16,16 +18,8 @@ import {
 } from './helpers'
 import { strictlyPositiveNumber } from './matchers'
 
-// TODO use real types
-// tslint:disable: no-unsafe-any
-type LogsGlobal = any
-type RumEvent = any
-type RumEventCategory = any
-type RumViewEvent = any
-type RumResourceEvent = any
-const ERROR = 'error' as any
-
 beforeEach(() => {
+  // tslint:disable-next-line: no-unsafe-any
   browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
 })
 
@@ -73,7 +67,7 @@ describe('rum', () => {
     })
     await flushEvents()
     const types = await retrieveRumEventsTypes()
-    expect(types).toContain(ERROR)
+    expect(types).toContain(RumEventCategory.ERROR)
     await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
     })

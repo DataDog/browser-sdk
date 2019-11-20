@@ -10,7 +10,12 @@
         "name": "typescript-tslint-plugin"
       }
     ],
-    "types": ["node", "@wdio/sync", "jasmine"]
+    "types": ["node", "@wdio/sync", "jasmine"],
+    "paths": {
+      "datadog-logs": ["../../../packages/logs/src"],
+      "datadog-rum": ["../../../packages/rum/src"],
+      "@browser-agent/core": ["../../../packages/core/src"]
+    }
   },
   "include": ["./**/*.ts"]
 }

@@ -1,19 +1,29 @@
+import { ErrorContext, HttpContext, MonitoringMessage } from '@browser-agent/core'
+import { LogsMessage } from 'datadog-logs'
+import { RumEvent, RumViewEvent } from 'datadog-rum'
 import * as request from 'request'
-
-// TODO use real types
-// tslint:disable: no-unsafe-any
-type ErrorContext = any
-type HttpContext = any
-type MonitoringMessage = any
-type LogsMessage = any
-type RumEvent = any
 
 export interface ServerErrorMessage {
   error: ErrorContext
   http: HttpContext
   message: string
+  application_id: string
+  session_id: string
+  view: {
+    id: string
+  }
 }
 export type ServerLogsMessage = LogsMessage & ServerErrorMessage
+
+export interface ServerRumViewEvent extends RumViewEvent {
+  rum: RumViewEvent['rum'] & {
+    document_version: number
+  }
+  session_id: string
+  view: RumViewEvent['view'] & {
+    id: string
+  }
+}
 
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
@@ -86,7 +96,9 @@ export async function retrieveMonitoringErrors() {
 
 export async function retrieveInitialViewEvents() {
   const events = await retrieveRumEvents()
-  return events.filter((event) => event.evt.category === 'view' && event.rum.document_version === 1)
+  return events.filter(
+    (event) => event.evt.category === 'view' && (event as ServerRumViewEvent).rum.document_version === 1
+  ) as ServerRumViewEvent[]
 }
 
 export async function resetServerState() {
