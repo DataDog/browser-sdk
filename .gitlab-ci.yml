@@ -103,8 +103,9 @@ deploy-staging:
   script:
     - yarn
     - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=release yarn build:bundle
+    - ./deploy.sh staging eu
     - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=release yarn build:bundle
-    - ./deploy.sh staging
+    - ./deploy.sh staging us
 
 deploy-prod:
   only:
@@ -116,5 +117,6 @@ deploy-prod:
   script:
     - yarn
     - TARGET_DATACENTER=eu TARGET_ENV=production VERSION=release yarn build:bundle
+    - ./deploy.sh prod eu
     - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
-    - ./deploy.sh prod
+    - ./deploy.sh prod us
