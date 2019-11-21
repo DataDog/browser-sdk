@@ -135,5 +135,5 @@ export async function renewSession() {
   await browser.deleteCookies(['_dd'])
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
-  await browser.sendKeys(['f'])
+  await browser.keys(['f'])
 }
