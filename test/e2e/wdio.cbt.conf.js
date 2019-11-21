@@ -12,4 +12,7 @@ exports.config = {
   hostname: 'hub.crossbrowsertesting.com',
   port: 80,
   cbtTunnel: true,
+  cbtTunnelOpts: {
+    nokill: true,
+  },
 }
