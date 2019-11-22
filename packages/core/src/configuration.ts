@@ -113,5 +113,5 @@ function getEndpoint(type: 'browser' | 'rum', conf: TransportConfiguration, sour
   const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${conf.version}`
   return `https://${type}-http-intake.logs.${domain}/v1/input/${conf.clientToken}?ddsource=${source ||
-    type}&ddtags=${tags}`
+    'browser'}&ddtags=${tags}`
 }
