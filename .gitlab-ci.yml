@@ -122,6 +122,57 @@ deploy-prod:
     - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
     - ./deploy.sh prod us
 
+########################################################################################################################
+# Notify
+########################################################################################################################
+
 include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
-notify-on-failure:
+
+notify-feature-branch-failure:
   extends: .slack-notifier.on-failure
+  except:
+    refs:
+      - master
+      - prod
+
+notify-master-success:
+  extends: .slack-notifier-base
+  only:
+    refs:
+      - master
+  script:
+    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+    - 'MESSAGE_TEXT=":rocket: browser-agent <$COMMIT_URL|$CI_COMMIT_SHORT_SHA> deployed to :datadog_staging:."'
+    - postmessage "#rum-front" "$MESSAGE_TEXT"
+
+notify-master-failure:
+  extends: .slack-notifier-base
+  when: on_failure
+  only:
+    refs:
+      - master
+  script:
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
+    - postmessage "#rum-front" "$MESSAGE_TEXT"
+
+notify-prod-success:
+  extends: .slack-notifier-base
+  only:
+    refs:
+      - prod
+  script:
+    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+    - 'MESSAGE_TEXT=":rocket: browser-agent <$COMMIT_URL|$CI_COMMIT_SHORT_SHA> deployed to :datadog:."'
+    - postmessage "#rum-front" "$MESSAGE_TEXT"
+
+notify-prod-failure:
+  extends: .slack-notifier-base
+  when: on_failure
+  only:
+    refs:
+      - prod
+  script:
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
+    - postmessage "#rum-front" "$MESSAGE_TEXT"
