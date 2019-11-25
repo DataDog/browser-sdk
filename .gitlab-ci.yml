@@ -174,5 +174,5 @@ notify-prod-failure:
       - prod
   script:
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME prod pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
     - postmessage "#rum-front" "$MESSAGE_TEXT"
