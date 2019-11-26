@@ -102,9 +102,9 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=staging yarn build:bundle
     - ./deploy.sh staging eu
-    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=staging yarn build:bundle
     - ./deploy.sh staging us
 
 deploy-release:
