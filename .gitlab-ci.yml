@@ -75,6 +75,7 @@ unit-cbt:
   except:
     refs:
       - master
+      - tags
   stage: unit-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -86,6 +87,7 @@ e2e-cbt:
   except:
     refs:
       - master
+      - tags
   stage: e2e-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
