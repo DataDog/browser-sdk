@@ -10,15 +10,7 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import {
-  handlePaintEntry,
-  handleResourceEntry,
-  PerformancePaintTiming,
-  RumEvent,
-  RumEventCategory,
-  RumResourceEvent,
-  startRum,
-} from '../src/rum'
+import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
@@ -132,21 +124,6 @@ describe('rum handle performance entry', () => {
     const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
-  })
-
-  it('should rewrite paint entries', () => {
-    const entry: Partial<PerformancePaintTiming> = { name: 'first-paint', startTime: 123456, entryType: 'paint' }
-    handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
-    expect(getEntry(addRumEvent, 0)).toEqual({
-      evt: {
-        category: RumEventCategory.SCREEN_PERFORMANCE,
-      },
-      screen: {
-        performance: {
-          'first-paint': 123456 * 1e6,
-        },
-      },
-    })
   })
 })
 

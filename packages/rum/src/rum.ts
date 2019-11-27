@@ -44,7 +44,6 @@ export enum RumEventCategory {
   LONG_TASK = 'long_task',
   VIEW = 'view',
   RESOURCE = 'resource',
-  SCREEN_PERFORMANCE = 'screen_performance',
 }
 
 interface PerformanceResourceDetailsElement {
@@ -83,29 +82,6 @@ export interface RumResourceEvent {
   }
   traceId?: number
 }
-
-export interface RumPerformanceScreenEvent {
-  evt: {
-    category: RumEventCategory.SCREEN_PERFORMANCE
-  }
-  screen: {
-    performance: PerformanceScreenDetails
-  }
-}
-
-type PerformanceScreenDetails =
-  | {
-      domComplete: number
-      domContentLoadedEventEnd: number
-      domInteractive: number
-      loadEventEnd: number
-    }
-  | {
-      'first-paint': number
-    }
-  | {
-      'first-contentful-paint': number
-    }
 
 export interface RumErrorEvent {
   http?: HttpContext
@@ -148,13 +124,7 @@ export interface RumUserAction {
   [key: string]: ContextValue
 }
 
-export type RumEvent =
-  | RumErrorEvent
-  | RumPerformanceScreenEvent
-  | RumResourceEvent
-  | RumViewEvent
-  | RumLongTaskEvent
-  | RumUserAction
+export type RumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserAction
 
 export function startRum(
   applicationId: string,
@@ -303,12 +273,6 @@ function trackPerformanceTiming(
       case 'resource':
         handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
         break
-      case 'navigation':
-        handleNavigationEntry(entry as PerformanceNavigationTiming, addRumEvent)
-        break
-      case 'paint':
-        handlePaintEntry(entry as PerformancePaintTiming, addRumEvent)
-        break
       case 'longtask':
         handleLongTaskEntry(entry as PerformanceLongTaskTiming, addRumEvent)
         break
@@ -344,36 +308,6 @@ export function handleResourceEntry(
     },
     resource: {
       kind: resourceKind,
-    },
-  })
-}
-
-export function handleNavigationEntry(entry: PerformanceNavigationTiming, addRumEvent: (event: RumEvent) => void) {
-  addRumEvent({
-    evt: {
-      category: RumEventCategory.SCREEN_PERFORMANCE,
-    },
-    screen: {
-      performance: {
-        domComplete: msToNs(entry.domComplete),
-        domContentLoadedEventEnd: msToNs(entry.domContentLoadedEventEnd),
-        domInteractive: msToNs(entry.domInteractive),
-        loadEventEnd: msToNs(entry.loadEventEnd),
-      },
-    },
-  })
-}
-
-export function handlePaintEntry(entry: PerformancePaintTiming, addRumEvent: (event: RumEvent) => void) {
-  const performance = {
-    [entry.name]: msToNs(entry.startTime),
-  }
-  addRumEvent({
-    evt: {
-      category: RumEventCategory.SCREEN_PERFORMANCE,
-    },
-    screen: {
-      performance: performance as PerformanceScreenDetails,
     },
   })
 }
