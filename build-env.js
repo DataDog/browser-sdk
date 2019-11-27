@@ -1,16 +1,16 @@
 const execSync = require('child_process').execSync
-const packageJson = require('./package.json')
+const lernaJson = require('./lerna.json')
 
 let version
 switch (process.env.VERSION) {
   case 'release':
-    version = packageJson.version
+    version = lernaJson.version
     break
   case 'staging':
     const commitSha1 = execSync('git rev-parse HEAD')
       .toString()
       .trim()
-    version = `${packageJson.version}+${commitSha1}`
+    version = `${lernaJson.version}+${commitSha1}`
     break
   default:
     version = 'dev'
