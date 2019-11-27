@@ -9,6 +9,7 @@ stages:
   - test
   - unit-cbt
   - e2e-cbt
+  - pre-deploy-notify
   - deploy
   - notify
 
@@ -74,7 +75,6 @@ unit-cbt:
   except:
     refs:
       - master
-      - prod
   stage: unit-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -86,7 +86,6 @@ e2e-cbt:
   except:
     refs:
       - master
-      - prod
   stage: e2e-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -103,16 +102,18 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=staging yarn build:bundle
     - ./deploy.sh staging eu
-    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=staging yarn build:bundle
     - ./deploy.sh staging us
 
-deploy-prod:
+deploy-release:
   only:
     refs:
-      - prod
+      - tags
   stage: deploy
+  when: manual
+  allow_failure: false
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -133,7 +134,7 @@ notify-feature-branch-failure:
   except:
     refs:
       - master
-      - prod
+      - tags
 
 notify-master-success:
   extends: .slack-notifier-base
@@ -141,9 +142,10 @@ notify-master-success:
     refs:
       - master
   script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
-    - 'MESSAGE_TEXT=":rocket: browser-agent <$COMMIT_URL|$CI_COMMIT_SHORT_SHA> deployed to :datadog_staging:."'
-    - postmessage "#rum-front" "$MESSAGE_TEXT"
+    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
 notify-master-failure:
   extends: .slack-notifier-base
@@ -152,27 +154,42 @@ notify-master-failure:
     refs:
       - master
   script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
-    - postmessage "#rum-front" "$MESSAGE_TEXT"
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
-notify-prod-success:
+notify-release-ready:
+  extends: .slack-notifier-base
+  stage: pre-deploy-notify
+  only:
+    refs:
+      - tags
+  script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+
+notify-release-success:
   extends: .slack-notifier-base
   only:
     refs:
-      - prod
+      - tags
   script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
-    - 'MESSAGE_TEXT=":rocket: browser-agent <$COMMIT_URL|$CI_COMMIT_SHORT_SHA> deployed to :datadog:."'
-    - postmessage "#rum-front" "$MESSAGE_TEXT"
+    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
-notify-prod-failure:
+notify-release-failure:
   extends: .slack-notifier-base
   when: on_failure
   only:
     refs:
-      - prod
+      - tags
   script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME prod pipeline <$BUILD_URL|$CI_PIPELINE_ID> failed."'
-    - postmessage "#rum-front" "$MESSAGE_TEXT"
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
