@@ -4,14 +4,12 @@ require,lodash.merge,MIT,Copyright OpenJS Foundation and other contributors
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 require,url-polyfill,MIT,Copyright 2017 Valentin Richard
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
-dev,@types/body-parser,MIT,Copyright Microsoft Corporation
-dev,@types/cors,MIT,Copyright Microsoft Corporation
-dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
 dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
+dev,@wdio/crossbrowsertesting-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
@@ -31,19 +29,23 @@ dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-typescript-preprocessor2,MIT,Copyright 2015 Cleiton Gomes Loiola
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
+dev,lerna,MIT,Copyright 2015-present Lerna Contributors
+dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,prettier,MIT,Copyright James Long and contributors
+dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
 dev,request,Apache-2.0,
 dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
+dev,string-replace-loader,MIT,Copyright 2015 Valentyn Barmashyn
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey
+dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,tslint,Apache-2.0,
 dev,tslint-config-airbnb,Apache-2.0,Copyright 2017 Progre
 dev,tslint-config-prettier,MIT,Copyright 2017 Alex Jover Morales
 dev,tslint-eslint-rules,MIT,Copyright 2015 Vitor Buzinaro Victor Schiavi
-dev,tslint-no-unused-expression-chai,MIT,Copyright 2017 OJ Kwon
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-tslint-plugin,MIT,Copyright 2018 Microsoft
 dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
-dev,webpack-dev-server,MIT,Copyright JS Foundation and other contributors
+dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
