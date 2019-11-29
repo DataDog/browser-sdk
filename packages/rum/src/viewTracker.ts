@@ -1,7 +1,7 @@
 import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { PerformancePaintTiming, RumEvent, RumEventCategory, RumViewEvent } from './rum'
+import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
 
 export interface ViewMeasures {
   firstContentfulPaint?: number
@@ -15,12 +15,12 @@ export interface ViewMeasures {
 }
 
 export let viewId: string
+export let viewLocation: Location
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
-let activeLocation: Location
 let viewMeasures: ViewMeasures
 
 export function trackView(
@@ -51,7 +51,7 @@ function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
     longTaskCount: 0,
     userActionCount: 0,
   }
-  activeLocation = { ...location }
+  viewLocation = { ...location }
   addViewEvent(addRumEvent)
 }
 
@@ -93,7 +93,7 @@ function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void
 }
 
 function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
-  if (areDifferentViews(activeLocation, location)) {
+  if (areDifferentViews(viewLocation, location)) {
     updateView(addRumEvent)
     newView(location, addRumEvent)
   }

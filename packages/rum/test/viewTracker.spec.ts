@@ -2,7 +2,7 @@ import { Batch } from '@browser-agent/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'
-import { trackView, viewId } from '../src/viewTracker'
+import { trackView, viewId, viewLocation } from '../src/viewTracker'
 
 function setup({
   addRumEvent,
@@ -29,28 +29,33 @@ function setup({
 
 describe('rum track url change', () => {
   let initialView: string
+  let initialLocation: Location
 
   beforeEach(() => {
     setup()
     initialView = viewId
+    initialLocation = viewLocation
   })
 
   it('should update view id on path change', () => {
     history.pushState({}, '', '/bar')
 
     expect(viewId).not.toEqual(initialView)
+    expect(viewLocation).not.toEqual(initialLocation)
   })
 
   it('should not update view id on search change', () => {
     history.pushState({}, '', '/foo?bar=qux')
 
     expect(viewId).toEqual(initialView)
+    expect(viewLocation).toEqual(initialLocation)
   })
 
   it('should not update view id on hash change', () => {
     history.pushState({}, '', '/foo#bar')
 
     expect(viewId).toEqual(initialView)
+    expect(viewLocation).toEqual(initialLocation)
   })
 })
 
