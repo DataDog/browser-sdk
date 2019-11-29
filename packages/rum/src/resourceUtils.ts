@@ -83,6 +83,7 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
   return (
     startsWith(url, configuration.logsEndpoint) ||
     startsWith(url, configuration.rumEndpoint) ||
+    startsWith(url, configuration.traceEndpoint) ||
     (configuration.internalMonitoringEndpoint && startsWith(url, configuration.internalMonitoringEndpoint))
   )
 }
