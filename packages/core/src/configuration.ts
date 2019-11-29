@@ -50,6 +50,7 @@ export interface UserConfiguration {
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
   rumEndpoint: string
+  traceEndpoint: string
   internalMonitoringEndpoint?: string
 }
 
@@ -71,6 +72,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   const configuration: Configuration = {
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     rumEndpoint: getEndpoint('rum', transportConfiguration),
+    traceEndpoint: getEndpoint('public-trace', transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
@@ -108,7 +110,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   return configuration
 }
 
-function getEndpoint(type: 'browser' | 'rum', conf: TransportConfiguration, source?: string) {
+function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
   const tld = conf.datacenter === 'us' ? 'com' : 'eu'
   const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${conf.version}`

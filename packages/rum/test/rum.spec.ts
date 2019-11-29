@@ -23,6 +23,7 @@ const configuration = {
   logsEndpoint: 'logs',
   maxBatchSize: 1,
   rumEndpoint: 'rum',
+  traceEndpoint: 'trace',
 }
 
 describe('rum handle performance entry', () => {
@@ -50,6 +51,16 @@ describe('rum handle performance entry', () => {
       entry: { entryType: 'resource', name: configuration.rumEndpoint },
       expectEntryToBeAdded: false,
     },
+    {
+      description: 'type resource + trace endpoint',
+      entry: { entryType: 'resource', name: configuration.traceEndpoint },
+      expectEntryToBeAdded: false,
+    },
+    {
+      description: 'type resource + valid request',
+      entry: { entryType: 'resource', name: 'valid' },
+      expectEntryToBeAdded: true,
+    },
   ].forEach(
     ({
       description,
@@ -62,7 +73,8 @@ describe('rum handle performance entry', () => {
     }) => {
       it(description, () => {
         handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
-        expect((addRumEvent as jasmine.Spy).calls.all.length !== 0).toEqual(expectEntryToBeAdded)
+        const entryAdded = (addRumEvent as jasmine.Spy).calls.all().length !== 0
+        expect(entryAdded).toEqual(expectEntryToBeAdded)
       })
     }
   )
