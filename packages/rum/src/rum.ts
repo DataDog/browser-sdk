@@ -22,7 +22,7 @@ import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { trackView, viewId, ViewMeasures } from './viewTracker'
+import { trackView, viewId, viewLocation, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -148,13 +148,13 @@ export function startRum(
           screen: {
             // needed for retro compatibility
             id: viewId,
-            url: window.location.href,
+            url: viewLocation.href,
           },
           sessionId: session.getId(),
           view: {
             id: viewId,
             referrer: document.referrer,
-            url: window.location.href,
+            url: viewLocation.href,
           },
         },
         globalContext
