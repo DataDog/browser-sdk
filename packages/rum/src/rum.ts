@@ -134,45 +134,32 @@ export function startRum(
 ): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
 
-  const batch = new Batch<RumEvent>(
-    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () =>
-      lodashMerge(
-        {
-          applicationId,
-          date: new Date().getTime(),
-          screen: {
-            // needed for retro compatibility
-            id: viewId,
-            url: viewLocation.href,
-          },
-          sessionId: session.getId(),
-          view: {
-            id: viewId,
-            referrer: document.referrer,
-            url: viewLocation.href,
-          },
-        },
-        globalContext
-      ),
-    withSnakeCaseKeys
+  const batch = startRumBatch(
+    configuration,
+    session,
+    () => ({
+      applicationId,
+      date: new Date().getTime(),
+      screen: {
+        // needed for retro compatibility
+        id: viewId,
+        url: viewLocation.href,
+      },
+      sessionId: session.getId(),
+      view: {
+        id: viewId,
+        referrer: document.referrer,
+        url: viewLocation.href,
+      },
+    }),
+    () => globalContext
   )
 
-  const addRumEvent = (event: RumEvent) => {
-    if (session.isTracked()) {
-      batch.add(event)
-    }
-  }
-
-  trackView(batch, window.location, lifeCycle, addRumEvent)
-  trackErrors(lifeCycle, addRumEvent)
-  trackRequests(configuration, lifeCycle, session, addRumEvent)
-  trackPerformanceTiming(configuration, lifeCycle, addRumEvent)
-  trackUserAction(lifeCycle, addRumEvent)
+  trackView(window.location, lifeCycle, batch.addRumEvent, batch.beforeFlushOnUnload)
+  trackErrors(lifeCycle, batch.addRumEvent)
+  trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
+  trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
+  trackUserAction(lifeCycle, batch.addRumEvent)
 
   return {
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
@@ -193,6 +180,31 @@ export function startRum(
     setRumGlobalContext: monitor((context: Context) => {
       globalContext = context
     }),
+  }
+}
+
+function startRumBatch(
+  configuration: Configuration,
+  session: RumSession,
+  rumContextProvider: () => Context,
+  globalContextProvider: () => Context
+) {
+  const batch = new Batch<RumEvent>(
+    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit),
+    configuration.maxBatchSize,
+    configuration.batchBytesLimit,
+    configuration.maxMessageSize,
+    configuration.flushTimeout,
+    () => lodashMerge(rumContextProvider(), globalContextProvider()),
+    withSnakeCaseKeys
+  )
+  return {
+    addRumEvent: (event: RumEvent) => {
+      if (session.isTracked()) {
+        batch.add(event)
+      }
+    },
+    beforeFlushOnUnload: (handler: () => void) => batch.beforeFlushOnUnload(handler),
   }
 }
 
