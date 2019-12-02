@@ -173,7 +173,6 @@ describe('internal monitoring', () => {
 
       expect(JSON.parse(server.requests[0].requestBody)).toEqual({
         date: FAKE_DATE,
-        entry_type: 'internal',
         error: jasmine.anything(),
         message: 'message',
         status: 'error',

@@ -14,7 +14,6 @@ enum StatusType {
 }
 
 export interface MonitoringMessage {
-  entryType: 'internal'
   message: string
   status: StatusType
   error?: {
@@ -47,8 +46,7 @@ export function startInternalMonitoring(configuration: Configuration) {
         referrer: document.referrer,
         url: window.location.href,
       },
-    }),
-    utils.withSnakeCaseKeys
+    })
   )
 
   lodashAssign(monitoringConfiguration, {
@@ -88,7 +86,6 @@ export function monitor<T extends Function>(fn: T): T {
 export function addMonitoringMessage(message: string) {
   addToMonitoringBatch({
     message,
-    entryType: 'internal',
     status: StatusType.info,
   })
 }
@@ -96,7 +93,6 @@ export function addMonitoringMessage(message: string) {
 function addErrorToMonitoringBatch(e: unknown) {
   addToMonitoringBatch({
     ...formatError(e),
-    entryType: 'internal',
     status: StatusType.error,
   })
 }
