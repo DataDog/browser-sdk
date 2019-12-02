@@ -10,7 +10,7 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
+import { handleResourceEntry, RumEvent, RumResourceEvent, startRum, UserAction } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
@@ -143,6 +143,7 @@ describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestDetails> = { url: 'http://foo.com' }
+  const FAKE_USER_ACTION: UserAction = { name: 'action', context: { foo: 'bar' } }
   let server: sinon.SinonFakeServer
   let original: PerformanceObserver | undefined
   let stubBuilder: PerformanceObserverStubBuilder
@@ -176,8 +177,9 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION)
 
-    expect(server.requests.length).toEqual(3)
+    expect(server.requests.length).toEqual(4)
   })
 
   it('when tracked without resources should not track resources', () => {
@@ -213,6 +215,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
     lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -336,5 +339,36 @@ describe('rum global context', () => {
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
     expect((getRumMessage(server, 1) as any).foo).toEqual('bar')
     expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
+  })
+
+  it('should not be automatically snake cased', () => {
+    RUM.setRumGlobalContext({ fooBar: 'foo' })
+    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+
+    expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
+  })
+})
+
+describe('rum user action', () => {
+  let lifeCycle: LifeCycle
+  let RUM: RumApi
+  let server: sinon.SinonFakeServer
+
+  beforeEach(() => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    server = sinon.fakeServer.create()
+    lifeCycle = new LifeCycle()
+    RUM = startRum('appId', lifeCycle, configuration as Configuration, session) as RumApi
+    server.requests = []
+  })
+
+  it('should not be automatically snake cased', () => {
+    lifeCycle.notify(LifeCycleEventType.userAction, { name: 'hello', context: { fooBar: 'foo' } })
+
+    expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })
 })
