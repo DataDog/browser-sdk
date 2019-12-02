@@ -39,8 +39,7 @@ export class Batch<T> {
     private bytesLimit: number,
     private maxMessageSize: number,
     private flushTimeout: number,
-    private contextProvider: () => Context,
-    private messageProcessor?: (message: Context) => Context
+    private contextProvider: () => Context
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()
@@ -82,10 +81,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    let contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
-    if (this.messageProcessor) {
-      contextualizedMessage = this.messageProcessor(contextualizedMessage)
-    }
+    const contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
