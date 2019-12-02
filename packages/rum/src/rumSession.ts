@@ -1,4 +1,4 @@
-import { Configuration, performDraw, startSessionManagement } from '@browser-agent/core'
+import { Configuration, performDraw, startSessionManagement } from '@browser-sdk/core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_COOKIE_NAME = '_dd_r'

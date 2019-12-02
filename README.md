@@ -1,6 +1,6 @@
-# Datadog Browser Agent
+# Datadog Browser SDK
 
-The browser agent is used to collect logs and RUM data from the browser.
+The browser SDK is used to collect logs and RUM data from the browser.
 It's bundled into four files which are distributed through Cloudfront:
 
 - `https://www.datadoghq-browser-agent.com/datadog-logs-(eu|us).js`

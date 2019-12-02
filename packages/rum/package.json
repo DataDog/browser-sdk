@@ -13,7 +13,7 @@
     "replace-build-env": "node ../../replace-build-env.js"
   },
   "dependencies": {
-    "@browser-agent/core": "^1.1.0",
+    "@browser-sdk/core": "^1.1.0",
     "lodash.assign": "4.2.0",
     "lodash.merge": "4.6.2",
     "tslib": "1.10.0"

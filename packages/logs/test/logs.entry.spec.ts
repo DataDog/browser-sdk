@@ -1,4 +1,4 @@
-import { monitor, stopSessionManagement } from '@browser-agent/core'
+import { monitor, stopSessionManagement } from '@browser-sdk/core'
 import { LogsGlobal } from '../src'
 
 describe('logs entry', () => {

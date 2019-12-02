@@ -1,4 +1,4 @@
-import { ErrorContext, HttpContext, MonitoringMessage } from '@browser-agent/core'
+import { ErrorContext, HttpContext, MonitoringMessage } from '@browser-sdk/core'
 import { LogsMessage } from 'datadog-logs'
 import { RumEvent, RumViewEvent } from 'datadog-rum'
 import * as request from 'request'

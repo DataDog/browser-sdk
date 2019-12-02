@@ -14,7 +14,7 @@ import {
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
-} from '@browser-agent/core'
+} from '@browser-sdk/core'
 import lodashMerge from 'lodash.merge'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

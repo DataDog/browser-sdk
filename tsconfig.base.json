@@ -13,7 +13,7 @@
       }
     ],
     "paths": {
-      "@browser-agent/core": ["./packages/core/src"]
+      "@browser-sdk/core": ["./packages/core/src"]
     }
   }
 }

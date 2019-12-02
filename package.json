@@ -1,6 +1,6 @@
 {
-  "name": "browser-agent",
-  "description": "browser agent",
+  "name": "browser-sdk",
+  "description": "browser SDK",
   "private": true,
   "workspaces": [
     "packages/*"

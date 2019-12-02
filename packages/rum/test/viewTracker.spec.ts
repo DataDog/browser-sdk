@@ -1,4 +1,4 @@
-import { Batch } from '@browser-agent/core'
+import { Batch } from '@browser-sdk/core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'

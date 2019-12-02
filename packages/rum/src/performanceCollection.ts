@@ -1,4 +1,4 @@
-import { getRelativeTime, monitor } from '@browser-agent/core'
+import { getRelativeTime, monitor } from '@browser-sdk/core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
