@@ -162,24 +162,4 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
     warnStub.restore()
   })
-
-  it('should allow to add a custom message processor', () => {
-    batch = new Batch(
-      transport,
-      MAX_SIZE,
-      BATCH_BYTES_LIMIT,
-      MESSAGE_BYTES_LIMIT,
-      FLUSH_TIMEOUT,
-      () => ({}),
-      (message: Context) => {
-        message.message = `*** ${message.message} ***`
-        return message
-      }
-    )
-
-    batch.add({ message: 'hello' })
-    batch.flush()
-
-    expect(transport.send).toHaveBeenCalledWith(`{"message":"*** hello ***"}`, jasmine.any(Number))
-  })
 })

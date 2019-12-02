@@ -1,5 +1,3 @@
-import { Batch } from '@browser-sdk/core'
-
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'
 import { trackView, viewId, viewLocation } from '../src/viewTracker'
@@ -18,13 +16,7 @@ function setup({
     fakeLocation.hash = url.hash
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  const fakeBatch: Partial<Batch<RumEvent>> = { beforeFlushOnUnload: () => undefined }
-  trackView(
-    fakeBatch as Batch<RumEvent>,
-    fakeLocation as Location,
-    lifeCycle || new LifeCycle(),
-    addRumEvent || (() => undefined)
-  )
+  trackView(fakeLocation as Location, lifeCycle || new LifeCycle(), addRumEvent || (() => undefined), () => undefined)
 }
 
 describe('rum track url change', () => {

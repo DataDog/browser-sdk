@@ -24,10 +24,10 @@ let documentVersion: number
 let viewMeasures: ViewMeasures
 
 export function trackView(
-  batch: Batch<RumEvent>,
   location: Location,
   lifeCycle: LifeCycle,
-  addRumEvent: (event: RumEvent) => void
+  addRumEvent: (event: RumEvent) => void,
+  beforeFlushOnUnload: (handler: () => void) => void
 ) {
   const scheduleViewUpdate = throttle(monitor(() => updateView(addRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
     leading: false,
@@ -38,7 +38,7 @@ export function trackView(
   trackMeasures(lifeCycle, scheduleViewUpdate)
   trackRenewSession(location, lifeCycle, addRumEvent)
 
-  batch.beforeFlushOnUnload(() => updateView(addRumEvent))
+  beforeFlushOnUnload(() => updateView(addRumEvent))
 }
 
 function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
