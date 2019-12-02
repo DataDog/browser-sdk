@@ -5,7 +5,7 @@
     "outDir": "./bundle/",
     "module": "es6",
     "paths": {
-      "@browser-agent/core": ["../core/src"]
+      "@browser-sdk/core": ["../core/src"]
     }
   },
   "include": ["src", "test"]

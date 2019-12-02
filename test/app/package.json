@@ -9,7 +9,7 @@
     "datadog-rum": "file:../../packages/rum"
   },
   "resolutions": {
-    "@browser-agent/core": "file:../../packages/core"
+    "@browser-sdk/core": "file:../../packages/core"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",

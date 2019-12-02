@@ -14,7 +14,7 @@
     "paths": {
       "datadog-logs": ["../../../packages/logs/src"],
       "datadog-rum": ["../../../packages/rum/src"],
-      "@browser-agent/core": ["../../../packages/core/src"]
+      "@browser-sdk/core": ["../../../packages/core/src"]
     }
   },
   "include": ["./**/*.ts"]

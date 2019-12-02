@@ -9,7 +9,7 @@ import {
   monitor,
   startRequestCollection,
   UserConfiguration,
-} from '@browser-agent/core'
+} from '@browser-sdk/core'
 import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'

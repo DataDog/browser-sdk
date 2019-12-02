@@ -9,7 +9,7 @@ import {
   HttpRequest,
   monitored,
   noop,
-} from '@browser-agent/core'
+} from '@browser-sdk/core'
 import lodashMerge from 'lodash.merge'
 
 import { LoggerSession } from './loggerSession'

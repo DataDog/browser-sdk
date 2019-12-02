@@ -5,7 +5,7 @@ import {
   isIE,
   PerformanceObserverStubBuilder,
   RequestDetails,
-} from '@browser-agent/core'
+} from '@browser-sdk/core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'

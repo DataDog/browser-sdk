@@ -1,4 +1,4 @@
-import { Configuration, performDraw, startSessionManagement } from '@browser-agent/core'
+import { Configuration, performDraw, startSessionManagement } from '@browser-sdk/core'
 
 export const LOGGER_COOKIE_NAME = '_dd_l'
 

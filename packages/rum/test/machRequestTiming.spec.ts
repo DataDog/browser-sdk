@@ -1,4 +1,4 @@
-import { isIE, RequestDetails } from '@browser-agent/core'
+import { isIE, RequestDetails } from '@browser-sdk/core'
 
 import { matchRequestTiming } from '../src/matchRequestTiming'
 

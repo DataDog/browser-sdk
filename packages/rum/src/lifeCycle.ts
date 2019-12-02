@@ -1,4 +1,4 @@
-import { ErrorMessage, RequestDetails } from '@browser-agent/core'
+import { ErrorMessage, RequestDetails } from '@browser-sdk/core'
 import { UserAction } from './rum'
 
 export enum LifeCycleEventType {

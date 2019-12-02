@@ -1,4 +1,4 @@
-import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@browser-agent/core'
+import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@browser-sdk/core'
 
 import { PerformanceResourceDetails } from './rum'
 
