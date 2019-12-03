@@ -276,6 +276,7 @@ export function trackRequests(
       },
       traceId: requestDetails.traceId,
     })
+    lifeCycle.notify(LifeCycleEventType.rumResource)
   })
 }
 
@@ -287,7 +288,7 @@ function trackPerformanceTiming(
   lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
     switch (entry.entryType) {
       case 'resource':
-        handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent)
+        handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent, lifeCycle)
         break
       case 'longtask':
         handleLongTaskEntry(entry as PerformanceLongTaskTiming, addRumEvent)
@@ -301,7 +302,8 @@ function trackPerformanceTiming(
 export function handleResourceEntry(
   configuration: Configuration,
   entry: PerformanceResourceTiming,
-  addRumEvent: (event: RumEvent) => void
+  addRumEvent: (event: RumEvent) => void,
+  lifeCycle: LifeCycle
 ) {
   if (!isValidResource(entry.name, configuration)) {
     return
@@ -326,6 +328,7 @@ export function handleResourceEntry(
       kind: resourceKind,
     },
   })
+  lifeCycle.notify(LifeCycleEventType.rumResource)
 }
 
 export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {

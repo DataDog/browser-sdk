@@ -132,6 +132,21 @@ describe('rum view measures', () => {
     expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
   })
 
+  it('should track resource count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.rumResource)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
+  })
+
   it('should track user action count', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
@@ -155,6 +170,7 @@ describe('rum view measures', () => {
     expect(getViewEvent(0).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
 
@@ -171,11 +187,13 @@ describe('rum view measures', () => {
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
     expect(getViewEvent(2).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
   })

@@ -9,9 +9,10 @@ export interface ViewMeasures {
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
-  userActionCount: number
   errorCount: number
+  resourceCount: number
   longTaskCount: number
+  userActionCount: number
 }
 
 export let viewId: string
@@ -49,6 +50,7 @@ function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
   viewMeasures = {
     errorCount: 0,
     longTaskCount: 0,
+    resourceCount: 0,
     userActionCount: 0,
   }
   viewLocation = { ...location }
@@ -137,6 +139,10 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       viewMeasures.longTaskCount += 1
       scheduleViewUpdate()
     }
+  })
+  lifeCycle.subscribe(LifeCycleEventType.rumResource, () => {
+    viewMeasures.resourceCount += 1
+    scheduleViewUpdate()
   })
 }
 

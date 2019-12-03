@@ -72,7 +72,12 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
-        handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+        handleResourceEntry(
+          configuration as Configuration,
+          entry as PerformanceResourceTiming,
+          addRumEvent,
+          new LifeCycle()
+        )
         const entryAdded = (addRumEvent as jasmine.Spy).calls.all().length !== 0
         expect(entryAdded).toEqual(expectEntryToBeAdded)
       })
@@ -115,7 +120,12 @@ describe('rum handle performance entry', () => {
       it(`should compute resource kind: ${description}`, () => {
         const entry: Partial<PerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
-        handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+        handleResourceEntry(
+          configuration as Configuration,
+          entry as PerformanceResourceTiming,
+          addRumEvent,
+          new LifeCycle()
+        )
         const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
       })
@@ -132,7 +142,12 @@ describe('rum handle performance entry', () => {
       responseStart: 25,
     }
 
-    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, addRumEvent)
+    handleResourceEntry(
+      configuration as Configuration,
+      entry as PerformanceResourceTiming,
+      addRumEvent,
+      new LifeCycle()
+    )
     const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
