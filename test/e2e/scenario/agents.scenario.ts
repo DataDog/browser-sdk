@@ -121,6 +121,7 @@ describe('rum', () => {
       error_count: 0,
       load_event_end: strictlyPositiveNumber(),
       long_task_count: 0,
+      resource_count: 0,
       user_action_count: 0,
     } as any)
   })
