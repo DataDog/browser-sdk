@@ -81,7 +81,7 @@ unit-cbt:
   image: $CI_IMAGE
   script:
     - yarn
-    - ./ci-cbt.sh test:unit
+    - ./scripts/ci-cbt.sh test:unit
 
 e2e-cbt:
   except:
@@ -93,7 +93,7 @@ e2e-cbt:
   image: $CI_IMAGE
   script:
     - yarn
-    - ./ci-cbt.sh test:e2e
+    - ./scripts/ci-cbt.sh test:e2e
 
 deploy-staging:
   only:
@@ -105,9 +105,9 @@ deploy-staging:
   script:
     - yarn
     - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=staging yarn build:bundle
-    - ./deploy.sh staging eu
+    - ./scripts/deploy.sh staging eu
     - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=staging yarn build:bundle
-    - ./deploy.sh staging us
+    - ./scripts/deploy.sh staging us
 
 deploy-release:
   only:
@@ -121,9 +121,9 @@ deploy-release:
   script:
     - yarn
     - TARGET_DATACENTER=eu TARGET_ENV=production VERSION=release yarn build:bundle
-    - ./deploy.sh prod eu
+    - ./scripts/deploy.sh prod eu
     - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
-    - ./deploy.sh prod us
+    - ./scripts/deploy.sh prod us
 
 ########################################################################################################################
 # Notify
