@@ -58,7 +58,7 @@ export function trackXhr(observable: RequestObservable) {
   })
 
   const originalSend = XMLHttpRequest.prototype.send
-  XMLHttpRequest.prototype.send = monitor(function(this: XMLHttpRequest, body: unknown) {
+  XMLHttpRequest.prototype.send = function(this: XMLHttpRequest, body: unknown) {
     const startTime = performance.now()
     const reportXhr = () => {
       observable.notify({
@@ -76,7 +76,7 @@ export function trackXhr(observable: RequestObservable) {
     this.addEventListener('loadend', monitor(reportXhr))
 
     return originalSend.apply(this, arguments as any)
-  })
+  }
 }
 
 function getTraceId(): number | undefined {
