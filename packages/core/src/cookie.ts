@@ -48,7 +48,7 @@ export function getCookie(name: string) {
 }
 
 export function areCookiesAuthorized(): boolean {
-  if (document.cookie === undefined) {
+  if (document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {
