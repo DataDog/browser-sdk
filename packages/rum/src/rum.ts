@@ -77,9 +77,6 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  rum?: {
-    requestCount: number
-  }
   traceId?: number
 }
 
@@ -90,9 +87,6 @@ export interface RumErrorEvent {
     category: RumEventCategory.ERROR
   }
   message: string
-  rum: {
-    errorCount: number
-  }
 }
 
 export interface RumViewEvent {
@@ -219,9 +213,6 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => voi
       evt: {
         category: RumEventCategory.ERROR,
       },
-      rum: {
-        errorCount: 1,
-      },
       ...context,
     })
   })
@@ -270,9 +261,6 @@ export function trackRequests(
       },
       resource: {
         kind,
-      },
-      rum: {
-        requestCount: 1,
       },
       traceId: requestDetails.traceId,
     })
