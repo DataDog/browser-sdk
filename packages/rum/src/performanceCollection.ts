@@ -80,7 +80,7 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
 
 function handlePerformanceEntries(session: RumSession, lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
   function notify(entry: PerformanceEntry) {
-    lifeCycle.notify(LifeCycleEventType.performance, entry)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry)
   }
 
   if (session.isTrackedWithResource()) {

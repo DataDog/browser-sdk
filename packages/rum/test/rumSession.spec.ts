@@ -34,7 +34,7 @@ describe('rum session', () => {
     jasmine.clock().mockDate(new Date())
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
     lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.renewSession, renewSessionSpy)
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
   })
 
   afterEach(() => {

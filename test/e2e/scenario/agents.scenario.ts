@@ -16,7 +16,7 @@ import {
   tearDown,
   withBrowserLogs,
 } from './helpers'
-import { strictlyPositiveNumber } from './matchers'
+import { positiveNumber, strictlyPositiveNumber } from './matchers'
 
 beforeEach(() => {
   // tslint:disable-next-line: no-unsafe-any
@@ -121,6 +121,7 @@ describe('rum', () => {
       error_count: 0,
       load_event_end: strictlyPositiveNumber(),
       long_task_count: 0,
+      resource_count: positiveNumber(), // some browsers can send a resource for the page load
       user_action_count: 0,
     } as any)
   })

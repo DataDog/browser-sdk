@@ -58,7 +58,7 @@ describe('rum track renew session', () => {
       lifeCycle,
     })
     const initialView = viewId
-    lifeCycle.notify(LifeCycleEventType.renewSession)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(viewId).not.toEqual(initialView)
   })
@@ -108,8 +108,8 @@ describe('rum view measures', () => {
     expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.errorCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.error, {} as any)
-    lifeCycle.notify(LifeCycleEventType.error, {} as any)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
@@ -124,12 +124,27 @@ describe('rum view measures', () => {
     expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.longTaskCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.performance, FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures.longTaskCount).toEqual(1)
     expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
+  })
+
+  it('should track resource count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
   })
 
   it('should track user action count', () => {
@@ -139,7 +154,7 @@ describe('rum view measures', () => {
     expect(getEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION as UserAction)
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
@@ -155,11 +170,15 @@ describe('rum view measures', () => {
     expect(getViewEvent(0).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
 
-    lifeCycle.notify(LifeCycleEventType.performance, FAKE_PAINT_ENTRY as PerformancePaintTiming)
-    lifeCycle.notify(LifeCycleEventType.performance, FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
     history.pushState({}, '', '/bar')
 
     expect(getEventCount()).toEqual(3)
@@ -171,11 +190,13 @@ describe('rum view measures', () => {
       firstContentfulPaint: 123e6,
       loadEventEnd: 567e6,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
     expect(getViewEvent(2).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
+      resourceCount: 0,
       userActionCount: 0,
     })
   })
