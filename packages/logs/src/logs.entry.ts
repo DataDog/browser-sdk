@@ -1,9 +1,9 @@
 import {
-  areCookiesAuthorized,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
+  isValidBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
@@ -77,25 +77,13 @@ export type LogsGlobal = typeof STUBBED_LOGS
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
 let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (isAlreadyInitialized) {
-    console.error('DD_LOGS is already initialized.')
+  if (!isValidBrowsingContext() || !canInitLogs(userConfiguration)) {
     return
   }
-  if (!areCookiesAuthorized()) {
-    console.error('Cookies are not authorized, we will not send any data.')
-    return
-  }
-  if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
-    console.error('Client Token is not configured, we will not send any data.')
-    return
-  }
+
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
     console.warn('Public API Key is deprecated. Please use Client Token instead.')
-  }
-  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
-    console.error('Sample Rate should be a number between 0 and 100')
-    return
   }
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const logsUserConfiguration = {
@@ -108,6 +96,22 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
   lodashAssign(datadogLogs, globalApi)
   isAlreadyInitialized = true
 })
+
+function canInitLogs(userConfiguration: LogsUserConfiguration) {
+  if (isAlreadyInitialized) {
+    console.error('DD_LOGS is already initialized.')
+    return false
+  }
+  if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
+    console.error('Client Token is not configured, we will not send any data.')
+    return false
+  }
+  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    console.error('Sample Rate should be a number between 0 and 100')
+    return false
+  }
+  return true
+}
 
 declare global {
   interface Window {

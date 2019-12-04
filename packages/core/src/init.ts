@@ -1,4 +1,5 @@
 import { buildConfiguration, UserConfiguration } from './configuration'
+import { areCookiesAuthorized } from './cookie'
 import { startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
 
@@ -29,6 +30,7 @@ export interface BuildEnv {
   env: Environment
   version: string
 }
+
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   startInternalMonitoring(configuration)
@@ -38,4 +40,12 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
     configuration,
     errorObservable,
   }
+}
+
+export function isValidBrowsingContext() {
+  if (!areCookiesAuthorized()) {
+    console.error('Cookies are not authorized, we will not send any data.')
+    return false
+  }
+  return true
 }

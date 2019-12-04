@@ -1,9 +1,9 @@
 import {
-  areCookiesAuthorized,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
+  isValidBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
@@ -54,32 +54,11 @@ export type RumGlobal = typeof STUBBED_RUM
 export const datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (isAlreadyInitialized) {
-    console.error('DD_RUM is already initialized.')
-    return
-  }
-  if (!areCookiesAuthorized()) {
-    console.error('Cookies are not authorized, we will not send any data.')
-    return
-  }
-  if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
-    console.error('Client Token is not configured, we will not send any data.')
+  if (!isValidBrowsingContext() || !canInitRum(userConfiguration)) {
     return
   }
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
-  }
-  if (!userConfiguration.applicationId) {
-    console.error('Application ID is not configured, no RUM data will be collected.')
-    return
-  }
-  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
-    console.error('Sample Rate should be a number between 0 and 100')
-    return
-  }
-  if (userConfiguration.resourceSampleRate !== undefined && !isPercentage(userConfiguration.resourceSampleRate)) {
-    console.error('Resource Sample Rate should be a number between 0 and 100')
-    return
   }
   const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
   const lifeCycle = new LifeCycle()
@@ -98,6 +77,30 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   lodashAssign(datadogRum, globalApi)
   isAlreadyInitialized = true
 })
+
+function canInitRum(userConfiguration: RumUserConfiguration) {
+  if (isAlreadyInitialized) {
+    console.error('DD_RUM is already initialized.')
+    return false
+  }
+  if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
+    console.error('Client Token is not configured, we will not send any data.')
+    return false
+  }
+  if (!userConfiguration.applicationId) {
+    console.error('Application ID is not configured, no RUM data will be collected.')
+    return false
+  }
+  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    console.error('Sample Rate should be a number between 0 and 100')
+    return false
+  }
+  if (userConfiguration.resourceSampleRate !== undefined && !isPercentage(userConfiguration.resourceSampleRate)) {
+    console.error('Resource Sample Rate should be a number between 0 and 100')
+    return false
+  }
+  return true
+}
 
 declare global {
   interface Window {
