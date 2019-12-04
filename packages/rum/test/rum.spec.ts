@@ -190,9 +190,9 @@ describe('rum session', () => {
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
-    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(4)
   })
@@ -209,10 +209,10 @@ describe('rum session', () => {
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     expect(server.requests.length).toEqual(1)
   })
 
@@ -228,9 +228,9 @@ describe('rum session', () => {
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.userAction, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -271,15 +271,15 @@ describe('rum session', () => {
     startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(1)
 
     isTrackedWithResource = false
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(1)
 
     isTrackedWithResource = true
-    lifeCycle.notify(LifeCycleEventType.request, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(2)
   })
 })
@@ -340,16 +340,16 @@ describe('rum global context', () => {
 
   it('should be added to the request', () => {
     RUM.setRumGlobalContext({ bar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
   it('should be updatable', () => {
     RUM.setRumGlobalContext({ bar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     RUM.setRumGlobalContext({ foo: 'bar' })
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
     expect((getRumMessage(server, 1) as any).foo).toEqual('bar')
@@ -358,7 +358,7 @@ describe('rum global context', () => {
 
   it('should not be automatically snake cased', () => {
     RUM.setRumGlobalContext({ fooBar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.error, FAKE_ERROR as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })
@@ -382,7 +382,7 @@ describe('rum user action', () => {
   })
 
   it('should not be automatically snake cased', () => {
-    lifeCycle.notify(LifeCycleEventType.userAction, { name: 'hello', context: { fooBar: 'foo' } })
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { name: 'hello', context: { fooBar: 'foo' } })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })

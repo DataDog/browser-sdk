@@ -166,7 +166,7 @@ export function startRum(
       globalContext[key] = value
     }),
     addUserAction: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.userAction, { name, context })
+      lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { name, context })
     }),
     getInternalContext: monitor(() => {
       return {
@@ -213,7 +213,7 @@ function startRumBatch(
 }
 
 function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.error, ({ message, context }: ErrorMessage) => {
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, context }: ErrorMessage) => {
     addRumEvent({
       message,
       evt: {
@@ -228,7 +228,7 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => voi
 }
 
 function trackUserAction(lifeCycle: LifeCycle, addUserEvent: (event: RumUserAction) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.userAction, ({ name, context }) => {
+  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, ({ name, context }) => {
     addUserEvent({
       ...context,
       evt: {
@@ -245,7 +245,7 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.request, (requestDetails: RequestDetails) => {
+  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COLLECTED, (requestDetails: RequestDetails) => {
     if (!session.isTrackedWithResource()) {
       return
     }
@@ -276,7 +276,7 @@ export function trackRequests(
       },
       traceId: requestDetails.traceId,
     })
-    lifeCycle.notify(LifeCycleEventType.rumResource)
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })
 }
 
@@ -285,7 +285,7 @@ function trackPerformanceTiming(
   lifeCycle: LifeCycle,
   addRumEvent: (event: RumEvent) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
+  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     switch (entry.entryType) {
       case 'resource':
         handleResourceEntry(configuration, entry as PerformanceResourceTiming, addRumEvent, lifeCycle)
@@ -328,7 +328,7 @@ export function handleResourceEntry(
       kind: resourceKind,
     },
   })
-  lifeCycle.notify(LifeCycleEventType.rumResource)
+  lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }
 
 export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {

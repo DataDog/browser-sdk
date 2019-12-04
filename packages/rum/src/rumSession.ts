@@ -19,7 +19,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
   const session = startSessionManagement(RUM_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
 
   session.renewObservable.subscribe(() => {
-    lifeCycle.notify(LifeCycleEventType.renewSession)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
   return {

@@ -106,7 +106,7 @@ function areDifferentViews(previous: Location, current: Location) {
 }
 
 function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
-  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
+  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
       viewMeasures = {
@@ -126,28 +126,28 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       scheduleViewUpdate()
     }
   })
-  lifeCycle.subscribe(LifeCycleEventType.error, () => {
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, () => {
     viewMeasures.errorCount += 1
     scheduleViewUpdate()
   })
-  lifeCycle.subscribe(LifeCycleEventType.userAction, () => {
+  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, () => {
     viewMeasures.userActionCount += 1
     scheduleViewUpdate()
   })
-  lifeCycle.subscribe(LifeCycleEventType.performance, (entry) => {
+  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'longtask') {
       viewMeasures.longTaskCount += 1
       scheduleViewUpdate()
     }
   })
-  lifeCycle.subscribe(LifeCycleEventType.rumResource, () => {
+  lifeCycle.subscribe(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH, () => {
     viewMeasures.resourceCount += 1
     scheduleViewUpdate()
   })
 }
 
 function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.renewSession, () => {
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     updateView(addRumEvent)
     newView(location, addRumEvent)
   })
