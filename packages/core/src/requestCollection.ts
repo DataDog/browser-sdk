@@ -103,7 +103,7 @@ export function trackFetch(observable: RequestObservable) {
     const reportFetchError = async (response: Response | Error) => {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-      if ('stack' in response) {
+      if ('stack' in response || response instanceof Error) {
         const stackTrace = computeStackTrace(response)
         observable.notify({
           duration,
