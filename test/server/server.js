@@ -8,7 +8,7 @@ const webpack = require('webpack')
 const logsConfig = require('../../packages/logs/webpack.config')
 const rumConfig = require('../../packages/rum/webpack.config')
 const fakeBackend = require('./fake-backend')
-const buildEnv = require('.././../build-env')
+const buildEnv = require('../../scripts/build-env')
 
 let port = 3000
 const app = express()

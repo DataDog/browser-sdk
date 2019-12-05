@@ -1,5 +1,5 @@
 const execSync = require('child_process').execSync
-const lernaJson = require('./lerna.json')
+const lernaJson = require('../lerna.json')
 
 let version
 switch (process.env.VERSION) {
