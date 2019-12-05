@@ -74,10 +74,6 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    if (browser.capabilities.browserName === 'Safari') {
-      pending('XHR timings is not fully supported in Safari yet')
-    }
-
     await browserExecuteAsync((baseUrl, done) => {
       let loaded = false
       const xhr = new XMLHttpRequest()
@@ -104,7 +100,6 @@ describe('rum', () => {
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
     expect(timing.http.performance!.download.start).toBeGreaterThan(0)
-    expect(timing.http.performance!.download.duration).toBeGreaterThan(0)
   })
 
   it('should send performance timings along the view events', async () => {
@@ -189,10 +184,6 @@ describe('error collection', () => {
   })
 
   it('should track fetch error', async () => {
-    if (browser.capabilities.browserName === 'Safari') {
-      pending('fetch patching is not fully supported in Safari yet')
-    }
-
     await browserExecuteAsync(
       (baseUrl, unreachableUrl, done) => {
         let count = 0
@@ -223,6 +214,6 @@ describe('error collection', () => {
 
     expect(logs[1].message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http.status_code).toEqual(0)
-    expect(logs[1].error.stack).toEqual('TypeError: Failed to fetch')
+    expect(logs[1].error.stack).toContain('TypeError')
   })
 })
