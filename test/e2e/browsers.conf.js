@@ -34,4 +34,14 @@ module.exports = [
     browserName: 'Chrome Mobile 75',
     browser_api_name: 'MblChrome75',
   },
+  // Safari mobile on iOS 12.0 does not support
+  // the way we flush events on page change
+  // wait for more recent version available on cbt
+  // {
+  //   deviceName: "iPhone XR Simulator",
+  //   platformName: "iOS",
+  //   platformVersion: "12.0",
+  //   browserName: "Safari",
+  //   deviceOrientation: 'portrait'
+  // },
 ]
