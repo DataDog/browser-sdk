@@ -29,4 +29,9 @@ module.exports = [
     browserName: 'Firefox 70',
     browser_api_name: 'FF70',
   },
+  {
+    os_api_name: 'GalaxyS9-And90',
+    browserName: 'Chrome Mobile 75',
+    browser_api_name: 'MblChrome75',
+  },
 ]
