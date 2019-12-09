@@ -17,6 +17,7 @@ export interface RequestDetails {
   url: string
   status: number
   response?: string
+  responseType?: string
   startTime: number
   duration: number
   traceId?: number
@@ -100,7 +101,7 @@ export function trackFetch(observable: RequestObservable) {
   window.fetch = monitor(function(this: GlobalFetch['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
-    const reportFetchError = async (response: Response | Error) => {
+    const reportFetch = async (response: Response | Error) => {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response || response instanceof Error) {
@@ -122,13 +123,14 @@ export function trackFetch(observable: RequestObservable) {
           startTime,
           url,
           response: text,
+          responseType: response.type,
           status: response.status,
           type: RequestType.FETCH,
         })
       }
     }
     const responsePromise = originalFetch.call(this, input, init)
-    responsePromise.then(monitor(reportFetchError), monitor(reportFetchError))
+    responsePromise.then(monitor(reportFetch), monitor(reportFetch))
     return responsePromise
   })
 }
@@ -138,7 +140,7 @@ export function normalizeUrl(url: string) {
 }
 
 export function isRejected(request: RequestDetails) {
-  return request.status === 0
+  return request.status === 0 && request.responseType !== 'opaque'
 }
 
 export function isServerError(request: RequestDetails) {
