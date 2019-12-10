@@ -19,4 +19,14 @@ module.exports = [
     browserName: 'Safari',
     browser_api_name: 'Safari12',
   },
+  {
+    os_api_name: 'Win10',
+    browserName: 'Microsoft Edge 18',
+    browser_api_name: 'Edge18',
+  },
+  {
+    os_api_name: 'Win10',
+    browserName: 'Firefox 70',
+    browser_api_name: 'FF70',
+  },
 ]
