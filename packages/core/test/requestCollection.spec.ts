@@ -1,5 +1,12 @@
 import { Observable } from '../src/observable'
-import { normalizeUrl, RequestDetails, RequestType, trackFetch } from '../src/requestCollection'
+import {
+  isRejected,
+  isServerError,
+  normalizeUrl,
+  RequestDetails,
+  RequestType,
+  trackFetch,
+} from '../src/requestCollection'
 import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
 
 describe('fetch tracker', () => {
@@ -41,6 +48,8 @@ describe('fetch tracker', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
       expect(request.response).toEqual('fetch error')
+      expect(isRejected(request)).toBe(false)
+      expect(isServerError(request)).toBe(true)
       done()
     })
   })
@@ -55,6 +64,24 @@ describe('fetch tracker', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
       expect(request.response).toMatch(/Error: fetch error/)
+      expect(isRejected(request)).toBe(true)
+      expect(isServerError(request)).toBe(false)
+      done()
+    })
+  })
+
+  it('should track opaque fetch', (done) => {
+    // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
+    fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
+
+    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+      const request = requests[0]
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(0)
+      expect(isRejected(request)).toBe(false)
+      expect(isServerError(request)).toBe(false)
       done()
     })
   })
@@ -69,6 +96,8 @@ describe('fetch tracker', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(400)
       expect(request.response).toEqual('Not found')
+      expect(isRejected(request)).toBe(false)
+      expect(isServerError(request)).toBe(false)
       done()
     })
   })
