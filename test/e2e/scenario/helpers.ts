@@ -131,9 +131,28 @@ export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) =
 }
 
 export async function renewSession() {
-  // Expire sessionId cookie
-  await browser.deleteCookies(['_dd'])
+  await deleteAllCookies()
+  expect(await findSessionCookie()).not.toBeDefined()
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
-  await browser.keys(['f'])
+  const button = await $('button')
+  await button.click()
+  expect(await findSessionCookie()).toBeDefined()
+}
+
+// wdio method does not work for some browsers
+async function deleteAllCookies() {
+  return browserExecute(() => {
+    const cookies = document.cookie.split(';')
+    for (const cookie of cookies) {
+      const eqPos = cookie.indexOf('=')
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
+    }
+  })
+}
+
+async function findSessionCookie() {
+  // tslint:disable-next-line: no-unsafe-any
+  return ((await browser.getCookies()) as any[]).find((cookie: any) => cookie.name === '_dd')
 }

@@ -10,11 +10,12 @@ declare global {
 }
 
 function supportPerformanceObject() {
-  return window.performance !== undefined && 'getEntries' in performance && 'addEventListener' in performance
+  return window.performance !== undefined && 'getEntries' in performance
 }
 
 function supportPerformanceNavigationTimingEvent() {
   return (
+    window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
     PerformanceObserver.supportedEntryTypes.includes('navigation')
   )
@@ -30,18 +31,17 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
     )
     observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
 
-    if (supportPerformanceObject()) {
+    if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
       performance.addEventListener('resourcetimingbufferfull', () => {
         performance.clearResourceTimings()
       })
-
-      if (!supportPerformanceNavigationTimingEvent()) {
-        retrieveNavigationTimingWhenLoaded((timing) => {
-          handlePerformanceEntries(session, lifeCycle, [timing])
-        })
-      }
     }
+  }
+  if (!supportPerformanceNavigationTimingEvent()) {
+    retrieveNavigationTimingWhenLoaded((timing) => {
+      handlePerformanceEntries(session, lifeCycle, [timing])
+    })
   }
 }
 
