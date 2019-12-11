@@ -16,7 +16,6 @@ import {
   tearDown,
   withBrowserLogs,
 } from './helpers'
-import { positiveNumber, strictlyPositiveNumber } from './matchers'
 
 beforeEach(() => {
   // tslint:disable-next-line: no-unsafe-any
@@ -109,16 +108,11 @@ describe('rum', () => {
     const viewEvent = findLastEvent(events, (event) => event.evt.category === 'view') as RumViewEvent
 
     expect(viewEvent as any).not.toBe(undefined)
-    expect(viewEvent.view.measures).toEqual({
-      dom_complete: strictlyPositiveNumber(),
-      dom_content_loaded: strictlyPositiveNumber(),
-      dom_interactive: strictlyPositiveNumber(),
-      error_count: 0,
-      load_event_end: strictlyPositiveNumber(),
-      long_task_count: 0,
-      resource_count: positiveNumber(), // some browsers can send a resource for the page load
-      user_action_count: 0,
-    } as any)
+    const measures = viewEvent.view.measures
+    expect((measures as any).dom_complete).toBeGreaterThan(0)
+    expect((measures as any).dom_content_loaded).toBeGreaterThan(0)
+    expect((measures as any).dom_interactive).toBeGreaterThan(0)
+    expect((measures as any).load_event_end).toBeGreaterThan(0)
   })
 
   it('should create a new View when the session is renewed', async () => {
