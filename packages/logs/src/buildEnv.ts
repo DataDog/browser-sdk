@@ -1,4 +1,4 @@
-import { BuildEnv, Datacenter, Environment } from '@browser-sdk/core'
+import { BuildEnv, Datacenter, Environment } from '@datadog/browser-core'
 
 export const buildEnv: BuildEnv = {
   datacenter: '<<< TARGET_DATACENTER >>>' as Datacenter,

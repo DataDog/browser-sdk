@@ -1,4 +1,4 @@
-import { isIE, RequestDetails } from '@browser-sdk/core'
+import { isIE, RequestDetails } from '@datadog/browser-core'
 
 import { matchRequestTiming } from '../src/matchRequestTiming'
 

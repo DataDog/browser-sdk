@@ -1,4 +1,4 @@
-import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@browser-sdk/core'
+import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@datadog/browser-core'
 
 import { PerformanceResourceDetails } from './rum'
 
