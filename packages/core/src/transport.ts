@@ -1,6 +1,6 @@
 import lodashMerge from 'lodash.merge'
 
-import { monitor } from './internalMonitoring'
+import { addMonitoringMessage, monitor } from './internalMonitoring'
 import { Context, jsonStringify } from './utils'
 
 /**
@@ -24,6 +24,25 @@ export class HttpRequest {
     const request = new XMLHttpRequest()
     request.open('POST', this.endpointUrl, true)
     request.send(data)
+  }
+}
+
+const isObject = (o: unknown): o is { [k: string]: unknown } => typeof o === 'object' && o !== null
+
+function reportAbnormalMeasure(contextualizedMessage: Context) {
+  if (
+    isObject(contextualizedMessage.view) &&
+    isObject(contextualizedMessage.view.measures) &&
+    isObject(contextualizedMessage.rum)
+  ) {
+    const loadEventEnd = contextualizedMessage.view.measures.load_event_end
+    if (typeof loadEventEnd === 'number' && loadEventEnd > 86400e9 /* 1 day in ns */) {
+      addMonitoringMessage(
+        `Buggy load event measure: ${loadEventEnd} - ` +
+          `View Id: ${contextualizedMessage.view.id} - ` +
+          `Document Version: ${contextualizedMessage.rum.document_version}`
+      )
+    }
   }
 }
 
@@ -82,6 +101,7 @@ export class Batch<T> {
 
   private process(message: T) {
     const contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
+    reportAbnormalMeasure(contextualizedMessage)
     const processedMessage = jsonStringify(contextualizedMessage)!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
