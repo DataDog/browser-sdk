@@ -1,5 +1,5 @@
-import { LogsGlobal } from 'datadog-logs'
-import { RumEvent, RumEventCategory, RumResourceEvent, RumViewEvent } from 'datadog-rum'
+import { LogsGlobal } from '@datadog/browser-logs'
+import { RumEvent, RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
 import {
   browserExecute,
   browserExecuteAsync,

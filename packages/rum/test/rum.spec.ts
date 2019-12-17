@@ -5,7 +5,7 @@ import {
   isIE,
   PerformanceObserverStubBuilder,
   RequestDetails,
-} from '@browser-sdk/core'
+} from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'

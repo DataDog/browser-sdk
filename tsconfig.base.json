@@ -13,7 +13,7 @@
       }
     ],
     "paths": {
-      "@browser-sdk/core": ["./packages/core/src"]
+      "@datadog/browser-core": ["./packages/core/src"]
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Batch, generateUUID, monitor, msToNs, throttle } from '@browser-sdk/core'
+import { Batch, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'

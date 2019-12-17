@@ -17,7 +17,11 @@
     "member-access": false,
     "no-console": false,
     "no-default-export": true,
-    "no-implicit-dependencies": [true, "dev", ["datadog-logs", "datadog-rum", "@browser-sdk/core"]],
+    "no-implicit-dependencies": [
+      true,
+      "dev",
+      ["@datadog/browser-logs", "@datadog/browser-rum", "@datadog/browser-core"]
+    ],
     "no-null-keyword": true,
     "no-submodule-imports": [true],
     "no-unsafe-any": true,

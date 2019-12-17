@@ -1,4 +1,4 @@
-import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, Observable, Omit } from '@browser-sdk/core'
+import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, Observable, Omit } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../src/logger'

@@ -1,6 +1,6 @@
-import { ErrorContext, HttpContext, MonitoringMessage } from '@browser-sdk/core'
-import { LogsMessage } from 'datadog-logs'
-import { RumEvent, RumViewEvent } from 'datadog-rum'
+import { ErrorContext, HttpContext, MonitoringMessage } from '@datadog/browser-core'
+import { LogsMessage } from '@datadog/browser-logs'
+import { RumEvent, RumViewEvent } from '@datadog/browser-rum'
 import * as request from 'request'
 
 export interface ServerErrorMessage {

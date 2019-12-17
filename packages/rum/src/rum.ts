@@ -14,7 +14,7 @@ import {
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
-} from '@browser-sdk/core'
+} from '@datadog/browser-core'
 import lodashMerge from 'lodash.merge'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
