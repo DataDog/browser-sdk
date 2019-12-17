@@ -13,7 +13,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "^1.2.2",
+    "@datadog/browser-core": "1.2.2",
     "lodash.assign": "4.2.0",
     "lodash.merge": "4.6.2",
     "tslib": "1.10.0"
