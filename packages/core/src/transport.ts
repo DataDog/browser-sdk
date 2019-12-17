@@ -29,7 +29,7 @@ export class HttpRequest {
 
 const isObject = (o: unknown): o is { [k: string]: unknown } => typeof o === 'object' && o !== null
 
-function reportAdbnormalMeasure(contextualizedMessage: Context) {
+function reportAbnormalMeasure(contextualizedMessage: Context) {
   if (
     isObject(contextualizedMessage.view) &&
     isObject(contextualizedMessage.view.measures) &&
@@ -101,7 +101,7 @@ export class Batch<T> {
 
   private process(message: T) {
     const contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
-    reportAdbnormalMeasure(contextualizedMessage)
+    reportAbnormalMeasure(contextualizedMessage)
     const processedMessage = jsonStringify(contextualizedMessage)!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
