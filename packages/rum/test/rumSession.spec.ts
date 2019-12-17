@@ -7,7 +7,7 @@ import {
   SESSION_COOKIE_NAME,
   setCookie,
   stopSessionManagement,
-} from '@browser-sdk/core'
+} from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../src/rumSession'

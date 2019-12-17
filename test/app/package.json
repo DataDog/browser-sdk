@@ -5,11 +5,11 @@
     "postinstall": "webpack --mode=production"
   },
   "dependencies": {
-    "datadog-logs": "file:../../packages/logs",
-    "datadog-rum": "file:../../packages/rum"
+    "@datadog/browser-logs": "file:../../packages/logs",
+    "@datadog/browser-rum": "file:../../packages/rum"
   },
   "resolutions": {
-    "@browser-sdk/core": "file:../../packages/core"
+    "@datadog/browser-core": "file:../../packages/core"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",

@@ -1,5 +1,5 @@
-import { datadogLogs } from 'datadog-logs'
-import { datadogRum } from 'datadog-rum'
+import { datadogLogs } from '@datadog/browser-logs'
+import { datadogRum } from '@datadog/browser-rum'
 
 datadogLogs.init({
   clientToken: 'key',
