@@ -17,6 +17,10 @@ function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
   return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
 }
 
+function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
+  return server.requests.map((r) => JSON.parse(r.requestBody) as T)
+}
+
 const configuration = {
   ...DEFAULT_CONFIGURATION,
   internalMonitoringEndpoint: 'monitoring',
@@ -281,6 +285,50 @@ describe('rum session', () => {
     isTrackedWithResource = true
     lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
     expect(server.requests.length).toEqual(2)
+  })
+
+  it('when the session is renewed, a final view event then a new view event should be sent', () => {
+    let sessionId = '42'
+    const session = {
+      getId: () => sessionId,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const lifeCycle = new LifeCycle()
+    server.requests = []
+    startRum('appId', lifeCycle, configuration as Configuration, session)
+
+    interface ExpectedRequestBody {
+      evt: {
+        category: string
+      }
+      session_id: string
+      view: {
+        id: string
+      }
+    }
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests.length).toEqual(1)
+    expect(initialRequests[0].evt.category).toEqual('view')
+    expect(initialRequests[0].session_id).toEqual('42')
+
+    server.requests = []
+    sessionId = '43'
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(subsequentRequests.length).toEqual(2)
+
+    // Final view event
+    expect(subsequentRequests[0].evt.category).toEqual('view')
+    expect(subsequentRequests[0].session_id).toEqual('42')
+    expect(subsequentRequests[0].view.id).toEqual(initialRequests[0].view.id)
+
+    // New view event
+    expect(subsequentRequests[1].evt.category).toEqual('view')
+    expect(subsequentRequests[1].session_id).toEqual('43')
+    expect(subsequentRequests[1].view.id).not.toEqual(initialRequests[0].view.id)
   })
 })
 
