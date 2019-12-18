@@ -120,8 +120,7 @@ deploy-release:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build
-    - ./scripts/publish-npm.sh
+    - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
     - ./scripts/deploy.sh prod us
     - TARGET_DATACENTER=eu TARGET_ENV=production VERSION=release yarn build:bundle
     - ./scripts/deploy.sh prod eu
