@@ -22,7 +22,7 @@ import { matchRequestTiming } from './matchRequestTiming'
 import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { trackView, viewId, viewLocation, ViewMeasures } from './viewTracker'
+import { trackView, viewContext, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -136,20 +136,20 @@ export function startRum(
       date: new Date().getTime(),
       screen: {
         // needed for retro compatibility
-        id: viewId,
-        url: viewLocation.href,
+        id: viewContext.id,
+        url: viewContext.location.href,
       },
-      sessionId: session.getId(),
+      sessionId: viewContext.sessionId,
       view: {
-        id: viewId,
+        id: viewContext.id,
         referrer: document.referrer,
-        url: viewLocation.href,
+        url: viewContext.location.href,
       },
     }),
     () => globalContext
   )
 
-  trackView(window.location, lifeCycle, batch.addRumEvent, batch.beforeFlushOnUnload)
+  trackView(window.location, lifeCycle, session, batch.addRumEvent, batch.beforeFlushOnUnload)
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
@@ -165,9 +165,9 @@ export function startRum(
     getInternalContext: monitor(() => {
       return {
         application_id: applicationId,
-        session_id: session.getId(),
+        session_id: viewContext.sessionId,
         view: {
-          id: viewId,
+          id: viewContext.id,
         },
       }
     }),

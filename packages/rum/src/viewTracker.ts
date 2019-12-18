@@ -2,6 +2,7 @@ import { Batch, generateUUID, monitor, msToNs, throttle } from '@datadog/browser
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+import { RumSession } from './rumSession'
 
 export interface ViewMeasures {
   firstContentfulPaint?: number
@@ -15,8 +16,13 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
-export let viewId: string
-export let viewLocation: Location
+interface ViewContext {
+  id: string
+  location: Location
+  sessionId: string | undefined
+}
+
+export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 let startTimestamp: number
@@ -27,6 +33,7 @@ let viewMeasures: ViewMeasures
 export function trackView(
   location: Location,
   lifeCycle: LifeCycle,
+  session: RumSession,
   addRumEvent: (event: RumEvent) => void,
   beforeFlushOnUnload: (handler: () => void) => void
 ) {
@@ -34,16 +41,20 @@ export function trackView(
     leading: false,
   })
 
-  newView(location, addRumEvent)
-  trackHistory(location, addRumEvent)
+  newView(location, session, addRumEvent)
+  trackHistory(location, session, addRumEvent)
   trackMeasures(lifeCycle, scheduleViewUpdate)
-  trackRenewSession(location, lifeCycle, addRumEvent)
+  trackRenewSession(location, lifeCycle, session, addRumEvent)
 
   beforeFlushOnUnload(() => updateView(addRumEvent))
 }
 
-function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
-  viewId = generateUUID()
+function newView(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
+  viewContext = {
+    id: generateUUID(),
+    location: { ...location },
+    sessionId: session.getId(),
+  }
   startTimestamp = new Date().getTime()
   startOrigin = performance.now()
   documentVersion = 1
@@ -53,7 +64,6 @@ function newView(location: Location, addRumEvent: (event: RumEvent) => void) {
     resourceCount: 0,
     userActionCount: 0,
   }
-  viewLocation = { ...location }
   addViewEvent(addRumEvent)
 }
 
@@ -78,26 +88,26 @@ function addViewEvent(addRumEvent: (event: RumEvent) => void) {
   })
 }
 
-function trackHistory(location: Location, addRumEvent: (event: RumEvent) => void) {
+function trackHistory(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location, session, addRumEvent)
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location, session, addRumEvent)
   })
   window.addEventListener('popstate', () => {
-    onUrlChange(location, addRumEvent)
+    onUrlChange(location, session, addRumEvent)
   })
 }
 
-function onUrlChange(location: Location, addRumEvent: (event: RumEvent) => void) {
-  if (areDifferentViews(viewLocation, location)) {
+function onUrlChange(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
+  if (areDifferentViews(viewContext.location, location)) {
     updateView(addRumEvent)
-    newView(location, addRumEvent)
+    newView(location, session, addRumEvent)
   }
 }
 
@@ -146,9 +156,14 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   })
 }
 
-function trackRenewSession(location: Location, lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+function trackRenewSession(
+  location: Location,
+  lifeCycle: LifeCycle,
+  session: RumSession,
+  addRumEvent: (event: RumEvent) => void
+) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     updateView(addRumEvent)
-    newView(location, addRumEvent)
+    newView(location, session, addRumEvent)
   })
 }

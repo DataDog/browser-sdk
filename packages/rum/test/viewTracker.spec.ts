@@ -1,6 +1,7 @@
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'
-import { trackView, viewId, viewLocation } from '../src/viewTracker'
+import { RumSession } from '../src/rumSession'
+import { trackView, viewContext } from '../src/viewTracker'
 
 function setup({
   addRumEvent,
@@ -16,7 +17,18 @@ function setup({
     fakeLocation.hash = url.hash
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  trackView(fakeLocation as Location, lifeCycle || new LifeCycle(), addRumEvent || (() => undefined), () => undefined)
+  const fakeSession = {
+    getId() {
+      return '42'
+    },
+  }
+  trackView(
+    fakeLocation as Location,
+    lifeCycle || new LifeCycle(),
+    fakeSession as RumSession,
+    addRumEvent || (() => undefined),
+    () => undefined
+  )
 }
 
 describe('rum track url change', () => {
@@ -25,29 +37,29 @@ describe('rum track url change', () => {
 
   beforeEach(() => {
     setup()
-    initialView = viewId
-    initialLocation = viewLocation
+    initialView = viewContext.id
+    initialLocation = viewContext.location
   })
 
   it('should update view id on path change', () => {
     history.pushState({}, '', '/bar')
 
-    expect(viewId).not.toEqual(initialView)
-    expect(viewLocation).not.toEqual(initialLocation)
+    expect(viewContext.id).not.toEqual(initialView)
+    expect(viewContext.location).not.toEqual(initialLocation)
   })
 
   it('should not update view id on search change', () => {
     history.pushState({}, '', '/foo?bar=qux')
 
-    expect(viewId).toEqual(initialView)
-    expect(viewLocation).toEqual(initialLocation)
+    expect(viewContext.id).toEqual(initialView)
+    expect(viewContext.location).toEqual(initialLocation)
   })
 
   it('should not update view id on hash change', () => {
     history.pushState({}, '', '/foo#bar')
 
-    expect(viewId).toEqual(initialView)
-    expect(viewLocation).toEqual(initialLocation)
+    expect(viewContext.id).toEqual(initialView)
+    expect(viewContext.location).toEqual(initialLocation)
   })
 })
 
@@ -57,10 +69,10 @@ describe('rum track renew session', () => {
     setup({
       lifeCycle,
     })
-    const initialView = viewId
+    const initialView = viewContext.id
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    expect(viewId).not.toEqual(initialView)
+    expect(viewContext.id).not.toEqual(initialView)
   })
 })
 
