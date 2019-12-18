@@ -1,9 +1,23 @@
 # `rum`
 
-It contains everything related to RUM stuff. When loaded, it exposes a `window.DD_RUM` that
-contains all the public APIs.
+Datadog browser rum library.
 
-### Typical use
+## Setup
+
+### NPM
+
+```
+import { datadogRum } from '@datadog/browser-rum'
+datadogRum.init({
+  applicationId: 'XXX',
+  clientToken: 'XXX',
+  datacenter: 'us',
+  resourceSampleRate: 100,
+  sampleRate: 100
+})
+```
+
+### Bundle
 
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
@@ -18,7 +32,7 @@ contains all the public APIs.
 </script>
 ```
 
-### API exposed in `window.DD_RUM`
+## Public API
 
 - Init must be called to start the tracking. Configurable options:
 
@@ -47,10 +61,4 @@ contains all the public APIs.
 
   ```
   addUserAction (name: string, context: Context)
-  ```
-
-- Get internal context
-
-  ```
-  getInternalContext () # retrieve RUM internal context (link with other products)
   ```

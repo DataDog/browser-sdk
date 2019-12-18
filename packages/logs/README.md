@@ -1,11 +1,24 @@
 # `logs`
 
-It contains everything needed to send logs. When loaded, it exposes a `window.DD_LOGS` that
-contains all the public APIs.
+Datadog browser logs library.
 
 [Browser support](./BROWSER_SUPPORT.md#logger)
 
-### Typical use
+## Setup
+
+### NPM
+
+```
+import { datadogLogs } from '@datadog/browser-logs'
+datadogLogs.init({
+  clientToken: 'XXX',
+  datacenter: 'us',
+  forwardErrorsToLogs: true,
+  sampleRate: 100
+})
+```
+
+### Bundle
 
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
@@ -19,7 +32,7 @@ contains all the public APIs.
 </script>
 ```
 
-### API exposed in `window.DD_LOGS`
+## Public API
 
 What we call `Context` is a map `{key: value}` that will be added to the message context.
 
