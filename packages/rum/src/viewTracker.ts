@@ -1,4 +1,4 @@
-import { Batch, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { addMonitoringMessage, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
@@ -115,10 +115,25 @@ function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
+function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming) {
+  if (navigationEntry.loadEventEnd > 86400e3 /* one day in ms */) {
+    addMonitoringMessage(
+      `Got an abnormal load event in a PerformanceNavigationTiming entry!
+Session Id: ${viewContext.sessionId}
+View Id: ${viewContext.id}
+View start date: ${startTimestamp}
+Document Version: ${documentVersion}
+Entry: ${JSON.stringify(navigationEntry)}
+Previous measures: ${JSON.stringify(viewMeasures)}`
+    )
+  }
+}
+
 function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
+      reportAbnormalLoadEvent(navigationEntry)
       viewMeasures = {
         ...viewMeasures,
         domComplete: msToNs(navigationEntry.domComplete),
