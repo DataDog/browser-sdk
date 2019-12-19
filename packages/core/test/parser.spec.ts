@@ -1,7 +1,7 @@
 // tslint:disable no-unsafe-any
 
 import { isSafari } from '../src/specHelper'
-import { computeStackTrace } from '../src/tracekit'
+import { BrowserError, computeStackTrace } from '../src/tracekit'
 import * as CapturedExceptions from './fixtures/capturedExceptions'
 
 describe('Parser', () => {
@@ -30,7 +30,7 @@ describe('Parser', () => {
   })
 
   it('should parse Safari 6 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.SAFARI_6 as Error)
+    const stackFrames = computeStackTrace(CapturedExceptions.SAFARI_6 as BrowserError)
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({
@@ -202,7 +202,7 @@ describe('Parser', () => {
   })
 
   it('should parse Firefox 7 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_7 as Error)
+    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_7 as BrowserError)
 
     expect(stackFrames.stack.length).toEqual(7)
     expect(stackFrames.stack[0]).toEqual({
@@ -257,7 +257,7 @@ describe('Parser', () => {
   })
 
   it('should parse Firefox 14 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_14 as Error)
+    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_14 as BrowserError)
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
@@ -542,7 +542,7 @@ describe('Parser', () => {
   })
 
   it('should parse empty IE 9 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.IE_9 as Error)
+    const stackFrames = computeStackTrace(CapturedExceptions.IE_9 as BrowserError)
 
     if (stackFrames.stack) {
       expect(stackFrames.stack.length).toEqual(0)

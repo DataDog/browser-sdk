@@ -3,10 +3,8 @@ import { getRelativeTime, monitor } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
 
-declare global {
-  interface Window {
-    PerformanceObserver?: PerformanceObserver
-  }
+interface BrowserWindow extends Window {
+  PerformanceObserver?: PerformanceObserver
 }
 
 function supportPerformanceObject() {
@@ -15,7 +13,7 @@ function supportPerformanceObject() {
 
 function supportPerformanceNavigationTimingEvent() {
   return (
-    window.PerformanceObserver &&
+    (window as BrowserWindow).PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
     PerformanceObserver.supportedEntryTypes.includes('navigation')
   )
@@ -25,7 +23,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
   if (supportPerformanceObject()) {
     handlePerformanceEntries(session, lifeCycle, performance.getEntries())
   }
-  if (window.PerformanceObserver) {
+  if ((window as BrowserWindow).PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(session, lifeCycle, entries.getEntries()))
     )

@@ -113,10 +113,8 @@ function canInitLogs(userConfiguration: LogsUserConfiguration) {
   return true
 }
 
-declare global {
-  interface Window {
-    DD_LOGS?: LogsGlobal
-  }
+interface BrowserWindow extends Window {
+  DD_LOGS?: LogsGlobal
 }
 
-window.DD_LOGS = datadogLogs
+;(window as BrowserWindow).DD_LOGS = datadogLogs
