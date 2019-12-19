@@ -102,10 +102,8 @@ function canInitRum(userConfiguration: RumUserConfiguration) {
   return true
 }
 
-declare global {
-  interface Window {
-    DD_RUM?: RumGlobal
-  }
+interface BrowserWindow extends Window {
+  DD_RUM?: RumGlobal
 }
 
-window.DD_RUM = datadogRum
+;(window as BrowserWindow).DD_RUM = datadogRum

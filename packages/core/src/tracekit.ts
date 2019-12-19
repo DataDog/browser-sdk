@@ -2,14 +2,12 @@
 
 import { monitor } from './internalMonitoring'
 
-declare global {
-  interface Error {
-    sourceURL?: string
-    fileName?: string
-    line?: string | number
-    lineNumber?: string | number
-    description?: string
-  }
+export interface BrowserError extends Error {
+  sourceURL?: string
+  fileName?: string
+  line?: string | number
+  lineNumber?: string | number
+  description?: string
 }
 
 export type Handler = (...params: any[]) => any
@@ -816,7 +814,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @return {StackTrace} Stack trace information.
    * @memberof computeStackTrace
    */
-  function computeStackTraceByWalkingCallerChain(ex: Error, depth: number) {
+  function computeStackTraceByWalkingCallerChain(ex: BrowserError, depth: number) {
     const functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i
     const stack = []
     const funcs: any = {}

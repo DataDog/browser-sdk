@@ -13,6 +13,10 @@ import { startPerformanceCollection } from '../src/performanceCollection'
 import { handleResourceEntry, RumEvent, RumResourceEvent, startRum, UserAction } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 
+interface BrowserWindow extends Window {
+  PerformanceObserver?: PerformanceObserver
+}
+
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
   return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
 }
@@ -163,6 +167,7 @@ describe('rum session', () => {
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestDetails> = { url: 'http://foo.com' }
   const FAKE_USER_ACTION: UserAction = { name: 'action', context: { foo: 'bar' } }
+  const browserWindow = window as BrowserWindow
   let server: sinon.SinonFakeServer
   let original: PerformanceObserver | undefined
   let stubBuilder: PerformanceObserverStubBuilder
@@ -172,14 +177,14 @@ describe('rum session', () => {
       pending('no full rum support')
     }
     server = sinon.fakeServer.create()
-    original = window.PerformanceObserver
+    original = browserWindow.PerformanceObserver
     stubBuilder = new PerformanceObserverStubBuilder()
-    window.PerformanceObserver = stubBuilder.getStub()
+    browserWindow.PerformanceObserver = stubBuilder.getStub()
   })
 
   afterEach(() => {
     server.restore()
-    window.PerformanceObserver = original
+    browserWindow.PerformanceObserver = original
   })
 
   it('when tracked with resources should enable full tracking', () => {

@@ -23,16 +23,14 @@ export interface RequestDetails {
   traceId?: number
 }
 
-declare global {
-  interface Window {
-    ddtrace?: any
-  }
+interface BrowserWindow extends Window {
+  ddtrace?: any
+}
 
-  interface XMLHttpRequest {
-    _datadog_xhr: {
-      method: string
-      url: string
-    }
+interface BrowserXHR extends XMLHttpRequest {
+  _datadog_xhr: {
+    method: string
+    url: string
   }
 }
 
@@ -50,7 +48,7 @@ export function startRequestCollection() {
 
 export function trackXhr(observable: RequestObservable) {
   const originalOpen = XMLHttpRequest.prototype.open
-  XMLHttpRequest.prototype.open = monitor(function(this: XMLHttpRequest, method: string, url: string) {
+  XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
     this._datadog_xhr = {
       method,
       url,
@@ -59,7 +57,7 @@ export function trackXhr(observable: RequestObservable) {
   })
 
   const originalSend = XMLHttpRequest.prototype.send
-  XMLHttpRequest.prototype.send = function(this: XMLHttpRequest, body: unknown) {
+  XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
     const startTime = performance.now()
     const reportXhr = () => {
       observable.notify({
@@ -82,9 +80,9 @@ export function trackXhr(observable: RequestObservable) {
 
 function getTraceId(): number | undefined {
   // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && window.ddtrace.tracer.scope().active()
+  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
     ? // tslint:disable-next-line: no-unsafe-any
-      window.ddtrace.tracer
+      (window as BrowserWindow).ddtrace.tracer
         .scope()
         .active()
         .context()
