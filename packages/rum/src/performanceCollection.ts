@@ -1,8 +1,7 @@
-import { addMonitoringMessage, getRelativeTime, monitor } from '@datadog/browser-core'
+import { getRelativeTime, monitor } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
-import { viewContext } from './viewTracker'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -52,23 +51,8 @@ interface FakePerformanceNavigationTiming {
   loadEventEnd: number
 }
 
-function reportAbnormalTimeOrigin() {
-  if (getRelativeTime(performance.timing.loadEventEnd) > 86400e3 /* 1 day in ms */) {
-    addMonitoringMessage(
-      `Got an abnormal loadEventEnd timing
-Session Id: ${viewContext.sessionId}
-View Id: ${viewContext.id}
-timeOrigin: ${performance.timeOrigin}
-navigationStart: ${performance.timing.navigationStart}
-loadEventEnd: ${performance.timing.loadEventEnd}
-timing: ${getRelativeTime(performance.timing.loadEventEnd)}`
-    )
-  }
-}
-
 function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
-    reportAbnormalTimeOrigin()
     const timing: FakePerformanceNavigationTiming = {
       domComplete: getRelativeTime(performance.timing.domComplete),
       domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
