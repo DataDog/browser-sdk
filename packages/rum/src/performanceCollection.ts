@@ -53,18 +53,15 @@ interface FakePerformanceNavigationTiming {
 }
 
 function reportAbnormalTimeOrigin() {
-  if (typeof performance.timeOrigin !== 'number') {
-    return
-  }
-  const diff = Math.abs(performance.timing.navigationStart - performance.timeOrigin)
-  if (diff > 86400e3 /* 1 day in ms */) {
+  if (getRelativeTime(performance.timing.loadEventEnd) > 86400e3 /* 1 day in ms */) {
     addMonitoringMessage(
-      `Got a big diff between navigationStart and timeOrigin
+      `Got an abnormal loadEventEnd timing
 Session Id: ${viewContext.sessionId}
 View Id: ${viewContext.id}
 timeOrigin: ${performance.timeOrigin}
 navigationStart: ${performance.timing.navigationStart}
-diff: ${diff}`
+loadEventEnd: ${performance.timing.loadEventEnd}
+timing: ${getRelativeTime(performance.timing.loadEventEnd)}`
     )
   }
 }
