@@ -1,7 +1,8 @@
-import { getRelativeTime, monitor } from '@datadog/browser-core'
+import { addMonitoringMessage, getRelativeTime, monitor } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
+import { viewContext } from './viewTracker'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -51,8 +52,26 @@ interface FakePerformanceNavigationTiming {
   loadEventEnd: number
 }
 
+function reportAbnormalTimeOrigin() {
+  if (typeof performance.timeOrigin !== 'number') {
+    return
+  }
+  const diff = Math.abs(performance.timing.navigationStart - performance.timeOrigin)
+  if (diff > 86400e3 /* 1 day in ms */) {
+    addMonitoringMessage(
+      `Got a big diff between navigationStart and timeOrigin
+Session Id: ${viewContext.sessionId}
+View Id: ${viewContext.id}
+timeOrigin: ${performance.timeOrigin}
+navigationStart: ${performance.timing.navigationStart}
+diff: ${diff}`
+    )
+  }
+}
+
 function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
+    reportAbnormalTimeOrigin()
     const timing: FakePerformanceNavigationTiming = {
       domComplete: getRelativeTime(performance.timing.domComplete),
       domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
