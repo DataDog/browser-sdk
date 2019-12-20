@@ -2,8 +2,7 @@
 
 const exec = require('child_process').exec
 
-const [_, __, ...args] = process.argv
-const COMMAND = `yarn ${args.join(' ')}`
+const COMMAND = `yarn ${process.argv.slice(2).join(' ')}`
 const RETRY_DELAY_IN_MIN = 5
 const MAX_RETRY_COUNT = 3
 let retryCount = 0
@@ -31,9 +30,9 @@ function executeWithRetry() {
 
 function isRetryAllowed(logs) {
   return (
-    logs.indexOf('UnhandledRejection') !== -1 ||
-    logs.indexOf('Request failed due to Error') !== -1 ||
-    logs.indexOf('Failed to load resource') !== -1
+    logs.includes('UnhandledRejection') ||
+    logs.includes('Request failed due to Error') ||
+    logs.includes('Failed to load resource')
   )
 }
 
