@@ -1,10 +1,9 @@
 'use strict'
 
-const path = require('path')
 const exec = require('child_process').exec
 
-const rootDirectory = path.join(__dirname, '..')
-const COMMAND = `${rootDirectory}/node_modules/.bin/karma start ${rootDirectory}/test/unit/karma.cbt.conf.js`
+const [_, __, ...args] = process.argv
+const COMMAND = `yarn ${args.join(' ')}`
 const MAX_RETRY_COUNT = 3
 let retryCount = 0
 
