@@ -78,18 +78,6 @@ export function trackXhr(observable: RequestObservable) {
   }
 }
 
-function getTraceId(): number | undefined {
-  // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
-    ? // tslint:disable-next-line: no-unsafe-any
-      (window as BrowserWindow).ddtrace.tracer
-        .scope()
-        .active()
-        .context()
-        .toTraceId()
-    : undefined
-}
-
 export function trackFetch(observable: RequestObservable) {
   if (!window.fetch) {
     return
@@ -111,6 +99,7 @@ export function trackFetch(observable: RequestObservable) {
           url,
           response: toStackTraceString(stackTrace),
           status: 0,
+          traceId: getTraceId(),
           type: RequestType.FETCH,
         })
       } else if ('status' in response) {
@@ -123,6 +112,7 @@ export function trackFetch(observable: RequestObservable) {
           response: text,
           responseType: response.type,
           status: response.status,
+          traceId: getTraceId(),
           type: RequestType.FETCH,
         })
       }
@@ -143,4 +133,16 @@ export function isRejected(request: RequestDetails) {
 
 export function isServerError(request: RequestDetails) {
   return request.status >= 500
+}
+
+function getTraceId(): number | undefined {
+  // tslint:disable-next-line: no-unsafe-any
+  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+    ? // tslint:disable-next-line: no-unsafe-any
+      (window as BrowserWindow).ddtrace.tracer
+        .scope()
+        .active()
+        .context()
+        .toTraceId()
+    : undefined
 }
