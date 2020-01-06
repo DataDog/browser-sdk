@@ -183,6 +183,7 @@ export function isPercentage(value: unknown) {
  *
  * Note: this does not use `performance.timeOrigin` because it doesn't seem to reflect the actual
  * time on which the navigation has started: it may be much farther in the past, at least in Firefox 71.
+ * Related issue in Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1429926
  */
 export function getRelativeTime(timestamp: number) {
   return timestamp - performance.timing.navigationStart
