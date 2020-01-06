@@ -153,6 +153,7 @@ async function deleteAllCookies() {
 }
 
 async function findSessionCookie() {
+  const cookies = (await browser.getCookies()) || []
   // tslint:disable-next-line: no-unsafe-any
-  return ((await browser.getCookies()) as any[]).find((cookie: any) => cookie.name === '_dd')
+  return cookies.find((cookie: any) => cookie.name === '_dd')
 }
