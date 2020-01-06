@@ -135,6 +135,14 @@ export function isServerError(request: RequestDetails) {
   return request.status >= 500
 }
 
+/**
+ * Get the current traceId generated from dd-trace-js (if any).
+ *
+ * Note: in order to work, the browser-sdk should be initialized *before* dd-trace-js because both
+ * libraries are wrapping fetch() and XHR.  Wrappers are called in reverse order, and the
+ * dd-trace-js wrapper needs to be called first so it can generate the new trace.  The browser-sdk
+ * wrapper will then pick up the new trace id via this function.
+ */
 function getTraceId(): number | undefined {
   // tslint:disable-next-line: no-unsafe-any
   return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
