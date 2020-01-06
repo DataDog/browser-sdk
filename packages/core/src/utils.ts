@@ -178,8 +178,13 @@ export function isPercentage(value: unknown) {
   return typeof value === 'number' && value >= 0 && value <= 100
 }
 
+/**
+ * Get the time since the navigation was started.
+ *
+ * Note: this does not use `performance.timeOrigin` because it doesn't seem to reflect the actual
+ * time on which the navigation has started: it may be much farther in the past, at least in Firefox 71.
+ * Related issue in Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1429926
+ */
 export function getRelativeTime(timestamp: number) {
-  // performance.timeOrigin is undefined in WebKit, see https://bugs.webkit.org/show_bug.cgi?id=174862
-  const timeOrigin = performance.timeOrigin !== undefined ? performance.timeOrigin : performance.timing.navigationStart
-  return timestamp - timeOrigin
+  return timestamp - performance.timing.navigationStart
 }
