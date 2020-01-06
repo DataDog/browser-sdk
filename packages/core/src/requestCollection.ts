@@ -78,18 +78,6 @@ export function trackXhr(observable: RequestObservable) {
   }
 }
 
-function getTraceId(): number | undefined {
-  // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
-    ? // tslint:disable-next-line: no-unsafe-any
-      (window as BrowserWindow).ddtrace.tracer
-        .scope()
-        .active()
-        .context()
-        .toTraceId()
-    : undefined
-}
-
 export function trackFetch(observable: RequestObservable) {
   if (!window.fetch) {
     return
@@ -111,6 +99,7 @@ export function trackFetch(observable: RequestObservable) {
           url,
           response: toStackTraceString(stackTrace),
           status: 0,
+          traceId: getTraceId(),
           type: RequestType.FETCH,
         })
       } else if ('status' in response) {
@@ -123,6 +112,7 @@ export function trackFetch(observable: RequestObservable) {
           response: text,
           responseType: response.type,
           status: response.status,
+          traceId: getTraceId(),
           type: RequestType.FETCH,
         })
       }
@@ -143,4 +133,24 @@ export function isRejected(request: RequestDetails) {
 
 export function isServerError(request: RequestDetails) {
   return request.status >= 500
+}
+
+/**
+ * Get the current traceId generated from dd-trace-js (if any).
+ *
+ * Note: in order to work, the browser-sdk should be initialized *before* dd-trace-js because both
+ * libraries are wrapping fetch() and XHR.  Wrappers are called in reverse order, and the
+ * dd-trace-js wrapper needs to be called first so it can generate the new trace.  The browser-sdk
+ * wrapper will then pick up the new trace id via this function.
+ */
+function getTraceId(): number | undefined {
+  // tslint:disable-next-line: no-unsafe-any
+  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+    ? // tslint:disable-next-line: no-unsafe-any
+      (window as BrowserWindow).ddtrace.tracer
+        .scope()
+        .active()
+        .context()
+        .toTraceId()
+    : undefined
 }
