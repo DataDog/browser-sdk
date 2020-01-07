@@ -3,7 +3,9 @@ const cors = require('cors')
 const express = require('express')
 const middleware = require('webpack-dev-middleware')
 const path = require('path')
+const fs = require('fs')
 const webpack = require('webpack')
+const morgan = require('morgan')
 
 const logsConfig = require('../../packages/logs/webpack.config')
 const rumConfig = require('../../packages/rum/webpack.config')
@@ -21,6 +23,9 @@ if (process.env.ENV === 'development') {
   app.use(middleware(webpack(withBuildEnv(logsConfig(null, { mode: 'development' })))))
 } else {
   // e2e tests
+  morgan.token('body', (req) => hasValidBody(req) && `\n${req.body}`)
+  const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
+  app.use(morgan(':method :url :body', { stream }))
   app.use(express.static(path.join(__dirname, '../../packages/logs/bundle')))
   app.use(express.static(path.join(__dirname, '../../packages/rum/bundle')))
   app.use(bodyParser.text())
@@ -46,4 +51,8 @@ function withBuildEnv(webpackConf) {
     ],
   }
   return webpackConf
+}
+
+function hasValidBody(req) {
+  return req.body && JSON.stringify(req.body) !== '{}'
 }

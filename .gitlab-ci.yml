@@ -59,6 +59,10 @@ bundle-e2e:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  artifacts:
+    paths:
+      - test/server/test-server.log
+    when: always
   script:
     - yarn
     - yarn test:e2e:bundle
@@ -67,6 +71,10 @@ npm-e2e:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  artifacts:
+    paths:
+      - test/server/test-server.log
+    when: always
   script:
     - yarn
     - yarn test:e2e:npm
@@ -91,6 +99,10 @@ e2e-cbt:
   stage: e2e-cbt
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  artifacts:
+    paths:
+      - test/server/test-server.log
+    when: always
   script:
     - yarn
     - ./scripts/ci-cbt.sh test:e2e

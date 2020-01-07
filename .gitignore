@@ -4,3 +4,4 @@ esm
 node_modules
 coverage
 tunnel.log
+test-server.log
