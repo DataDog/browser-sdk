@@ -32,6 +32,7 @@ function isRetryAllowed(logs) {
   return (
     logs.includes('UnhandledRejection') ||
     logs.includes('Request failed due to Error') ||
+    logs.includes('ESOCKETTIMEDOUT') ||
     logs.includes('Failed to load resource')
   )
 }
