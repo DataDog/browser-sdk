@@ -23,7 +23,7 @@ if (process.env.ENV === 'development') {
   app.use(middleware(webpack(withBuildEnv(logsConfig(null, { mode: 'development' })))))
 } else {
   // e2e tests
-  morgan.token('body', (req) => hasValidBody(req) && `\n${req.body}`)
+  morgan.token('body', (req, res) => extractBody(req, res))
   const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
   app.use(morgan(':method :url :body', { stream }))
   app.use(express.static(path.join(__dirname, '../../packages/logs/bundle')))
@@ -53,6 +53,15 @@ function withBuildEnv(webpackConf) {
   return webpackConf
 }
 
-function hasValidBody(req) {
-  return req.body && JSON.stringify(req.body) !== '{}'
+function extractBody(req, res) {
+  if (isValidBody(req.body)) {
+    return `\n${req.body}`
+  }
+  if (isValidBody(res.body)) {
+    return `\n${res.body}`
+  }
+}
+
+function isValidBody(body) {
+  return body && JSON.stringify(body) !== '{}'
 }
