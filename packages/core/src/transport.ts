@@ -29,9 +29,8 @@ export class HttpRequest {
 
 export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
-  private buffer: string = ''
+  private buffer: string[] = []
   private bufferBytesSize = 0
-  private bufferMessageCount = 0
 
   constructor(
     private request: HttpRequest,
@@ -66,10 +65,9 @@ export class Batch<T> {
 
   flush() {
     if (this.buffer.length !== 0) {
-      this.request.send(this.buffer, this.bufferBytesSize)
-      this.buffer = ''
+      this.request.send(this.buffer.join('\n'), this.bufferBytesSize)
+      this.buffer = []
       this.bufferBytesSize = 0
-      this.bufferMessageCount = 0
     }
   }
 
@@ -88,13 +86,12 @@ export class Batch<T> {
   }
 
   private push(processedMessage: string, messageBytesSize: number) {
-    if (this.buffer) {
-      this.buffer += '\n'
+    if (this.buffer.length > 0) {
+      // \n separator at serialization
       this.bufferBytesSize += 1
     }
-    this.buffer += processedMessage
+    this.buffer.push(processedMessage)
     this.bufferBytesSize += messageBytesSize
-    this.bufferMessageCount += 1
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
@@ -103,7 +100,7 @@ export class Batch<T> {
   }
 
   private isFull() {
-    return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
+    return this.buffer.length === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
 
   private sizeInBytes(candidate: string) {
