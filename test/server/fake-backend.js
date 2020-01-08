@@ -38,6 +38,7 @@ module.exports = (app) => {
 }
 
 function send(res, data) {
+  // add response content to res object for logging
   res.body = JSON.stringify(data)
   res.send(data)
 }
