@@ -162,4 +162,23 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
     warnStub.restore()
   })
+
+  it('should remove a message', () => {
+    batch.add({ message: '1' })
+    const firstMessageSize = (batch as any).bufferBytesSize
+
+    batch.add({ message: '2' })
+    batch.remove(1)
+
+    expect((batch as any).bufferBytesSize).toBe(firstMessageSize)
+
+    batch.add({ message: '3' })
+    expect(transport.send).not.toHaveBeenCalled()
+
+    batch.add({ message: '4' })
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"3"}\n{"foo":"bar","message":"4"}',
+      jasmine.any(Number)
+    )
+  })
 })

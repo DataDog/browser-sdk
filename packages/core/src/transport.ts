@@ -59,6 +59,15 @@ export class Batch<T> {
     }
   }
 
+  remove(index: number) {
+    const [removedMessage] = this.buffer.splice(index, 1)
+    const messageBytesSize = this.sizeInBytes(removedMessage)
+    this.bufferBytesSize -= messageBytesSize
+    if (this.buffer.length > 0) {
+      this.bufferBytesSize -= 1
+    }
+  }
+
   beforeFlushOnUnload(handler: () => void) {
     this.beforeFlushOnUnloadHandlers.push(handler)
   }
