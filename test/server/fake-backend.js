@@ -7,19 +7,19 @@ module.exports = (app) => {
     req.body.split('\n').forEach((log) => logs.push(JSON.parse(log)))
     res.send('ok')
   })
-  app.get('/logs', (req, res) => res.send(logs))
+  app.get('/logs', (req, res) => send(res, logs))
 
   app.post('/rum', (req, res) => {
     req.body.split('\n').forEach((rumEvent) => rumEvents.push(JSON.parse(rumEvent)))
     res.send('ok')
   })
-  app.get('/rum', (req, res) => res.send(rumEvents))
+  app.get('/rum', (req, res) => send(res, rumEvents))
 
   app.post('/monitoring', (req, res) => {
     monitoring.push(JSON.parse(req.body))
     res.send('ok')
   })
-  app.get('/monitoring', (req, res) => res.send(monitoring))
+  app.get('/monitoring', (req, res) => send(res, monitoring))
 
   app.get('/reset', (req, res) => {
     logs = []
@@ -35,4 +35,10 @@ module.exports = (app) => {
   app.get('/ok', (req, res) => {
     res.send('ok')
   })
+}
+
+function send(res, data) {
+  // add response content to res object for logging
+  res.body = JSON.stringify(data)
+  res.send(data)
 }
