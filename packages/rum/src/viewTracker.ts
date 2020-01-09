@@ -34,22 +34,22 @@ export function trackView(
   location: Location,
   lifeCycle: LifeCycle,
   session: RumSession,
-  addRumEvent: (event: RumEvent) => void,
+  upsertRumEvent: (event: RumEvent, key: string) => void,
   beforeFlushOnUnload: (handler: () => void) => void
 ) {
-  const scheduleViewUpdate = throttle(monitor(() => updateView(addRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
+  const scheduleViewUpdate = throttle(monitor(() => updateView(upsertRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
     leading: false,
   })
 
-  newView(location, session, addRumEvent)
-  trackHistory(location, session, addRumEvent)
+  newView(location, session, upsertRumEvent)
+  trackHistory(location, session, upsertRumEvent)
   trackMeasures(lifeCycle, scheduleViewUpdate)
-  trackRenewSession(location, lifeCycle, session, addRumEvent)
+  trackRenewSession(location, lifeCycle, session, upsertRumEvent)
 
-  beforeFlushOnUnload(() => updateView(addRumEvent))
+  beforeFlushOnUnload(() => updateView(upsertRumEvent))
 }
 
-function newView(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
+function newView(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
   viewContext = {
     id: generateUUID(),
     location: { ...location },
@@ -64,50 +64,53 @@ function newView(location: Location, session: RumSession, addRumEvent: (event: R
     resourceCount: 0,
     userActionCount: 0,
   }
-  addViewEvent(addRumEvent)
+  upsertViewEvent(upsertRumEvent)
 }
 
-function updateView(addRumEvent: (event: RumEvent) => void) {
+function updateView(upsertRumEvent: (event: RumEvent, key: string) => void) {
   documentVersion += 1
-  addViewEvent(addRumEvent)
+  upsertViewEvent(upsertRumEvent)
 }
 
-function addViewEvent(addRumEvent: (event: RumEvent) => void) {
-  addRumEvent({
-    date: startTimestamp,
-    duration: msToNs(performance.now() - startOrigin),
-    evt: {
-      category: RumEventCategory.VIEW,
+function upsertViewEvent(upsertRumEvent: (event: RumEvent, key: string) => void) {
+  upsertRumEvent(
+    {
+      date: startTimestamp,
+      duration: msToNs(performance.now() - startOrigin),
+      evt: {
+        category: RumEventCategory.VIEW,
+      },
+      rum: {
+        documentVersion,
+      },
+      view: {
+        measures: viewMeasures,
+      },
     },
-    rum: {
-      documentVersion,
-    },
-    view: {
-      measures: viewMeasures,
-    },
-  })
+    viewContext.id
+  )
 }
 
-function trackHistory(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
+function trackHistory(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(location, session, addRumEvent)
+    onUrlChange(location, session, upsertRumEvent)
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, session, addRumEvent)
+    onUrlChange(location, session, upsertRumEvent)
   })
   window.addEventListener('popstate', () => {
-    onUrlChange(location, session, addRumEvent)
+    onUrlChange(location, session, upsertRumEvent)
   })
 }
 
-function onUrlChange(location: Location, session: RumSession, addRumEvent: (event: RumEvent) => void) {
+function onUrlChange(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
   if (areDifferentViews(viewContext.location, location)) {
-    updateView(addRumEvent)
-    newView(location, session, addRumEvent)
+    updateView(upsertRumEvent)
+    newView(location, session, upsertRumEvent)
   }
 }
 
@@ -175,10 +178,10 @@ function trackRenewSession(
   location: Location,
   lifeCycle: LifeCycle,
   session: RumSession,
-  addRumEvent: (event: RumEvent) => void
+  upsertRumEvent: (event: RumEvent, key: string) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    updateView(addRumEvent)
-    newView(location, session, addRumEvent)
+    updateView(upsertRumEvent)
+    newView(location, session, upsertRumEvent)
   })
 }

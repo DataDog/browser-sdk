@@ -188,3 +188,11 @@ export function isPercentage(value: unknown) {
 export function getRelativeTime(timestamp: number) {
   return timestamp - performance.timing.navigationStart
 }
+
+export function objectValues(object: { [key: string]: unknown }) {
+  const values: unknown[] = []
+  Object.keys(object).forEach((key) => {
+    values.push(object[key])
+  })
+  return values
+}

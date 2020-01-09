@@ -149,7 +149,7 @@ export function startRum(
     () => globalContext
   )
 
-  trackView(window.location, lifeCycle, session, batch.addRumEvent, batch.beforeFlushOnUnload)
+  trackView(window.location, lifeCycle, session, batch.upsertRumEvent, batch.beforeFlushOnUnload)
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
@@ -203,6 +203,11 @@ function startRumBatch(
       }
     },
     beforeFlushOnUnload: (handler: () => void) => batch.beforeFlushOnUnload(handler),
+    upsertRumEvent: (event: RumEvent, key: string) => {
+      if (session.isTracked()) {
+        batch.upsert(withSnakeCaseKeys(event as Context), key)
+      }
+    },
   }
 }
 
