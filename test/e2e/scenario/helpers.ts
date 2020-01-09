@@ -72,31 +72,16 @@ export async function tearDown() {
   })
 }
 
-export async function retrieveRumEvents() {
-  return fetch('/rum').then((rumEvents: string) => JSON.parse(rumEvents) as RumEvent[])
+export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
+  return fetchWhile('/logs', (logs: ServerLogsMessage[]) => logs.length === 0)
 }
 
-export async function retrieveRumEventsTypes() {
-  return retrieveRumEvents().then((rumEvents: RumEvent[]) =>
-    rumEvents.map((rumEvent: RumEvent) => rumEvent.evt.category)
-  )
-}
-
-export async function retrieveLogs() {
-  return fetch('/logs').then((logs: string) => JSON.parse(logs) as ServerLogsMessage[])
-}
-
-export async function retrieveLogsMessages() {
-  return retrieveLogs().then((logs: ServerLogsMessage[]) => logs.map((log: ServerLogsMessage) => log.message))
+export async function waitServerRumEvents(): Promise<RumEvent[]> {
+  return fetchWhile('/rum', (events: RumEvent[]) => events.length === 0)
 }
 
 export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
-}
-
-export async function retrieveViewEvents() {
-  const events = await retrieveRumEvents()
-  return events.filter((event) => event.evt.category === 'view') as ServerRumViewEvent[]
 }
 
 export async function resetServerState() {
@@ -112,6 +97,23 @@ async function fetch(url: string): Promise<string> {
       resolve(body)
     })
   })
+}
+
+export async function fetchWhile(url: string, conditionFn: (body: any) => boolean, timeout = 10000) {
+  const threshold = new Date().getTime() + timeout
+  let body: string = await fetch(url)
+  while (conditionFn(JSON.parse(body))) {
+    if (new Date().getTime() > threshold) {
+      throw new Error(`fetchWhile promise rejected because of timeout (${timeout / 1000}s)
+            Body: ${body}
+            conditionFn: ${conditionFn.toString()}
+            `)
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    body = await fetch(url)
+  }
+  return JSON.parse(body)
 }
 
 export function sortByMessage(a: { message: string }, b: { message: string }) {

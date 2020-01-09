@@ -1,18 +1,16 @@
 import { LogsGlobal } from '@datadog/browser-logs'
-import { RumEvent, RumEventCategory, RumResourceEvent } from '@datadog/browser-rum'
+import { RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
 import {
   browserExecute,
   browserExecuteAsync,
   flushBrowserLogs,
   flushEvents,
   renewSession,
-  retrieveLogs,
-  retrieveLogsMessages,
-  retrieveRumEvents,
-  retrieveRumEventsTypes,
-  retrieveViewEvents,
+  ServerRumViewEvent,
   sortByMessage,
   tearDown,
+  waitServerLogs,
+  waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
 
@@ -31,8 +29,8 @@ describe('logs', () => {
       ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
     })
     await flushEvents()
-    const logs = await retrieveLogsMessages()
-    expect(logs).toContain('hello')
+    const logMessages = (await waitServerLogs()).map((log) => log.message)
+    expect(logMessages).toContain('hello')
   })
 
   it('should send errors', async () => {
@@ -40,8 +38,8 @@ describe('logs', () => {
       console.error('oh snap')
     })
     await flushEvents()
-    const logs = await retrieveLogsMessages()
-    expect(logs).toContain('console error: oh snap')
+    const logMessages = (await waitServerLogs()).map((log) => log.message)
+    expect(logMessages).toContain('console error: oh snap')
     await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
     })
@@ -52,7 +50,7 @@ describe('logs', () => {
       ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
     })
     await flushEvents()
-    const log = (await retrieveLogs())[0]
+    const log = (await waitServerLogs())[0]
     expect(log.application_id).toBe('rum')
     expect(log.view.id).toBeDefined()
   })
@@ -64,8 +62,8 @@ describe('rum', () => {
       console.error('oh snap')
     })
     await flushEvents()
-    const types = await retrieveRumEventsTypes()
-    expect(types).toContain(RumEventCategory.ERROR)
+    const eventCategories = (await waitServerRumEvents()).map((rumEvent) => rumEvent.evt.category)
+    expect(eventCategories).toContain(RumEventCategory.ERROR)
     await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
     })
@@ -88,8 +86,8 @@ describe('rum', () => {
     }, browser.options.baseUrl!)
 
     await flushEvents()
-    const timing = (await retrieveRumEvents()).find(
-      (event: RumEvent) =>
+    const timing = (await waitServerRumEvents()).find(
+      (event) =>
         event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
     ) as RumResourceEvent
 
@@ -102,7 +100,9 @@ describe('rum', () => {
 
   it('should send performance timings along the view events', async () => {
     await flushEvents()
-    const viewEvent = (await retrieveViewEvents())[0]
+    const events = await waitServerRumEvents()
+
+    const viewEvent = events.filter((event) => event.evt.category === 'view')[0] as RumViewEvent
 
     expect(viewEvent as any).not.toBe(undefined)
     const measures = viewEvent.view.measures
@@ -116,7 +116,9 @@ describe('rum', () => {
     await renewSession()
     await flushEvents()
 
-    const viewEvents = await retrieveViewEvents()
+    const viewEvents = (await waitServerRumEvents()).filter(
+      (event) => event.evt.category === 'view'
+    ) as ServerRumViewEvent[]
 
     expect(viewEvents.length).toBe(2)
     expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
@@ -161,7 +163,7 @@ describe('error collection', () => {
     )
     await flushBrowserLogs()
     await flushEvents()
-    const logs = (await retrieveLogs()).sort(sortByMessage)
+    const logs = (await waitServerLogs()).sort(sortByMessage)
 
     expect(logs.length).toEqual(2)
 
@@ -195,7 +197,7 @@ describe('error collection', () => {
     )
     await flushBrowserLogs()
     await flushEvents()
-    const logs = (await retrieveLogs()).sort(sortByMessage)
+    const logs = (await waitServerLogs()).sort(sortByMessage)
 
     expect(logs.length).toEqual(2)
 
