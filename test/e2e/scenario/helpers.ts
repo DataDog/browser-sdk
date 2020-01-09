@@ -94,11 +94,9 @@ export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
 }
 
-export async function retrieveInitialViewEvents() {
+export async function retrieveViewEvents() {
   const events = await retrieveRumEvents()
-  return events.filter(
-    (event) => event.evt.category === 'view' && (event as ServerRumViewEvent).rum.document_version === 1
-  ) as ServerRumViewEvent[]
+  return events.filter((event) => event.evt.category === 'view') as ServerRumViewEvent[]
 }
 
 export async function resetServerState() {
@@ -124,10 +122,6 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
     return 1
   }
   return 0
-}
-
-export function findLastEvent(events: RumEvent[], predicate: (event: RumEvent) => boolean) {
-  return events.reduce<RumEvent | undefined>((olderEvent, event) => (predicate(event) ? event : olderEvent), undefined)
 }
 
 export async function renewSession() {

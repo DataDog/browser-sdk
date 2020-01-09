@@ -1,17 +1,16 @@
 import { LogsGlobal } from '@datadog/browser-logs'
-import { RumEvent, RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import { RumEvent, RumEventCategory, RumResourceEvent } from '@datadog/browser-rum'
 import {
   browserExecute,
   browserExecuteAsync,
-  findLastEvent,
   flushBrowserLogs,
   flushEvents,
   renewSession,
-  retrieveInitialViewEvents,
   retrieveLogs,
   retrieveLogsMessages,
   retrieveRumEvents,
   retrieveRumEventsTypes,
+  retrieveViewEvents,
   sortByMessage,
   tearDown,
   withBrowserLogs,
@@ -103,9 +102,7 @@ describe('rum', () => {
 
   it('should send performance timings along the view events', async () => {
     await flushEvents()
-    const events = await retrieveRumEvents()
-
-    const viewEvent = findLastEvent(events, (event) => event.evt.category === 'view') as RumViewEvent
+    const viewEvent = (await retrieveViewEvents())[0]
 
     expect(viewEvent as any).not.toBe(undefined)
     const measures = viewEvent.view.measures
@@ -119,7 +116,7 @@ describe('rum', () => {
     await renewSession()
     await flushEvents()
 
-    const viewEvents = await retrieveInitialViewEvents()
+    const viewEvents = await retrieveViewEvents()
 
     expect(viewEvents.length).toBe(2)
     expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
