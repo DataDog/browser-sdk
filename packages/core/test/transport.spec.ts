@@ -163,25 +163,6 @@ describe('batch', () => {
     warnStub.restore()
   })
 
-  it('should remove a message', () => {
-    batch.add({ message: '1' })
-    const firstMessageSize = (batch as any).bufferBytesSize
-
-    batch.add({ message: '2' })
-    batch.remove(1)
-
-    expect((batch as any).bufferBytesSize).toBe(firstMessageSize)
-
-    batch.add({ message: '3' })
-    expect(transport.send).not.toHaveBeenCalled()
-
-    batch.add({ message: '4' })
-    expect(transport.send).toHaveBeenCalledWith(
-      '{"foo":"bar","message":"1"}\n{"foo":"bar","message":"3"}\n{"foo":"bar","message":"4"}',
-      jasmine.any(Number)
-    )
-  })
-
   it('should upsert a message for a given key', () => {
     batch.upsert({ message: '1' }, 'a')
     batch.upsert({ message: '2' }, 'a')
@@ -199,6 +180,17 @@ describe('batch', () => {
 
     expect(transport.send).toHaveBeenCalledWith(
       '{"foo":"bar","message":"5"}\n{"foo":"bar","message":"6"}\n{"foo":"bar","message":"7"}',
+      jasmine.any(Number)
+    )
+
+    batch.upsert({ message: '8' }, 'a')
+    batch.upsert({ message: '9' }, 'b')
+    batch.upsert({ message: '10' }, 'a')
+    batch.upsert({ message: '11' }, 'b')
+    batch.flush()
+
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"10"}\n{"foo":"bar","message":"11"}',
       jasmine.any(Number)
     )
   })

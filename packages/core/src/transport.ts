@@ -1,7 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
 import { monitor } from './internalMonitoring'
-import { Context, jsonStringify } from './utils'
+import { Context, jsonStringify, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -29,9 +29,10 @@ export class HttpRequest {
 
 export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
-  private buffer: string[] = []
+  private pushOnlyBuffer: string[] = []
+  private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
-  private bufferIndexByKey: { [key: string]: number } = {}
+  private bufferMessageCount = 0
 
   constructor(
     private request: HttpRequest,
@@ -53,25 +54,18 @@ export class Batch<T> {
     this.addOrUpdate(message, key)
   }
 
-  remove(index: number) {
-    const [removedMessage] = this.buffer.splice(index, 1)
-    const messageBytesSize = this.sizeInBytes(removedMessage)
-    this.bufferBytesSize -= messageBytesSize
-    if (this.buffer.length > 0) {
-      this.bufferBytesSize -= 1
-    }
-  }
-
   beforeFlushOnUnload(handler: () => void) {
     this.beforeFlushOnUnloadHandlers.push(handler)
   }
 
   flush() {
-    if (this.buffer.length !== 0) {
-      this.request.send(this.buffer.join('\n'), this.bufferBytesSize)
-      this.buffer = []
+    if (this.bufferMessageCount !== 0) {
+      const messages = [...this.pushOnlyBuffer, ...objectValues(this.upsertBuffer)]
+      this.request.send(messages.join('\n'), this.bufferBytesSize)
+      this.pushOnlyBuffer = []
+      this.upsertBuffer = {}
       this.bufferBytesSize = 0
-      this.bufferIndexByKey = {}
+      this.bufferMessageCount = 0
     }
   }
 
@@ -81,26 +75,16 @@ export class Batch<T> {
       console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
       return
     }
-    if (key && this.bufferIndexByKey[key] !== undefined) {
-      this.remove(this.bufferIndexByKey[key])
+    if (this.hasMessageFor(key)) {
+      this.remove(key)
     }
     if (this.willReachedBytesLimitWith(messageBytesSize)) {
       this.flush()
     }
-    this.push(processedMessage, messageBytesSize)
-    if (key) {
-      this.bufferIndexByKey[key] = this.buffer.length - 1
-    }
+    this.push(processedMessage, messageBytesSize, key)
     if (this.isFull()) {
       this.flush()
     }
-  }
-
-  private flushPeriodically() {
-    setTimeout(() => {
-      this.flush()
-      this.flushPeriodically()
-    }, this.flushTimeout)
   }
 
   private process(message: T) {
@@ -110,13 +94,33 @@ export class Batch<T> {
     return { processedMessage, messageBytesSize }
   }
 
-  private push(processedMessage: string, messageBytesSize: number) {
-    if (this.buffer.length > 0) {
+  private push(processedMessage: string, messageBytesSize: number, key?: string) {
+    if (this.bufferMessageCount > 0) {
       // \n separator at serialization
       this.bufferBytesSize += 1
     }
-    this.buffer.push(processedMessage)
+    if (key !== undefined) {
+      this.upsertBuffer[key] = processedMessage
+    } else {
+      this.pushOnlyBuffer.push(processedMessage)
+    }
     this.bufferBytesSize += messageBytesSize
+    this.bufferMessageCount += 1
+  }
+
+  private remove(key: string) {
+    const removedMessage = this.upsertBuffer[key]
+    delete this.upsertBuffer[key]
+    const messageBytesSize = this.sizeInBytes(removedMessage)
+    this.bufferBytesSize -= messageBytesSize
+    this.bufferMessageCount -= 1
+    if (this.bufferMessageCount > 0) {
+      this.bufferBytesSize -= 1
+    }
+  }
+
+  private hasMessageFor(key?: string): key is string {
+    return key !== undefined && this.upsertBuffer[key] !== undefined
   }
 
   private willReachedBytesLimitWith(messageBytesSize: number) {
@@ -125,12 +129,19 @@ export class Batch<T> {
   }
 
   private isFull() {
-    return this.buffer.length === this.maxSize || this.bufferBytesSize >= this.bytesLimit
+    return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
 
   private sizeInBytes(candidate: string) {
     // tslint:disable-next-line no-bitwise
     return ~-encodeURI(candidate).split(/%..|./).length
+  }
+
+  private flushPeriodically() {
+    setTimeout(() => {
+      this.flush()
+      this.flushPeriodically()
+    }, this.flushTimeout)
   }
 
   private flushOnVisibilityHidden() {
