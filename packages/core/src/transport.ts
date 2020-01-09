@@ -31,6 +31,7 @@ export class Batch<T> {
   private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private buffer: string[] = []
   private bufferBytesSize = 0
+  private bufferIndexByKey: { [key: string]: number } = {}
 
   constructor(
     private request: HttpRequest,
@@ -45,18 +46,11 @@ export class Batch<T> {
   }
 
   add(message: T) {
-    const { processedMessage, messageBytesSize } = this.process(message)
-    if (messageBytesSize >= this.maxMessageSize) {
-      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
-      return
-    }
-    if (this.willReachedBytesLimitWith(messageBytesSize)) {
-      this.flush()
-    }
-    this.push(processedMessage, messageBytesSize)
-    if (this.isFull()) {
-      this.flush()
-    }
+    this.addOrUpdate(message)
+  }
+
+  upsert(message: T, key: string) {
+    this.addOrUpdate(message, key)
   }
 
   remove(index: number) {
@@ -77,6 +71,28 @@ export class Batch<T> {
       this.request.send(this.buffer.join('\n'), this.bufferBytesSize)
       this.buffer = []
       this.bufferBytesSize = 0
+      this.bufferIndexByKey = {}
+    }
+  }
+
+  private addOrUpdate(message: T, key?: string) {
+    const { processedMessage, messageBytesSize } = this.process(message)
+    if (messageBytesSize >= this.maxMessageSize) {
+      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
+      return
+    }
+    if (key && this.bufferIndexByKey[key] !== undefined) {
+      this.remove(this.bufferIndexByKey[key])
+    }
+    if (this.willReachedBytesLimitWith(messageBytesSize)) {
+      this.flush()
+    }
+    this.push(processedMessage, messageBytesSize)
+    if (key) {
+      this.bufferIndexByKey[key] = this.buffer.length - 1
+    }
+    if (this.isFull()) {
+      this.flush()
     }
   }
 

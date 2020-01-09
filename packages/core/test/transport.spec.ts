@@ -181,4 +181,25 @@ describe('batch', () => {
       jasmine.any(Number)
     )
   })
+
+  it('should upsert a message for a given key', () => {
+    batch.upsert({ message: '1' }, 'a')
+    batch.upsert({ message: '2' }, 'a')
+    batch.upsert({ message: '3' }, 'b')
+    batch.upsert({ message: '4' }, 'c')
+
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"2"}\n{"foo":"bar","message":"3"}\n{"foo":"bar","message":"4"}',
+      jasmine.any(Number)
+    )
+
+    batch.upsert({ message: '5' }, 'c')
+    batch.upsert({ message: '6' }, 'b')
+    batch.upsert({ message: '7' }, 'a')
+
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"5"}\n{"foo":"bar","message":"6"}\n{"foo":"bar","message":"7"}',
+      jasmine.any(Number)
+    )
+  })
 })
