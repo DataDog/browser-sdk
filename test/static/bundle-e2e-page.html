@@ -9,8 +9,9 @@
       window.DD_LOGS &&
         window.DD_LOGS.init({
           clientToken: 'key',
-          internalMonitoringEndpoint: '/monitoring',
-          logsEndpoint: '/logs',
+          internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+          logsEndpoint: `${window.location.origin}/logs`,
+          rumEndpoint: `${window.location.origin}/rum`,
           forwardErrorsToLogs: true,
         })
     </script>
@@ -18,10 +19,11 @@
     <script type="text/javascript">
       window.DD_RUM &&
         window.DD_RUM.init({
-          clientToken: 'key',
-          internalMonitoringEndpoint: '/monitoring',
           applicationId: 'rum',
-          rumEndpoint: '/rum',
+          clientToken: 'key',
+          internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+          logsEndpoint: `${window.location.origin}/logs`,
+          rumEndpoint: `${window.location.origin}/rum`,
         })
     </script>
   </head>

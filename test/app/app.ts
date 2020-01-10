@@ -4,13 +4,15 @@ import { datadogRum } from '@datadog/browser-rum'
 datadogLogs.init({
   clientToken: 'key',
   forwardErrorsToLogs: true,
-  internalMonitoringEndpoint: '/monitoring',
-  logsEndpoint: '/logs',
+  internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+  logsEndpoint: `${window.location.origin}/logs`,
+  rumEndpoint: `${window.location.origin}/rum`,
 })
 
 datadogRum.init({
   applicationId: 'rum',
   clientToken: 'key',
-  internalMonitoringEndpoint: '/monitoring',
-  rumEndpoint: '/rum',
+  internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+  logsEndpoint: `${window.location.origin}/logs`,
+  rumEndpoint: `${window.location.origin}/rum`,
 })
