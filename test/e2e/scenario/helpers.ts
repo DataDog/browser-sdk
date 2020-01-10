@@ -70,6 +70,7 @@ export async function tearDown() {
     logs.forEach(console.log)
     expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
   })
+  await deleteAllCookies()
 }
 
 export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
