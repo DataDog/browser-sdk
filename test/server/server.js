@@ -13,7 +13,13 @@ const fakeBackend = require('./fake-backend')
 const buildEnv = require('../../scripts/build-env')
 
 let port = 3000
+
+morgan.token('body', (req, res) => extractBody(req, res))
+const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
+
 const app = express()
+app.use(cors())
+app.use(morgan(':method :url :body', { stream }))
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../app/dist')))
 
@@ -23,13 +29,9 @@ if (process.env.ENV === 'development') {
   app.use(middleware(webpack(withBuildEnv(logsConfig(null, { mode: 'development' })))))
 } else {
   // e2e tests
-  morgan.token('body', (req, res) => extractBody(req, res))
-  const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
-  app.use(morgan(':method :url :body', { stream }))
   app.use(express.static(path.join(__dirname, '../../packages/logs/bundle')))
   app.use(express.static(path.join(__dirname, '../../packages/rum/bundle')))
   app.use(bodyParser.text())
-  app.use(cors())
   fakeBackend(app)
 }
 
