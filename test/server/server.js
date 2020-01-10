@@ -19,7 +19,7 @@ const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
 
 const app = express()
 app.use(cors())
-app.use(morgan(':method :url :body', { stream }))
+app.use(morgan(':method :url :status :body', { stream }))
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../app/dist')))
 
