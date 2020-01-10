@@ -100,10 +100,10 @@ async function fetch(url: string): Promise<string> {
 }
 
 export async function fetchWhile(url: string, conditionFn: (body: any) => boolean, timeout = 10000) {
-  const threshold = new Date().getTime() + timeout
+  const threshold = Date.now() + timeout
   let body: string = await fetch(url)
   while (conditionFn(JSON.parse(body))) {
-    if (new Date().getTime() > threshold) {
+    if (Date.now() > threshold) {
       throw new Error(`fetchWhile promise rejected because of timeout (${timeout / 1000}s)
             Body: ${body}
             conditionFn: ${conditionFn.toString()}

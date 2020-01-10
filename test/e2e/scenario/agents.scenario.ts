@@ -102,7 +102,7 @@ describe('rum', () => {
     await flushEvents()
     const events = await waitServerRumEvents()
 
-    const viewEvent = events.filter((event) => event.evt.category === 'view')[0] as RumViewEvent
+    const viewEvent = events.find((event) => event.evt.category === 'view') as RumViewEvent
 
     expect(viewEvent as any).not.toBe(undefined)
     const measures = viewEvent.view.measures
