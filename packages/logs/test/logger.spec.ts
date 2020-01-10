@@ -46,9 +46,6 @@ describe('logger module', () => {
       expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE,
         foo: 'bar',
-        http: {
-          referer: window.location.href,
-        },
         message: 'message',
         status: StatusType.warn,
         view: {
