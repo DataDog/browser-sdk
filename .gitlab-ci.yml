@@ -53,7 +53,8 @@ unit:
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn test
+    - yarn test:unit
+    - ./scripts/codecov.sh
 
 bundle-e2e:
   stage: test
