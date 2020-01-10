@@ -7,7 +7,7 @@ module.exports = function(config) {
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
-      reports: ['html', 'text-summary'],
+      reports: ['html', 'text-summary', 'json'],
       dir: path.join(__dirname, '../../coverage'),
     },
     customLaunchers: {
