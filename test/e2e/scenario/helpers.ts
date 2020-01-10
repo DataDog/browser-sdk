@@ -28,6 +28,12 @@ export interface ServerRumViewEvent extends RumViewEvent {
 const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
 
 export async function flushEvents() {
+  // wait to process event loop before switching page
+  await browserExecuteAsync((done) =>
+    setTimeout(() => {
+      done(undefined)
+    })
+  )
   return browser.url('/empty.html')
 }
 
