@@ -134,11 +134,6 @@ export function startRum(
     () => ({
       applicationId,
       date: new Date().getTime(),
-      screen: {
-        // needed for retro compatibility
-        id: viewContext.id,
-        url: viewContext.location.href,
-      },
       sessionId: viewContext.sessionId,
       view: {
         id: viewContext.id,

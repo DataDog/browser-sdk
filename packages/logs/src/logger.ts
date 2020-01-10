@@ -63,11 +63,6 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
       lodashMerge(
         {
           date: new Date().getTime(),
-          http: {
-            // view.url is preferred, but keep http.referer for retro-compatibility
-            referer: window.location.href,
-          },
-          sessionId: session.getId(), // keep for retro-compatibility, could be cleaned in 12/2019
           session_id: session.getId(),
           view: {
             referrer: document.referrer,
