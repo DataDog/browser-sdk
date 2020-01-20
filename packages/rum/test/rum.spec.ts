@@ -3,6 +3,7 @@ import {
   DEFAULT_CONFIGURATION,
   ErrorMessage,
   isIE,
+  Omit,
   PerformanceObserverStubBuilder,
   RequestDetails,
 } from '@datadog/browser-core'
