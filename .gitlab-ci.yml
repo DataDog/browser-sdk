@@ -46,6 +46,7 @@ build:
   script:
     - yarn
     - yarn build
+    - yarn test:tsc:3.0
 
 unit:
   stage: test
