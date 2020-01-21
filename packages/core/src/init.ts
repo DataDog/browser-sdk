@@ -47,7 +47,7 @@ export function isValidBrowsingContext() {
     console.error('Cookies are not authorized, we will not send any data.')
     return false
   }
-  if (isDocPrerendered() || isLocalFile()) {
+  if (isLocalFile()) {
     console.error('Execution is not allowed in the current context.')
     return false
   }
@@ -56,9 +56,4 @@ export function isValidBrowsingContext() {
 
 function isLocalFile() {
   return window.location.protocol === 'file:'
-}
-
-function isDocPrerendered() {
-  // https://www.w3.org/TR/resource-hints/#dfn-prerender
-  return document.visibilityState === 'prerender'
 }
