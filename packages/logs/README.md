@@ -23,12 +23,12 @@ datadogLogs.init({
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
 <script>
-    window.DD_LOGS.init({
-        clientToken: 'XXX',
-        datacenter: 'us',
-        forwardErrorsToLogs: true,
-        sampleRate: 100
-    });
+  window.DD_LOGS.init({
+    clientToken: 'XXX',
+    datacenter: 'us',
+    forwardErrorsToLogs: true,
+    sampleRate: 100
+  });
 </script>
 ```
 
@@ -80,3 +80,19 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   addLoggerGlobalContext (key: string, value: any)  # add one key-value to the default context
   setLoggerGlobalContext (context: Context)  # entirely replace the default context
   ```
+
+## TypeScript support
+
+Types are compatible with TypeScript >= 3.0.
+For earlier version, you can import js sources and use global variable to avoid any compilation issue:
+
+```
+import '@datadog/browser-logs/bundle/datadog-logs-us';
+
+window.DD_LOGS.init({
+  clientToken: 'XXX',
+  datacenter: 'us',
+  forwardErrorsToLogs: true,
+  sampleRate: 100
+});
+```

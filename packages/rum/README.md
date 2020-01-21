@@ -22,13 +22,13 @@ datadogRum.init({
 ```
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
 <script>
-    window.DD_RUM.init({
-        applicationId: 'XXX',
-        clientToken: 'XXX',
-        datacenter: 'us',
-        resourceSampleRate: 100,
-        sampleRate: 100
-    });
+  window.DD_RUM.init({
+    applicationId: 'XXX',
+    clientToken: 'XXX',
+    datacenter: 'us',
+    resourceSampleRate: 100,
+    sampleRate: 100
+  });
 </script>
 ```
 
@@ -62,3 +62,20 @@ datadogRum.init({
   ```
   addUserAction (name: string, context: Context)
   ```
+
+## TypeScript support
+
+Types are compatible with TypeScript >= 3.0.
+For earlier version, you can import js sources and use global variable to avoid any compilation issue:
+
+```
+import '@datadog/browser-rum/bundle/datadog-rum-us';
+
+window.DD_RUM.init({
+  applicationId: 'XXX',
+  clientToken: 'XXX',
+  datacenter: 'us',
+  resourceSampleRate: 100,
+  sampleRate: 100
+});
+```
