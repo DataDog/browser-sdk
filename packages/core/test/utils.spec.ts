@@ -242,6 +242,13 @@ describe('utils', () => {
       expect(jsonStringify(1)).toEqual('1')
       expect(jsonStringify(true)).toEqual('true')
     })
+
+    it('should not crash on serialization error', () => {
+      const circularReference: any = { otherData: 123 }
+      ;(circularReference as any).myself = circularReference
+
+      expect(jsonStringify(circularReference)).toEqual('<error: unable to serialize object>')
+    })
   })
 
   it('should perform a draw', () => {

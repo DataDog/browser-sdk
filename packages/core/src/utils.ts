@@ -150,8 +150,11 @@ export function jsonStringify(
     }
   }
 
+  let result: string
   try {
-    return JSON.stringify(value, replacer, space)
+    result = JSON.stringify(value, undefined, space)
+  } catch {
+    result = '<error: unable to serialize object>'
   } finally {
     if (originalToJSON[0]) {
       ;(value as ObjectWithToJSON).toJSON = originalToJSON[1]
@@ -160,6 +163,7 @@ export function jsonStringify(
       ;(prototype as ObjectWithToJSON).toJSON = originalProtoToJSON[1]
     }
   }
+  return result
 }
 
 function hasToJSON(value: unknown): value is ObjectWithToJSON {
