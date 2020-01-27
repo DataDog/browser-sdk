@@ -3,7 +3,7 @@ import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
   isCollectingError: true,
-  maxErrorsByMinute: 10000,
+  maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   resourceSampleRate: 100,
   sampleRate: 100,
