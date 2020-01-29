@@ -63,30 +63,25 @@ Entry: ${JSON.stringify(entry)}`)
   }
 }
 
+function formatTiming(start: number, end: number) {
+  if (start <= 0 || end <= 0 || end < start) {
+    return undefined
+  }
+  return { duration: msToNs(end - start), start: msToNs(start) }
+}
+
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   if (entry && hasTimingAllowedAttributes(entry)) {
     reporteAbnormalEntry(entry)
     return {
-      connect: { duration: msToNs(entry.connectEnd - entry.connectStart), start: msToNs(entry.connectStart) },
-      dns: {
-        duration: msToNs(entry.domainLookupEnd - entry.domainLookupStart),
-        start: msToNs(entry.domainLookupStart),
-      },
-      download: { duration: msToNs(entry.responseEnd - entry.responseStart), start: msToNs(entry.responseStart) },
-      firstByte: { duration: msToNs(entry.responseStart - entry.requestStart), start: msToNs(entry.requestStart) },
-      redirect:
-        entry.redirectStart > 0
-          ? { duration: msToNs(entry.redirectEnd - entry.redirectStart), start: msToNs(entry.redirectStart) }
-          : undefined,
-      ssl:
-        entry.secureConnectionStart > 0
-          ? {
-              duration: msToNs(entry.connectEnd - entry.secureConnectionStart),
-              start: msToNs(entry.secureConnectionStart),
-            }
-          : undefined,
+      connect: formatTiming(entry.connectStart, entry.connectEnd),
+      dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
+      download: formatTiming(entry.responseStart, entry.responseEnd),
+      firstByte: formatTiming(entry.requestStart, entry.responseStart),
+      redirect: formatTiming(entry.redirectStart, entry.redirectEnd),
+      ssl: formatTiming(entry.secureConnectionStart, entry.connectEnd),
     }
   }
   return undefined
