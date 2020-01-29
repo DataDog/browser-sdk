@@ -158,8 +158,46 @@ describe('rum handle performance entry', () => {
       new LifeCycle()
     )
     const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
-    expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
-    expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
+    expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
+    expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
+  })
+
+  it('should ignore negative timing start', () => {
+    const entry: Partial<PerformanceResourceTiming> = {
+      connectEnd: 10,
+      connectStart: -3,
+      entryType: 'resource',
+      name: 'http://localhost/test',
+      responseEnd: 100,
+      responseStart: 25,
+    }
+
+    handleResourceEntry(
+      configuration as Configuration,
+      entry as PerformanceResourceTiming,
+      addRumEvent,
+      new LifeCycle()
+    )
+    const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+    expect(resourceEvent.http.performance!.connect).toBe(undefined)
+  })
+
+  it('should send positive durations only', () => {
+    const entry: Partial<PerformanceResourceTiming> = {
+      entryType: 'resource',
+      name: 'http://localhost/test',
+      responseEnd: 25,
+      responseStart: 100,
+    }
+
+    handleResourceEntry(
+      configuration as Configuration,
+      entry as PerformanceResourceTiming,
+      addRumEvent,
+      new LifeCycle()
+    )
+    const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+    expect(resourceEvent.http.performance!.download!.duration).toBe(0)
   })
 })
 
