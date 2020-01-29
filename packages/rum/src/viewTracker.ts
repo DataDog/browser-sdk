@@ -119,14 +119,21 @@ function areDifferentViews(previous: Location, current: Location) {
 }
 
 function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming) {
-  if (navigationEntry.loadEventEnd > 86400e3 /* one day in ms */) {
+  if (
+    navigationEntry.loadEventEnd > 86400e3 /* one day in ms */ ||
+    navigationEntry.loadEventEnd > performance.now() + 60e3 /* one minute in ms */
+  ) {
     addMonitoringMessage(
       `Got an abnormal load event in a PerformanceNavigationTiming entry!
 Session Id: ${viewContext.sessionId}
 View Id: ${viewContext.id}
+Load event: ${navigationEntry.loadEventEnd}
 View start date: ${startTimestamp}
+Page duration: ${performance.now()}
+View duration: ${performance.now() - startOrigin}
 Document Version: ${documentVersion}
 Entry: ${JSON.stringify(navigationEntry)}
+Perf timing: ${JSON.stringify(performance.timing)}
 Previous measures: ${JSON.stringify(viewMeasures)}`
     )
   }
