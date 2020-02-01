@@ -72,7 +72,17 @@ export function trackXhr(observable: RequestObservable) {
       })
     }
 
-    this.addEventListener('loadend', monitor(reportXhr))
+    const originalOnreadystatechange = this.onreadystatechange;
+
+    this.onreadystatechange = function () {
+      if (this.readyState === XMLHttpRequest.DONE) {
+        monitor(reportXhr)()
+      }
+
+      if (originalOnreadystatechange) {
+        originalOnreadystatechange.apply(this, arguments as any)
+      }
+    };
 
     return originalSend.apply(this, arguments as any)
   }
