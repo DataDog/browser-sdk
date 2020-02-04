@@ -25,6 +25,7 @@ interface ViewContext {
 export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
+const pageOrigin = Date.now()
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -128,6 +129,7 @@ function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming) {
 Session Id: ${viewContext.sessionId}
 View Id: ${viewContext.id}
 Load event: ${navigationEntry.loadEventEnd}
+Page start date: ${pageOrigin}
 View start date: ${startTimestamp}
 Page duration: ${performance.now()}
 View duration: ${performance.now() - startOrigin}
