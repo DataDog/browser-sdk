@@ -8,6 +8,7 @@ import {
   HttpContext,
   HttpRequest,
   includes,
+  InternalMonitoring,
   monitor,
   msToNs,
   Omit,
@@ -125,9 +126,23 @@ export function startRum(
   applicationId: string,
   lifeCycle: LifeCycle,
   configuration: Configuration,
-  session: RumSession
+  session: RumSession,
+  internalMonitoring: InternalMonitoring
 ): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
+
+  internalMonitoring.setExternalContextProvider(() =>
+    lodashMerge(
+      {
+        application_id: applicationId,
+        session_id: viewContext.sessionId,
+        view: {
+          id: viewContext.id,
+        },
+      },
+      globalContext
+    )
+  )
 
   const batch = startRumBatch(
     configuration,
