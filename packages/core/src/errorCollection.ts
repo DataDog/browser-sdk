@@ -41,16 +41,20 @@ export enum ErrorOrigin {
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
+let filteredErrorsObservable: ErrorObservable
 
 export function startErrorCollection(configuration: Configuration) {
-  const errorObservable = new Observable<ErrorMessage>()
-  if (configuration.isCollectingError) {
-    const requestObservable = startRequestCollection()
-    trackNetworkError(configuration, errorObservable, requestObservable)
-    startConsoleTracking(errorObservable)
-    startRuntimeErrorTracking(errorObservable)
+  if (!filteredErrorsObservable) {
+    const errorObservable = new Observable<ErrorMessage>()
+    if (configuration.isCollectingError) {
+      const requestObservable = startRequestCollection()
+      trackNetworkError(configuration, errorObservable, requestObservable)
+      startConsoleTracking(errorObservable)
+      startRuntimeErrorTracking(errorObservable)
+    }
+    filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
-  return filterErrors(configuration, errorObservable)
+  return filteredErrorsObservable
 }
 
 export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {

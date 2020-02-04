@@ -1,6 +1,7 @@
 // tslint:disable ban-types
 
 import lodashAssign from 'lodash.assign'
+import lodashMerge from 'lodash.merge'
 
 import { Configuration } from './configuration'
 import { toStackTraceString } from './errorCollection'
@@ -11,6 +12,10 @@ import * as utils from './utils'
 enum StatusType {
   info = 'info',
   error = 'error',
+}
+
+export interface InternalMonitoring {
+  setExternalContextProvider: (provider: () => utils.Context) => void
 }
 
 export interface MonitoringMessage {
@@ -29,31 +34,40 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-export function startInternalMonitoring(configuration: Configuration) {
-  if (!configuration.internalMonitoringEndpoint) {
-    return
-  }
+let externalContextProvider: () => utils.Context
 
-  const batch = new Batch<MonitoringMessage>(
-    new HttpRequest(configuration.internalMonitoringEndpoint, configuration.batchBytesLimit),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () => ({
-      date: new Date().getTime(),
-      view: {
-        referrer: document.referrer,
-        url: window.location.href,
-      },
+export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
+  if (configuration.internalMonitoringEndpoint) {
+    const batch = new Batch<MonitoringMessage>(
+      new HttpRequest(configuration.internalMonitoringEndpoint, configuration.batchBytesLimit),
+      configuration.maxBatchSize,
+      configuration.batchBytesLimit,
+      configuration.maxMessageSize,
+      configuration.flushTimeout,
+      () =>
+        lodashMerge(
+          {
+            date: new Date().getTime(),
+            view: {
+              referrer: document.referrer,
+              url: window.location.href,
+            },
+          },
+          externalContextProvider !== undefined ? externalContextProvider() : {}
+        )
+    )
+
+    lodashAssign(monitoringConfiguration, {
+      batch,
+      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
+      sentMessageCount: 0,
     })
-  )
-
-  lodashAssign(monitoringConfiguration, {
-    batch,
-    maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-    sentMessageCount: 0,
-  })
+  }
+  return {
+    setExternalContextProvider: (provider: () => utils.Context) => {
+      externalContextProvider = provider
+    },
+  }
 }
 
 export function resetInternalMonitoring() {

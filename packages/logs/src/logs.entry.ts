@@ -90,9 +90,9 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
     ...userConfiguration,
     isCollectingError,
   }
-  const { errorObservable, configuration } = commonInit(logsUserConfiguration, buildEnv)
+  const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
   const session = startLoggerSession(configuration)
-  const globalApi = startLogger(errorObservable, configuration, session)
+  const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
   lodashAssign(datadogLogs, globalApi)
   isAlreadyInitialized = true
 })

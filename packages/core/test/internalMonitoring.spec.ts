@@ -2,6 +2,7 @@ import sinon from 'sinon'
 
 import { Configuration } from '../src/configuration'
 import {
+  InternalMonitoring,
   monitor,
   monitored,
   MonitoringMessage,
@@ -192,6 +193,37 @@ describe('internal monitoring', () => {
       }
 
       expect(server.requests.length).toEqual(max)
+    })
+  })
+
+  describe('external context', () => {
+    let server: sinon.SinonFakeServer
+    let internalMonitoring: InternalMonitoring
+
+    beforeEach(() => {
+      internalMonitoring = startInternalMonitoring(configuration as Configuration)
+      server = sinon.fakeServer.create()
+    })
+
+    afterEach(() => {
+      resetInternalMonitoring()
+      server.restore()
+    })
+
+    it('should be added to error messages', () => {
+      internalMonitoring.setExternalContextProvider(() => ({
+        foo: 'bar',
+      }))
+      monitor(() => {
+        throw new Error('message')
+      })()
+      expect((JSON.parse(server.requests[0].requestBody) as any).foo).toEqual('bar')
+
+      internalMonitoring.setExternalContextProvider(() => ({}))
+      monitor(() => {
+        throw new Error('message')
+      })()
+      expect((JSON.parse(server.requests[1].requestBody) as any).foo).not.toBeDefined()
     })
   })
 })

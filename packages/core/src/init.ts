@@ -33,12 +33,13 @@ export interface BuildEnv {
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
-  startInternalMonitoring(configuration)
+  const internalMonitoring = startInternalMonitoring(configuration)
   const errorObservable = startErrorCollection(configuration)
 
   return {
     configuration,
     errorObservable,
+    internalMonitoring,
   }
 }
 
