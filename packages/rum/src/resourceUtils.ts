@@ -46,10 +46,35 @@ function formatTiming(start: number, end: number) {
   return { duration: msToNs(Math.max(end - start, 0)), start: msToNs(start) }
 }
 
+const durationPairs: Array<[keyof PerformanceResourceTiming, keyof PerformanceResourceTiming]> = [
+  ['connectStart', 'connectEnd'],
+  ['domainLookupStart', 'domainLookupEnd'],
+  ['responseStart', 'responseEnd'],
+  ['requestStart', 'responseStart'],
+  ['redirectStart', 'redirectEnd'],
+  ['secureConnectionStart', 'connectEnd'],
+]
+function reporteAbnormalEntry(entry: PerformanceResourceTiming) {
+  let error = ''
+  for (const [start, end] of durationPairs) {
+    if (entry[start] < 0) {
+      error += `${start} is negative\n`
+    } else if (entry[start] > entry[end]) {
+      error += `${start} is greater than ${end}\n`
+    }
+  }
+  if (error) {
+    addMonitoringMessage(`Got an abnormal PerformanceResourceTiming:
+${error}
+Entry: ${JSON.stringify(entry)}`)
+  }
+}
+
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   if (entry && hasTimingAllowedAttributes(entry)) {
+    reporteAbnormalEntry(entry)
     return {
       connect: formatTiming(entry.connectStart, entry.connectEnd),
       dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
