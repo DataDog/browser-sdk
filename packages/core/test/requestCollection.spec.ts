@@ -70,6 +70,23 @@ describe('fetch tracker', () => {
     })
   })
 
+  // https://fetch.spec.whatwg.org/#concept-body-consume-body
+  it('should track fetch with response text error', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ status: 200, responseTextError: new Error('locked') })
+
+    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
+      const request = requests[0]
+      expect(request.type).toEqual(RequestType.FETCH)
+      expect(request.method).toEqual('GET')
+      expect(request.url).toEqual(FAKE_URL)
+      expect(request.status).toEqual(200)
+      expect(request.response).toMatch(/Error: locked/)
+      expect(isRejected(request)).toBe(false)
+      expect(isServerError(request)).toBe(false)
+      done()
+    })
+  })
+
   it('should track opaque fetch', (done) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
     fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
