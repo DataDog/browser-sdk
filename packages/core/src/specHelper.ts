@@ -55,7 +55,14 @@ export class FetchStubBuilder {
         resolve({
           ...response,
           clone: () => {
-            const cloned = { text: async () => response.responseText }
+            const cloned = {
+              text: async () => {
+                if (response.responseTextError) {
+                  throw response.responseTextError
+                }
+                return response.responseText
+              },
+            }
             return cloned as Response
           },
         }) as Promise<ResponseStub>
@@ -67,6 +74,7 @@ export class FetchStubBuilder {
 
 export interface ResponseStub extends Partial<Response> {
   responseText?: string
+  responseTextError?: Error
 }
 
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
