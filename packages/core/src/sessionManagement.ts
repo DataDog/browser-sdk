@@ -33,7 +33,7 @@ export function stopSessionManagement() {
 
 export function startSessionManagement<Type extends string>(
   cookieName: string,
-  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
+  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
   const sessionType = cacheCookieAccess(cookieName)
@@ -68,7 +68,7 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return (cookiesAuthorized) ? sessionId.get() : undefined
+      return cookiesAuthorized ? sessionId.get() : undefined
     },
     getType() {
       return sessionType.get() as Type | undefined

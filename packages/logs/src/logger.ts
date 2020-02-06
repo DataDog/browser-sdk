@@ -69,10 +69,10 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
             url: window.location.href,
           },
         },
-        (session.getId()) ? { session_id: session.getId() } : {},
+        session.getId() ? { session_id: session.getId() } : {},
         globalContext,
-        getRUMInternalContext(),
-      ) as Context,
+        getRUMInternalContext()
+      ) as Context
   )
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
@@ -120,7 +120,7 @@ export class Logger {
     private handlers: { [key in HandlerType]: (message: LogsMessage) => void },
     handler = HandlerType.http,
     private level = StatusType.debug,
-    private loggerContext: Context = {},
+    private loggerContext: Context = {}
   ) {
     this.handler = this.handlers[handler]
   }

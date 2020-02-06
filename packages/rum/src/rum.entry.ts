@@ -71,7 +71,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
   requestObservable.subscribe((requestDetails) =>
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails),
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails)
   )
 
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
