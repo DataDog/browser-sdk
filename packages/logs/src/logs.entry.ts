@@ -1,4 +1,5 @@
 import {
+  BrowsingContext,
   commonInit,
   Context,
   ContextValue,
@@ -77,7 +78,7 @@ export type LogsGlobal = typeof STUBBED_LOGS
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
 let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!isValidBrowsingContext() || !canInitLogs(userConfiguration)) {
+  if (!isValidBrowsingContext(BrowsingContext.LOGS) || !canInitLogs(userConfiguration)) {
     return
   }
 

@@ -14,6 +14,7 @@ import lodashMerge from 'lodash.merge'
 
 import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
+import { areCookiesAuthorized } from '../../core/src/cookie'
 
 export enum StatusType {
   debug = 'debug',
@@ -34,6 +35,7 @@ export const STATUSES = Object.keys(StatusType)
 export interface LogsMessage {
   message: string
   status: StatusType
+
   [key: string]: ContextValue
 }
 
@@ -63,15 +65,15 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
       lodashMerge(
         {
           date: new Date().getTime(),
-          session_id: session.getId(),
           view: {
             referrer: document.referrer,
             url: window.location.href,
           },
         },
+        (areCookiesAuthorized()) ? { session_id: session.getId() } : {},
         globalContext,
-        getRUMInternalContext()
-      ) as Context
+        getRUMInternalContext(),
+      ) as Context,
   )
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
@@ -119,7 +121,7 @@ export class Logger {
     private handlers: { [key in HandlerType]: (message: LogsMessage) => void },
     handler = HandlerType.http,
     private level = StatusType.debug,
-    private loggerContext: Context = {}
+    private loggerContext: Context = {},
   ) {
     this.handler = this.handlers[handler]
   }

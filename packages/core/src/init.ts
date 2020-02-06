@@ -25,6 +25,11 @@ export function makeGlobal<T>(stub: T): T {
 export type Datacenter = 'eu' | 'us'
 export type Environment = 'production' | 'staging' | 'e2e-test'
 
+export enum BrowsingContext {
+  RUM = 'rum',
+  LOGS = 'logs'
+}
+
 export interface BuildEnv {
   datacenter: Datacenter
   env: Environment
@@ -42,16 +47,25 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
   }
 }
 
-export function isValidBrowsingContext() {
-  if (!areCookiesAuthorized()) {
-    console.error('Cookies are not authorized, we will not send any data.')
-    return false
+export function isValidBrowsingContext(browsingContext: BrowsingContext) {
+  switch (browsingContext) {
+    case BrowsingContext.RUM:
+      if (!areCookiesAuthorized()) {
+        console.error('Cookies are not authorized, RUM will not send any data.')
+        return false
+      }
+      if (isLocalFile()) {
+        console.error('Execution is not allowed in the current context.')
+        return false
+      }
+      return true
+    case BrowsingContext.LOGS:
+      if (isLocalFile()) {
+        console.error('Execution is not allowed in the current context.')
+        return false
+      }
+      return true
   }
-  if (isLocalFile()) {
-    console.error('Execution is not allowed in the current context.')
-    return false
-  }
-  return true
 }
 
 function isLocalFile() {

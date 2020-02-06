@@ -1,4 +1,5 @@
 import {
+  BrowsingContext,
   commonInit,
   Context,
   ContextValue,
@@ -54,7 +55,7 @@ export type RumGlobal = typeof STUBBED_RUM
 export const datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!isValidBrowsingContext() || !canInitRum(userConfiguration)) {
+  if (!isValidBrowsingContext(BrowsingContext.RUM) || !canInitRum(userConfiguration)) {
     return
   }
   if (userConfiguration.publicApiKey) {
@@ -70,7 +71,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
   requestObservable.subscribe((requestDetails) =>
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails),
   )
 
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session)
