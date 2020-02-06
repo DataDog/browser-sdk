@@ -1,10 +1,10 @@
 import {
-  BrowsingContext,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
-  isValidBrowsingContext,
+  isValidCookiesBrowsingContext,
+  isValidLocalFileBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
@@ -55,7 +55,7 @@ export type RumGlobal = typeof STUBBED_RUM
 export const datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!isValidBrowsingContext(BrowsingContext.RUM) || !canInitRum(userConfiguration)) {
+  if (!isValidCookiesBrowsingContext() || !isValidLocalFileBrowsingContext() || !canInitRum(userConfiguration)) {
     return
   }
   if (userConfiguration.publicApiKey) {

@@ -14,7 +14,6 @@ import lodashMerge from 'lodash.merge'
 
 import { LoggerSession } from './loggerSession'
 import { LogsGlobal } from './logs.entry'
-import { areCookiesAuthorized } from '../../core/src/cookie'
 
 export enum StatusType {
   debug = 'debug',
@@ -70,7 +69,7 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
             url: window.location.href,
           },
         },
-        (areCookiesAuthorized()) ? { session_id: session.getId() } : {},
+        (session.getId()) ? { session_id: session.getId() } : {},
         globalContext,
         getRUMInternalContext(),
       ) as Context,

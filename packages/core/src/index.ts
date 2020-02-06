@@ -1,7 +1,7 @@
 export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration } from './configuration'
 export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
 export {
-  BrowsingContext, BuildEnv, Datacenter, Environment, makeStub, makeGlobal, commonInit, isValidBrowsingContext,
+  BuildEnv, Datacenter, Environment, makeStub, makeGlobal, commonInit, isValidCookiesBrowsingContext, isValidLocalFileBrowsingContext,
 } from './init'
 export { MonitoringMessage, monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'

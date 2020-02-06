@@ -1,10 +1,9 @@
 import {
-  BrowsingContext,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
-  isValidBrowsingContext,
+  isValidLocalFileBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
@@ -14,7 +13,8 @@ import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
-import { startLoggerSession } from './loggerSession'
+import { LoggerSession, startLoggerSession } from './loggerSession'
+import { areCookiesAuthorized } from '../../core/src/cookie'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
@@ -78,7 +78,7 @@ export type LogsGlobal = typeof STUBBED_LOGS
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
 let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!isValidBrowsingContext(BrowsingContext.LOGS) || !canInitLogs(userConfiguration)) {
+  if (!isValidLocalFileBrowsingContext() || !canInitLogs(userConfiguration)) {
     return
   }
 

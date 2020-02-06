@@ -1,4 +1,4 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY } from './cookie'
+import { areCookiesAuthorized, cacheCookieAccess, COOKIE_ACCESS_DELAY } from './cookie'
 import { Observable } from './observable'
 import * as utils from './utils'
 
@@ -7,7 +7,9 @@ export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
 export interface Session<T> {
   renewObservable: Observable<void>
+
   getId(): string | undefined
+
   getType(): T | undefined
 }
 
@@ -31,10 +33,11 @@ export function stopSessionManagement() {
 
 export function startSessionManagement<Type extends string>(
   cookieName: string,
-  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
+  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
 ): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
   const sessionType = cacheCookieAccess(cookieName)
+  const cookiesAuthorized: boolean = areCookiesAuthorized()
   const renewObservable = new Observable<void>()
   let currentSessionId = sessionId.get()
 
@@ -65,7 +68,7 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return sessionId.get()
+      return (cookiesAuthorized) ? sessionId.get() : undefined
     },
     getType() {
       return sessionType.get() as Type | undefined
