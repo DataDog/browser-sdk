@@ -103,7 +103,12 @@ export function trackFetch(observable: RequestObservable) {
           type: RequestType.FETCH,
         })
       } else if ('status' in response) {
-        const text = await response.clone().text()
+        let text: string
+        try {
+          text = await response.clone().text()
+        } catch (e) {
+          text = `Unable to retrieve response: ${e}`
+        }
         observable.notify({
           duration,
           method,
