@@ -7,8 +7,8 @@ export {
   makeStub,
   makeGlobal,
   commonInit,
-  isValidCookiesBrowsingContext,
-  isValidLocalFileBrowsingContext,
+  checkCookiesAuthorized,
+  checkIsNotLocalFile,
 } from './init'
 export { MonitoringMessage, monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'

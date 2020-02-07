@@ -3,7 +3,7 @@ import {
   Context,
   ContextValue,
   isPercentage,
-  isValidLocalFileBrowsingContext,
+  checkIsNotLocalFile,
   makeGlobal,
   makeStub,
   monitor,
@@ -78,7 +78,7 @@ export type LogsGlobal = typeof STUBBED_LOGS
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
 let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!isValidLocalFileBrowsingContext() || !canInitLogs(userConfiguration)) {
+  if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
     return
   }
 

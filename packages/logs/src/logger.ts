@@ -64,12 +64,12 @@ export function startLogger(errorObservable: ErrorObservable, configuration: Con
       lodashMerge(
         {
           date: new Date().getTime(),
+          session_id: session.getId(),
           view: {
             referrer: document.referrer,
             url: window.location.href,
           },
         },
-        session.getId() ? { session_id: session.getId() } : {},
         globalContext,
         getRUMInternalContext()
       ) as Context

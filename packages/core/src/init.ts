@@ -42,7 +42,7 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
   }
 }
 
-export function isValidCookiesBrowsingContext() {
+export function checkCookiesAuthorized() {
   if (!areCookiesAuthorized()) {
     console.error('Cookies are not authorized, we will not send any data.')
     return false
@@ -50,7 +50,7 @@ export function isValidCookiesBrowsingContext() {
   return true
 }
 
-export function isValidLocalFileBrowsingContext() {
+export function checkIsNotLocalFile() {
   if (isLocalFile()) {
     console.error('Execution is not allowed in the current context.')
     return false
