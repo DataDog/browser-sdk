@@ -1,4 +1,5 @@
 import {
+  addMonitoringMessage,
   Batch,
   Configuration,
   Context,
@@ -8,6 +9,7 @@ import {
   HttpContext,
   HttpRequest,
   includes,
+  InternalMonitoring,
   monitor,
   msToNs,
   Omit,
@@ -125,9 +127,25 @@ export function startRum(
   applicationId: string,
   lifeCycle: LifeCycle,
   configuration: Configuration,
-  session: RumSession
+  session: RumSession,
+  internalMonitoring: InternalMonitoring
 ): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
+
+  internalMonitoring.setExternalContextProvider(() =>
+    lodashMerge(
+      {
+        application_id: applicationId,
+        session_id: viewContext.sessionId,
+        view: {
+          id: viewContext.id,
+        },
+      },
+      globalContext
+    )
+  )
+
+  reportAbnormalPerformanceNow()
 
   const batch = startRumBatch(
     configuration,
@@ -327,4 +345,14 @@ export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEven
       category: RumEventCategory.LONG_TASK,
     },
   })
+}
+
+function reportAbnormalPerformanceNow() {
+  if (performance.now() > 300e3 /* 5 min in ms*/) {
+    addMonitoringMessage(`Abnormal performance.now()
+performance.now(): ${performance.now()}
+Date.now(): ${Date.now()}
+Navigation entries: ${JSON.stringify(performance.getEntriesByType('navigation'), undefined, 2)}
+`)
+  }
 }

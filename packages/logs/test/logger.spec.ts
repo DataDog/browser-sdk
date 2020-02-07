@@ -1,4 +1,11 @@
-import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, Observable, Omit } from '@datadog/browser-core'
+import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
+  ErrorMessage,
+  InternalMonitoring,
+  Observable,
+  Omit,
+} from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../src/logger'
@@ -13,6 +20,9 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
 }
 const errorObservable = new Observable<ErrorMessage>()
 type LogsApi = Omit<LogsGlobal, 'init'>
+const internalMonitoring: InternalMonitoring = {
+  setExternalContextProvider: () => undefined,
+}
 
 describe('logger module', () => {
   const TRACKED_SESSION = { getId: () => undefined, isTracked: () => true }
@@ -26,7 +36,7 @@ describe('logger module', () => {
   let server: sinon.SinonFakeServer
 
   beforeEach(() => {
-    LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION) as LogsApi
+    LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION, internalMonitoring) as LogsApi
     server = sinon.fakeServer.create()
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date(FAKE_DATE))
@@ -242,7 +252,7 @@ describe('logger module', () => {
 
     it('should all use the same batch', () => {
       const customConf = { ...configuration, maxBatchSize: 3 }
-      LOGS = startLogger(errorObservable, customConf as Configuration, TRACKED_SESSION) as LogsApi
+      LOGS = startLogger(errorObservable, customConf as Configuration, TRACKED_SESSION, internalMonitoring) as LogsApi
 
       const logger1 = LOGS.createLogger('1')
       const logger2 = LOGS.createLogger('2')
@@ -257,7 +267,12 @@ describe('logger module', () => {
 
   describe('logger session', () => {
     it('when tracked should enable disable logging', () => {
-      LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION) as LogsApi
+      LOGS = startLogger(
+        errorObservable,
+        configuration as Configuration,
+        TRACKED_SESSION,
+        internalMonitoring
+      ) as LogsApi
 
       LOGS.logger.log('message')
       expect(server.requests.length).toEqual(1)
@@ -268,7 +283,12 @@ describe('logger module', () => {
         getId: () => undefined,
         isTracked: () => false,
       }
-      LOGS = startLogger(errorObservable, configuration as Configuration, notTrackedSession) as LogsApi
+      LOGS = startLogger(
+        errorObservable,
+        configuration as Configuration,
+        notTrackedSession,
+        internalMonitoring
+      ) as LogsApi
 
       LOGS.logger.log('message')
       expect(server.requests.length).toEqual(0)
@@ -280,7 +300,7 @@ describe('logger module', () => {
         getId: () => undefined,
         isTracked: () => isTracked,
       }
-      LOGS = startLogger(errorObservable, configuration as Configuration, session) as LogsApi
+      LOGS = startLogger(errorObservable, configuration as Configuration, session, internalMonitoring) as LogsApi
       const testLogger = LOGS.createLogger('test')
 
       LOGS.logger.log('message')

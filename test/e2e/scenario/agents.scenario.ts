@@ -14,9 +14,9 @@ import {
   withBrowserLogs,
 } from './helpers'
 
-beforeEach(() => {
+beforeEach(async () => {
   // tslint:disable-next-line: no-unsafe-any
-  browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
+  await browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
 })
 
 afterEach(tearDown)
