@@ -39,10 +39,35 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
   return ResourceKind.OTHER
 }
 
+const durationPairs: Array<[keyof PerformanceResourceTiming, keyof PerformanceResourceTiming]> = [
+  ['connectStart', 'connectEnd'],
+  ['domainLookupStart', 'domainLookupEnd'],
+  ['responseStart', 'responseEnd'],
+  ['requestStart', 'responseStart'],
+  ['redirectStart', 'redirectEnd'],
+  ['secureConnectionStart', 'connectEnd'],
+]
+function reporteAbnormalEntry(entry: PerformanceResourceTiming) {
+  let error = ''
+  for (const [start, end] of durationPairs) {
+    if (entry[start] < 0) {
+      error += `${start} is negative\n`
+    } else if (entry[start] > entry[end]) {
+      error += `${start} is greater than ${end}\n`
+    }
+  }
+  if (error) {
+    addMonitoringMessage(`Got an abnormal PerformanceResourceTiming:
+${error}
+Entry: ${JSON.stringify(entry)}`)
+  }
+}
+
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   if (entry && hasTimingAllowedAttributes(entry)) {
+    reporteAbnormalEntry(entry)
     return {
       connect: { duration: msToNs(entry.connectEnd - entry.connectStart), start: msToNs(entry.connectStart) },
       dns: {
