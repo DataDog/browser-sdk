@@ -81,6 +81,13 @@ npm-e2e:
     - yarn
     - yarn test:e2e:npm
 
+check-licenses:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - node --no-warnings scripts/check-licenses.js
+
 unit-cbt:
   except:
     refs:
