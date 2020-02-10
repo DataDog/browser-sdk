@@ -12,15 +12,18 @@ export enum LoggerSessionType {
   TRACKED = '1',
 }
 
-export function startLoggerSession(configuration: Configuration): LoggerSession {
+export function startLoggerSession(configuration: Configuration, areCookieAuthorized: boolean): LoggerSession {
+  if (!areCookieAuthorized) {
+    const isTracked = computeSessionType(configuration) === LoggerSessionType.TRACKED
+    return {
+      getId: () => undefined,
+      isTracked: () => isTracked,
+    }
+  }
   const session = startSessionManagement(LOGGER_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
-
   return {
     getId: session.getId,
-    isTracked: () =>
-      session.getType()
-        ? session.getType() === LoggerSessionType.TRACKED
-        : computeSessionType(configuration) === LoggerSessionType.TRACKED,
+    isTracked: () => session.getType() === LoggerSessionType.TRACKED,
   }
 }
 

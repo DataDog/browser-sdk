@@ -35,7 +35,6 @@ export const STATUSES = Object.keys(StatusType)
 export interface LogsMessage {
   message: string
   status: StatusType
-
   [key: string]: ContextValue
 }
 
