@@ -12,10 +12,7 @@ async function main() {
   const packageJsonPaths = await findPackageJsonPaths()
 
   console.log(`Look for dependencies in:\n`, packageJsonPaths)
-  const declaredDependencies = packageJsonPaths
-    .map(retrievePackageJsonDependencies)
-    .reduce(withoutDuplicates)
-    .sort()
+  const declaredDependencies = withoutDuplicates(packageJsonPaths.flatMap(retrievePackageJsonDependencies)).sort()
 
   const declaredLicenses = (await retrieveLicenses()).sort()
 
@@ -47,8 +44,8 @@ function retrievePackageJsonDependencies(packageJsonPath) {
     .filter((dependency) => !dependency.includes('@datadog'))
 }
 
-function withoutDuplicates(a, b) {
-  return [...new Set([...a, ...b])]
+function withoutDuplicates(a) {
+  return [...new Set(a)]
 }
 
 async function retrieveLicenses() {
