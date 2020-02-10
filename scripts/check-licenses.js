@@ -35,7 +35,7 @@ async function main() {
 }
 
 async function findPackageJsonPaths() {
-  const { stdout } = await exec('find . -name "package.json" | grep -v node_modules')
+  const { stdout } = await exec('find . -path "*/node_modules/*" -prune -o -name "package.json" -print')
   return stdout.trim().split('\n')
 }
 
