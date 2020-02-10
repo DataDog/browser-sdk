@@ -1,10 +1,10 @@
 import {
+  checkCookiesAuthorized,
+  checkIsNotLocalFile,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
   makeGlobal,
   makeStub,
   monitor,

@@ -25,25 +25,17 @@ export function startLoggerSession(configuration: Configuration): LoggerSession 
 }
 
 function computeSessionType(configuration: Configuration): string {
-  let sessionType
   if (!performDraw(configuration.sampleRate)) {
-    sessionType = LoggerSessionType.NOT_TRACKED
-  } else {
-    sessionType = LoggerSessionType.TRACKED
+    return LoggerSessionType.NOT_TRACKED
   }
-  return sessionType
+  return LoggerSessionType.TRACKED
 }
 
 function computeSessionState(configuration: Configuration, rawSessionType?: string) {
-  let sessionType
-  if (hasValidLoggerSession(rawSessionType)) {
-    sessionType = rawSessionType
-  } else {
-    sessionType = computeSessionType(configuration)
-  }
+  const sessionType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeSessionType(configuration)
   return {
     isTracked: sessionType === LoggerSessionType.TRACKED,
-    type: sessionType,
+    type: hasValidLoggerSession(rawSessionType) ? rawSessionType : computeSessionType(configuration),
   }
 }
 

@@ -1,9 +1,9 @@
 import {
+  checkIsNotLocalFile,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
-  checkIsNotLocalFile,
   makeGlobal,
   makeStub,
   monitor,
@@ -14,7 +14,6 @@ import lodashAssign from 'lodash.assign'
 import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { LoggerSession, startLoggerSession } from './loggerSession'
-import { areCookiesAuthorized } from '../../core/src/cookie'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
