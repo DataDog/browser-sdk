@@ -1,4 +1,5 @@
 import {
+  areCookiesAuthorized,
   checkIsNotLocalFile,
   commonInit,
   Context,
@@ -10,7 +11,6 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import lodashAssign from 'lodash.assign'
-import { areCookiesAuthorized } from '../../core/src/cookie'
 import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'

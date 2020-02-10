@@ -21,6 +21,6 @@ export {
 } from './sessionManagement'
 export { HttpRequest, Batch } from './transport'
 export * from './utils'
-export { getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
+export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
 
 export * from './specHelper'
