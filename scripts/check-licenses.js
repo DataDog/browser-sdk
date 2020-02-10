@@ -26,7 +26,7 @@ async function main() {
       `\nIn ${LICENSE_FILE} but not in package.json:\n`,
       declaredLicenses.filter((d) => !declaredDependencies.includes(d))
     )
-    throw new Error()
+    throw new Error('dependencies mismatch')
   }
   console.log(`\n✅ All dependencies listed in ${LICENSE_FILE}`)
 }
@@ -63,6 +63,7 @@ async function retrieveLicenses() {
   return licenses
 }
 
-main().catch(() => {
+main().catch((e) => {
+  console.error('\nStacktrace:\n', e)
   process.exit(1)
 })
