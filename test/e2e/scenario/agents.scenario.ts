@@ -131,7 +131,7 @@ describe('rum', () => {
 
     await browserExecuteAsync((baseUrl, done) => {
       const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', done)
+      xhr.addEventListener('load', () => done(undefined))
       xhr.open('GET', `${baseUrl}/ok`)
       xhr.send()
     }, browser.options.baseUrl!)
