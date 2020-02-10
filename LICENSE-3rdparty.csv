@@ -5,6 +5,7 @@ require,tslib,Apache-2.0,Copyright Microsoft Corporation
 require,url-polyfill,MIT,Copyright 2017 Valentin Richard
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
+dev,@types/lodash.assign,MIT,Copyright Microsoft Corporation
 dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
@@ -16,6 +17,7 @@ dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other cont
 dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
 dev,body-parser,MIT,Copyright 2014 Jonathan Ong 2014-2015 Douglas Christopher Wilson
+dev,codecov,MIT,Copyright 2014 Gregg Caines
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
 dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contributors
@@ -30,6 +32,7 @@ dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-typescript-preprocessor2,MIT,Copyright 2015 Cleiton Gomes Loiola
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
+dev,morgan,MIT,Copyright 2014 Jonathan Ong 2014-2017 Douglas Christopher Wilson
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,prettier,MIT,Copyright James Long and contributors
 dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
