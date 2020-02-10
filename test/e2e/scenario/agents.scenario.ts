@@ -3,6 +3,7 @@ import { RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/brows
 import {
   browserExecute,
   browserExecuteAsync,
+  expireSession,
   flushBrowserLogs,
   flushEvents,
   renewSession,
@@ -123,6 +124,26 @@ describe('rum', () => {
     expect(viewEvents.length).toBe(2)
     expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
     expect(viewEvents[0].view.id).not.toBe(viewEvents[1].view.id)
+  })
+
+  it('should not send events when session is expired', async () => {
+    await expireSession()
+
+    await browserExecuteAsync((baseUrl, done) => {
+      const xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', done)
+      xhr.open('GET', `${baseUrl}/ok`)
+      xhr.send()
+    }, browser.options.baseUrl!)
+
+    await flushEvents()
+
+    const timing = (await waitServerRumEvents()).find(
+      (event) =>
+        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
+    ) as RumResourceEvent
+
+    expect(timing).not.toBeDefined()
   })
 })
 

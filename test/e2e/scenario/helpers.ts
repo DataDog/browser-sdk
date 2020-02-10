@@ -134,13 +134,17 @@ export function sortByMessage(a: { message: string }, b: { message: string }) {
 }
 
 export async function renewSession() {
+  await expireSession()
+  const button = await $('button')
+  await button.click()
+  expect(await findSessionCookie()).toBeDefined()
+}
+
+export async function expireSession() {
   await deleteAllCookies()
   expect(await findSessionCookie()).not.toBeDefined()
   // Cookies are cached for 1s, wait until the cache expires
   await browser.pause(1100)
-  const button = await $('button')
-  await button.click()
-  expect(await findSessionCookie()).toBeDefined()
 }
 
 // wdio method does not work for some browsers
