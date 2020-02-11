@@ -26,7 +26,7 @@ export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 const pageOrigin = Date.now()
-const navigationEntries: PerformanceNavigationTiming[] = []
+let pageLoad = 0
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -45,8 +45,14 @@ export function trackView(
 
   newView(location, session, upsertRumEvent)
   trackHistory(location, session, upsertRumEvent)
-  trackMeasures(lifeCycle, scheduleViewUpdate)
+  trackMeasures(lifeCycle, scheduleViewUpdate, session)
   trackRenewSession(location, lifeCycle, session, upsertRumEvent)
+
+  window.addEventListener('load', trackLoad)
+  function trackLoad() {
+    pageLoad = performance.now()
+    window.removeEventListener('load', trackLoad)
+  }
 
   beforeFlushOnUnload(() => updateView(upsertRumEvent))
 }
@@ -120,34 +126,29 @@ function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming) {
-  if (
-    navigationEntry.loadEventEnd > 86400e3 /* one day in ms */ ||
-    navigationEntry.loadEventEnd > performance.now() + 60e3 /* one minute in ms */
-  ) {
+function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming, session: RumSession) {
+  if (navigationEntry.loadEventEnd > 36e5 /* one hour in ms */) {
     addMonitoringMessage(
-      `Got an abnormal load event in a PerformanceNavigationTiming entry!
-Session Id: ${viewContext.sessionId}
+      `[RUMF-257] abnormal load event
+isTracked: ${session.isTracked()}
+Session Id: ${session.getId()}
 View Id: ${viewContext.id}
-Load event: ${navigationEntry.loadEventEnd}
-Page start date: ${pageOrigin}
-View start date: ${startTimestamp}
-Page duration: ${performance.now()}
-View duration: ${performance.now() - startOrigin}
-Document Version: ${documentVersion}
+Load event (entry): ${navigationEntry.loadEventEnd / 6e4}min
+Load event (listener): ${pageLoad / 6e4}min
+Page duration (Date.now()): ${(Date.now() - pageOrigin) / 6e4}min
+Page duration (perf.now()): ${performance.now() / 6e4}min 
 Entry: ${JSON.stringify(navigationEntry)}
-Previous navigation entries: ${JSON.stringify(navigationEntries)}
-Perf timing: ${JSON.stringify(performance.timing)}
-Previous measures: ${JSON.stringify(viewMeasures)}`
+Previous navigation entries: ${JSON.stringify(performance.getEntriesByType('navigation'))}
+Perf timing: ${JSON.stringify(performance.timing)}`
     )
   }
 }
 
-function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
+function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void, session: RumSession) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
-      reportAbnormalLoadEvent(navigationEntry)
+      reportAbnormalLoadEvent(navigationEntry, session)
       viewMeasures = {
         ...viewMeasures,
         domComplete: msToNs(navigationEntry.domComplete),
@@ -156,7 +157,6 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }
       scheduleViewUpdate()
-      navigationEntries.push(navigationEntry)
     } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
       const paintEntry = entry as PerformancePaintTiming
       viewMeasures = {
