@@ -24,8 +24,9 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
 
   return {
     getId: session.getId,
-    isTracked: () => isTracked(session.getType()),
-    isTrackedWithResource: () => session.getType() === RumSessionType.TRACKED_WITH_RESOURCES,
+    isTracked: () => session.getId() !== undefined && isTracked(session.getType()),
+    isTrackedWithResource: () =>
+      session.getId() !== undefined && session.getType() === RumSessionType.TRACKED_WITH_RESOURCES,
   }
 }
 
