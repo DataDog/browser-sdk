@@ -38,7 +38,7 @@ function computeSessionState(configuration: Configuration, rawSessionType?: stri
   const sessionType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeSessionType(configuration)
   return {
     isTracked: sessionType === LoggerSessionType.TRACKED,
-    type: hasValidLoggerSession(rawSessionType) ? rawSessionType : computeSessionType(configuration),
+    type: sessionType,
   }
 }
 

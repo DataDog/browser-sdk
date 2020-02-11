@@ -78,4 +78,11 @@ describe('logger session', () => {
     expect(getCookie(LOGGER_COOKIE_NAME)).toEqual(LoggerSessionType.TRACKED)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
+
+  it('when no cookies available, isTracked is computed at each call and getId is undefined', () => {
+    const session = startLoggerSession(configuration as Configuration, false)
+
+    expect(session.getId()).toBeUndefined()
+    expect(session.isTracked()).toMatch(/true|false/)
+  })
 })
