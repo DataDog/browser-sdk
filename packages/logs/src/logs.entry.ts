@@ -1,16 +1,16 @@
 import {
+  areCookiesAuthorized,
+  checkIsNotLocalFile,
   commonInit,
   Context,
   ContextValue,
   isPercentage,
-  isValidBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
 import lodashAssign from 'lodash.assign'
-
 import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'
@@ -77,7 +77,7 @@ export type LogsGlobal = typeof STUBBED_LOGS
 export const datadogLogs = makeGlobal(STUBBED_LOGS)
 let isAlreadyInitialized = false
 datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!isValidBrowsingContext() || !canInitLogs(userConfiguration)) {
+  if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
     return
   }
 
@@ -91,7 +91,7 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
     isCollectingError,
   }
   const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
-  const session = startLoggerSession(configuration)
+  const session = startLoggerSession(configuration, areCookiesAuthorized())
   const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
   lodashAssign(datadogLogs, globalApi)
   isAlreadyInitialized = true
