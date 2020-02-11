@@ -349,9 +349,9 @@ export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEven
 
 function reportAbnormalPerformanceNow() {
   if (performance.now() > 300e3 /* 5 min in ms*/) {
-    addMonitoringMessage(`Abnormal performance.now()
-performance.now(): ${performance.now()}
-Date.now(): ${Date.now()}
+    addMonitoringMessage(`[RUMF-257] Abnormal performance.now()
+performance.now(): ${performance.now() / 6e4}s
+Date.now(): ${new Date().toISOString()}
 Navigation entries: ${JSON.stringify(performance.getEntriesByType('navigation'), undefined, 2)}
 `)
   }
