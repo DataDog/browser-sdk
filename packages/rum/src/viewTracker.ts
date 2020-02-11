@@ -26,6 +26,7 @@ export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 const pageOrigin = Date.now()
+let pageLoad = 0
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -46,6 +47,12 @@ export function trackView(
   trackHistory(location, session, upsertRumEvent)
   trackMeasures(lifeCycle, scheduleViewUpdate, session)
   trackRenewSession(location, lifeCycle, session, upsertRumEvent)
+
+  window.addEventListener('load', trackLoad)
+  function trackLoad() {
+    pageLoad = performance.now()
+    window.removeEventListener('load', trackLoad)
+  }
 
   beforeFlushOnUnload(() => updateView(upsertRumEvent))
 }
@@ -126,7 +133,8 @@ function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming, s
 isTracked: ${session.isTracked()}
 Session Id: ${session.getId()}
 View Id: ${viewContext.id}
-Load event: ${navigationEntry.loadEventEnd / 6e4}min
+Load event (entry): ${navigationEntry.loadEventEnd / 6e4}min
+Load event (listener): ${pageLoad / 6e4}min
 Page duration (Date.now()): ${(Date.now() - pageOrigin) / 6e4}min
 Page duration (perf.now()): ${performance.now() / 6e4}min 
 Entry: ${JSON.stringify(navigationEntry)}
