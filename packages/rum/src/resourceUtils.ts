@@ -40,26 +40,39 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
 }
 
 function formatTiming(start: number, end: number) {
-  if (start <= 0 || end <= 0 || end < start) {
-    return undefined
-  }
   return { duration: msToNs(end - start), start: msToNs(start) }
+}
+
+function isValidTiming(start: number, end: number) {
+  return start > 0 && end > 0 && end >= start
 }
 
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  if (entry && hasTimingAllowedAttributes(entry)) {
-    return {
-      connect: formatTiming(entry.connectStart, entry.connectEnd),
-      dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
-      download: formatTiming(entry.responseStart, entry.responseEnd),
-      firstByte: formatTiming(entry.requestStart, entry.responseStart),
-      redirect: formatTiming(entry.redirectStart, entry.redirectEnd),
-      ssl: formatTiming(entry.secureConnectionStart, entry.connectEnd),
-    }
+  if (!entry || !hasTimingAllowedAttributes(entry)) {
+    return undefined
   }
-  return undefined
+  if (
+    !isValidTiming(entry.connectStart, entry.connectEnd) ||
+    !isValidTiming(entry.domainLookupStart, entry.domainLookupEnd) ||
+    !isValidTiming(entry.responseStart, entry.responseEnd) ||
+    !isValidTiming(entry.requestStart, entry.responseStart)
+  ) {
+    return undefined
+  }
+  return {
+    connect: formatTiming(entry.connectStart, entry.connectEnd),
+    dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
+    download: formatTiming(entry.responseStart, entry.responseEnd),
+    firstByte: formatTiming(entry.requestStart, entry.responseStart),
+    redirect: isValidTiming(entry.redirectStart, entry.redirectEnd)
+      ? formatTiming(entry.redirectStart, entry.redirectEnd)
+      : undefined,
+    ssl: isValidTiming(entry.secureConnectionStart, entry.connectEnd)
+      ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
+      : undefined,
+  }
 }
 
 export function computeSize(entry?: PerformanceResourceTiming) {
