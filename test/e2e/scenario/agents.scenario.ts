@@ -96,7 +96,7 @@ describe('rum', () => {
     expect(timing.http.method).toEqual('GET')
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
-    expect(timing.http.performance!.download.start).toBeGreaterThan(0)
+    expect(timing.http.performance!.download!.start).toBeGreaterThan(0)
   })
 
   it('should send performance timings along the view events', async () => {
