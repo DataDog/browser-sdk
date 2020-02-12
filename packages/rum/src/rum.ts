@@ -1,5 +1,4 @@
 import {
-  addMonitoringMessage,
   Batch,
   Configuration,
   Context,
@@ -144,8 +143,6 @@ export function startRum(
       globalContext
     )
   )
-
-  reportAbnormalPerformanceNow()
 
   const batch = startRumBatch(
     configuration,
@@ -345,14 +342,4 @@ export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEven
       category: RumEventCategory.LONG_TASK,
     },
   })
-}
-
-function reportAbnormalPerformanceNow() {
-  if (performance.now() > 300e3 /* 5 min in ms*/) {
-    addMonitoringMessage(`[RUMF-257] Abnormal performance.now()
-performance.now(): ${performance.now() / 6e4}s
-Date.now(): ${new Date().toISOString()}
-Navigation entries: ${JSON.stringify(performance.getEntriesByType('navigation'), undefined, 2)}
-`)
-  }
 }
