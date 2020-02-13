@@ -93,12 +93,12 @@ function upsertViewEvent(upsertRumEvent: (event: RumEvent, key: string) => void)
 
 function trackHistory(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
   const originalPushState = history.pushState
-  history.pushState = monitor(function (this: History['pushState']) {
+  history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
     onUrlChange(location, session, upsertRumEvent)
   })
   const originalReplaceState = history.replaceState
-  history.replaceState = monitor(function (this: History['replaceState']) {
+  history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
     onUrlChange(location, session, upsertRumEvent)
   })
