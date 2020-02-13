@@ -113,6 +113,22 @@ describe('rum', () => {
     expect((measures as any).load_event_end).toBeGreaterThan(0)
   })
 
+  it('should retrieve early requests timings', async () => {
+    await flushEvents()
+    const events = await waitServerRumEvents()
+
+    const resourceEvent = events.find(
+      (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url.includes('empty.css')
+    ) as RumResourceEvent
+
+    expect(resourceEvent as any).not.toBe(undefined)
+    expect(resourceEvent.duration).toBeGreaterThan(0)
+    const performance = resourceEvent.http.performance!
+    expect(performance.connect.start).toBeGreaterThan(0)
+    expect(performance.dns.start).toBeGreaterThan(0)
+    expect(performance.download.start).toBeGreaterThan(0)
+  })
+
   it('should create a new View when the session is renewed', async () => {
     await renewSession()
     await flushEvents()
