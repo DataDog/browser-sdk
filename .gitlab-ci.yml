@@ -81,6 +81,18 @@ npm-e2e:
     - yarn
     - yarn test:e2e:npm
 
+async-e2e:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    paths:
+      - test/server/test-server.log
+    when: always
+  script:
+    - yarn
+    - yarn test:e2e:async
+
 check-licenses:
   stage: test
   tags: ['runner:main', 'size:large']

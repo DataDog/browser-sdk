@@ -19,6 +19,7 @@
     "test:e2e": "yarn run test:e2e:bundle",
     "test:e2e:bundle": "TARGET_ENV=e2e-test yarn build && E2E_MODE=bundle wdio test/e2e/wdio.local.conf.js",
     "test:e2e:npm": "TARGET_ENV=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build) && E2E_MODE=npm wdio test/e2e/wdio.local.conf.js",
+    "test:e2e:async": "TARGET_ENV=e2e-test yarn build && E2E_MODE=async wdio test/e2e/wdio.local.conf.js",
     "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && node ./scripts/cbt-with-retry.js wdio test/e2e/wdio.cbt.conf.js",
     "test:tsc:3.0": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn tsc:compatibility)"
   },
