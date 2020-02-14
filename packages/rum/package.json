@@ -23,5 +23,10 @@
     "@types/lodash.merge": "4.6.6",
     "@types/sinon": "7.0.13",
     "sinon": "7.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum"
   }
 }
