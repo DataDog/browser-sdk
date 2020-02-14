@@ -23,8 +23,6 @@ module.exports = {
       files: true,
       project: 'test/e2e/scenario/tsconfig.json',
     })
-    // avoid reference error when executing ts files with window references
-    global.window = {}
   },
   onComplete: function() {
     serverProcess.kill()

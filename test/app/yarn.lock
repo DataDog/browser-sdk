@@ -2,8 +2,8 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@1.2.7", "@datadog/browser-core@file:../../packages/core":
-  version "1.2.7"
+"@datadog/browser-core@1.4.1", "@datadog/browser-core@file:../../packages/core":
+  version "1.4.1"
   dependencies:
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
@@ -11,17 +11,17 @@
     url-polyfill "1.1.7"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "1.2.7"
+  version "1.4.1"
   dependencies:
-    "@datadog/browser-core" "1.2.7"
+    "@datadog/browser-core" "1.4.1"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "1.2.7"
+  version "1.4.1"
   dependencies:
-    "@datadog/browser-core" "1.2.7"
+    "@datadog/browser-core" "1.4.1"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"

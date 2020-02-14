@@ -46,7 +46,15 @@ build:
   script:
     - yarn
     - yarn build
-    - yarn test:tsc:3.0
+
+compatibility:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn test:compat:tsc
+    - yarn test:compat:ssr
 
 unit:
   stage: test

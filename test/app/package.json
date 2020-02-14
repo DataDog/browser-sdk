@@ -2,8 +2,9 @@
   "name": "app",
   "version": "0.0.0",
   "scripts": {
-    "tsc:compatibility": "tsc -p tsconfig.json",
-    "build": "webpack --mode=production"
+    "build": "webpack --mode=production",
+    "compat:tsc": "tsc -p tsconfig.json",
+    "compat:ssr": "webpack --mode=development && node dist/app.js"
   },
   "dependencies": {
     "@datadog/browser-logs": "file:../../packages/logs",
