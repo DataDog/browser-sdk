@@ -200,3 +200,14 @@ export function objectValues(object: { [key: string]: unknown }) {
   })
   return values
 }
+
+const fakeGlobal = {}
+
+export function getGlobalObject<T>(): T {
+  return (isGlobal('global') ? global : isGlobal('window') ? window : fakeGlobal) as T
+}
+
+function isGlobal(globalName: string) {
+  // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
+  return new Function(`try {return this===${globalName};}catch(e){return false;}`)
+}
