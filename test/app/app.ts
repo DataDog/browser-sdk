@@ -1,7 +1,8 @@
 import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 
-const origin = global ? '' : window.location.origin
+// fallback for server side rendering
+const origin = typeof location === 'object' ? location.origin : ''
 
 datadogLogs.init({
   clientToken: 'key',
