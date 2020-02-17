@@ -54,11 +54,8 @@ interface FakePerformanceNavigationTiming {
 function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
     const timing: FakePerformanceNavigationTiming = {
-      domComplete: getRelativeTime(performance.timing.domComplete),
-      domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
-      domInteractive: getRelativeTime(performance.timing.domInteractive),
+      ...computeRelativePerformanceTiming(),
       entryType: 'navigation',
-      loadEventEnd: getRelativeTime(performance.timing.loadEventEnd),
     }
     callback((timing as unknown) as PerformanceNavigationTiming)
   }
@@ -74,6 +71,21 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
 
     window.addEventListener('load', listener)
   }
+}
+
+interface IndexedPerformanceTiming extends PerformanceTiming {
+  [key: string]: any
+}
+
+function computeRelativePerformanceTiming() {
+  const result: Partial<IndexedPerformanceTiming> = {}
+  const timing = performance.timing as IndexedPerformanceTiming
+  for (const key in timing) {
+    if (Number.isInteger(timing[key] as any)) {
+      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key] as number)
+    }
+  }
+  return result as PerformanceTiming
 }
 
 function handlePerformanceEntries(session: RumSession, lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
