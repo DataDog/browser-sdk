@@ -200,3 +200,8 @@ export function objectValues(object: { [key: string]: unknown }) {
   })
   return values
 }
+
+export function getGlobalObject<T>(): T {
+  // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
+  return (typeof globalThis === 'object' ? globalThis : Function('return this')()) as T
+}

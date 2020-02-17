@@ -4,6 +4,7 @@ import {
   commonInit,
   Context,
   ContextValue,
+  getGlobalObject,
   isPercentage,
   makeGlobal,
   makeStub,
@@ -117,4 +118,4 @@ interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
 }
 
-;(window as BrowserWindow).DD_LOGS = datadogLogs
+getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs

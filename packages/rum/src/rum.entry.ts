@@ -4,6 +4,7 @@ import {
   commonInit,
   Context,
   ContextValue,
+  getGlobalObject,
   isPercentage,
   makeGlobal,
   makeStub,
@@ -108,4 +109,4 @@ interface BrowserWindow extends Window {
   DD_RUM?: RumGlobal
 }
 
-;(window as BrowserWindow).DD_RUM = datadogRum
+getGlobalObject<BrowserWindow>().DD_RUM = datadogRum
