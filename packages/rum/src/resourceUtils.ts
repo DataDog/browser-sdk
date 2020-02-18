@@ -2,7 +2,10 @@ import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, st
 
 import { PerformanceResourceDetails } from './rum'
 
+export const FAKE_INITIAL_DOCUMENT = 'initial_document'
+
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
+  [ResourceKind.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
   [ResourceKind.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceKind.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceKind.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
@@ -44,7 +47,7 @@ function formatTiming(start: number, end: number) {
 }
 
 function isValidTiming(start: number, end: number) {
-  return start > 0 && end > 0 && end >= start
+  return start >= 0 && end >= 0 && end >= start
 }
 
 export function computePerformanceResourceDetails(

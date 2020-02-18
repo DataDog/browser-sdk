@@ -5,6 +5,7 @@ export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 
 export enum ResourceKind {
+  DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
   FETCH = 'fetch',
