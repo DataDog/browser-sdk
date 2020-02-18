@@ -3,6 +3,7 @@ import { RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/brows
 import {
   browserExecute,
   browserExecuteAsync,
+  expectToHaveValidTimings,
   expireSession,
   flushBrowserLogs,
   flushEvents,
@@ -17,7 +18,7 @@ import {
 
 beforeEach(async () => {
   // tslint:disable-next-line: no-unsafe-any
-  await browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html`)
+  await browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
 })
 
 afterEach(tearDown)
@@ -122,11 +123,21 @@ describe('rum', () => {
     ) as RumResourceEvent
 
     expect(resourceEvent as any).not.toBe(undefined)
-    expect(resourceEvent.duration).toBeGreaterThan(0)
-    const performance = resourceEvent.http.performance!
-    expect(performance.connect.start).toBeGreaterThan(0)
-    expect(performance.dns.start).toBeGreaterThan(0)
-    expect(performance.download.start).toBeGreaterThan(0)
+    expectToHaveValidTimings(resourceEvent)
+  })
+
+  it('should retrieve initial document timings', async () => {
+    const pageUrl = await browser.getUrl()
+    await flushEvents()
+    const events = await waitServerRumEvents()
+
+    const resourceEvent = events.find(
+      (event) => event.evt.category === 'resource' && (event as RumResourceEvent).resource.kind === 'document'
+    ) as RumResourceEvent
+
+    expect(resourceEvent as any).not.toBe(undefined)
+    expect(resourceEvent.http.url).toBe(pageUrl)
+    expectToHaveValidTimings(resourceEvent)
   })
 
   it('should create a new View when the session is renewed', async () => {
