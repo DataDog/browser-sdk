@@ -3,6 +3,7 @@ import { RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/brows
 import {
   browserExecute,
   browserExecuteAsync,
+  expireSession,
   flushBrowserLogs,
   flushEvents,
   renewSession,
@@ -95,7 +96,7 @@ describe('rum', () => {
     expect(timing.http.method).toEqual('GET')
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
-    expect(timing.http.performance!.download.start).toBeGreaterThan(0)
+    expect(timing.http.performance!.download!.start).toBeGreaterThan(0)
   })
 
   it('should send performance timings along the view events', async () => {
@@ -112,6 +113,22 @@ describe('rum', () => {
     expect((measures as any).load_event_end).toBeGreaterThan(0)
   })
 
+  it('should retrieve early requests timings', async () => {
+    await flushEvents()
+    const events = await waitServerRumEvents()
+
+    const resourceEvent = events.find(
+      (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url.includes('empty.css')
+    ) as RumResourceEvent
+
+    expect(resourceEvent as any).not.toBe(undefined)
+    expect(resourceEvent.duration).toBeGreaterThan(0)
+    const performance = resourceEvent.http.performance!
+    expect(performance.connect.start).toBeGreaterThan(0)
+    expect(performance.dns.start).toBeGreaterThan(0)
+    expect(performance.download.start).toBeGreaterThan(0)
+  })
+
   it('should create a new View when the session is renewed', async () => {
     await renewSession()
     await flushEvents()
@@ -123,6 +140,26 @@ describe('rum', () => {
     expect(viewEvents.length).toBe(2)
     expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
     expect(viewEvents[0].view.id).not.toBe(viewEvents[1].view.id)
+  })
+
+  it('should not send events when session is expired', async () => {
+    await expireSession()
+
+    await browserExecuteAsync((baseUrl, done) => {
+      const xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => done(undefined))
+      xhr.open('GET', `${baseUrl}/ok`)
+      xhr.send()
+    }, browser.options.baseUrl!)
+
+    await flushEvents()
+
+    const timing = (await waitServerRumEvents()).find(
+      (event) =>
+        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
+    ) as RumResourceEvent
+
+    expect(timing).not.toBeDefined()
   })
 })
 

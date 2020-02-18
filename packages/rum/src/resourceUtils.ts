@@ -39,57 +39,40 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
   return ResourceKind.OTHER
 }
 
-const durationPairs: Array<[keyof PerformanceResourceTiming, keyof PerformanceResourceTiming]> = [
-  ['connectStart', 'connectEnd'],
-  ['domainLookupStart', 'domainLookupEnd'],
-  ['responseStart', 'responseEnd'],
-  ['requestStart', 'responseStart'],
-  ['redirectStart', 'redirectEnd'],
-  ['secureConnectionStart', 'connectEnd'],
-]
-function reporteAbnormalEntry(entry: PerformanceResourceTiming) {
-  let error = ''
-  for (const [start, end] of durationPairs) {
-    if (entry[start] < 0) {
-      error += `${start} is negative\n`
-    } else if (entry[start] > entry[end]) {
-      error += `${start} is greater than ${end}\n`
-    }
-  }
-  if (error) {
-    addMonitoringMessage(`Got an abnormal PerformanceResourceTiming:
-${error}
-Entry: ${JSON.stringify(entry)}`)
-  }
+function formatTiming(start: number, end: number) {
+  return { duration: msToNs(end - start), start: msToNs(start) }
+}
+
+function isValidTiming(start: number, end: number) {
+  return start > 0 && end > 0 && end >= start
 }
 
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  if (entry && hasTimingAllowedAttributes(entry)) {
-    reporteAbnormalEntry(entry)
-    return {
-      connect: { duration: msToNs(entry.connectEnd - entry.connectStart), start: msToNs(entry.connectStart) },
-      dns: {
-        duration: msToNs(entry.domainLookupEnd - entry.domainLookupStart),
-        start: msToNs(entry.domainLookupStart),
-      },
-      download: { duration: msToNs(entry.responseEnd - entry.responseStart), start: msToNs(entry.responseStart) },
-      firstByte: { duration: msToNs(entry.responseStart - entry.requestStart), start: msToNs(entry.requestStart) },
-      redirect:
-        entry.redirectStart > 0
-          ? { duration: msToNs(entry.redirectEnd - entry.redirectStart), start: msToNs(entry.redirectStart) }
-          : undefined,
-      ssl:
-        entry.secureConnectionStart > 0
-          ? {
-              duration: msToNs(entry.connectEnd - entry.secureConnectionStart),
-              start: msToNs(entry.secureConnectionStart),
-            }
-          : undefined,
-    }
+  if (!entry || !hasTimingAllowedAttributes(entry)) {
+    return undefined
   }
-  return undefined
+  if (
+    !isValidTiming(entry.connectStart, entry.connectEnd) ||
+    !isValidTiming(entry.domainLookupStart, entry.domainLookupEnd) ||
+    !isValidTiming(entry.responseStart, entry.responseEnd) ||
+    !isValidTiming(entry.requestStart, entry.responseStart)
+  ) {
+    return undefined
+  }
+  return {
+    connect: formatTiming(entry.connectStart, entry.connectEnd),
+    dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
+    download: formatTiming(entry.responseStart, entry.responseEnd),
+    firstByte: formatTiming(entry.requestStart, entry.responseStart),
+    redirect: isValidTiming(entry.redirectStart, entry.redirectEnd)
+      ? formatTiming(entry.redirectStart, entry.redirectEnd)
+      : undefined,
+    ssl: isValidTiming(entry.secureConnectionStart, entry.connectEnd)
+      ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
+      : undefined,
+  }
 }
 
 export function computeSize(entry?: PerformanceResourceTiming) {

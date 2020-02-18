@@ -150,8 +150,11 @@ describe('rum handle performance entry', () => {
     const entry: Partial<PerformanceResourceTiming> = {
       connectEnd: 10,
       connectStart: 3,
+      domainLookupEnd: 3,
+      domainLookupStart: 3,
       entryType: 'resource',
       name: 'http://localhost/test',
+      requestStart: 20,
       responseEnd: 100,
       responseStart: 25,
     }
@@ -163,8 +166,48 @@ describe('rum handle performance entry', () => {
       new LifeCycle()
     )
     const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
-    expect(resourceEvent.http.performance!.connect.duration).toEqual(7 * 1e6)
-    expect(resourceEvent.http.performance!.download.duration).toEqual(75 * 1e6)
+    expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
+    expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
+  })
+
+  describe('ignore invalid performance entry', () => {
+    it('when it has a negative timing start', () => {
+      const entry: Partial<PerformanceResourceTiming> = {
+        connectEnd: 10,
+        connectStart: -3,
+        entryType: 'resource',
+        name: 'http://localhost/test',
+        responseEnd: 100,
+        responseStart: 25,
+      }
+
+      handleResourceEntry(
+        configuration as Configuration,
+        entry as PerformanceResourceTiming,
+        addRumEvent,
+        new LifeCycle()
+      )
+      const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+      expect(resourceEvent.http.performance).toBe(undefined)
+    })
+
+    it('when it has timing start after its end', () => {
+      const entry: Partial<PerformanceResourceTiming> = {
+        entryType: 'resource',
+        name: 'http://localhost/test',
+        responseEnd: 25,
+        responseStart: 100,
+      }
+
+      handleResourceEntry(
+        configuration as Configuration,
+        entry as PerformanceResourceTiming,
+        addRumEvent,
+        new LifeCycle()
+      )
+      const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+      expect(resourceEvent.http.performance).toBe(undefined)
+    })
   })
 })
 

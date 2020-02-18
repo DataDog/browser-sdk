@@ -1,9 +1,11 @@
 import {
+  checkCookiesAuthorized,
+  checkIsNotLocalFile,
   commonInit,
   Context,
   ContextValue,
+  getGlobalObject,
   isPercentage,
-  isValidBrowsingContext,
   makeGlobal,
   makeStub,
   monitor,
@@ -54,7 +56,7 @@ export type RumGlobal = typeof STUBBED_RUM
 export const datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
-  if (!isValidBrowsingContext() || !canInitRum(userConfiguration)) {
+  if (!checkCookiesAuthorized() || !checkIsNotLocalFile() || !canInitRum(userConfiguration)) {
     return
   }
   if (userConfiguration.publicApiKey) {
@@ -65,6 +67,8 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
+  const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
+
   const requestObservable = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
 
@@ -73,7 +77,6 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
     lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails)
   )
 
-  const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
   lodashAssign(datadogRum, globalApi)
   isAlreadyInitialized = true
 })
@@ -106,4 +109,4 @@ interface BrowserWindow extends Window {
   DD_RUM?: RumGlobal
 }
 
-;(window as BrowserWindow).DD_RUM = datadogRum
+getGlobalObject<BrowserWindow>().DD_RUM = datadogRum

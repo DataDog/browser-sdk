@@ -1,6 +1,6 @@
 variables:
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 13
+  CURRENT_CI_IMAGE: 14
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
 
@@ -46,7 +46,15 @@ build:
   script:
     - yarn
     - yarn build
-    - yarn test:tsc:3.0
+
+compatibility:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn test:compat:tsc
+    - yarn test:compat:ssr
 
 unit:
   stage: test
@@ -80,6 +88,25 @@ npm-e2e:
   script:
     - yarn
     - yarn test:e2e:npm
+
+async-e2e:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    paths:
+      - test/server/test-server.log
+    when: always
+  script:
+    - yarn
+    - yarn test:e2e:async
+
+check-licenses:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - node --no-warnings scripts/check-licenses.js
 
 unit-cbt:
   except:

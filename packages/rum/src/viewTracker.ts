@@ -1,4 +1,4 @@
-import { addMonitoringMessage, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
@@ -25,8 +25,6 @@ interface ViewContext {
 export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
-const pageOrigin = Date.now()
-const navigationEntries: PerformanceNavigationTiming[] = []
 let startTimestamp: number
 let startOrigin: number
 let documentVersion: number
@@ -120,34 +118,10 @@ function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function reportAbnormalLoadEvent(navigationEntry: PerformanceNavigationTiming) {
-  if (
-    navigationEntry.loadEventEnd > 86400e3 /* one day in ms */ ||
-    navigationEntry.loadEventEnd > performance.now() + 60e3 /* one minute in ms */
-  ) {
-    addMonitoringMessage(
-      `Got an abnormal load event in a PerformanceNavigationTiming entry!
-Session Id: ${viewContext.sessionId}
-View Id: ${viewContext.id}
-Load event: ${navigationEntry.loadEventEnd}
-Page start date: ${pageOrigin}
-View start date: ${startTimestamp}
-Page duration: ${performance.now()}
-View duration: ${performance.now() - startOrigin}
-Document Version: ${documentVersion}
-Entry: ${JSON.stringify(navigationEntry)}
-Previous navigation entries: ${JSON.stringify(navigationEntries)}
-Perf timing: ${JSON.stringify(performance.timing)}
-Previous measures: ${JSON.stringify(viewMeasures)}`
-    )
-  }
-}
-
 function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
-      reportAbnormalLoadEvent(navigationEntry)
       viewMeasures = {
         ...viewMeasures,
         domComplete: msToNs(navigationEntry.domComplete),
@@ -156,7 +130,6 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }
       scheduleViewUpdate()
-      navigationEntries.push(navigationEntry)
     } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
       const paintEntry = entry as PerformancePaintTiming
       viewMeasures = {

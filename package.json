@@ -13,14 +13,17 @@
     "dev": "ENV=development node test/server/server.js",
     "release": "lerna version --exact",
     "publish:npm": "TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build && lerna publish from-package",
+    "fail": "./scripts/fail.sh",
     "test": "yarn test:unit",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:unit:cbt": "node ./scripts/cbt-with-retry.js karma start test/unit/karma.cbt.conf.js",
     "test:e2e": "yarn run test:e2e:bundle",
     "test:e2e:bundle": "TARGET_ENV=e2e-test yarn build && E2E_MODE=bundle wdio test/e2e/wdio.local.conf.js",
     "test:e2e:npm": "TARGET_ENV=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build) && E2E_MODE=npm wdio test/e2e/wdio.local.conf.js",
+    "test:e2e:async": "TARGET_ENV=e2e-test yarn build && E2E_MODE=async wdio test/e2e/wdio.local.conf.js",
     "test:e2e:cbt": "TARGET_ENV=e2e-test yarn build && node ./scripts/cbt-with-retry.js wdio test/e2e/wdio.cbt.conf.js",
-    "test:tsc:3.0": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn tsc:compatibility)"
+    "test:compat:tsc": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:tsc) || yarn fail 'typescript 3.0 compatibility broken'",
+    "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'"
   },
   "devDependencies": {
     "@types/jasmine": "3.3.13",

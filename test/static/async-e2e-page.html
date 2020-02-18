@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/empty.css" />
+    <title>async tests page</title>
+  </head>
+  <body>
+    <button>click me</button>
+    <script type="text/javascript">
+      window.addEventListener('load', () => {
+        const logs = document.createElement('script')
+        logs.src = './datadog-logs-us.js'
+        logs.onload = () => {
+          window.DD_LOGS &&
+            window.DD_LOGS.init({
+              clientToken: 'key',
+              internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+              logsEndpoint: `${window.location.origin}/logs`,
+              rumEndpoint: `${window.location.origin}/rum`,
+              forwardErrorsToLogs: true,
+            })
+        }
+        document.getElementsByTagName('head')[0].appendChild(logs)
+
+        const rum = document.createElement('script')
+        rum.src = './datadog-rum-us.js'
+        rum.onload = () => {
+          window.DD_RUM &&
+            window.DD_RUM.init({
+              applicationId: 'rum',
+              clientToken: 'key',
+              internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
+              logsEndpoint: `${window.location.origin}/logs`,
+              rumEndpoint: `${window.location.origin}/rum`,
+            })
+        }
+        document.getElementsByTagName('head')[0].appendChild(rum)
+      })
+    </script>
+  </body>
+</html>

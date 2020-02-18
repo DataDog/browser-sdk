@@ -12,24 +12,30 @@ export enum LoggerSessionType {
   TRACKED = '1',
 }
 
-export function startLoggerSession(configuration: Configuration): LoggerSession {
+export function startLoggerSession(configuration: Configuration, areCookieAuthorized: boolean): LoggerSession {
+  if (!areCookieAuthorized) {
+    const isTracked = computeSessionType(configuration) === LoggerSessionType.TRACKED
+    return {
+      getId: () => undefined,
+      isTracked: () => isTracked,
+    }
+  }
   const session = startSessionManagement(LOGGER_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
-
   return {
     getId: session.getId,
     isTracked: () => session.getType() === LoggerSessionType.TRACKED,
   }
 }
 
-function computeSessionState(configuration: Configuration, rawSessionType?: string) {
-  let sessionType
-  if (hasValidLoggerSession(rawSessionType)) {
-    sessionType = rawSessionType
-  } else if (!performDraw(configuration.sampleRate)) {
-    sessionType = LoggerSessionType.NOT_TRACKED
-  } else {
-    sessionType = LoggerSessionType.TRACKED
+function computeSessionType(configuration: Configuration): string {
+  if (!performDraw(configuration.sampleRate)) {
+    return LoggerSessionType.NOT_TRACKED
   }
+  return LoggerSessionType.TRACKED
+}
+
+function computeSessionState(configuration: Configuration, rawSessionType?: string) {
+  const sessionType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeSessionType(configuration)
   return {
     isTracked: sessionType === LoggerSessionType.TRACKED,
     type: sessionType,
