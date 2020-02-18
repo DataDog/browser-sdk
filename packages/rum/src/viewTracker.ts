@@ -1,4 +1,4 @@
-import { generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { generateUUID, getTimestamp, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
@@ -25,7 +25,7 @@ interface ViewContext {
 export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
-let startTimestamp: number
+let isInitialView = true
 let startOrigin: number
 let documentVersion: number
 let viewMeasures: ViewMeasures
@@ -55,8 +55,7 @@ function newView(location: Location, session: RumSession, upsertRumEvent: (event
     location: { ...location },
     sessionId: session.getId(),
   }
-  startTimestamp = new Date().getTime()
-  startOrigin = performance.now()
+  startOrigin = isInitialView ? 0 : performance.now()
   documentVersion = 1
   viewMeasures = {
     errorCount: 0,
@@ -65,6 +64,7 @@ function newView(location: Location, session: RumSession, upsertRumEvent: (event
     userActionCount: 0,
   }
   upsertViewEvent(upsertRumEvent)
+  isInitialView = false
 }
 
 function updateView(upsertRumEvent: (event: RumEvent, key: string) => void) {
@@ -75,7 +75,7 @@ function updateView(upsertRumEvent: (event: RumEvent, key: string) => void) {
 function upsertViewEvent(upsertRumEvent: (event: RumEvent, key: string) => void) {
   upsertRumEvent(
     {
-      date: startTimestamp,
+      date: getTimestamp(startOrigin),
       duration: msToNs(performance.now() - startOrigin),
       evt: {
         category: RumEventCategory.VIEW,
