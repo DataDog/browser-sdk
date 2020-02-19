@@ -25,7 +25,6 @@ interface ViewContext {
 export let viewContext: ViewContext
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
-let isInitialView = true
 let startOrigin: number
 let documentVersion: number
 let viewMeasures: ViewMeasures
@@ -50,12 +49,12 @@ export function trackView(
 }
 
 function newView(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
+  startOrigin = !viewContext ? 0 : performance.now()
   viewContext = {
     id: generateUUID(),
     location: { ...location },
     sessionId: session.getId(),
   }
-  startOrigin = isInitialView ? 0 : performance.now()
   documentVersion = 1
   viewMeasures = {
     errorCount: 0,
@@ -64,7 +63,6 @@ function newView(location: Location, session: RumSession, upsertRumEvent: (event
     userActionCount: 0,
   }
   upsertViewEvent(upsertRumEvent)
-  isInitialView = false
 }
 
 function updateView(upsertRumEvent: (event: RumEvent, key: string) => void) {
