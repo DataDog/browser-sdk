@@ -260,6 +260,7 @@ describe('error limitation', () => {
         origin: ErrorOrigin.SOURCE,
       },
     },
+    startTime: 100,
   }
 
   beforeEach(() => {
@@ -276,19 +277,19 @@ describe('error limitation', () => {
   })
 
   it('should stop send errors if threshold is exceeded', () => {
-    errorObservable.notify({ message: '1', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '2', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '3', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
 
-    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '1', startTime: 100, ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '2', startTime: 100, ...CONTEXT })
-    expect(filteredSubscriber).not.toHaveBeenCalledWith({ message: '3', startTime: 100, ...CONTEXT })
+    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '1', ...CONTEXT })
+    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '2', ...CONTEXT })
+    expect(filteredSubscriber).not.toHaveBeenCalledWith({ message: '3', ...CONTEXT })
   })
 
   it('should send a threshold reached message', () => {
-    errorObservable.notify({ message: '1', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '2', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '3', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
 
     expect(filteredSubscriber).toHaveBeenCalledWith({
       context: { error: { origin: ErrorOrigin.AGENT } },
@@ -298,28 +299,28 @@ describe('error limitation', () => {
   })
 
   it('should reset error count every each minute', () => {
-    errorObservable.notify({ message: '1', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '2', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '3', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '4', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '1', ...CONTEXT })
+    errorObservable.notify({ message: '2', ...CONTEXT })
+    errorObservable.notify({ message: '3', ...CONTEXT })
+    errorObservable.notify({ message: '4', ...CONTEXT })
     expect(filteredSubscriber).toHaveBeenCalledTimes(3)
 
     jasmine.clock().tick(ONE_MINUTE - 1)
 
-    errorObservable.notify({ message: '5', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '5', ...CONTEXT })
     expect(filteredSubscriber).toHaveBeenCalledTimes(3)
 
     jasmine.clock().tick(1)
 
-    errorObservable.notify({ message: '6', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '7', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '8', startTime: 100, ...CONTEXT })
-    errorObservable.notify({ message: '9', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '6', ...CONTEXT })
+    errorObservable.notify({ message: '7', ...CONTEXT })
+    errorObservable.notify({ message: '8', ...CONTEXT })
+    errorObservable.notify({ message: '9', ...CONTEXT })
     expect(filteredSubscriber).toHaveBeenCalledTimes(6)
 
     jasmine.clock().tick(ONE_MINUTE)
 
-    errorObservable.notify({ message: '10', startTime: 100, ...CONTEXT })
+    errorObservable.notify({ message: '10', ...CONTEXT })
     expect(filteredSubscriber).toHaveBeenCalledTimes(7)
   })
 })
