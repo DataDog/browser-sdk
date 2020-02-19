@@ -6,6 +6,7 @@ import {
   ErrorMessage,
   ErrorObservable,
   ErrorOrigin,
+  getTimestamp,
   HttpRequest,
   InternalMonitoring,
   monitored,
@@ -91,7 +92,9 @@ export function startLogger(
   }
   const logger = new Logger(session, handlers)
   customLoggers = {}
-  errorObservable.subscribe((e: ErrorMessage) => logger.error(e.message, e.context))
+  errorObservable.subscribe((e: ErrorMessage) =>
+    logger.error(e.message, { date: getTimestamp(e.startTime), ...e.context })
+  )
 
   const globalApi: Partial<LogsGlobal> = {}
   globalApi.setLoggerGlobalContext = (context: Context) => {

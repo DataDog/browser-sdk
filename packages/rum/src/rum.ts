@@ -223,9 +223,10 @@ function startRumBatch(
 }
 
 function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, context }: ErrorMessage) => {
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, startTime, context }: ErrorMessage) => {
     addRumEvent({
       message,
+      date: getTimestamp(startTime),
       evt: {
         category: RumEventCategory.ERROR,
       },
