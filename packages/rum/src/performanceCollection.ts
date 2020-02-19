@@ -1,4 +1,4 @@
-import { getRelativeTime, monitor } from '@datadog/browser-core'
+import { getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
@@ -117,7 +117,7 @@ function computeRelativePerformanceTiming() {
   const result: Partial<IndexedPerformanceTiming> = {}
   const timing = performance.timing as IndexedPerformanceTiming
   for (const key in timing) {
-    if (Number.isInteger(timing[key] as any)) {
+    if (isNumber(timing[key])) {
       result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key] as number)
     }
   }
