@@ -45,7 +45,11 @@ describe('console tracker', () => {
 
   it('should notify error', () => {
     console.error('foo', 'bar')
-    expect(notifyError).toHaveBeenCalledWith({ ...CONSOLE_CONTEXT, message: 'console error: foo bar' })
+    expect(notifyError).toHaveBeenCalledWith({
+      ...CONSOLE_CONTEXT,
+      message: 'console error: foo bar',
+      startTime: jasmine.any(Number),
+    })
   })
 
   it('should stringify object parameters', () => {
@@ -53,6 +57,7 @@ describe('console tracker', () => {
     expect(notifyError).toHaveBeenCalledWith({
       ...CONSOLE_CONTEXT,
       message: 'console error: Hello {\n  "foo": "bar"\n}',
+      startTime: jasmine.any(Number),
     })
   })
 
@@ -212,6 +217,7 @@ describe('network error tracker', () => {
         http: { method: 'GET', status_code: 503, url: 'http://fake.com' },
       },
       message: 'XHR error GET http://fake.com',
+      startTime: jasmine.any(Number),
     })
   })
 
@@ -254,6 +260,7 @@ describe('error limitation', () => {
         origin: ErrorOrigin.SOURCE,
       },
     },
+    startTime: 100,
   }
 
   beforeEach(() => {
@@ -287,6 +294,7 @@ describe('error limitation', () => {
     expect(filteredSubscriber).toHaveBeenCalledWith({
       context: { error: { origin: ErrorOrigin.AGENT } },
       message: 'Reached max number of errors by minute: 2',
+      startTime: jasmine.any(Number),
     })
   })
 

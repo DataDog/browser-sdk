@@ -193,6 +193,10 @@ export function getRelativeTime(timestamp: number) {
   return timestamp - performance.timing.navigationStart
 }
 
+export function getTimestamp(relativeTime: number) {
+  return Math.floor(performance.timing.navigationStart + relativeTime)
+}
+
 export function objectValues(object: { [key: string]: unknown }) {
   const values: unknown[] = []
   Object.keys(object).forEach((key) => {

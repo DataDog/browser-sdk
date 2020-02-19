@@ -13,6 +13,7 @@ import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tr
 import { jsonStringify, ONE_MINUTE } from './utils'
 
 export interface ErrorMessage {
+  startTime: number
   message: string
   context: {
     error: ErrorContext
@@ -73,6 +74,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
           },
         },
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
+        startTime: performance.now(),
       })
     }
   })
@@ -93,6 +95,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
         },
       },
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
+      startTime: performance.now(),
     })
   })
 }
@@ -143,6 +146,7 @@ export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
         origin: ErrorOrigin.SOURCE,
       },
     },
+    startTime: performance.now(),
   }
 }
 
@@ -178,6 +182,7 @@ export function trackNetworkError(
           },
         },
         message: `${format(request.type)} error ${request.method} ${request.url}`,
+        startTime: request.startTime,
       })
     }
   })

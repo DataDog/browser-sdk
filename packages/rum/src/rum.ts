@@ -5,6 +5,7 @@ import {
   ContextValue,
   ErrorContext,
   ErrorMessage,
+  getTimestamp,
   HttpContext,
   HttpRequest,
   includes,
@@ -223,9 +224,10 @@ function startRumBatch(
 }
 
 function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, context }: ErrorMessage) => {
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, startTime, context }: ErrorMessage) => {
     addRumEvent({
       message,
+      date: getTimestamp(startTime),
       evt: {
         category: RumEventCategory.ERROR,
       },
@@ -262,6 +264,7 @@ export function trackRequests(
     const timing = matchRequestTiming(requestDetails)
     const kind = requestDetails.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     addRumEvent({
+      date: getTimestamp(timing ? timing.startTime : requestDetails.startTime),
       duration: msToNs(timing ? timing.duration : requestDetails.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
@@ -317,6 +320,7 @@ export function handleResourceEntry(
     return
   }
   addRumEvent({
+    date: getTimestamp(entry.startTime),
     duration: msToNs(entry.duration),
     evt: {
       category: RumEventCategory.RESOURCE,
@@ -337,6 +341,7 @@ export function handleResourceEntry(
 
 export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {
   addRumEvent({
+    date: getTimestamp(entry.startTime),
     duration: msToNs(entry.duration),
     evt: {
       category: RumEventCategory.LONG_TASK,
