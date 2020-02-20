@@ -1,6 +1,7 @@
-import { getRelativeTime, monitor } from '@datadog/browser-core'
+import { getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 import { RumSession } from './rumSession'
 
 interface BrowserWindow extends Window {
@@ -20,6 +21,9 @@ function supportPerformanceNavigationTimingEvent() {
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSession) {
+  retrieveInitialDocumentResourceTiming((timing) => {
+    handlePerformanceEntries(session, lifeCycle, [timing])
+  })
   if (supportPerformanceObject()) {
     handlePerformanceEntries(session, lifeCycle, performance.getEntries())
   }
@@ -43,6 +47,38 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
   }
 }
 
+interface FakeResourceTiming extends PerformanceEntry {
+  entryType: 'resource'
+  initiatorType: string
+  duration: number
+  decodedBodySize: number
+  name: string
+  redirectStart: number
+  redirectEnd: number
+  domainLookupStart: number
+  domainLookupEnd: number
+  connectStart: number
+  connectEnd: number
+  secureConnectionStart: number
+  requestStart: number
+  responseStart: number
+  responseEnd: number
+}
+
+function retrieveInitialDocumentResourceTiming(callback: (timing: PerformanceResourceTiming) => void) {
+  let timing: Partial<FakeResourceTiming>
+  if (supportPerformanceNavigationTimingEvent() && performance.getEntriesByType('navigation').length > 0) {
+    const navigationEntry = performance.getEntriesByType('navigation')[0]
+    timing = { ...navigationEntry.toJSON() }
+  } else {
+    timing = { ...computeRelativePerformanceTiming(), name: window.location.href, decodedBodySize: 0, startTime: 0 }
+  }
+  timing.entryType = 'resource'
+  timing.initiatorType = FAKE_INITIAL_DOCUMENT
+  timing.duration = timing.responseEnd
+  callback(timing as PerformanceResourceTiming)
+}
+
 interface FakePerformanceNavigationTiming {
   entryType: 'navigation'
   domComplete: number
@@ -54,11 +90,8 @@ interface FakePerformanceNavigationTiming {
 function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
     const timing: FakePerformanceNavigationTiming = {
-      domComplete: getRelativeTime(performance.timing.domComplete),
-      domContentLoadedEventEnd: getRelativeTime(performance.timing.domContentLoadedEventEnd),
-      domInteractive: getRelativeTime(performance.timing.domInteractive),
+      ...computeRelativePerformanceTiming(),
       entryType: 'navigation',
-      loadEventEnd: getRelativeTime(performance.timing.loadEventEnd),
     }
     callback((timing as unknown) as PerformanceNavigationTiming)
   }
@@ -74,6 +107,21 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
 
     window.addEventListener('load', listener)
   }
+}
+
+interface IndexedPerformanceTiming extends PerformanceTiming {
+  [key: string]: any
+}
+
+function computeRelativePerformanceTiming() {
+  const result: Partial<IndexedPerformanceTiming> = {}
+  const timing = performance.timing as IndexedPerformanceTiming
+  for (const key in timing) {
+    if (isNumber(timing[key])) {
+      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key] as number)
+    }
+  }
+  return result as PerformanceTiming
 }
 
 function handlePerformanceEntries(session: RumSession, lifeCycle: LifeCycle, entries: PerformanceEntry[]) {

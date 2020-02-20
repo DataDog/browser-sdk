@@ -2,7 +2,10 @@ import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, st
 
 import { PerformanceResourceDetails } from './rum'
 
+export const FAKE_INITIAL_DOCUMENT = 'initial_document'
+
 const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
+  [ResourceKind.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
   [ResourceKind.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceKind.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceKind.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
@@ -44,7 +47,7 @@ function formatTiming(start: number, end: number) {
 }
 
 function isValidTiming(start: number, end: number) {
-  return start > 0 && end > 0 && end >= start
+  return start >= 0 && end >= 0 && end >= start
 }
 
 export function computePerformanceResourceDetails(
@@ -57,7 +60,9 @@ export function computePerformanceResourceDetails(
     !isValidTiming(entry.connectStart, entry.connectEnd) ||
     !isValidTiming(entry.domainLookupStart, entry.domainLookupEnd) ||
     !isValidTiming(entry.responseStart, entry.responseEnd) ||
-    !isValidTiming(entry.requestStart, entry.responseStart)
+    !isValidTiming(entry.requestStart, entry.responseStart) ||
+    !isValidTiming(entry.redirectStart, entry.redirectEnd) ||
+    !isValidTiming(entry.secureConnectionStart, entry.connectEnd)
   ) {
     return undefined
   }
@@ -66,12 +71,8 @@ export function computePerformanceResourceDetails(
     dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
     download: formatTiming(entry.responseStart, entry.responseEnd),
     firstByte: formatTiming(entry.requestStart, entry.responseStart),
-    redirect: isValidTiming(entry.redirectStart, entry.redirectEnd)
-      ? formatTiming(entry.redirectStart, entry.redirectEnd)
-      : undefined,
-    ssl: isValidTiming(entry.secureConnectionStart, entry.connectEnd)
-      ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
-      : undefined,
+    redirect: entry.redirectStart !== 0 ? formatTiming(entry.redirectStart, entry.redirectEnd) : undefined,
+    ssl: entry.secureConnectionStart !== 0 ? formatTiming(entry.secureConnectionStart, entry.connectEnd) : undefined,
   }
 }
 

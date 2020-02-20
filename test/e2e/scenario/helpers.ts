@@ -1,6 +1,6 @@
 import { ErrorContext, HttpContext, MonitoringMessage } from '@datadog/browser-core'
 import { LogsMessage } from '@datadog/browser-logs'
-import { RumEvent, RumViewEvent } from '@datadog/browser-rum'
+import { RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
 import * as request from 'request'
 
 export interface ServerErrorMessage {
@@ -163,4 +163,13 @@ async function findSessionCookie() {
   const cookies = (await browser.getCookies()) || []
   // tslint:disable-next-line: no-unsafe-any
   return cookies.find((cookie: any) => cookie.name === '_dd')
+}
+
+export function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
+  expect((resourceEvent as any).date).toBeGreaterThan(0)
+  expect(resourceEvent.duration).toBeGreaterThan(0)
+  const performance = resourceEvent.http.performance!
+  expect(performance.connect.start).toBeGreaterThanOrEqual(0)
+  expect(performance.dns.start).toBeGreaterThanOrEqual(0)
+  expect(performance.download.start).toBeGreaterThan(0)
 }

@@ -5,6 +5,7 @@ export const ONE_MINUTE = 60 * 1000
 export const ONE_KILO_BYTE = 1024
 
 export enum ResourceKind {
+  DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
   FETCH = 'fetch',
@@ -179,7 +180,11 @@ export function includes(candidate: unknown[], search: unknown) {
 }
 
 export function isPercentage(value: unknown) {
-  return typeof value === 'number' && value >= 0 && value <= 100
+  return isNumber(value) && value >= 0 && value <= 100
+}
+
+export function isNumber(value: unknown): value is number {
+  return typeof value === 'number'
 }
 
 /**
