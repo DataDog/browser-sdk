@@ -60,7 +60,9 @@ export function computePerformanceResourceDetails(
     !isValidTiming(entry.connectStart, entry.connectEnd) ||
     !isValidTiming(entry.domainLookupStart, entry.domainLookupEnd) ||
     !isValidTiming(entry.responseStart, entry.responseEnd) ||
-    !isValidTiming(entry.requestStart, entry.responseStart)
+    !isValidTiming(entry.requestStart, entry.responseStart) ||
+    !isValidTiming(entry.redirectStart, entry.redirectEnd) ||
+    !isValidTiming(entry.secureConnectionStart, entry.connectEnd)
   ) {
     return undefined
   }
@@ -69,12 +71,8 @@ export function computePerformanceResourceDetails(
     dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
     download: formatTiming(entry.responseStart, entry.responseEnd),
     firstByte: formatTiming(entry.requestStart, entry.responseStart),
-    redirect: isValidTiming(entry.redirectStart, entry.redirectEnd)
-      ? formatTiming(entry.redirectStart, entry.redirectEnd)
-      : undefined,
-    ssl: isValidTiming(entry.secureConnectionStart, entry.connectEnd)
-      ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
-      : undefined,
+    redirect: entry.redirectStart !== 0 ? formatTiming(entry.redirectStart, entry.redirectEnd) : undefined,
+    ssl: entry.secureConnectionStart !== 0 ? formatTiming(entry.secureConnectionStart, entry.connectEnd) : undefined,
   }
 }
 

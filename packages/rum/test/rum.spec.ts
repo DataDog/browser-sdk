@@ -154,9 +154,12 @@ describe('rum handle performance entry', () => {
       domainLookupStart: 3,
       entryType: 'resource',
       name: 'http://localhost/test',
+      redirectEnd: 0,
+      redirectStart: 0,
       requestStart: 20,
       responseEnd: 100,
       responseStart: 25,
+      secureConnectionStart: 0,
     }
 
     handleResourceEntry(
