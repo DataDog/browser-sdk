@@ -36,7 +36,7 @@
     "@wdio/spec-reporter": "5.16.5",
     "@wdio/sync": "5.16.9",
     "body-parser": "1.19.0",
-    "codecov": "3.6.1",
+    "codecov": "3.6.5",
     "cors": "2.8.5",
     "express": "4.17.1",
     "istanbul-instrumenter-loader": "3.0.1",
