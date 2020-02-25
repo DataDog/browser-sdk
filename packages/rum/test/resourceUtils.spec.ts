@@ -105,30 +105,30 @@ describe('computePerformanceResourceDetails', () => {
       expect(computePerformanceResourceDetails(generateResourceWith(overrides))).toBeUndefined()
     })
   })
-})
 
-it('should allow really fast document resource', () => {
-  expect(
-    computePerformanceResourceDetails(
-      generateResourceWith({
-        connectEnd: 0,
-        connectStart: 0,
-        domainLookupEnd: 0,
-        domainLookupStart: 0,
-        redirectEnd: 0,
-        redirectStart: 0,
-        requestStart: 0,
-        responseEnd: 50,
-        responseStart: 40,
-        secureConnectionStart: 0,
-      })
-    )
-  ).toEqual({
-    connect: { start: 0, duration: 0 },
-    dns: { start: 0, duration: 0 },
-    download: { start: 40e6, duration: 10e6 },
-    firstByte: { start: 0, duration: 40e6 },
-    redirect: undefined,
-    ssl: undefined,
+  it('should allow really fast document resource', () => {
+    expect(
+      computePerformanceResourceDetails(
+        generateResourceWith({
+          connectEnd: 0,
+          connectStart: 0,
+          domainLookupEnd: 0,
+          domainLookupStart: 0,
+          redirectEnd: 0,
+          redirectStart: 0,
+          requestStart: 0,
+          responseEnd: 50,
+          responseStart: 40,
+          secureConnectionStart: 0,
+        })
+      )
+    ).toEqual({
+      connect: { start: 0, duration: 0 },
+      dns: { start: 0, duration: 0 },
+      download: { start: 40e6, duration: 10e6 },
+      firstByte: { start: 0, duration: 40e6 },
+      redirect: undefined,
+      ssl: undefined,
+    })
   })
 })
