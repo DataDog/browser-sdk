@@ -1,6 +1,14 @@
+import { Configuration } from './configuration'
 import { Observable } from './observable'
 import { RequestDetails } from './requestCollection'
 import { noop } from './utils'
+
+export const SPEC_ENDPOINTS: Partial<Configuration> = {
+  internalMonitoringEndpoint: 'https://monitoring-intake.com/abcde?foo=bar',
+  logsEndpoint: 'https://logs-intake.com/abcde?foo=bar',
+  rumEndpoint: 'https://rum-intake.com/abcde?foo=bar',
+  traceEndpoint: 'https://trace-intake.com/abcde?foo=bar',
+}
 
 export function isSafari() {
   return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)

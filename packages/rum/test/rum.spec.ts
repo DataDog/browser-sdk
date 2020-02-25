@@ -7,6 +7,7 @@ import {
   Omit,
   PerformanceObserverStubBuilder,
   RequestDetails,
+  SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
@@ -29,11 +30,8 @@ function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
 
 const configuration = {
   ...DEFAULT_CONFIGURATION,
-  internalMonitoringEndpoint: 'monitoring',
-  logsEndpoint: 'logs',
+  ...SPEC_ENDPOINTS,
   maxBatchSize: 1,
-  rumEndpoint: 'rum',
-  traceEndpoint: 'trace',
 }
 
 const internalMonitoring: InternalMonitoring = {
@@ -72,7 +70,7 @@ describe('rum handle performance entry', () => {
     },
     {
       description: 'type resource + valid request',
-      entry: { entryType: 'resource', name: 'valid' },
+      entry: { entryType: 'resource', name: 'https://resource.com/valid' },
       expectEntryToBeAdded: true,
     },
   ].forEach(

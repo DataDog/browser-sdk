@@ -1,4 +1,5 @@
-import { computePerformanceResourceDetails } from '../src/resourceUtils'
+import { Configuration, DEFAULT_CONFIGURATION, SPEC_ENDPOINTS } from '@datadog/browser-core'
+import { computePerformanceResourceDetails, isValidResource } from '../src/resourceUtils'
 
 function generateResourceWith(overrides: Partial<PerformanceResourceTiming>) {
   const completeTiming: Partial<PerformanceResourceTiming> = {
@@ -130,5 +131,24 @@ describe('computePerformanceResourceDetails', () => {
       redirect: undefined,
       ssl: undefined,
     })
+  })
+})
+
+describe('isValidRequest', () => {
+  const configuration: Partial<Configuration> = {
+    ...DEFAULT_CONFIGURATION,
+    ...SPEC_ENDPOINTS,
+  }
+
+  it('should exclude requests on intakes endpoints', () => {
+    expect(isValidResource('https://rum-intake.com/abcde?foo=bar', configuration as Configuration)).toBe(false)
+  })
+
+  it('should exclude requests on intakes endpoints with different client parameters', () => {
+    expect(isValidResource('https://rum-intake.com/wxyz?foo=qux', configuration as Configuration)).toBe(false)
+  })
+
+  it('should allow requests on non intake domains', () => {
+    expect(isValidResource('https://my-domain.com/hello?a=b', configuration as Configuration)).toBe(true)
   })
 })
