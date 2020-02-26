@@ -1,4 +1,4 @@
-import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind, startsWith } from '@datadog/browser-core'
+import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind } from '@datadog/browser-core'
 
 import { PerformanceResourceDetails } from './rum'
 
@@ -98,5 +98,5 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
 }
 
 function haveSameOrigin(url1: string, url2: string) {
-  return startsWith(url2, new URL(url1).origin)
+  return new URL(url1).origin === new URL(url2).origin
 }
