@@ -25,7 +25,7 @@ export interface ServerRumViewEvent extends RumViewEvent {
   }
 }
 
-const baseRequest = request.defaults({ baseUrl: 'http://localhost:3000' })
+const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
 
 export async function flushEvents() {
   // wait to process event loop before switching page
@@ -97,7 +97,7 @@ export async function resetServerState() {
 
 async function fetch(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    baseRequest.get(url, (err: any, response: any, body: string) => {
+    intakeRequest.get(url, (err: any, response: any, body: string) => {
       if (err) {
         reject(err)
       }

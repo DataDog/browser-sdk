@@ -2,20 +2,21 @@ import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 
 // fallback for server side rendering
-const origin = typeof location === 'object' ? location.origin : ''
+const hostname = typeof location === 'object' ? location.hostname : ''
+const intakeOrigin = `http://${hostname}:4000`
 
 datadogLogs.init({
   clientToken: 'key',
   forwardErrorsToLogs: true,
-  internalMonitoringEndpoint: `${origin}/monitoring`,
-  logsEndpoint: `${origin}/logs`,
-  rumEndpoint: `${origin}/rum`,
+  internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+  logsEndpoint: `${intakeOrigin}/logs`,
+  rumEndpoint: `${intakeOrigin}/rum`,
 })
 
 datadogRum.init({
   applicationId: 'rum',
   clientToken: 'key',
-  internalMonitoringEndpoint: `${origin}/monitoring`,
-  logsEndpoint: `${origin}/logs`,
-  rumEndpoint: `${origin}/rum`,
+  internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+  logsEndpoint: `${intakeOrigin}/logs`,
+  rumEndpoint: `${intakeOrigin}/rum`,
 })

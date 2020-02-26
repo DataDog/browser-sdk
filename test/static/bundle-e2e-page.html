@@ -7,12 +7,13 @@
     <title>bundle tests page</title>
     <script type="text/javascript" src="./datadog-logs-us.js"></script>
     <script type="text/javascript">
+      const intakeOrigin = `http://${window.location.hostname}:4000`
       window.DD_LOGS &&
         window.DD_LOGS.init({
           clientToken: 'key',
-          internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
-          logsEndpoint: `${window.location.origin}/logs`,
-          rumEndpoint: `${window.location.origin}/rum`,
+          internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+          logsEndpoint: `${intakeOrigin}/logs`,
+          rumEndpoint: `${intakeOrigin}/rum`,
           forwardErrorsToLogs: true,
         })
     </script>
@@ -22,9 +23,9 @@
         window.DD_RUM.init({
           applicationId: 'rum',
           clientToken: 'key',
-          internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
-          logsEndpoint: `${window.location.origin}/logs`,
-          rumEndpoint: `${window.location.origin}/rum`,
+          internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+          logsEndpoint: `${intakeOrigin}/logs`,
+          rumEndpoint: `${intakeOrigin}/rum`,
         })
     </script>
   </head>

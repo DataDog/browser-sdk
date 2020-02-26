@@ -12,7 +12,7 @@ const rumConfig = require('../../packages/rum/webpack.config')
 const fakeBackend = require('./fake-backend')
 const buildEnv = require('../../scripts/build-env')
 
-let port = 3000
+let port = process.env.PORT || 3000
 
 morgan.token('body', (req, res) => extractBody(req, res))
 const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
