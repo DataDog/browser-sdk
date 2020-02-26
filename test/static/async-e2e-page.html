@@ -10,15 +10,16 @@
     <button>click me</button>
     <script type="text/javascript">
       window.addEventListener('load', () => {
+        const intakeOrigin = `http://${window.location.hostname}:4000`
         const logs = document.createElement('script')
         logs.src = './datadog-logs-us.js'
         logs.onload = () => {
           window.DD_LOGS &&
             window.DD_LOGS.init({
               clientToken: 'key',
-              internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
-              logsEndpoint: `${window.location.origin}/logs`,
-              rumEndpoint: `${window.location.origin}/rum`,
+              internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+              logsEndpoint: `${intakeOrigin}/logs`,
+              rumEndpoint: `${intakeOrigin}/rum`,
               forwardErrorsToLogs: true,
             })
         }
@@ -31,9 +32,9 @@
             window.DD_RUM.init({
               applicationId: 'rum',
               clientToken: 'key',
-              internalMonitoringEndpoint: `${window.location.origin}/monitoring`,
-              logsEndpoint: `${window.location.origin}/logs`,
-              rumEndpoint: `${window.location.origin}/rum`,
+              internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
+              logsEndpoint: `${intakeOrigin}/logs`,
+              rumEndpoint: `${intakeOrigin}/rum`,
             })
         }
         document.getElementsByTagName('head')[0].appendChild(rum)
