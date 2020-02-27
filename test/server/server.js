@@ -31,9 +31,9 @@ if (process.env.ENV === 'development') {
   // e2e tests
   app.use(express.static(path.join(__dirname, '../../packages/logs/bundle')))
   app.use(express.static(path.join(__dirname, '../../packages/rum/bundle')))
-  app.use(bodyParser.text())
-  fakeBackend(app)
 }
+app.use(bodyParser.text())
+fakeBackend(app)
 
 app.listen(port, () => console.log(`server listening on port ${port}.`))
 
