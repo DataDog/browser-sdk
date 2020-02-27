@@ -6,6 +6,7 @@ import {
   RequestDetails,
   RequestType,
   trackFetch,
+  trackXhr,
 } from '../src/requestCollection'
 import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
 
@@ -191,5 +192,154 @@ describe('normalize url', () => {
       pending('https://bugzilla.mozilla.org/show_bug.cgi?id=1578787')
     }
     expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
+  })
+})
+
+describe('xhr tracker', () => {
+  let originalOpen: typeof XMLHttpRequest.prototype.open
+  let originalSend: typeof XMLHttpRequest.prototype.send
+  let requestObservable: Observable<RequestDetails>
+  let notifySpy: jasmine.Spy
+
+  beforeEach(() => {
+    originalOpen = XMLHttpRequest.prototype.open
+    originalSend = XMLHttpRequest.prototype.send
+    requestObservable = new Observable<RequestDetails>()
+    notifySpy = spyOn(requestObservable, 'notify').and.callThrough()
+    trackXhr(requestObservable)
+  })
+
+  afterEach(() => {
+    XMLHttpRequest.prototype.open = originalOpen
+    XMLHttpRequest.prototype.send = originalSend
+  })
+
+  function xhrSpec(setup: (xhr: XMLHttpRequest) => void, expectations: (xhr: XMLHttpRequest) => void, done: DoneFn) {
+    const xhr = new XMLHttpRequest()
+    xhr.addEventListener('loadend', () => {
+      setTimeout(() => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            duration: jasmine.any(Number),
+            startTime: jasmine.any(Number),
+            traceId: undefined,
+            type: 'xhr',
+          })
+        )
+        expectations(xhr)
+        done()
+      })
+    })
+    setup(xhr)
+    xhr.send()
+  }
+
+  it('should track successful request', (done) => {
+    xhrSpec(
+      (xhr) => xhr.open('GET', '/ok'),
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: 'ok',
+            status: 200,
+            url: jasmine.stringMatching('/ok'),
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track client error', (done) => {
+    xhrSpec(
+      (xhr) => xhr.open('GET', '/expected-404'),
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: 'NOT FOUND',
+            status: 404,
+            url: jasmine.stringMatching('/expected-404'),
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track server error', (done) => {
+    xhrSpec(
+      (xhr) => xhr.open('GET', '/throw'),
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: jasmine.stringMatching('expected server error'),
+            status: 500,
+            url: jasmine.stringMatching('/throw'),
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track network error', (done) => {
+    xhrSpec(
+      (xhr) => xhr.open('GET', 'http://foo.bar/qux'),
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: '',
+            status: 0,
+            url: 'http://foo.bar/qux',
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track successful request aborted', (done) => {
+    const onReadyStateChange = jasmine.createSpy()
+    xhrSpec(
+      (xhr) => {
+        xhr.onreadystatechange = onReadyStateChange
+        xhr.addEventListener('load', () => xhr.abort())
+        xhr.open('GET', '/ok')
+      },
+      (xhr) => {
+        expect(xhr.status).toBe(0)
+        expect(onReadyStateChange).toHaveBeenCalled()
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: 'ok',
+            status: 200,
+            url: jasmine.stringMatching('/ok'),
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track successful sync request', (done) => {
+    xhrSpec(
+      (xhr) => xhr.open('GET', '/ok', false),
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: 'ok',
+            status: 200,
+            url: jasmine.stringMatching('/ok'),
+          })
+        )
+      },
+      done
+    )
   })
 })
