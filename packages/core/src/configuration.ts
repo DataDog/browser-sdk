@@ -2,6 +2,7 @@ import { BuildEnv, Datacenter, Environment } from './init'
 import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
+  enableExperimentalFeatures: false,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -40,6 +41,7 @@ export interface UserConfiguration {
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter
+  enableExperimentalFeatures?: boolean
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
@@ -93,6 +95,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('resourceSampleRate' in userConfiguration) {
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
+  }
+
+  if ('enableExperimentalFeatures' in userConfiguration) {
+    configuration.enableExperimentalFeatures = userConfiguration.enableExperimentalFeatures!
   }
 
   if (transportConfiguration.env === 'e2e-test') {
