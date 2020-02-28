@@ -175,55 +175,6 @@ describe('rum', () => {
 })
 
 describe('error collection', () => {
-  it('should track xhr error', async () => {
-    await browserExecuteAsync(
-      (baseUrl, unreachableUrl, done) => {
-        let count = 0
-        let xhr = new XMLHttpRequest()
-        xhr.addEventListener('load', () => (count += 1))
-        xhr.open('GET', `${baseUrl}/throw`)
-        xhr.send()
-
-        xhr = new XMLHttpRequest()
-        xhr.addEventListener('load', () => (count += 1))
-        xhr.open('GET', `${baseUrl}/unknown`)
-        xhr.send()
-
-        xhr = new XMLHttpRequest()
-        xhr.addEventListener('error', () => (count += 1))
-        xhr.open('GET', unreachableUrl)
-        xhr.send()
-
-        xhr = new XMLHttpRequest()
-        xhr.addEventListener('load', () => (count += 1))
-        xhr.open('GET', `${baseUrl}/ok`)
-        xhr.send()
-
-        const interval = setInterval(() => {
-          if (count === 4) {
-            clearInterval(interval)
-            done(undefined)
-          }
-        }, 500)
-      },
-      browser.options.baseUrl!,
-      UNREACHABLE_URL
-    )
-    await flushBrowserLogs()
-    await flushEvents()
-    const logs = (await waitServerLogs()).sort(sortByMessage)
-
-    expect(logs.length).toEqual(2)
-
-    expect(logs[0].message).toEqual(`XHR error GET ${browser.options.baseUrl}/throw`)
-    expect(logs[0].http.status_code).toEqual(500)
-    expect(logs[0].error.stack).toMatch(/Server error/)
-
-    expect(logs[1].message).toEqual(`XHR error GET ${UNREACHABLE_URL}`)
-    expect(logs[1].http.status_code).toEqual(0)
-    expect(logs[1].error.stack).toEqual('Failed to load')
-  })
-
   it('should track fetch error', async () => {
     await browserExecuteAsync(
       (baseUrl, unreachableUrl, done) => {

@@ -11,7 +11,7 @@ const ONE_MINUTE = 60000
 module.exports = function(config) {
   config.set({
     ...karmaBaseConf,
-    plugins: ['karma-*', 'karma-cbt-launcher'],
+    plugins: [...karmaBaseConf.plugins, 'karma-cbt-launcher'],
     reporters: [...karmaBaseConf.reporters, 'CrossBrowserTesting'],
     browsers: Object.keys(browsers),
     concurrency: 1,
