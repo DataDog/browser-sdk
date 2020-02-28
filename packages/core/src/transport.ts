@@ -12,17 +12,19 @@ import { Context, jsonStringify, objectValues } from './utils'
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointUrl: string, private bytesLimit: number) {}
+  constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
   send(data: string, size: number) {
+    const batchTime = new Date().getTime()
+    const url = this.withBatchTime ? `${this.endpointUrl}&batch_time=${batchTime}` : this.endpointUrl
     if (navigator.sendBeacon && size < this.bytesLimit) {
-      const isQueued = navigator.sendBeacon(this.endpointUrl, data)
+      const isQueued = navigator.sendBeacon(url, data)
       if (isQueued) {
         return
       }
     }
     const request = new XMLHttpRequest()
-    request.open('POST', this.endpointUrl, true)
+    request.open('POST', url, true)
     request.send(data)
   }
 }
