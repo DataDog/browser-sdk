@@ -231,12 +231,14 @@ describe('xhr tracker', () => {
       })
     })
     setup(xhr)
-    xhr.send()
   }
 
   it('should track successful request', (done) => {
     xhrSpec(
-      (xhr) => xhr.open('GET', '/ok'),
+      (xhr) => {
+        xhr.open('GET', '/ok')
+        xhr.send()
+      },
       () => {
         expect(notifySpy).toHaveBeenCalledWith(
           jasmine.objectContaining({
@@ -253,7 +255,10 @@ describe('xhr tracker', () => {
 
   it('should track client error', (done) => {
     xhrSpec(
-      (xhr) => xhr.open('GET', '/expected-404'),
+      (xhr) => {
+        xhr.open('GET', '/expected-404')
+        xhr.send()
+      },
       () => {
         expect(notifySpy).toHaveBeenCalledWith(
           jasmine.objectContaining({
@@ -270,7 +275,10 @@ describe('xhr tracker', () => {
 
   it('should track server error', (done) => {
     xhrSpec(
-      (xhr) => xhr.open('GET', '/throw'),
+      (xhr) => {
+        xhr.open('GET', '/throw')
+        xhr.send()
+      },
       () => {
         expect(notifySpy).toHaveBeenCalledWith(
           jasmine.objectContaining({
@@ -287,7 +295,10 @@ describe('xhr tracker', () => {
 
   it('should track network error', (done) => {
     xhrSpec(
-      (xhr) => xhr.open('GET', 'http://foo.bar/qux'),
+      (xhr) => {
+        xhr.open('GET', 'http://foo.bar/qux')
+        xhr.send()
+      },
       () => {
         expect(notifySpy).toHaveBeenCalledWith(
           jasmine.objectContaining({
@@ -309,6 +320,7 @@ describe('xhr tracker', () => {
         xhr.onreadystatechange = onReadyStateChange
         xhr.addEventListener('load', () => xhr.abort())
         xhr.open('GET', '/ok')
+        xhr.send()
       },
       (xhr) => {
         expect(xhr.status).toBe(0)
@@ -328,7 +340,31 @@ describe('xhr tracker', () => {
 
   it('should track successful sync request', (done) => {
     xhrSpec(
-      (xhr) => xhr.open('GET', '/ok', false),
+      (xhr) => {
+        xhr.open('GET', '/ok', false)
+        xhr.send()
+      },
+      () => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            method: 'GET',
+            response: 'ok',
+            status: 200,
+            url: jasmine.stringMatching('/ok'),
+          })
+        )
+      },
+      done
+    )
+  })
+
+  it('should track request with onreadystatechange overridden', (done) => {
+    xhrSpec(
+      (xhr) => {
+        xhr.open('GET', '/ok')
+        xhr.send()
+        xhr.onreadystatechange = () => undefined
+      },
       () => {
         expect(notifySpy).toHaveBeenCalledWith(
           jasmine.objectContaining({
