@@ -484,6 +484,10 @@ describe('rum user action', () => {
     server.requests = []
   })
 
+  afterEach(() => {
+    server.restore()
+  })
+
   it('should not be automatically snake cased', () => {
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { name: 'hello', context: { fooBar: 'foo' } })
 
