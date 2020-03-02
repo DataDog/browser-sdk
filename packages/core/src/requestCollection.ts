@@ -59,7 +59,12 @@ export function trackXhr(observable: RequestObservable) {
   const originalSend = XMLHttpRequest.prototype.send
   XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
     const startTime = performance.now()
+    let hasBeenReported = false
     const reportXhr = () => {
+      if (hasBeenReported) {
+        return
+      }
+      hasBeenReported = true
       observable.notify({
         startTime,
         duration: performance.now() - startTime,
@@ -83,6 +88,8 @@ export function trackXhr(observable: RequestObservable) {
         originalOnreadystatechange.apply(this, arguments as any)
       }
     }
+
+    this.addEventListener('loadend', monitor(reportXhr))
 
     return originalSend.apply(this, arguments as any)
   }
