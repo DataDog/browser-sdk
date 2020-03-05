@@ -169,7 +169,5 @@ export function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
   expect((resourceEvent as any).date).toBeGreaterThan(0)
   expect(resourceEvent.duration).toBeGreaterThan(0)
   const performance = resourceEvent.http.performance!
-  expect(performance.connect.start).toBeGreaterThanOrEqual(0)
-  expect(performance.dns.start).toBeGreaterThanOrEqual(0)
   expect(performance.download.start).toBeGreaterThan(0)
 }

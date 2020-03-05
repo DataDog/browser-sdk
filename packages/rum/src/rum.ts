@@ -56,8 +56,8 @@ interface PerformanceResourceDetailsElement {
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
-  dns: PerformanceResourceDetailsElement
-  connect: PerformanceResourceDetailsElement
+  dns?: PerformanceResourceDetailsElement
+  connect?: PerformanceResourceDetailsElement
   ssl?: PerformanceResourceDetailsElement
   firstByte: PerformanceResourceDetailsElement
   download: PerformanceResourceDetailsElement
