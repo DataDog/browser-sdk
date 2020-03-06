@@ -70,22 +70,6 @@ describe('computePerformanceResourceDetails', () => {
       ssl: { start: 16e6, duration: 1e6 },
     })
   })
-  it('should not compute ssl timing when no secure connection', () => {
-    expect(
-      computePerformanceResourceDetails(
-        generateResourceWith({
-          secureConnectionStart: 0,
-        })
-      )
-    ).toEqual({
-      connect: { start: 15e6, duration: 2e6 },
-      dns: { start: 13e6, duration: 1e6 },
-      download: { start: 50e6, duration: 10e6 },
-      firstByte: { start: 20e6, duration: 30e6 },
-      redirect: { start: 10e6, duration: 1e6 },
-      ssl: undefined,
-    })
-  })
 
   it('should not compute dns timing when persistent connection or cache', () => {
     expect(
@@ -103,6 +87,43 @@ describe('computePerformanceResourceDetails', () => {
       firstByte: { start: 20e6, duration: 30e6 },
       redirect: { start: 10e6, duration: 1e6 },
       ssl: { start: 16e6, duration: 1e6 },
+    })
+  })
+
+  it('should not compute ssl timing when no secure connection', () => {
+    expect(
+      computePerformanceResourceDetails(
+        generateResourceWith({
+          secureConnectionStart: 0,
+        })
+      )
+    ).toEqual({
+      connect: { start: 15e6, duration: 2e6 },
+      dns: { start: 13e6, duration: 1e6 },
+      download: { start: 50e6, duration: 10e6 },
+      firstByte: { start: 20e6, duration: 30e6 },
+      redirect: { start: 10e6, duration: 1e6 },
+      ssl: undefined,
+    })
+  })
+
+  it('should not compute ssl timing when persistent connection', () => {
+    expect(
+      computePerformanceResourceDetails(
+        generateResourceWith({
+          connectEnd: 12,
+          connectStart: 12,
+          fetchStart: 12,
+          secureConnectionStart: 12,
+        })
+      )
+    ).toEqual({
+      connect: undefined,
+      dns: { start: 13e6, duration: 1e6 },
+      download: { start: 50e6, duration: 10e6 },
+      firstByte: { start: 20e6, duration: 30e6 },
+      redirect: { start: 10e6, duration: 1e6 },
+      ssl: undefined,
     })
   })
 

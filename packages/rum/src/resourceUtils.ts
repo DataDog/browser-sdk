@@ -70,7 +70,11 @@ export function computePerformanceResourceDetails(
     redirect: isRelevantTiming(entry.redirectStart, entry.redirectEnd, 0)
       ? formatTiming(entry.redirectStart, entry.redirectEnd)
       : undefined,
-    ssl: entry.secureConnectionStart !== 0 ? formatTiming(entry.secureConnectionStart, entry.connectEnd) : undefined,
+    ssl:
+      entry.secureConnectionStart !== 0 &&
+      isRelevantTiming(entry.secureConnectionStart, entry.connectEnd, entry.fetchStart)
+        ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
+        : undefined,
   }
 }
 
