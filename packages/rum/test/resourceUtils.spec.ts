@@ -146,6 +146,16 @@ describe('computePerformanceResourceDetails', () => {
       ssl: undefined,
     })
   })
+
+  it('should not compute timings when memory cache', () => {
+    expect(
+      computePerformanceResourceDetails(
+        generateResourceWith({
+          duration: 0,
+        })
+      )
+    ).toEqual(undefined)
+  })
   ;[
     {
       connectEnd: 10,

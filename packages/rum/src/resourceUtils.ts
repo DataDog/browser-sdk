@@ -45,7 +45,7 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  if (!entry || !hasTimingAllowedAttributes(entry)) {
+  if (!entry || !hasTimingAllowedAttributes(entry) || isCached(entry)) {
     return undefined
   }
   if (
@@ -78,6 +78,14 @@ export function computePerformanceResourceDetails(
   }
 }
 
+function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
+  return timing.responseStart > 0
+}
+
+function isCached(timing: PerformanceResourceTiming) {
+  return timing.duration === 0
+}
+
 function isValidTiming(start: number, end: number) {
   return start >= 0 && end >= 0 && end >= start
 }
@@ -96,10 +104,6 @@ function formatTiming(start: number, end: number) {
 
 export function computeSize(entry?: PerformanceResourceTiming) {
   return entry && hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
-}
-
-function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
-  return timing.responseStart > 0
 }
 
 export function isValidResource(url: string, configuration: Configuration) {
