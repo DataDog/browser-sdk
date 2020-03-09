@@ -42,18 +42,10 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
   return ResourceKind.OTHER
 }
 
-function formatTiming(start: number, end: number) {
-  return { duration: msToNs(end - start), start: msToNs(start) }
-}
-
-function isValidTiming(start: number, end: number) {
-  return start >= 0 && end >= 0 && end >= start
-}
-
 export function computePerformanceResourceDetails(
   entry?: PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
-  if (!entry || !hasTimingAllowedAttributes(entry)) {
+  if (!entry || !hasTimingAllowedAttributes(entry) || isCached(entry)) {
     return undefined
   }
   if (
@@ -67,21 +59,51 @@ export function computePerformanceResourceDetails(
     return undefined
   }
   return {
-    connect: formatTiming(entry.connectStart, entry.connectEnd),
-    dns: formatTiming(entry.domainLookupStart, entry.domainLookupEnd),
+    connect: isRelevantTiming(entry.connectStart, entry.connectEnd, entry.fetchStart)
+      ? formatTiming(entry.connectStart, entry.connectEnd)
+      : undefined,
+    dns: isRelevantTiming(entry.domainLookupStart, entry.domainLookupEnd, entry.fetchStart)
+      ? formatTiming(entry.domainLookupStart, entry.domainLookupEnd)
+      : undefined,
     download: formatTiming(entry.responseStart, entry.responseEnd),
     firstByte: formatTiming(entry.requestStart, entry.responseStart),
-    redirect: entry.redirectStart !== 0 ? formatTiming(entry.redirectStart, entry.redirectEnd) : undefined,
-    ssl: entry.secureConnectionStart !== 0 ? formatTiming(entry.secureConnectionStart, entry.connectEnd) : undefined,
+    redirect: isRelevantTiming(entry.redirectStart, entry.redirectEnd, 0)
+      ? formatTiming(entry.redirectStart, entry.redirectEnd)
+      : undefined,
+    ssl:
+      entry.secureConnectionStart !== 0 &&
+      isRelevantTiming(entry.secureConnectionStart, entry.connectEnd, entry.fetchStart)
+        ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
+        : undefined,
   }
-}
-
-export function computeSize(entry?: PerformanceResourceTiming) {
-  return entry && hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
 }
 
 function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
   return timing.responseStart > 0
+}
+
+function isCached(timing: PerformanceResourceTiming) {
+  return timing.duration === 0
+}
+
+function isValidTiming(start: number, end: number) {
+  return start >= 0 && end >= 0 && end >= start
+}
+
+/**
+ * Do not collect timing when persistent connection, cache, ...
+ * https://developer.mozilla.org/en-US/docs/Web/Performance/Navigation_and_resource_timings
+ */
+function isRelevantTiming(start: number, end: number, reference: number) {
+  return start !== reference || end !== reference
+}
+
+function formatTiming(start: number, end: number) {
+  return { duration: msToNs(end - start), start: msToNs(start) }
+}
+
+export function computeSize(entry?: PerformanceResourceTiming) {
+  return entry && hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
 }
 
 export function isValidResource(url: string, configuration: Configuration) {
