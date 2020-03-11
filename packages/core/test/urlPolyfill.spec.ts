@@ -1,8 +1,17 @@
-import { getHash, getOrigin, getPathName, getSearch, isFirefox, isValidUrl, normalizeUrl } from '../src'
+import {
+  getHash,
+  getLocationOrigin,
+  getOrigin,
+  getPathName,
+  getSearch,
+  isFirefox,
+  isValidUrl,
+  normalizeUrl,
+} from '../src'
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual(`${window.location.origin}/my/path`)
+    expect(normalizeUrl('/my/path')).toEqual(`${getLocationOrigin()}/my/path`)
   })
 
   it('should add protocol to relative url', () => {

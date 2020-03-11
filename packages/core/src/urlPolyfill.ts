@@ -1,5 +1,7 @@
+import { getLinkElementOrigin, getLocationOrigin } from './utils'
+
 export function normalizeUrl(url: string) {
-  return buildUrl(url, window.location.origin).href
+  return buildUrl(url, getLocationOrigin()).href
 }
 
 export function isValidUrl(url: string) {
@@ -15,11 +17,12 @@ export function haveSameOrigin(url1: string, url2: string) {
 }
 
 export function getOrigin(url: string) {
-  return buildUrl(url).origin
+  return getLinkElementOrigin(buildUrl(url))
 }
 
 export function getPathName(url: string) {
-  return buildUrl(url).pathname
+  const pathname = buildUrl(url).pathname
+  return pathname[0] === '/' ? pathname : `/${pathname}`
 }
 
 export function getSearch(url: string) {
