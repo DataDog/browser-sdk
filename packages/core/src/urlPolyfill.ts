@@ -1,10 +1,10 @@
 export function normalizeUrl(url: string) {
-  return new URL(url, window.location.origin).href
+  return buildUrl(url, window.location.origin).href
 }
 
 export function isValidUrl(url: string) {
   try {
-    return !!new URL(url)
+    return !!buildUrl(url)
   } catch {
     return false
   }
@@ -15,17 +15,34 @@ export function haveSameOrigin(url1: string, url2: string) {
 }
 
 export function getOrigin(url: string) {
-  return new URL(url).origin
+  return buildUrl(url).origin
 }
 
 export function getPathName(url: string) {
-  return new URL(url).pathname
+  return buildUrl(url).pathname
 }
 
 export function getSearch(url: string) {
-  return new URL(url).search
+  return buildUrl(url).search
 }
 
 export function getHash(url: string) {
-  return new URL(url).hash
+  return buildUrl(url).hash
+}
+
+function buildUrl(url: string, base?: string) {
+  if (base === undefined && !/:/.test(url)) {
+    throw new Error(`Invalid URL: '${url}'`)
+  }
+  let doc = document
+  const anchorElement = doc.createElement('a')
+  if (base !== undefined) {
+    doc = document.implementation.createHTMLDocument('')
+    const baseElement = doc.createElement('base')
+    baseElement.href = base
+    doc.head.appendChild(baseElement)
+    doc.body.appendChild(anchorElement)
+  }
+  anchorElement.href = url
+  return anchorElement
 }
