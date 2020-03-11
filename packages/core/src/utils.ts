@@ -219,7 +219,7 @@ export function getLocationOrigin() {
  * IE fallback
  * https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
  */
-export function getLinkElementOrigin(element: Location | HTMLAnchorElement) {
+export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
   if (element.origin) {
     return element.origin
   }

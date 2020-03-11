@@ -34,6 +34,9 @@ export function getHash(url: string) {
 }
 
 function buildUrl(url: string, base?: string) {
+  if (checkURLSupported()) {
+    return new URL(url, base)
+  }
   if (base === undefined && !/:/.test(url)) {
     throw new Error(`Invalid URL: '${url}'`)
   }
@@ -48,4 +51,18 @@ function buildUrl(url: string, base?: string) {
   }
   anchorElement.href = url
   return anchorElement
+}
+
+let isURLSupported: boolean | undefined
+function checkURLSupported() {
+  if (isURLSupported !== undefined) {
+    return isURLSupported
+  }
+  try {
+    const url = new URL('http://test')
+    return url.href === 'http://test'
+  } catch {
+    isURLSupported = false
+  }
+  return isURLSupported
 }
