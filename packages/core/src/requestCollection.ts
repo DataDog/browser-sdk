@@ -1,5 +1,3 @@
-import 'url-polyfill'
-
 import { toStackTraceString } from './errorCollection'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
