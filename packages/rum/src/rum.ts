@@ -64,6 +64,7 @@ export interface PerformanceResourceDetails {
 }
 
 export interface RumResourceEvent {
+  date: number
   duration: number
   evt: {
     category: RumEventCategory.RESOURCE
@@ -309,7 +310,7 @@ function trackPerformanceTiming(
 export function handleResourceEntry(
   configuration: Configuration,
   entry: PerformanceResourceTiming,
-  addRumEvent: (event: RumEvent) => void,
+  addRumEvent: (event: RumResourceEvent) => void,
   lifeCycle: LifeCycle
 ) {
   if (!isValidResource(entry.name, configuration)) {

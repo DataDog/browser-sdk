@@ -1,4 +1,13 @@
-import { addMonitoringMessage, Configuration, includes, msToNs, ResourceKind } from '@datadog/browser-core'
+import {
+  addMonitoringMessage,
+  Configuration,
+  getPathName,
+  haveSameOrigin,
+  includes,
+  isValidUrl,
+  msToNs,
+  ResourceKind,
+} from '@datadog/browser-core'
 
 import { PerformanceResourceDetails } from './rum'
 
@@ -25,18 +34,15 @@ const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string)
 ]
 
 export function computeResourceKind(timing: PerformanceResourceTiming) {
-  let url: URL | undefined
-  try {
-    url = new URL(timing.name)
-  } catch (e) {
+  const url = timing.name
+  if (!isValidUrl(url)) {
     addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
+    return ResourceKind.OTHER
   }
-  if (url !== undefined) {
-    const path = url.pathname
-    for (const [type, isType] of RESOURCE_TYPES) {
-      if (isType(timing.initiatorType, path)) {
-        return type
-      }
+  const path = getPathName(url)
+  for (const [type, isType] of RESOURCE_TYPES) {
+    if (isType(timing.initiatorType, path)) {
+      return type
     }
   }
   return ResourceKind.OTHER
@@ -117,8 +123,4 @@ function isBrowserAgentRequest(url: string, configuration: Configuration) {
     haveSameOrigin(url, configuration.traceEndpoint) ||
     (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint))
   )
-}
-
-function haveSameOrigin(url1: string, url2: string) {
-  return new URL(url1).origin === new URL(url2).origin
 }

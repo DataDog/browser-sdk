@@ -4,6 +4,7 @@ import { toStackTraceString } from './errorCollection'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { computeStackTrace } from './tracekit'
+import { normalizeUrl } from './urlPolyfill'
 import { ResourceKind } from './utils'
 
 export enum RequestType {
@@ -143,10 +144,6 @@ export function trackFetch(observable: RequestObservable) {
     responsePromise.then(monitor(reportFetch), monitor(reportFetch))
     return responsePromise
   })
-}
-
-export function normalizeUrl(url: string) {
-  return new URL(url, window.location.origin).href
 }
 
 export function isRejected(request: RequestDetails) {
