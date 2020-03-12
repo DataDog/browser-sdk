@@ -191,11 +191,22 @@ export function isNumber(value: unknown): value is number {
  * Related issue in Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1429926
  */
 export function getRelativeTime(timestamp: number) {
-  return timestamp - performance.timing.navigationStart
+  return timestamp - getNavigationStart()
 }
 
 export function getTimestamp(relativeTime: number) {
-  return Math.floor(performance.timing.navigationStart + relativeTime)
+  return Math.floor(getNavigationStart() + relativeTime)
+}
+
+/**
+ * Navigation start slightly change on some rare cases
+ */
+let navigationStart: number | undefined
+export function getNavigationStart() {
+  if (navigationStart === undefined) {
+    navigationStart = performance.timing.navigationStart
+  }
+  return navigationStart
 }
 
 export function objectValues(object: { [key: string]: unknown }) {
