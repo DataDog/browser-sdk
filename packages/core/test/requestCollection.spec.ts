@@ -1,13 +1,5 @@
 import { Observable } from '../src/observable'
-import {
-  isRejected,
-  isServerError,
-  normalizeUrl,
-  RequestDetails,
-  RequestType,
-  trackFetch,
-  trackXhr,
-} from '../src/requestCollection'
+import { isRejected, isServerError, RequestDetails, RequestType, trackFetch, trackXhr } from '../src/requestCollection'
 import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
 
 describe('fetch tracker', () => {
@@ -171,27 +163,6 @@ describe('fetch tracker', () => {
       expect(spy).toHaveBeenCalled()
       done()
     })
-  })
-})
-
-describe('normalize url', () => {
-  it('should add origin to relative path', () => {
-    expect(normalizeUrl('/my/path')).toEqual(`${window.location.origin}/my/path`)
-  })
-
-  it('should add protocol to relative url', () => {
-    expect(normalizeUrl('//foo.com:9876/my/path')).toEqual('http://foo.com:9876/my/path')
-  })
-
-  it('should keep full url unchanged', () => {
-    expect(normalizeUrl('https://foo.com/my/path')).toEqual('https://foo.com/my/path')
-  })
-
-  it('should keep non http url unchanged', () => {
-    if (isFirefox()) {
-      pending('https://bugzilla.mozilla.org/show_bug.cgi?id=1578787')
-    }
-    expect(normalizeUrl('file://foo.com/my/path')).toEqual('file://foo.com/my/path')
   })
 })
 

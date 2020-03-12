@@ -13,8 +13,7 @@
   "dependencies": {
     "lodash.assign": "4.2.0",
     "lodash.merge": "4.6.2",
-    "tslib": "1.10.0",
-    "url-polyfill": "1.1.7"
+    "tslib": "1.10.0"
   },
   "devDependencies": {
     "@types/lodash.assign": "4.2.6",

@@ -2,26 +2,25 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@1.4.1", "@datadog/browser-core@file:../../packages/core":
-  version "1.4.1"
+"@datadog/browser-core@1.7.0", "@datadog/browser-core@file:../../packages/core":
+  version "1.7.0"
   dependencies:
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
-    url-polyfill "1.1.7"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "1.4.1"
+  version "1.7.0"
   dependencies:
-    "@datadog/browser-core" "1.4.1"
+    "@datadog/browser-core" "1.7.0"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "1.4.1"
+  version "1.7.0"
   dependencies:
-    "@datadog/browser-core" "1.4.1"
+    "@datadog/browser-core" "1.7.0"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
@@ -2235,11 +2234,6 @@ urix@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/urix/-/urix-0.1.0.tgz#da937f7a62e21fec1fd18d49b35c2935067a6c72"
   integrity sha1-2pN/emLiH+wf0Y1Js1wpNQZ6bHI=
-
-url-polyfill@1.1.7:
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/url-polyfill/-/url-polyfill-1.1.7.tgz#402ee84360eb549bbeb585f4c7971e79a31de9e3"
-  integrity sha512-ZrAxYWCREjmMtL8gSbSiKKLZZticgihCvVBtrFbUVpyoETt8GQJeG2okMWA8XryDAaHMjJfhnc+rnhXRbI4DXA==
 
 url@^0.11.0:
   version "0.11.0"

@@ -210,3 +210,19 @@ export function getGlobalObject<T>(): T {
   // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
   return (typeof globalThis === 'object' ? globalThis : Function('return this')()) as T
 }
+
+export function getLocationOrigin() {
+  return getLinkElementOrigin(window.location)
+}
+
+/**
+ * IE fallback
+ * https://developer.mozilla.org/en-US/docs/Web/API/HTMLHyperlinkElementUtils/origin
+ */
+export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL) {
+  if (element.origin) {
+    return element.origin
+  }
+  const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
+  return `${element.protocol}//${sanitizedHost}`
+}

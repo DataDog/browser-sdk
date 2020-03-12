@@ -1,3 +1,5 @@
+import { getHash, getPathName, getSearch } from '@datadog/browser-core'
+
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumEvent, RumViewEvent, UserAction } from '../src/rum'
 import { RumSession } from '../src/rumSession'
@@ -11,10 +13,10 @@ function setup({
   lifeCycle?: LifeCycle
 } = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-    const url = new URL(pathname, 'http://localhost')
-    fakeLocation.pathname = url.pathname
-    fakeLocation.search = url.search
-    fakeLocation.hash = url.hash
+    const url = `http://localhost${pathname}`
+    fakeLocation.pathname = getPathName(url)
+    fakeLocation.search = getSearch(url)
+    fakeLocation.hash = getHash(url)
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
   const fakeSession = {

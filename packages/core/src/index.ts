@@ -20,6 +20,7 @@ export {
   stopSessionManagement,
 } from './sessionManagement'
 export { HttpRequest, Batch } from './transport'
+export * from './urlPolyfill'
 export * from './utils'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
 
