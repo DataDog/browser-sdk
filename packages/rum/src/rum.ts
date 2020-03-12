@@ -197,7 +197,7 @@ function startRumBatch(
   globalContextProvider: () => Context
 ) {
   const batch = new Batch<Context>(
-    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, configuration.enableExperimentalFeatures),
+    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, true),
     configuration.maxBatchSize,
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
