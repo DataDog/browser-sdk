@@ -15,8 +15,7 @@ export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
   send(data: string, size: number) {
-    const batchTime = new Date().getTime()
-    const url = this.withBatchTime ? `${this.endpointUrl}&batch_time=${batchTime}` : this.endpointUrl
+    const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
     if (navigator.sendBeacon && size < this.bytesLimit) {
       const isQueued = navigator.sendBeacon(url, data)
       if (isQueued) {
@@ -27,6 +26,10 @@ export class HttpRequest {
     request.open('POST', url, true)
     request.send(data)
   }
+}
+
+function addBatchTime(url: string) {
+  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
 }
 
 export class Batch<T> {
