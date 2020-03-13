@@ -33,6 +33,7 @@ function isRetryAllowed(logs) {
     logs.includes('UnhandledRejection') ||
     logs.includes('Request failed due to Error') ||
     logs.includes('ESOCKETTIMEDOUT') ||
+    logs.includes('WebSocket error') ||
     logs.includes('Failed to load resource')
   )
 }
