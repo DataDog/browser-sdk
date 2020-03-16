@@ -35,7 +35,7 @@ export function getHash(url: string) {
 
 function buildUrl(url: string, base?: string) {
   if (checkURLSupported()) {
-    return new URL(url, base)
+    return base !== undefined ? new URL(url, base) : new URL(url)
   }
   if (base === undefined && !/:/.test(url)) {
     throw new Error(`Invalid URL: '${url}'`)
@@ -59,8 +59,9 @@ function checkURLSupported() {
     return isURLSupported
   }
   try {
-    const url = new URL('http://test')
-    return url.href === 'http://test'
+    const url = new URL('http://test/path')
+    isURLSupported = url.href === 'http://test/path'
+    return isURLSupported
   } catch {
     isURLSupported = false
   }
