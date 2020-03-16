@@ -2,25 +2,25 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@1.7.0", "@datadog/browser-core@file:../../packages/core":
-  version "1.7.0"
+"@datadog/browser-core@1.7.3", "@datadog/browser-core@file:../../packages/core":
+  version "1.7.3"
   dependencies:
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "1.7.0"
+  version "1.7.3"
   dependencies:
-    "@datadog/browser-core" "1.7.0"
+    "@datadog/browser-core" "1.7.3"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "1.7.0"
+  version "1.7.3"
   dependencies:
-    "@datadog/browser-core" "1.7.0"
+    "@datadog/browser-core" "1.7.3"
     lodash.assign "4.2.0"
     lodash.merge "4.6.2"
     tslib "1.10.0"
@@ -182,9 +182,9 @@
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
 acorn@^6.2.1:
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.4.0.tgz#b659d2ffbafa24baf5db1cdbb2c94a983ecd2784"
-  integrity sha512-gac8OEcQ2Li1dxIEWGZzsp2BitJxwkwcOm0zHAJLcPJaVvm58FRnk6RkuLRpU1EujipU2ZFODv2P9DLMfnV8mw==
+  version "6.4.1"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.4.1.tgz#531e58ba3f51b9dacb9a6646ca4debf5b14ca474"
+  integrity sha512-ZVA9k326Nwrj3Cj9jlh3wGFutC2ZornPNARZwsNYqQYgN0EsV2d53w5RN/co65Ohn4sUAUtb1rSUAOD6XN9idA==
 
 ajv-errors@^1.0.0:
   version "1.0.1"
