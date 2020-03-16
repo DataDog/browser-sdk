@@ -25,6 +25,10 @@
     "test:compat:tsc": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:tsc) || yarn fail 'typescript 3.0 compatibility broken'",
     "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'"
   },
+  "resolutions": {
+    "acorn": "6.4.1",
+    "minimist": "1.2.2"
+  },
   "devDependencies": {
     "@types/jasmine": "3.3.13",
     "@types/request": "2.48.2",
