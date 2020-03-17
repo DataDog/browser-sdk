@@ -11,7 +11,9 @@
     "@datadog/browser-rum": "file:../../packages/rum"
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../packages/core"
+    "@datadog/browser-core": "file:../../packages/core",
+    "acorn": "6.4.1",
+    "minimist": "1.2.2"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
