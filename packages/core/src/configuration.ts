@@ -8,6 +8,7 @@ export const DEFAULT_CONFIGURATION = {
   maxInternalMonitoringMessagesPerPage: 15,
   resourceSampleRate: 100,
   sampleRate: 100,
+  silentMultipleInit: false,
 
   /**
    * arbitrary value, byte precision not needed
@@ -42,6 +43,7 @@ export interface UserConfiguration {
   resourceSampleRate?: number
   datacenter?: Datacenter
   enableExperimentalFeatures?: boolean
+  silentMultipleInit?: boolean
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
