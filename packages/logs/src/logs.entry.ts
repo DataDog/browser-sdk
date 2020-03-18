@@ -99,8 +99,10 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
 })
 
 function canInitLogs(userConfiguration: LogsUserConfiguration) {
-  if (isAlreadyInitialized && !userConfiguration.silentMultipleInit) {
-    console.error('DD_LOGS is already initialized.')
+  if (isAlreadyInitialized) {
+    if (!userConfiguration.silentMultipleInit) {
+      console.error('DD_LOGS is already initialized.')
+    }
     return false
   }
   if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
