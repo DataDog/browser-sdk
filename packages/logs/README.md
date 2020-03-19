@@ -41,13 +41,15 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
   - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
+  - `silentMultipleInit`: prevent logging errors while having multiple Init
 
   ```
   init(configuration: {
       clientToken: string,
       datacenter?: string,
       isCollectingError?: boolean,
-      sampleRate?: number
+      sampleRate?: number,
+      silentMultipleInit?: boolean
   })
   ```
 

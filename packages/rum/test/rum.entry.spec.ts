@@ -55,6 +55,27 @@ describe('rum entry', () => {
     expect(errorSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('should not log an error if init is called several times and silentMultipleInit is true', () => {
+    const errorSpy = spyOn(console, 'error')
+    rumGlobal.init({
+      applicationId: 'yes',
+      clientToken: 'yes',
+      resourceSampleRate: 1,
+      sampleRate: 1,
+      silentMultipleInit: true,
+    })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
+
+    rumGlobal.init({
+      applicationId: 'yes',
+      clientToken: 'yes',
+      resourceSampleRate: 1,
+      sampleRate: 1,
+      silentMultipleInit: true,
+    })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
+  })
+
   it("shouldn't trigger any console.log if the configuration is correct", () => {
     const errorSpy = spyOn(console, 'error')
     rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })

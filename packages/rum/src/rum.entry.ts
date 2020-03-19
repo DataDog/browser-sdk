@@ -83,7 +83,9 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
 function canInitRum(userConfiguration: RumUserConfiguration) {
   if (isAlreadyInitialized) {
-    console.error('DD_RUM is already initialized.')
+    if (!userConfiguration.silentMultipleInit) {
+      console.error('DD_RUM is already initialized.')
+    }
     return false
   }
   if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {

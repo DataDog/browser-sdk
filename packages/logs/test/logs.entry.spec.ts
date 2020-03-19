@@ -76,6 +76,23 @@ describe('logs entry', () => {
     expect(errorSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('should not log an error if init is called several times and silentMultipleInit is true', () => {
+    const errorSpy = spyOn(console, 'error')
+    logsGlobal.init({
+      clientToken: 'yes',
+      sampleRate: 1,
+      silentMultipleInit: true,
+    })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
+
+    logsGlobal.init({
+      clientToken: 'yes',
+      sampleRate: 1,
+      silentMultipleInit: true,
+    })
+    expect(errorSpy).toHaveBeenCalledTimes(0)
+  })
+
   it("shouldn't trigger any console.log if the configuration is correct", () => {
     const errorSpy = spyOn(console, 'error')
     logsGlobal.init({ clientToken: 'yes', sampleRate: 1 })

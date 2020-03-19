@@ -39,6 +39,7 @@ datadogRum.init({
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
   - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
+  - `silentMultipleInit`: prevent logging errors while having multiple Init
 
   ```
   init(configuration: {
@@ -46,7 +47,8 @@ datadogRum.init({
       clientToken: string,
       datacenter?: string,
       resourceSampleRate?: number
-      sampleRate?: number
+      sampleRate?: number,
+      silentMultipleInit?: boolean
   })
   ```
 
