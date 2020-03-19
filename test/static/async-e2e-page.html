@@ -18,7 +18,6 @@
           window.DD_LOGS &&
             window.DD_LOGS.init({
               clientToken: 'key',
-              enableExperimentalFeatures: true,
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
               logsEndpoint: `${intakeOrigin}/logs`,
               rumEndpoint: `${intakeOrigin}/rum`,
@@ -34,7 +33,6 @@
             window.DD_RUM.init({
               applicationId: 'rum',
               clientToken: 'key',
-              enableExperimentalFeatures: true,
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
               logsEndpoint: `${intakeOrigin}/logs`,
               rumEndpoint: `${intakeOrigin}/rum`,
