@@ -22,7 +22,13 @@ import lodashMerge from 'lodash.merge'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
-import { computePerformanceResourceDetails, computeResourceKind, computeSize, isValidResource } from './resourceUtils'
+import {
+  computePerformanceResourceDetails,
+  computePerformanceResourceDuration,
+  computeResourceKind,
+  computeSize,
+  isValidResource,
+} from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { trackView, viewContext, ViewMeasures } from './viewTracker'
@@ -266,18 +272,18 @@ export function trackRequests(
     const kind = requestDetails.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     addRumEvent({
       date: getTimestamp(timing ? timing.startTime : requestDetails.startTime),
-      duration: msToNs(timing ? timing.duration : requestDetails.duration),
+      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(requestDetails.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
       },
       http: {
         method: requestDetails.method,
-        performance: computePerformanceResourceDetails(timing),
+        performance: timing ? computePerformanceResourceDetails(timing) : undefined,
         statusCode: requestDetails.status,
         url: requestDetails.url,
       },
       network: {
-        bytesWritten: computeSize(timing),
+        bytesWritten: timing ? computeSize(timing) : undefined,
       },
       resource: {
         kind,
@@ -322,7 +328,7 @@ export function handleResourceEntry(
   }
   addRumEvent({
     date: getTimestamp(entry.startTime),
-    duration: msToNs(entry.duration),
+    duration: computePerformanceResourceDuration(entry),
     evt: {
       category: RumEventCategory.RESOURCE,
     },

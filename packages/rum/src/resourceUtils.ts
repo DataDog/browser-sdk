@@ -48,68 +48,122 @@ export function computeResourceKind(timing: PerformanceResourceTiming) {
   return ResourceKind.OTHER
 }
 
-export function computePerformanceResourceDetails(
-  entry?: PerformanceResourceTiming
-): PerformanceResourceDetails | undefined {
-  if (!entry || !hasTimingAllowedAttributes(entry) || isCached(entry)) {
-    return undefined
+function areInOrder(...numbers: number[]) {
+  for (let i = 1; i < numbers.length; i += 1) {
+    if (numbers[i - 1] > numbers[i]) {
+      return false
+    }
   }
+  return true
+}
+
+export function computePerformanceResourceDuration(entry: PerformanceResourceTiming): number {
+  const { duration, startTime, responseEnd } = entry
+
+  // Safari duration is always 0 on timings blocked by cross origin policies.
+  if (duration === 0 && startTime < responseEnd) {
+    return msToNs(responseEnd - startTime)
+  }
+
+  return msToNs(duration)
+}
+
+export function computePerformanceResourceDetails(
+  entry: PerformanceResourceTiming
+): PerformanceResourceDetails | undefined {
+  const {
+    startTime,
+    fetchStart,
+    domainLookupStart,
+    domainLookupEnd,
+    connectStart,
+    secureConnectionStart,
+    connectEnd,
+    requestStart,
+    responseStart,
+    responseEnd,
+  } = entry
+  let { redirectStart, redirectEnd } = entry
+
+  // Ensure timings are in the right order.  On top of filtering out potential invalid
+  // PerformanceResourceTiming, it will ignore entries from requests where timings cannot be
+  // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
+  // it.
   if (
-    !isValidTiming(entry.connectStart, entry.connectEnd) ||
-    !isValidTiming(entry.domainLookupStart, entry.domainLookupEnd) ||
-    !isValidTiming(entry.responseStart, entry.responseEnd) ||
-    !isValidTiming(entry.requestStart, entry.responseStart) ||
-    !isValidTiming(entry.redirectStart, entry.redirectEnd) ||
-    !isValidTiming(entry.secureConnectionStart, entry.connectEnd)
+    !areInOrder(
+      startTime,
+      fetchStart,
+      domainLookupStart,
+      domainLookupEnd,
+      connectStart,
+      connectEnd,
+      requestStart,
+      responseStart,
+      responseEnd
+    )
   ) {
     return undefined
   }
+
+  // The only time fetchStart is different than startTime is if a redirection occured.
+  const hasRedirectionOccured = fetchStart !== startTime
+
+  if (hasRedirectionOccured) {
+    // Firefox doesn't provide redirect timings on cross origin requests.  Provide a default for
+    // those.
+    if (redirectStart < startTime) {
+      redirectStart = startTime
+    }
+    if (redirectEnd < startTime) {
+      redirectEnd = fetchStart
+    }
+
+    // Make sure redirect timings are in order
+    if (!areInOrder(startTime, redirectStart, redirectEnd, fetchStart)) {
+      return undefined
+    }
+  }
+
+  const details: PerformanceResourceDetails = {
+    download: formatTiming(startTime, responseStart, responseEnd),
+    firstByte: formatTiming(startTime, requestStart, responseStart),
+  }
+
+  // Make sure a connection occured
+  if (connectEnd !== fetchStart) {
+    details.connect = formatTiming(startTime, connectStart, connectEnd)
+
+    // Make sure a secure connection occured
+    if (areInOrder(connectStart, secureConnectionStart, connectEnd)) {
+      details.ssl = formatTiming(startTime, secureConnectionStart, connectEnd)
+    }
+  }
+
+  // Make sure a domain lookup occured
+  if (domainLookupEnd !== fetchStart) {
+    details.dns = formatTiming(startTime, domainLookupStart, domainLookupEnd)
+  }
+
+  if (hasRedirectionOccured) {
+    details.redirect = formatTiming(startTime, redirectStart, redirectEnd)
+  }
+
+  return details
+}
+
+function formatTiming(origin: number, start: number, end: number) {
   return {
-    connect: isRelevantTiming(entry.connectStart, entry.connectEnd, entry.fetchStart)
-      ? formatTiming(entry.connectStart, entry.connectEnd)
-      : undefined,
-    dns: isRelevantTiming(entry.domainLookupStart, entry.domainLookupEnd, entry.fetchStart)
-      ? formatTiming(entry.domainLookupStart, entry.domainLookupEnd)
-      : undefined,
-    download: formatTiming(entry.responseStart, entry.responseEnd),
-    firstByte: formatTiming(entry.requestStart, entry.responseStart),
-    redirect: isRelevantTiming(entry.redirectStart, entry.redirectEnd, 0)
-      ? formatTiming(entry.redirectStart, entry.redirectEnd)
-      : undefined,
-    ssl:
-      entry.secureConnectionStart !== 0 &&
-      isRelevantTiming(entry.secureConnectionStart, entry.connectEnd, entry.fetchStart)
-        ? formatTiming(entry.secureConnectionStart, entry.connectEnd)
-        : undefined,
+    duration: msToNs(end - start),
+    start: msToNs(start - origin),
   }
 }
 
-function hasTimingAllowedAttributes(timing: PerformanceResourceTiming) {
-  return timing.responseStart > 0
-}
-
-function isCached(timing: PerformanceResourceTiming) {
-  return timing.duration === 0
-}
-
-function isValidTiming(start: number, end: number) {
-  return start >= 0 && end >= 0 && end >= start
-}
-
-/**
- * Do not collect timing when persistent connection, cache, ...
- * https://developer.mozilla.org/en-US/docs/Web/Performance/Navigation_and_resource_timings
- */
-function isRelevantTiming(start: number, end: number, reference: number) {
-  return start !== reference || end !== reference
-}
-
-function formatTiming(start: number, end: number) {
-  return { duration: msToNs(end - start), start: msToNs(start) }
-}
-
-export function computeSize(entry?: PerformanceResourceTiming) {
-  return entry && hasTimingAllowedAttributes(entry) ? entry.decodedBodySize : undefined
+export function computeSize(entry: PerformanceResourceTiming) {
+  // Make sure a request actually occured
+  if (entry.startTime < entry.responseStart) {
+    return entry.decodedBodySize
+  }
+  return undefined
 }
 
 export function isValidResource(url: string, configuration: Configuration) {
