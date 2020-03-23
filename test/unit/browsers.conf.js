@@ -22,9 +22,9 @@ module.exports = {
   CHROME_MOBILE: {
     base: 'CrossBrowserTesting',
     browserName: 'Chrome',
-    deviceName: 'Galaxy S9',
+    deviceName: 'Pixel 4',
     platformName: 'Android',
-    platformVersion: '9.0',
+    platformVersion: '10.0',
   },
   SAFARI_MOBILE: {
     base: 'CrossBrowserTesting',

@@ -30,9 +30,9 @@ module.exports = [
     browser_api_name: 'FF70',
   },
   {
-    os_api_name: 'GalaxyS9-And90',
-    browserName: 'Chrome Mobile 80',
-    browser_api_name: 'MblChrome80',
+    os_api_name: 'Pixel4-And10',
+    browserName: 'Chrome Mobile 79',
+    browser_api_name: 'MblChrome79',
   },
   // Safari mobile on iOS 12.0 does not support
   // the way we flush events on page change
