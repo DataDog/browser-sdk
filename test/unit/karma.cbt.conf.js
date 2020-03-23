@@ -1,5 +1,6 @@
 const karmaBaseConf = require('./karma.base.conf')
 const browsers = require('./browsers.conf')
+const getTestName = require('../getTestName')
 
 // force entry resolution to ensure sinon code is in ES5
 // https://github.com/webpack/webpack/issues/5756
@@ -23,6 +24,8 @@ module.exports = function(config) {
       username: process.env.CBT_USERNAME,
       authkey: process.env.CBT_AUTHKEY,
     },
-    customLaunchers: browsers,
+    customLaunchers: Object.fromEntries(
+      Object.entries(browsers).map(([key, browser]) => [key, { ...browser, name: getTestName('unit') }])
+    ),
   })
 }
