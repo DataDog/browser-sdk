@@ -25,6 +25,13 @@ export interface ServerRumViewEvent extends RumViewEvent {
   }
 }
 
+const { hostname } = new URL(browser.config.baseUrl!)
+
+export const serverUrl = {
+  crossOrigin: `http://${hostname}:3001`,
+  sameOrigin: browser.config.baseUrl!,
+}
+
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
 
 export async function flushEvents() {

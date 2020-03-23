@@ -10,6 +10,7 @@ import {
   makeXHRAndCollectEvent,
   renewSession,
   ServerRumViewEvent,
+  serverUrl,
   sortByMessage,
   tearDown,
   waitServerLogs,
@@ -73,7 +74,31 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    const timing = await makeXHRAndCollectEvent(`${browser.config.baseUrl}/ok`)
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`)
+    expect(timing).not.toBeUndefined()
+    expect(timing!.http.method).toEqual('GET')
+    expect((timing!.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing!)
+  })
+
+  it('should not track disallowed cross origin xhr timings', async () => {
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`)
+    expect(timing).not.toBeUndefined()
+    expect(timing!.http.method).toEqual('GET')
+    expect((timing!.http as any).status_code).toEqual(200)
+    expect(timing!.duration).toBeGreaterThan(0)
+
+    // Edge 18 seems to have valid timings even on cross browser requests ¯\_ツ_/¯ It doesn't matter
+    // too much.
+    if (browser.capabilities.browserName === 'MicrosoftEdge' && browser.capabilities.browserVersion === '18') {
+      expectToHaveValidTimings(timing!)
+    } else {
+      expect(timing!.http.performance).toBeUndefined()
+    }
+  })
+
+  it('should track allowed cross origin xhr timings', async () => {
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`)
     expect(timing).not.toBeUndefined()
     expect(timing!.http.method).toEqual('GET')
     expect((timing!.http as any).status_code).toEqual(200)
@@ -136,7 +161,7 @@ describe('rum', () => {
   it('should not send events when session is expired', async () => {
     await expireSession()
 
-    const timing = await makeXHRAndCollectEvent(`${browser.config.baseUrl}/ok`)
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`)
 
     expect(timing).not.toBeDefined()
   })
@@ -159,7 +184,7 @@ describe('error collection', () => {
           }
         }, 500)
       },
-      browser.options.baseUrl!,
+      serverUrl.sameOrigin,
       UNREACHABLE_URL
     )
     await flushBrowserLogs()
@@ -168,7 +193,7 @@ describe('error collection', () => {
 
     expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).toEqual(`Fetch error GET ${browser.options.baseUrl}/throw`)
+    expect(logs[0].message).toEqual(`Fetch error GET ${serverUrl.sameOrigin}/throw`)
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 

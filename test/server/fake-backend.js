@@ -33,6 +33,9 @@ module.exports = (app) => {
   })
 
   app.get('/ok', (req, res) => {
+    if (req.query['timing-allow-origin'] === 'true') {
+      res.set('Timing-Allow-Origin', '*')
+    }
     res.send('ok')
   })
 }
