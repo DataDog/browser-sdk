@@ -165,6 +165,30 @@ async function findSessionCookie() {
   return cookies.find((cookie: any) => cookie.name === '_dd')
 }
 
+export async function makeXHRAndCollectEvent(url: string): Promise<RumResourceEvent | undefined> {
+  // tslint:disable-next-line: no-shadowed-variable
+  await browserExecuteAsync((url, done) => {
+    let loaded = false
+    const xhr = new XMLHttpRequest()
+    xhr.addEventListener('load', () => (loaded = true))
+    xhr.open('GET', url)
+    xhr.send()
+
+    const interval = setInterval(() => {
+      if (loaded) {
+        clearInterval(interval)
+        done(undefined)
+      }
+    }, 500)
+  }, url)
+
+  await flushEvents()
+
+  return (await waitServerRumEvents()).find(
+    (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url === url
+  ) as RumResourceEvent
+}
+
 export function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
   expect((resourceEvent as any).date).toBeGreaterThan(0)
   expect(resourceEvent.duration).toBeGreaterThan(0)

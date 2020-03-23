@@ -7,6 +7,7 @@ import {
   expireSession,
   flushBrowserLogs,
   flushEvents,
+  makeXHRAndCollectEvent,
   renewSession,
   ServerRumViewEvent,
   sortByMessage,
@@ -72,32 +73,11 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    await browserExecuteAsync((baseUrl, done) => {
-      let loaded = false
-      const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (loaded = true))
-      xhr.open('GET', `${baseUrl}/ok`)
-      xhr.send()
-
-      const interval = setInterval(() => {
-        if (loaded) {
-          clearInterval(interval)
-          done(undefined)
-        }
-      }, 500)
-    }, browser.options.baseUrl!)
-
-    await flushEvents()
-    const timing = (await waitServerRumEvents()).find(
-      (event) =>
-        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
-    ) as RumResourceEvent
-
-    expect(timing as any).not.toBe(undefined)
-    expect(timing.http.method).toEqual('GET')
-    expect((timing.http as any).status_code).toEqual(200)
-    expect(timing.duration).toBeGreaterThan(0)
-    expect(timing.http.performance!.download!.start).toBeGreaterThan(0)
+    const timing = await makeXHRAndCollectEvent(`${browser.config.baseUrl}/ok`)
+    expect(timing).not.toBeUndefined()
+    expect(timing!.http.method).toEqual('GET')
+    expect((timing!.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing!)
   })
 
   it('should send performance timings along the view events', async () => {
@@ -156,19 +136,7 @@ describe('rum', () => {
   it('should not send events when session is expired', async () => {
     await expireSession()
 
-    await browserExecuteAsync((baseUrl, done) => {
-      const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => done(undefined))
-      xhr.open('GET', `${baseUrl}/ok`)
-      xhr.send()
-    }, browser.options.baseUrl!)
-
-    await flushEvents()
-
-    const timing = (await waitServerRumEvents()).find(
-      (event) =>
-        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
-    ) as RumResourceEvent
+    const timing = await makeXHRAndCollectEvent(`${browser.config.baseUrl}/ok`)
 
     expect(timing).not.toBeDefined()
   })
