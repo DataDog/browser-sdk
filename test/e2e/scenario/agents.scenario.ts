@@ -81,6 +81,16 @@ describe('rum', () => {
     expectToHaveValidTimings(timing!)
   })
 
+  it('should track redirect xhr timings', async () => {
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect/1`)
+    expect(timing!).not.toBeUndefined()
+    expect(timing!.http.method).toEqual('GET')
+    expect((timing!.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing!)
+    expect(timing!.http.performance!.redirect).not.toBeUndefined()
+    expect(timing!.http.performance!.redirect!.duration).toBeGreaterThan(0)
+  })
+
   it('should not track disallowed cross origin xhr timings', async () => {
     const timing = await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`)
     expect(timing).not.toBeUndefined()

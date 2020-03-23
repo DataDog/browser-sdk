@@ -38,6 +38,15 @@ module.exports = (app) => {
     }
     res.send('ok')
   })
+
+  app.get('/redirect/:n', (req, res) => {
+    const n = Number(req.params.n)
+    if (!isNaN(n) && n > 1) {
+      res.redirect(`${n - 1}`)
+    } else {
+      res.redirect('../ok')
+    }
+  })
 }
 
 function send(res, data) {
