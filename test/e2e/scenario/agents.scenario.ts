@@ -98,7 +98,7 @@ describe('rum', () => {
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
 
-    // Edge 18 seems to have valid timings even on cross browser requests ¯\_ツ_/¯ It doesn't matter
+    // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
     // too much.
     if (browser.capabilities.browserName === 'MicrosoftEdge' && browser.capabilities.browserVersion === '18') {
       expectToHaveValidTimings(timing)
