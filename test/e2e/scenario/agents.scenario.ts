@@ -74,45 +74,45 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`)
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`))!
     expect(timing).not.toBeUndefined()
-    expect(timing!.http.method).toEqual('GET')
-    expect((timing!.http as any).status_code).toEqual(200)
-    expectToHaveValidTimings(timing!)
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
   })
 
   it('should track redirect xhr timings', async () => {
-    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect/1`)
-    expect(timing!).not.toBeUndefined()
-    expect(timing!.http.method).toEqual('GET')
-    expect((timing!.http as any).status_code).toEqual(200)
-    expectToHaveValidTimings(timing!)
-    expect(timing!.http.performance!.redirect).not.toBeUndefined()
-    expect(timing!.http.performance!.redirect!.duration).toBeGreaterThan(0)
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect/1`))!
+    expect(timing).not.toBeUndefined()
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
+    expect(timing.http.performance!.redirect).not.toBeUndefined()
+    expect(timing.http.performance!.redirect!.duration).toBeGreaterThan(0)
   })
 
   it('should not track disallowed cross origin xhr timings', async () => {
-    const timing = await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`)
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
     expect(timing).not.toBeUndefined()
-    expect(timing!.http.method).toEqual('GET')
-    expect((timing!.http as any).status_code).toEqual(200)
-    expect(timing!.duration).toBeGreaterThan(0)
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.duration).toBeGreaterThan(0)
 
     // Edge 18 seems to have valid timings even on cross browser requests ¯\_ツ_/¯ It doesn't matter
     // too much.
     if (browser.capabilities.browserName === 'MicrosoftEdge' && browser.capabilities.browserVersion === '18') {
-      expectToHaveValidTimings(timing!)
+      expectToHaveValidTimings(timing)
     } else {
-      expect(timing!.http.performance).toBeUndefined()
+      expect(timing.http.performance).toBeUndefined()
     }
   })
 
   it('should track allowed cross origin xhr timings', async () => {
-    const timing = await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`)
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
     expect(timing).not.toBeUndefined()
-    expect(timing!.http.method).toEqual('GET')
-    expect((timing!.http as any).status_code).toEqual(200)
-    expectToHaveValidTimings(timing!)
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
   })
 
   it('should send performance timings along the view events', async () => {
