@@ -82,7 +82,7 @@ describe('rum', () => {
   })
 
   it('should track redirect xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect/1`))!
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
     expect((timing.http as any).status_code).toEqual(200)
