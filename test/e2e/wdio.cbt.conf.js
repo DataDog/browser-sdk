@@ -1,10 +1,11 @@
 const baseConf = require('./wdio.base.conf')
 const browsers = require('./browsers.conf')
+const getTestName = require('../getTestName')
 
 exports.config = {
   ...baseConf,
 
-  capabilities: browsers.map((browser) => ({ ...browser, name: 'RUM Browser Agent E2E' })),
+  capabilities: browsers.map((browser) => ({ ...browser, name: getTestName('E2E') })),
   baseUrl: 'http://local:3000',
   services: ['crossbrowsertesting'],
   user: process.env.CBT_USERNAME,
