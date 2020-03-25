@@ -7,8 +7,10 @@ import {
   expireSession,
   flushBrowserLogs,
   flushEvents,
+  makeXHRAndCollectEvent,
   renewSession,
   ServerRumViewEvent,
+  serverUrl,
   sortByMessage,
   tearDown,
   waitServerLogs,
@@ -72,32 +74,45 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    await browserExecuteAsync((baseUrl, done) => {
-      let loaded = false
-      const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (loaded = true))
-      xhr.open('GET', `${baseUrl}/ok`)
-      xhr.send()
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`))!
+    expect(timing).not.toBeUndefined()
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
+  })
 
-      const interval = setInterval(() => {
-        if (loaded) {
-          clearInterval(interval)
-          done(undefined)
-        }
-      }, 500)
-    }, browser.options.baseUrl!)
+  it('should track redirect xhr timings', async () => {
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect`))!
+    expect(timing).not.toBeUndefined()
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
+    expect(timing.http.performance!.redirect).not.toBeUndefined()
+    expect(timing.http.performance!.redirect!.duration).toBeGreaterThan(0)
+  })
 
-    await flushEvents()
-    const timing = (await waitServerRumEvents()).find(
-      (event) =>
-        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
-    ) as RumResourceEvent
-
-    expect(timing as any).not.toBe(undefined)
+  it('should not track disallowed cross origin xhr timings', async () => {
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
+    expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
     expect((timing.http as any).status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
-    expect(timing.http.performance!.download!.start).toBeGreaterThan(0)
+
+    // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
+    // too much.
+    if (browser.capabilities.browserName === 'MicrosoftEdge' && browser.capabilities.browserVersion === '18') {
+      expectToHaveValidTimings(timing)
+    } else {
+      expect(timing.http.performance).toBeUndefined()
+    }
+  })
+
+  it('should track allowed cross origin xhr timings', async () => {
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
+    expect(timing).not.toBeUndefined()
+    expect(timing.http.method).toEqual('GET')
+    expect((timing.http as any).status_code).toEqual(200)
+    expectToHaveValidTimings(timing)
   })
 
   it('should send performance timings along the view events', async () => {
@@ -156,19 +171,7 @@ describe('rum', () => {
   it('should not send events when session is expired', async () => {
     await expireSession()
 
-    await browserExecuteAsync((baseUrl, done) => {
-      const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => done(undefined))
-      xhr.open('GET', `${baseUrl}/ok`)
-      xhr.send()
-    }, browser.options.baseUrl!)
-
-    await flushEvents()
-
-    const timing = (await waitServerRumEvents()).find(
-      (event) =>
-        event.evt.category === 'resource' && (event as RumResourceEvent).http.url === `${browser.options.baseUrl}/ok`
-    ) as RumResourceEvent
+    const timing = await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`)
 
     expect(timing).not.toBeDefined()
   })
@@ -191,7 +194,7 @@ describe('error collection', () => {
           }
         }, 500)
       },
-      browser.options.baseUrl!,
+      serverUrl.sameOrigin,
       UNREACHABLE_URL
     )
     await flushBrowserLogs()
@@ -200,7 +203,7 @@ describe('error collection', () => {
 
     expect(logs.length).toEqual(2)
 
-    expect(logs[0].message).toEqual(`Fetch error GET ${browser.options.baseUrl}/throw`)
+    expect(logs[0].message).toEqual(`Fetch error GET ${serverUrl.sameOrigin}/throw`)
     expect(logs[0].http.status_code).toEqual(500)
     expect(logs[0].error.stack).toMatch(/Server error/)
 
