@@ -1,6 +1,5 @@
 const { exec } = require('child_process')
-let appProcess
-let intakeProcess
+let servers
 
 module.exports = {
   runner: 'local',
@@ -17,8 +16,14 @@ module.exports = {
   },
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
-    appProcess = exec('PORT=3000 node test/server/server')
-    intakeProcess = exec('PORT=4000 node test/server/server')
+    servers = [
+      // Test server same origin
+      exec('PORT=3000 node test/server/server'),
+      // Test server cross origin
+      exec('PORT=3001 node test/server/server'),
+      // Intake server
+      exec('PORT=4000 node test/server/server'),
+    ]
   },
   before: function() {
     require('ts-node').register({
@@ -27,7 +32,6 @@ module.exports = {
     })
   },
   onComplete: function() {
-    appProcess.kill()
-    intakeProcess.kill()
+    servers.forEach((server) => server.kill())
   },
 }

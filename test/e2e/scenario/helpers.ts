@@ -25,6 +25,13 @@ export interface ServerRumViewEvent extends RumViewEvent {
   }
 }
 
+const { hostname } = new URL(browser.config.baseUrl!)
+
+export const serverUrl = {
+  crossOrigin: `http://${hostname}:3001`,
+  sameOrigin: browser.config.baseUrl!,
+}
+
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
 
 export async function flushEvents() {
@@ -163,6 +170,30 @@ async function findSessionCookie() {
   const cookies = (await browser.getCookies()) || []
   // tslint:disable-next-line: no-unsafe-any
   return cookies.find((cookie: any) => cookie.name === '_dd')
+}
+
+export async function makeXHRAndCollectEvent(url: string): Promise<RumResourceEvent | undefined> {
+  // tslint:disable-next-line: no-shadowed-variable
+  await browserExecuteAsync((url, done) => {
+    let loaded = false
+    const xhr = new XMLHttpRequest()
+    xhr.addEventListener('load', () => (loaded = true))
+    xhr.open('GET', url)
+    xhr.send()
+
+    const interval = setInterval(() => {
+      if (loaded) {
+        clearInterval(interval)
+        done(undefined)
+      }
+    }, 500)
+  }, url)
+
+  await flushEvents()
+
+  return (await waitServerRumEvents()).find(
+    (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url === url
+  ) as RumResourceEvent
 }
 
 export function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
