@@ -148,6 +148,7 @@ export function setDebugMode(debugMode: boolean) {
 
 function logErrorIfDebug(e: any) {
   if (monitoringConfiguration.debugMode) {
+    // Log as warn to not forward the logs.
     console.warn('[INTERNAL ERROR]', e)
   }
 }
