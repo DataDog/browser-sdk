@@ -67,7 +67,9 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const lifeCycle = new LifeCycle()
 
   const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
-  startNewSessionChecks(lifeCycle)
+  if (configuration.enableExperimentalFeatures.includes('new-session-checks')) {
+    startNewSessionChecks(lifeCycle)
+  }
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
