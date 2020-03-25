@@ -176,10 +176,17 @@ describe('rum handle performance entry', () => {
       const entry: Partial<PerformanceResourceTiming> = {
         connectEnd: 10,
         connectStart: -3,
+        domainLookupEnd: 10,
+        domainLookupStart: 10,
         entryType: 'resource',
+        fetchStart: 10,
         name: 'http://localhost/test',
+        redirectEnd: 0,
+        redirectStart: 0,
+        requestStart: 10,
         responseEnd: 100,
         responseStart: 25,
+        secureConnectionStart: 0,
       }
 
       handleResourceEntry(
