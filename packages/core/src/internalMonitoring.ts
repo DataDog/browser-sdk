@@ -98,6 +98,7 @@ export function monitor<T extends Function>(fn: T): T {
 }
 
 export function addMonitoringMessage(message: string) {
+  logMessageIfDebug(message)
   addToMonitoringBatch({
     message,
     status: StatusType.info,
@@ -147,7 +148,12 @@ export function setDebugMode(debugMode: boolean) {
 
 function logErrorIfDebug(e: any) {
   if (monitoringConfiguration.debugMode) {
-    // Log as warn to not forward the logs.
     console.warn('[INTERNAL ERROR]', e)
+  }
+}
+
+function logMessageIfDebug(message: any) {
+  if (monitoringConfiguration.debugMode) {
+    console.log('[MONITORING MESSAGE]', message)
   }
 }
