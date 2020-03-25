@@ -2,7 +2,7 @@ import { BuildEnv, Datacenter, Environment } from './init'
 import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
-  enableExperimentalFeatures: [],
+  enableExperimentalFeatures: [] as string[],
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -42,7 +42,7 @@ export interface UserConfiguration {
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter
-  enableExperimentalFeatures?: []
+  enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
 
   // Below is only taken into account for e2e-test bundle.
