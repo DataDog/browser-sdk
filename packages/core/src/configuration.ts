@@ -2,7 +2,6 @@ import { BuildEnv, Datacenter, Environment } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
-  enableExperimentalFeatures: [] as string[],
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -75,12 +74,13 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     version: buildEnv.version,
   }
 
+  const enableExperimentalFeatures = Array.isArray(userConfiguration.enableExperimentalFeatures)
+    ? userConfiguration.enableExperimentalFeatures
+    : []
+
   const configuration: Configuration = {
     isEnabled: (feature: string) => {
-      return (
-        Array.isArray(configuration.enableExperimentalFeatures) &&
-        includes(configuration.enableExperimentalFeatures, feature)
-      )
+      return includes(enableExperimentalFeatures, feature)
     },
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     rumEndpoint: getEndpoint('rum', transportConfiguration),
@@ -105,10 +105,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('resourceSampleRate' in userConfiguration) {
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
-  }
-
-  if ('enableExperimentalFeatures' in userConfiguration) {
-    configuration.enableExperimentalFeatures = userConfiguration.enableExperimentalFeatures!
   }
 
   if (transportConfiguration.env === 'e2e-test') {
