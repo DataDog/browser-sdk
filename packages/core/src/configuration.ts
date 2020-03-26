@@ -1,5 +1,5 @@
 import { BuildEnv, Datacenter, Environment } from './init'
-import { ONE_KILO_BYTE, ONE_SECOND } from './utils'
+import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
   enableExperimentalFeatures: [] as string[],
@@ -56,6 +56,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   rumEndpoint: string
   traceEndpoint: string
   internalMonitoringEndpoint?: string
+
+  isEnabled: (feature: string) => boolean
 }
 
 interface TransportConfiguration {
@@ -74,6 +76,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   }
 
   const configuration: Configuration = {
+    isEnabled: (feature: string) => {
+      return (
+        Array.isArray(configuration.enableExperimentalFeatures) &&
+        includes(configuration.enableExperimentalFeatures, feature)
+      )
+    },
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     rumEndpoint: getEndpoint('rum', transportConfiguration),
     traceEndpoint: getEndpoint('public-trace', transportConfiguration),
