@@ -12,7 +12,7 @@
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json",
     "dev": "ENV=development node test/server/server.js",
     "release": "lerna version --exact",
-    "version": "./scripts/changelog.sh",
+    "version": "node ./scripts/generate-changelog.js",
     "publish:npm": "TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build && lerna publish from-package",
     "fail": "./scripts/fail.sh",
     "test": "yarn test:unit",
