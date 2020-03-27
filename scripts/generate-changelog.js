@@ -34,7 +34,7 @@ async function main() {
 
   const changesWhihPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
-    (match, id) => `[(#${id})](https://github.com/DataDog/browser-sdk/pull/${id})`
+    (match, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
 
   try {
