@@ -32,11 +32,16 @@ async function main() {
     `# Changelog\n\n## v${lernaConfig.version}\n\n${commitsCmd.stdout}`
   )
 
+  const changesWhihPullRequestLinks = changesWithEmojis.replace(
+		/\(#(\d+)\)/gm,
+    (match, id) => `[(#${id})](https://github.com/DataDog/browser-sdk/pull/${id})`
+  )
+
   try {
     await replace({
       files: CHANGELOG_FILE,
       from: new RegExp('# Changelog', 'g'),
-      to: changesWithEmojis,
+      to: changesWhihPullRequestLinks,
     })
   } catch (error) {
     throw error
