@@ -54,22 +54,16 @@ async function main() {
 }
 
 async function emojiNameToUnicode(changes) {
-  const emojiNameRegex = /:[^:\s]*(?:::[^:\s]*)*:/g
-  const changelogEmojisNames = new Map()
+	const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
 
-  const matches = emojiNameRegex.exec(changes)
-  if (!!matches) {
-    await matches.map((match) => {
-      const emoji = name.get(match)
-      if (!!emoji) {
-        changelogEmojisNames.set(match, emoji)
-      }
-    })
-  }
-
-  for await (const [emojiName, emojiUnicode] of changelogEmojisNames) {
-    changes = changes.replace(new RegExp(emojiName, 'g'), emojiUnicode)
-  }
+	let matches;
+	while (matches = emojiNameRegex.exec(changes)) {
+		if (!!matches) {
+			await matches.map((match) => {
+				changes = changes.replace(match, name.get(match) || match)
+			})
+		}
+	}
 
   return changes
 }
