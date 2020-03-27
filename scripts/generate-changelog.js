@@ -12,25 +12,13 @@ const lernaConfig = require('../lerna.json')
 const CHANGELOG_FILE = 'CHANGELOG.md'
 
 async function main() {
-  const lastTagHashCmd = await exec('git rev-list --tags --max-count=1')
-  if (lastTagHashCmd.stderr) {
-    throw lastTagHashCmd.stderr
-  }
+  const lastTagHash = await executeCommand('git rev-list --tags --max-count=1')
+  const lastTagName = await executeCommand(`git describe --tags ${lastTagHash}`)
 
-  const lastTagNameCmd = await exec(`git describe --tags ${lastTagHashCmd.stdout}`)
-  if (lastTagNameCmd.stderr) {
-    throw lastTagNameCmd.stderr
-  }
-  const oldTag = lastTagNameCmd.stdout.replace(/\n$/, '')
+  const oldTag = lastTagName.replace(/\n$/, '')
+  const commits = await executeCommand(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
 
-  const commitsCmd = await exec(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
-  if (commitsCmd.stderr) {
-    throw commitsCmd.stderr
-  }
-
-  const changesWithEmojis = await emojiNameToUnicode(
-    `# Changelog\n\n## v${lernaConfig.version}\n\n${commitsCmd.stdout}`
-  )
+  const changesWithEmojis = await emojiNameToUnicode(`# Changelog\n\n## v${lernaConfig.version}\n\n${commits}`)
 
   const changesWhihPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
@@ -47,6 +35,14 @@ async function main() {
   if (openEditorCmd.stderr) {
     throw openEditorCmd.stderr
   }
+}
+
+async function executeCommand(command) {
+  const commandResult = await exec(command)
+  if (commandResult.stderr) {
+    throw commandResult.stderr
+  }
+  return commandResult.stdout
 }
 
 async function emojiNameToUnicode(changes) {
