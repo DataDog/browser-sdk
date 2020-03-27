@@ -66,7 +66,7 @@ async function emojiNameToUnicode(changes) {
     changes = changes.replace(new RegExp(emojiName, 'g'), emojiUnicode)
   }
 
-	return changes
+  return changes
 }
 
 main().catch((e) => {
