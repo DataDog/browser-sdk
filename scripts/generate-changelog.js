@@ -37,15 +37,11 @@ async function main() {
     (match, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
 
-  try {
-    await replace({
-      files: CHANGELOG_FILE,
-      from: new RegExp('# Changelog', 'g'),
-      to: changesWhihPullRequestLinks,
-    })
-  } catch (error) {
-    throw error
-  }
+  await replace({
+    files: CHANGELOG_FILE,
+    from: new RegExp('# Changelog', 'g'),
+    to: changesWhihPullRequestLinks,
+  })
 
   const openEditorCmd = await spawn(process.env.EDITOR, [CHANGELOG_FILE], { stdio: 'inherit', detached: true })
   if (openEditorCmd.stderr) {
@@ -54,16 +50,16 @@ async function main() {
 }
 
 async function emojiNameToUnicode(changes) {
-	const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
+  const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
 
-	let matches;
-	while (matches = emojiNameRegex.exec(changes)) {
-		if (!!matches) {
-			await matches.map((match) => {
-				changes = changes.replace(match, name.get(match) || match)
-			})
-		}
-	}
+  let matches
+  while ((matches = emojiNameRegex.exec(changes))) {
+    if (!!matches) {
+      await matches.map((match) => {
+        changes = changes.replace(match, name.get(match) || match)
+      })
+    }
+  }
 
   return changes
 }
