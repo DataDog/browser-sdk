@@ -17,20 +17,20 @@ const CHANGELOG_FILE = 'CHANGELOG.md'
 async function main() {
   const lastHashCmd = await exec('git rev-list --tags --max-count=1')
   if (lastHashCmd.stderr) {
-    console.error(`error: ${stderr}`)
+    console.error(`error: ${lastHashCmd.stderr}`)
     return
   }
 
   const oldTagCmd = await exec(`git describe --tags ${lastHashCmd.stdout}`)
   if (oldTagCmd.stderr) {
-    console.error(`error: ${stderr}`)
+    console.error(`error: ${oldTagCmd.stderr}`)
     return
   }
   const oldTag = oldTagCmd.stdout.replace(/\n$/, '')
 
   const commitsCmd = await exec(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
   if (commitsCmd.stderr) {
-    console.error(`error: ${stderr}`)
+    console.error(`error: ${commitsCmd.stderr}`)
     return
   }
 
@@ -48,7 +48,7 @@ async function main() {
 
   const openEditorCmd = await spawn(process.env.EDITOR, [CHANGELOG_FILE], { stdio: 'inherit', detached: true })
   if (openEditorCmd.stderr) {
-    console.error(`error: ${stderr}`)
+    console.error(`error: ${openEditorCmd.stderr}`)
     return
   }
 }
