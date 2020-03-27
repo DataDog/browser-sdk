@@ -12,16 +12,16 @@ const lernaConfig = require('../lerna.json')
 const CHANGELOG_FILE = 'CHANGELOG.md'
 
 async function main() {
-  const lastHashCmd = await exec('git rev-list --tags --max-count=1')
-  if (lastHashCmd.stderr) {
-    throw lastHashCmd.stderr
+  const lastTagHashCmd = await exec('git rev-list --tags --max-count=1')
+  if (lastTagHashCmd.stderr) {
+    throw lastTagHashCmd.stderr
   }
 
-  const oldTagCmd = await exec(`git describe --tags ${lastHashCmd.stdout}`)
-  if (oldTagCmd.stderr) {
-    throw oldTagCmd.stderr
+  const lastTagNameCmd = await exec(`git describe --tags ${lastTagHashCmd.stdout}`)
+  if (lastTagNameCmd.stderr) {
+    throw lastTagNameCmd.stderr
   }
-  const oldTag = oldTagCmd.stdout.replace(/\n$/, '')
+  const oldTag = lastTagNameCmd.stdout.replace(/\n$/, '')
 
   const commitsCmd = await exec(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
   if (commitsCmd.stderr) {
