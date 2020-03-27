@@ -17,21 +17,18 @@ const CHANGELOG_FILE = 'CHANGELOG.md'
 async function main() {
   const lastHashCmd = await exec('git rev-list --tags --max-count=1')
   if (lastHashCmd.stderr) {
-    console.error(`error: ${lastHashCmd.stderr}`)
-    return
+    throw lastHashCmd.stderr
   }
 
   const oldTagCmd = await exec(`git describe --tags ${lastHashCmd.stdout}`)
   if (oldTagCmd.stderr) {
-    console.error(`error: ${oldTagCmd.stderr}`)
-    return
+    throw oldTagCmd.stderr
   }
   const oldTag = oldTagCmd.stdout.replace(/\n$/, '')
 
   const commitsCmd = await exec(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
   if (commitsCmd.stderr) {
-    console.error(`error: ${commitsCmd.stderr}`)
-    return
+    throw commitsCmd.stderr
   }
 
   try {
@@ -41,15 +38,14 @@ async function main() {
       to: `# Changelog\n\n## v${lernaConfig.version}\n\n${commitsCmd.stdout}`,
     })
   } catch (error) {
-    console.error('Error occurred:', error)
+    throw error
   }
 
   await emojiNameToUnicode()
 
   const openEditorCmd = await spawn(process.env.EDITOR, [CHANGELOG_FILE], { stdio: 'inherit', detached: true })
   if (openEditorCmd.stderr) {
-    console.error(`error: ${openEditorCmd.stderr}`)
-    return
+    throw openEditorCmd.stderr
   }
 }
 
