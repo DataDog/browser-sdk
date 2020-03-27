@@ -2,6 +2,27 @@
 
 ## v1.7.5
 
+- Use throw instead of console.error
+- Fixes errors
+- Rewrite changelog generation script to nodejs
+- Rename emoji file
+- Fixes indentation
+- Merge branch 'master' into glorieux/adds-changelog
+- Adds changelog generation hook
+- 🔊[RUMF-408] add new session check logs (#318)
+- [RUMF-407] improve resource timings collection (#315)
+- Adds emoji-name-map license
+- Adds emojis replacement script
+- Remove pre 1.0.0 commits
+- Fixes formatting
+- [RUMF-402]: Adds CHANGELOG
+- 🔧 improve CBT test names (#314)
+- [RUMF-382] prepare support for multiple feature flags (#312)
+- 🔧 update cbt chrome mobile (#313)
+- v1.7.5 (#311)
+
+## v1.7.5
+
 - ✨add an option to silent multiple Init errors (#310)
 
 ## v1.7.4
