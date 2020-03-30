@@ -5,7 +5,7 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const spawn = util.promisify(require('child_process').spawn)
 
-const name = require('emoji-name-map')
+const emojiNameMap = require('emoji-name-map')
 
 const lernaConfig = require('../lerna.json')
 
@@ -52,7 +52,7 @@ async function emojiNameToUnicode(changes) {
   while ((matches = emojiNameRegex.exec(changes))) {
     if (!!matches) {
       await matches.map((match) => {
-        changes = changes.replace(match, name.get(match) || match)
+        changes = changes.replace(match, emojiNameMap.get(match) || match)
       })
     }
   }
