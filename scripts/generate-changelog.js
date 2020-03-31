@@ -15,8 +15,7 @@ async function main() {
   const lastTagHash = await executeCommand('git rev-list --tags --max-count=1')
   const lastTagName = await executeCommand(`git describe --tags ${lastTagHash}`)
 
-  const oldTag = lastTagName.replace(/\n$/, '')
-  const commits = await executeCommand(`git log ${oldTag}..HEAD --pretty=format:"- %s"`)
+  const commits = await executeCommand(`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:"- %s"`)
 
   const changesWithEmojis = await emojiNameToUnicode(`# Changelog\n\n## v${lernaConfig.version}\n\n${commits}`)
 
