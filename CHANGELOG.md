@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.7.5
+## v1.8.0
 
 - 🔊[RUMF-408] add new session check logs ([#318](https://github.com/DataDog/browser-sdk/pull/318))
 - [RUMF-407] improve resource timings collection ([#315](https://github.com/DataDog/browser-sdk/pull/315))
