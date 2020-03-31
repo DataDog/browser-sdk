@@ -16,7 +16,6 @@ import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { startNewSessionChecks } from './newSessionChecks'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
@@ -67,9 +66,6 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const lifeCycle = new LifeCycle()
 
   const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
-  if (configuration.isEnabled('new-session-checks')) {
-    startNewSessionChecks(lifeCycle)
-  }
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
