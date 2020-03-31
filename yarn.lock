@@ -3500,6 +3500,15 @@ elliptic@^6.0.0:
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
 
+emoji-name-map@1.2.8:
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/emoji-name-map/-/emoji-name-map-1.2.8.tgz#4bd5c6bfe3ae4bffc7d8ff60c0da57a91df3a0b4"
+  integrity sha512-UxX9lJXCmwqLaRCkprtXZAEMDNk0z7IbNaUJ51gZouq7/9j2IiqsrmUGo/fLd2YgwZFElWlItsjQo86fz4l2zA==
+  dependencies:
+    emojilib "^2.0.2"
+    iterate-object "^1.3.1"
+    map-o "^2.0.1"
+
 emoji-regex@^7.0.1:
   version "7.0.3"
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-7.0.3.tgz#933a04052860c85e83c122479c4748a8e4c72156"
@@ -3509,6 +3518,11 @@ emoji-regex@^8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-8.0.0.tgz#e818fd69ce5ccfcb404594f842963bf53164cc37"
   integrity sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==
+
+emojilib@^2.0.2:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/emojilib/-/emojilib-2.4.0.tgz#ac518a8bb0d5f76dda57289ccb2fdf9d39ae721e"
+  integrity sha512-5U0rVMU5Y2n2+ykNLQqMoqklN9ICBT/KsvC1Gz6vqHbz2AXXGkG+Pm5rMWk/8Vjrr/mY9985Hi8DYzn1F09Nyw==
 
 emojis-list@^2.0.0:
   version "2.1.0"
@@ -5638,6 +5652,11 @@ istanbul-reports@^2.2.4:
   dependencies:
     handlebars "^4.1.2"
 
+iterate-object@^1.3.0, iterate-object@^1.3.1:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/iterate-object/-/iterate-object-1.3.3.tgz#c58e60f7f0caefa2d382027a484b215988a7a296"
+  integrity sha512-DximWbkke36cnrSfNJv6bgcB2QOMV9PRD2FiowwzCoMsh8RupFLdbNIzWe+cVDWT+NIMNJgGlB1dGxP6kpzGtA==
+
 jasmine-core@3.4.0, jasmine-core@^3.3:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.4.0.tgz#2a74618e966026530c3518f03e9f845d26473ce3"
@@ -6374,6 +6393,13 @@ map-cache@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/map-cache/-/map-cache-0.2.2.tgz#c32abd0bd6525d9b051645bb4f26ac5dc98a0dbf"
   integrity sha1-wyq9C9ZSXZsFFkW7TyasXcmKDb8=
+
+map-o@^2.0.1:
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/map-o/-/map-o-2.0.9.tgz#7e7b4bc7b192fd3ca2cda230eaf9d8e3dd5f86ce"
+  integrity sha512-oYdT5amkNO06ZS/+x6qQ6SAz+/k9lByczvBZn8RKnwzWOb9FDlb1NCwBTtjOmloeh4sOuxkxeGf0s2ruSUieEg==
+  dependencies:
+    iterate-object "^1.3.0"
 
 map-obj@^1.0.0, map-obj@^1.0.1:
   version "1.0.1"
