@@ -19,7 +19,7 @@ async function main() {
 
   const changesWithEmojis = await emojiNameToUnicode(`# Changelog\n\n## v${lernaConfig.version}\n\n${commits}`)
 
-  const changesWhihPullRequestLinks = changesWithEmojis.replace(
+  const changesWithPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
     (match, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
@@ -27,7 +27,7 @@ async function main() {
   await replace({
     files: CHANGELOG_FILE,
     from: new RegExp('# Changelog', 'g'),
-    to: changesWhihPullRequestLinks,
+    to: changesWithPullRequestLinks,
   })
 
   const openEditorCmd = await spawn(process.env.EDITOR, [CHANGELOG_FILE], { stdio: 'inherit', detached: true })
