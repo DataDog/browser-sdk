@@ -46,17 +46,7 @@ async function executeCommand(command) {
 
 async function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
-
-  let matches
-  while ((matches = emojiNameRegex.exec(changes))) {
-    if (!!matches) {
-      await matches.map((match) => {
-        changes = changes.replace(match, emojiNameMap.get(match) || match)
-      })
-    }
-  }
-
-  return changes
+  return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
 main().catch((e) => {

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.1
+
+- 🐛fix feature check ([#320](https://github.com/DataDog/browser-sdk/pull/320))
+
 ## v1.8.0
 
 - 🔊[RUMF-408] add new session check logs ([#318](https://github.com/DataDog/browser-sdk/pull/318))
