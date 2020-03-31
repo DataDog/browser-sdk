@@ -7,7 +7,6 @@
 - 🔧 improve CBT test names ([#314](https://github.com/DataDog/browser-sdk/pull/314))
 - [RUMF-382] prepare support for multiple feature flags ([#312](https://github.com/DataDog/browser-sdk/pull/312))
 - 🔧 update cbt chrome mobile ([#313](https://github.com/DataDog/browser-sdk/pull/313))
-- v1.7.5 ([#311](https://github.com/DataDog/browser-sdk/pull/311))
 
 ## v1.7.5
 
