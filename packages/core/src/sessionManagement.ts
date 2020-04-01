@@ -1,5 +1,6 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
 import { Observable } from './observable'
+import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd'
@@ -11,7 +12,7 @@ export interface Session<T> {
   getType(): T | undefined
 }
 
-interface SessionState {
+export interface SessionState {
   id?: string
   [key: string]: string | undefined
 }
@@ -24,6 +25,7 @@ export function startSessionManagement<Type extends string>(
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
+  tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveSession(sessionCookie).id
 
@@ -62,7 +64,7 @@ const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 
 const SESSION_ENTRY_SEPARATOR = '&'
 
-function isValidSessionString(sessionString: string | undefined): sessionString is string {
+export function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
@@ -84,7 +86,7 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
   return session
 }
 
-function persistSession(session: SessionState, cookie: CookieCache) {
+export function persistSession(session: SessionState, cookie: CookieCache) {
   const cookieString = utils
     .objectEntries(session)
     .map(([key, value]) => `${key}=${value}`)
