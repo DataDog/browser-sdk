@@ -1,6 +1,6 @@
 import { Configuration, performDraw, startSessionManagement } from '@datadog/browser-core'
 
-export const LOGGER_COOKIE_NAME = '_dd_l'
+export const LOGGER_SESSION_KEY = 'logs'
 
 export interface LoggerSession {
   getId: () => string | undefined
@@ -20,7 +20,7 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
       isTracked: () => isTracked,
     }
   }
-  const session = startSessionManagement(LOGGER_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
+  const session = startSessionManagement(LOGGER_SESSION_KEY, (rawType) => computeSessionState(configuration, rawType))
   return {
     getId: session.getId,
     isTracked: () => session.getType() === LoggerSessionType.TRACKED,
