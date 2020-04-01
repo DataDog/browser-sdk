@@ -1,5 +1,4 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
-import { tryCookieMigration } from './cookieMigration'
 import { Observable } from './observable'
 import * as utils from './utils'
 
@@ -25,7 +24,6 @@ export function startSessionManagement<Type extends string>(
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
-  tryCookieMigration(sessionId)
   const sessionType = cacheCookieAccess(cookieName)
   const renewObservable = new Observable<void>()
   let currentSessionId = sessionId.get()
