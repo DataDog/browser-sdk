@@ -1,4 +1,5 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY } from './cookie'
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
+import { tryCookieMigration } from './cookieMigration'
 import { Observable } from './observable'
 import * as utils from './utils'
 
@@ -11,6 +12,11 @@ export interface Session<T> {
   getType(): T | undefined
 }
 
+interface SessionState {
+  id?: string
+  [key: string]: string | undefined
+}
+
 /**
  * Limit access to cookie to avoid performance issues
  */
@@ -19,6 +25,7 @@ export function startSessionManagement<Type extends string>(
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
+  tryCookieMigration(sessionId)
   const sessionType = cacheCookieAccess(cookieName)
   const renewObservable = new Observable<void>()
   let currentSessionId = sessionId.get()
@@ -57,6 +64,32 @@ export function startSessionManagement<Type extends string>(
     },
     renewObservable,
   }
+}
+
+const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
+
+const SESSION_ENTRY_SEPARATOR = '&'
+
+export function isValidSessionString(sessionString: string | undefined): sessionString is string {
+  return (
+    sessionString !== undefined &&
+    (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
+  )
+}
+
+export function retrieveSession(sessionCookie: CookieCache): SessionState {
+  const sessionString = sessionCookie.get()
+  const session: SessionState = {}
+  if (isValidSessionString(sessionString)) {
+    sessionString.split(SESSION_ENTRY_SEPARATOR).forEach((entry) => {
+      const matches = SESSION_ENTRY_REGEXP.exec(entry)
+      if (matches !== null) {
+        const [, key, value] = matches
+        session[key] = value
+      }
+    })
+  }
+  return session
 }
 
 export function stopSessionManagement() {
