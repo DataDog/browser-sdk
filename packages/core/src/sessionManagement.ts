@@ -14,21 +14,6 @@ export interface Session<T> {
 /**
  * Limit access to cookie to avoid performance issues
  */
-let registeredActivityListeners: Array<() => void> = []
-
-export function trackActivity(expandOrRenewSession: () => void) {
-  const options = { capture: true, passive: true }
-  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
-    document.addEventListener(event, expandOrRenewSession, options)
-    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
-  })
-}
-
-export function stopSessionManagement() {
-  registeredActivityListeners.forEach((e) => e())
-  registeredActivityListeners = []
-}
-
 export function startSessionManagement<Type extends string>(
   cookieName: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
@@ -72,4 +57,19 @@ export function startSessionManagement<Type extends string>(
     },
     renewObservable,
   }
+}
+
+export function stopSessionManagement() {
+  registeredActivityListeners.forEach((e) => e())
+  registeredActivityListeners = []
+}
+
+let registeredActivityListeners: Array<() => void> = []
+
+export function trackActivity(expandOrRenewSession: () => void) {
+  const options = { capture: true, passive: true }
+  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
+    document.addEventListener(event, expandOrRenewSession, options)
+    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
+  })
 }
