@@ -20,32 +20,26 @@ interface SessionState {
  * Limit access to cookie to avoid performance issues
  */
 export function startSessionManagement<Type extends string>(
-  cookieName: string,
+  sessionTypeKey: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
-  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
-  const sessionType = cacheCookieAccess(cookieName)
+  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   const renewObservable = new Observable<void>()
-  let currentSessionId = sessionId.get()
+  let currentSessionId = retrieveSession(sessionCookie).id
 
   const expandOrRenewSession = utils.throttle(() => {
-    const { type, isTracked } = computeSessionState(sessionType.get())
-    sessionType.set(type, EXPIRATION_DELAY)
-    if (!isTracked) {
-      return
+    const session = retrieveSession(sessionCookie)
+    const { type, isTracked } = computeSessionState(session[sessionTypeKey])
+    session[sessionTypeKey] = type
+    if (isTracked && !session.id) {
+      session.id = utils.generateUUID()
     }
-
-    if (sessionId.get()) {
-      // If we already have a session id, just expand its duration
-      sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
-    } else {
-      // Else generate a new session id
-      sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
-    }
+    // save changes and expand session duration
+    persistSession(session, sessionCookie)
 
     // If the session id has changed, notify that the session has been renewed
-    if (currentSessionId !== sessionId.get()) {
-      currentSessionId = sessionId.get()
+    if (isTracked && currentSessionId !== session.id) {
+      currentSessionId = session.id
       renewObservable.notify()
     }
   }, COOKIE_ACCESS_DELAY)
@@ -55,10 +49,10 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return sessionId.get()
+      return retrieveSession(sessionCookie).id
     },
     getType() {
-      return sessionType.get() as Type | undefined
+      return retrieveSession(sessionCookie)[sessionTypeKey] as Type | undefined
     },
     renewObservable,
   }
@@ -68,14 +62,14 @@ const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 
 const SESSION_ENTRY_SEPARATOR = '&'
 
-export function isValidSessionString(sessionString: string | undefined): sessionString is string {
+function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
 }
 
-export function retrieveSession(sessionCookie: CookieCache): SessionState {
+function retrieveSession(sessionCookie: CookieCache): SessionState {
   const sessionString = sessionCookie.get()
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
@@ -88,6 +82,14 @@ export function retrieveSession(sessionCookie: CookieCache): SessionState {
     })
   }
   return session
+}
+
+function persistSession(session: SessionState, cookie: CookieCache) {
+  const cookieString = utils
+    .objectEntries(session)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(SESSION_ENTRY_SEPARATOR)
+  cookie.set(cookieString, EXPIRATION_DELAY)
 }
 
 export function stopSessionManagement() {
