@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.8.2
+
+- 🥅[RUMF-430] handle potential session rollback ([#329](https://github.com/DataDog/browser-sdk/pull/329))
+
 ## v1.8.1
 
 - 🐛fix feature check ([#320](https://github.com/DataDog/browser-sdk/pull/320))
