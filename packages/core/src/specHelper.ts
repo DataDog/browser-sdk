@@ -1,6 +1,5 @@
 import { Configuration } from './configuration'
-import { Observable } from './observable'
-import { RequestDetails } from './requestCollection'
+import { RequestDetails, RequestObservables } from './requestCollection'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -30,14 +29,17 @@ export function clearAllCookies() {
 
 export class FetchStubBuilder {
   private requests: RequestDetails[] = []
-  private pendingFetch = 0
   private whenAllCompleteFn: (messages: RequestDetails[]) => void = noop
 
-  constructor(observable: Observable<RequestDetails>) {
-    observable.subscribe((request: RequestDetails) => {
+  constructor(observables: RequestObservables) {
+    let pendingFetch = 0
+    observables.start.subscribe(() => {
+      pendingFetch += 1
+    })
+    observables.complete.subscribe((request: RequestDetails) => {
       this.requests.push(request)
-      this.pendingFetch -= 1
-      if (this.pendingFetch === 0) {
+      pendingFetch -= 1
+      if (pendingFetch === 0) {
         // ensure that AssertionError are not swallowed by promise context
         setTimeout(() => {
           this.whenAllCompleteFn(this.requests)
@@ -52,7 +54,6 @@ export class FetchStubBuilder {
 
   getStub() {
     return (() => {
-      this.pendingFetch += 1
       let resolve: (response: ResponseStub) => unknown
       let reject: (error: Error) => unknown
       const promise: unknown = new Promise((res, rej) => {

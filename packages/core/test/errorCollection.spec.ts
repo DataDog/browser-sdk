@@ -193,6 +193,7 @@ describe('network error tracker', () => {
   const DEFAULT_REQUEST = {
     duration: 10,
     method: 'GET',
+    requestId: 123,
     response: 'Server error',
     startTime: 0,
     status: 503,

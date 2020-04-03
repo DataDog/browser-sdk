@@ -10,7 +10,12 @@ export enum RequestType {
   XHR = ResourceKind.XHR,
 }
 
+export interface RequestStartEvent {
+  requestId: number
+}
+
 export interface RequestDetails {
+  requestId: number
   type: RequestType
   method: string
   url: string
@@ -33,19 +38,34 @@ interface BrowserXHR extends XMLHttpRequest {
   }
 }
 
-export type RequestObservable = Observable<RequestDetails>
-let requestObservable: Observable<RequestDetails>
-
-export function startRequestCollection() {
-  if (!requestObservable) {
-    requestObservable = new Observable<RequestDetails>()
-    trackXhr(requestObservable)
-    trackFetch(requestObservable)
-  }
-  return requestObservable
+export interface RequestObservables {
+  start: Observable<RequestStartEvent>
+  complete: Observable<RequestDetails>
 }
 
-export function trackXhr(observable: RequestObservable) {
+let nextRequestId = 1
+
+function getNextRequestId() {
+  const result = nextRequestId
+  nextRequestId += 1
+  return result
+}
+
+let globalObservables: RequestObservables
+
+export function startRequestCollection() {
+  if (!globalObservables) {
+    globalObservables = {
+      complete: new Observable(),
+      start: new Observable(),
+    }
+    trackXhr(globalObservables)
+    trackFetch(globalObservables)
+  }
+  return globalObservables
+}
+
+export function trackXhr(observables: RequestObservables) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
     this._datadog_xhr = {
@@ -58,13 +78,20 @@ export function trackXhr(observable: RequestObservable) {
   const originalSend = XMLHttpRequest.prototype.send
   XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
     const startTime = performance.now()
+    const requestId = getNextRequestId()
+
+    observables.start.notify({
+      requestId,
+    })
+
     let hasBeenReported = false
     const reportXhr = () => {
       if (hasBeenReported) {
         return
       }
       hasBeenReported = true
-      observable.notify({
+      observables.complete.notify({
+        requestId,
         startTime,
         duration: performance.now() - startTime,
         method: this._datadog_xhr.method,
@@ -94,7 +121,7 @@ export function trackXhr(observable: RequestObservable) {
   }
 }
 
-export function trackFetch(observable: RequestObservable) {
+export function trackFetch(observables: RequestObservables) {
   if (!window.fetch) {
     return
   }
@@ -103,14 +130,21 @@ export function trackFetch(observable: RequestObservable) {
   window.fetch = monitor(function(this: GlobalFetch['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
+    const requestId = getNextRequestId()
+
+    observables.start.notify({
+      requestId,
+    })
+
     const reportFetch = async (response: Response | Error) => {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response || response instanceof Error) {
         const stackTrace = computeStackTrace(response)
-        observable.notify({
+        observables.complete.notify({
           duration,
           method,
+          requestId,
           startTime,
           url,
           response: toStackTraceString(stackTrace),
@@ -125,9 +159,10 @@ export function trackFetch(observable: RequestObservable) {
         } catch (e) {
           text = `Unable to retrieve response: ${e}`
         }
-        observable.notify({
+        observables.complete.notify({
           duration,
           method,
+          requestId,
           startTime,
           url,
           response: text,

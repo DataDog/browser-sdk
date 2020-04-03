@@ -1,14 +1,7 @@
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import {
-  isRejected,
-  isServerError,
-  RequestDetails,
-  RequestObservable,
-  RequestType,
-  startRequestCollection,
-} from './requestCollection'
+import { isRejected, isServerError, RequestDetails, RequestType, startRequestCollection } from './requestCollection'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
@@ -48,8 +41,8 @@ export function startErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<ErrorMessage>()
     if (configuration.isCollectingError) {
-      const requestObservable = startRequestCollection()
-      trackNetworkError(configuration, errorObservable, requestObservable)
+      const requestObservables = startRequestCollection()
+      trackNetworkError(configuration, errorObservable, requestObservables.complete)
       startConsoleTracking(errorObservable)
       startRuntimeErrorTracking(errorObservable)
     }
@@ -165,7 +158,7 @@ export function toStackTraceString(stack: StackTrace) {
 export function trackNetworkError(
   configuration: Configuration,
   errorObservable: ErrorObservable,
-  requestObservable: RequestObservable
+  requestObservable: Observable<RequestDetails>
 ) {
   requestObservable.subscribe((request: RequestDetails) => {
     if (isRejected(request) || isServerError(request)) {
