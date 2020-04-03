@@ -72,7 +72,7 @@
     "tslint-config-airbnb": "5.11.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-eslint-rules": "5.4.0",
-    "typescript": "3.5.3",
+    "typescript": "3.8.3",
     "typescript-tslint-plugin": "0.5.4",
     "webdriverio": "5.16.7",
     "webpack": "4.42.1",
