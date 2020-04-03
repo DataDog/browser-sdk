@@ -1,5 +1,4 @@
-import { LogsGlobal } from '@datadog/browser-logs'
-import { RumEventCategory, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import './globalTypes'
 import {
   browserExecute,
   browserExecuteAsync,
@@ -9,7 +8,6 @@ import {
   flushEvents,
   makeXHRAndCollectEvent,
   renewSession,
-  ServerRumViewEvent,
   serverUrl,
   sortByMessage,
   tearDown,
@@ -17,10 +15,10 @@ import {
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
+import { isRumResourceEvent, isRumViewEvent } from './serverTypes'
 
 beforeEach(async () => {
-  // tslint:disable-next-line: no-unsafe-any
-  await browser.url(`/${(browser as any).config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
+  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
 })
 
 afterEach(tearDown)
@@ -30,7 +28,7 @@ const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 describe('logs', () => {
   it('should send logs', async () => {
     await browserExecute(() => {
-      ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
+      window.DD_LOGS!.logger.log('hello')
     })
     await flushEvents()
     const logMessages = (await waitServerLogs()).map((log) => log.message)
@@ -51,7 +49,7 @@ describe('logs', () => {
 
   it('should add RUM internal context to logs', async () => {
     await browserExecute(() => {
-      ;((window as any).DD_LOGS as LogsGlobal).logger.log('hello')
+      window.DD_LOGS!.logger.log('hello')
     })
     await flushEvents()
     const log = (await waitServerLogs())[0]
@@ -67,7 +65,7 @@ describe('rum', () => {
     })
     await flushEvents()
     const eventCategories = (await waitServerRumEvents()).map((rumEvent) => rumEvent.evt.category)
-    expect(eventCategories).toContain(RumEventCategory.ERROR)
+    expect(eventCategories).toContain('error')
     await withBrowserLogs((browserLogs) => {
       expect(browserLogs.length).toEqual(1)
     })
@@ -77,7 +75,7 @@ describe('rum', () => {
     const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
-    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.http.status_code).toEqual(200)
     expectToHaveValidTimings(timing)
   })
 
@@ -85,7 +83,7 @@ describe('rum', () => {
     const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
-    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.http.status_code).toEqual(200)
     expectToHaveValidTimings(timing)
     expect(timing.http.performance!.redirect).not.toBeUndefined()
     expect(timing.http.performance!.redirect!.duration).toBeGreaterThan(0)
@@ -95,7 +93,7 @@ describe('rum', () => {
     const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
-    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.http.status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
 
     // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
@@ -111,7 +109,7 @@ describe('rum', () => {
     const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
-    expect((timing.http as any).status_code).toEqual(200)
+    expect(timing.http.status_code).toEqual(200)
     expectToHaveValidTimings(timing)
   })
 
@@ -119,26 +117,24 @@ describe('rum', () => {
     await flushEvents()
     const events = await waitServerRumEvents()
 
-    const viewEvent = events.find((event) => event.evt.category === 'view') as RumViewEvent
+    const viewEvent = events.find(isRumViewEvent)
 
-    expect(viewEvent as any).not.toBe(undefined)
-    const measures = viewEvent.view.measures
-    expect((measures as any).dom_complete).toBeGreaterThan(0)
-    expect((measures as any).dom_content_loaded).toBeGreaterThan(0)
-    expect((measures as any).dom_interactive).toBeGreaterThan(0)
-    expect((measures as any).load_event_end).toBeGreaterThan(0)
+    expect(viewEvent).not.toBe(undefined)
+    const measures = viewEvent!.view.measures!
+    expect(measures.dom_complete).toBeGreaterThan(0)
+    expect(measures.dom_content_loaded).toBeGreaterThan(0)
+    expect(measures.dom_interactive).toBeGreaterThan(0)
+    expect(measures.load_event_end).toBeGreaterThan(0)
   })
 
   it('should retrieve early requests timings', async () => {
     await flushEvents()
     const events = await waitServerRumEvents()
 
-    const resourceEvent = events.find(
-      (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url.includes('empty.css')
-    ) as RumResourceEvent
+    const resourceEvent = events.filter(isRumResourceEvent).find((event) => event.http.url.includes('empty.css'))
 
-    expect(resourceEvent as any).not.toBe(undefined)
-    expectToHaveValidTimings(resourceEvent)
+    expect(resourceEvent).not.toBe(undefined)
+    expectToHaveValidTimings(resourceEvent!)
   })
 
   it('should retrieve initial document timings', async () => {
@@ -146,22 +142,18 @@ describe('rum', () => {
     await flushEvents()
     const events = await waitServerRumEvents()
 
-    const resourceEvent = events.find(
-      (event) => event.evt.category === 'resource' && (event as RumResourceEvent).resource.kind === 'document'
-    ) as RumResourceEvent
+    const resourceEvent = events.filter(isRumResourceEvent).find((event) => event.resource.kind === 'document')
 
-    expect(resourceEvent as any).not.toBe(undefined)
-    expect(resourceEvent.http.url).toBe(pageUrl)
-    expectToHaveValidTimings(resourceEvent)
+    expect(resourceEvent).not.toBe(undefined)
+    expect(resourceEvent!.http.url).toBe(pageUrl)
+    expectToHaveValidTimings(resourceEvent!)
   })
 
   it('should create a new View when the session is renewed', async () => {
     await renewSession()
     await flushEvents()
 
-    const viewEvents = (await waitServerRumEvents()).filter(
-      (event) => event.evt.category === 'view'
-    ) as ServerRumViewEvent[]
+    const viewEvents = (await waitServerRumEvents()).filter(isRumViewEvent)
 
     expect(viewEvents.length).toBe(2)
     expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
@@ -204,11 +196,11 @@ describe('error collection', () => {
     expect(logs.length).toEqual(2)
 
     expect(logs[0].message).toEqual(`Fetch error GET ${serverUrl.sameOrigin}/throw`)
-    expect(logs[0].http.status_code).toEqual(500)
-    expect(logs[0].error.stack).toMatch(/Server error/)
+    expect(logs[0].http!.status_code).toEqual(500)
+    expect(logs[0].error!.stack).toMatch(/Server error/)
 
     expect(logs[1].message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
-    expect(logs[1].http.status_code).toEqual(0)
-    expect(logs[1].error.stack).toContain('TypeError')
+    expect(logs[1].http!.status_code).toEqual(0)
+    expect(logs[1].error!.stack).toContain('TypeError')
   })
 })

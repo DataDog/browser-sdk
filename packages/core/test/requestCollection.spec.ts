@@ -223,7 +223,7 @@ describe('xhr tracker', () => {
         const details = (completeSpy.calls.allArgs() as RequestDetails[][])
           .map((args) => args[0])
           // IE10/11 doesn't have .find() or .includes()
-          .filter(d => d.url.indexOf(expectedURL) >= 0)[0]
+          .filter((d) => d.url.indexOf(expectedURL) >= 0)[0]
 
         expect(details).toEqual({
           duration: (jasmine.any(Number) as unknown) as number,
