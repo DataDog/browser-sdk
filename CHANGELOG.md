@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.0
+
+- ✨[RUMF-430] new session cookie format ([#332](https://github.com/DataDog/browser-sdk/pull/332))
+
 ## v1.8.2
 
 - 🥅[RUMF-430] handle potential session rollback ([#329](https://github.com/DataDog/browser-sdk/pull/329))
