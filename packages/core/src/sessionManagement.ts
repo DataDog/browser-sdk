@@ -1,5 +1,4 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
-import { tryCookieMigration } from './cookieMigration'
 import { Observable } from './observable'
 import * as utils from './utils'
 
@@ -25,7 +24,6 @@ export function startSessionManagement<Type extends string>(
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
-  tryCookieMigration(sessionId)
   const sessionType = cacheCookieAccess(cookieName)
   const renewObservable = new Observable<void>()
   let currentSessionId = sessionId.get()
@@ -70,14 +68,14 @@ const SESSION_ENTRY_REGEXP = /^([a-z]+)=([a-z0-9-]+)$/
 
 const SESSION_ENTRY_SEPARATOR = '&'
 
-export function isValidSessionString(sessionString: string | undefined): sessionString is string {
+function isValidSessionString(sessionString: string | undefined): sessionString is string {
   return (
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
 }
 
-export function retrieveSession(sessionCookie: CookieCache): SessionState {
+function retrieveSession(sessionCookie: CookieCache): SessionState {
   const sessionString = sessionCookie.get()
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
