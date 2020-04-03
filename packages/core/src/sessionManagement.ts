@@ -1,6 +1,6 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
+import { tryCookieMigration } from './cookieMigration'
 import { Observable } from './observable'
-import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd'
@@ -12,7 +12,7 @@ export interface Session<T> {
   getType(): T | undefined
 }
 
-export interface SessionState {
+interface SessionState {
   id?: string
   [key: string]: string | undefined
 }
@@ -21,27 +21,33 @@ export interface SessionState {
  * Limit access to cookie to avoid performance issues
  */
 export function startSessionManagement<Type extends string>(
-  sessionTypeKey: string,
+  cookieName: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
-  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
-  tryOldCookiesMigration(sessionCookie)
+  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
+  tryCookieMigration(sessionId)
+  const sessionType = cacheCookieAccess(cookieName)
   const renewObservable = new Observable<void>()
-  let currentSessionId = retrieveSession(sessionCookie).id
+  let currentSessionId = sessionId.get()
 
   const expandOrRenewSession = utils.throttle(() => {
-    const session = retrieveSession(sessionCookie)
-    const { type, isTracked } = computeSessionState(session[sessionTypeKey])
-    session[sessionTypeKey] = type
-    if (isTracked && !session.id) {
-      session.id = utils.generateUUID()
+    const { type, isTracked } = computeSessionState(sessionType.get())
+    sessionType.set(type, EXPIRATION_DELAY)
+    if (!isTracked) {
+      return
     }
-    // save changes and expand session duration
-    persistSession(session, sessionCookie)
+
+    if (sessionId.get()) {
+      // If we already have a session id, just expand its duration
+      sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
+    } else {
+      // Else generate a new session id
+      sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
+    }
 
     // If the session id has changed, notify that the session has been renewed
-    if (isTracked && currentSessionId !== session.id) {
-      currentSessionId = session.id
+    if (currentSessionId !== sessionId.get()) {
+      currentSessionId = sessionId.get()
       renewObservable.notify()
     }
   }, COOKIE_ACCESS_DELAY)
@@ -51,10 +57,10 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return retrieveSession(sessionCookie).id
+      return sessionId.get()
     },
     getType() {
-      return retrieveSession(sessionCookie)[sessionTypeKey] as Type | undefined
+      return sessionType.get() as Type | undefined
     },
     renewObservable,
   }
@@ -71,7 +77,7 @@ export function isValidSessionString(sessionString: string | undefined): session
   )
 }
 
-function retrieveSession(sessionCookie: CookieCache): SessionState {
+export function retrieveSession(sessionCookie: CookieCache): SessionState {
   const sessionString = sessionCookie.get()
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
@@ -84,14 +90,6 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
     })
   }
   return session
-}
-
-export function persistSession(session: SessionState, cookie: CookieCache) {
-  const cookieString = utils
-    .objectEntries(session)
-    .map(([key, value]) => `${key}=${value}`)
-    .join(SESSION_ENTRY_SEPARATOR)
-  cookie.set(cookieString, EXPIRATION_DELAY)
 }
 
 export function stopSessionManagement() {
