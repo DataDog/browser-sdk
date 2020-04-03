@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { RUM_SESSION_KEY, RumSessionType, startRumSession } from '../src/rumSession'
+import { RUM_COOKIE_NAME, RumSessionType, startRumSession } from '../src/rumSession'
 
 function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
   spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithResources ? 0 : 1)
@@ -50,8 +50,8 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
-    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 
   it('when tracked without resources should store session type and id', () => {
@@ -60,8 +60,8 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITHOUT_RESOURCES}`)
-    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITHOUT_RESOURCES)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 
   it('when not tracked should store session type', () => {
@@ -70,33 +70,36 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
-    expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
+    expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
   })
 
   it('when tracked should keep existing session type and id', () => {
-    setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
+    setCookie(RUM_COOKIE_NAME, RumSessionType.TRACKED_WITH_RESOURCES, DURATION)
+    setCookie(SESSION_COOKIE_NAME, 'abcdef', DURATION)
 
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcdef')
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
+    expect(getCookie(SESSION_COOKIE_NAME)).toEqual('abcdef')
   })
 
   it('when not tracked should keep existing session type', () => {
-    setCookie(SESSION_COOKIE_NAME, 'rum=0', DURATION)
+    setCookie(RUM_COOKIE_NAME, RumSessionType.NOT_TRACKED, DURATION)
 
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toBe(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.NOT_TRACKED)
   })
 
   it('should renew on activity after expiration', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
+    setCookie(RUM_COOKIE_NAME, '', DURATION)
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
+    expect(getCookie(RUM_COOKIE_NAME)).toBeUndefined()
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     expect(renewSessionSpy).not.toHaveBeenCalled()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
@@ -105,7 +108,7 @@ describe('rum session', () => {
     document.dispatchEvent(new CustomEvent('click'))
 
     expect(renewSessionSpy).toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
-    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
+    expect(getCookie(RUM_COOKIE_NAME)).toEqual(RumSessionType.TRACKED_WITH_RESOURCES)
+    expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/^[a-f0-9-]+$/)
   })
 })
