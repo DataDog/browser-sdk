@@ -12,6 +12,10 @@ export enum LifeCycleEventType {
   DOM_MUTATED,
 }
 
+export interface Subscription {
+  unsubscribe(): void
+}
+
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
@@ -33,24 +37,30 @@ export class LifeCycle {
     }
   }
 
-  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): void
-  subscribe(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, callback: (data: PerformanceEntry) => void): void
-  subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): void
-  subscribe(eventType: LifeCycleEventType.REQUEST_COLLECTED, callback: (data: RequestDetails) => void): void
-  subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): void
+  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+    callback: (data: PerformanceEntry) => void
+  ): Subscription
+  subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.REQUEST_COLLECTED, callback: (data: RequestDetails) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED,
     callback: () => void
-  ): void
+  ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
-    const eventCallbacks = this.callbacks[eventType]
-    if (eventCallbacks) {
-      eventCallbacks.push(callback)
-    } else {
-      this.callbacks[eventType] = [callback]
+    if (!this.callbacks[eventType]) {
+      this.callbacks[eventType] = []
+    }
+    this.callbacks[eventType]!.push(callback)
+    return {
+      unsubscribe: () => {
+        this.callbacks[eventType] = this.callbacks[eventType]!.filter((other) => callback !== other)
+      },
     }
   }
 }

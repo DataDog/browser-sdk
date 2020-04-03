@@ -15,7 +15,7 @@ import {
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
-import { isRumResourceEvent, isRumViewEvent } from './serverTypes'
+import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from './serverTypes'
 
 beforeEach(async () => {
   await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
@@ -202,5 +202,56 @@ describe('error collection', () => {
     expect(logs[1].message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
     expect(logs[1].http!.status_code).toEqual(0)
     expect(logs[1].error!.stack).toContain('TypeError')
+  })
+})
+
+describe('user action collection', () => {
+  it('should track a click user action', async () => {
+    await browserExecute(() => {
+      const button = document.querySelector('button')!
+      button.addEventListener('click', () => {
+        button.setAttribute('data-clicked', 'true')
+      })
+      button.click()
+    })
+
+    await flushEvents()
+
+    const userActionEvents = (await waitServerRumEvents()).filter(isRumUserActionEvent)
+
+    expect(userActionEvents.length).toBe(1)
+    expect(userActionEvents[0].user_action).toEqual({
+      id: (jasmine.any(String) as unknown) as string,
+      type: 'click',
+    })
+    expect(userActionEvents[0].evt.name).toBe('click me')
+    expect(userActionEvents[0].duration).toBeGreaterThanOrEqual(0)
+  })
+
+  it('should associate a request to its user action', async () => {
+    await browserExecuteAsync((baseUrl, done) => {
+      const button = document.querySelector('button')!
+      button.addEventListener('click', () => {
+        fetch(`${baseUrl}/ok`).then(done)
+      })
+      button.click()
+    }, serverUrl.sameOrigin)
+
+    await flushEvents()
+
+    const rumEvents = await waitServerRumEvents()
+    const userActionEvents = rumEvents.filter(isRumUserActionEvent)
+    const resourceEvents = rumEvents.filter(isRumResourceEvent).filter((event) => event.resource.kind === 'fetch')
+
+    expect(userActionEvents.length).toBe(1)
+    expect(userActionEvents[0].user_action).toEqual({
+      id: (jasmine.any(String) as unknown) as string,
+      type: 'click',
+    })
+    expect(userActionEvents[0].evt.name).toBe('click me')
+    expect(userActionEvents[0].duration).toBeGreaterThan(0)
+
+    expect(resourceEvents.length).toBe(1)
+    expect(resourceEvents[0].user_action_id).toBe(userActionEvents[0].user_action.id)
   })
 })
