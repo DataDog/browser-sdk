@@ -49,7 +49,7 @@
     "istanbul-instrumenter-loader": "3.0.1",
     "jasmine-core": "3.4.0",
     "js-polyfills": "0.1.42",
-    "karma": "4.2.0",
+    "karma": "4.4.1",
     "karma-cbt-launcher": "bcaudan/karma-cbt-launcher#remove-node-6-support",
     "karma-chrome-launcher": "3.0.0",
     "karma-coverage-istanbul-reporter": "2.0.5",
