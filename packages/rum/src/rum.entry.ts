@@ -15,6 +15,7 @@ import {
 import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'
+import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
@@ -71,6 +72,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   const requestObservables = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
+  startDOMMutationCollection(lifeCycle)
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
   requestObservables.start.subscribe((event) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, event))
