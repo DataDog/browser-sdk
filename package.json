@@ -32,7 +32,7 @@
     "minimist": "1.2.2"
   },
   "devDependencies": {
-    "@types/jasmine": "3.3.13",
+    "@types/jasmine": "3.5.10",
     "@types/request": "2.48.4",
     "@wdio/cli": "5.16.9",
     "@wdio/crossbrowsertesting-service": "5.16.9",
@@ -47,7 +47,7 @@
     "emoji-name-map": "1.2.8",
     "express": "4.17.1",
     "istanbul-instrumenter-loader": "3.0.1",
-    "jasmine-core": "3.4.0",
+    "jasmine-core": "3.5.0",
     "js-polyfills": "0.1.42",
     "karma": "4.4.1",
     "karma-cbt-launcher": "bcaudan/karma-cbt-launcher#remove-node-6-support",
