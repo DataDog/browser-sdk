@@ -1,7 +1,8 @@
 import { Configuration, performDraw, startSessionManagement } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
-export const RUM_COOKIE_NAME = '_dd_r'
+export const RUM_OLD_COOKIE_NAME = '_dd_r'
+export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSession {
   getId: () => string | undefined
@@ -16,7 +17,9 @@ export enum RumSessionType {
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const session = startSessionManagement(RUM_COOKIE_NAME, (rawType) => computeSessionState(configuration, rawType))
+  const session = startSessionManagement(RUM_SESSION_KEY, RUM_OLD_COOKIE_NAME, (rawType) =>
+    computeSessionState(configuration, rawType)
+  )
 
   session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
