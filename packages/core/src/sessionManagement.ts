@@ -1,53 +1,65 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
-import { tryCookieMigration } from './cookieMigration'
 import { Observable } from './observable'
+import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
 
-export const SESSION_COOKIE_NAME = '_dd'
+export const SESSION_COOKIE_NAME = '_dd_s'
+export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
 export interface Session<T> {
   renewObservable: Observable<void>
+
   getId(): string | undefined
+
   getType(): T | undefined
 }
 
-interface SessionState {
+export interface SessionState {
   id?: string
+
   [key: string]: string | undefined
 }
 
 /**
  * Limit access to cookie to avoid performance issues
+ *
+ * Old cookies are maintained only to allow rollback without compatibility issue
+ * Since the new version does not update the old cookies,
+ * pages in both old and new format should live together without issue
  */
 export function startSessionManagement<Type extends string>(
-  cookieName: string,
+  sessionTypeKey: string,
+  oldCookieName: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
-  const sessionId = cacheCookieAccess(SESSION_COOKIE_NAME)
-  tryCookieMigration(sessionId)
-  const sessionType = cacheCookieAccess(cookieName)
+  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
+  tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
-  let currentSessionId = sessionId.get()
+  let currentSessionId = retrieveSession(sessionCookie).id
+
+  const oldSessionId = cacheCookieAccess(OLD_SESSION_COOKIE_NAME)
+  const oldSessionType = cacheCookieAccess(oldCookieName)
 
   const expandOrRenewSession = utils.throttle(() => {
-    const { type, isTracked } = computeSessionState(sessionType.get())
-    sessionType.set(type, EXPIRATION_DELAY)
-    if (!isTracked) {
-      return
+    const session = retrieveSession(sessionCookie)
+    const { type, isTracked } = computeSessionState(session[sessionTypeKey])
+    session[sessionTypeKey] = type
+    if (isTracked && !session.id) {
+      session.id = utils.generateUUID()
     }
+    // save changes and expand session duration
+    persistSession(session, sessionCookie)
 
-    if (sessionId.get()) {
-      // If we already have a session id, just expand its duration
-      sessionId.set(sessionId.get()!, EXPIRATION_DELAY)
-    } else {
-      // Else generate a new session id
-      sessionId.set(utils.generateUUID(), EXPIRATION_DELAY)
+    // update old cookies
+    oldSessionType.set(type, EXPIRATION_DELAY)
+    if (isTracked) {
+      oldSessionId.set(session.id!, EXPIRATION_DELAY)
     }
 
     // If the session id has changed, notify that the session has been renewed
-    if (currentSessionId !== sessionId.get()) {
-      currentSessionId = sessionId.get()
+    if (isTracked && currentSessionId !== session.id) {
+      currentSessionId = session.id
       renewObservable.notify()
     }
   }, COOKIE_ACCESS_DELAY)
@@ -57,10 +69,10 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return sessionId.get()
+      return retrieveSession(sessionCookie).id
     },
     getType() {
-      return sessionType.get() as Type | undefined
+      return retrieveSession(sessionCookie)[sessionTypeKey] as Type | undefined
     },
     renewObservable,
   }
@@ -77,7 +89,7 @@ export function isValidSessionString(sessionString: string | undefined): session
   )
 }
 
-export function retrieveSession(sessionCookie: CookieCache): SessionState {
+function retrieveSession(sessionCookie: CookieCache): SessionState {
   const sessionString = sessionCookie.get()
   const session: SessionState = {}
   if (isValidSessionString(sessionString)) {
@@ -90,6 +102,14 @@ export function retrieveSession(sessionCookie: CookieCache): SessionState {
     })
   }
   return session
+}
+
+export function persistSession(session: SessionState, cookie: CookieCache) {
+  const cookieString = utils
+    .objectEntries(session)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(SESSION_ENTRY_SEPARATOR)
+  cookie.set(cookieString, EXPIRATION_DELAY)
 }
 
 export function stopSessionManagement() {
