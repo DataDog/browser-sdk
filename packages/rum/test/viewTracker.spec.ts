@@ -1,14 +1,7 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import {
-  PerformanceLongTaskTiming,
-  PerformancePaintTiming,
-  RumEvent,
-  RumViewEvent,
-  UserAction,
-  UserActionType,
-} from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction, UserActionType } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { trackView, viewContext } from '../src/viewTracker'
 
@@ -109,7 +102,7 @@ describe('rum view measures', () => {
     entryType: 'navigation',
     loadEventEnd: 567,
   }
-  let addRumEvent: jasmine.Spy<InferableFunction>
+  let addRumEvent: jasmine.Spy
 
   function getViewEvent(index: number) {
     return addRumEvent.calls.argsFor(index)[0] as RumViewEvent

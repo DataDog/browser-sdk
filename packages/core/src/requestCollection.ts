@@ -127,7 +127,7 @@ export function trackFetch(observables: RequestObservables) {
   }
   const originalFetch = window.fetch
   // tslint:disable promise-function-async
-  window.fetch = monitor(function(this: GlobalFetch['fetch'], input: RequestInfo, init?: RequestInit) {
+  window.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
     const requestId = getNextRequestId()

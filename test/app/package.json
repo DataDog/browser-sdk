@@ -14,7 +14,7 @@
     "@datadog/browser-core": "file:../../packages/core",
     "acorn": "6.4.1",
     "kind-of": "6.0.3",
-    "minimist": "1.2.2"
+    "minimist": "1.2.3"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
