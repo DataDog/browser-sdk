@@ -47,8 +47,8 @@ export function startErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<ErrorMessage>()
     if (configuration.isCollectingError) {
-      const requestObservables = startRequestCollection()
-      trackNetworkError(configuration, errorObservable, requestObservables.complete)
+      const [, requestCompleteObservable] = startRequestCollection()
+      trackNetworkError(configuration, errorObservable, requestCompleteObservable)
       startConsoleTracking(errorObservable)
       startRuntimeErrorTracking(errorObservable)
     }

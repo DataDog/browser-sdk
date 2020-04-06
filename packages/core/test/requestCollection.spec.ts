@@ -23,10 +23,7 @@ describe('fetch tracker', () => {
       pending('no fetch support')
     }
     originalFetch = window.fetch
-    const requestObservables = {
-      complete: new Observable<RequestCompleteEvent>(),
-      start: new Observable<RequestStartEvent>(),
-    }
+    const requestObservables: RequestObservables = [new Observable(), new Observable()]
     fetchStubBuilder = new FetchStubBuilder(requestObservables)
     window.fetch = fetchStubBuilder.getStub()
     trackFetch(requestObservables)
@@ -180,20 +177,19 @@ describe('fetch tracker', () => {
 describe('xhr tracker', () => {
   let originalOpen: typeof XMLHttpRequest.prototype.open
   let originalSend: typeof XMLHttpRequest.prototype.send
-  let requestObservables: RequestObservables
+  let requestStartObservable: Observable<RequestStartEvent>
+  let requestCompleteObservable: Observable<RequestCompleteEvent>
   let startSpy: jasmine.Spy
   let completeSpy: jasmine.Spy
 
   beforeEach(() => {
     originalOpen = XMLHttpRequest.prototype.open
     originalSend = XMLHttpRequest.prototype.send
-    requestObservables = {
-      complete: new Observable(),
-      start: new Observable(),
-    }
-    startSpy = spyOn(requestObservables.start, 'notify').and.callThrough()
-    completeSpy = spyOn(requestObservables.complete, 'notify').and.callThrough()
-    trackXhr(requestObservables)
+    requestStartObservable = new Observable()
+    requestCompleteObservable = new Observable()
+    startSpy = spyOn(requestStartObservable, 'notify').and.callThrough()
+    completeSpy = spyOn(requestCompleteObservable, 'notify').and.callThrough()
+    trackXhr([requestStartObservable, requestCompleteObservable])
   })
 
   afterEach(() => {

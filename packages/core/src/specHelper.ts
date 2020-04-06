@@ -31,12 +31,12 @@ export class FetchStubBuilder {
   private completeEvents: RequestCompleteEvent[] = []
   private whenAllCompleteFn: (completeEvents: RequestCompleteEvent[]) => void = noop
 
-  constructor(observables: RequestObservables) {
+  constructor([requestStartObservable, requestCompleteObservable]: RequestObservables) {
     let pendingFetch = 0
-    observables.start.subscribe(() => {
+    requestStartObservable.subscribe(() => {
       pendingFetch += 1
     })
-    observables.complete.subscribe((completeEvent: RequestCompleteEvent) => {
+    requestCompleteObservable.subscribe((completeEvent: RequestCompleteEvent) => {
       this.completeEvents.push(completeEvent)
       pendingFetch -= 1
       if (pendingFetch === 0) {

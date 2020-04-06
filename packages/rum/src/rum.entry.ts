@@ -71,7 +71,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
-  const requestObservables = startRequestCollection()
+  const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
   startDOMMutationCollection(lifeCycle)
   if (configuration.isEnabled('collect-user-actions')) {
@@ -79,8 +79,8 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
-  requestObservables.start.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
-  requestObservables.complete.subscribe((completeEvent) =>
+  requestStartObservable.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
+  requestCompleteObservable.subscribe((completeEvent) =>
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, completeEvent)
   )
 

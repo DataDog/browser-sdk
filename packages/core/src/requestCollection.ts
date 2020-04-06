@@ -38,10 +38,7 @@ interface BrowserXHR extends XMLHttpRequest {
   }
 }
 
-export interface RequestObservables {
-  start: Observable<RequestStartEvent>
-  complete: Observable<RequestCompleteEvent>
-}
+export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
 let nextRequestId = 1
 
@@ -55,17 +52,14 @@ let requestObservablesSingleton: RequestObservables
 
 export function startRequestCollection() {
   if (!requestObservablesSingleton) {
-    requestObservablesSingleton = {
-      complete: new Observable(),
-      start: new Observable(),
-    }
+    requestObservablesSingleton = [new Observable(), new Observable()]
     trackXhr(requestObservablesSingleton)
     trackFetch(requestObservablesSingleton)
   }
   return requestObservablesSingleton
 }
 
-export function trackXhr(observables: RequestObservables) {
+export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
     this._datadog_xhr = {
@@ -80,7 +74,7 @@ export function trackXhr(observables: RequestObservables) {
     const startTime = performance.now()
     const requestId = getNextRequestId()
 
-    observables.start.notify({
+    requestStartObservable.notify({
       requestId,
     })
 
@@ -90,7 +84,7 @@ export function trackXhr(observables: RequestObservables) {
         return
       }
       hasBeenReported = true
-      observables.complete.notify({
+      requestCompleteObservable.notify({
         requestId,
         startTime,
         duration: performance.now() - startTime,
@@ -121,7 +115,7 @@ export function trackXhr(observables: RequestObservables) {
   }
 }
 
-export function trackFetch(observables: RequestObservables) {
+export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
   if (!window.fetch) {
     return
   }
@@ -132,7 +126,7 @@ export function trackFetch(observables: RequestObservables) {
     const startTime = performance.now()
     const requestId = getNextRequestId()
 
-    observables.start.notify({
+    requestStartObservable.notify({
       requestId,
     })
 
@@ -141,7 +135,7 @@ export function trackFetch(observables: RequestObservables) {
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response || response instanceof Error) {
         const stackTrace = computeStackTrace(response)
-        observables.complete.notify({
+        requestCompleteObservable.notify({
           duration,
           method,
           requestId,
@@ -159,7 +153,7 @@ export function trackFetch(observables: RequestObservables) {
         } catch (e) {
           text = `Unable to retrieve response: ${e}`
         }
-        observables.complete.notify({
+        requestCompleteObservable.notify({
           duration,
           method,
           requestId,
