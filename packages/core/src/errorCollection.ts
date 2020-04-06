@@ -1,7 +1,13 @@
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import { isRejected, isServerError, RequestDetails, RequestType, startRequestCollection } from './requestCollection'
+import {
+  isRejected,
+  isServerError,
+  RequestCompleteEvent,
+  RequestType,
+  startRequestCollection,
+} from './requestCollection'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
 import { jsonStringify, ONE_MINUTE } from './utils'
 
@@ -158,24 +164,24 @@ export function toStackTraceString(stack: StackTrace) {
 export function trackNetworkError(
   configuration: Configuration,
   errorObservable: ErrorObservable,
-  requestObservable: Observable<RequestDetails>
+  requestObservable: Observable<RequestCompleteEvent>
 ) {
-  requestObservable.subscribe((request: RequestDetails) => {
-    if (isRejected(request) || isServerError(request)) {
+  requestObservable.subscribe((completeEvent: RequestCompleteEvent) => {
+    if (isRejected(completeEvent) || isServerError(completeEvent)) {
       errorObservable.notify({
         context: {
           error: {
             origin: ErrorOrigin.NETWORK,
-            stack: truncateResponse(request.response, configuration) || 'Failed to load',
+            stack: truncateResponse(completeEvent.response, configuration) || 'Failed to load',
           },
           http: {
-            method: request.method,
-            status_code: request.status,
-            url: request.url,
+            method: completeEvent.method,
+            status_code: completeEvent.status,
+            url: completeEvent.url,
           },
         },
-        message: `${format(request.type)} error ${request.method} ${request.url}`,
-        startTime: request.startTime,
+        message: `${format(completeEvent.type)} error ${completeEvent.method} ${completeEvent.url}`,
+        startTime: completeEvent.startTime,
       })
     }
   })

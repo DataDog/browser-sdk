@@ -14,7 +14,7 @@ export interface RequestStartEvent {
   requestId: number
 }
 
-export interface RequestDetails {
+export interface RequestCompleteEvent {
   requestId: number
   type: RequestType
   method: string
@@ -40,7 +40,7 @@ interface BrowserXHR extends XMLHttpRequest {
 
 export interface RequestObservables {
   start: Observable<RequestStartEvent>
-  complete: Observable<RequestDetails>
+  complete: Observable<RequestCompleteEvent>
 }
 
 let nextRequestId = 1
@@ -179,12 +179,12 @@ export function trackFetch(observables: RequestObservables) {
   })
 }
 
-export function isRejected(request: RequestDetails) {
-  return request.status === 0 && request.responseType !== 'opaque'
+export function isRejected(completeEvent: RequestCompleteEvent) {
+  return completeEvent.status === 0 && completeEvent.responseType !== 'opaque'
 }
 
-export function isServerError(request: RequestDetails) {
-  return request.status >= 500
+export function isServerError(completeEvent: RequestCompleteEvent) {
+  return completeEvent.status >= 500
 }
 
 /**

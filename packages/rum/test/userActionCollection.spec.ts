@@ -1,4 +1,4 @@
-import { Observable, RequestDetails } from '@datadog/browser-core'
+import { Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { UserActionType } from '../src/rum'
 import { $$tests, ChangeEvent, getUserActionId, startUserActionCollection } from '../src/userActionCollection'
@@ -263,7 +263,7 @@ describe('trackPageChanges', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
-      } as RequestDetails)
+      } as RequestCompleteEvent)
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
     })
 
@@ -273,7 +273,7 @@ describe('trackPageChanges', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
-      } as RequestDetails)
+      } as RequestCompleteEvent)
       expect(events).toEqual([])
     })
 
@@ -289,15 +289,15 @@ describe('trackPageChanges', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 9,
-      } as RequestDetails)
+      } as RequestCompleteEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 11,
-      } as RequestDetails)
+      } as RequestCompleteEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
-      } as RequestDetails)
+      } as RequestCompleteEvent)
       expect(events).toEqual([{ isBusy: true }, { isBusy: true }, { isBusy: true }, { isBusy: false }])
     })
   })

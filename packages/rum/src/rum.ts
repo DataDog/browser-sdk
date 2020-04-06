@@ -13,7 +13,7 @@ import {
   monitor,
   msToNs,
   Omit,
-  RequestDetails,
+  RequestCompleteEvent,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
@@ -309,27 +309,27 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COLLECTED, (requestDetails: RequestDetails) => {
+  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COLLECTED, (completeEvent: RequestCompleteEvent) => {
     if (!session.isTrackedWithResource()) {
       return
     }
-    if (!isValidResource(requestDetails.url, configuration)) {
+    if (!isValidResource(completeEvent.url, configuration)) {
       return
     }
-    const timing = matchRequestTiming(requestDetails)
-    const kind = requestDetails.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
-    const startTime = timing ? timing.startTime : requestDetails.startTime
+    const timing = matchRequestTiming(completeEvent)
+    const kind = completeEvent.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    const startTime = timing ? timing.startTime : completeEvent.startTime
     addRumEvent({
       date: getTimestamp(startTime),
-      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(requestDetails.duration),
+      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(completeEvent.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
       },
       http: {
-        method: requestDetails.method,
+        method: completeEvent.method,
         performance: timing ? computePerformanceResourceDetails(timing) : undefined,
-        statusCode: requestDetails.status,
-        url: requestDetails.url,
+        statusCode: completeEvent.status,
+        url: completeEvent.url,
       },
       network: {
         bytesWritten: timing ? computeSize(timing) : undefined,
@@ -337,7 +337,7 @@ export function trackRequests(
       resource: {
         kind,
       },
-      traceId: requestDetails.traceId,
+      traceId: completeEvent.traceId,
       userActionId: getUserActionId(startTime),
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)

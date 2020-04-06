@@ -14,7 +14,7 @@ export { InternalMonitoring, MonitoringMessage, monitored, monitor, addMonitorin
 export { Observable } from './observable'
 export {
   RequestType,
-  RequestDetails,
+  RequestCompleteEvent,
   RequestStartEvent,
   startRequestCollection,
   RequestObservables,

@@ -2,7 +2,7 @@ import { Observable } from '../src/observable'
 import {
   isRejected,
   isServerError,
-  RequestDetails,
+  RequestCompleteEvent,
   RequestObservables,
   RequestStartEvent,
   RequestType,
@@ -23,7 +23,7 @@ describe('fetch tracker', () => {
     }
     originalFetch = window.fetch
     const requestObservables = {
-      complete: new Observable<RequestDetails>(),
+      complete: new Observable<RequestCompleteEvent>(),
       start: new Observable<RequestStartEvent>(),
     }
     fetchStubBuilder = new FetchStubBuilder(requestObservables)
@@ -44,15 +44,15 @@ describe('fetch tracker', () => {
   it('should track server error', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(500)
-      expect(request.response).toEqual('fetch error')
-      expect(isRejected(request)).toBe(false)
-      expect(isServerError(request)).toBe(true)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      const completeEvent = completeEvents[0]
+      expect(completeEvent.type).toEqual(RequestType.FETCH)
+      expect(completeEvent.method).toEqual('GET')
+      expect(completeEvent.url).toEqual(FAKE_URL)
+      expect(completeEvent.status).toEqual(500)
+      expect(completeEvent.response).toEqual('fetch error')
+      expect(isRejected(completeEvent)).toBe(false)
+      expect(isServerError(completeEvent)).toBe(true)
       done()
     })
   })
@@ -60,15 +60,15 @@ describe('fetch tracker', () => {
   it('should track refused fetch', (done) => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(request.response).toMatch(/Error: fetch error/)
-      expect(isRejected(request)).toBe(true)
-      expect(isServerError(request)).toBe(false)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      const completeEvent = completeEvents[0]
+      expect(completeEvent.type).toEqual(RequestType.FETCH)
+      expect(completeEvent.method).toEqual('GET')
+      expect(completeEvent.url).toEqual(FAKE_URL)
+      expect(completeEvent.status).toEqual(0)
+      expect(completeEvent.response).toMatch(/Error: fetch error/)
+      expect(isRejected(completeEvent)).toBe(true)
+      expect(isServerError(completeEvent)).toBe(false)
       done()
     })
   })
@@ -77,15 +77,15 @@ describe('fetch tracker', () => {
   it('should track fetch with response text error', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 200, responseTextError: new Error('locked') })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(200)
-      expect(request.response).toMatch(/Error: locked/)
-      expect(isRejected(request)).toBe(false)
-      expect(isServerError(request)).toBe(false)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      const completeEvent = completeEvents[0]
+      expect(completeEvent.type).toEqual(RequestType.FETCH)
+      expect(completeEvent.method).toEqual('GET')
+      expect(completeEvent.url).toEqual(FAKE_URL)
+      expect(completeEvent.status).toEqual(200)
+      expect(completeEvent.response).toMatch(/Error: locked/)
+      expect(isRejected(completeEvent)).toBe(false)
+      expect(isServerError(completeEvent)).toBe(false)
       done()
     })
   })
@@ -94,14 +94,14 @@ describe('fetch tracker', () => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
     fetchStub(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(0)
-      expect(isRejected(request)).toBe(false)
-      expect(isServerError(request)).toBe(false)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      const completeEvent = completeEvents[0]
+      expect(completeEvent.type).toEqual(RequestType.FETCH)
+      expect(completeEvent.method).toEqual('GET')
+      expect(completeEvent.url).toEqual(FAKE_URL)
+      expect(completeEvent.status).toEqual(0)
+      expect(isRejected(completeEvent)).toBe(false)
+      expect(isServerError(completeEvent)).toBe(false)
       done()
     })
   })
@@ -109,15 +109,15 @@ describe('fetch tracker', () => {
   it('should track client error', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      const request = requests[0]
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(400)
-      expect(request.response).toEqual('Not found')
-      expect(isRejected(request)).toBe(false)
-      expect(isServerError(request)).toBe(false)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      const completeEvent = completeEvents[0]
+      expect(completeEvent.type).toEqual(RequestType.FETCH)
+      expect(completeEvent.method).toEqual('GET')
+      expect(completeEvent.url).toEqual(FAKE_URL)
+      expect(completeEvent.status).toEqual(400)
+      expect(completeEvent.response).toEqual('Not found')
+      expect(isRejected(completeEvent)).toBe(false)
+      expect(isServerError(completeEvent)).toBe(false)
       done()
     })
   })
@@ -130,13 +130,13 @@ describe('fetch tracker', () => {
     fetchStub(new Request(FAKE_URL), { method: 'POST' }).resolveWith({ status: 500 })
     fetchStub(FAKE_URL, { method: 'POST' }).resolveWith({ status: 500 })
 
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      expect(requests[0].method).toEqual('GET')
-      expect(requests[1].method).toEqual('GET')
-      expect(requests[2].method).toEqual('PUT')
-      expect(requests[3].method).toEqual('POST')
-      expect(requests[4].method).toEqual('POST')
-      expect(requests[5].method).toEqual('POST')
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      expect(completeEvents[0].method).toEqual('GET')
+      expect(completeEvents[1].method).toEqual('GET')
+      expect(completeEvents[2].method).toEqual('PUT')
+      expect(completeEvents[3].method).toEqual('POST')
+      expect(completeEvents[4].method).toEqual('POST')
+      expect(completeEvents[5].method).toEqual('POST')
       done()
     })
   })
@@ -144,9 +144,9 @@ describe('fetch tracker', () => {
   it('should get url from input', (done) => {
     fetchStub(FAKE_URL).rejectWith(new Error('fetch error'))
     fetchStub(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
-    fetchStubBuilder.whenAllComplete((requests: RequestDetails[]) => {
-      expect(requests[0].url).toEqual(FAKE_URL)
-      expect(requests[1].url).toEqual(FAKE_URL)
+    fetchStubBuilder.whenAllComplete((completeEvents: RequestCompleteEvent[]) => {
+      expect(completeEvents[0].url).toEqual(FAKE_URL)
+      expect(completeEvents[1].url).toEqual(FAKE_URL)
       done()
     })
   })
@@ -220,12 +220,12 @@ describe('xhr tracker', () => {
     const xhr = new XMLHttpRequest()
     xhr.addEventListener('loadend', () => {
       setTimeout(() => {
-        const details = (completeSpy.calls.allArgs() as RequestDetails[][])
+        const completeEvent = (completeSpy.calls.allArgs() as RequestCompleteEvent[][])
           .map((args) => args[0])
           // IE10/11 doesn't have .find() or .includes()
           .filter((d) => d.url.indexOf(expectedURL) >= 0)[0]
 
-        expect(details).toEqual({
+        expect(completeEvent).toEqual({
           duration: (jasmine.any(Number) as unknown) as number,
           method: expectedMethod as string,
           requestId: (jasmine.any(Number) as unknown) as number,
@@ -236,7 +236,7 @@ describe('xhr tracker', () => {
           type: RequestType.XHR,
           url: (jasmine.stringMatching(expectedURL) as unknown) as string,
         })
-        expect(startSpy).toHaveBeenCalledWith({ requestId: details.requestId })
+        expect(startSpy).toHaveBeenCalledWith({ requestId: completeEvent.requestId })
 
         if (expectXHR) {
           expectXHR(xhr)

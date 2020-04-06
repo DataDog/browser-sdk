@@ -1,4 +1,4 @@
-import { ErrorMessage, RequestDetails, RequestStartEvent } from '@datadog/browser-core'
+import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
 import { UserAction } from './rum'
 
 export enum LifeCycleEventType {
@@ -22,7 +22,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
-  notify(eventType: LifeCycleEventType.REQUEST_COLLECTED, data: RequestDetails): void
+  notify(eventType: LifeCycleEventType.REQUEST_COLLECTED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, data: UserAction): void
   notify(
     eventType:
@@ -43,7 +43,10 @@ export class LifeCycle {
     callback: (data: PerformanceEntry) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.REQUEST_COLLECTED, callback: (data: RequestDetails) => void): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.REQUEST_COLLECTED,
+    callback: (data: RequestCompleteEvent) => void
+  ): Subscription
   subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription
   subscribe(
     eventType:

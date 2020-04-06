@@ -11,7 +11,7 @@ import {
   trackNetworkError,
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
-import { RequestDetails, RequestType } from '../src/requestCollection'
+import { RequestCompleteEvent, RequestType } from '../src/requestCollection'
 import { StackTrace } from '../src/tracekit'
 import { ONE_MINUTE } from '../src/utils'
 
@@ -189,7 +189,7 @@ describe('runtime error formatter', () => {
 
 describe('network error tracker', () => {
   let errorObservableSpy: jasmine.Spy
-  let requestObservable: Observable<RequestDetails>
+  let requestObservable: Observable<RequestCompleteEvent>
   const DEFAULT_REQUEST = {
     duration: 10,
     method: 'GET',
@@ -203,7 +203,7 @@ describe('network error tracker', () => {
 
   beforeEach(() => {
     const errorObservable = new Observable<ErrorMessage>()
-    requestObservable = new Observable<RequestDetails>()
+    requestObservable = new Observable<RequestCompleteEvent>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
     const configuration = { requestErrorResponseLengthLimit: 32 }
     trackNetworkError(configuration as Configuration, errorObservable, requestObservable)
