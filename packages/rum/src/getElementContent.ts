@@ -1,4 +1,4 @@
-function strLengthLimit(s: string) {
+function truncate(s: string) {
   return s.length > 200 ? `${s.slice(0, 200)} [...]` : s
 }
 
@@ -27,7 +27,7 @@ export function getElementContent(element: Element): string {
     if (typeof content === 'string') {
       const trimedContent = content.trim()
       if (trimedContent) {
-        return strLengthLimit(trimedContent)
+        return truncate(trimedContent)
       }
     }
   }
