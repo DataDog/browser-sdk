@@ -1,4 +1,4 @@
-import { generateUUID, Observable } from '@datadog/browser-core'
+import { generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { UserActionType } from './rum'
@@ -100,8 +100,11 @@ function newUserAction(
   const startTime = performance.now()
   let hasFinished = false
 
-  const validationTimeoutId = setTimeout(() => finish(undefined), USER_ACTION_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(() => finish(createDetails(performance.now())), USER_ACTION_MAX_DURATION)
+  const validationTimeoutId = setTimeout(monitor(() => finish(undefined)), USER_ACTION_VALIDATION_DELAY)
+  const maxDurationTimeoutId = setTimeout(
+    monitor(() => finish(createDetails(performance.now()))),
+    USER_ACTION_MAX_DURATION
+  )
 
   currentUserAction = { id, startTime }
 
@@ -110,7 +113,7 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(() => finish(createDetails(lastChangeTime)), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => finish(createDetails(lastChangeTime))), USER_ACTION_END_DELAY)
     }
   })
 
