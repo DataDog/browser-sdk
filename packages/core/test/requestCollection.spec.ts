@@ -204,17 +204,17 @@ describe('xhr tracker', () => {
   function xhrSpec({
     done,
     setup,
-    expectedMethod = 'GET',
-    expectedResponse = 'ok',
-    expectedStatus = 200,
-    expectedURL = '/ok',
+    expectedMethod,
+    expectedResponse,
+    expectedStatus,
+    expectedURL,
     expectXHR,
   }: {
     done: DoneFn
     setup: (xhr: XMLHttpRequest) => void
-    expectedMethod?: string | jasmine.Any
-    expectedStatus?: number | jasmine.Any
-    expectedURL?: string
+    expectedMethod: string | jasmine.Any
+    expectedStatus: number | jasmine.Any
+    expectedURL: string
     expectedResponse?: string | jasmine.Any
     expectXHR?: (xhr: XMLHttpRequest) => void
   }) {
@@ -256,6 +256,10 @@ describe('xhr tracker', () => {
         xhr.open('GET', '/ok')
         xhr.send()
       },
+      expectedMethod: 'GET',
+      expectedResponse: 'ok',
+      expectedStatus: 200,
+      expectedURL: '/ok',
     })
   })
 
@@ -266,6 +270,7 @@ describe('xhr tracker', () => {
         xhr.open('GET', '/expected-404')
         xhr.send()
       },
+      expectedMethod: 'GET',
       expectedResponse: 'NOT FOUND',
       expectedStatus: 404,
       expectedURL: '/expected-404',
@@ -279,6 +284,7 @@ describe('xhr tracker', () => {
         xhr.open('GET', '/throw')
         xhr.send()
       },
+      expectedMethod: 'GET',
       expectedResponse: jasmine.stringMatching('expected server error'),
       expectedStatus: 500,
       expectedURL: '/throw',
@@ -292,6 +298,7 @@ describe('xhr tracker', () => {
         xhr.open('GET', 'http://foo.bar/qux')
         xhr.send()
       },
+      expectedMethod: 'GET',
       expectedResponse: '',
       expectedStatus: 0,
       expectedURL: 'http://foo.bar/qux',
@@ -308,6 +315,10 @@ describe('xhr tracker', () => {
         xhr.open('GET', '/ok')
         xhr.send()
       },
+      expectedMethod: 'GET',
+      expectedResponse: 'ok',
+      expectedStatus: 200,
+      expectedURL: '/ok',
       expectXHR(xhr) {
         expect(xhr.status).toBe(0)
         expect(onReadyStateChange).toHaveBeenCalled()
@@ -318,6 +329,10 @@ describe('xhr tracker', () => {
   it('should track successful sync request', (done) => {
     xhrSpec({
       done,
+      expectedMethod: 'GET',
+      expectedResponse: 'ok',
+      expectedStatus: 200,
+      expectedURL: '/ok',
       setup(xhr) {
         xhr.open('GET', '/ok', false)
         xhr.send()
@@ -328,6 +343,10 @@ describe('xhr tracker', () => {
   it('should track request with onreadystatechange overridden', (done) => {
     xhrSpec({
       done,
+      expectedMethod: 'GET',
+      expectedResponse: 'ok',
+      expectedStatus: 200,
+      expectedURL: '/ok',
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
