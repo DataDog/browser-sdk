@@ -80,7 +80,7 @@ export function getUserActionId(time: number): string | undefined {
   return undefined
 }
 
-interface UserActionEnded {
+interface UserActionDetails {
   id: string
   startTime: number
   duration: number
@@ -88,7 +88,7 @@ interface UserActionEnded {
 
 function newUserAction(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  finishCallback: (event: UserActionEnded | undefined) => void
+  finishCallback: (details: UserActionDetails | undefined) => void
 ) {
   if (currentUserAction) {
     finishCallback(undefined)
