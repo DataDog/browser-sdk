@@ -8,7 +8,7 @@ const BUSY_DELAY = 100
 const USER_ACTION_MAX_DURATION = 10_000
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
-  function clickEventListener(event: Event) {
+  function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
     }
@@ -31,11 +31,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     })
   }
 
-  addEventListener('click', clickEventListener, { capture: true })
+  addEventListener('click', processClick, { capture: true })
 
   return {
     stop() {
-      removeEventListener('click', clickEventListener, { capture: true })
+      removeEventListener('click', processClick, { capture: true })
     },
   }
 }
