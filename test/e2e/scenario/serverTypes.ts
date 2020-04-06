@@ -1,8 +1,4 @@
-import { ContextValue } from '@datadog/browser-core'
-
 export interface ServerErrorMessage {
-  // error: ErrorContext
-  // http: HttpContext
   message: string
   application_id: string
   session_id: string
@@ -23,7 +19,6 @@ export interface ServerLogsMessage {
   http?: {
     status_code?: number
   }
-  [key: string]: ContextValue
 }
 
 export interface ServerRumEvent {
