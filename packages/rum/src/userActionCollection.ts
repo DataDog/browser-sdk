@@ -15,10 +15,12 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
     const content = getElementContent(event.target)
 
-    const { observable: changesObservable, stop: stopChangesTracking } = trackPageChanges(lifeCycle)
+    const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPagePageActivities(
+      lifeCycle
+    )
 
-    newUserAction(changesObservable, (userActionDetails) => {
-      stopChangesTracking()
+    newUserAction(pageActivitiesObservable, (userActionDetails) => {
+      stopPageActivitiesTracking()
       if (userActionDetails) {
         lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
           duration: userActionDetails.duration,
@@ -56,7 +58,7 @@ interface UserActionEnded {
 }
 
 function newUserAction(
-  changesObservable: Observable<ChangeEvent>,
+  pageActivitiesObservable: Observable<PageActivityEvent>,
   finishCallback: (event: UserActionEnded | undefined) => void
 ) {
   if (currentUserAction) {
@@ -74,7 +76,7 @@ function newUserAction(
 
   currentUserAction = { id, startTime }
 
-  changesObservable.subscribe(({ isBusy }) => {
+  pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const time = performance.now()
@@ -96,17 +98,17 @@ function newUserAction(
   }
 }
 
-export interface ChangeEvent {
+export interface PageActivityEvent {
   isBusy: boolean
 }
 
-function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<ChangeEvent>; stop(): void } {
-  const result = new Observable<ChangeEvent>()
+function trackPagePageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
+  const result = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestId: undefined | number
   let pendingRequestsCount = 0
 
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyChange()))
+  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyPageActivity()))
 
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
@@ -114,7 +116,7 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
         return
       }
 
-      notifyChange()
+      notifyPageActivity()
     })
   )
 
@@ -125,7 +127,7 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
       }
 
       pendingRequestsCount += 1
-      notifyChange()
+      notifyPageActivity()
     })
   )
 
@@ -136,11 +138,11 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
         return
       }
       pendingRequestsCount -= 1
-      notifyChange()
+      notifyPageActivity()
     })
   )
 
-  function notifyChange() {
+  function notifyPageActivity() {
     result.notify({ isBusy: pendingRequestsCount > 0 })
   }
 
@@ -152,10 +154,9 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
   }
 }
 
-
 export const $$tests = {
   newUserAction,
-  trackPageChanges,
+  trackPagePageActivities,
   resetUserAction() {
     currentUserAction = undefined
   },

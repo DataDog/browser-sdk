@@ -1,8 +1,8 @@
 import { Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { UserActionType } from '../src/rum'
-import { $$tests, ChangeEvent, getUserActionId, startUserActionCollection } from '../src/userActionCollection'
-const { newUserAction, trackPageChanges, resetUserAction } = $$tests
+import { $$tests, getUserActionId, PageActivityEvent, startUserActionCollection } from '../src/userActionCollection'
+const { newUserAction, trackPagePageActivities, resetUserAction } = $$tests
 
 function mockClock() {
   beforeEach(() => {
@@ -51,9 +51,9 @@ describe('newUserAction', () => {
   })
 
   it('starts a new user action, and validate it', (done) => {
-    const changeObservable = new Observable<ChangeEvent>()
+    const activityObservable = new Observable<PageActivityEvent>()
 
-    newUserAction(changeObservable, (details) => {
+    newUserAction(activityObservable, (details) => {
       expect(details).toEqual({
         duration: 80,
         id: (jasmine.any(String) as unknown) as string,
@@ -63,22 +63,22 @@ describe('newUserAction', () => {
     })
 
     clock.tick(80)
-    changeObservable.notify({ isBusy: false })
+    activityObservable.notify({ isBusy: false })
 
     clock.expire()
   })
 
   it('cancels any starting user action while another one is happening', (done) => {
     let count = 2
-    const changeObservable = new Observable<ChangeEvent>()
-    newUserAction(changeObservable, (details) => {
+    const activityObservable = new Observable<PageActivityEvent>()
+    newUserAction(activityObservable, (details) => {
       expect(details).toBeDefined()
       count -= 1
       if (count === 0) {
         done()
       }
     })
-    newUserAction(changeObservable, (details) => {
+    newUserAction(activityObservable, (details) => {
       expect(details).toBeUndefined()
       count -= 1
       if (count === 0) {
@@ -87,31 +87,31 @@ describe('newUserAction', () => {
     })
 
     clock.tick(80)
-    changeObservable.notify({ isBusy: false })
+    activityObservable.notify({ isBusy: false })
 
     clock.expire()
   })
 
-  describe('extend with changes', () => {
-    it('is extended while there is page changes', (done) => {
-      const changeObservable = new Observable<ChangeEvent>()
-      newUserAction(changeObservable, (details) => {
+  describe('extend with activities', () => {
+    it('is extended while there is page activities', (done) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (details) => {
         expect(details!.duration).toBe(5 * 80)
         done()
       })
 
       for (let i = 0; i < 5; i += 1) {
         clock.tick(80)
-        changeObservable.notify({ isBusy: false })
+        activityObservable.notify({ isBusy: false })
       }
 
       clock.expire()
     })
 
     it('expires after a limit', (done) => {
-      const changeObservable = new Observable<ChangeEvent>()
+      const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
-      newUserAction(changeObservable, (details) => {
+      newUserAction(activityObservable, (details) => {
         expect(details!.duration).toBe(10_000)
         stop = true
         done()
@@ -119,39 +119,39 @@ describe('newUserAction', () => {
 
       for (let i = 0; i < 500 && !stop; i += 1) {
         clock.tick(80)
-        changeObservable.notify({ isBusy: false })
+        activityObservable.notify({ isBusy: false })
       }
 
       clock.expire()
     })
   })
 
-  describe('busy changes', () => {
+  describe('busy activities', () => {
     it('is extended while the page is busy', (done) => {
-      const changeObservable = new Observable<ChangeEvent>()
-      newUserAction(changeObservable, (details) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (details) => {
         expect(details!.duration).toBe(580)
         done()
       })
 
       clock.tick(80)
-      changeObservable.notify({ isBusy: true })
+      activityObservable.notify({ isBusy: true })
 
       clock.tick(500)
-      changeObservable.notify({ isBusy: false })
+      activityObservable.notify({ isBusy: false })
 
       clock.expire()
     })
 
     it('expires is the page is busy for too long', (done) => {
-      const changeObservable = new Observable<ChangeEvent>()
-      newUserAction(changeObservable, (details) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (details) => {
         expect(details!.duration).toBe(10_000)
         done()
       })
 
       clock.tick(80)
-      changeObservable.notify({ isBusy: true })
+      activityObservable.notify({ isBusy: true })
 
       clock.expire()
     })
@@ -167,8 +167,8 @@ describe('getUserActionId', () => {
 
   it('returns the current user action id', (done) => {
     expect(getUserActionId(Date.now())).toBeUndefined()
-    const changeObservable = new Observable<ChangeEvent>()
-    newUserAction(changeObservable, (details) => {
+    const activityObservable = new Observable<PageActivityEvent>()
+    newUserAction(activityObservable, (details) => {
       expect(details!.id).toBe(userActionId)
       expect(getUserActionId(Date.now())).toBeUndefined()
       done()
@@ -179,7 +179,7 @@ describe('getUserActionId', () => {
     expect(userActionId).toBeDefined()
 
     clock.tick(80)
-    changeObservable.notify({ isBusy: false })
+    activityObservable.notify({ isBusy: false })
 
     expect(getUserActionId(Date.now())).toBeDefined()
 
@@ -187,10 +187,10 @@ describe('getUserActionId', () => {
   })
 
   it('do not return the user action id for events occuring before the start of the user action', (done) => {
-    const changeObservable = new Observable<ChangeEvent>()
+    const activityObservable = new Observable<PageActivityEvent>()
     const time = Date.now()
     clock.tick(50)
-    newUserAction(changeObservable, done)
+    newUserAction(activityObservable, done)
 
     clock.tick(50)
     expect(getUserActionId(time)).toBeUndefined()
@@ -199,18 +199,18 @@ describe('getUserActionId', () => {
   })
 })
 
-describe('trackPageChanges', () => {
-  const { events, pushEvent } = eventsCollector<ChangeEvent>()
-  it('emits a change event on dom mutation', () => {
+describe('trackPagePageActivities', () => {
+  const { events, pushEvent } = eventsCollector<PageActivityEvent>()
+  it('emits an activity event on dom mutation', () => {
     const lifeCycle = new LifeCycle()
-    trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  it('emits a change event on resource collected', () => {
+  it('emits an activity event on resource collected', () => {
     const lifeCycle = new LifeCycle()
-    trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       // tslint:disable-next-line no-object-literal-type-assertion
       entryType: 'resource',
@@ -218,9 +218,9 @@ describe('trackPageChanges', () => {
     expect(events).toEqual([{ isBusy: false }])
   })
 
-  it('does not emit a change event when a navigation occurs', () => {
+  it('does not emit an activity event when a navigation occurs', () => {
     const lifeCycle = new LifeCycle()
-    trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       // tslint:disable-next-line no-object-literal-type-assertion
       entryType: 'navigation',
@@ -228,9 +228,9 @@ describe('trackPageChanges', () => {
     expect(events).toEqual([])
   })
 
-  it('stops emiting changes after calling stop()', () => {
+  it('stops emiting activities after calling stop()', () => {
     const lifeCycle = new LifeCycle()
-    const { stop, observable } = trackPageChanges(lifeCycle)
+    const { stop, observable } = trackPagePageActivities(lifeCycle)
     observable.subscribe(pushEvent)
 
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
@@ -245,18 +245,18 @@ describe('trackPageChanges', () => {
   })
 
   describe('requests', () => {
-    it('emits a change event when a request starts', () => {
+    it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()
-      trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
       expect(events).toEqual([{ isBusy: true }])
     })
 
-    it('emits a change event when a request completes', () => {
+    it('emits an activity event when a request completes', () => {
       const lifeCycle = new LifeCycle()
-      trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
@@ -269,7 +269,7 @@ describe('trackPageChanges', () => {
 
     it('ignores requests that has started before', () => {
       const lifeCycle = new LifeCycle()
-      trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
@@ -279,7 +279,7 @@ describe('trackPageChanges', () => {
 
     it('keeps emiting busy events while all requests are not completed', () => {
       const lifeCycle = new LifeCycle()
-      trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
+      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
