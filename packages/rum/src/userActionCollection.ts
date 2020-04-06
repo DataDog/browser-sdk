@@ -3,8 +3,37 @@ import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { UserActionType } from './rum'
 
-const IDLE_DELAY = 100
-const BUSY_DELAY = 100
+// Automatic user action collection lifecycle overview:
+//
+//                               (Start)
+//                   .--------------'----------------------.
+//                   v                                     v
+//     [Wait for a page activity ]          [Wait for a maximum duration]
+//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//          /                  \                           |
+//         v                   v                           |
+//  [No page activity]   [Page activity]                   |
+//         |                   |,----------------------.   |
+//         v                   v                       |   |
+//     (Discard)     [Wait for a page activity]        |   |
+//                   [   timeout: END_DELAY   ]        |   |
+//                       /                \            |   |
+//                      v                 v            |   |
+//             [No page activity]    [Page activity]   |   |
+//                      |                 |            |   |
+//                      |                 '------------'   |
+//                      '-----------. ,--------------------'
+//                                   v
+//                                 (End)
+//
+// Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the user action is still alive
+// after MAX_DURATION, it has been validated.
+
+// Delay to wait for a page activity to validate the user action
+const USER_ACTION_VALIDATION_DELAY = 100
+// Delay to wait after a page activity to end the user action
+const USER_ACTION_END_DELAY = 100
+// Maximum duration of a user action
 const USER_ACTION_MAX_DURATION = 10_000
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
@@ -71,7 +100,7 @@ function newUserAction(
   const startTime = performance.now()
   let hasFinished = false
 
-  const validationTimeoutId = setTimeout(() => finish(false), BUSY_DELAY)
+  const validationTimeoutId = setTimeout(() => finish(false), USER_ACTION_VALIDATION_DELAY)
   const maxDurationTimeoutId = setTimeout(() => finish(true), USER_ACTION_MAX_DURATION)
 
   currentUserAction = { id, startTime }
@@ -81,7 +110,7 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     const time = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(() => finish(true, time), IDLE_DELAY)
+      idleTimeoutId = setTimeout(() => finish(true, time), USER_ACTION_END_DELAY)
     }
   })
 
