@@ -91,6 +91,7 @@ function newUserAction(
   finishCallback: (details: UserActionDetails | undefined) => void
 ) {
   if (currentUserAction) {
+    // Discard any new user action if another one is already occuring.
     finishCallback(undefined)
     return
   }
