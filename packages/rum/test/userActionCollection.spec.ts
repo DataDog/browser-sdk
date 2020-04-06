@@ -260,7 +260,7 @@ describe('trackPageChanges', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
       } as RequestCompleteEvent)
@@ -270,7 +270,7 @@ describe('trackPageChanges', () => {
     it('ignores requests that has started before', () => {
       const lifeCycle = new LifeCycle()
       trackPageChanges(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
       } as RequestCompleteEvent)
@@ -286,15 +286,15 @@ describe('trackPageChanges', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 11,
       })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 9,
       } as RequestCompleteEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 11,
       } as RequestCompleteEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
       } as RequestCompleteEvent)

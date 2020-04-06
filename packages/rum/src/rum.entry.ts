@@ -81,7 +81,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
   requestObservables.start.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
   requestObservables.complete.subscribe((completeEvent) =>
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, completeEvent)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, completeEvent)
   )
 
   lodashAssign(datadogRum, globalApi)

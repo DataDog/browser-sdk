@@ -87,7 +87,7 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
   )
 
   subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COLLECTED, (completeEvent) => {
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (completeEvent) => {
       // If the request started before the tracking start, ignore it
       if (firstRequestId === undefined || completeEvent.requestId < firstRequestId) {
         return

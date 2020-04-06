@@ -6,7 +6,7 @@ export enum LifeCycleEventType {
   PERFORMANCE_ENTRY_COLLECTED,
   USER_ACTION_COLLECTED,
   REQUEST_STARTED,
-  REQUEST_COLLECTED,
+  REQUEST_COMPLETED,
   SESSION_RENEWED,
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
@@ -22,7 +22,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
-  notify(eventType: LifeCycleEventType.REQUEST_COLLECTED, data: RequestCompleteEvent): void
+  notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, data: UserAction): void
   notify(
     eventType:
@@ -44,7 +44,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
   subscribe(
-    eventType: LifeCycleEventType.REQUEST_COLLECTED,
+    eventType: LifeCycleEventType.REQUEST_COMPLETED,
     callback: (data: RequestCompleteEvent) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription

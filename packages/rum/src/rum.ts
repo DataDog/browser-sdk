@@ -309,7 +309,7 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COLLECTED, (completeEvent: RequestCompleteEvent) => {
+  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (completeEvent: RequestCompleteEvent) => {
     if (!session.isTrackedWithResource()) {
       return
     }
