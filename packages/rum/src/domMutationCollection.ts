@@ -12,6 +12,7 @@ export function startDOMMutationCollection(lifeCycle: LifeCycle) {
 
     observer.observe(document.documentElement, {
       attributes: true,
+      characterData: true,
       childList: true,
       subtree: true,
     })

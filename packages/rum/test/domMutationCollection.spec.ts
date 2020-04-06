@@ -17,6 +17,8 @@ describe('domMutationCollection', () => {
     return (done: DoneFn) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
+      root.appendChild(document.createElement('span'))
+      root.appendChild(document.createTextNode('foo'))
       document.body.appendChild(root)
 
       const lifeCycle = new LifeCycle()
@@ -39,7 +41,7 @@ describe('domMutationCollection', () => {
   }
 
   it(
-    'collects DOM mutation on Element',
+    'collects DOM mutation when an element is added',
     domMutationSpec(
       (root) => {
         root.appendChild(document.createElement('button'))
@@ -49,7 +51,7 @@ describe('domMutationCollection', () => {
   )
 
   it(
-    'collects DOM mutation on Text creation',
+    'collects DOM mutation when a text node is added',
     domMutationSpec(
       (root) => {
         root.appendChild(document.createTextNode('foo'))
@@ -73,6 +75,37 @@ describe('domMutationCollection', () => {
     domMutationSpec(
       (root) => {
         root.setAttribute('data-test', 'bar')
+      },
+      { expectedMutations: 1 }
+    )
+  )
+
+  it(
+    'collects DOM mutation when an element is removed',
+    domMutationSpec(
+      (root) => {
+        root.removeChild(root.childNodes[0])
+      },
+      { expectedMutations: 1 }
+    )
+  )
+
+  it(
+    'collects DOM mutation when an element is moved',
+    domMutationSpec(
+      (root) => {
+        // tslint:disable-next-line: no-null-keyword
+        root.insertBefore(root.childNodes[0], null)
+      },
+      { expectedMutations: 1 }
+    )
+  )
+
+  it(
+    'collects DOM mutation when text node content changes',
+    domMutationSpec(
+      (root) => {
+        ;(root.childNodes[1] as Text).data = 'bar'
       },
       { expectedMutations: 1 }
     )
