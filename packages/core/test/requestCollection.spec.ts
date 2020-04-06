@@ -10,6 +10,7 @@ import {
   trackXhr,
 } from '../src/requestCollection'
 import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
+import { includes } from '../src/utils'
 
 describe('fetch tracker', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -222,8 +223,8 @@ describe('xhr tracker', () => {
       setTimeout(() => {
         const completeEvent = (completeSpy.calls.allArgs() as RequestCompleteEvent[][])
           .map((args) => args[0])
-          // IE10/11 doesn't have .find() or .includes()
-          .filter((d) => d.url.indexOf(expectedURL) >= 0)[0]
+          // IE10/11 doesn't have .find()
+          .filter((d) => includes(d.url, expectedURL))[0]
 
         expect(completeEvent).toEqual({
           duration: (jasmine.any(Number) as unknown) as number,
