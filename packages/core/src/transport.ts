@@ -153,6 +153,7 @@ export class Batch<T> {
     /**
      * With sendBeacon, requests are guaranteed to be successfully sent during document unload
      */
+    // @ts-ignore this function is not always defined
     if (navigator.sendBeacon) {
       /**
        * beforeunload is called before visibilitychange
