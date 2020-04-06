@@ -197,7 +197,8 @@ export function startRum(
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
-  trackUserAction(lifeCycle, batch.addUserEvent, batch.addRumEvent)
+  trackCustomUserAction(lifeCycle, batch.addUserEvent)
+  trackAutoUserAction(lifeCycle, batch.addRumEvent)
 
   return {
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
@@ -269,11 +270,7 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => voi
   })
 }
 
-function trackUserAction(
-  lifeCycle: LifeCycle,
-  addUserEvent: (event: RumUserActionEvent) => void,
-  addRumEvent: (event: RumUserActionEvent) => void
-) {
+function trackCustomUserAction(lifeCycle: LifeCycle, addUserEvent: (event: RumUserActionEvent) => void) {
   lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
     if (userAction.type === UserActionType.CUSTOM) {
       addUserEvent({
@@ -286,7 +283,13 @@ function trackUserAction(
           type: userAction.type,
         },
       })
-    } else {
+    }
+  })
+}
+
+function trackAutoUserAction(lifeCycle: LifeCycle, addRumEvent: (event: RumUserActionEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
+    if (userAction.type !== UserActionType.CUSTOM) {
       addRumEvent({
         date: getTimestamp(userAction.startTime),
         duration: userAction.duration,
