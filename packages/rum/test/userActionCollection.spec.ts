@@ -48,7 +48,7 @@ function eventsCollector<T>() {
 describe('newUserAction', () => {
   const clock = mockClock()
 
-  it("starts a new user action, but don't validate it", (done) => {
+  it('should not collect an event that is not followed by page activity', (done) => {
     newUserAction(new Observable(), (details) => {
       expect(details).toBeUndefined()
       done()
@@ -57,7 +57,7 @@ describe('newUserAction', () => {
     clock.expire()
   })
 
-  it('starts a new user action, and validate it', (done) => {
+  it('should collect an event that is followed by page activity', (done) => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     newUserAction(activityObservable, (details) => {
