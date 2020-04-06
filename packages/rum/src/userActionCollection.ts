@@ -7,6 +7,48 @@ const IDLE_DELAY = 100
 const BUSY_DELAY = 100
 const USER_ACTION_MAX_DURATION = 10_000
 
+export function startUserActionCollection(lifeCycle: LifeCycle) {
+  function clickEventListener(event: Event) {
+    if (!(event.target instanceof Element)) {
+      return
+    }
+
+    const content = getElementContent(event.target)
+
+    const { observable: changesObservable, stop: stopChangesTracking } = trackPageChanges(lifeCycle)
+
+    newUserAction(changesObservable, (userActionDetails) => {
+      stopChangesTracking()
+      if (userActionDetails) {
+        lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
+          duration: userActionDetails.duration,
+          id: userActionDetails.id,
+          name: content,
+          startTime: userActionDetails.startTime,
+          type: UserActionType.CLICK,
+        })
+      }
+    })
+  }
+
+  addEventListener('click', clickEventListener, { capture: true })
+
+  return {
+    stop() {
+      removeEventListener('click', clickEventListener, { capture: true })
+    },
+  }
+}
+
+let currentUserAction: { id: string; startTime: number } | undefined
+
+export function getUserActionId(time: number): string | undefined {
+  if (currentUserAction && time >= currentUserAction.startTime) {
+    return currentUserAction.id
+  }
+  return undefined
+}
+
 interface UserActionEnded {
   id: string
   startTime: number
@@ -57,6 +99,7 @@ function newUserAction(
 export interface ChangeEvent {
   isBusy: boolean
 }
+
 function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<ChangeEvent>; stop(): void } {
   const result = new Observable<ChangeEvent>()
   const subscriptions: Subscription[] = []
@@ -109,7 +152,6 @@ function trackPageChanges(lifeCycle: LifeCycle): { observable: Observable<Change
   }
 }
 
-let currentUserAction: { id: string; startTime: number } | undefined
 
 export const $$tests = {
   newUserAction,
@@ -117,44 +159,4 @@ export const $$tests = {
   resetUserAction() {
     currentUserAction = undefined
   },
-}
-
-export function getUserActionId(time: number): string | undefined {
-  if (currentUserAction && time >= currentUserAction.startTime) {
-    return currentUserAction.id
-  }
-  return undefined
-}
-
-export function startUserActionCollection(lifeCycle: LifeCycle) {
-  function clickEventListener(event: Event) {
-    if (!(event.target instanceof Element)) {
-      return
-    }
-
-    const content = getElementContent(event.target)
-
-    const { observable: changesObservable, stop: stopChangesTracking } = trackPageChanges(lifeCycle)
-
-    newUserAction(changesObservable, (userActionDetails) => {
-      stopChangesTracking()
-      if (userActionDetails) {
-        lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
-          duration: userActionDetails.duration,
-          id: userActionDetails.id,
-          name: content,
-          startTime: userActionDetails.startTime,
-          type: UserActionType.CLICK,
-        })
-      }
-    })
-  }
-
-  addEventListener('click', clickEventListener, { capture: true })
-
-  return {
-    stop() {
-      removeEventListener('click', clickEventListener, { capture: true })
-    },
-  }
 }
