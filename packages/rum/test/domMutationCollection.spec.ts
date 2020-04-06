@@ -2,6 +2,10 @@ import { isIE } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../src/domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 
+// The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
+// We want to wait for a few event loop executions to potentially collect multiple mutation events.
+const DOM_MUTATION_COLLECTION_DURATION = 16
+
 describe('domMutationCollection', () => {
   beforeEach(() => {
     if (isIE()) {
@@ -30,7 +34,7 @@ describe('domMutationCollection', () => {
         expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
         done()
-      }, 16)
+      }, DOM_MUTATION_COLLECTION_DURATION)
     }
   }
 
