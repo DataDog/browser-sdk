@@ -9,7 +9,7 @@ describe('domMutationCollection', () => {
     }
   })
 
-  function domMutationSpec(mutate: (root: HTMLElement) => void, expectation: number) {
+  function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
     return (done: DoneFn) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
@@ -27,7 +27,7 @@ describe('domMutationCollection', () => {
       mutate(root)
 
       setTimeout(() => {
-        expect(counter).toBe(expectation)
+        expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
         done()
       }, 16)
@@ -36,29 +36,41 @@ describe('domMutationCollection', () => {
 
   it(
     'collects DOM mutation on Element',
-    domMutationSpec((root) => {
-      root.appendChild(document.createElement('button'))
-    }, 1)
+    domMutationSpec(
+      (root) => {
+        root.appendChild(document.createElement('button'))
+      },
+      { expectedMutations: 1 }
+    )
   )
 
   it(
     'collects DOM mutation on Text creation',
-    domMutationSpec((root) => {
-      root.appendChild(document.createTextNode('foo'))
-    }, 1)
+    domMutationSpec(
+      (root) => {
+        root.appendChild(document.createTextNode('foo'))
+      },
+      { expectedMutations: 1 }
+    )
   )
 
   it(
     'collects DOM mutation on attribute creation',
-    domMutationSpec((root) => {
-      root.setAttribute('data-test2', 'bar')
-    }, 1)
+    domMutationSpec(
+      (root) => {
+        root.setAttribute('data-test2', 'bar')
+      },
+      { expectedMutations: 1 }
+    )
   )
 
   it(
     'collects DOM mutation on attribute change',
-    domMutationSpec((root) => {
-      root.setAttribute('data-test', 'bar')
-    }, 1)
+    domMutationSpec(
+      (root) => {
+        root.setAttribute('data-test', 'bar')
+      },
+      { expectedMutations: 1 }
+    )
   )
 })
