@@ -100,8 +100,8 @@ function newUserAction(
   const startTime = performance.now()
   let hasFinished = false
 
-  const validationTimeoutId = setTimeout(() => finish(false), USER_ACTION_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(() => finish(true), USER_ACTION_MAX_DURATION)
+  const validationTimeoutId = setTimeout(() => finish(undefined), USER_ACTION_VALIDATION_DELAY)
+  const maxDurationTimeoutId = setTimeout(() => finish(createDetails(performance.now())), USER_ACTION_MAX_DURATION)
 
   currentUserAction = { id, startTime }
 
@@ -110,11 +110,15 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(() => finish(true, lastChangeTime), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(() => finish(createDetails(lastChangeTime)), USER_ACTION_END_DELAY)
     }
   })
 
-  function finish(end: boolean, time = performance.now()) {
+  function createDetails(endTime: number): UserActionDetails {
+    return { id, startTime, duration: endTime - startTime }
+  }
+
+  function finish(details: UserActionDetails | undefined) {
     if (hasFinished) {
       return
     }
@@ -123,7 +127,7 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     currentUserAction = undefined
-    finishCallback(end ? { id, startTime, duration: time - startTime } : undefined)
+    finishCallback(details)
   }
 }
 
