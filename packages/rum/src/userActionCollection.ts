@@ -34,7 +34,7 @@ const USER_ACTION_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the user action
 const USER_ACTION_END_DELAY = 100
 // Maximum duration of a user action
-const USER_ACTION_MAX_DURATION = 10_000
+export const USER_ACTION_MAX_DURATION = 10_000
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   function processClick(event: Event) {

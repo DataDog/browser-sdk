@@ -1,7 +1,13 @@
 import { Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { UserActionType } from '../src/rum'
-import { $$tests, getUserActionId, PageActivityEvent, startUserActionCollection } from '../src/userActionCollection'
+import {
+  $$tests,
+  getUserActionId,
+  PageActivityEvent,
+  startUserActionCollection,
+  USER_ACTION_MAX_DURATION,
+} from '../src/userActionCollection'
 const { newUserAction, trackPagePageActivities, resetUserAction } = $$tests
 
 function mockClock() {
@@ -20,7 +26,8 @@ function mockClock() {
       jasmine.clock().tick(ms)
     },
     expire() {
-      jasmine.clock().tick(100_000)
+      // Make sure no user action is still pending
+      jasmine.clock().tick(USER_ACTION_MAX_DURATION * 10)
     },
   }
 }
@@ -112,7 +119,7 @@ describe('newUserAction', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
       newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(10_000)
+        expect(details!.duration).toBe(USER_ACTION_MAX_DURATION)
         stop = true
         done()
       })
@@ -146,7 +153,7 @@ describe('newUserAction', () => {
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(10_000)
+        expect(details!.duration).toBe(USER_ACTION_MAX_DURATION)
         done()
       })
 
