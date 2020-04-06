@@ -108,9 +108,9 @@ function newUserAction(
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    const time = performance.now()
+    const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(() => finish(true, time), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(() => finish(true, lastChangeTime), USER_ACTION_END_DELAY)
     }
   })
 
