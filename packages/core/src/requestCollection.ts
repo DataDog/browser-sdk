@@ -51,18 +51,18 @@ function getNextRequestId() {
   return result
 }
 
-let globalObservables: RequestObservables
+let requestObservablesSingleton: RequestObservables
 
 export function startRequestCollection() {
-  if (!globalObservables) {
-    globalObservables = {
+  if (!requestObservablesSingleton) {
+    requestObservablesSingleton = {
       complete: new Observable(),
       start: new Observable(),
     }
-    trackXhr(globalObservables)
-    trackFetch(globalObservables)
+    trackXhr(requestObservablesSingleton)
+    trackFetch(requestObservablesSingleton)
   }
-  return globalObservables
+  return requestObservablesSingleton
 }
 
 export function trackXhr(observables: RequestObservables) {
