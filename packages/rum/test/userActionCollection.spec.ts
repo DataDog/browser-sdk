@@ -8,7 +8,7 @@ import {
   startUserActionCollection,
   USER_ACTION_MAX_DURATION,
 } from '../src/userActionCollection'
-const { newUserAction, trackPagePageActivities, resetUserAction } = $$tests
+const { newUserAction, trackPageActivities, resetUserAction } = $$tests
 
 function mockClock() {
   beforeEach(() => {
@@ -210,14 +210,14 @@ describe('trackPagePageActivities', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
   it('emits an activity event on dom mutation', () => {
     const lifeCycle = new LifeCycle()
-    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
     const lifeCycle = new LifeCycle()
-    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       // tslint:disable-next-line no-object-literal-type-assertion
       entryType: 'resource',
@@ -227,7 +227,7 @@ describe('trackPagePageActivities', () => {
 
   it('does not emit an activity event when a navigation occurs', () => {
     const lifeCycle = new LifeCycle()
-    trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       // tslint:disable-next-line no-object-literal-type-assertion
       entryType: 'navigation',
@@ -237,7 +237,7 @@ describe('trackPagePageActivities', () => {
 
   it('stops emiting activities after calling stop()', () => {
     const lifeCycle = new LifeCycle()
-    const { stop, observable } = trackPagePageActivities(lifeCycle)
+    const { stop, observable } = trackPageActivities(lifeCycle)
     observable.subscribe(pushEvent)
 
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
@@ -254,7 +254,7 @@ describe('trackPagePageActivities', () => {
   describe('requests', () => {
     it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()
-      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
@@ -263,7 +263,7 @@ describe('trackPagePageActivities', () => {
 
     it('emits an activity event when a request completes', () => {
       const lifeCycle = new LifeCycle()
-      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
@@ -276,7 +276,7 @@ describe('trackPagePageActivities', () => {
 
     it('ignores requests that has started before', () => {
       const lifeCycle = new LifeCycle()
-      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         // tslint:disable-next-line no-object-literal-type-assertion
         requestId: 10,
@@ -286,7 +286,7 @@ describe('trackPagePageActivities', () => {
 
     it('keeps emiting busy events while all requests are not completed', () => {
       const lifeCycle = new LifeCycle()
-      trackPagePageActivities(lifeCycle).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })

@@ -44,9 +44,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
     const content = getElementContent(event.target)
 
-    const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPagePageActivities(
-      lifeCycle
-    )
+    const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
     newUserAction(pageActivitiesObservable, (userActionDetails) => {
       stopPageActivitiesTracking()
@@ -139,7 +137,7 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-function trackPagePageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
+function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
   const result = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestId: undefined | number
@@ -193,7 +191,7 @@ function trackPagePageActivities(lifeCycle: LifeCycle): { observable: Observable
 
 export const $$tests = {
   newUserAction,
-  trackPagePageActivities,
+  trackPageActivities,
   resetUserAction() {
     currentUserAction = undefined
   },
