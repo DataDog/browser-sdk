@@ -223,9 +223,24 @@ export function objectEntries(object: { [key: string]: unknown }) {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
+/**
+ * inspired by https://mathiasbynens.be/notes/globalthis
+ */
 export function getGlobalObject<T>(): T {
-  // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
-  return (typeof globalThis === 'object' ? globalThis : Function('return this')()) as T
+  if (typeof globalThis === 'object') {
+    return (globalThis as unknown) as T
+  }
+  Object.defineProperty(Object.prototype, '_dd_temp_', {
+    get() {
+      return this
+    },
+    configurable: true,
+  })
+  // @ts-ignore
+  const globalObject = _dd_temp_
+  // @ts-ignore
+  delete Object.prototype._dd_temp_
+  return globalObject as T
 }
 
 export function getLocationOrigin() {
