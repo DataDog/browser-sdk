@@ -1,10 +1,11 @@
-import { CookieCache, getCookie, setCookie } from './cookie'
-import { isValidSessionString, OLD_SESSION_COOKIE_NAME, persistSession, SessionState } from './sessionManagement'
+import { CookieCache, getCookie } from './cookie'
+import { persistSession, SessionState } from './sessionManagement'
 
-// duplicate values to avoid dependency issues
+export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const OLD_RUM_COOKIE_NAME = '_dd_r'
 export const OLD_LOGS_COOKIE_NAME = '_dd_l'
 
+// duplicate values to avoid dependency issues
 export const RUM_SESSION_KEY = 'rum'
 export const LOGS_SESSION_KEY = 'logs'
 
