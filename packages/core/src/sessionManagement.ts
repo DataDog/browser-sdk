@@ -147,10 +147,12 @@ let registeredIntervals: number[] = []
 export function trackActivity(expandOrRenewSession: () => void) {
   const doExpandOrRenewSession = monitor(expandOrRenewSession)
   const options = { capture: true, passive: true }
-  ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
-    document.addEventListener(event, doExpandOrRenewSession, options)
-    registeredListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
-  })
+  ;[utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL].forEach(
+    (event: string) => {
+      document.addEventListener(event, doExpandOrRenewSession, options)
+      registeredListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
+    }
+  )
 }
 
 function trackVisibility(expandSession: () => void, visibilityStateProvider: () => VisibilityState) {
@@ -161,8 +163,10 @@ function trackVisibility(expandSession: () => void, visibilityStateProvider: () 
   })
 
   const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
-  document.addEventListener('visibilitychange', expandSessionWhenVisible)
+  document.addEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
 
   registeredIntervals.push(visibilityCheckInterval)
-  registeredListeners.push(() => document.removeEventListener('visibilitychange', expandSessionWhenVisible))
+  registeredListeners.push(() =>
+    document.removeEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  )
 }
