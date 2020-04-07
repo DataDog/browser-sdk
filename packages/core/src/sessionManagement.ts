@@ -1,4 +1,5 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
+import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
@@ -105,9 +106,10 @@ export function stopSessionManagement() {
 let registeredActivityListeners: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
+  const doExpandOrRenewSession = monitor(expandOrRenewSession)
   const options = { capture: true, passive: true }
   ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
-    document.addEventListener(event, expandOrRenewSession, options)
-    registeredActivityListeners.push(() => document.removeEventListener(event, expandOrRenewSession, options))
+    document.addEventListener(event, doExpandOrRenewSession, options)
+    registeredActivityListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
   })
 }
