@@ -6,18 +6,17 @@ import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
+export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
 export interface Session<T> {
   renewObservable: Observable<void>
-
   getId(): string | undefined
-
   getType(): T | undefined
 }
 
 export interface SessionState {
   id?: string
-
+  created?: string
   [key: string]: string | undefined
 }
 
@@ -26,19 +25,23 @@ export interface SessionState {
  */
 export function startSessionManagement<Type extends string>(
   sessionTypeKey: string,
-  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
+  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
+  withNewSessionStrategy = false
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
-  let currentSessionId = retrieveSession(sessionCookie).id
+  let currentSessionId = retrieveActiveSession(sessionCookie, withNewSessionStrategy).id
 
   const expandOrRenewSession = utils.throttle(() => {
-    const session = retrieveSession(sessionCookie)
+    const session = retrieveActiveSession(sessionCookie, withNewSessionStrategy)
     const { type, isTracked } = computeSessionState(session[sessionTypeKey])
     session[sessionTypeKey] = type
     if (isTracked && !session.id) {
       session.id = utils.generateUUID()
+      if (withNewSessionStrategy) {
+        session.created = String(Date.now())
+      }
     }
     // save changes and expand session duration
     persistSession(session, sessionCookie)
@@ -55,10 +58,10 @@ export function startSessionManagement<Type extends string>(
 
   return {
     getId() {
-      return retrieveSession(sessionCookie).id
+      return retrieveActiveSession(sessionCookie, withNewSessionStrategy).id
     },
     getType() {
-      return retrieveSession(sessionCookie)[sessionTypeKey] as Type | undefined
+      return retrieveActiveSession(sessionCookie, withNewSessionStrategy)[sessionTypeKey] as Type | undefined
     },
     renewObservable,
   }
@@ -73,6 +76,22 @@ export function isValidSessionString(sessionString: string | undefined): session
     sessionString !== undefined &&
     (sessionString.indexOf(SESSION_ENTRY_SEPARATOR) !== -1 || SESSION_ENTRY_REGEXP.test(sessionString))
   )
+}
+
+function retrieveActiveSession(sessionCookie: CookieCache, withNewSessionStrategy: boolean): SessionState {
+  const session = retrieveSession(sessionCookie)
+  if (!withNewSessionStrategy || isActiveSession(session)) {
+    return session
+  }
+  const timedOutSession = {}
+  persistSession(timedOutSession, sessionCookie)
+  return timedOutSession
+}
+
+function isActiveSession(session: SessionState) {
+  // created can be undefined for versions which was not storing created date
+  // this check could be removed when older versions will not be available/live anymore
+  return session.created === undefined || Date.now() - Number(session.created) < SESSION_TIME_OUT_DELAY
 }
 
 function retrieveSession(sessionCookie: CookieCache): SessionState {
