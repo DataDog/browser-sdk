@@ -180,6 +180,16 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
+export function find<T>(array: T[], predicate: (item: T, index: number, array: T[]) => unknown): T | undefined {
+  for (let i = 0; i < array.length; i += 1) {
+    const item = array[i]
+    if (predicate(item, i, array)) {
+      return item
+    }
+  }
+  return undefined
+}
+
 export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }
