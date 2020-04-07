@@ -237,9 +237,20 @@ export function getGlobalObject<T>(): T {
     configurable: true,
   })
   // @ts-ignore
-  const globalObject = _dd_temp_
+  let globalObject: unknown = _dd_temp_
   // @ts-ignore
   delete Object.prototype._dd_temp_
+  if (typeof globalObject !== 'object') {
+    // on safari _dd_temp_ is available on window but not globally
+    // fallback on other browser globals check
+    if (typeof self === 'object') {
+      globalObject = self
+    } else if (typeof window === 'object') {
+      globalObject = window
+    } else {
+      globalObject = {}
+    }
+  }
   return globalObject as T
 }
 
