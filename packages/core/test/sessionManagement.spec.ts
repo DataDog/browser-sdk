@@ -1,3 +1,4 @@
+import { ONE_HOUR } from '../src'
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, getCookie, setCookie } from '../src/cookie'
 import {
   Session,
@@ -6,6 +7,7 @@ import {
   SESSION_TIME_OUT_DELAY,
   startSessionManagement,
   stopSessionManagement,
+  VISIBILITY_CHECK_DELAY,
 } from '../src/sessionManagement'
 import { isIE } from '../src/specHelper'
 
@@ -91,10 +93,11 @@ describe('startSessionManagement', () => {
   })
 
   afterEach(() => {
-    // flush pending callbacks to avoid random failures
-    jasmine.clock().tick(new Date().getTime())
-    jasmine.clock().uninstall()
+    // remove intervals first
     stopSessionManagement()
+    // flush pending callbacks to avoid random failures
+    jasmine.clock().tick(ONE_HOUR)
+    jasmine.clock().uninstall()
   })
 
   describe('cookie management', () => {
@@ -314,7 +317,8 @@ describe('startSessionManagement', () => {
           isTracked: true,
           type: FakeSessionType.TRACKED,
         }),
-        true
+        true,
+        () => 'hidden'
       )
       expectSessionIdToBeDefined(session)
 
@@ -329,7 +333,8 @@ describe('startSessionManagement', () => {
           isTracked: true,
           type: FakeSessionType.TRACKED,
         }),
-        true
+        true,
+        () => 'hidden'
       )
       expectSessionIdToBeDefined(session)
 
@@ -340,6 +345,30 @@ describe('startSessionManagement', () => {
       expectSessionIdToBeDefined(session)
 
       jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
+      expectSessionIdToNotBeDefined(session)
+    })
+
+    it('should expand session on visibility', () => {
+      let visibility: VisibilityState = 'visible'
+
+      const session = startSessionManagement(
+        FIRST_SESSION_TYPE_KEY,
+        () => ({
+          isTracked: true,
+          type: FakeSessionType.TRACKED,
+        }),
+        true,
+        () => visibility
+      )
+
+      jasmine.clock().tick(3 * VISIBILITY_CHECK_DELAY)
+      visibility = 'hidden'
+      expectSessionIdToBeDefined(session)
+
+      jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)
+      expectSessionIdToBeDefined(session)
+
+      jasmine.clock().tick(10)
       expectSessionIdToNotBeDefined(session)
     })
   })

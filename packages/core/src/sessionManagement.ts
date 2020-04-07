@@ -7,6 +7,7 @@ import * as utils from './utils'
 export const SESSION_COOKIE_NAME = '_dd_s'
 export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
+export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 
 export interface Session<T> {
   renewObservable: Observable<void>
@@ -27,7 +28,8 @@ export interface SessionState {
 export function startSessionManagement<Type extends string>(
   sessionTypeKey: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
-  withNewSessionStrategy = false
+  withNewSessionStrategy = false,
+  visibilityStateProvider = () => document.visibilityState
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
@@ -54,8 +56,16 @@ export function startSessionManagement<Type extends string>(
     }
   }, COOKIE_ACCESS_DELAY)
 
+  const expandSession = () => {
+    const session = retrieveActiveSession(sessionCookie, withNewSessionStrategy)
+    persistSession(session, sessionCookie, withNewSessionStrategy)
+  }
+
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
+  if (withNewSessionStrategy) {
+    trackVisibility(expandSession, visibilityStateProvider)
+  }
 
   return {
     getId() {
@@ -125,17 +135,34 @@ export function persistSession(session: SessionState, cookie: CookieCache, withN
 }
 
 export function stopSessionManagement() {
-  registeredActivityListeners.forEach((e) => e())
-  registeredActivityListeners = []
+  registeredListeners.forEach((e) => e())
+  registeredIntervals.forEach((interval) => clearInterval(interval))
+  registeredListeners = []
+  registeredIntervals = []
 }
 
-let registeredActivityListeners: Array<() => void> = []
+let registeredListeners: Array<() => void> = []
+let registeredIntervals: number[] = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
   const doExpandOrRenewSession = monitor(expandOrRenewSession)
   const options = { capture: true, passive: true }
   ;['click', 'touchstart', 'keydown', 'scroll'].forEach((event: string) => {
     document.addEventListener(event, doExpandOrRenewSession, options)
-    registeredActivityListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
+    registeredListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
   })
+}
+
+function trackVisibility(expandSession: () => void, visibilityStateProvider: () => VisibilityState) {
+  const expandSessionWhenVisible = monitor(() => {
+    if (visibilityStateProvider() === 'visible') {
+      expandSession()
+    }
+  })
+
+  const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
+  document.addEventListener('visibilitychange', expandSessionWhenVisible)
+
+  registeredIntervals.push(visibilityCheckInterval)
+  registeredListeners.push(() => document.removeEventListener('visibilitychange', expandSessionWhenVisible))
 }
