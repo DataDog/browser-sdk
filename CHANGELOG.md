@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.1
+
+- 🔥[RUMF-430] stop maintaining old cookies ([#342](https://github.com/DataDog/browser-sdk/pull/342))
+
 ## v1.9.0
 
 - ✨[RUMF-430] new session cookie format ([#337](https://github.com/DataDog/browser-sdk/pull/337))
