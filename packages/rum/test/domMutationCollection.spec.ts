@@ -28,13 +28,14 @@ describe('domMutationCollection', () => {
         counter += 1
       })
 
-      startDOMMutationCollection(lifeCycle)
+      const domMutationCollectionSubscription = startDOMMutationCollection(lifeCycle)
 
       mutate(root)
 
       setTimeout(() => {
         expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
+        domMutationCollectionSubscription.stop()
         done()
       }, DOM_MUTATION_COLLECTION_DURATION)
     }

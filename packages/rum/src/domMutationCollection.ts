@@ -5,8 +5,9 @@ interface BrowserWindow extends Window {
 }
 
 export function startDOMMutationCollection(lifeCycle: LifeCycle) {
+  let observer: MutationObserver | undefined
   if ((window as BrowserWindow).MutationObserver) {
-    const observer = new MutationObserver(() => {
+    observer = new MutationObserver(() => {
       lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     })
 
@@ -16,5 +17,13 @@ export function startDOMMutationCollection(lifeCycle: LifeCycle) {
       childList: true,
       subtree: true,
     })
+  }
+
+  return {
+    stop() {
+      if (observer) {
+        observer.disconnect()
+      }
+    },
   }
 }
