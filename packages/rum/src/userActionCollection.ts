@@ -138,7 +138,7 @@ export interface PageActivityEvent {
 }
 
 function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
-  const result = new Observable<PageActivityEvent>()
+  const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestId: undefined | number
   let pendingRequestsCount = 0
@@ -178,11 +178,11 @@ function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<Pag
   )
 
   function notifyPageActivity() {
-    result.notify({ isBusy: pendingRequestsCount > 0 })
+    observable.notify({ isBusy: pendingRequestsCount > 0 })
   }
 
   return {
-    observable: result,
+    observable,
     stop() {
       subscriptions.forEach((s) => s.unsubscribe())
     },
