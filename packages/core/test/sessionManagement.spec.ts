@@ -2,6 +2,7 @@ import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, getCookie, setCook
 import {
   Session,
   SESSION_COOKIE_NAME,
+  SESSION_EXPIRATION_DELAY,
   SESSION_TIME_OUT_DELAY,
   startSessionManagement,
   stopSessionManagement,
@@ -302,6 +303,44 @@ describe('startSessionManagement', () => {
 
       expect(session.getId()).toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('created=')
+    })
+  })
+
+  describe('session expiration', () => {
+    it('should expire the session after expiration delay', () => {
+      const session = startSessionManagement(
+        FIRST_SESSION_TYPE_KEY,
+        () => ({
+          isTracked: true,
+          type: FakeSessionType.TRACKED,
+        }),
+        true
+      )
+      expectSessionIdToBeDefined(session)
+
+      jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
+      expectSessionIdToNotBeDefined(session)
+    })
+
+    it('should expand duration on activity', () => {
+      const session = startSessionManagement(
+        FIRST_SESSION_TYPE_KEY,
+        () => ({
+          isTracked: true,
+          type: FakeSessionType.TRACKED,
+        }),
+        true
+      )
+      expectSessionIdToBeDefined(session)
+
+      jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)
+      document.dispatchEvent(new CustomEvent('click'))
+
+      jasmine.clock().tick(10)
+      expectSessionIdToBeDefined(session)
+
+      jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
+      expectSessionIdToNotBeDefined(session)
     })
   })
 })

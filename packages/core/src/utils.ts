@@ -223,6 +223,10 @@ export function objectEntries(object: { [key: string]: unknown }) {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
+export function isEmptyObject(object: object) {
+  return Object.keys(object).length === 0
+}
+
 export function getGlobalObject<T>(): T {
   // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
   return (typeof globalThis === 'object' ? globalThis : Function('return this')()) as T

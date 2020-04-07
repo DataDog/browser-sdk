@@ -5,7 +5,7 @@ import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
-export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
+export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 export const SESSION_TIME_OUT_DELAY = 4 * utils.ONE_HOUR
 
 export interface Session<T> {
@@ -17,6 +17,7 @@ export interface Session<T> {
 export interface SessionState {
   id?: string
   created?: string
+  expire?: string
   [key: string]: string | undefined
 }
 
@@ -44,7 +45,7 @@ export function startSessionManagement<Type extends string>(
       }
     }
     // save changes and expand session duration
-    persistSession(session, sessionCookie)
+    persistSession(session, sessionCookie, withNewSessionStrategy)
 
     // If the session id has changed, notify that the session has been renewed
     if (isTracked && currentSessionId !== session.id) {
@@ -83,15 +84,18 @@ function retrieveActiveSession(sessionCookie: CookieCache, withNewSessionStrateg
   if (!withNewSessionStrategy || isActiveSession(session)) {
     return session
   }
-  const timedOutSession = {}
-  persistSession(timedOutSession, sessionCookie)
-  return timedOutSession
+  const inactiveSession = {}
+  persistSession(inactiveSession, sessionCookie, withNewSessionStrategy)
+  return inactiveSession
 }
 
 function isActiveSession(session: SessionState) {
-  // created can be undefined for versions which was not storing created date
-  // this check could be removed when older versions will not be available/live anymore
-  return session.created === undefined || Date.now() - Number(session.created) < SESSION_TIME_OUT_DELAY
+  // created and expire can be undefined for versions which was not storing them
+  // these checks could be removed when older versions will not be available/live anymore
+  return (
+    (session.created === undefined || Date.now() - Number(session.created) < SESSION_TIME_OUT_DELAY) &&
+    (session.expire === undefined || Date.now() < Number(session.expire))
+  )
 }
 
 function retrieveSession(sessionCookie: CookieCache): SessionState {
@@ -109,12 +113,15 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
   return session
 }
 
-export function persistSession(session: SessionState, cookie: CookieCache) {
+export function persistSession(session: SessionState, cookie: CookieCache, withNewSessionStrategy = false) {
+  if (withNewSessionStrategy && !utils.isEmptyObject(session)) {
+    session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
+  }
   const cookieString = utils
     .objectEntries(session)
     .map(([key, value]) => `${key}=${value}`)
     .join(SESSION_ENTRY_SEPARATOR)
-  cookie.set(cookieString, EXPIRATION_DELAY)
+  cookie.set(cookieString, SESSION_EXPIRATION_DELAY)
 }
 
 export function stopSessionManagement() {
