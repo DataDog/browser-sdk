@@ -312,27 +312,27 @@ export function trackRequests(
   session: RumSession,
   addRumEvent: (event: RumEvent) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (completeEvent: RequestCompleteEvent) => {
+  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     if (!session.isTrackedWithResource()) {
       return
     }
-    if (!isValidResource(completeEvent.url, configuration)) {
+    if (!isValidResource(request.url, configuration)) {
       return
     }
-    const timing = matchRequestTiming(completeEvent)
-    const kind = completeEvent.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
-    const startTime = timing ? timing.startTime : completeEvent.startTime
+    const timing = matchRequestTiming(request)
+    const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    const startTime = timing ? timing.startTime : request.startTime
     addRumEvent({
       date: getTimestamp(startTime),
-      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(completeEvent.duration),
+      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
       evt: {
         category: RumEventCategory.RESOURCE,
       },
       http: {
-        method: completeEvent.method,
+        method: request.method,
         performance: timing ? computePerformanceResourceDetails(timing) : undefined,
-        statusCode: completeEvent.status,
-        url: completeEvent.url,
+        statusCode: request.status,
+        url: request.url,
       },
       network: {
         bytesWritten: timing ? computeSize(timing) : undefined,
@@ -340,7 +340,7 @@ export function trackRequests(
       resource: {
         kind,
       },
-      traceId: completeEvent.traceId,
+      traceId: request.traceId,
       userActionId: getUserActionId(startTime),
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)

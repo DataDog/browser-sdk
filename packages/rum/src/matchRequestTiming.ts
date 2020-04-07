@@ -17,13 +17,13 @@ interface Timing {
  * - if two following timings match (OPTIONS request), return the timing for the actual request
  * - otherwise we can't decide, return undefined
  */
-export function matchRequestTiming(completeEvent: RequestCompleteEvent) {
+export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
   const candidates = performance
-    .getEntriesByName(completeEvent.url, 'resource')
-    .filter((entry) => isBetween(entry, completeEvent.startTime, endTime(completeEvent))) as PerformanceResourceTiming[]
+    .getEntriesByName(request.url, 'resource')
+    .filter((entry) => isBetween(entry, request.startTime, endTime(request))) as PerformanceResourceTiming[]
 
   if (candidates.length === 1) {
     return candidates[0]

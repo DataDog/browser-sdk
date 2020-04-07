@@ -28,21 +28,21 @@ export function clearAllCookies() {
 }
 
 export class FetchStubBuilder {
-  private completeEvents: RequestCompleteEvent[] = []
-  private whenAllCompleteFn: (completeEvents: RequestCompleteEvent[]) => void = noop
+  private requests: RequestCompleteEvent[] = []
+  private whenAllCompleteFn: (requests: RequestCompleteEvent[]) => void = noop
 
   constructor([requestStartObservable, requestCompleteObservable]: RequestObservables) {
     let pendingFetch = 0
     requestStartObservable.subscribe(() => {
       pendingFetch += 1
     })
-    requestCompleteObservable.subscribe((completeEvent: RequestCompleteEvent) => {
-      this.completeEvents.push(completeEvent)
+    requestCompleteObservable.subscribe((request: RequestCompleteEvent) => {
+      this.requests.push(request)
       pendingFetch -= 1
       if (pendingFetch === 0) {
         // ensure that AssertionError are not swallowed by promise context
         setTimeout(() => {
-          this.whenAllCompleteFn(this.completeEvents)
+          this.whenAllCompleteFn(this.requests)
         })
       }
     })

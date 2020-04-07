@@ -166,22 +166,22 @@ export function trackNetworkError(
   errorObservable: ErrorObservable,
   requestObservable: Observable<RequestCompleteEvent>
 ) {
-  requestObservable.subscribe((completeEvent: RequestCompleteEvent) => {
-    if (isRejected(completeEvent) || isServerError(completeEvent)) {
+  requestObservable.subscribe((request: RequestCompleteEvent) => {
+    if (isRejected(request) || isServerError(request)) {
       errorObservable.notify({
         context: {
           error: {
             origin: ErrorOrigin.NETWORK,
-            stack: truncateResponse(completeEvent.response, configuration) || 'Failed to load',
+            stack: truncateResponse(request.response, configuration) || 'Failed to load',
           },
           http: {
-            method: completeEvent.method,
-            status_code: completeEvent.status,
-            url: completeEvent.url,
+            method: request.method,
+            status_code: request.status,
+            url: request.url,
           },
         },
-        message: `${format(completeEvent.type)} error ${completeEvent.method} ${completeEvent.url}`,
-        startTime: completeEvent.startTime,
+        message: `${format(request.type)} error ${request.method} ${request.url}`,
+        startTime: request.startTime,
       })
     }
   })

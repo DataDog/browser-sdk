@@ -169,9 +169,9 @@ function trackPagePageActivities(lifeCycle: LifeCycle): { observable: Observable
   )
 
   subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (completeEvent) => {
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
       // If the request started before the tracking start, ignore it
-      if (firstRequestId === undefined || completeEvent.requestId < firstRequestId) {
+      if (firstRequestId === undefined || request.requestId < firstRequestId) {
         return
       }
       pendingRequestsCount -= 1

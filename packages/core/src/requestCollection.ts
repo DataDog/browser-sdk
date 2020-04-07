@@ -173,12 +173,12 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
   })
 }
 
-export function isRejected(completeEvent: RequestCompleteEvent) {
-  return completeEvent.status === 0 && completeEvent.responseType !== 'opaque'
+export function isRejected(request: RequestCompleteEvent) {
+  return request.status === 0 && request.responseType !== 'opaque'
 }
 
-export function isServerError(completeEvent: RequestCompleteEvent) {
-  return completeEvent.status >= 500
+export function isServerError(request: RequestCompleteEvent) {
+  return request.status >= 500
 }
 
 /**
