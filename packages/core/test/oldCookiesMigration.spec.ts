@@ -1,7 +1,12 @@
 import { getCookie, SESSION_COOKIE_NAME, setCookie } from '../src'
 import { cacheCookieAccess } from '../src/cookie'
-import { OLD_LOGS_COOKIE_NAME, OLD_RUM_COOKIE_NAME, tryOldCookiesMigration } from '../src/oldCookiesMigration'
-import { EXPIRATION_DELAY, OLD_SESSION_COOKIE_NAME } from '../src/sessionManagement'
+import {
+  OLD_LOGS_COOKIE_NAME,
+  OLD_RUM_COOKIE_NAME,
+  OLD_SESSION_COOKIE_NAME,
+  tryOldCookiesMigration,
+} from '../src/oldCookiesMigration'
+import { EXPIRATION_DELAY } from '../src/sessionManagement'
 
 describe('old cookies migration', () => {
   it('should not touch current cookie', () => {

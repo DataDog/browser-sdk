@@ -4,7 +4,6 @@ import { tryOldCookiesMigration } from './oldCookiesMigration'
 import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
-export const OLD_SESSION_COOKIE_NAME = '_dd'
 export const EXPIRATION_DELAY = 15 * utils.ONE_MINUTE
 
 export interface Session<T> {
@@ -23,23 +22,15 @@ export interface SessionState {
 
 /**
  * Limit access to cookie to avoid performance issues
- *
- * Old cookies are maintained only to allow rollback without compatibility issue
- * Since the new version does not update the old cookies,
- * pages in both old and new format should live together without issue
  */
 export function startSessionManagement<Type extends string>(
   sessionTypeKey: string,
-  oldCookieName: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveSession(sessionCookie).id
-
-  const oldSessionId = cacheCookieAccess(OLD_SESSION_COOKIE_NAME)
-  const oldSessionType = cacheCookieAccess(oldCookieName)
 
   const expandOrRenewSession = utils.throttle(() => {
     const session = retrieveSession(sessionCookie)
@@ -50,12 +41,6 @@ export function startSessionManagement<Type extends string>(
     }
     // save changes and expand session duration
     persistSession(session, sessionCookie)
-
-    // update old cookies
-    oldSessionType.set(type, EXPIRATION_DELAY)
-    if (isTracked) {
-      oldSessionId.set(session.id!, EXPIRATION_DELAY)
-    }
 
     // If the session id has changed, notify that the session has been renewed
     if (isTracked && currentSessionId !== session.id) {
