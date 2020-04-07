@@ -49,8 +49,8 @@ describe('newUserAction', () => {
   const clock = mockClock()
 
   it('should not collect an event that is not followed by page activity', (done) => {
-    newUserAction(new Observable(), (details) => {
-      expect(details).toBeUndefined()
+    newUserAction(new Observable(), (userAction) => {
+      expect(userAction).toBeUndefined()
       done()
     })
 
@@ -60,8 +60,8 @@ describe('newUserAction', () => {
   it('should collect an event that is followed by page activity', (done) => {
     const activityObservable = new Observable<PageActivityEvent>()
 
-    newUserAction(activityObservable, (details) => {
-      expect(details).toEqual({
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toEqual({
         duration: 80,
         id: (jasmine.any(String) as unknown) as string,
         startTime: (jasmine.any(Number) as unknown) as number,
@@ -78,15 +78,15 @@ describe('newUserAction', () => {
   it('cancels any starting user action while another one is happening', (done) => {
     let count = 2
     const activityObservable = new Observable<PageActivityEvent>()
-    newUserAction(activityObservable, (details) => {
-      expect(details).toBeDefined()
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toBeDefined()
       count -= 1
       if (count === 0) {
         done()
       }
     })
-    newUserAction(activityObservable, (details) => {
-      expect(details).toBeUndefined()
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toBeUndefined()
       count -= 1
       if (count === 0) {
         done()
@@ -102,8 +102,8 @@ describe('newUserAction', () => {
   describe('extend with activities', () => {
     it('is extended while there is page activities', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(5 * 80)
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(5 * 80)
         done()
       })
 
@@ -118,8 +118,8 @@ describe('newUserAction', () => {
     it('expires after a limit', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
-      newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(USER_ACTION_MAX_DURATION)
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
         stop = true
         done()
       })
@@ -136,8 +136,8 @@ describe('newUserAction', () => {
   describe('busy activities', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(580)
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(580)
         done()
       })
 
@@ -152,8 +152,8 @@ describe('newUserAction', () => {
 
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (details) => {
-        expect(details!.duration).toBe(USER_ACTION_MAX_DURATION)
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
         done()
       })
 
@@ -175,8 +175,8 @@ describe('getUserActionId', () => {
   it('returns the current user action id', (done) => {
     expect(getUserActionId(Date.now())).toBeUndefined()
     const activityObservable = new Observable<PageActivityEvent>()
-    newUserAction(activityObservable, (details) => {
-      expect(details!.id).toBe(userActionId)
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction!.id).toBe(userActionId)
       expect(getUserActionId(Date.now())).toBeUndefined()
       done()
     })

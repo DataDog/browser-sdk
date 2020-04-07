@@ -46,14 +46,14 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
     const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
-    newUserAction(pageActivitiesObservable, (userActionDetails) => {
+    newUserAction(pageActivitiesObservable, (userActionCompleteEvent) => {
       stopPageActivitiesTracking()
-      if (userActionDetails) {
+      if (userActionCompleteEvent) {
         lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
-          duration: userActionDetails.duration,
-          id: userActionDetails.id,
+          duration: userActionCompleteEvent.duration,
+          id: userActionCompleteEvent.id,
           name: content,
-          startTime: userActionDetails.startTime,
+          startTime: userActionCompleteEvent.startTime,
           type: UserActionType.CLICK,
         })
       }
@@ -78,7 +78,7 @@ export function getUserActionId(time: number): string | undefined {
   return undefined
 }
 
-interface UserActionDetails {
+interface UserActionCompleteEvent {
   id: string
   startTime: number
   duration: number
@@ -86,7 +86,7 @@ interface UserActionDetails {
 
 function newUserAction(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  finishCallback: (details: UserActionDetails | undefined) => void
+  finishCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
 ) {
   if (currentUserAction) {
     // Discard any new user action if another one is already occuring.
@@ -101,7 +101,7 @@ function newUserAction(
 
   const validationTimeoutId = setTimeout(monitor(() => finish(undefined)), USER_ACTION_VALIDATION_DELAY)
   const maxDurationTimeoutId = setTimeout(
-    monitor(() => finish(createDetails(performance.now()))),
+    monitor(() => finish(completeUserAction(performance.now()))),
     USER_ACTION_MAX_DURATION
   )
 
@@ -112,15 +112,15 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => finish(createDetails(lastChangeTime))), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => finish(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
     }
   })
 
-  function createDetails(endTime: number): UserActionDetails {
+  function completeUserAction(endTime: number): UserActionCompleteEvent {
     return { id, startTime, duration: endTime - startTime }
   }
 
-  function finish(details: UserActionDetails | undefined) {
+  function finish(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
     if (hasFinished) {
       return
     }
@@ -129,7 +129,7 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     currentUserAction = undefined
-    finishCallback(details)
+    finishCallback(userActionCompleteEvent)
   }
 }
 
