@@ -1,4 +1,4 @@
-import { Observable, RequestCompleteEvent } from '@datadog/browser-core'
+import { DOM_EVENT, Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { UserActionType } from '../src/rum'
 import {
@@ -334,7 +334,7 @@ describe('startUserActionCollection', () => {
   })
 
   it('starts a user action when clicking on an element', () => {
-    button.addEventListener('click', () => {
+    button.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(50)
       // Since we don't collect dom mutations for this test, manually dispatch one
       lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
