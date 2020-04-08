@@ -50,7 +50,9 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
     kind: 'fetch' | 'xhr' | 'document'
   }
   duration: number
-  user_action_id?: string
+  user_action?: {
+    id: string
+  }
 }
 
 export function isRumResourceEvent(event: ServerRumEvent): event is ServerRumResourceEvent {

@@ -31,7 +31,7 @@ import {
 } from './resourceUtils'
 import { RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { getUserActionId } from './userActionCollection'
+import { getUserActionReference, UserActionReference } from './userActionCollection'
 import { trackView, viewContext, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
@@ -106,17 +106,18 @@ export interface RumResourceEvent {
     kind: ResourceKind
   }
   traceId?: number
-  userActionId?: string
+  userAction?: UserActionReference
 }
 
 export interface RumErrorEvent {
+  date: number
   http?: HttpContext
   error: ErrorContext
   evt: {
     category: RumEventCategory.ERROR
   }
   message: string
-  userActionId?: string
+  userAction?: UserActionReference
 }
 
 export interface RumViewEvent {
@@ -138,7 +139,7 @@ export interface RumLongTaskEvent {
   evt: {
     category: RumEventCategory.LONG_TASK
   }
-  userActionId?: string
+  userAction?: UserActionReference
 }
 
 export interface RumUserActionEvent {
@@ -264,7 +265,7 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => voi
       evt: {
         category: RumEventCategory.ERROR,
       },
-      userActionId: getUserActionId(startTime),
+      userAction: getUserActionReference(startTime),
       ...context,
     })
   })
@@ -341,7 +342,7 @@ export function trackRequests(
         kind,
       },
       traceId: request.traceId,
-      userActionId: getUserActionId(startTime),
+      userAction: getUserActionReference(startTime),
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })
@@ -395,7 +396,7 @@ export function handleResourceEntry(
     resource: {
       kind: resourceKind,
     },
-    userActionId: getUserActionId(entry.startTime),
+    userAction: getUserActionReference(entry.startTime),
   })
   lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }
@@ -408,6 +409,6 @@ export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEven
       category: RumEventCategory.LONG_TASK,
     },
     startTime: entry.startTime,
-    userActionId: getUserActionId(entry.startTime),
+    userAction: getUserActionReference(entry.startTime),
   })
 }

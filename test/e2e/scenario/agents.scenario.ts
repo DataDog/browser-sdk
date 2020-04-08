@@ -252,6 +252,6 @@ describe('user action collection', () => {
     expect(userActionEvents[0].duration).toBeGreaterThan(0)
 
     expect(resourceEvents.length).toBe(1)
-    expect(resourceEvents[0].user_action_id).toBe(userActionEvents[0].user_action.id)
+    expect(resourceEvents[0].user_action!.id).toBe(userActionEvents[0].user_action.id!)
   })
 })

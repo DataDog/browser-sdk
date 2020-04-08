@@ -71,9 +71,12 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
 let currentUserAction: { id: string; startTime: number } | undefined
 
-export function getUserActionId(time: number): string | undefined {
+export interface UserActionReference {
+  id: string
+}
+export function getUserActionReference(time: number): UserActionReference | undefined {
   if (currentUserAction && time >= currentUserAction.startTime) {
-    return currentUserAction.id
+    return { id: currentUserAction.id }
   }
   return undefined
 }
