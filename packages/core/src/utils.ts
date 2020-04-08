@@ -173,8 +173,21 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
   return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
 }
 
-export function includes(candidate: unknown[], search: unknown) {
+export function includes(candidate: string, search: string): boolean
+export function includes<T>(candidate: T[], search: T): boolean
+export function includes(candidate: string | unknown[], search: any) {
+  // tslint:disable-next-line: no-unsafe-any
   return candidate.indexOf(search) !== -1
+}
+
+export function find<T>(array: T[], predicate: (item: T, index: number, array: T[]) => unknown): T | undefined {
+  for (let i = 0; i < array.length; i += 1) {
+    const item = array[i]
+    if (predicate(item, i, array)) {
+      return item
+    }
+  }
+  return undefined
 }
 
 export function isPercentage(value: unknown) {

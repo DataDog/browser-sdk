@@ -1,6 +1,5 @@
 import { Configuration } from './configuration'
-import { Observable } from './observable'
-import { RequestDetails } from './requestCollection'
+import { RequestCompleteEvent, RequestObservables } from './requestCollection'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -29,15 +28,18 @@ export function clearAllCookies() {
 }
 
 export class FetchStubBuilder {
-  private requests: RequestDetails[] = []
-  private pendingFetch = 0
-  private whenAllCompleteFn: (messages: RequestDetails[]) => void = noop
+  private requests: RequestCompleteEvent[] = []
+  private whenAllCompleteFn: (requests: RequestCompleteEvent[]) => void = noop
 
-  constructor(observable: Observable<RequestDetails>) {
-    observable.subscribe((request: RequestDetails) => {
+  constructor([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+    let pendingFetch = 0
+    requestStartObservable.subscribe(() => {
+      pendingFetch += 1
+    })
+    requestCompleteObservable.subscribe((request: RequestCompleteEvent) => {
       this.requests.push(request)
-      this.pendingFetch -= 1
-      if (this.pendingFetch === 0) {
+      pendingFetch -= 1
+      if (pendingFetch === 0) {
         // ensure that AssertionError are not swallowed by promise context
         setTimeout(() => {
           this.whenAllCompleteFn(this.requests)
@@ -46,13 +48,12 @@ export class FetchStubBuilder {
     })
   }
 
-  whenAllComplete(onCompleteFn: (_: RequestDetails[]) => void) {
+  whenAllComplete(onCompleteFn: (_: RequestCompleteEvent[]) => void) {
     this.whenAllCompleteFn = onCompleteFn
   }
 
   getStub() {
     return (() => {
-      this.pendingFetch += 1
       let resolve: (response: ResponseStub) => unknown
       let reject: (error: Error) => unknown
       const promise: unknown = new Promise((res, rej) => {
