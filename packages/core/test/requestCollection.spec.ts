@@ -9,7 +9,7 @@ import {
   trackFetch,
   trackXhr,
 } from '../src/requestCollection'
-import { FetchStub, FetchStubBuilder, FetchStubPromise, isFirefox, isIE } from '../src/specHelper'
+import { FetchStub, FetchStubBuilder, FetchStubPromise, isIE } from '../src/specHelper'
 import { find, includes } from '../src/utils'
 
 describe('fetch tracker', () => {
@@ -211,7 +211,7 @@ describe('xhr tracker', () => {
     expectedMethod: string | jasmine.Any
     expectedStatus: number | jasmine.Any
     expectedURL: string
-    expectedResponse?: string | jasmine.Any
+    expectedResponse?: string | jasmine.AsymmetricMatcher<string>
     expectXHR?: (xhr: XMLHttpRequest) => void
   }) {
     const xhr = new XMLHttpRequest()
