@@ -94,6 +94,7 @@ function retrieveActiveSession(sessionCookie: CookieCache, withNewSessionStrateg
   if (!withNewSessionStrategy || isActiveSession(session)) {
     return session
   }
+  // clear session
   const inactiveSession = {}
   persistSession(inactiveSession, sessionCookie, withNewSessionStrategy)
   return inactiveSession
@@ -124,7 +125,12 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
 }
 
 export function persistSession(session: SessionState, cookie: CookieCache, withNewSessionStrategy = false) {
-  if (withNewSessionStrategy && !utils.isEmptyObject(session)) {
+  if (utils.isEmptyObject(session)) {
+    // clear session
+    cookie.set('', 0)
+    return
+  }
+  if (withNewSessionStrategy) {
     session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
   }
   const cookieString = utils
