@@ -310,6 +310,27 @@ describe('startSessionManagement', () => {
   })
 
   describe('session expiration', () => {
+    function setPageVisibility(visibility: 'visible' | 'hidden') {
+      Object.defineProperty(document, 'visibilityState', {
+        get() {
+          return visibility
+        },
+        configurable: true,
+      })
+    }
+
+    function restorePageVisibility() {
+      delete (document as any).visibilityState
+    }
+
+    beforeEach(() => {
+      setPageVisibility('hidden')
+    })
+
+    afterEach(() => {
+      restorePageVisibility()
+    })
+
     it('should expire the session after expiration delay', () => {
       const session = startSessionManagement(
         FIRST_SESSION_TYPE_KEY,
@@ -317,8 +338,7 @@ describe('startSessionManagement', () => {
           isTracked: true,
           type: FakeSessionType.TRACKED,
         }),
-        true,
-        () => 'hidden'
+        true
       )
       expectSessionIdToBeDefined(session)
 
@@ -333,8 +353,7 @@ describe('startSessionManagement', () => {
           isTracked: true,
           type: FakeSessionType.TRACKED,
         }),
-        true,
-        () => 'hidden'
+        true
       )
       expectSessionIdToBeDefined(session)
 
@@ -349,7 +368,7 @@ describe('startSessionManagement', () => {
     })
 
     it('should expand session on visibility', () => {
-      let visibility: VisibilityState = 'visible'
+      setPageVisibility('visible')
 
       const session = startSessionManagement(
         FIRST_SESSION_TYPE_KEY,
@@ -357,12 +376,11 @@ describe('startSessionManagement', () => {
           isTracked: true,
           type: FakeSessionType.TRACKED,
         }),
-        true,
-        () => visibility
+        true
       )
 
       jasmine.clock().tick(3 * VISIBILITY_CHECK_DELAY)
-      visibility = 'hidden'
+      setPageVisibility('hidden')
       expectSessionIdToBeDefined(session)
 
       jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)

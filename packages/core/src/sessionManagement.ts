@@ -28,8 +28,7 @@ export interface SessionState {
 export function startSessionManagement<Type extends string>(
   sessionTypeKey: string,
   computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
-  withNewSessionStrategy = false,
-  visibilityStateProvider = () => document.visibilityState
+  withNewSessionStrategy = false
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
@@ -64,7 +63,7 @@ export function startSessionManagement<Type extends string>(
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
   if (withNewSessionStrategy) {
-    trackVisibility(expandSession, visibilityStateProvider)
+    trackVisibility(expandSession)
   }
 
   return {
@@ -161,9 +160,9 @@ export function trackActivity(expandOrRenewSession: () => void) {
   )
 }
 
-function trackVisibility(expandSession: () => void, visibilityStateProvider: () => VisibilityState) {
+function trackVisibility(expandSession: () => void) {
   const expandSessionWhenVisible = monitor(() => {
-    if (visibilityStateProvider() === 'visible') {
+    if (document.visibilityState === 'visible') {
       expandSession()
     }
   })
