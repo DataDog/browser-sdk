@@ -135,6 +135,7 @@ export interface RumViewEvent {
 }
 
 export interface RumLongTaskEvent {
+  date: number
   duration: number
   evt: {
     category: RumEventCategory.LONG_TASK
@@ -257,7 +258,7 @@ function startRumBatch(
   }
 }
 
-function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumEvent) => void) {
+function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumErrorEvent) => void) {
   lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, startTime, context }: ErrorMessage) => {
     addRumEvent({
       message,
@@ -401,14 +402,13 @@ export function handleResourceEntry(
   lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }
 
-export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumEvent) => void) {
+export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEvent: (event: RumLongTaskEvent) => void) {
   addRumEvent({
     date: getTimestamp(entry.startTime),
     duration: msToNs(entry.duration),
     evt: {
       category: RumEventCategory.LONG_TASK,
     },
-    startTime: entry.startTime,
     userAction: getUserActionReference(entry.startTime),
   })
 }
