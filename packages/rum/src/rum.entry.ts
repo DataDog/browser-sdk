@@ -15,10 +15,12 @@ import {
 import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'
+import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
+import { startUserActionCollection } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -69,13 +71,16 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
-  const requestObservable = startRequestCollection()
+  const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
+  startDOMMutationCollection(lifeCycle)
+  if (configuration.isEnabled('collect-user-actions')) {
+    startUserActionCollection(lifeCycle)
+  }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
-  requestObservable.subscribe((requestDetails) =>
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, requestDetails)
-  )
+  requestStartObservable.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
+  requestCompleteObservable.subscribe((request) => lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, request))
 
   lodashAssign(datadogRum, globalApi)
   isAlreadyInitialized = true
