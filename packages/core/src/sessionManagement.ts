@@ -126,8 +126,7 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
 
 export function persistSession(session: SessionState, cookie: CookieCache, withNewSessionStrategy = false) {
   if (utils.isEmptyObject(session)) {
-    // clear session
-    cookie.set('', 0)
+    clearSession(cookie)
     return
   }
   if (withNewSessionStrategy) {
@@ -138,6 +137,10 @@ export function persistSession(session: SessionState, cookie: CookieCache, withN
     .map(([key, value]) => `${key}=${value}`)
     .join(SESSION_ENTRY_SEPARATOR)
   cookie.set(cookieString, SESSION_EXPIRATION_DELAY)
+}
+
+function clearSession(cookie: CookieCache) {
+  cookie.set('', 0)
 }
 
 export function stopSessionManagement() {
