@@ -1,4 +1,4 @@
-import { generateUUID, monitor, Observable } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { UserActionType } from './rum'
@@ -60,11 +60,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     })
   }
 
-  addEventListener('click', processClick, { capture: true })
+  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
 
   return {
     stop() {
-      removeEventListener('click', processClick, { capture: true })
+      removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
     },
   }
 }

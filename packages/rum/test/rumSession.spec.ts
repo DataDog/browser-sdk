@@ -20,6 +20,7 @@ describe('rum session', () => {
   const DURATION = 123456
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
+    isEnabled: () => true,
     resourceSampleRate: 0.5,
     sampleRate: 0.5,
   }
@@ -38,10 +39,11 @@ describe('rum session', () => {
   })
 
   afterEach(() => {
+    // remove intervals first
+    stopSessionManagement()
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
-    stopSessionManagement()
   })
 
   it('when tracked with resources should store session type and id', () => {
@@ -90,7 +92,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toBe(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
   })
 
   it('should renew on activity after expiration', () => {

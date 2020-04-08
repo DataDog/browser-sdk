@@ -11,7 +11,7 @@ import { LOGGER_SESSION_KEY, LoggerSessionType, startLoggerSession } from '../sr
 
 describe('logger session', () => {
   const DURATION = 123456
-  const configuration: Partial<Configuration> = { sampleRate: 0.5 }
+  const configuration: Partial<Configuration> = { isEnabled: () => true, sampleRate: 0.5 }
   let tracked = true
 
   beforeEach(() => {
@@ -21,10 +21,11 @@ describe('logger session', () => {
   })
 
   afterEach(() => {
+    // remove intervals first
+    stopSessionManagement()
     // flush pending callbacks to avoid random failures
     jasmine.clock().tick(new Date().getTime())
     jasmine.clock().uninstall()
-    stopSessionManagement()
   })
 
   it('when tracked should store session type and id', () => {
@@ -59,7 +60,7 @@ describe('logger session', () => {
 
     startLoggerSession(configuration as Configuration, true)
 
-    expect(getCookie(SESSION_COOKIE_NAME)).toBe(`${LOGGER_SESSION_KEY}=${LoggerSessionType.NOT_TRACKED}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${LOGGER_SESSION_KEY}=${LoggerSessionType.NOT_TRACKED}`)
   })
 
   it('should renew on activity after expiration', () => {

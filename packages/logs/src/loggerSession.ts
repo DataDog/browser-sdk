@@ -20,7 +20,11 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
       isTracked: () => isTracked,
     }
   }
-  const session = startSessionManagement(LOGGER_SESSION_KEY, (rawType) => computeSessionState(configuration, rawType))
+  const session = startSessionManagement(
+    LOGGER_SESSION_KEY,
+    (rawType) => computeSessionState(configuration, rawType),
+    configuration.isEnabled('new-session')
+  )
   return {
     getId: session.getId,
     isTracked: () => session.getType() === LoggerSessionType.TRACKED,
