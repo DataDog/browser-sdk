@@ -141,14 +141,11 @@ export function persistSession(session: SessionState, cookie: CookieCache, withN
 }
 
 export function stopSessionManagement() {
-  registeredListeners.forEach((e) => e())
-  registeredIntervals.forEach((interval) => clearInterval(interval))
-  registeredListeners = []
-  registeredIntervals = []
+  stopCallbacks.forEach((e) => e())
+  stopCallbacks = []
 }
 
-let registeredListeners: Array<() => void> = []
-let registeredIntervals: number[] = []
+let stopCallbacks: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
   const doExpandOrRenewSession = monitor(expandOrRenewSession)
@@ -156,7 +153,7 @@ export function trackActivity(expandOrRenewSession: () => void) {
   ;[utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL].forEach(
     (event: string) => {
       document.addEventListener(event, doExpandOrRenewSession, options)
-      registeredListeners.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
+      stopCallbacks.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
     }
   )
 }
@@ -171,8 +168,8 @@ function trackVisibility(expandSession: () => void, visibilityStateProvider: () 
   const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
   document.addEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
 
-  registeredIntervals.push(visibilityCheckInterval)
-  registeredListeners.push(() =>
+  stopCallbacks.push(() => {
+    clearInterval(visibilityCheckInterval)
     document.removeEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
-  )
+  })
 }
