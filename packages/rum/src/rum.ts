@@ -292,7 +292,7 @@ function trackAutoUserAction(lifeCycle: LifeCycle, addRumEvent: (event: RumUserA
     if (userAction.type !== UserActionType.CUSTOM) {
       addRumEvent({
         date: getTimestamp(userAction.startTime),
-        duration: userAction.duration,
+        duration: msToNs(userAction.duration),
         evt: {
           category: RumEventCategory.USER_ACTION,
           name: userAction.name,
