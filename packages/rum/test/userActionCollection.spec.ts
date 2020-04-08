@@ -3,7 +3,7 @@ import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { UserActionType } from '../src/rum'
 import {
   $$tests,
-  getUserActionId,
+  getUserActionReference,
   PageActivityEvent,
   startUserActionCollection,
   USER_ACTION_MAX_DURATION,
@@ -165,42 +165,42 @@ describe('newUserAction', () => {
   })
 })
 
-describe('getUserActionId', () => {
+describe('getUserActionReference', () => {
   const clock = mockClock()
 
   beforeEach(() => {
     resetUserAction()
   })
 
-  it('returns the current user action id', (done) => {
-    expect(getUserActionId(Date.now())).toBeUndefined()
+  it('returns the current user action reference', (done) => {
+    expect(getUserActionReference(Date.now())).toBeUndefined()
     const activityObservable = new Observable<PageActivityEvent>()
     newUserAction(activityObservable, (userAction) => {
-      expect(userAction!.id).toBe(userActionId)
-      expect(getUserActionId(Date.now())).toBeUndefined()
+      expect(userAction!.id).toBe(userActionReference.id)
+      expect(getUserActionReference(Date.now())).toBeUndefined()
       done()
     })
 
-    const userActionId = getUserActionId(Date.now())!
+    const userActionReference = getUserActionReference(Date.now())!
 
-    expect(userActionId).toBeDefined()
+    expect(userActionReference).toBeDefined()
 
     clock.tick(80)
     activityObservable.notify({ isBusy: false })
 
-    expect(getUserActionId(Date.now())).toBeDefined()
+    expect(getUserActionReference(Date.now())).toBeDefined()
 
     clock.expire()
   })
 
-  it('do not return the user action id for events occuring before the start of the user action', (done) => {
+  it('do not return the user action reference for events occuring before the start of the user action', (done) => {
     const activityObservable = new Observable<PageActivityEvent>()
     const time = Date.now()
     clock.tick(50)
     newUserAction(activityObservable, done)
 
     clock.tick(50)
-    expect(getUserActionId(time)).toBeUndefined()
+    expect(getUserActionReference(time)).toBeUndefined()
 
     clock.expire()
   })
