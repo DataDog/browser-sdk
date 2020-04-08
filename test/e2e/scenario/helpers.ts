@@ -177,3 +177,14 @@ export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) 
   const performance = resourceEvent.http.performance!
   expect(performance.download.start).toBeGreaterThan(0)
 }
+
+export async function waitForSDKLoaded() {
+  await browserExecuteAsync((done) => {
+    const interval = setInterval(() => {
+      if (window.DD_RUM && window.DD_LOGS) {
+        clearInterval(interval)
+        done(undefined)
+      }
+    }, 500)
+  })
+}
