@@ -93,10 +93,8 @@ function retrieveActiveSession(sessionCookie: CookieCache, withNewSessionStrateg
   if (!withNewSessionStrategy || isActiveSession(session)) {
     return session
   }
-  // clear session
-  const inactiveSession = {}
-  persistSession(inactiveSession, sessionCookie, withNewSessionStrategy)
-  return inactiveSession
+  clearSession(sessionCookie)
+  return {}
 }
 
 function isActiveSession(session: SessionState) {
