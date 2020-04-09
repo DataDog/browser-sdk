@@ -1,4 +1,4 @@
-import { DOM_EVENT, Observable, RequestCompleteEvent } from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage, Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
   $$tests,
@@ -85,6 +85,11 @@ describe('startUserActionCollection', () => {
       {
         duration: 50,
         id: jasmine.any(String),
+        measures: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
         name: 'Click me',
         startTime: jasmine.any(Number),
         type: UserActionType.CLICK,
@@ -164,6 +169,32 @@ describe('newUserAction', () => {
     expect(spy).toHaveBeenCalledTimes(1)
     const userAction = spy.calls.argsFor(0)[0]
     expect(userAction.name).toBe('test-1')
+  })
+
+  it('counts errors occuring during the user action', () => {
+    // tslint:disable-next-line: no-object-literal-type-assertion
+    const error = {} as ErrorMessage
+    const lifeCycle = new LifeCycle()
+    const spy = jasmine.createSpy<(arg: UserAction) => void>()
+    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, spy)
+
+    newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
+
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+    clock.tick(80)
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+
+    clock.expire()
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    const userAction = spy.calls.argsFor(0)[0] as AutoUserAction
+    expect(userAction.measures).toEqual({
+      errorCount: 2,
+      longTaskCount: 0,
+      resourceCount: 0,
+    })
   })
 })
 

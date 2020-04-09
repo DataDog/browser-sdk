@@ -1,6 +1,7 @@
 import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
+import { trackEventCounts } from './trackEventCounts'
 
 // Automatic user action collection lifecycle overview:
 //
@@ -41,6 +42,12 @@ export enum UserActionType {
   CUSTOM = 'custom',
 }
 
+export interface UserActionMeasures {
+  errorCount: number
+  longTaskCount: number
+  resourceCount: number
+}
+
 interface CustomUserAction {
   type: UserActionType.CUSTOM
   name: string
@@ -53,6 +60,7 @@ export interface AutoUserAction {
   name: string
   startTime: number
   duration: number
+  measures: UserActionMeasures
 }
 
 export type UserAction = CustomUserAction | AutoUserAction
@@ -88,9 +96,11 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   currentUserAction = { id, startTime }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
+  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
   waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
+    stopEventCountsTracking()
     if (endTime !== undefined) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
@@ -98,6 +108,11 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
         startTime,
         type,
         duration: endTime - startTime,
+        measures: {
+          errorCount: eventCounts.errorCount,
+          longTaskCount: eventCounts.longTaskCount,
+          resourceCount: eventCounts.resourceCount,
+        },
       })
     }
   })

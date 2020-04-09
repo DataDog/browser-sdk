@@ -224,6 +224,11 @@ describe('user action collection', () => {
     expect(userActionEvents.length).toBe(1)
     expect(userActionEvents[0].user_action).toEqual({
       id: (jasmine.any(String) as unknown) as string,
+      measures: {
+        error_count: 0,
+        long_task_count: (jasmine.any(Number) as unknown) as number,
+        resource_count: 0,
+      },
       type: 'click',
     })
     expect(userActionEvents[0].evt.name).toBe('click me')
@@ -248,6 +253,11 @@ describe('user action collection', () => {
     expect(userActionEvents.length).toBe(1)
     expect(userActionEvents[0].user_action).toEqual({
       id: (jasmine.any(String) as unknown) as string,
+      measures: {
+        error_count: 0,
+        long_task_count: (jasmine.any(Number) as unknown) as number,
+        resource_count: 1,
+      },
       type: 'click',
     })
     expect(userActionEvents[0].evt.name).toBe('click me')
