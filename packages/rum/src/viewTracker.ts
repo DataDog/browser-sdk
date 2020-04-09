@@ -3,6 +3,7 @@ import { DOM_EVENT, generateUUID, getTimestamp, monitor, msToNs, throttle } from
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
 import { RumSession } from './rumSession'
+import { trackEventCounts } from './trackEventCounts'
 
 export interface ViewMeasures {
   firstContentfulPaint?: number
@@ -140,22 +141,8 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       scheduleViewUpdate()
     }
   })
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, () => {
-    viewMeasures.errorCount += 1
-    scheduleViewUpdate()
-  })
-  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, () => {
-    viewMeasures.userActionCount += 1
-    scheduleViewUpdate()
-  })
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'longtask') {
-      viewMeasures.longTaskCount += 1
-      scheduleViewUpdate()
-    }
-  })
-  lifeCycle.subscribe(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH, () => {
-    viewMeasures.resourceCount += 1
+  trackEventCounts(lifeCycle, (eventCounts) => {
+    viewMeasures = { ...viewMeasures, ...eventCounts }
     scheduleViewUpdate()
   })
 }
