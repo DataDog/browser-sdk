@@ -157,6 +157,11 @@ export interface RumUserActionEvent {
 
 export type RumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserActionEvent
 
+enum SessionType {
+  SYNTHETICS = 'synthetics',
+  USER = 'user',
+}
+
 export function startRum(
   applicationId: string,
   lifeCycle: LifeCycle,
@@ -179,12 +184,17 @@ export function startRum(
     )
   )
 
+  const sessionTpe = getSessionType()
+
   const batch = startRumBatch(
     configuration,
     session,
     () => ({
       applicationId,
       date: new Date().getTime(),
+      session: {
+        type: sessionTpe,
+      },
       sessionId: viewContext.sessionId,
       view: {
         id: viewContext.id,
@@ -411,4 +421,12 @@ export function handleLongTaskEntry(entry: PerformanceLongTaskTiming, addRumEven
     },
     userAction: getUserActionReference(entry.startTime),
   })
+}
+
+interface BrowserWindow extends Window {
+  _DATADOG_SYNTHETICS_BROWSER?: unknown
+}
+
+function getSessionType() {
+  return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }
