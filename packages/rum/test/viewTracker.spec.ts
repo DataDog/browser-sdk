@@ -1,7 +1,7 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction, UserActionType } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { trackView, viewContext } from '../src/viewTracker'
 
@@ -88,6 +88,7 @@ describe('rum view measures', () => {
       bar: 123,
     },
     name: 'foo',
+    type: UserActionType.CUSTOM,
   }
   const FAKE_PAINT_ENTRY = {
     entryType: 'paint',

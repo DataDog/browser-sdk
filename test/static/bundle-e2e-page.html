@@ -16,6 +16,7 @@
           logsEndpoint: `${intakeOrigin}/logs`,
           rumEndpoint: `${intakeOrigin}/rum`,
           forwardErrorsToLogs: true,
+          enableExperimentalFeatures: ['new-session'],
         })
     </script>
     <script type="text/javascript" src="./datadog-rum-us.js"></script>
@@ -27,6 +28,7 @@
           internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
           logsEndpoint: `${intakeOrigin}/logs`,
           rumEndpoint: `${intakeOrigin}/rum`,
+          enableExperimentalFeatures: ['collect-user-actions'],
         })
     </script>
   </head>

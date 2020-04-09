@@ -3,8 +3,18 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
-export const ONE_DAY = 24 * ONE_HOUR
 export const ONE_KILO_BYTE = 1024
+
+export enum DOM_EVENT {
+  BEFORE_UNLOAD = 'beforeunload',
+  CLICK = 'click',
+  KEY_DOWN = 'keydown',
+  LOAD = 'load',
+  POP_STATE = 'popstate',
+  SCROLL = 'scroll',
+  TOUCH_START = 'touchstart',
+  VISIBILITY_CHANGE = 'visibilitychange',
+}
 
 export enum ResourceKind {
   DOCUMENT = 'document',
@@ -173,8 +183,21 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
   return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
 }
 
-export function includes(candidate: unknown[], search: unknown) {
+export function includes(candidate: string, search: string): boolean
+export function includes<T>(candidate: T[], search: T): boolean
+export function includes(candidate: string | unknown[], search: any) {
+  // tslint:disable-next-line: no-unsafe-any
   return candidate.indexOf(search) !== -1
+}
+
+export function find<T>(array: T[], predicate: (item: T, index: number, array: T[]) => unknown): T | undefined {
+  for (let i = 0; i < array.length; i += 1) {
+    const item = array[i]
+    if (predicate(item, i, array)) {
+      return item
+    }
+  }
+  return undefined
 }
 
 export function isPercentage(value: unknown) {
@@ -221,6 +244,10 @@ export function objectValues(object: { [key: string]: unknown }) {
 
 export function objectEntries(object: { [key: string]: unknown }) {
   return Object.keys(object).map((key) => [key, object[key]])
+}
+
+export function isEmptyObject(object: object) {
+  return Object.keys(object).length === 0
 }
 
 /**

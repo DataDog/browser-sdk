@@ -1,4 +1,4 @@
-import { getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
+import { DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
@@ -99,13 +99,13 @@ function retrieveNavigationTimingWhenLoaded(callback: (timing: PerformanceNaviga
   if (document.readyState === 'complete') {
     sendFakeTiming()
   } else {
-    const listener = () => {
-      window.removeEventListener('load', listener)
+    const listener = monitor(() => {
+      window.removeEventListener(DOM_EVENT.LOAD, listener)
       // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
       setTimeout(monitor(sendFakeTiming))
-    }
+    })
 
-    window.addEventListener('load', listener)
+    window.addEventListener(DOM_EVENT.LOAD, listener)
   }
 }
 
