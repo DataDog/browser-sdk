@@ -8,7 +8,7 @@ import {
   USER_ACTION_MAX_DURATION,
   UserActionType,
 } from '../src/userActionCollection'
-const { newUserAction, trackPageActivities, resetUserAction } = $$tests
+const { waitUserActionCompletion, trackPageActivities, resetUserAction } = $$tests
 
 function mockClock() {
   beforeEach(() => {
@@ -109,7 +109,7 @@ describe('getUserActionReference', () => {
   it('returns the current user action reference', (done) => {
     expect(getUserActionReference(Date.now())).toBeUndefined()
     const activityObservable = new Observable<PageActivityEvent>()
-    newUserAction(activityObservable, (userAction) => {
+    waitUserActionCompletion(activityObservable, (userAction) => {
       expect(userAction!.id).toBe(userActionReference.id)
       expect(getUserActionReference(Date.now())).toBeUndefined()
       done()
@@ -131,7 +131,7 @@ describe('getUserActionReference', () => {
     const activityObservable = new Observable<PageActivityEvent>()
     const time = Date.now()
     clock.tick(50)
-    newUserAction(activityObservable, done)
+    waitUserActionCompletion(activityObservable, done)
 
     clock.tick(50)
     expect(getUserActionReference(time)).toBeUndefined()
@@ -244,11 +244,11 @@ describe('trackPagePageActivities', () => {
   })
 })
 
-describe('newUserAction', () => {
+describe('waitUserActionCompletion', () => {
   const clock = mockClock()
 
   it('should not collect an event that is not followed by page activity', (done) => {
-    newUserAction(new Observable(), (userAction) => {
+    waitUserActionCompletion(new Observable(), (userAction) => {
       expect(userAction).toBeUndefined()
       done()
     })
@@ -259,7 +259,7 @@ describe('newUserAction', () => {
   it('should collect an event that is followed by page activity', (done) => {
     const activityObservable = new Observable<PageActivityEvent>()
 
-    newUserAction(activityObservable, (userAction) => {
+    waitUserActionCompletion(activityObservable, (userAction) => {
       expect(userAction).toEqual({
         duration: 80,
         id: (jasmine.any(String) as unknown) as string,
@@ -277,14 +277,14 @@ describe('newUserAction', () => {
   it('cancels any starting user action while another one is happening', (done) => {
     let count = 2
     const activityObservable = new Observable<PageActivityEvent>()
-    newUserAction(activityObservable, (userAction) => {
+    waitUserActionCompletion(activityObservable, (userAction) => {
       expect(userAction).toBeDefined()
       count -= 1
       if (count === 0) {
         done()
       }
     })
-    newUserAction(activityObservable, (userAction) => {
+    waitUserActionCompletion(activityObservable, (userAction) => {
       expect(userAction).toBeUndefined()
       count -= 1
       if (count === 0) {
@@ -301,7 +301,7 @@ describe('newUserAction', () => {
   describe('extend with activities', () => {
     it('is extended while there is page activities', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
+      waitUserActionCompletion(activityObservable, (userAction) => {
         expect(userAction!.duration).toBe(5 * 80)
         done()
       })
@@ -317,7 +317,7 @@ describe('newUserAction', () => {
     it('expires after a limit', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
-      newUserAction(activityObservable, (userAction) => {
+      waitUserActionCompletion(activityObservable, (userAction) => {
         expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
         stop = true
         done()
@@ -335,7 +335,7 @@ describe('newUserAction', () => {
   describe('busy activities', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
+      waitUserActionCompletion(activityObservable, (userAction) => {
         expect(userAction!.duration).toBe(580)
         done()
       })
@@ -351,7 +351,7 @@ describe('newUserAction', () => {
 
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
+      waitUserActionCompletion(activityObservable, (userAction) => {
         expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
         done()
       })

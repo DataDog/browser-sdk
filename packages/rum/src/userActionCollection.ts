@@ -67,7 +67,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
     const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
-    newUserAction(pageActivitiesObservable, (userActionCompleteEvent) => {
+    waitUserActionCompletion(pageActivitiesObservable, (userActionCompleteEvent) => {
       stopPageActivitiesTracking()
       if (userActionCompleteEvent) {
         lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
@@ -165,24 +165,24 @@ interface UserActionCompleteEvent {
   duration: number
 }
 
-function newUserAction(
+function waitUserActionCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  finishCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
+  completionCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
 ) {
   if (currentUserAction) {
     // Discard any new user action if another one is already occuring.
-    finishCallback(undefined)
+    completionCallback(undefined)
     return
   }
 
   let idleTimeoutId: ReturnType<typeof setTimeout>
   const id = generateUUID()
   const startTime = performance.now()
-  let hasFinished = false
+  let hasCompleted = false
 
-  const validationTimeoutId = setTimeout(monitor(() => finish(undefined)), USER_ACTION_VALIDATION_DELAY)
+  const validationTimeoutId = setTimeout(monitor(() => complete(undefined)), USER_ACTION_VALIDATION_DELAY)
   const maxDurationTimeoutId = setTimeout(
-    monitor(() => finish(completeUserAction(performance.now()))),
+    monitor(() => complete(completeUserAction(performance.now()))),
     USER_ACTION_MAX_DURATION
   )
 
@@ -193,7 +193,7 @@ function newUserAction(
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => finish(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => complete(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
     }
   })
 
@@ -201,23 +201,23 @@ function newUserAction(
     return { id, startTime, duration: endTime - startTime }
   }
 
-  function finish(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
-    if (hasFinished) {
+  function complete(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
+    if (hasCompleted) {
       return
     }
-    hasFinished = true
+    hasCompleted = true
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     currentUserAction = undefined
-    finishCallback(userActionCompleteEvent)
+    completionCallback(userActionCompleteEvent)
   }
 }
 
 export const $$tests = {
-  newUserAction,
   trackPageActivities,
   resetUserAction() {
     currentUserAction = undefined
   },
+  waitUserActionCompletion,
 }
