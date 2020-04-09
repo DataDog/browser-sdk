@@ -223,6 +223,7 @@ export function startRum(
       return {
         application_id: applicationId,
         session_id: viewContext.sessionId,
+        user_action: getUserActionReference(performance.now()),
         view: {
           id: viewContext.id,
         },
