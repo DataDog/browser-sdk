@@ -11,6 +11,7 @@ import {
   serverUrl,
   sortByMessage,
   tearDown,
+  waitForSDKLoaded,
   waitServerLogs,
   waitServerRumEvents,
   withBrowserLogs,
@@ -19,6 +20,7 @@ import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from './serv
 
 beforeEach(async () => {
   await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
+  await waitForSDKLoaded()
 })
 
 afterEach(tearDown)
