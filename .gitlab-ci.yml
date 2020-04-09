@@ -53,7 +53,6 @@ build:
   image: $CI_IMAGE
   script:
     - yarn
-    - yarn typecheck
     - yarn build
 
 compatibility:
