@@ -1,7 +1,6 @@
-import { DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
+import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
-import { UserActionType } from './rum'
 
 // Automatic user action collection lifecycle overview:
 //
@@ -35,6 +34,28 @@ const USER_ACTION_VALIDATION_DELAY = 100
 const USER_ACTION_END_DELAY = 100
 // Maximum duration of a user action
 export const USER_ACTION_MAX_DURATION = 10_000
+
+export enum UserActionType {
+  CLICK = 'click',
+  LOAD_VIEW = 'load_view',
+  CUSTOM = 'custom',
+}
+
+interface CustomUserAction {
+  type: UserActionType.CUSTOM
+  name: string
+  context?: Context
+}
+
+interface AutoUserAction {
+  type: UserActionType.LOAD_VIEW | UserActionType.CLICK
+  id: string
+  name: string
+  startTime: number
+  duration: number
+}
+
+export type UserAction = CustomUserAction | AutoUserAction
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   function processClick(event: Event) {

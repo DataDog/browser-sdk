@@ -1,8 +1,9 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction, UserActionType } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent } from '../src/rum'
 import { RumSession } from '../src/rumSession'
+import { UserAction, UserActionType } from '../src/userActionCollection'
 import { trackView, viewContext } from '../src/viewTracker'
 
 function setup({

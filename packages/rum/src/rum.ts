@@ -31,7 +31,7 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { getUserActionReference, UserActionReference } from './userActionCollection'
+import { getUserActionReference, UserActionReference, UserActionType } from './userActionCollection'
 import { trackView, viewContext, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
@@ -42,28 +42,6 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 }
 
 export type PerformanceLongTaskTiming = PerformanceEntry
-
-export enum UserActionType {
-  CLICK = 'click',
-  LOAD_VIEW = 'load_view',
-  CUSTOM = 'custom',
-}
-
-interface CustomUserAction {
-  type: UserActionType.CUSTOM
-  name: string
-  context?: Context
-}
-
-interface AutoUserAction {
-  type: UserActionType.LOAD_VIEW | UserActionType.CLICK
-  id: string
-  name: string
-  startTime: number
-  duration: number
-}
-
-export type UserAction = CustomUserAction | AutoUserAction
 
 export enum RumEventCategory {
   USER_ACTION = 'user_action',

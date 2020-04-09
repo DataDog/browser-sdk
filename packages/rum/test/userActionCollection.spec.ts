@@ -1,12 +1,12 @@
 import { DOM_EVENT, Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { UserActionType } from '../src/rum'
 import {
   $$tests,
   getUserActionReference,
   PageActivityEvent,
   startUserActionCollection,
   USER_ACTION_MAX_DURATION,
+  UserActionType,
 } from '../src/userActionCollection'
 const { newUserAction, trackPageActivities, resetUserAction } = $$tests
 
