@@ -29,7 +29,7 @@ import {
   computeSize,
   isValidResource,
 } from './resourceUtils'
-import { RumGlobal } from './rum.entry'
+import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { getUserActionReference, UserActionReference } from './userActionCollection'
 import { trackView, viewContext, ViewMeasures } from './viewTracker'
@@ -219,16 +219,18 @@ export function startRum(
     addUserAction: monitor((name: string, context?: Context) => {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
     }),
-    getInternalContext: monitor(() => {
-      return {
-        application_id: applicationId,
-        session_id: viewContext.sessionId,
-        user_action: getUserActionReference(),
-        view: {
-          id: viewContext.id,
-        },
+    getInternalContext: monitor(
+      (): InternalContext => {
+        return {
+          application_id: applicationId,
+          session_id: viewContext.sessionId,
+          user_action: getUserActionReference(),
+          view: {
+            id: viewContext.id,
+          },
+        }
       }
-    }),
+    ),
     setRumGlobalContext: monitor((context: Context) => {
       globalContext = context
     }),

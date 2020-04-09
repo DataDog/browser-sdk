@@ -75,11 +75,7 @@ export interface UserActionReference {
   id: string
 }
 export function getUserActionReference(time?: number): UserActionReference | undefined {
-  if (!currentUserAction) {
-    return undefined
-  }
-
-  if (time !== undefined && time < currentUserAction.startTime) {
+  if (!currentUserAction || (time !== undefined && time < currentUserAction.startTime)) {
     return undefined
   }
 
