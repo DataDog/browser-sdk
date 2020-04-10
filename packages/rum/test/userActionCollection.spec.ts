@@ -45,123 +45,57 @@ function eventsCollector<T>() {
   }
 }
 
-describe('newUserAction', () => {
+describe('startUserActionCollection', () => {
+  const { events, pushEvent } = eventsCollector()
   const clock = mockClock()
+  let button: HTMLButtonElement
+  let userActionCollectionSubscription: { stop(): void }
+  let lifeCycle: LifeCycle
 
-  it('should not collect an event that is not followed by page activity', (done) => {
-    newUserAction(new Observable(), (userAction) => {
-      expect(userAction).toBeUndefined()
-      done()
+  beforeEach(() => {
+    button = document.createElement('button')
+    button.type = 'button'
+    button.appendChild(document.createTextNode('Click me'))
+    document.body.appendChild(button)
+
+    lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
+    userActionCollectionSubscription = startUserActionCollection(lifeCycle)
+  })
+
+  afterEach(() => {
+    button.parentNode!.removeChild(button)
+    userActionCollectionSubscription.stop()
+  })
+
+  it('starts a user action when clicking on an element', () => {
+    button.addEventListener(DOM_EVENT.CLICK, () => {
+      clock.tick(50)
+      // Since we don't collect dom mutations for this test, manually dispatch one
+      lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     })
+
+    clock.tick(50)
+    button.click()
 
     clock.expire()
+    expect(events).toEqual([
+      {
+        duration: 50,
+        id: jasmine.any(String),
+        name: 'Click me',
+        startTime: jasmine.any(Number),
+        type: UserActionType.CLICK,
+      },
+    ])
   })
 
-  it('should collect an event that is followed by page activity', (done) => {
-    const activityObservable = new Observable<PageActivityEvent>()
-
-    newUserAction(activityObservable, (userAction) => {
-      expect(userAction).toEqual({
-        duration: 80,
-        id: (jasmine.any(String) as unknown) as string,
-        startTime: (jasmine.any(Number) as unknown) as number,
-      })
-      done()
-    })
-
-    clock.tick(80)
-    activityObservable.notify({ isBusy: false })
+  it('cancels a user action when if nothing happens after a click', () => {
+    clock.tick(50)
+    button.click()
 
     clock.expire()
-  })
-
-  it('cancels any starting user action while another one is happening', (done) => {
-    let count = 2
-    const activityObservable = new Observable<PageActivityEvent>()
-    newUserAction(activityObservable, (userAction) => {
-      expect(userAction).toBeDefined()
-      count -= 1
-      if (count === 0) {
-        done()
-      }
-    })
-    newUserAction(activityObservable, (userAction) => {
-      expect(userAction).toBeUndefined()
-      count -= 1
-      if (count === 0) {
-        done()
-      }
-    })
-
-    clock.tick(80)
-    activityObservable.notify({ isBusy: false })
-
-    clock.expire()
-  })
-
-  describe('extend with activities', () => {
-    it('is extended while there is page activities', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
-        expect(userAction!.duration).toBe(5 * 80)
-        done()
-      })
-
-      for (let i = 0; i < 5; i += 1) {
-        clock.tick(80)
-        activityObservable.notify({ isBusy: false })
-      }
-
-      clock.expire()
-    })
-
-    it('expires after a limit', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      let stop = false
-      newUserAction(activityObservable, (userAction) => {
-        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
-        stop = true
-        done()
-      })
-
-      for (let i = 0; i < 500 && !stop; i += 1) {
-        clock.tick(80)
-        activityObservable.notify({ isBusy: false })
-      }
-
-      clock.expire()
-    })
-  })
-
-  describe('busy activities', () => {
-    it('is extended while the page is busy', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
-        expect(userAction!.duration).toBe(580)
-        done()
-      })
-
-      clock.tick(80)
-      activityObservable.notify({ isBusy: true })
-
-      clock.tick(500)
-      activityObservable.notify({ isBusy: false })
-
-      clock.expire()
-    })
-
-    it('expires is the page is busy for too long', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      newUserAction(activityObservable, (userAction) => {
-        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
-        done()
-      })
-
-      clock.tick(80)
-      activityObservable.notify({ isBusy: true })
-
-      clock.expire()
-    })
+    expect(events).toEqual([])
   })
 })
 
@@ -310,56 +244,122 @@ describe('trackPagePageActivities', () => {
   })
 })
 
-describe('startUserActionCollection', () => {
-  const { events, pushEvent } = eventsCollector()
+describe('newUserAction', () => {
   const clock = mockClock()
-  let button: HTMLButtonElement
-  let userActionCollectionSubscription: { stop(): void }
-  let lifeCycle: LifeCycle
 
-  beforeEach(() => {
-    button = document.createElement('button')
-    button.type = 'button'
-    button.appendChild(document.createTextNode('Click me'))
-    document.body.appendChild(button)
-
-    lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
-    userActionCollectionSubscription = startUserActionCollection(lifeCycle)
-  })
-
-  afterEach(() => {
-    button.parentNode!.removeChild(button)
-    userActionCollectionSubscription.stop()
-  })
-
-  it('starts a user action when clicking on an element', () => {
-    button.addEventListener(DOM_EVENT.CLICK, () => {
-      clock.tick(50)
-      // Since we don't collect dom mutations for this test, manually dispatch one
-      lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+  it('should not collect an event that is not followed by page activity', (done) => {
+    newUserAction(new Observable(), (userAction) => {
+      expect(userAction).toBeUndefined()
+      done()
     })
 
-    clock.tick(50)
-    button.click()
-
     clock.expire()
-    expect(events).toEqual([
-      {
-        duration: 50,
-        id: jasmine.any(String),
-        name: 'Click me',
-        startTime: jasmine.any(Number),
-        type: UserActionType.CLICK,
-      },
-    ])
   })
 
-  it('cancels a user action when if nothing happens after a click', () => {
-    clock.tick(50)
-    button.click()
+  it('should collect an event that is followed by page activity', (done) => {
+    const activityObservable = new Observable<PageActivityEvent>()
+
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toEqual({
+        duration: 80,
+        id: (jasmine.any(String) as unknown) as string,
+        startTime: (jasmine.any(Number) as unknown) as number,
+      })
+      done()
+    })
+
+    clock.tick(80)
+    activityObservable.notify({ isBusy: false })
 
     clock.expire()
-    expect(events).toEqual([])
+  })
+
+  it('cancels any starting user action while another one is happening', (done) => {
+    let count = 2
+    const activityObservable = new Observable<PageActivityEvent>()
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toBeDefined()
+      count -= 1
+      if (count === 0) {
+        done()
+      }
+    })
+    newUserAction(activityObservable, (userAction) => {
+      expect(userAction).toBeUndefined()
+      count -= 1
+      if (count === 0) {
+        done()
+      }
+    })
+
+    clock.tick(80)
+    activityObservable.notify({ isBusy: false })
+
+    clock.expire()
+  })
+
+  describe('extend with activities', () => {
+    it('is extended while there is page activities', (done) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(5 * 80)
+        done()
+      })
+
+      for (let i = 0; i < 5; i += 1) {
+        clock.tick(80)
+        activityObservable.notify({ isBusy: false })
+      }
+
+      clock.expire()
+    })
+
+    it('expires after a limit', (done) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      let stop = false
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
+        stop = true
+        done()
+      })
+
+      for (let i = 0; i < 500 && !stop; i += 1) {
+        clock.tick(80)
+        activityObservable.notify({ isBusy: false })
+      }
+
+      clock.expire()
+    })
+  })
+
+  describe('busy activities', () => {
+    it('is extended while the page is busy', (done) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(580)
+        done()
+      })
+
+      clock.tick(80)
+      activityObservable.notify({ isBusy: true })
+
+      clock.tick(500)
+      activityObservable.notify({ isBusy: false })
+
+      clock.expire()
+    })
+
+    it('expires is the page is busy for too long', (done) => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      newUserAction(activityObservable, (userAction) => {
+        expect(userAction!.duration).toBe(USER_ACTION_MAX_DURATION)
+        done()
+      })
+
+      clock.tick(80)
+      activityObservable.notify({ isBusy: true })
+
+      clock.expire()
+    })
   })
 })

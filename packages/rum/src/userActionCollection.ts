@@ -82,61 +82,6 @@ export function getUserActionReference(time?: number): UserActionReference | und
   return { id: currentUserAction.id }
 }
 
-interface UserActionCompleteEvent {
-  id: string
-  startTime: number
-  duration: number
-}
-
-function newUserAction(
-  pageActivitiesObservable: Observable<PageActivityEvent>,
-  finishCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
-) {
-  if (currentUserAction) {
-    // Discard any new user action if another one is already occuring.
-    finishCallback(undefined)
-    return
-  }
-
-  let idleTimeoutId: ReturnType<typeof setTimeout>
-  const id = generateUUID()
-  const startTime = performance.now()
-  let hasFinished = false
-
-  const validationTimeoutId = setTimeout(monitor(() => finish(undefined)), USER_ACTION_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(
-    monitor(() => finish(completeUserAction(performance.now()))),
-    USER_ACTION_MAX_DURATION
-  )
-
-  currentUserAction = { id, startTime }
-
-  pageActivitiesObservable.subscribe(({ isBusy }) => {
-    clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
-    const lastChangeTime = performance.now()
-    if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => finish(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
-    }
-  })
-
-  function completeUserAction(endTime: number): UserActionCompleteEvent {
-    return { id, startTime, duration: endTime - startTime }
-  }
-
-  function finish(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
-    if (hasFinished) {
-      return
-    }
-    hasFinished = true
-    clearTimeout(validationTimeoutId)
-    clearTimeout(idleTimeoutId)
-    clearTimeout(maxDurationTimeoutId)
-    currentUserAction = undefined
-    finishCallback(userActionCompleteEvent)
-  }
-}
-
 export interface PageActivityEvent {
   isBusy: boolean
 }
@@ -190,6 +135,61 @@ function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<Pag
     stop() {
       subscriptions.forEach((s) => s.unsubscribe())
     },
+  }
+}
+
+interface UserActionCompleteEvent {
+  id: string
+  startTime: number
+  duration: number
+}
+
+function newUserAction(
+  pageActivitiesObservable: Observable<PageActivityEvent>,
+  finishCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
+) {
+  if (currentUserAction) {
+    // Discard any new user action if another one is already occuring.
+    finishCallback(undefined)
+    return
+  }
+
+  let idleTimeoutId: ReturnType<typeof setTimeout>
+  const id = generateUUID()
+  const startTime = performance.now()
+  let hasFinished = false
+
+  const validationTimeoutId = setTimeout(monitor(() => finish(undefined)), USER_ACTION_VALIDATION_DELAY)
+  const maxDurationTimeoutId = setTimeout(
+    monitor(() => finish(completeUserAction(performance.now()))),
+    USER_ACTION_MAX_DURATION
+  )
+
+  currentUserAction = { id, startTime }
+
+  pageActivitiesObservable.subscribe(({ isBusy }) => {
+    clearTimeout(validationTimeoutId)
+    clearTimeout(idleTimeoutId)
+    const lastChangeTime = performance.now()
+    if (!isBusy) {
+      idleTimeoutId = setTimeout(monitor(() => finish(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
+    }
+  })
+
+  function completeUserAction(endTime: number): UserActionCompleteEvent {
+    return { id, startTime, duration: endTime - startTime }
+  }
+
+  function finish(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
+    if (hasFinished) {
+      return
+    }
+    hasFinished = true
+    clearTimeout(validationTimeoutId)
+    clearTimeout(idleTimeoutId)
+    clearTimeout(maxDurationTimeoutId)
+    currentUserAction = undefined
+    finishCallback(userActionCompleteEvent)
   }
 }
 
