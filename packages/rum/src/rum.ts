@@ -209,7 +209,7 @@ export function startRum(
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
-  trackCustomUserAction(lifeCycle, batch.addUserEvent)
+  trackCustomUserAction(lifeCycle, batch.addRumEvent)
   trackAutoUserAction(lifeCycle, batch.addRumEvent)
 
   return {
@@ -252,14 +252,9 @@ function startRumBatch(
     () => lodashMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider())
   )
   return {
-    addRumEvent: (event: RumEvent) => {
+    addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked()) {
-        batch.add(withSnakeCaseKeys(event as Context))
-      }
-    },
-    addUserEvent: (event: RumUserActionEvent) => {
-      if (session.isTracked()) {
-        batch.add(event as Context)
+        batch.add({ ...context, ...withSnakeCaseKeys(event as Context) })
       }
     },
     beforeFlushOnUnload: (handler: () => void) => batch.beforeFlushOnUnload(handler),
@@ -285,19 +280,24 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumErrorEvent) =
   })
 }
 
-function trackCustomUserAction(lifeCycle: LifeCycle, addUserEvent: (event: RumUserActionEvent) => void) {
+function trackCustomUserAction(
+  lifeCycle: LifeCycle,
+  addRumEvent: (event: RumUserActionEvent, context?: Context) => void
+) {
   lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
     if (userAction.type === UserActionType.CUSTOM) {
-      addUserEvent({
-        ...userAction.context,
-        evt: {
-          category: RumEventCategory.USER_ACTION,
-          name: userAction.name,
+      addRumEvent(
+        {
+          evt: {
+            category: RumEventCategory.USER_ACTION,
+            name: userAction.name,
+          },
+          userAction: {
+            type: userAction.type,
+          },
         },
-        userAction: {
-          type: userAction.type,
-        },
-      })
+        userAction.context
+      )
     }
   })
 }
