@@ -47,7 +47,7 @@ interface CustomUserAction {
   context?: Context
 }
 
-interface AutoUserAction {
+export interface AutoUserAction {
   type: UserActionType.LOAD_VIEW | UserActionType.CLICK
   id: string
   name: string
@@ -63,22 +63,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
       return
     }
 
-    const content = getElementContent(event.target)
-
-    const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
-
-    waitUserActionCompletion(pageActivitiesObservable, (userActionCompleteEvent) => {
-      stopPageActivitiesTracking()
-      if (userActionCompleteEvent) {
-        lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
-          duration: userActionCompleteEvent.duration,
-          id: userActionCompleteEvent.id,
-          name: content,
-          startTime: userActionCompleteEvent.startTime,
-          type: UserActionType.CLICK,
-        })
-      }
-    })
+    newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
@@ -91,6 +76,32 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 }
 
 let currentUserAction: { id: string; startTime: number } | undefined
+
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
+  if (currentUserAction) {
+    // Discard any new user action if another one is already occuring.
+    return
+  }
+
+  const id = generateUUID()
+  const startTime = performance.now()
+  currentUserAction = { id, startTime }
+
+  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
+
+  waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
+    stopPageActivitiesTracking()
+    if (endTime !== undefined) {
+      lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
+        id,
+        name,
+        startTime,
+        type,
+        duration: endTime - startTime,
+      })
+    }
+  })
+}
 
 export interface UserActionReference {
   id: string
@@ -159,49 +170,26 @@ function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<Pag
   }
 }
 
-interface UserActionCompleteEvent {
-  id: string
-  startTime: number
-  duration: number
-}
-
 function waitUserActionCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  completionCallback: (userActionCompleteEvent: UserActionCompleteEvent | undefined) => void
+  completionCallback: (endTime: number | undefined) => void
 ) {
-  if (currentUserAction) {
-    // Discard any new user action if another one is already occuring.
-    completionCallback(undefined)
-    return
-  }
-
   let idleTimeoutId: ReturnType<typeof setTimeout>
-  const id = generateUUID()
-  const startTime = performance.now()
   let hasCompleted = false
 
   const validationTimeoutId = setTimeout(monitor(() => complete(undefined)), USER_ACTION_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(
-    monitor(() => complete(completeUserAction(performance.now()))),
-    USER_ACTION_MAX_DURATION
-  )
-
-  currentUserAction = { id, startTime }
+  const maxDurationTimeoutId = setTimeout(monitor(() => complete(performance.now())), USER_ACTION_MAX_DURATION)
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => complete(completeUserAction(lastChangeTime))), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => complete(lastChangeTime)), USER_ACTION_END_DELAY)
     }
   })
 
-  function completeUserAction(endTime: number): UserActionCompleteEvent {
-    return { id, startTime, duration: endTime - startTime }
-  }
-
-  function complete(userActionCompleteEvent: UserActionCompleteEvent | undefined) {
+  function complete(endTime: number | undefined) {
     if (hasCompleted) {
       return
     }
@@ -210,11 +198,12 @@ function waitUserActionCompletion(
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     currentUserAction = undefined
-    completionCallback(userActionCompleteEvent)
+    completionCallback(endTime)
   }
 }
 
 export const $$tests = {
+  newUserAction,
   trackPageActivities,
   resetUserAction() {
     currentUserAction = undefined
