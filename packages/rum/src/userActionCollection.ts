@@ -74,11 +74,12 @@ let currentUserAction: { id: string; startTime: number } | undefined
 export interface UserActionReference {
   id: string
 }
-export function getUserActionReference(time: number): UserActionReference | undefined {
-  if (currentUserAction && time >= currentUserAction.startTime) {
-    return { id: currentUserAction.id }
+export function getUserActionReference(time?: number): UserActionReference | undefined {
+  if (!currentUserAction || (time !== undefined && time < currentUserAction.startTime)) {
+    return undefined
   }
-  return undefined
+
+  return { id: currentUserAction.id }
 }
 
 interface UserActionCompleteEvent {
