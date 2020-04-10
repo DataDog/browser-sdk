@@ -131,7 +131,7 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const tags = `version:${conf.version}`
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
-  const proxyParameter = conf.proxyHost ? `dd-host=${datadogHost}&` : ''
+  const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
 
   return `https://${host}/v1/input/${conf.clientToken}?${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
 }
