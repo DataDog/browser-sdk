@@ -10,7 +10,7 @@
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml,html}\"",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json && tslint -c ./tslint.json -p ./test/e2e/scenario/tsconfig.json",
-    "typecheck": "tsc -p . --noEmit true",
+    "typecheck": "tsc -p . --noEmit true && tsc -p test/e2e/scenario --noEmit true",
     "dev": "ENV=development node test/server/server.js",
     "release": "lerna version --exact",
     "version": "node ./scripts/generate-changelog.js",
