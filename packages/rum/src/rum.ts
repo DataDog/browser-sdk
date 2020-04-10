@@ -282,11 +282,11 @@ function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumErrorEvent) =
 
 function trackCustomUserAction(
   lifeCycle: LifeCycle,
-  addUserEvent: (event: RumUserActionEvent, context?: Context) => void
+  addRumEvent: (event: RumUserActionEvent, context?: Context) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
     if (userAction.type === UserActionType.CUSTOM) {
-      addUserEvent(
+      addRumEvent(
         {
           evt: {
             category: RumEventCategory.USER_ACTION,
