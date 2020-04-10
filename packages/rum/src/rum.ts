@@ -209,7 +209,7 @@ export function startRum(
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
-  trackCustomUserAction(lifeCycle, batch.addUserEvent)
+  trackCustomUserAction(lifeCycle, batch.addRumEvent)
   trackAutoUserAction(lifeCycle, batch.addRumEvent)
 
   return {
@@ -252,12 +252,7 @@ function startRumBatch(
     () => lodashMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider())
   )
   return {
-    addRumEvent: (event: RumEvent) => {
-      if (session.isTracked()) {
-        batch.add(withSnakeCaseKeys(event as Context))
-      }
-    },
-    addUserEvent: (event: RumUserActionEvent, context?: Context) => {
+    addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked()) {
         batch.add({ ...context, ...withSnakeCaseKeys(event as Context) })
       }
