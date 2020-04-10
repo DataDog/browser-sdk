@@ -70,4 +70,12 @@ describe('configuration', () => {
       expect(configuration.rumEndpoint).toContain('datadoghq.eu')
     })
   })
+
+  describe('proxyHost', () => {
+    it('should replace endpoint host add set it as a query parameter', () => {
+      const configuration = buildConfiguration({ clientToken, proxyHost: 'proxy.io' }, prodEnv)
+      expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
+      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.com&')
+    })
+  })
 })
