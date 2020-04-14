@@ -187,20 +187,19 @@ describe('newUserAction', () => {
   })
 
   it('counts errors occuring during the user action', () => {
-    // tslint:disable-next-line: no-object-literal-type-assertion
-    const error = {} as ErrorMessage
+    const error = {}
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
 
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
     clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
 
     clock.expire()
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
 
     expect(events.length).toBe(1)
     const userAction = events[0] as AutoUserAction
@@ -224,20 +223,20 @@ describe('trackPagePageActivities', () => {
   it('emits an activity event on resource collected', () => {
     const lifeCycle = new LifeCycle()
     trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      // tslint:disable-next-line no-object-literal-type-assertion
+    const performanceEntry = {
       entryType: 'resource',
-    } as PerformanceEntry)
+    }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
     const lifeCycle = new LifeCycle()
     trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-      // tslint:disable-next-line no-object-literal-type-assertion
+    const performanceEntry = {
       entryType: 'navigation',
-    } as PerformanceEntry)
+    }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
     expect(events).toEqual([])
   })
 
@@ -258,6 +257,9 @@ describe('trackPagePageActivities', () => {
   })
 
   describe('requests', () => {
+    function makeFakeRequestCompleteEvent(requestId: number): RequestCompleteEvent {
+      return { requestId } as any
+    }
     it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
@@ -273,20 +275,14 @@ describe('trackPagePageActivities', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 10,
       })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        // tslint:disable-next-line no-object-literal-type-assertion
-        requestId: 10,
-      } as RequestCompleteEvent)
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
     })
 
     it('ignores requests that has started before', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        // tslint:disable-next-line no-object-literal-type-assertion
-        requestId: 10,
-      } as RequestCompleteEvent)
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
@@ -299,18 +295,9 @@ describe('trackPagePageActivities', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestId: 11,
       })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        // tslint:disable-next-line no-object-literal-type-assertion
-        requestId: 9,
-      } as RequestCompleteEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        // tslint:disable-next-line no-object-literal-type-assertion
-        requestId: 11,
-      } as RequestCompleteEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-        // tslint:disable-next-line no-object-literal-type-assertion
-        requestId: 10,
-      } as RequestCompleteEvent)
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: true }, { isBusy: true }, { isBusy: false }])
     })
   })

@@ -7,32 +7,32 @@ describe('trackEventCounts', () => {
   it('tracks errors', () => {
     const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
-    // tslint:disable-next-line no-object-literal-type-assertion
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as ErrorMessage)
+    const error = {}
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
     expect(eventCounts.errorCount).toBe(1)
   })
 
   it('tracks long tasks', () => {
     const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
-    // tslint:disable-next-line no-object-literal-type-assertion
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, { entryType: 'longtask' } as PerformanceEntry)
+    const performanceEntry = { entryType: 'longtask' }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
     expect(eventCounts.longTaskCount).toBe(1)
   })
 
   it("doesn't track navigation entries", () => {
     const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
-    // tslint:disable-next-line no-object-literal-type-assertion
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, { entryType: 'navigation' } as PerformanceEntry)
+    const performanceEntry = { entryType: 'navigation' }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
     expect(objectValues(eventCounts).every((value) => value === 0)).toBe(true)
   })
 
   it('tracks user actions', () => {
     const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
-    // tslint:disable-next-line no-object-literal-type-assertion
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {} as UserAction)
+    const userAction = {}
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, userAction as UserAction)
     expect(eventCounts.userActionCount).toBe(1)
   })
 
