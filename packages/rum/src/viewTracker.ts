@@ -29,6 +29,7 @@ const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 let startOrigin: number
 let documentVersion: number
 let viewMeasures: ViewMeasures
+let resetEventCounts: (() => void) | undefined
 
 export function trackView(
   location: Location,
@@ -62,6 +63,9 @@ function newView(location: Location, session: RumSession, upsertRumEvent: (event
     longTaskCount: 0,
     resourceCount: 0,
     userActionCount: 0,
+  }
+  if (resetEventCounts) {
+    resetEventCounts()
   }
   upsertViewEvent(upsertRumEvent)
 }
@@ -141,10 +145,11 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       scheduleViewUpdate()
     }
   })
-  trackEventCounts(lifeCycle, (eventCounts) => {
+  const { reset } = trackEventCounts(lifeCycle, (eventCounts) => {
     viewMeasures = { ...viewMeasures, ...eventCounts }
     scheduleViewUpdate()
   })
+  resetEventCounts = reset
 }
 
 function trackRenewSession(

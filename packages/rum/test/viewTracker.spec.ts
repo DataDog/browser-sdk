@@ -178,6 +178,29 @@ describe('rum view measures', () => {
     expect(getViewEvent(2).view.measures.userActionCount).toEqual(0)
   })
 
+  it('should reset event count when the view changes', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    history.pushState({}, '', '/baz')
+
+    expect(getEventCount()).toEqual(5)
+    expect(getViewEvent(3).view.measures.resourceCount).toEqual(2)
+    expect(getViewEvent(4).view.measures.resourceCount).toEqual(0)
+  })
+
   it('should track performance timings', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
