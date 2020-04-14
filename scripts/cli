@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+
+PATH="$PATH:$(yarn bin)"
+
+main () {
+  if [[ $# -lt 1 ]]; then
+    cmd_help
+  fi
+
+  local command="cmd_$1"
+  shift
+
+  "$command" "$@"
+}
+
+cmd_help () {
+  local available_commands=$(set | perl -nle'print $& while m{^cmd_\K\w+}g')
+  echo -e "Available commands:\n$available_commands"
+  exit 1
+}
+
+cmd_typecheck () {
+  local project_path="${1}"
+  tsc -p "$project_path" --noEmit true
+}
+
+cmd_lint () {
+  local project_path="${1}"
+  tslint -p "$project_path" -c ./tslint.json
+}
+
+main "$@"
