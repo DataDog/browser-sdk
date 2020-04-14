@@ -30,9 +30,9 @@ import { trackEventCounts } from './trackEventCounts'
 // after MAX_DURATION, it has been validated.
 
 // Delay to wait for a page activity to validate the user action
-const USER_ACTION_VALIDATION_DELAY = 100
+export const USER_ACTION_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the user action
-const USER_ACTION_END_DELAY = 100
+export const USER_ACTION_END_DELAY = 100
 // Maximum duration of a user action
 export const USER_ACTION_MAX_DURATION = 10_000
 

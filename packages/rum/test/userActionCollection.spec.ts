@@ -6,11 +6,22 @@ import {
   getUserActionReference,
   PageActivityEvent,
   startUserActionCollection,
+  USER_ACTION_END_DELAY,
   USER_ACTION_MAX_DURATION,
+  USER_ACTION_VALIDATION_DELAY,
   UserAction,
   UserActionType,
 } from '../src/userActionCollection'
 const { waitUserActionCompletion, trackPageActivities, resetUserAction, newUserAction } = $$tests
+
+// Used to wait some time after the creation of a user action
+const BEFORE_USER_ACTION_VALIDATION_DELAY = USER_ACTION_VALIDATION_DELAY * 0.8
+// Used to wait some time before the (potential) end of a user action
+const BEFORE_USER_ACTION_END_DELAY = USER_ACTION_END_DELAY * 0.8
+// Used to wait some time but it doesn't matter how much.
+const SOME_ARBITRARY_DELAY = 50
+// An long delay used to wait after any user action is finished.
+const EXPIRE_DELAY = USER_ACTION_MAX_DURATION * 10
 
 function mockClock() {
   beforeEach(() => {
@@ -29,7 +40,7 @@ function mockClock() {
     },
     expire() {
       // Make sure no user action is still pending
-      jasmine.clock().tick(USER_ACTION_MAX_DURATION * 10)
+      jasmine.clock().tick(EXPIRE_DELAY)
     },
   }
 }
@@ -72,18 +83,18 @@ describe('startUserActionCollection', () => {
 
   it('starts a user action when clicking on an element', () => {
     button.addEventListener(DOM_EVENT.CLICK, () => {
-      clock.tick(50)
+      clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
       lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     })
 
-    clock.tick(50)
+    clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
 
     clock.expire()
     expect(events).toEqual([
       {
-        duration: 50,
+        duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
         id: jasmine.any(String),
         measures: {
           errorCount: 0,
@@ -98,7 +109,7 @@ describe('startUserActionCollection', () => {
   })
 
   it('cancels a user action when if nothing happens after a click', () => {
-    clock.tick(50)
+    clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
 
     clock.expire()
@@ -125,7 +136,7 @@ describe('getUserActionReference', () => {
 
     expect(userActionReference).toBeDefined()
 
-    clock.tick(80)
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
 
     expect(getUserActionReference()).toBeDefined()
@@ -139,13 +150,18 @@ describe('getUserActionReference', () => {
   })
 
   it('do not return the user action reference for events occuring before the start of the user action', () => {
-    clock.tick(50)
+    const timeBeforeStartingUserAction = Date.now()
+
+    clock.tick(SOME_ARBITRARY_DELAY)
     newUserAction(new LifeCycle(), UserActionType.CLICK, 'test')
 
-    clock.tick(50)
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY * 0.5)
+    const timeAfterStartingUserAction = Date.now()
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY * 0.5)
+
     expect(getUserActionReference()).toBeDefined()
-    expect(getUserActionReference(Date.now() - 20)).toBeDefined()
-    expect(getUserActionReference(Date.now() - 100)).toBeUndefined()
+    expect(getUserActionReference(timeAfterStartingUserAction)).toBeDefined()
+    expect(getUserActionReference(timeBeforeStartingUserAction)).toBeUndefined()
 
     clock.expire()
   })
@@ -162,7 +178,7 @@ describe('newUserAction', () => {
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-2')
 
-    clock.tick(80)
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
 
     clock.expire()
@@ -181,7 +197,7 @@ describe('newUserAction', () => {
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
-    clock.tick(80)
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
 
@@ -319,11 +335,11 @@ describe('waitUserActionCompletion', () => {
 
     const startTime = performance.now()
     waitUserActionCompletion(activityObservable, (endTime) => {
-      expect(endTime).toEqual(startTime + 80)
+      expect(endTime).toEqual(startTime + BEFORE_USER_ACTION_VALIDATION_DELAY)
       done()
     })
 
-    clock.tick(80)
+    clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
 
     clock.expire()
@@ -333,13 +349,17 @@ describe('waitUserActionCompletion', () => {
     it('is extended while there is page activities', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
+
+      // Extend the user action but stops before USER_ACTION_MAX_DURATION
+      const extendCount = Math.floor(USER_ACTION_MAX_DURATION / BEFORE_USER_ACTION_END_DELAY - 1)
+
       waitUserActionCompletion(activityObservable, (endTime) => {
-        expect(endTime).toBe(startTime + 5 * 80)
+        expect(endTime).toBe(startTime + (extendCount + 1) * BEFORE_USER_ACTION_END_DELAY)
         done()
       })
 
-      for (let i = 0; i < 5; i += 1) {
-        clock.tick(80)
+      for (let i = 0; i < extendCount; i += 1) {
+        clock.tick(BEFORE_USER_ACTION_END_DELAY)
         activityObservable.notify({ isBusy: false })
       }
 
@@ -350,14 +370,18 @@ describe('waitUserActionCompletion', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
       const startTime = performance.now()
+
+      // Extend the user action until it's more than USER_ACTION_MAX_DURATION
+      const extendCount = Math.ceil(USER_ACTION_MAX_DURATION / BEFORE_USER_ACTION_END_DELAY + 1)
+
       waitUserActionCompletion(activityObservable, (endTime) => {
         expect(endTime).toBe(startTime + USER_ACTION_MAX_DURATION)
         stop = true
         done()
       })
 
-      for (let i = 0; i < 500 && !stop; i += 1) {
-        clock.tick(80)
+      for (let i = 0; i < extendCount && !stop; i += 1) {
+        clock.tick(BEFORE_USER_ACTION_END_DELAY)
         activityObservable.notify({ isBusy: false })
       }
 
@@ -370,14 +394,14 @@ describe('waitUserActionCompletion', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
       waitUserActionCompletion(activityObservable, (endTime) => {
-        expect(endTime).toBe(startTime + 580)
+        expect(endTime).toBe(startTime + BEFORE_USER_ACTION_VALIDATION_DELAY + USER_ACTION_END_DELAY * 2)
         done()
       })
 
-      clock.tick(80)
+      clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
 
-      clock.tick(500)
+      clock.tick(USER_ACTION_END_DELAY * 2)
       activityObservable.notify({ isBusy: false })
 
       clock.expire()
@@ -391,7 +415,7 @@ describe('waitUserActionCompletion', () => {
         done()
       })
 
-      clock.tick(80)
+      clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
 
       clock.expire()
