@@ -4,8 +4,13 @@ import { EventCounts, trackEventCounts } from '../src/trackEventCounts'
 import { UserAction } from '../src/userActionCollection'
 
 describe('trackEventCounts', () => {
+  let lifeCycle: LifeCycle
+
+  beforeEach(() => {
+    lifeCycle = new LifeCycle()
+  })
+
   it('tracks errors', () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
     const error = {}
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
@@ -13,7 +18,6 @@ describe('trackEventCounts', () => {
   })
 
   it('tracks long tasks', () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
     const performanceEntry = { entryType: 'longtask' }
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
@@ -21,7 +25,6 @@ describe('trackEventCounts', () => {
   })
 
   it("doesn't track navigation entries", () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
     const performanceEntry = { entryType: 'navigation' }
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
@@ -29,7 +32,6 @@ describe('trackEventCounts', () => {
   })
 
   it('tracks user actions', () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
     const userAction = {}
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, userAction as UserAction)
@@ -37,14 +39,12 @@ describe('trackEventCounts', () => {
   })
 
   it('tracks resources', () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts } = trackEventCounts(lifeCycle)
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     expect(eventCounts.resourceCount).toBe(1)
   })
 
   it('stops tracking when stop is called', () => {
-    const lifeCycle = new LifeCycle()
     const { eventCounts, stop } = trackEventCounts(lifeCycle)
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     expect(eventCounts.resourceCount).toBe(1)
@@ -54,7 +54,6 @@ describe('trackEventCounts', () => {
   })
 
   it('invokes a potential callback when a count is increased', () => {
-    const lifeCycle = new LifeCycle()
     const spy = jasmine.createSpy<(eventCounts: EventCounts) => void>()
     trackEventCounts(lifeCycle, spy)
 
