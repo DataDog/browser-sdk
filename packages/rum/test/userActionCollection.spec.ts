@@ -119,6 +119,7 @@ describe('startUserActionCollection', () => {
 
 describe('getUserActionReference', () => {
   const clock = mockClock()
+  const { events, pushEvent } = eventsCollector<UserAction>()
 
   beforeEach(() => {
     resetUserAction()
@@ -127,8 +128,7 @@ describe('getUserActionReference', () => {
   it('returns the current user action reference', () => {
     expect(getUserActionReference()).toBeUndefined()
     const lifeCycle = new LifeCycle()
-    const spy = jasmine.createSpy<(arg: UserAction) => void>()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, spy)
+    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test')
 
@@ -145,7 +145,7 @@ describe('getUserActionReference', () => {
 
     expect(getUserActionReference()).toBeUndefined()
 
-    const userAction = spy.calls.argsFor(0)[0] as AutoUserAction
+    const userAction = events[0] as AutoUserAction
     expect(userAction.id).toBe(userActionReference.id)
   })
 
@@ -169,11 +169,11 @@ describe('getUserActionReference', () => {
 
 describe('newUserAction', () => {
   const clock = mockClock()
+  const { events, pushEvent } = eventsCollector<UserAction>()
 
   it('cancels any starting user action while another one is happening', () => {
     const lifeCycle = new LifeCycle()
-    const spy = jasmine.createSpy<(arg: UserAction) => void>()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, spy)
+    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-2')
@@ -182,17 +182,15 @@ describe('newUserAction', () => {
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
 
     clock.expire()
-    expect(spy).toHaveBeenCalledTimes(1)
-    const userAction = spy.calls.argsFor(0)[0]
-    expect(userAction.name).toBe('test-1')
+    expect(events.length).toBe(1)
+    expect(events[0].name).toBe('test-1')
   })
 
   it('counts errors occuring during the user action', () => {
     // tslint:disable-next-line: no-object-literal-type-assertion
     const error = {} as ErrorMessage
     const lifeCycle = new LifeCycle()
-    const spy = jasmine.createSpy<(arg: UserAction) => void>()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, spy)
+    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
 
@@ -204,8 +202,8 @@ describe('newUserAction', () => {
     clock.expire()
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error)
 
-    expect(spy).toHaveBeenCalledTimes(1)
-    const userAction = spy.calls.argsFor(0)[0] as AutoUserAction
+    expect(events.length).toBe(1)
+    const userAction = events[0] as AutoUserAction
     expect(userAction.measures).toEqual({
       errorCount: 2,
       longTaskCount: 0,
