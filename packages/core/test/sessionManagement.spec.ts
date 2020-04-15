@@ -9,7 +9,7 @@ import {
   stopSessionManagement,
   VISIBILITY_CHECK_DELAY,
 } from '../src/sessionManagement'
-import { isIE, setPageVisibility, restorePageVisibility } from '../src/specHelper'
+import { isIE, restorePageVisibility, setPageVisibility } from '../src/specHelper'
 
 describe('cacheCookieAccess', () => {
   const TEST_COOKIE = 'test'
