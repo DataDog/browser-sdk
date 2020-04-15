@@ -8,7 +8,7 @@ stages:
   - ci-image
   - test
   - unit-bs
-  - e2e-cbt
+  - e2e-bs
   - pre-deploy-notify
   - deploy
   - notify
@@ -128,12 +128,12 @@ unit-bs:
     - yarn
     - ./scripts/ci-bs.sh test:unit
 
-e2e-cbt:
+e2e-bs:
   except:
     refs:
       - master
       - tags
-  stage: e2e-cbt
+  stage: e2e-bs
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
@@ -142,7 +142,7 @@ e2e-cbt:
     when: always
   script:
     - yarn
-    - ./scripts/ci-cbt.sh test:e2e
+    - ./scripts/ci-bs.sh test:e2e
 
 deploy-staging:
   only:

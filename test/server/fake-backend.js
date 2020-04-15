@@ -36,7 +36,7 @@ module.exports = (app) => {
     if (req.query['timing-allow-origin'] === 'true') {
       res.set('Timing-Allow-Origin', '*')
     }
-    res.send('ok')
+    setTimeout(() => res.send('ok'), 10)
   })
 
   app.get('/redirect', (req, res) => {

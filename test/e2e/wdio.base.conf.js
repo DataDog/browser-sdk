@@ -17,10 +17,11 @@ module.exports = {
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
     servers = [
+      // browserstack allowed ports https://www.browserstack.com/question/664
       // Test server same origin
       exec('PORT=3000 node test/server/server'),
       // Test server cross origin
-      exec('PORT=3001 node test/server/server'),
+      exec('PORT=3002 node test/server/server'),
       // Intake server
       exec('PORT=4000 node test/server/server'),
     ]
