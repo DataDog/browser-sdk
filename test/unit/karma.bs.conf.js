@@ -12,17 +12,20 @@ const ONE_MINUTE = 60000
 module.exports = function(config) {
   config.set({
     ...karmaBaseConf,
-    plugins: [...karmaBaseConf.plugins, 'karma-cbt-launcher'],
-    reporters: [...karmaBaseConf.reporters, 'CrossBrowserTesting'],
+    plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
+    reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: Object.keys(browsers),
-    concurrency: 1,
-    captureTimeout: 3 * ONE_MINUTE,
+    concurrency: 5,
+    hostname: process.env.IP_ADDRESS, // needed for iOS cf https://www.browserstack.com/question/663
+    captureTimeout: ONE_MINUTE,
     browserDisconnectTimeout: ONE_MINUTE,
     browserDisconnectTolerance: 3,
     browserNoActivityTimeout: ONE_MINUTE,
-    cbtConfig: {
-      username: process.env.CBT_USERNAME,
-      authkey: process.env.CBT_AUTHKEY,
+    browserStack: {
+      username: process.env.BS_USERNAME,
+      accessKey: process.env.BS_ACCESS_KEY,
+      project: 'browser sdk unit',
+      video: false,
     },
     customLaunchers: Object.fromEntries(
       Object.entries(browsers).map(([key, browser]) => [key, { ...browser, name: getTestName('unit') }])

@@ -7,7 +7,7 @@ variables:
 stages:
   - ci-image
   - test
-  - unit-cbt
+  - unit-bs
   - e2e-cbt
   - pre-deploy-notify
   - deploy
@@ -116,17 +116,17 @@ check-licenses:
   script:
     - node --no-warnings scripts/check-licenses.js
 
-unit-cbt:
+unit-bs:
   except:
     refs:
       - master
       - tags
-  stage: unit-cbt
+  stage: unit-bs
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
-    - ./scripts/ci-cbt.sh test:unit
+    - ./scripts/ci-bs.sh test:unit
 
 e2e-cbt:
   except:
