@@ -1,6 +1,6 @@
 const karmaBaseConf = require('./karma.base.conf')
-const browsers = require('./browsers.conf')
-const getTestName = require('../getTestName')
+const browsers = require('../browsers.conf')
+const getBuildInfos = require('../getBuildInfos')
 
 // force entry resolution to ensure sinon code is in ES5
 // https://github.com/webpack/webpack/issues/5756
@@ -25,10 +25,11 @@ module.exports = function(config) {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
       project: 'browser sdk unit',
+      build: getBuildInfos(),
       video: false,
     },
     customLaunchers: Object.fromEntries(
-      Object.entries(browsers).map(([key, browser]) => [key, { ...browser, name: getTestName('unit') }])
+      Object.entries(browsers).map(([key, browser]) => [key, { ...browser, name: key.toLowerCase() }])
     ),
   })
 }
