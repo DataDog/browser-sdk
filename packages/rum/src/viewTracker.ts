@@ -128,7 +128,11 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
         loadEventEnd: msToNs(navigationEntry.loadEventEnd),
       }
       scheduleViewUpdate()
-    } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+    } else if (
+      entry.entryType === 'paint' &&
+      entry.name === 'first-contentful-paint' &&
+      document.visibilityState === 'visible'
+    ) {
       const paintEntry = entry as PerformancePaintTiming
       viewMeasures = {
         ...viewMeasures,
