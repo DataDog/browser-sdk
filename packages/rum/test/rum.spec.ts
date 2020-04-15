@@ -6,14 +6,14 @@ import {
   isIE,
   Omit,
   PerformanceObserverStubBuilder,
-  RequestDetails,
+  RequestCompleteEvent,
   SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { handleResourceEntry, RumEvent, RumResourceEvent, startRum, UserAction } from '../src/rum'
+import { handleResourceEntry, RumEvent, RumResourceEvent, startRum, UserAction, UserActionType } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 
 interface BrowserWindow extends Window {
@@ -222,8 +222,12 @@ describe('rum handle performance entry', () => {
 describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-  const FAKE_REQUEST: Partial<RequestDetails> = { url: 'http://foo.com' }
-  const FAKE_USER_ACTION: UserAction = { name: 'action', context: { foo: 'bar' } }
+  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
+  const FAKE_USER_ACTION: UserAction = {
+    context: { foo: 'bar' },
+    name: 'action',
+    type: UserActionType.CUSTOM,
+  }
   const browserWindow = window as BrowserWindow
   let server: sinon.SinonFakeServer
   let original: PerformanceObserver | undefined
@@ -257,7 +261,7 @@ describe('rum session', () => {
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(4)
@@ -275,7 +279,7 @@ describe('rum session', () => {
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     expect(server.requests.length).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
@@ -294,7 +298,7 @@ describe('rum session', () => {
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
 
@@ -337,15 +341,15 @@ describe('rum session', () => {
     startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     expect(server.requests.length).toEqual(1)
 
     isTrackedWithResource = false
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     expect(server.requests.length).toEqual(1)
 
     isTrackedWithResource = true
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COLLECTED, FAKE_REQUEST as RequestDetails)
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     expect(server.requests.length).toEqual(2)
   })
 
@@ -496,7 +500,11 @@ describe('rum user action', () => {
   })
 
   it('should not be automatically snake cased', () => {
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { name: 'hello', context: { fooBar: 'foo' } })
+    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
+      context: { fooBar: 'foo' },
+      name: 'hello',
+      type: UserActionType.CUSTOM,
+    })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })

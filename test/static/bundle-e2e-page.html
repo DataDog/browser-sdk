@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="base-uri 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="base-uri 'none'; script-src 'self' 'unsafe-inline'" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/empty.css" />
     <title>bundle tests page</title>
@@ -16,6 +16,7 @@
           logsEndpoint: `${intakeOrigin}/logs`,
           rumEndpoint: `${intakeOrigin}/rum`,
           forwardErrorsToLogs: true,
+          enableExperimentalFeatures: ['new-session'],
         })
     </script>
     <script type="text/javascript" src="./datadog-rum-us.js"></script>
@@ -27,6 +28,7 @@
           internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
           logsEndpoint: `${intakeOrigin}/logs`,
           rumEndpoint: `${intakeOrigin}/rum`,
+          enableExperimentalFeatures: ['collect-user-actions'],
         })
     </script>
   </head>

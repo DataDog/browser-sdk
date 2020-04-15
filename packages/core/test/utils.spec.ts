@@ -2,7 +2,7 @@ import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCase
 
 describe('utils', () => {
   describe('throttle', () => {
-    let spy: jasmine.Spy<InferableFunction>
+    let spy: jasmine.Spy
     let throttled: () => void
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import { RequestDetails } from '@datadog/browser-core'
+import { RequestCompleteEvent } from '@datadog/browser-core'
 
 interface Timing {
   startTime: number
@@ -17,15 +17,13 @@ interface Timing {
  * - if two following timings match (OPTIONS request), return the timing for the actual request
  * - otherwise we can't decide, return undefined
  */
-export function matchRequestTiming(requestDetails: RequestDetails) {
+export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
   const candidates = performance
-    .getEntriesByName(requestDetails.url, 'resource')
-    .filter((entry) =>
-      isBetween(entry, requestDetails.startTime, endTime(requestDetails))
-    ) as PerformanceResourceTiming[]
+    .getEntriesByName(request.url, 'resource')
+    .filter((entry) => isBetween(entry, request.startTime, endTime(request))) as PerformanceResourceTiming[]
 
   if (candidates.length === 1) {
     return candidates[0]

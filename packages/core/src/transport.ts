@@ -1,7 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
 import { monitor } from './internalMonitoring'
-import { Context, jsonStringify, objectValues } from './utils'
+import { Context, DOM_EVENT, jsonStringify, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -153,6 +153,7 @@ export class Batch<T> {
     /**
      * With sendBeacon, requests are guaranteed to be successfully sent during document unload
      */
+    // @ts-ignore this function is not always defined
     if (navigator.sendBeacon) {
       /**
        * beforeunload is called before visibilitychange
@@ -160,7 +161,7 @@ export class Batch<T> {
        * caveat: unload can still be canceled by another listener
        */
       window.addEventListener(
-        'beforeunload',
+        DOM_EVENT.BEFORE_UNLOAD,
         monitor(() => {
           this.beforeFlushOnUnloadHandlers.forEach((handler) => handler())
         })
@@ -171,7 +172,7 @@ export class Batch<T> {
        * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
        */
       document.addEventListener(
-        'visibilitychange',
+        DOM_EVENT.VISIBILITY_CHANGE,
         monitor(() => {
           if (document.visibilityState === 'hidden') {
             this.flush()
@@ -183,7 +184,7 @@ export class Batch<T> {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      window.addEventListener('beforeunload', monitor(() => this.flush()))
+      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(() => this.flush()))
     }
   }
 }

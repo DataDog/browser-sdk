@@ -1,29 +1,6 @@
-import { ErrorContext, HttpContext, MonitoringMessage } from '@datadog/browser-core'
-import { LogsMessage } from '@datadog/browser-logs'
-import { RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import { MonitoringMessage } from '@datadog/browser-core'
 import * as request from 'request'
-
-export interface ServerErrorMessage {
-  error: ErrorContext
-  http: HttpContext
-  message: string
-  application_id: string
-  session_id: string
-  view: {
-    id: string
-  }
-}
-export type ServerLogsMessage = LogsMessage & ServerErrorMessage
-
-export interface ServerRumViewEvent extends RumViewEvent {
-  rum: RumViewEvent['rum'] & {
-    document_version: number
-  }
-  session_id: string
-  view: RumViewEvent['view'] & {
-    id: string
-  }
-}
+import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
 
 const { hostname } = new URL(browser.config.baseUrl!)
 
@@ -90,8 +67,8 @@ export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
   return fetchWhile('/logs', (logs: ServerLogsMessage[]) => logs.length === 0)
 }
 
-export async function waitServerRumEvents(): Promise<RumEvent[]> {
-  return fetchWhile('/rum', (events: RumEvent[]) => events.length === 0)
+export async function waitServerRumEvents(): Promise<ServerRumEvent[]> {
+  return fetchWhile('/rum', (events: ServerRumEvent[]) => events.length === 0)
 }
 
 export async function retrieveMonitoringErrors() {
@@ -169,10 +146,10 @@ async function deleteAllCookies() {
 async function findSessionCookie() {
   const cookies = (await browser.getCookies()) || []
   // tslint:disable-next-line: no-unsafe-any
-  return cookies.find((cookie: any) => cookie.name === '_dd')
+  return cookies.find((cookie: any) => cookie.name === '_dd_s')
 }
 
-export async function makeXHRAndCollectEvent(url: string): Promise<RumResourceEvent | undefined> {
+export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumResourceEvent | undefined> {
   // tslint:disable-next-line: no-shadowed-variable
   await browserExecuteAsync((url, done) => {
     let loaded = false
@@ -191,14 +168,23 @@ export async function makeXHRAndCollectEvent(url: string): Promise<RumResourceEv
 
   await flushEvents()
 
-  return (await waitServerRumEvents()).find(
-    (event) => event.evt.category === 'resource' && (event as RumResourceEvent).http.url === url
-  ) as RumResourceEvent
+  return (await waitServerRumEvents()).filter(isRumResourceEvent).find((event) => event.http.url === url)
 }
 
-export function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
-  expect((resourceEvent as any).date).toBeGreaterThan(0)
+export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
+  expect(resourceEvent.date).toBeGreaterThan(0)
   expect(resourceEvent.duration).toBeGreaterThan(0)
   const performance = resourceEvent.http.performance!
   expect(performance.download.start).toBeGreaterThan(0)
+}
+
+export async function waitForSDKLoaded() {
+  await browserExecuteAsync((done) => {
+    const interval = setInterval(() => {
+      if (window.DD_RUM && window.DD_LOGS) {
+        clearInterval(interval)
+        done(undefined)
+      }
+    }, 500)
+  })
 }

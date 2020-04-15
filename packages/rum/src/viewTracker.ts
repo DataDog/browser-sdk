@@ -1,4 +1,4 @@
-import { generateUUID, getTimestamp, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, getTimestamp, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
@@ -100,9 +100,12 @@ function trackHistory(location: Location, session: RumSession, upsertRumEvent: (
     originalReplaceState.apply(this, arguments as any)
     onUrlChange(location, session, upsertRumEvent)
   })
-  window.addEventListener('popstate', () => {
-    onUrlChange(location, session, upsertRumEvent)
-  })
+  window.addEventListener(
+    DOM_EVENT.POP_STATE,
+    monitor(() => {
+      onUrlChange(location, session, upsertRumEvent)
+    })
+  )
 }
 
 function onUrlChange(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {

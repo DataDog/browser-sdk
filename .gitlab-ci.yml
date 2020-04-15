@@ -39,6 +39,14 @@ lint:
     - yarn
     - yarn lint
 
+typecheck:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn typecheck
+
 build:
   stage: test
   tags: ['runner:main', 'size:large']

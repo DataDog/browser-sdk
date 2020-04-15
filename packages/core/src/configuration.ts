@@ -43,6 +43,7 @@ export interface UserConfiguration {
   datacenter?: Datacenter
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
+  proxyHost?: string
 
   // Below is only taken into account for e2e-test bundle.
   internalMonitoringEndpoint?: string
@@ -64,6 +65,7 @@ interface TransportConfiguration {
   datacenter: Datacenter
   env: Environment
   version: string
+  proxyHost?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
@@ -71,6 +73,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     clientToken: userConfiguration.clientToken,
     datacenter: userConfiguration.datacenter || buildEnv.datacenter,
     env: buildEnv.env,
+    proxyHost: userConfiguration.proxyHost,
     version: buildEnv.version,
   }
 
@@ -126,6 +129,9 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const tld = conf.datacenter === 'us' ? 'com' : 'eu'
   const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags = `version:${conf.version}`
-  return `https://${type}-http-intake.logs.${domain}/v1/input/${conf.clientToken}?ddsource=${source ||
-    'browser'}&ddtags=${tags}`
+  const datadogHost = `${type}-http-intake.logs.${domain}`
+  const host = conf.proxyHost ? conf.proxyHost : datadogHost
+  const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
+
+  return `https://${host}/v1/input/${conf.clientToken}?${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
 }

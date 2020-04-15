@@ -3,7 +3,7 @@
 const replace = require('replace-in-file')
 const util = require('util')
 const exec = util.promisify(require('child_process').exec)
-const spawn = util.promisify(require('child_process').spawn)
+const spawn = require('child_process').spawn
 
 const emojiNameMap = require('emoji-name-map')
 
@@ -30,10 +30,9 @@ async function main() {
     to: changesWithPullRequestLinks,
   })
 
-  const openEditorCmd = await spawn(process.env.EDITOR, [CHANGELOG_FILE], { stdio: 'inherit', detached: true })
-  if (openEditorCmd.stderr) {
-    throw openEditorCmd.stderr
-  }
+  await spawnCommand(process.env.EDITOR, [CHANGELOG_FILE])
+
+  await executeCommand(`git add ${CHANGELOG_FILE}`)
 }
 
 async function executeCommand(command) {
@@ -42,6 +41,15 @@ async function executeCommand(command) {
     throw commandResult.stderr
   }
   return commandResult.stdout
+}
+
+function spawnCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit' })
+    child.on('error', () => reject())
+    child.on('close', () => resolve())
+    child.on('exit', () => resolve())
+  })
 }
 
 async function emojiNameToUnicode(changes) {

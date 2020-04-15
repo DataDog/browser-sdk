@@ -19,4 +19,5 @@ datadogRum.init({
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
   logsEndpoint: `${intakeOrigin}/logs`,
   rumEndpoint: `${intakeOrigin}/rum`,
+  enableExperimentalFeatures: ['collect-user-actions'],
 })

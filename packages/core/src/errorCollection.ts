@@ -4,8 +4,7 @@ import { Observable } from './observable'
 import {
   isRejected,
   isServerError,
-  RequestDetails,
-  RequestObservable,
+  RequestCompleteEvent,
   RequestType,
   startRequestCollection,
 } from './requestCollection'
@@ -48,8 +47,8 @@ export function startErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<ErrorMessage>()
     if (configuration.isCollectingError) {
-      const requestObservable = startRequestCollection()
-      trackNetworkError(configuration, errorObservable, requestObservable)
+      const [, requestCompleteObservable] = startRequestCollection()
+      trackNetworkError(configuration, errorObservable, requestCompleteObservable)
       startConsoleTracking(errorObservable)
       startRuntimeErrorTracking(errorObservable)
     }
@@ -165,9 +164,9 @@ export function toStackTraceString(stack: StackTrace) {
 export function trackNetworkError(
   configuration: Configuration,
   errorObservable: ErrorObservable,
-  requestObservable: RequestObservable
+  requestObservable: Observable<RequestCompleteEvent>
 ) {
-  requestObservable.subscribe((request: RequestDetails) => {
+  requestObservable.subscribe((request: RequestCompleteEvent) => {
     if (isRejected(request) || isServerError(request)) {
       errorObservable.notify({
         context: {

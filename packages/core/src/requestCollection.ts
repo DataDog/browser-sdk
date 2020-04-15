@@ -10,7 +10,12 @@ export enum RequestType {
   XHR = ResourceKind.XHR,
 }
 
-export interface RequestDetails {
+export interface RequestStartEvent {
+  requestId: number
+}
+
+export interface RequestCompleteEvent {
+  requestId: number
   type: RequestType
   method: string
   url: string
@@ -33,19 +38,28 @@ interface BrowserXHR extends XMLHttpRequest {
   }
 }
 
-export type RequestObservable = Observable<RequestDetails>
-let requestObservable: Observable<RequestDetails>
+export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
-export function startRequestCollection() {
-  if (!requestObservable) {
-    requestObservable = new Observable<RequestDetails>()
-    trackXhr(requestObservable)
-    trackFetch(requestObservable)
-  }
-  return requestObservable
+let nextRequestId = 1
+
+function getNextRequestId() {
+  const result = nextRequestId
+  nextRequestId += 1
+  return result
 }
 
-export function trackXhr(observable: RequestObservable) {
+let requestObservablesSingleton: RequestObservables
+
+export function startRequestCollection() {
+  if (!requestObservablesSingleton) {
+    requestObservablesSingleton = [new Observable(), new Observable()]
+    trackXhr(requestObservablesSingleton)
+    trackFetch(requestObservablesSingleton)
+  }
+  return requestObservablesSingleton
+}
+
+export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
   const originalOpen = XMLHttpRequest.prototype.open
   XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
     this._datadog_xhr = {
@@ -58,13 +72,20 @@ export function trackXhr(observable: RequestObservable) {
   const originalSend = XMLHttpRequest.prototype.send
   XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
     const startTime = performance.now()
+    const requestId = getNextRequestId()
+
+    requestStartObservable.notify({
+      requestId,
+    })
+
     let hasBeenReported = false
     const reportXhr = () => {
       if (hasBeenReported) {
         return
       }
       hasBeenReported = true
-      observable.notify({
+      requestCompleteObservable.notify({
+        requestId,
         startTime,
         duration: performance.now() - startTime,
         method: this._datadog_xhr.method,
@@ -94,23 +115,30 @@ export function trackXhr(observable: RequestObservable) {
   }
 }
 
-export function trackFetch(observable: RequestObservable) {
+export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
   if (!window.fetch) {
     return
   }
   const originalFetch = window.fetch
   // tslint:disable promise-function-async
-  window.fetch = monitor(function(this: GlobalFetch['fetch'], input: RequestInfo, init?: RequestInit) {
+  window.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
+    const requestId = getNextRequestId()
+
+    requestStartObservable.notify({
+      requestId,
+    })
+
     const reportFetch = async (response: Response | Error) => {
       const duration = performance.now() - startTime
       const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
       if ('stack' in response || response instanceof Error) {
         const stackTrace = computeStackTrace(response)
-        observable.notify({
+        requestCompleteObservable.notify({
           duration,
           method,
+          requestId,
           startTime,
           url,
           response: toStackTraceString(stackTrace),
@@ -125,9 +153,10 @@ export function trackFetch(observable: RequestObservable) {
         } catch (e) {
           text = `Unable to retrieve response: ${e}`
         }
-        observable.notify({
+        requestCompleteObservable.notify({
           duration,
           method,
+          requestId,
           startTime,
           url,
           response: text,
@@ -144,11 +173,11 @@ export function trackFetch(observable: RequestObservable) {
   })
 }
 
-export function isRejected(request: RequestDetails) {
+export function isRejected(request: RequestCompleteEvent) {
   return request.status === 0 && request.responseType !== 'opaque'
 }
 
-export function isServerError(request: RequestDetails) {
+export function isServerError(request: RequestCompleteEvent) {
   return request.status >= 500
 }
 

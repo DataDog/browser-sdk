@@ -3,8 +3,18 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
-export const ONE_DAY = 24 * ONE_HOUR
 export const ONE_KILO_BYTE = 1024
+
+export enum DOM_EVENT {
+  BEFORE_UNLOAD = 'beforeunload',
+  CLICK = 'click',
+  KEY_DOWN = 'keydown',
+  LOAD = 'load',
+  POP_STATE = 'popstate',
+  SCROLL = 'scroll',
+  TOUCH_START = 'touchstart',
+  VISIBILITY_CHANGE = 'visibilitychange',
+}
 
 export enum ResourceKind {
   DOCUMENT = 'document',
@@ -173,8 +183,21 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
   return typeof value === 'object' && value !== null && value.hasOwnProperty('toJSON')
 }
 
-export function includes(candidate: unknown[], search: unknown) {
+export function includes(candidate: string, search: string): boolean
+export function includes<T>(candidate: T[], search: T): boolean
+export function includes(candidate: string | unknown[], search: any) {
+  // tslint:disable-next-line: no-unsafe-any
   return candidate.indexOf(search) !== -1
+}
+
+export function find<T>(array: T[], predicate: (item: T, index: number, array: T[]) => unknown): T | undefined {
+  for (let i = 0; i < array.length; i += 1) {
+    const item = array[i]
+    if (predicate(item, i, array)) {
+      return item
+    }
+  }
+  return undefined
 }
 
 export function isPercentage(value: unknown) {
@@ -219,9 +242,43 @@ export function objectValues(object: { [key: string]: unknown }) {
   return values
 }
 
+export function objectEntries(object: { [key: string]: unknown }) {
+  return Object.keys(object).map((key) => [key, object[key]])
+}
+
+export function isEmptyObject(object: object) {
+  return Object.keys(object).length === 0
+}
+
+/**
+ * inspired by https://mathiasbynens.be/notes/globalthis
+ */
 export function getGlobalObject<T>(): T {
-  // tslint:disable-next-line: function-constructor no-function-constructor-with-string-args
-  return (typeof globalThis === 'object' ? globalThis : Function('return this')()) as T
+  if (typeof globalThis === 'object') {
+    return (globalThis as unknown) as T
+  }
+  Object.defineProperty(Object.prototype, '_dd_temp_', {
+    get() {
+      return this
+    },
+    configurable: true,
+  })
+  // @ts-ignore
+  let globalObject: unknown = _dd_temp_
+  // @ts-ignore
+  delete Object.prototype._dd_temp_
+  if (typeof globalObject !== 'object') {
+    // on safari _dd_temp_ is available on window but not globally
+    // fallback on other browser globals check
+    if (typeof self === 'object') {
+      globalObject = self
+    } else if (typeof window === 'object') {
+      globalObject = window
+    } else {
+      globalObject = {}
+    }
+  }
+  return globalObject as T
 }
 
 export function getLocationOrigin() {

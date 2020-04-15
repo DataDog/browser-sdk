@@ -36,6 +36,7 @@
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
               logsEndpoint: `${intakeOrigin}/logs`,
               rumEndpoint: `${intakeOrigin}/rum`,
+              enableExperimentalFeatures: ['collect-user-actions'],
             })
         }
         document.getElementsByTagName('head')[0].appendChild(rum)
