@@ -9,7 +9,7 @@ import {
   stopSessionManagement,
   VISIBILITY_CHECK_DELAY,
 } from '../src/sessionManagement'
-import { isIE } from '../src/specHelper'
+import { isIE, setPageVisibility, restorePageVisibility } from '../src/specHelper'
 
 describe('cacheCookieAccess', () => {
   const TEST_COOKIE = 'test'
@@ -310,19 +310,6 @@ describe('startSessionManagement', () => {
   })
 
   describe('session expiration', () => {
-    function setPageVisibility(visibility: 'visible' | 'hidden') {
-      Object.defineProperty(document, 'visibilityState', {
-        get() {
-          return visibility
-        },
-        configurable: true,
-      })
-    }
-
-    function restorePageVisibility() {
-      delete (document as any).visibilityState
-    }
-
     beforeEach(() => {
       setPageVisibility('hidden')
     })

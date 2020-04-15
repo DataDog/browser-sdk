@@ -4,6 +4,7 @@ import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction, UserActionType } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { trackView, viewContext } from '../src/viewTracker'
+import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
 
 function setup({
   addRumEvent,
@@ -178,6 +179,7 @@ describe('rum view measures', () => {
   })
 
   it('should track performance timings', () => {
+    setPageVisibility('visible')
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
@@ -214,5 +216,30 @@ describe('rum view measures', () => {
       resourceCount: 0,
       userActionCount: 0,
     })
+    restorePageVisibility()
+  })
+  it('should not collect firstContentfulPaint if page is not visible', () => {
+    setPageVisibility('hidden')
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+    history.pushState({}, '', '/bar')
+
+    expect(getEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures).toEqual({
+      domComplete: 456e6,
+      domContentLoaded: 345e6,
+      domInteractive: 234e6,
+      errorCount: 0,
+      loadEventEnd: 567e6,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+    restorePageVisibility()
   })
 })
