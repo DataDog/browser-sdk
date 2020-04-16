@@ -1,3 +1,6 @@
+const execSync = require('child_process').execSync
+const path = require('path')
+
 const karmaBaseConf = require('./karma.base.conf')
 const browsers = require('../browsers.conf')
 const getBuildInfos = require('../getBuildInfos')
@@ -8,6 +11,7 @@ const getBuildInfos = require('../getBuildInfos')
 karmaBaseConf.webpack.resolve.mainFields = ['cdn', 'main']
 
 const ONE_MINUTE = 60000
+const ipAddress = execSync(path.join(__dirname, '../..', 'scripts/get-ip.sh'))
 
 module.exports = function(config) {
   config.set({
@@ -16,7 +20,7 @@ module.exports = function(config) {
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: Object.keys(browsers),
     concurrency: 5,
-    hostname: process.env.IP_ADDRESS, // needed for iOS cf https://www.browserstack.com/question/663
+    hostname: ipAddress,
     captureTimeout: ONE_MINUTE,
     browserDisconnectTimeout: ONE_MINUTE,
     browserDisconnectTolerance: 3,
