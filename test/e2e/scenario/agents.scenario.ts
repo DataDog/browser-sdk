@@ -100,7 +100,7 @@ describe('rum', () => {
 
     // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
     // too much.
-    if (browser.capabilities.browserName === 'MicrosoftEdge' && browser.capabilities.browserVersion === '18') {
+    if (browser.capabilities.browserName === 'MicrosoftEdge') {
       expectToHaveValidTimings(timing)
     } else {
       expect(timing.http.performance).toBeUndefined()
@@ -209,13 +209,15 @@ describe('error collection', () => {
 
 describe('user action collection', () => {
   it('should track a click user action', async () => {
+    const button = await $('button')
     await browserExecute(() => {
-      const button = document.querySelector('button')!
-      button.addEventListener('click', () => {
-        button.setAttribute('data-clicked', 'true')
+      const btn = document.querySelector('button')!
+      btn.addEventListener('click', () => {
+        btn.setAttribute('data-clicked', 'true')
       })
-      button.click()
+      btn.click()
     })
+    expect(await button.getAttribute('data-clicked')).toBe('true')
 
     await flushEvents()
 
@@ -231,6 +233,7 @@ describe('user action collection', () => {
   })
 
   it('should associate a request to its user action', async () => {
+    await $('button')
     await browserExecuteAsync((baseUrl, done) => {
       const button = document.querySelector('button')!
       button.addEventListener('click', () => {
