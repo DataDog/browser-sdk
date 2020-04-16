@@ -20,7 +20,7 @@ const BEFORE_USER_ACTION_VALIDATION_DELAY = USER_ACTION_VALIDATION_DELAY * 0.8
 const BEFORE_USER_ACTION_END_DELAY = USER_ACTION_END_DELAY * 0.8
 // Used to wait some time but it doesn't matter how much.
 const SOME_ARBITRARY_DELAY = 50
-// An long delay used to wait after any user action is finished.
+// A long delay used to wait after any user action is finished.
 const EXPIRE_DELAY = USER_ACTION_MAX_DURATION * 10
 
 function mockClock() {
