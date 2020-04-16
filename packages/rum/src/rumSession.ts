@@ -16,11 +16,7 @@ export enum RumSessionType {
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const session = startSessionManagement(
-    RUM_SESSION_KEY,
-    (rawType) => computeSessionState(configuration, rawType),
-    configuration.isEnabled('new-session')
-  )
+  const session = startSessionManagement(RUM_SESSION_KEY, (rawType) => computeSessionState(configuration, rawType))
 
   session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
