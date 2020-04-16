@@ -260,14 +260,10 @@ describe('startSessionManagement', () => {
 
   describe('session timeout', () => {
     it('should expire the session when the time out delay is reached', () => {
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
       expect(session.getId()).toBeDefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeDefined()
 
@@ -279,14 +275,10 @@ describe('startSessionManagement', () => {
     it('should renew an existing timed out session', () => {
       setCookie(SESSION_COOKIE_NAME, `id=abcde&first=tracked&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
 
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
 
       expect(session.getId()).not.toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`created=${Date.now()}`)
@@ -295,14 +287,10 @@ describe('startSessionManagement', () => {
     it('should not add created date to an existing session from an older versions', () => {
       setCookie(SESSION_COOKIE_NAME, `id=abcde&first=tracked`, DURATION)
 
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
 
       expect(session.getId()).toBe('abcde')
       expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('created=')
@@ -332,14 +320,10 @@ describe('startSessionManagement', () => {
     })
 
     it('should expire the session after expiration delay', () => {
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
       expectSessionIdToBeDefined(session)
 
       jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
@@ -347,14 +331,10 @@ describe('startSessionManagement', () => {
     })
 
     it('should expand duration on activity', () => {
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
       expectSessionIdToBeDefined(session)
 
       jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)
@@ -370,14 +350,10 @@ describe('startSessionManagement', () => {
     it('should expand session on visibility', () => {
       setPageVisibility('visible')
 
-      const session = startSessionManagement(
-        FIRST_SESSION_TYPE_KEY,
-        () => ({
-          isTracked: true,
-          type: FakeSessionType.TRACKED,
-        }),
-        true
-      )
+      const session = startSessionManagement(FIRST_SESSION_TYPE_KEY, () => ({
+        isTracked: true,
+        type: FakeSessionType.TRACKED,
+      }))
 
       jasmine.clock().tick(3 * VISIBILITY_CHECK_DELAY)
       setPageVisibility('hidden')
