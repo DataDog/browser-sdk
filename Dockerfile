@@ -45,5 +45,4 @@ RUN apt-get install -y -q --no-install-recommends default-jdk
 
 RUN apt-get -y install git
 
-RUN apt-get -y install net-tools
 RUN apt-get -y install procps
