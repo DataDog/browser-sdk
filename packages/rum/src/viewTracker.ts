@@ -29,7 +29,6 @@ const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 let startOrigin: number
 let documentVersion: number
 let viewMeasures: ViewMeasures
-let resetEventCounts: (() => void) | undefined
 
 export function trackView(
   location: Location,
@@ -42,15 +41,24 @@ export function trackView(
     leading: false,
   })
 
-  newView(location, session, upsertRumEvent)
-  trackHistory(location, session, upsertRumEvent)
-  trackMeasures(lifeCycle, scheduleViewUpdate)
-  trackRenewSession(location, lifeCycle, session, upsertRumEvent)
+  const { reset: resetEventCounts } = trackEventCounts(lifeCycle, (eventCounts) => {
+    viewMeasures = { ...viewMeasures, ...eventCounts }
+    scheduleViewUpdate()
+  })
+  newView(location, session, resetEventCounts, upsertRumEvent)
+  trackHistory(location, session, resetEventCounts, upsertRumEvent)
+  trackTimings(lifeCycle, scheduleViewUpdate)
+  trackRenewSession(location, lifeCycle, session, resetEventCounts, upsertRumEvent)
 
   beforeFlushOnUnload(() => updateView(upsertRumEvent))
 }
 
-function newView(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
+function newView(
+  location: Location,
+  session: RumSession,
+  resetEventCounts: () => void,
+  upsertRumEvent: (event: RumEvent, key: string) => void
+) {
   startOrigin = !viewContext ? 0 : performance.now()
   viewContext = {
     id: generateUUID(),
@@ -64,9 +72,7 @@ function newView(location: Location, session: RumSession, upsertRumEvent: (event
     resourceCount: 0,
     userActionCount: 0,
   }
-  if (resetEventCounts) {
-    resetEventCounts()
-  }
+  resetEventCounts()
   upsertViewEvent(upsertRumEvent)
 }
 
@@ -94,29 +100,39 @@ function upsertViewEvent(upsertRumEvent: (event: RumEvent, key: string) => void)
   )
 }
 
-function trackHistory(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
+function trackHistory(
+  location: Location,
+  session: RumSession,
+  resetEventCounts: () => void,
+  upsertRumEvent: (event: RumEvent, key: string) => void
+) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(location, session, upsertRumEvent)
+    onUrlChange(location, session, resetEventCounts, upsertRumEvent)
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, session, upsertRumEvent)
+    onUrlChange(location, session, resetEventCounts, upsertRumEvent)
   })
   window.addEventListener(
     DOM_EVENT.POP_STATE,
     monitor(() => {
-      onUrlChange(location, session, upsertRumEvent)
+      onUrlChange(location, session, resetEventCounts, upsertRumEvent)
     })
   )
 }
 
-function onUrlChange(location: Location, session: RumSession, upsertRumEvent: (event: RumEvent, key: string) => void) {
+function onUrlChange(
+  location: Location,
+  session: RumSession,
+  resetEventCounts: () => void,
+  upsertRumEvent: (event: RumEvent, key: string) => void
+) {
   if (areDifferentViews(viewContext.location, location)) {
     updateView(upsertRumEvent)
-    newView(location, session, upsertRumEvent)
+    newView(location, session, resetEventCounts, upsertRumEvent)
   }
 }
 
@@ -124,7 +140,7 @@ function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
+function trackTimings(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       const navigationEntry = entry as PerformanceNavigationTiming
@@ -145,21 +161,17 @@ function trackMeasures(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
       scheduleViewUpdate()
     }
   })
-  const { reset } = trackEventCounts(lifeCycle, (eventCounts) => {
-    viewMeasures = { ...viewMeasures, ...eventCounts }
-    scheduleViewUpdate()
-  })
-  resetEventCounts = reset
 }
 
 function trackRenewSession(
   location: Location,
   lifeCycle: LifeCycle,
   session: RumSession,
+  resetEventCounts: () => void,
   upsertRumEvent: (event: RumEvent, key: string) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     updateView(upsertRumEvent)
-    newView(location, session, upsertRumEvent)
+    newView(location, session, resetEventCounts, upsertRumEvent)
   })
 }
