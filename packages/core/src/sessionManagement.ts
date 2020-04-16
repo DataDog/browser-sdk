@@ -27,26 +27,23 @@ export interface SessionState {
  */
 export function startSessionManagement<Type extends string>(
   sessionTypeKey: string,
-  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean },
-  withNewSessionStrategy = false
+  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
 ): Session<Type> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
-  let currentSessionId = retrieveActiveSession(sessionCookie, withNewSessionStrategy).id
+  let currentSessionId = retrieveActiveSession(sessionCookie).id
 
   const expandOrRenewSession = utils.throttle(() => {
-    const session = retrieveActiveSession(sessionCookie, withNewSessionStrategy)
+    const session = retrieveActiveSession(sessionCookie)
     const { type, isTracked } = computeSessionState(session[sessionTypeKey])
     session[sessionTypeKey] = type
     if (isTracked && !session.id) {
       session.id = utils.generateUUID()
-      if (withNewSessionStrategy) {
-        session.created = String(Date.now())
-      }
+      session.created = String(Date.now())
     }
     // save changes and expand session duration
-    persistSession(session, sessionCookie, withNewSessionStrategy)
+    persistSession(session, sessionCookie)
 
     // If the session id has changed, notify that the session has been renewed
     if (isTracked && currentSessionId !== session.id) {
@@ -56,22 +53,20 @@ export function startSessionManagement<Type extends string>(
   }, COOKIE_ACCESS_DELAY)
 
   const expandSession = () => {
-    const session = retrieveActiveSession(sessionCookie, withNewSessionStrategy)
-    persistSession(session, sessionCookie, withNewSessionStrategy)
+    const session = retrieveActiveSession(sessionCookie)
+    persistSession(session, sessionCookie)
   }
 
   expandOrRenewSession()
   trackActivity(expandOrRenewSession)
-  if (withNewSessionStrategy) {
-    trackVisibility(expandSession)
-  }
+  trackVisibility(expandSession)
 
   return {
     getId() {
-      return retrieveActiveSession(sessionCookie, withNewSessionStrategy).id
+      return retrieveActiveSession(sessionCookie).id
     },
     getType() {
-      return retrieveActiveSession(sessionCookie, withNewSessionStrategy)[sessionTypeKey] as Type | undefined
+      return retrieveActiveSession(sessionCookie)[sessionTypeKey] as Type | undefined
     },
     renewObservable,
   }
@@ -88,9 +83,9 @@ export function isValidSessionString(sessionString: string | undefined): session
   )
 }
 
-function retrieveActiveSession(sessionCookie: CookieCache, withNewSessionStrategy: boolean): SessionState {
+function retrieveActiveSession(sessionCookie: CookieCache): SessionState {
   const session = retrieveSession(sessionCookie)
-  if (!withNewSessionStrategy || isActiveSession(session)) {
+  if (isActiveSession(session)) {
     return session
   }
   clearSession(sessionCookie)
@@ -121,14 +116,12 @@ function retrieveSession(sessionCookie: CookieCache): SessionState {
   return session
 }
 
-export function persistSession(session: SessionState, cookie: CookieCache, withNewSessionStrategy = false) {
+export function persistSession(session: SessionState, cookie: CookieCache) {
   if (utils.isEmptyObject(session)) {
     clearSession(cookie)
     return
   }
-  if (withNewSessionStrategy) {
-    session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
-  }
+  session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
   const cookieString = utils
     .objectEntries(session)
     .map(([key, value]) => `${key}=${value}`)
