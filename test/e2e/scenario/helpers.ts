@@ -5,18 +5,18 @@ import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourc
 const { hostname } = new URL(browser.config.baseUrl!)
 
 export const serverUrl = {
-  crossOrigin: `http://${hostname}:3001`,
+  crossOrigin: `http://${hostname}:3002`,
   sameOrigin: browser.config.baseUrl!,
 }
 
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
 
 export async function flushEvents() {
-  // wait to process event loop before switching page
+  // wait to process user actions + event loop before switching page
   await browserExecuteAsync((done) =>
     setTimeout(() => {
       done(undefined)
-    })
+    }, 200)
   )
   return browser.url('/empty.html')
 }

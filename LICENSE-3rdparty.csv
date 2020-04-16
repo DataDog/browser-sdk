@@ -8,14 +8,15 @@ dev,@types/lodash.assign,MIT,Copyright Microsoft Corporation
 dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
+dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
-dev,@wdio/crossbrowsertesting-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/jasmine-framework,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
 dev,body-parser,MIT,Copyright 2014 Jonathan Ong 2014-2015 Douglas Christopher Wilson
+dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,codecov,MIT,Copyright 2014 Gregg Caines
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
@@ -23,7 +24,7 @@ dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contribut
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
-dev,karma-cbt-launcher,MIT,Copyright 2018 CrossBrowserTesting.com
+dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.

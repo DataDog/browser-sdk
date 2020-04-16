@@ -1,14 +1,14 @@
 variables:
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 14
+  CURRENT_CI_IMAGE: 16
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
 
 stages:
   - ci-image
   - test
-  - unit-cbt
-  - e2e-cbt
+  - unit-bs
+  - e2e-bs
   - pre-deploy-notify
   - deploy
   - notify
@@ -116,24 +116,24 @@ check-licenses:
   script:
     - node --no-warnings scripts/check-licenses.js
 
-unit-cbt:
+unit-bs:
   except:
     refs:
       - master
       - tags
-  stage: unit-cbt
+  stage: unit-bs
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
-    - ./scripts/ci-cbt.sh test:unit
+    - ./scripts/ci-bs.sh test:unit
 
-e2e-cbt:
+e2e-bs:
   except:
     refs:
       - master
       - tags
-  stage: e2e-cbt
+  stage: e2e-bs
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
@@ -142,7 +142,7 @@ e2e-cbt:
     when: always
   script:
     - yarn
-    - ./scripts/ci-cbt.sh test:e2e
+    - ./scripts/ci-bs.sh test:e2e
 
 deploy-staging:
   only:
