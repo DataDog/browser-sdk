@@ -17,10 +17,6 @@ module.exports = function(config) {
     browsers: Object.keys(browsers),
     concurrency: 5,
     hostname: getIp(),
-    captureTimeout: ONE_MINUTE,
-    browserDisconnectTimeout: ONE_MINUTE,
-    browserDisconnectTolerance: 3,
-    browserNoActivityTimeout: ONE_MINUTE,
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
