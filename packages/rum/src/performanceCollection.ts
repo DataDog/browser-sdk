@@ -33,6 +33,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
     )
     const entryTypes = ['resource', 'navigation', 'longtask']
 
+    // cf https://github.com/w3c/paint-timing/issues/40
     if (document.visibilityState === 'visible') {
       entryTypes.push('paint')
     }
