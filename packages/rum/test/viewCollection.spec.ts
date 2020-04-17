@@ -3,7 +3,7 @@ import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent } from '../src/rum'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { trackView, viewContext } from '../src/viewTracker'
+import { trackView, viewContext } from '../src/viewCollection'
 
 function setup({
   addRumEvent,

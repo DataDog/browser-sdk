@@ -32,7 +32,7 @@ import {
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { getUserActionReference, UserActionMeasures, UserActionReference, UserActionType } from './userActionCollection'
-import { trackView, viewContext, ViewMeasures } from './viewTracker'
+import { trackView, viewContext, ViewMeasures } from './viewCollection'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
