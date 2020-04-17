@@ -15,19 +15,53 @@ export enum RumSessionType {
   TRACKED_WITHOUT_RESOURCES = '2',
 }
 
+class StoredSession {
+  private id: string | undefined
+  private type: RumSessionType | undefined
+
+  constructor(private isAlive: () => boolean) {}
+
+  store(id: string | undefined, type: RumSessionType | undefined) {
+    this.id = id
+    this.type = type
+  }
+
+  getId() {
+    this.makeSureSessionIsAlive()
+    return this.id
+  }
+
+  isTracked() {
+    this.makeSureSessionIsAlive()
+    return isTracked(this.type)
+  }
+
+  isTrackedWithResource() {
+    this.makeSureSessionIsAlive()
+    return this.type === RumSessionType.TRACKED_WITH_RESOURCES
+  }
+
+  private makeSureSessionIsAlive() {
+    if (!this.isAlive()) {
+      this.id = undefined
+      this.type = undefined
+    }
+  }
+}
+
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
   const session = startSessionManagement(RUM_SESSION_KEY, (rawType) => computeSessionState(configuration, rawType))
+  const storedSession = new StoredSession(() => session.getId() !== undefined)
+
+  storedSession.store(session.getId(), session.getType())
 
   session.renewObservable.subscribe(() => {
+    lifeCycle.notify(LifeCycleEventType.SESSION_WILL_RENEW)
+    storedSession.store(session.getId(), session.getType())
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
-  return {
-    getId: session.getId,
-    isTracked: () => session.getId() !== undefined && isTracked(session.getType()),
-    isTrackedWithResource: () =>
-      session.getId() !== undefined && session.getType() === RumSessionType.TRACKED_WITH_RESOURCES,
-  }
+  return storedSession
 }
 
 function computeSessionState(configuration: Configuration, rawSessionType?: string) {

@@ -2,7 +2,6 @@ import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent } from '../src/rum'
-import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
 import { trackView, viewContext } from '../src/viewTracker'
 
@@ -20,18 +19,7 @@ function setup({
     fakeLocation.hash = getHash(url)
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  const fakeSession = {
-    getId() {
-      return '42'
-    },
-  }
-  trackView(
-    fakeLocation as Location,
-    lifeCycle || new LifeCycle(),
-    fakeSession as RumSession,
-    addRumEvent || (() => undefined),
-    () => undefined
-  )
+  trackView(fakeLocation as Location, lifeCycle || new LifeCycle(), addRumEvent || (() => undefined), () => undefined)
 }
 
 describe('rum track url change', () => {

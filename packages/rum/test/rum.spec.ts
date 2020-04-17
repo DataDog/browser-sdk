@@ -381,6 +381,7 @@ describe('rum session', () => {
     expect(initialRequests[0].session_id).toEqual('42')
 
     server.requests = []
+    lifeCycle.notify(LifeCycleEventType.SESSION_WILL_RENEW)
     sessionId = '43'
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 

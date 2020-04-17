@@ -155,7 +155,7 @@ export function startRum(
     lodashMerge(
       {
         application_id: applicationId,
-        session_id: viewContext.sessionId,
+        session_id: session.getId(),
         view: {
           id: viewContext.id,
         },
@@ -175,7 +175,7 @@ export function startRum(
       session: {
         type: sessionTpe,
       },
-      sessionId: viewContext.sessionId,
+      sessionId: session.getId(),
       view: {
         id: viewContext.id,
         referrer: document.referrer,
@@ -185,7 +185,7 @@ export function startRum(
     () => globalContext
   )
 
-  trackView(window.location, lifeCycle, session, batch.upsertRumEvent, batch.beforeFlushOnUnload)
+  trackView(window.location, lifeCycle, batch.upsertRumEvent, batch.beforeFlushOnUnload)
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
@@ -203,7 +203,7 @@ export function startRum(
       (): InternalContext => {
         return {
           application_id: applicationId,
-          session_id: viewContext.sessionId,
+          session_id: session.getId(),
           user_action: getUserActionReference(),
           view: {
             id: viewContext.id,
