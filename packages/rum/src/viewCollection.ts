@@ -31,8 +31,7 @@ let viewMeasures: ViewMeasures
 export function trackView(
   location: Location,
   lifeCycle: LifeCycle,
-  upsertRumEvent: (event: RumEvent, key: string) => void,
-  beforeFlushOnUnload: (handler: () => void) => void
+  upsertRumEvent: (event: RumEvent, key: string) => void
 ) {
   const scheduleViewUpdate = throttle(monitor(() => updateView(upsertRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
     leading: false,
@@ -47,7 +46,7 @@ export function trackView(
   trackTimings(lifeCycle, scheduleViewUpdate)
   trackRenewSession(location, lifeCycle, resetEventCounts, upsertRumEvent)
 
-  beforeFlushOnUnload(() => updateView(upsertRumEvent))
+  lifeCycle.subscribe(LifeCycleEventType.WILL_UNLOAD, () => updateView(upsertRumEvent))
 }
 
 function newView(

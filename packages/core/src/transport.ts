@@ -1,7 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
 import { monitor } from './internalMonitoring'
-import { Context, DOM_EVENT, jsonStringify, objectValues } from './utils'
+import { Context, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -45,7 +45,8 @@ export class Batch<T> {
     private bytesLimit: number,
     private maxMessageSize: number,
     private flushTimeout: number,
-    private contextProvider: () => Context
+    private contextProvider: () => Context,
+    private willUnloadCallback: () => void = noop
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()
@@ -160,12 +161,7 @@ export class Batch<T> {
        * register first to be sure to be called before flush on beforeunload
        * caveat: unload can still be canceled by another listener
        */
-      window.addEventListener(
-        DOM_EVENT.BEFORE_UNLOAD,
-        monitor(() => {
-          this.beforeFlushOnUnloadHandlers.forEach((handler) => handler())
-        })
-      )
+      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.willUnloadCallback))
 
       /**
        * Only event that guarantee to fire on mobile devices when the page transitions to background state

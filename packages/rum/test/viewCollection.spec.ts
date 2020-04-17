@@ -19,7 +19,7 @@ function setup({
     fakeLocation.hash = getHash(url)
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  trackView(fakeLocation as Location, lifeCycle || new LifeCycle(), addRumEvent || (() => undefined), () => undefined)
+  trackView(fakeLocation as Location, lifeCycle || new LifeCycle(), addRumEvent || (() => undefined))
 }
 
 describe('rum track url change', () => {
