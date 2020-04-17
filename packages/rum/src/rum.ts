@@ -32,7 +32,7 @@ import {
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { getUserActionReference, UserActionMeasures, UserActionReference, UserActionType } from './userActionCollection'
-import { trackView, viewContext, ViewMeasures } from './viewCollection'
+import { viewContext, ViewMeasures } from './viewCollection'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -186,7 +186,7 @@ export function startRum(
     () => lifeCycle.notify(LifeCycleEventType.WILL_UNLOAD)
   )
 
-  trackView(window.location, lifeCycle, batch.upsertRumEvent)
+  trackView(lifeCycle, batch.upsertRumEvent)
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
@@ -246,6 +246,27 @@ function startRumBatch(
       }
     },
   }
+}
+
+function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, key: string) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, (view) => {
+    upsertRumEvent(
+      {
+        date: getTimestamp(view.startTime),
+        duration: msToNs(view.duration),
+        evt: {
+          category: RumEventCategory.VIEW,
+        },
+        rum: {
+          documentVersion: view.documentVersion,
+        },
+        view: {
+          measures: view.measures,
+        },
+      },
+      view.id
+    )
+  })
 }
 
 function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumErrorEvent) => void) {

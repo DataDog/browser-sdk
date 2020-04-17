@@ -1,8 +1,17 @@
-import { DOM_EVENT, generateUUID, getTimestamp, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { PerformancePaintTiming, RumEvent, RumEventCategory } from './rum'
+import { PerformancePaintTiming } from './rum'
 import { trackEventCounts } from './trackEventCounts'
+
+export interface View {
+  id: string
+  location: Location
+  measures: ViewMeasures
+  documentVersion: number
+  startTime: number
+  duration: number
+}
 
 export interface ViewMeasures {
   firstContentfulPaint?: number
@@ -16,6 +25,35 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
+const THROTTLE_VIEW_UPDATE_PERIOD = 3000
+
+export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
+  let currentLocation = { ...location }
+  let endCurrentView = newView(lifeCycle, currentLocation, 0).end
+
+  // Renew view on history changes
+  trackHistory(() => {
+    if (areDifferentViews(currentLocation, location)) {
+      currentLocation = { ...location }
+      endCurrentView()
+      endCurrentView = newView(lifeCycle, currentLocation).end
+    }
+  })
+
+  // Renew view on session changes
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_WILL_RENEW, () => {
+    endCurrentView()
+  })
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    endCurrentView = newView(lifeCycle, currentLocation).end
+  })
+
+  // End the current view on page unload
+  lifeCycle.subscribe(LifeCycleEventType.WILL_UNLOAD, () => {
+    endCurrentView()
+  })
+}
+
 interface ViewContext {
   id: string
   location: Location
@@ -23,149 +61,105 @@ interface ViewContext {
 
 export let viewContext: ViewContext
 
-const THROTTLE_VIEW_UPDATE_PERIOD = 3000
-let startOrigin: number
-let documentVersion: number
-let viewMeasures: ViewMeasures
-
-export function trackView(
-  location: Location,
-  lifeCycle: LifeCycle,
-  upsertRumEvent: (event: RumEvent, key: string) => void
-) {
-  const scheduleViewUpdate = throttle(monitor(() => updateView(upsertRumEvent)), THROTTLE_VIEW_UPDATE_PERIOD, {
-    leading: false,
-  })
-
-  const { reset: resetEventCounts } = trackEventCounts(lifeCycle, (eventCounts) => {
-    viewMeasures = { ...viewMeasures, ...eventCounts }
-    scheduleViewUpdate()
-  })
-  newView(location, resetEventCounts, upsertRumEvent)
-  trackHistory(location, resetEventCounts, upsertRumEvent)
-  trackTimings(lifeCycle, scheduleViewUpdate)
-  trackRenewSession(location, lifeCycle, resetEventCounts, upsertRumEvent)
-
-  lifeCycle.subscribe(LifeCycleEventType.WILL_UNLOAD, () => updateView(upsertRumEvent))
-}
-
-function newView(
-  location: Location,
-  resetEventCounts: () => void,
-  upsertRumEvent: (event: RumEvent, key: string) => void
-) {
-  startOrigin = !viewContext ? 0 : performance.now()
-  viewContext = {
-    id: generateUUID(),
-    location: { ...location },
-  }
-  documentVersion = 1
-  viewMeasures = {
+function newView(lifeCycle: LifeCycle, location: Location, startOrigin: number = performance.now()) {
+  // Setup initial values
+  const id = generateUUID()
+  let measures: ViewMeasures = {
     errorCount: 0,
     longTaskCount: 0,
     resourceCount: 0,
     userActionCount: 0,
   }
-  resetEventCounts()
-  upsertViewEvent(upsertRumEvent)
-}
+  let documentVersion = 0
 
-function updateView(upsertRumEvent: (event: RumEvent, key: string) => void) {
-  documentVersion += 1
-  upsertViewEvent(upsertRumEvent)
-}
+  viewContext = { id, location }
 
-function upsertViewEvent(upsertRumEvent: (event: RumEvent, key: string) => void) {
-  upsertRumEvent(
-    {
-      date: getTimestamp(startOrigin),
-      duration: msToNs(performance.now() - startOrigin),
-      evt: {
-        category: RumEventCategory.VIEW,
-      },
-      rum: {
-        documentVersion,
-      },
-      view: {
-        measures: viewMeasures,
-      },
+  // Update the view every time the measures are changing
+  const scheduleViewUpdate = throttle(monitor(updateView), THROTTLE_VIEW_UPDATE_PERIOD, {
+    leading: false,
+  })
+  function updateMeasures(newMeasures: Partial<ViewMeasures>) {
+    measures = { ...measures, ...newMeasures }
+    scheduleViewUpdate()
+  }
+  const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
+  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
+
+  // Initial view update
+  updateView()
+
+  function updateView() {
+    documentVersion += 1
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
+      documentVersion,
+      id,
+      location,
+      measures,
+      duration: performance.now() - startOrigin,
+      startTime: startOrigin,
+    })
+  }
+
+  return {
+    end() {
+      stopTimingsTracking()
+      stopEventCountsTracking()
+      // Make a final view update
+      updateView()
     },
-    viewContext.id
-  )
+  }
 }
 
-function trackHistory(
-  location: Location,
-  resetEventCounts: () => void,
-  upsertRumEvent: (event: RumEvent, key: string) => void
-) {
+function trackHistory(onChange: () => void) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onUrlChange(location, resetEventCounts, upsertRumEvent)
+    onChange()
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onUrlChange(location, resetEventCounts, upsertRumEvent)
+    onChange()
   })
-  window.addEventListener(
-    DOM_EVENT.POP_STATE,
-    monitor(() => {
-      onUrlChange(location, resetEventCounts, upsertRumEvent)
-    })
-  )
-}
-
-function onUrlChange(
-  location: Location,
-  resetEventCounts: () => void,
-  upsertRumEvent: (event: RumEvent, key: string) => void
-) {
-  if (areDifferentViews(viewContext.location, location)) {
-    updateView(upsertRumEvent)
-    newView(location, resetEventCounts, upsertRumEvent)
-  }
+  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onChange))
 }
 
 function areDifferentViews(previous: Location, current: Location) {
   return previous.pathname !== current.pathname
 }
 
-function trackTimings(lifeCycle: LifeCycle, scheduleViewUpdate: () => void) {
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'navigation') {
-      const navigationEntry = entry as PerformanceNavigationTiming
-      viewMeasures = {
-        ...viewMeasures,
-        domComplete: msToNs(navigationEntry.domComplete),
-        domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
-        domInteractive: msToNs(navigationEntry.domInteractive),
-        loadEventEnd: msToNs(navigationEntry.loadEventEnd),
-      }
-      scheduleViewUpdate()
-    } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-      const paintEntry = entry as PerformancePaintTiming
-      viewMeasures = {
-        ...viewMeasures,
-        firstContentfulPaint: msToNs(paintEntry.startTime),
-      }
-      scheduleViewUpdate()
-    }
-  })
+interface Timings {
+  domComplete?: number
+  domContentLoaded?: number
+  domInteractive?: number
+  loadEventEnd?: number
+  firstContentfulPaint?: number
 }
 
-function trackRenewSession(
-  location: Location,
-  lifeCycle: LifeCycle,
-  resetEventCounts: () => void,
-  upsertRumEvent: (event: RumEvent, key: string) => void
-) {
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_WILL_RENEW, () => {
-    updateView(upsertRumEvent)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    newView(location, resetEventCounts, upsertRumEvent)
-  })
+function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
+  let timings: Timings = {}
+  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
+    LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+    (entry) => {
+      if (entry.entryType === 'navigation') {
+        const navigationEntry = entry as PerformanceNavigationTiming
+        timings = {
+          ...timings,
+          domComplete: msToNs(navigationEntry.domComplete),
+          domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
+          domInteractive: msToNs(navigationEntry.domInteractive),
+          loadEventEnd: msToNs(navigationEntry.loadEventEnd),
+        }
+        callback(timings)
+      } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+        const paintEntry = entry as PerformancePaintTiming
+        timings = {
+          ...timings,
+          firstContentfulPaint: msToNs(paintEntry.startTime),
+        }
+        callback(timings)
+      }
+    }
+  )
+  return { stop: stopPerformanceTracking }
 }
