@@ -65,7 +65,15 @@ export interface ServerRumUserActionEvent extends ServerRumEvent {
     name: string
   }
   duration: number
-  user_action: { id?: string; type: 'click' | 'custom' }
+  user_action: {
+    id?: string
+    type: 'click' | 'custom'
+    measures: {
+      resource_count: number
+      error_count: number
+      long_task_count: number
+    }
+  }
 }
 
 export function isRumUserActionEvent(event: ServerRumEvent): event is ServerRumUserActionEvent {

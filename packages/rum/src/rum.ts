@@ -31,7 +31,7 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { getUserActionReference, UserActionReference } from './userActionCollection'
+import { getUserActionReference, UserActionMeasures, UserActionReference, UserActionType } from './userActionCollection'
 import { trackView, viewContext, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
@@ -42,28 +42,6 @@ export interface PerformancePaintTiming extends PerformanceEntry {
 }
 
 export type PerformanceLongTaskTiming = PerformanceEntry
-
-export enum UserActionType {
-  CLICK = 'click',
-  LOAD_VIEW = 'load_view',
-  CUSTOM = 'custom',
-}
-
-interface CustomUserAction {
-  type: UserActionType.CUSTOM
-  name: string
-  context?: Context
-}
-
-interface AutoUserAction {
-  type: UserActionType.LOAD_VIEW | UserActionType.CLICK
-  id: string
-  name: string
-  startTime: number
-  duration: number
-}
-
-export type UserAction = CustomUserAction | AutoUserAction
 
 export enum RumEventCategory {
   USER_ACTION = 'user_action',
@@ -144,6 +122,8 @@ export interface RumLongTaskEvent {
 }
 
 export interface RumUserActionEvent {
+  date?: number
+  duration?: number
   evt: {
     category: RumEventCategory.USER_ACTION
     name: string
@@ -151,8 +131,8 @@ export interface RumUserActionEvent {
   userAction: {
     id?: string
     type: UserActionType
+    measures?: UserActionMeasures
   }
-  [key: string]: ContextValue
 }
 
 export type RumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserActionEvent
@@ -254,13 +234,13 @@ function startRumBatch(
   return {
     addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked()) {
-        batch.add({ ...context, ...withSnakeCaseKeys(event as Context) })
+        batch.add({ ...context, ...withSnakeCaseKeys((event as unknown) as Context) })
       }
     },
     beforeFlushOnUnload: (handler: () => void) => batch.beforeFlushOnUnload(handler),
     upsertRumEvent: (event: RumEvent, key: string) => {
       if (session.isTracked()) {
-        batch.upsert(withSnakeCaseKeys(event as Context), key)
+        batch.upsert(withSnakeCaseKeys((event as unknown) as Context), key)
       }
     },
   }
@@ -314,6 +294,7 @@ function trackAutoUserAction(lifeCycle: LifeCycle, addRumEvent: (event: RumUserA
         },
         userAction: {
           id: userAction.id,
+          measures: userAction.measures,
           type: userAction.type,
         },
       })

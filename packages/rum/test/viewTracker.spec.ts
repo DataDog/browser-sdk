@@ -1,8 +1,9 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent, UserAction, UserActionType } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent } from '../src/rum'
 import { RumSession } from '../src/rumSession'
+import { UserAction, UserActionType } from '../src/userActionCollection'
 import { trackView, viewContext } from '../src/viewTracker'
 
 function setup({
@@ -108,7 +109,7 @@ describe('rum view measures', () => {
     return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
   }
 
-  function getEventCount() {
+  function getRumEventCount() {
     return addRumEvent.calls.count()
   }
 
@@ -120,14 +121,14 @@ describe('rum view measures', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(getEventCount()).toEqual(1)
+    expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     history.pushState({}, '', '/bar')
 
-    expect(getEventCount()).toEqual(3)
+    expect(getRumEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures.errorCount).toEqual(2)
     expect(getViewEvent(2).view.measures.errorCount).toEqual(0)
   })
@@ -136,13 +137,13 @@ describe('rum view measures', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(getEventCount()).toEqual(1)
+    expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
-    expect(getEventCount()).toEqual(3)
+    expect(getRumEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures.longTaskCount).toEqual(1)
     expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
   })
@@ -151,13 +152,13 @@ describe('rum view measures', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(getEventCount()).toEqual(1)
+    expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
-    expect(getEventCount()).toEqual(3)
+    expect(getRumEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
     expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
   })
@@ -166,22 +167,45 @@ describe('rum view measures', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(getEventCount()).toEqual(1)
+    expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures.userActionCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
-    expect(getEventCount()).toEqual(3)
+    expect(getRumEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures.userActionCount).toEqual(1)
     expect(getViewEvent(2).view.measures.userActionCount).toEqual(0)
+  })
+
+  it('should reset event count when the view changes', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    history.pushState({}, '', '/bar')
+
+    expect(getRumEventCount()).toEqual(3)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    history.pushState({}, '', '/baz')
+
+    expect(getRumEventCount()).toEqual(5)
+    expect(getViewEvent(3).view.measures.resourceCount).toEqual(2)
+    expect(getViewEvent(4).view.measures.resourceCount).toEqual(0)
   })
 
   it('should track performance timings', () => {
     const lifeCycle = new LifeCycle()
     setup({ addRumEvent, lifeCycle })
 
-    expect(getEventCount()).toEqual(1)
+    expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
@@ -196,7 +220,7 @@ describe('rum view measures', () => {
     )
     history.pushState({}, '', '/bar')
 
-    expect(getEventCount()).toEqual(3)
+    expect(getRumEventCount()).toEqual(3)
     expect(getViewEvent(1).view.measures).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,
