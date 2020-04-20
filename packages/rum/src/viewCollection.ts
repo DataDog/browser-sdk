@@ -29,7 +29,8 @@ const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   let currentLocation = { ...location }
-  let endCurrentView = newView(lifeCycle, currentLocation, 0).end
+  const startOrigin = 0
+  let endCurrentView = newView(lifeCycle, currentLocation, startOrigin).end
 
   // Renew view on history changes
   trackHistory(() => {
