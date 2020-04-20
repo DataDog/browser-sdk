@@ -2,6 +2,7 @@ import { DOM_EVENT, generateUUID, monitor, msToNs, throttle } from '@datadog/bro
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
+import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
 
 export interface View {
@@ -27,26 +28,24 @@ export interface ViewMeasures {
 
 const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 
-export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
+export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, startOrigin)
+  let currentView = newView(lifeCycle, currentLocation, session, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation)
+      currentView = newView(lifeCycle, currentLocation, session)
     }
   })
 
   // Renew view on session changes
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_WILL_RENEW, () => {
-    currentView.end()
-  })
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    currentView = newView(lifeCycle, currentLocation)
+    currentView.end()
+    currentView = newView(lifeCycle, currentLocation, session)
   })
 
   // End the current view on page unload
@@ -58,11 +57,17 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
 interface ViewContext {
   id: string
   location: Location
+  sessionId: string | undefined
 }
 
 export let viewContext: ViewContext
 
-function newView(lifeCycle: LifeCycle, location: Location, startOrigin: number = performance.now()) {
+function newView(
+  lifeCycle: LifeCycle,
+  location: Location,
+  session: RumSession,
+  startOrigin: number = performance.now()
+) {
   // Setup initial values
   const id = generateUUID()
   let measures: ViewMeasures = {
@@ -73,7 +78,7 @@ function newView(lifeCycle: LifeCycle, location: Location, startOrigin: number =
   }
   let documentVersion = 0
 
-  viewContext = { id, location }
+  viewContext = { id, location, sessionId: session.getId() }
 
   // Update the view every time the measures are changing
   const scheduleViewUpdate = throttle(monitor(updateView), THROTTLE_VIEW_UPDATE_PERIOD, {

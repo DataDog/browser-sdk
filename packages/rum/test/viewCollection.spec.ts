@@ -2,6 +2,7 @@ import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
+import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
 import { startViewCollection, View, viewContext } from '../src/viewCollection'
 
@@ -13,7 +14,12 @@ function setup(lifeCycle: LifeCycle = new LifeCycle()) {
     fakeLocation.hash = getHash(url)
   })
   const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  startViewCollection(fakeLocation as Location, lifeCycle)
+  const fakeSession = {
+    getId() {
+      return '42'
+    },
+  }
+  startViewCollection(fakeLocation as Location, lifeCycle, fakeSession as RumSession)
 }
 
 describe('rum track url change', () => {
@@ -86,11 +92,8 @@ describe('rum track renew session', () => {
   it('should send a final view event when the session is renewed', () => {
     expect(getRumEventCount()).toEqual(1)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_WILL_RENEW)
-    expect(getViewEvent(0).id).toBe(getViewEvent(1).id)
-    expect(getRumEventCount()).toEqual(2)
-
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    expect(getViewEvent(0).id).toBe(getViewEvent(1).id)
     expect(getViewEvent(0).id).not.toBe(getViewEvent(2).id)
     expect(getRumEventCount()).toEqual(3)
   })

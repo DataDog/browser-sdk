@@ -9,7 +9,6 @@ export enum LifeCycleEventType {
   VIEW_COLLECTED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
-  SESSION_WILL_RENEW,
   SESSION_RENEWED,
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
@@ -31,7 +30,6 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.VIEW_COLLECTED, data: View): void
   notify(
     eventType:
-      | LifeCycleEventType.SESSION_WILL_RENEW
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
@@ -58,7 +56,6 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.VIEW_COLLECTED, callback: (data: View) => void): Subscription
   subscribe(
     eventType:
-      | LifeCycleEventType.SESSION_WILL_RENEW
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED

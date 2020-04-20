@@ -95,62 +95,19 @@ describe('rum session', () => {
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
   })
 
-  function renewSession() {
+  it('should renew on activity after expiration', () => {
+    startRumSession(configuration as Configuration, lifeCycle)
+
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+    expect(renewSessionSpy).not.toHaveBeenCalled()
     jasmine.clock().tick(COOKIE_ACCESS_DELAY)
 
     setupDraws({ tracked: true, trackedWithResources: true })
     document.dispatchEvent(new CustomEvent('click'))
-  }
-
-  it('should renew on activity after expiration', () => {
-    startRumSession(configuration as Configuration, lifeCycle)
-
-    expect(renewSessionSpy).not.toHaveBeenCalled()
-
-    renewSession()
 
     expect(renewSessionSpy).toHaveBeenCalled()
     expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
-  })
-
-  it('should return undefined values when the session is expired', () => {
-    setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-
-    const session = startRumSession(configuration as Configuration, lifeCycle)
-
-    setCookie(SESSION_COOKIE_NAME, '', DURATION)
-    jasmine.clock().tick(COOKIE_ACCESS_DELAY)
-
-    expect(session.getId()).toBe(undefined)
-    expect(session.isTracked()).toBe(false)
-    expect(session.isTrackedWithResource()).toBe(false)
-  })
-
-  it('should return the ending session id when notifying the WILL_RENEW life-cycle', () => {
-    setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
-
-    const session = startRumSession(configuration as Configuration, lifeCycle)
-    const idBeforeRenew = session.getId()
-    let idDuringWillRenewEvent
-    let idDuringRenewedEvent
-
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_WILL_RENEW, () => {
-      idDuringWillRenewEvent = session.getId()
-    })
-
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      idDuringRenewedEvent = session.getId()
-    })
-
-    renewSession()
-
-    expect(idBeforeRenew).toEqual(jasmine.any(String))
-    expect(idDuringWillRenewEvent).toEqual(jasmine.any(String))
-    expect(idDuringRenewedEvent).toEqual(jasmine.any(String))
-    expect(idBeforeRenew).toBe(idDuringWillRenewEvent)
-    expect(idBeforeRenew).not.toBe(idDuringRenewedEvent)
   })
 })

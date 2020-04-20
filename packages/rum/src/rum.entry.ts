@@ -73,7 +73,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
-  startViewCollection(location, lifeCycle)
+  startViewCollection(location, lifeCycle, session)
   const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
   startDOMMutationCollection(lifeCycle)

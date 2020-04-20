@@ -155,7 +155,7 @@ export function startRum(
     lodashMerge(
       {
         application_id: applicationId,
-        session_id: session.getId(),
+        session_id: viewContext.sessionId,
         view: {
           id: viewContext.id,
         },
@@ -175,7 +175,7 @@ export function startRum(
       session: {
         type: sessionTpe,
       },
-      sessionId: session.getId(),
+      sessionId: viewContext.sessionId,
       view: {
         id: viewContext.id,
         referrer: document.referrer,
@@ -204,7 +204,7 @@ export function startRum(
       (): InternalContext => {
         return {
           application_id: applicationId,
-          session_id: session.getId(),
+          session_id: viewContext.sessionId,
           user_action: getUserActionReference(),
           view: {
             id: viewContext.id,
