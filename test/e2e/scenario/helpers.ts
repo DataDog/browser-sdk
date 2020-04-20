@@ -188,7 +188,7 @@ export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumReso
 export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
   expect(resourceEvent.date).toBeGreaterThan(0)
   expect(resourceEvent.duration).toBeGreaterThan(0)
-  const performance = resourceEvent.http.performance!
+  const performance = resourceEvent.http.performance
   // timing could have been discarded by the SDK if there was not in the correct order
   if (performance) {
     expect(performance.download.start).toBeGreaterThan(0)
