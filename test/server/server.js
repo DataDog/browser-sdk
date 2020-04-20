@@ -9,6 +9,7 @@ const morgan = require('morgan')
 
 const logsConfig = require('../../packages/logs/webpack.config')
 const rumConfig = require('../../packages/rum/webpack.config')
+const { specContexts } = require('./spec-contexts')
 const fakeBackend = require('./fake-backend')
 const buildEnv = require('../../scripts/build-env')
 
@@ -22,6 +23,7 @@ const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'), { f
 
 const app = express()
 app.use(cors())
+app.use(specContexts)
 app.use(morgan('[:specId] :method :url :status :body', { stream }))
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../app/dist')))

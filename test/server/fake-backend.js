@@ -1,31 +1,26 @@
-module.exports = (app) => {
-  let logs = {}
-  let rumEvents = {}
-  let monitoring = {}
+const { clean } = require('./spec-contexts')
 
+module.exports = (app) => {
   app.post('/logs', (req, res) => {
-    req.body.split('\n').forEach((log) => addSpecEvent(logs, getSpecId(req), log))
+    req.body.split('\n').forEach((log) => req.specContext.logs.push(JSON.parse(log)))
     res.send('ok')
   })
-  app.get('/logs', (req, res) => send(res, logs[getSpecId(req)]))
+  app.get('/logs', (req, res) => send(res, req.specContext.logs))
 
   app.post('/rum', (req, res) => {
-    req.body.split('\n').forEach((rumEvent) => addSpecEvent(rumEvents, getSpecId(req), rumEvent))
+    req.body.split('\n').forEach((rumEvent) => req.specContext.rum.push(JSON.parse(rumEvent)))
     res.send('ok')
   })
-  app.get('/rum', (req, res) => send(res, rumEvents[getSpecId(req)]))
+  app.get('/rum', (req, res) => send(res, req.specContext.rum))
 
   app.post('/monitoring', (req, res) => {
-    addSpecEvent(monitoring, getSpecId(req), req.body)
+    req.specContext.monitoring.push(JSON.parse(req.body))
     res.send('ok')
   })
-  app.get('/monitoring', (req, res) => send(res, monitoring[getSpecId(req)]))
+  app.get('/monitoring', (req, res) => send(res, req.specContext.monitoring))
 
   app.get('/reset', (req, res) => {
-    const specId = getSpecId(req)
-    logs[specId] = undefined
-    rumEvents[specId] = undefined
-    monitoring[specId] = undefined
+    clean(req.specContext)
     res.send('ok')
   })
 
@@ -47,17 +42,6 @@ module.exports = (app) => {
   app.post('/server-log', (req, res) => {
     res.send('ok')
   })
-}
-
-function addSpecEvent(type, specId, rawEvent) {
-  if (type[specId] === undefined) {
-    type[specId] = []
-  }
-  type[specId].push(JSON.parse(rawEvent))
-}
-
-function getSpecId(req) {
-  return req.query['spec-id'] || 'unknown'
 }
 
 function send(res, data) {
