@@ -56,13 +56,14 @@ export async function flushBrowserLogs() {
 }
 
 export async function tearDown() {
+  await flushEvents()
   expect(await retrieveMonitoringErrors()).toEqual([])
-  await resetServerState()
   await withBrowserLogs((logs) => {
     logs.forEach(console.log)
     expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
   })
   await deleteAllCookies()
+  await resetServerState()
 }
 
 export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
