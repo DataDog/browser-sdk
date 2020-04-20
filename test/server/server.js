@@ -15,11 +15,14 @@ const buildEnv = require('../../scripts/build-env')
 let port = process.env.PORT || 3000
 
 morgan.token('body', (req, res) => extractBody(req, res))
+morgan.token('specId', function(req) {
+  return req.query['spec-id']
+})
 const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'), { flags: 'a' })
 
 const app = express()
 app.use(cors())
-app.use(morgan(':method :url :status :body', { stream }))
+app.use(morgan('[:specId] :method :url :status :body', { stream }))
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../app/dist')))
 
@@ -57,10 +60,10 @@ function withBuildEnv(webpackConf) {
 
 function extractBody(req, res) {
   if (isValidBody(req.body)) {
-    return `\n${req.body}`
+    return `\n[${req.query['spec-id']}] ${req.body}`
   }
   if (isValidBody(res.body)) {
-    return `\n${res.body}`
+    return `\n[${req.query['spec-id']}] ${res.body}`
   }
 }
 

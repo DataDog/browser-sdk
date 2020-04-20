@@ -32,7 +32,7 @@ export async function flushEvents() {
       done(undefined)
     }, 200)
   )
-  return browser.url('/empty.html')
+  return browser.url(`/empty.html?spec-id=${specId}`)
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
@@ -208,12 +208,12 @@ export async function waitForSDKLoaded() {
 }
 
 export async function logCurrentSpec() {
-  const message = `${browser.capabilities.browserName} - ${(getCurrentSpec as any)()} - ${specId}`
+  const message = `[${specId}] ${browser.capabilities.browserName} - ${(getCurrentSpec as any)()}`
   return new Promise((resolve, reject) => {
     intakeRequest.post(
-      '/server-log',
+      `/server-log?spec-id=${specId}`,
       {
-        body: `\n${message}\n`,
+        body: message,
         headers: { 'Content-Type': 'text/plain' },
       },
       (error: unknown) => {

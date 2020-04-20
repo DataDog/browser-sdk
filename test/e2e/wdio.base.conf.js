@@ -6,7 +6,7 @@ let servers
 module.exports = {
   runner: 'local',
   specs: ['./test/e2e/scenario/*.scenario.ts'],
-  maxInstances: 1,
+  maxInstances: 5,
   logLevel: 'warn',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
