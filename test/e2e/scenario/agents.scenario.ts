@@ -90,7 +90,7 @@ describe('rum', () => {
 
   it('should not track disallowed cross origin xhr timings', async () => {
     if (browser.capabilities.browserName === 'MicrosoftEdge') {
-      pending('Edge 18 seems to have valid timings even on cross origin requests')
+      pending('Edge 18 seems to track cross origin xhr timings anyway')
     }
     const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
     expect(resourceEvent).not.toBeUndefined()
