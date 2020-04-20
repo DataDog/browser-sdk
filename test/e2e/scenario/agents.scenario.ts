@@ -94,19 +94,15 @@ describe('rum', () => {
   })
 
   it('should not track disallowed cross origin xhr timings', async () => {
+    if (browser.capabilities.browserName === 'MicrosoftEdge') {
+      pending('Edge 18 seems to have valid timings even on cross origin requests')
+    }
     const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
     expect(timing.http.status_code).toEqual(200)
     expect(timing.duration).toBeGreaterThan(0)
-
-    // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
-    // too much.
-    if (browser.capabilities.browserName === 'MicrosoftEdge') {
-      expectToHaveValidTimings(timing)
-    } else {
-      expect(timing.http.performance).toBeUndefined()
-    }
+    expect(timing.http.performance).toBeUndefined()
   })
 
   it('should track allowed cross origin xhr timings', async () => {
