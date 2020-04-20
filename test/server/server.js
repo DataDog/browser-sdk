@@ -3,28 +3,21 @@ const cors = require('cors')
 const express = require('express')
 const middleware = require('webpack-dev-middleware')
 const path = require('path')
-const fs = require('fs')
 const webpack = require('webpack')
-const morgan = require('morgan')
 
 const logsConfig = require('../../packages/logs/webpack.config')
 const rumConfig = require('../../packages/rum/webpack.config')
 const { specContexts } = require('./spec-contexts')
+const { logging } = require('./logging')
 const fakeBackend = require('./fake-backend')
 const buildEnv = require('../../scripts/build-env')
 
 let port = process.env.PORT || 3000
 
-morgan.token('body', (req, res) => extractBody(req, res))
-morgan.token('specId', function(req) {
-  return req.query['spec-id']
-})
-const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'), { flags: 'a' })
-
 const app = express()
 app.use(cors())
 app.use(specContexts)
-app.use(morgan('[:specId] :method :url :status :body', { stream }))
+app.use(logging)
 app.use(express.static(path.join(__dirname, '../static')))
 app.use(express.static(path.join(__dirname, '../app/dist')))
 
@@ -58,17 +51,4 @@ function withBuildEnv(webpackConf) {
     ],
   }
   return webpackConf
-}
-
-function extractBody(req, res) {
-  if (isValidBody(req.body)) {
-    return `\n[${req.query['spec-id']}] ${req.body}`
-  }
-  if (isValidBody(res.body)) {
-    return `\n[${req.query['spec-id']}] ${res.body}`
-  }
-}
-
-function isValidBody(body) {
-  return body && JSON.stringify(body) !== '{}'
 }
