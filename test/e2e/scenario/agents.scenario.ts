@@ -6,24 +6,19 @@ import {
   expireSession,
   flushBrowserLogs,
   flushEvents,
-  logCurrentSpec,
   makeXHRAndCollectEvent,
   renewSession,
   serverUrl,
   sortByMessage,
+  startSpec,
   tearDown,
-  waitForSDKLoaded,
   waitServerLogs,
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
 import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from './serverTypes'
 
-beforeEach(async () => {
-  await logCurrentSpec()
-  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
-  await waitForSDKLoaded()
-})
+beforeEach(startSpec)
 
 afterEach(tearDown)
 

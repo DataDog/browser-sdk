@@ -12,6 +12,18 @@ export const serverUrl = {
 }
 
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
+let specId: any
+
+export async function startSpec() {
+  await generateSpecId()
+  await logCurrentSpec()
+  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}&spec-id=${specId}`)
+  await waitForSDKLoaded()
+}
+
+export async function generateSpecId() {
+  specId = String(Math.random()).substring(2)
+}
 
 export async function flushEvents() {
   // wait to process user actions + event loop before switching page
@@ -84,7 +96,7 @@ export async function resetServerState() {
 
 async function fetch(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    intakeRequest.get(url, (err: any, response: any, body: string) => {
+    intakeRequest.get(`${url}?spec-id=${specId}`, (err: any, response: any, body: string) => {
       if (err) {
         reject(err)
       }
@@ -196,7 +208,7 @@ export async function waitForSDKLoaded() {
 }
 
 export async function logCurrentSpec() {
-  const message = `${browser.capabilities.browserName} - ${getCurrentSpec()}`
+  const message = `${browser.capabilities.browserName} - ${(getCurrentSpec as any)()} - ${specId}`
   return new Promise((resolve, reject) => {
     intakeRequest.post(
       '/server-log',
@@ -204,7 +216,7 @@ export async function logCurrentSpec() {
         body: `\n${message}\n`,
         headers: { 'Content-Type': 'text/plain' },
       },
-      (error: unknown, response: unknown) => {
+      (error: unknown) => {
         if (error) {
           reject(error)
         } else {

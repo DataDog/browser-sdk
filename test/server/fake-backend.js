@@ -1,30 +1,31 @@
 module.exports = (app) => {
-  let logs = []
-  let rumEvents = []
-  let monitoring = []
+  let logs = {}
+  let rumEvents = {}
+  let monitoring = {}
 
   app.post('/logs', (req, res) => {
-    req.body.split('\n').forEach((log) => logs.push(JSON.parse(log)))
+    req.body.split('\n').forEach((log) => addSpecEvent(logs, getSpecId(req), log))
     res.send('ok')
   })
-  app.get('/logs', (req, res) => send(res, logs))
+  app.get('/logs', (req, res) => send(res, logs[getSpecId(req)]))
 
   app.post('/rum', (req, res) => {
-    req.body.split('\n').forEach((rumEvent) => rumEvents.push(JSON.parse(rumEvent)))
+    req.body.split('\n').forEach((rumEvent) => addSpecEvent(rumEvents, getSpecId(req), rumEvent))
     res.send('ok')
   })
-  app.get('/rum', (req, res) => send(res, rumEvents))
+  app.get('/rum', (req, res) => send(res, rumEvents[getSpecId(req)]))
 
   app.post('/monitoring', (req, res) => {
-    monitoring.push(JSON.parse(req.body))
+    addSpecEvent(monitoring, getSpecId(req), req.body)
     res.send('ok')
   })
-  app.get('/monitoring', (req, res) => send(res, monitoring))
+  app.get('/monitoring', (req, res) => send(res, monitoring[getSpecId(req)]))
 
   app.get('/reset', (req, res) => {
-    logs = []
-    rumEvents = []
-    monitoring = []
+    const specId = getSpecId(req)
+    logs[specId] = undefined
+    rumEvents[specId] = undefined
+    monitoring[specId] = undefined
     res.send('ok')
   })
 
@@ -48,8 +49,20 @@ module.exports = (app) => {
   })
 }
 
+function addSpecEvent(type, specId, rawEvent) {
+  if (type[specId] === undefined) {
+    type[specId] = []
+  }
+  type[specId].push(JSON.parse(rawEvent))
+}
+
+function getSpecId(req) {
+  return req.query['spec-id'] || 'unknown'
+}
+
 function send(res, data) {
   // add response content to res object for logging
-  res.body = JSON.stringify(data)
-  res.send(data)
+  const content = data || []
+  res.body = JSON.stringify(content)
+  res.send(content)
 }
