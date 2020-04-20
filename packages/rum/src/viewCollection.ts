@@ -111,18 +111,18 @@ function newView(lifeCycle: LifeCycle, location: Location, startOrigin: number =
   }
 }
 
-function trackHistory(onChange: () => void) {
+function trackHistory(onHistoryChange: () => void) {
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onChange()
+    onHistoryChange()
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onChange()
+    onHistoryChange()
   })
-  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onChange))
+  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
 }
 
 function areDifferentViews(previous: Location, current: Location) {
