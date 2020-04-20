@@ -30,28 +30,28 @@ const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let endCurrentView = newView(lifeCycle, currentLocation, startOrigin).end
+  let currentView = newView(lifeCycle, currentLocation, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
-      endCurrentView()
-      endCurrentView = newView(lifeCycle, currentLocation).end
+      currentView.end()
+      currentView = newView(lifeCycle, currentLocation)
     }
   })
 
   // Renew view on session changes
   lifeCycle.subscribe(LifeCycleEventType.SESSION_WILL_RENEW, () => {
-    endCurrentView()
+    currentView.end()
   })
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    endCurrentView = newView(lifeCycle, currentLocation).end
+    currentView = newView(lifeCycle, currentLocation)
   })
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.WILL_UNLOAD, () => {
-    endCurrentView()
+    currentView.end()
   })
 }
 
