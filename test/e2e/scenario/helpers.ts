@@ -1,6 +1,5 @@
 import { MonitoringMessage } from '@datadog/browser-core'
 import * as request from 'request'
-// @ts-ignore
 import { getCurrentSpec } from '../currentSpecReporter'
 import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
 
@@ -208,7 +207,7 @@ export async function waitForSDKLoaded() {
 }
 
 export async function logCurrentSpec() {
-  const message = `[${specId}] ${browser.capabilities.browserName} - ${(getCurrentSpec as any)()}`
+  const message = `[${specId}] ${browser.capabilities.browserName} - ${getCurrentSpec()}`
   return new Promise((resolve, reject) => {
     intakeRequest.post(
       `/server-log?spec-id=${specId}`,
