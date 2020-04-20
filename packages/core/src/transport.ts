@@ -33,7 +33,6 @@ function addBatchTime(url: string) {
 }
 
 export class Batch<T> {
-  private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
@@ -58,10 +57,6 @@ export class Batch<T> {
 
   upsert(message: T, key: string) {
     this.addOrUpdate(message, key)
-  }
-
-  beforeFlushOnUnload(handler: () => void) {
-    this.beforeFlushOnUnloadHandlers.push(handler)
   }
 
   flush() {
