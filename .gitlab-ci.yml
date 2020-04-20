@@ -7,8 +7,7 @@ variables:
 stages:
   - ci-image
   - test
-  - unit-bs
-  - e2e-bs
+  - browserstack
   - pre-deploy-notify
   - deploy
   - notify
@@ -121,7 +120,7 @@ unit-bs:
     refs:
       - master
       - tags
-  stage: unit-bs
+  stage: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
@@ -133,7 +132,7 @@ e2e-bs:
     refs:
       - master
       - tags
-  stage: e2e-bs
+  stage: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
