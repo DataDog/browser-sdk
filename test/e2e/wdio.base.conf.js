@@ -16,6 +16,7 @@ module.exports = {
   },
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
+    exec('rm test/server/test-server.log')
     servers = [
       // browserstack allowed ports https://www.browserstack.com/question/664
       // Test server same origin

@@ -15,7 +15,7 @@ const buildEnv = require('../../scripts/build-env')
 let port = process.env.PORT || 3000
 
 morgan.token('body', (req, res) => extractBody(req, res))
-const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'))
+const stream = fs.createWriteStream(path.join(__dirname, 'test-server.log'), { flags: 'a' })
 
 const app = express()
 app.use(cors())
