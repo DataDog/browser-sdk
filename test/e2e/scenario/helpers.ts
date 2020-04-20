@@ -12,7 +12,7 @@ export const serverUrl = {
 }
 
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
-let specId: any
+let specId: string
 
 export async function startSpec() {
   await generateSpecId()
