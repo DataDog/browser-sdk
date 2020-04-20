@@ -1,3 +1,4 @@
+const path = require('path')
 const { exec } = require('child_process')
 const { CurrentSpecReporter } = require('./currentSpecReporter')
 
@@ -15,6 +16,7 @@ module.exports = {
   reporters: ['spec'],
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
+    requires: [path.resolve(__dirname, './ts-node')],
   },
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
@@ -31,10 +33,6 @@ module.exports = {
   },
   before: function() {
     jasmine.getEnv().addReporter(new CurrentSpecReporter())
-    require('ts-node').register({
-      files: true,
-      project: 'test/e2e/scenario/tsconfig.json',
-    })
   },
   onComplete: function() {
     servers.forEach((server) => server.kill())
