@@ -155,8 +155,8 @@ describe('rum', () => {
     expect(firstViewEvent.session_id).not.toBe(lastViewEvent.session_id)
     expect(firstViewEvent.view.id).not.toBe(lastViewEvent.view.id)
 
-    const distinctIds = Array.from(new Set(viewEvents.map((viewEvent) => viewEvent.view.id)))
-    expect(distinctIds.length).toBe(2)
+    const distinctIds = new Set(viewEvents.map((viewEvent) => viewEvent.view.id))
+    expect(distinctIds.size).toBe(2)
   })
 
   it('should not send events when session is expired', async () => {
