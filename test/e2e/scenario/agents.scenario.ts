@@ -97,20 +97,20 @@ describe('rum', () => {
     if (browser.capabilities.browserName === 'MicrosoftEdge') {
       pending('Edge 18 seems to have valid timings even on cross origin requests')
     }
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
-    expect(timing).not.toBeUndefined()
-    expect(timing.http.method).toEqual('GET')
-    expect(timing.http.status_code).toEqual(200)
-    expect(timing.duration).toBeGreaterThan(0)
-    expect(timing.http.performance).toBeUndefined()
+    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
+    expect(resourceEvent).not.toBeUndefined()
+    expect(resourceEvent.http.method).toEqual('GET')
+    expect(resourceEvent.http.status_code).toEqual(200)
+    expect(resourceEvent.duration).toBeGreaterThan(0)
+    expect(resourceEvent.http.performance).toBeUndefined()
   })
 
   it('should track allowed cross origin xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
-    expect(timing).not.toBeUndefined()
-    expect(timing.http.method).toEqual('GET')
-    expect(timing.http.status_code).toEqual(200)
-    expectToHaveValidTimings(timing)
+    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
+    expect(resourceEvent).not.toBeUndefined()
+    expect(resourceEvent.http.method).toEqual('GET')
+    expect(resourceEvent.http.status_code).toEqual(200)
+    expectToHaveValidTimings(resourceEvent)
   })
 
   it('should send performance timings along the view events', async () => {
