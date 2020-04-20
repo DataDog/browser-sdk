@@ -1,5 +1,6 @@
 const path = require('path')
 const { exec } = require('child_process')
+const { unlinkSync } = require('fs')
 const { CurrentSpecReporter } = require('./currentSpecReporter')
 
 let servers
@@ -20,7 +21,11 @@ module.exports = {
   },
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
-    exec('rm test/server/test-server.log')
+    try {
+      unlinkSync('test/server/test-server.log')
+    } catch (e) {
+      console.log(e.message)
+    }
     servers = [
       // browserstack allowed ports https://www.browserstack.com/question/664
       // Test server same origin
