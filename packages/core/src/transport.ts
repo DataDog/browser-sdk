@@ -45,7 +45,7 @@ export class Batch<T> {
     private maxMessageSize: number,
     private flushTimeout: number,
     private contextProvider: () => Context,
-    private willUnloadCallback: () => void = noop
+    private beforeUnloadCallback: () => void = noop
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()
@@ -156,7 +156,7 @@ export class Batch<T> {
        * register first to be sure to be called before flush on beforeunload
        * caveat: unload can still be canceled by another listener
        */
-      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.willUnloadCallback))
+      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.beforeUnloadCallback))
 
       /**
        * Only event that guarantee to fire on mobile devices when the page transitions to background state

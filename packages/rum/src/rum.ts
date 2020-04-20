@@ -223,7 +223,7 @@ function startRumBatch(
   session: RumSession,
   rumContextProvider: () => Context,
   globalContextProvider: () => Context,
-  willUnloadCallback: () => void
+  beforeUnloadCallback: () => void
 ) {
   const batch = new Batch<Context>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, true),
@@ -232,7 +232,7 @@ function startRumBatch(
     configuration.maxMessageSize,
     configuration.flushTimeout,
     () => lodashMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider()),
-    willUnloadCallback
+    beforeUnloadCallback
   )
   return {
     addRumEvent: (event: RumEvent, context?: Context) => {
