@@ -42,6 +42,10 @@ module.exports = (app) => {
   app.get('/redirect', (req, res) => {
     res.redirect('ok')
   })
+
+  app.post('/server-log', (req, res) => {
+    res.send('ok')
+  })
 }
 
 function send(res, data) {

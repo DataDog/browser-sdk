@@ -1,4 +1,6 @@
 const { exec } = require('child_process')
+const { CurrentSpecReporter } = require('./currentSpecReporter')
+
 let servers
 
 module.exports = {
@@ -28,6 +30,7 @@ module.exports = {
     ]
   },
   before: function() {
+    jasmine.getEnv().addReporter(new CurrentSpecReporter())
     require('ts-node').register({
       files: true,
       project: 'test/e2e/scenario/tsconfig.json',
