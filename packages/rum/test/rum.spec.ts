@@ -11,9 +11,19 @@ import {
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
+import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { handleResourceEntry, RumEvent, RumResourceEvent, startRum, UserAction, UserActionType } from '../src/rum'
+import {
+  handleResourceEntry,
+  RumEvent,
+  RumResourceEvent,
+  startRum,
+  UserAction,
+  UserActionType,
+  PerformancePaintTiming,
+  RumViewEvent,
+} from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 
 interface BrowserWindow extends Window {
@@ -507,5 +517,53 @@ describe('rum user action', () => {
     })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
+  })
+})
+
+describe('RUM hidden page', () => {
+  let lifeCycle: LifeCycle
+  let RUM: RumApi
+  let server: sinon.SinonFakeServer
+  const session = {
+    getId: () => undefined,
+    isTracked: () => true,
+    isTrackedWithResource: () => true,
+  }
+
+  beforeEach(() => {
+    setPageVisibility('hidden')
+    server = sinon.fakeServer.create()
+    lifeCycle = new LifeCycle()
+    server.requests = []
+    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startPerformanceCollection(lifeCycle, session)
+    history.pushState({}, '', '/bar')
+  })
+
+  afterEach(() => {
+    restorePageVisibility()
+    server.restore()
+  })
+
+  it('should not collect first_contentful_paint if page is not visible', () => {
+    interface ExpectedRequestBody {
+      evt: {
+        category: string
+      }
+      view: {
+        measures: {
+          first_contentful_paint: number
+        }
+      }
+    }
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests.length).toBeGreaterThan(0)
+
+    initialRequests.map((request) => {
+      if (request.evt.category === 'view') {
+        expect(request.view.measures.first_contentful_paint).toBeUndefined()
+      }
+    })
   })
 })
