@@ -1,7 +1,8 @@
 import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
-import { trackEventCounts } from './trackEventCounts'
+import { EventCounts, trackEventCounts } from './trackEventCounts'
+import { View } from './viewTracker'
 
 // Automatic user action collection lifecycle overview:
 //
@@ -66,6 +67,7 @@ export interface AutoUserAction {
 export type UserAction = CustomUserAction | AutoUserAction
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
+  const subscriptions: Subscription[] = []
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
@@ -76,27 +78,43 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
 
+  function processLoadView(loadedView: View) {
+    if (!loadedView) {
+      return
+    }
+
+    const name = `Load page ${loadedView.location.pathname}`
+    newUserAction(lifeCycle, UserActionType.LOAD_VIEW, name, loadedView.startTime)
+  }
+
+  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processLoadView))
+
   return {
     stop() {
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+      subscriptions.forEach((s) => s.unsubscribe())
     },
   }
 }
 
-let currentUserAction: { id: string; startTime: number } | undefined
+let currentUserAction: { id: string; startTime: number; type: UserActionType; name: string } | undefined
+let currentEventCounts: EventCounts | undefined
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
-  if (currentUserAction) {
-    // Discard any new user action if another one is already occuring.
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string, inputStartTime?: number) {
+  if (currentUserAction && (currentUserAction.type === UserActionType.LOAD_VIEW || type === UserActionType.CLICK)) {
+    // Discard any new click user action if another one is already occuring.
+    // Discard any new user action if a load_view is already occuring.
     return
   }
 
-  const id = generateUUID()
-  const startTime = performance.now()
-  currentUserAction = { id, startTime }
+  const id = currentUserAction?.id || generateUUID()
+  const startTime = currentUserAction?.startTime || inputStartTime || performance.now()
+  currentUserAction = { id, startTime, type, name }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
-  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
+  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, currentEventCounts)
+
+  currentEventCounts = eventCounts
 
   waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
@@ -213,6 +231,7 @@ function waitUserActionCompletion(
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     currentUserAction = undefined
+    currentEventCounts = undefined
     completionCallback(endTime)
   }
 }
@@ -222,6 +241,7 @@ export const $$tests = {
   trackPageActivities,
   resetUserAction() {
     currentUserAction = undefined
+    currentEventCounts = undefined
   },
   waitUserActionCompletion,
 }
