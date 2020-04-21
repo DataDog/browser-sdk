@@ -42,7 +42,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
     }
   })
 
-  // Renew view on session changes
+  // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     currentView.end()
     currentView = newView(lifeCycle, currentLocation, session)
