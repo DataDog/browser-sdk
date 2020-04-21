@@ -26,7 +26,7 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
-const THROTTLE_VIEW_UPDATE_PERIOD = 3000
+export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }

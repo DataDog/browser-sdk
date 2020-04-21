@@ -4,7 +4,7 @@ import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { startViewCollection, View, viewContext } from '../src/viewCollection'
+import { startViewCollection, THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext } from '../src/viewCollection'
 
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
@@ -199,7 +199,68 @@ describe('rum view measures', () => {
     expect(getViewEvent(4).measures.resourceCount).toEqual(0)
   })
 
-  it('should track performance timings', () => {
+  it('should update measures when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    jasmine.clock().install()
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(getViewEvent(1).measures).toEqual({
+      domComplete: 456e6,
+      domContentLoaded: 345e6,
+      domInteractive: 234e6,
+      errorCount: 0,
+      loadEventEnd: 567e6,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    jasmine.clock().uninstall()
+  })
+
+  it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
+    jasmine.clock().install()
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(getViewEvent(1).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 1,
+      userActionCount: 0,
+    })
+
+    jasmine.clock().uninstall()
+  })
+
+  it('should update measures when ending a view', () => {
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
@@ -213,6 +274,8 @@ describe('rum view measures', () => {
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
       FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
     )
+    expect(getRumEventCount()).toEqual(1)
+
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
