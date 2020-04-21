@@ -1,5 +1,6 @@
 import { MonitoringMessage } from '@datadog/browser-core'
 import * as request from 'request'
+import { getCurrentSpec } from '../currentSpecReporter'
 import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
 
 const { hostname } = new URL(browser.config.baseUrl!)
@@ -10,6 +11,18 @@ export const serverUrl = {
 }
 
 const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
+let specId: string
+
+export async function startSpec() {
+  await generateSpecId()
+  await logCurrentSpec()
+  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}&spec-id=${specId}`)
+  await waitForSDKLoaded()
+}
+
+export async function generateSpecId() {
+  specId = String(Math.random()).substring(2)
+}
 
 export async function flushEvents() {
   // wait to process user actions + event loop before switching page
@@ -18,7 +31,7 @@ export async function flushEvents() {
       done(undefined)
     }, 200)
   )
-  return browser.url('/empty.html')
+  return browser.url(`/empty.html?spec-id=${specId}`)
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
@@ -54,13 +67,14 @@ export async function flushBrowserLogs() {
 }
 
 export async function tearDown() {
+  await flushEvents()
   expect(await retrieveMonitoringErrors()).toEqual([])
-  await resetServerState()
   await withBrowserLogs((logs) => {
     logs.forEach(console.log)
     expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
   })
   await deleteAllCookies()
+  await resetServerState()
 }
 
 export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
@@ -81,7 +95,7 @@ export async function resetServerState() {
 
 async function fetch(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    intakeRequest.get(url, (err: any, response: any, body: string) => {
+    intakeRequest.get(`${url}?spec-id=${specId}`, (err: any, response: any, body: string) => {
       if (err) {
         reject(err)
       }
@@ -174,8 +188,11 @@ export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumReso
 export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
   expect(resourceEvent.date).toBeGreaterThan(0)
   expect(resourceEvent.duration).toBeGreaterThan(0)
-  const performance = resourceEvent.http.performance!
-  expect(performance.download.start).toBeGreaterThan(0)
+  const performance = resourceEvent.http.performance
+  // timing could have been discarded by the SDK if there was not in the correct order
+  if (performance) {
+    expect(performance.download.start).toBeGreaterThan(0)
+  }
 }
 
 export async function waitForSDKLoaded() {
@@ -186,5 +203,25 @@ export async function waitForSDKLoaded() {
         done(undefined)
       }
     }, 500)
+  })
+}
+
+export async function logCurrentSpec() {
+  const message = `[${specId}] ${browser.capabilities.browserName} - ${getCurrentSpec()}`
+  return new Promise((resolve, reject) => {
+    intakeRequest.post(
+      `/server-log?spec-id=${specId}`,
+      {
+        body: message,
+        headers: { 'Content-Type': 'text/plain' },
+      },
+      (error: unknown) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
+        }
+      }
+    )
   })
 }
