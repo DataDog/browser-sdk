@@ -131,23 +131,24 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string,
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
-  waitUserActionCompletion(pageActivitiesObservable, (endTime, partialUserAction) => {
+  waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
     stopEventCountsTracking()
-    if (endTime !== undefined && partialUserAction !== undefined) {
+    if (endTime !== undefined && currentUserAction !== undefined) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
-        duration: endTime - partialUserAction.startTime,
+        duration: endTime - currentUserAction.startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
           resourceCount: eventCounts.resourceCount,
         },
-        name: partialUserAction.name,
-        startTime: partialUserAction.startTime,
-        type: partialUserAction.type,
+        name: currentUserAction.name,
+        startTime: currentUserAction.startTime,
+        type: currentUserAction.type,
       })
     }
+    currentUserAction = undefined
   })
 }
 
@@ -220,7 +221,7 @@ function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<Pag
 
 function waitUserActionCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  completionCallback: (endTime: number | undefined, partialUserAction: PartialUserAction | undefined) => void
+  completionCallback: (endTime: number | undefined) => void
 ) {
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
@@ -245,8 +246,7 @@ function waitUserActionCompletion(
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
-    completionCallback(endTime, currentUserAction)
-    currentUserAction = undefined
+    completionCallback(endTime)
   }
 }
 
