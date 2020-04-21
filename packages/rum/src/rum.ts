@@ -183,7 +183,7 @@ export function startRum(
       },
     }),
     () => globalContext,
-    () => lifeCycle.notify(LifeCycleEventType.WILL_UNLOAD)
+    () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
   )
 
   trackView(lifeCycle, batch.upsertRumEvent)

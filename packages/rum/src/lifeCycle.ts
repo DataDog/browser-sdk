@@ -12,7 +12,7 @@ export enum LifeCycleEventType {
   SESSION_RENEWED,
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
-  WILL_UNLOAD,
+  BEFORE_UNLOAD,
 }
 
 export interface Subscription {
@@ -33,7 +33,7 @@ export class LifeCycle {
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
-      | LifeCycleEventType.WILL_UNLOAD
+      | LifeCycleEventType.BEFORE_UNLOAD
   ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -59,7 +59,7 @@ export class LifeCycle {
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
-      | LifeCycleEventType.WILL_UNLOAD,
+      | LifeCycleEventType.BEFORE_UNLOAD,
     callback: () => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {

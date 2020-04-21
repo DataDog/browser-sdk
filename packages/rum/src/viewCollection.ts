@@ -49,7 +49,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   })
 
   // End the current view on page unload
-  lifeCycle.subscribe(LifeCycleEventType.WILL_UNLOAD, () => {
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
     currentView.end()
   })
 }
