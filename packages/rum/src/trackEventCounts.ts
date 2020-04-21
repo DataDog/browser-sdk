@@ -8,12 +8,8 @@ export interface EventCounts {
   resourceCount: number
 }
 
-export function trackEventCounts(
-  lifeCycle: LifeCycle,
-  inputEventCounts?: EventCounts,
-  callback: (eventCounts: EventCounts) => void = noop
-) {
-  const eventCounts = inputEventCounts || {
+export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: EventCounts) => void = noop) {
+  const eventCounts = {
     errorCount: 0,
     longTaskCount: 0,
     resourceCount: 0,
