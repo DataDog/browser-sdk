@@ -14,17 +14,9 @@ import sinon from 'sinon'
 import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import {
-  handleResourceEntry,
-  RumEvent,
-  RumResourceEvent,
-  startRum,
-  UserAction,
-  UserActionType,
-  PerformancePaintTiming,
-  RumViewEvent,
-} from '../src/rum'
+import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
+import { UserAction, UserActionType } from '../src/userActionCollection'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver

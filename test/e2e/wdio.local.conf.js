@@ -1,7 +1,7 @@
 const baseConf = require('./wdio.base.conf')
 
 // https://sites.google.com/a/chromium.org/chromedriver/downloads
-const CHROME_DRIVER_VERSION = '79.0.3945.36'
+const CHROME_DRIVER_VERSION = '81.0.4044.69'
 
 exports.config = {
   ...baseConf,
@@ -15,15 +15,21 @@ exports.config = {
     },
   ],
   baseUrl: 'http://localhost:3000',
-  services: ['selenium-standalone'],
-  seleniumInstallArgs: {
-    drivers: {
-      chrome: { version: CHROME_DRIVER_VERSION },
-    },
-  },
-  seleniumArgs: {
-    drivers: {
-      chrome: { version: CHROME_DRIVER_VERSION },
-    },
-  },
+  services: [
+    [
+      'selenium-standalone',
+      {
+        installArgs: {
+          drivers: {
+            chrome: { version: CHROME_DRIVER_VERSION },
+          },
+        },
+        args: {
+          drivers: {
+            chrome: { version: CHROME_DRIVER_VERSION },
+          },
+        },
+      },
+    ],
+  ],
 }

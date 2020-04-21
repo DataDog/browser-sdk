@@ -10,18 +10,15 @@ import {
   renewSession,
   serverUrl,
   sortByMessage,
+  startSpec,
   tearDown,
-  waitForSDKLoaded,
   waitServerLogs,
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
 import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from './serverTypes'
 
-beforeEach(async () => {
-  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}`)
-  await waitForSDKLoaded()
-})
+beforeEach(startSpec)
 
 afterEach(tearDown)
 
@@ -92,27 +89,23 @@ describe('rum', () => {
   })
 
   it('should not track disallowed cross origin xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
-    expect(timing).not.toBeUndefined()
-    expect(timing.http.method).toEqual('GET')
-    expect(timing.http.status_code).toEqual(200)
-    expect(timing.duration).toBeGreaterThan(0)
-
-    // Edge 18 seems to have valid timings even on cross origin requests ¯\_ツ_/¯ It doesn't matter
-    // too much.
     if (browser.capabilities.browserName === 'MicrosoftEdge') {
-      expectToHaveValidTimings(timing)
-    } else {
-      expect(timing.http.performance).toBeUndefined()
+      pending('Edge 18 seems to track cross origin xhr timings anyway')
     }
+    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
+    expect(resourceEvent).not.toBeUndefined()
+    expect(resourceEvent.http.method).toEqual('GET')
+    expect(resourceEvent.http.status_code).toEqual(200)
+    expect(resourceEvent.duration).toBeGreaterThan(0)
+    expect(resourceEvent.http.performance).toBeUndefined()
   })
 
   it('should track allowed cross origin xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
-    expect(timing).not.toBeUndefined()
-    expect(timing.http.method).toEqual('GET')
-    expect(timing.http.status_code).toEqual(200)
-    expectToHaveValidTimings(timing)
+    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
+    expect(resourceEvent).not.toBeUndefined()
+    expect(resourceEvent.http.method).toEqual('GET')
+    expect(resourceEvent.http.status_code).toEqual(200)
+    expectToHaveValidTimings(resourceEvent)
   })
 
   it('should send performance timings along the view events', async () => {
@@ -157,9 +150,13 @@ describe('rum', () => {
 
     const viewEvents = (await waitServerRumEvents()).filter(isRumViewEvent)
 
-    expect(viewEvents.length).toBe(2)
-    expect(viewEvents[0].session_id).not.toBe(viewEvents[1].session_id)
-    expect(viewEvents[0].view.id).not.toBe(viewEvents[1].view.id)
+    const firstViewEvent = viewEvents[0]
+    const lastViewEvent = viewEvents[viewEvents.length - 1]
+    expect(firstViewEvent.session_id).not.toBe(lastViewEvent.session_id)
+    expect(firstViewEvent.view.id).not.toBe(lastViewEvent.view.id)
+
+    const distinctIds = new Set(viewEvents.map((viewEvent) => viewEvent.view.id))
+    expect(distinctIds.size).toBe(2)
   })
 
   it('should not send events when session is expired', async () => {
@@ -226,6 +223,11 @@ describe('user action collection', () => {
     expect(userActionEvents.length).toBe(1)
     expect(userActionEvents[0].user_action).toEqual({
       id: (jasmine.any(String) as unknown) as string,
+      measures: {
+        error_count: 0,
+        long_task_count: (jasmine.any(Number) as unknown) as number,
+        resource_count: 0,
+      },
       type: 'click',
     })
     expect(userActionEvents[0].evt.name).toBe('click me')
@@ -251,6 +253,11 @@ describe('user action collection', () => {
     expect(userActionEvents.length).toBe(1)
     expect(userActionEvents[0].user_action).toEqual({
       id: (jasmine.any(String) as unknown) as string,
+      measures: {
+        error_count: 0,
+        long_task_count: (jasmine.any(Number) as unknown) as number,
+        resource_count: 1,
+      },
       type: 'click',
     })
     expect(userActionEvents[0].evt.name).toBe('click me')

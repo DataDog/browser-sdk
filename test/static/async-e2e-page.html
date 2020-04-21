@@ -12,15 +12,16 @@
     <script type="text/javascript">
       window.addEventListener('load', () => {
         const intakeOrigin = `http://${window.location.hostname}:4000`
+        const specIdParam = /spec-id=\d+/.exec(window.location.search)[0]
         const logs = document.createElement('script')
         logs.src = './datadog-logs-us.js'
         logs.onload = () => {
           window.DD_LOGS &&
             window.DD_LOGS.init({
               clientToken: 'key',
-              internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
-              logsEndpoint: `${intakeOrigin}/logs`,
-              rumEndpoint: `${intakeOrigin}/rum`,
+              internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
+              logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
+              rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
               forwardErrorsToLogs: true,
             })
         }
@@ -33,9 +34,9 @@
             window.DD_RUM.init({
               applicationId: 'rum',
               clientToken: 'key',
-              internalMonitoringEndpoint: `${intakeOrigin}/monitoring`,
-              logsEndpoint: `${intakeOrigin}/logs`,
-              rumEndpoint: `${intakeOrigin}/rum`,
+              internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
+              logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
+              rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
               enableExperimentalFeatures: ['collect-user-actions'],
             })
         }

@@ -17,5 +17,5 @@
       "@datadog/browser-core": ["../../../packages/core/src"]
     }
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "../*.d.ts"]
 }
