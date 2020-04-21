@@ -16,6 +16,7 @@ import { startPerformanceCollection } from '../src/performanceCollection'
 import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
 import { RumGlobal } from '../src/rum.entry'
 import { UserAction, UserActionType } from '../src/userActionCollection'
+import { startViewCollection } from '../src/viewCollection'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -257,6 +258,7 @@ describe('rum session', () => {
     }
     const lifeCycle = new LifeCycle()
     startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession, internalMonitoring)
+    startViewCollection(location, lifeCycle, trackedWithResourcesSession)
     startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
     server.requests = []
 
@@ -276,6 +278,7 @@ describe('rum session', () => {
     }
     const lifeCycle = new LifeCycle()
     startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession, internalMonitoring)
+    startViewCollection(location, lifeCycle, trackedWithResourcesSession)
     startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
     server.requests = []
 
@@ -315,6 +318,7 @@ describe('rum session', () => {
     }
     const lifeCycle = new LifeCycle()
     startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
+    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
@@ -339,6 +343,7 @@ describe('rum session', () => {
     }
     const lifeCycle = new LifeCycle()
     startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
+    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
@@ -364,6 +369,7 @@ describe('rum session', () => {
     const lifeCycle = new LifeCycle()
     server.requests = []
     startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
+    startViewCollection(location, lifeCycle, session)
 
     interface ExpectedRequestBody {
       evt: {
@@ -420,7 +426,9 @@ describe('rum init', () => {
       isTrackedWithResource: () => true,
     }
 
-    startRum('appId', new LifeCycle(), configuration as Configuration, session, internalMonitoring)
+    const lifeCycle = new LifeCycle()
+    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
+    startViewCollection(location, lifeCycle, session)
 
     expect(server.requests.length).toBeGreaterThan(0)
   })
@@ -446,6 +454,7 @@ describe('rum global context', () => {
     server = sinon.fakeServer.create()
     lifeCycle = new LifeCycle()
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startViewCollection(location, lifeCycle, session)
     server.requests = []
   })
 
@@ -493,6 +502,7 @@ describe('rum user action', () => {
     server = sinon.fakeServer.create()
     lifeCycle = new LifeCycle()
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startViewCollection(location, lifeCycle, session)
     server.requests = []
   })
 

@@ -1,15 +1,18 @@
 import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
 import { UserAction } from './userActionCollection'
+import { View } from './viewCollection'
 
 export enum LifeCycleEventType {
   ERROR_COLLECTED,
   PERFORMANCE_ENTRY_COLLECTED,
   USER_ACTION_COLLECTED,
+  VIEW_COLLECTED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
+  BEFORE_UNLOAD,
 }
 
 export interface Subscription {
@@ -24,11 +27,13 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, data: UserAction): void
+  notify(eventType: LifeCycleEventType.VIEW_COLLECTED, data: View): void
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
+      | LifeCycleEventType.BEFORE_UNLOAD
   ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -48,11 +53,13 @@ export class LifeCycle {
     callback: (data: RequestCompleteEvent) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.VIEW_COLLECTED, callback: (data: View) => void): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
-      | LifeCycleEventType.DOM_MUTATED,
+      | LifeCycleEventType.DOM_MUTATED
+      | LifeCycleEventType.BEFORE_UNLOAD,
     callback: () => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
