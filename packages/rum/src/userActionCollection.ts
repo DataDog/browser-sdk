@@ -2,7 +2,7 @@ import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
-import { View } from './viewTracker'
+import { View } from './viewCollection'
 
 // Automatic user action collection lifecycle overview:
 //
@@ -68,6 +68,11 @@ export type UserAction = CustomUserAction | AutoUserAction
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
+  let currentViewId: string | undefined
+
+  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processLoadView))
+
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
@@ -76,18 +81,15 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
-  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
-
   function processLoadView(loadedView: View) {
-    if (!loadedView) {
+    if (!loadedView || loadedView.id === currentViewId) {
       return
     }
+    currentViewId = loadedView.id
 
     const name = `Load page ${loadedView.location.pathname}`
     newUserAction(lifeCycle, UserActionType.LOAD_VIEW, name, loadedView.startTime)
   }
-
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processLoadView))
 
   return {
     stop() {
@@ -97,8 +99,14 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
   }
 }
 
-let currentUserAction: { id: string; startTime: number; type: UserActionType; name: string } | undefined
-let currentEventCounts: EventCounts | undefined
+interface PartialUserAction {
+  id: string
+  startTime: number
+  type: UserActionType
+  name: string
+}
+
+let currentUserAction: PartialUserAction | undefined
 
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string, inputStartTime?: number) {
   if (currentUserAction && (currentUserAction.type === UserActionType.LOAD_VIEW || type === UserActionType.CLICK)) {
@@ -107,30 +115,37 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string,
     return
   }
 
-  const id = currentUserAction?.id || generateUUID()
-  const startTime = currentUserAction?.startTime || inputStartTime || performance.now()
+  if (currentUserAction && currentUserAction.type === UserActionType.CLICK && type === UserActionType.LOAD_VIEW) {
+    currentUserAction.type = UserActionType.LOAD_VIEW
+    currentUserAction.name = name
+    if (inputStartTime) {
+      currentUserAction.startTime = Math.min(currentUserAction.startTime, inputStartTime)
+    }
+    return
+  }
+
+  const id = generateUUID()
+  const startTime = inputStartTime || performance.now()
   currentUserAction = { id, startTime, type, name }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
-  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, currentEventCounts)
+  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
-  currentEventCounts = eventCounts
-
-  waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
+  waitUserActionCompletion(pageActivitiesObservable, (endTime, partialUserAction) => {
     stopPageActivitiesTracking()
     stopEventCountsTracking()
-    if (endTime !== undefined) {
+    if (endTime !== undefined && partialUserAction !== undefined) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
-        name,
-        startTime,
-        type,
-        duration: endTime - startTime,
+        duration: endTime - partialUserAction.startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
           resourceCount: eventCounts.resourceCount,
         },
+        name: partialUserAction.name,
+        startTime: partialUserAction.startTime,
+        type: partialUserAction.type,
       })
     }
   })
@@ -205,7 +220,7 @@ function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<Pag
 
 function waitUserActionCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
-  completionCallback: (endTime: number | undefined) => void
+  completionCallback: (endTime: number | undefined, partialUserAction: PartialUserAction | undefined) => void
 ) {
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
@@ -230,9 +245,8 @@ function waitUserActionCompletion(
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
+    completionCallback(endTime, currentUserAction)
     currentUserAction = undefined
-    currentEventCounts = undefined
-    completionCallback(endTime)
   }
 }
 
@@ -241,7 +255,6 @@ export const $$tests = {
   trackPageActivities,
   resetUserAction() {
     currentUserAction = undefined
-    currentEventCounts = undefined
   },
   waitUserActionCompletion,
 }
