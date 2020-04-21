@@ -1,10 +1,14 @@
+const path = require('path')
 const { exec } = require('child_process')
+const { unlinkSync } = require('fs')
+const { CurrentSpecReporter } = require('./currentSpecReporter')
+
 let servers
 
 module.exports = {
   runner: 'local',
   specs: ['./test/e2e/scenario/*.scenario.ts'],
-  maxInstances: 1,
+  maxInstances: 5,
   logLevel: 'warn',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
@@ -13,9 +17,15 @@ module.exports = {
   reporters: ['spec'],
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
+    requires: [path.resolve(__dirname, './ts-node')],
   },
   e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
+    try {
+      unlinkSync('test/server/test-server.log')
+    } catch (e) {
+      console.log(e.message)
+    }
     servers = [
       // browserstack allowed ports https://www.browserstack.com/question/664
       // Test server same origin
@@ -27,10 +37,7 @@ module.exports = {
     ]
   },
   before: function() {
-    require('ts-node').register({
-      files: true,
-      project: 'test/e2e/scenario/tsconfig.json',
-    })
+    jasmine.getEnv().addReporter(new CurrentSpecReporter())
   },
   onComplete: function() {
     servers.forEach((server) => server.kill())
