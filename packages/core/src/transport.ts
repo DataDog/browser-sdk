@@ -1,7 +1,7 @@
 import lodashMerge from 'lodash.merge'
 
 import { monitor } from './internalMonitoring'
-import { Context, DOM_EVENT, jsonStringify, objectValues } from './utils'
+import { Context, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -33,7 +33,6 @@ function addBatchTime(url: string) {
 }
 
 export class Batch<T> {
-  private beforeFlushOnUnloadHandlers: Array<() => void> = []
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
@@ -45,7 +44,8 @@ export class Batch<T> {
     private bytesLimit: number,
     private maxMessageSize: number,
     private flushTimeout: number,
-    private contextProvider: () => Context
+    private contextProvider: () => Context,
+    private beforeUnloadCallback: () => void = noop
   ) {
     this.flushOnVisibilityHidden()
     this.flushPeriodically()
@@ -57,10 +57,6 @@ export class Batch<T> {
 
   upsert(message: T, key: string) {
     this.addOrUpdate(message, key)
-  }
-
-  beforeFlushOnUnload(handler: () => void) {
-    this.beforeFlushOnUnloadHandlers.push(handler)
   }
 
   flush() {
@@ -160,12 +156,7 @@ export class Batch<T> {
        * register first to be sure to be called before flush on beforeunload
        * caveat: unload can still be canceled by another listener
        */
-      window.addEventListener(
-        DOM_EVENT.BEFORE_UNLOAD,
-        monitor(() => {
-          this.beforeFlushOnUnloadHandlers.forEach((handler) => handler())
-        })
-      )
+      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.beforeUnloadCallback))
 
       /**
        * Only event that guarantee to fire on mobile devices when the page transitions to background state

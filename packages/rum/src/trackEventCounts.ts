@@ -48,13 +48,5 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
       subscriptions.forEach((s) => s.unsubscribe())
     },
     eventCounts,
-    reset() {
-      const eventCountsMap = eventCounts as { [key: string]: number }
-      for (const key in eventCountsMap) {
-        if (Object.prototype.hasOwnProperty.call(eventCountsMap, key)) {
-          eventCountsMap[key] = 0
-        }
-      }
-    },
   }
 }
