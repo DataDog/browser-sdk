@@ -1,12 +1,18 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
+import { PerformanceLongTaskTiming, PerformancePaintTiming, RumViewEvent } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { startViewCollection, THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext } from '../src/viewCollection'
+import { trackView, viewContext } from '../src/viewTracker'
 
-function setup(lifeCycle: LifeCycle = new LifeCycle()) {
+function setup({
+  addRumEvent,
+  lifeCycle,
+}: {
+  addRumEvent?: () => any
+  lifeCycle?: LifeCycle
+} = {}) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = `http://localhost${pathname}`
     fakeLocation.pathname = getPathName(url)
@@ -19,7 +25,13 @@ function setup(lifeCycle: LifeCycle = new LifeCycle()) {
       return '42'
     },
   }
-  startViewCollection(fakeLocation as Location, lifeCycle, fakeSession as RumSession)
+  trackView(
+    fakeLocation as Location,
+    lifeCycle || new LifeCycle(),
+    fakeSession as RumSession,
+    addRumEvent || (() => undefined),
+    () => undefined
+  )
 }
 
 describe('rum track url change', () => {
@@ -54,48 +66,16 @@ describe('rum track url change', () => {
   })
 })
 
-function spyOnViews() {
-  let addRumEvent: jasmine.Spy
-  let lifeCycle: LifeCycle
-
-  function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as View
-  }
-
-  function getRumEventCount() {
-    return addRumEvent.calls.count()
-  }
-
-  addRumEvent = jasmine.createSpy()
-  lifeCycle = new LifeCycle()
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent)
-  setup(lifeCycle)
-
-  return { lifeCycle, getViewEvent, getRumEventCount }
-}
-
 describe('rum track renew session', () => {
-  let lifeCycle: LifeCycle
-  let getRumEventCount: () => number
-  let getViewEvent: (index: number) => View
-  beforeEach(() => {
-    ;({ lifeCycle, getRumEventCount, getViewEvent } = spyOnViews())
-  })
-
   it('should update page view id on renew session', () => {
+    const lifeCycle = new LifeCycle()
+    setup({
+      lifeCycle,
+    })
     const initialView = viewContext.id
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(viewContext.id).not.toEqual(initialView)
-  })
-
-  it('should send a final view event when the session is renewed', () => {
-    expect(getRumEventCount()).toEqual(1)
-
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-    expect(getViewEvent(0).id).toBe(getViewEvent(1).id)
-    expect(getViewEvent(0).id).not.toBe(getViewEvent(2).id)
-    expect(getRumEventCount()).toEqual(3)
   })
 })
 
@@ -123,146 +103,110 @@ describe('rum view measures', () => {
     entryType: 'navigation',
     loadEventEnd: 567,
   }
-  let lifeCycle: LifeCycle
-  let getRumEventCount: () => number
-  let getViewEvent: (index: number) => View
+  let addRumEvent: jasmine.Spy
+
+  function getViewEvent(index: number) {
+    return addRumEvent.calls.argsFor(index)[0] as RumViewEvent
+  }
+
+  function getRumEventCount() {
+    return addRumEvent.calls.count()
+  }
+
   beforeEach(() => {
-    ;({ lifeCycle, getRumEventCount, getViewEvent } = spyOnViews())
+    addRumEvent = jasmine.createSpy()
   })
 
   it('should track error count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures.errorCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures.errorCount).toEqual(2)
-    expect(getViewEvent(2).measures.errorCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.errorCount).toEqual(2)
+    expect(getViewEvent(2).view.measures.errorCount).toEqual(0)
   })
 
   it('should track long task count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures.longTaskCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures.longTaskCount).toEqual(1)
-    expect(getViewEvent(2).measures.longTaskCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.longTaskCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.longTaskCount).toEqual(0)
   })
 
   it('should track resource count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures.resourceCount).toEqual(1)
-    expect(getViewEvent(2).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
   })
 
   it('should track user action count', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures.userActionCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.userActionCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures.userActionCount).toEqual(1)
-    expect(getViewEvent(2).measures.userActionCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.userActionCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.userActionCount).toEqual(0)
   })
 
   it('should reset event count when the view changes', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
+
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(0).view.measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures.resourceCount).toEqual(1)
-    expect(getViewEvent(2).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(1).view.measures.resourceCount).toEqual(1)
+    expect(getViewEvent(2).view.measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/baz')
 
     expect(getRumEventCount()).toEqual(5)
-    expect(getViewEvent(3).measures.resourceCount).toEqual(2)
-    expect(getViewEvent(4).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(3).view.measures.resourceCount).toEqual(2)
+    expect(getViewEvent(4).view.measures.resourceCount).toEqual(0)
   })
 
-  it('should update measures when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
-    jasmine.clock().install()
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
-
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
+  it('should track performance timings', () => {
+    const lifeCycle = new LifeCycle()
+    setup({ addRumEvent, lifeCycle })
 
     expect(getRumEventCount()).toEqual(1)
-
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456e6,
-      domContentLoaded: 345e6,
-      domInteractive: 234e6,
-      errorCount: 0,
-      loadEventEnd: 567e6,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
-
-    jasmine.clock().uninstall()
-  })
-
-  it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
-    jasmine.clock().install()
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
-
-    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
-
-    expect(getRumEventCount()).toEqual(1)
-
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 1,
-      userActionCount: 0,
-    })
-
-    jasmine.clock().uninstall()
-  })
-
-  it('should update measures when ending a view', () => {
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
+    expect(getViewEvent(0).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
@@ -274,12 +218,10 @@ describe('rum view measures', () => {
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
       FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
     )
-    expect(getRumEventCount()).toEqual(1)
-
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(1).measures).toEqual({
+    expect(getViewEvent(1).view.measures).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,
       domInteractive: 234e6,
@@ -290,7 +232,7 @@ describe('rum view measures', () => {
       resourceCount: 0,
       userActionCount: 0,
     })
-    expect(getViewEvent(2).measures).toEqual({
+    expect(getViewEvent(2).view.measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,

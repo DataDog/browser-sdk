@@ -32,7 +32,7 @@ import {
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { getUserActionReference, UserActionMeasures, UserActionReference, UserActionType } from './userActionCollection'
-import { viewContext, ViewMeasures } from './viewCollection'
+import { trackView, viewContext, ViewMeasures } from './viewTracker'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -182,11 +182,10 @@ export function startRum(
         url: viewContext.location.href,
       },
     }),
-    () => globalContext,
-    () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    () => globalContext
   )
 
-  trackView(lifeCycle, batch.upsertRumEvent)
+  trackView(window.location, lifeCycle, session, batch.upsertRumEvent, batch.beforeFlushOnUnload)
   trackErrors(lifeCycle, batch.addRumEvent)
   trackRequests(configuration, lifeCycle, session, batch.addRumEvent)
   trackPerformanceTiming(configuration, lifeCycle, batch.addRumEvent)
@@ -222,8 +221,7 @@ function startRumBatch(
   configuration: Configuration,
   session: RumSession,
   rumContextProvider: () => Context,
-  globalContextProvider: () => Context,
-  beforeUnloadCallback: () => void
+  globalContextProvider: () => Context
 ) {
   const batch = new Batch<Context>(
     new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, true),
@@ -231,8 +229,7 @@ function startRumBatch(
     configuration.batchBytesLimit,
     configuration.maxMessageSize,
     configuration.flushTimeout,
-    () => lodashMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider()),
-    beforeUnloadCallback
+    () => lodashMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider())
   )
   return {
     addRumEvent: (event: RumEvent, context?: Context) => {
@@ -240,33 +237,13 @@ function startRumBatch(
         batch.add({ ...context, ...withSnakeCaseKeys((event as unknown) as Context) })
       }
     },
+    beforeFlushOnUnload: (handler: () => void) => batch.beforeFlushOnUnload(handler),
     upsertRumEvent: (event: RumEvent, key: string) => {
       if (session.isTracked()) {
         batch.upsert(withSnakeCaseKeys((event as unknown) as Context), key)
       }
     },
   }
-}
-
-function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, key: string) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, (view) => {
-    upsertRumEvent(
-      {
-        date: getTimestamp(view.startTime),
-        duration: msToNs(view.duration),
-        evt: {
-          category: RumEventCategory.VIEW,
-        },
-        rum: {
-          documentVersion: view.documentVersion,
-        },
-        view: {
-          measures: view.measures,
-        },
-      },
-      view.id
-    )
-  })
 }
 
 function trackErrors(lifeCycle: LifeCycle, addRumEvent: (event: RumErrorEvent) => void) {

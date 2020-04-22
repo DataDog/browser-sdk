@@ -21,7 +21,6 @@ import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { startUserActionCollection, UserActionReference } from './userActionCollection'
-import { startViewCollection } from './viewCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -73,7 +72,6 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const session = startRumSession(configuration, lifeCycle)
   const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
 
-  startViewCollection(location, lifeCycle, session)
   const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
   startDOMMutationCollection(lifeCycle)
