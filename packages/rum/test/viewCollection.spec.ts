@@ -297,4 +297,25 @@ describe('rum view measures', () => {
       userActionCount: 0,
     })
   })
+
+  it('should not update measures after ending a view', () => {
+    jasmine.clock().install()
+    expect(getRumEventCount()).toEqual(1)
+
+    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+
+    expect(getRumEventCount()).toEqual(1)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getRumEventCount()).toEqual(3)
+    expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
+    expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(3)
+
+    jasmine.clock().uninstall()
+  })
 })

@@ -95,6 +95,12 @@ function newView(
   updateView()
 
   function updateView() {
+    if (viewContext.id !== id) {
+      // The view update may come after the view has ended when the throttled scheduleViewUpdate
+      // function is called right before ending the view.  In this case, we should not send the
+      // updated view event.
+      return
+    }
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
