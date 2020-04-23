@@ -164,8 +164,6 @@ export function startRum(
     )
   )
 
-  const sessionTpe = getSessionType()
-
   const batch = startRumBatch(
     configuration,
     session,
@@ -173,7 +171,9 @@ export function startRum(
       applicationId,
       date: new Date().getTime(),
       session: {
-        type: sessionTpe,
+        // must be computed on each event because synthetics instrumentation can be done after sdk execution
+        // cf https://github.com/puppeteer/puppeteer/issues/3667
+        type: getSessionType(),
       },
       sessionId: viewContext.sessionId,
       view: {
