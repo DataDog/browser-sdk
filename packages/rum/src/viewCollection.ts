@@ -82,7 +82,7 @@ function newView(
   viewContext = { id, location, sessionId: session.getId() }
 
   // Update the view every time the measures are changing
-  const scheduleViewUpdate = throttle(
+  const { throttled: scheduleViewUpdate } = throttle(
     monitor(() => {
       if (shouldIgnoreScheduledViewUpdate) {
         // The view update may come after the view has ended when the throttled scheduleViewUpdate

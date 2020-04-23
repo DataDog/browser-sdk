@@ -34,7 +34,7 @@ export function startSessionManagement<Type extends string>(
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveActiveSession(sessionCookie).id
 
-  const expandOrRenewSession = utils.throttle(() => {
+  const { throttled: expandOrRenewSession } = utils.throttle(() => {
     const session = retrieveActiveSession(sessionCookie)
     const { type, isTracked } = computeSessionState(session[sessionTypeKey])
     session[sessionTypeKey] = type

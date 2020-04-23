@@ -34,30 +34,41 @@ export function throttle(
   fn: () => void,
   wait: number,
   options?: { leading?: boolean; trailing?: boolean }
-): () => void {
+): { throttled: () => void; stop: () => void } {
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
   let hasPendingExecution = false
+  let pendingTimeoutId: number
+  let isStopped = false
 
-  return function(this: any) {
-    if (inWaitPeriod) {
-      hasPendingExecution = true
-      return
-    }
-    if (needLeadingExecution) {
-      fn.apply(this)
-    } else {
-      hasPendingExecution = true
-    }
-    inWaitPeriod = true
-    setTimeout(() => {
-      if (needTrailingExecution && hasPendingExecution) {
-        fn.apply(this)
+  return {
+    throttled(this: any) {
+      if (isStopped) {
+        return
       }
-      inWaitPeriod = false
-      hasPendingExecution = false
-    }, wait)
+      if (inWaitPeriod) {
+        hasPendingExecution = true
+        return
+      }
+      if (needLeadingExecution) {
+        fn.apply(this)
+      } else {
+        hasPendingExecution = true
+      }
+      inWaitPeriod = true
+      pendingTimeoutId = window.setTimeout(() => {
+        if (needTrailingExecution && hasPendingExecution) {
+          fn.apply(this)
+        }
+        inWaitPeriod = false
+        hasPendingExecution = false
+      }, wait)
+    },
+    stop() {
+      window.clearTimeout(pendingTimeoutId)
+      isStopped = true
+    },
   }
 }
 
