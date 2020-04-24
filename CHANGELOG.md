@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.1
+
+- 🐛 [RUM] fix view update after its end ([#373](https://github.com/DataDog/browser-sdk/pull/373))
+
 ## v1.11.0
 
 - Change view logic to emit LifeCycle events ([#366](https://github.com/DataDog/browser-sdk/pull/366))
