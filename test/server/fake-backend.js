@@ -1,3 +1,4 @@
+const url = require('url')
 const { clean } = require('./spec-contexts')
 
 module.exports = (app) => {
@@ -32,11 +33,16 @@ module.exports = (app) => {
     if (req.query['timing-allow-origin'] === 'true') {
       res.set('Timing-Allow-Origin', '*')
     }
-    setTimeout(() => res.send('ok'), 10)
+    let timeoutDuration = 0
+    if (req.query['duration']) {
+      timeoutDuration = Number(req.query['duration'])
+    }
+    setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
   app.get('/redirect', (req, res) => {
-    res.redirect('ok')
+    const redirectUri = url.parse(req.originalUrl)
+    res.redirect(`ok${redirectUri.search}`)
   })
 
   app.post('/server-log', (req, res) => {
