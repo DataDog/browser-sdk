@@ -196,6 +196,7 @@ notify-master-success:
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
 
 notify-master-failure:
   extends: .slack-notifier-base
@@ -231,6 +232,7 @@ notify-release-success:
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
 notify-release-failure:
   extends: .slack-notifier-base
