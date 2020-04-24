@@ -81,9 +81,13 @@ function newView(
   viewContext = { id, location, sessionId: session.getId() }
 
   // Update the view every time the measures are changing
-  const scheduleViewUpdate = throttle(monitor(updateView), THROTTLE_VIEW_UPDATE_PERIOD, {
-    leading: false,
-  })
+  const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
+    monitor(updateView),
+    THROTTLE_VIEW_UPDATE_PERIOD,
+    {
+      leading: false,
+    }
+  )
   function updateMeasures(newMeasures: Partial<ViewMeasures>) {
     measures = { ...measures, ...newMeasures }
     scheduleViewUpdate()
@@ -110,6 +114,8 @@ function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
+      // prevent pending view updates execution
+      stopScheduleViewUpdate()
       // Make a final view update
       updateView()
     },
