@@ -541,13 +541,6 @@ describe('RUM hidden page', () => {
     }
   }
 
-  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-  const performanceEntry = {
-    entryType: 'view',
-    name: 'first-contentful-paint',
-    startTime: 123,
-  }
-
   beforeEach(() => {
     server = sinon.fakeServer.create()
     original = browserWindow.PerformanceObserver
@@ -567,6 +560,12 @@ describe('RUM hidden page', () => {
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => true,
+    }
+    const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
+    const performanceEntry = {
+      entryType: 'view',
+      name: 'first-contentful-paint',
+      startTime: 123,
     }
 
     setPageVisibility('hidden')
@@ -593,6 +592,12 @@ describe('RUM hidden page', () => {
       getId: () => undefined,
       isTracked: () => true,
       isTrackedWithResource: () => true,
+    }
+    const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
+    const performanceEntry = {
+      entryType: 'view',
+      name: 'first-contentful-paint',
+      startTime: 123,
     }
 
     setPageVisibility('visible')
