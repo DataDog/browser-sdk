@@ -12,7 +12,7 @@ export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 export interface Session<T> {
   renewObservable: Observable<void>
   getId(): string | undefined
-  getType(): T | undefined
+  getTrackingType(): T | undefined
 }
 
 export interface SessionState {
@@ -25,19 +25,19 @@ export interface SessionState {
 /**
  * Limit access to cookie to avoid performance issues
  */
-export function startSessionManagement<Type extends string>(
-  sessionTypeKey: string,
-  computeSessionState: (rawType?: string) => { type: Type; isTracked: boolean }
-): Session<Type> {
+export function startSessionManagement<TrackingType extends string>(
+  productKey: string,
+  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
+): Session<TrackingType> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveActiveSession(sessionCookie).id
 
-  const expandOrRenewSession = utils.throttle(() => {
+  const { throttled: expandOrRenewSession } = utils.throttle(() => {
     const session = retrieveActiveSession(sessionCookie)
-    const { type, isTracked } = computeSessionState(session[sessionTypeKey])
-    session[sessionTypeKey] = type
+    const { trackingType, isTracked } = computeSessionState(session[productKey])
+    session[productKey] = trackingType
     if (isTracked && !session.id) {
       session.id = utils.generateUUID()
       session.created = String(Date.now())
@@ -65,8 +65,8 @@ export function startSessionManagement<Type extends string>(
     getId() {
       return retrieveActiveSession(sessionCookie).id
     },
-    getType() {
-      return retrieveActiveSession(sessionCookie)[sessionTypeKey] as Type | undefined
+    getTrackingType() {
+      return retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined
     },
     renewObservable,
   }

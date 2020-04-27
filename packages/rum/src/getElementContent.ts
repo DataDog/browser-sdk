@@ -1,5 +1,5 @@
 function truncate(s: string) {
-  return s.length > 200 ? `${s.slice(0, 200)} [...]` : s
+  return s.length > 100 ? `${s.slice(0, 100)} [...]` : s
 }
 
 const candidates: Array<(element: Element) => string | null> = [

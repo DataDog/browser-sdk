@@ -9,14 +9,16 @@ export interface RumSession {
   isTrackedWithResource: () => boolean
 }
 
-export enum RumSessionType {
+export enum RumTrackingType {
   NOT_TRACKED = '0',
   TRACKED_WITH_RESOURCES = '1',
   TRACKED_WITHOUT_RESOURCES = '2',
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const session = startSessionManagement(RUM_SESSION_KEY, (rawType) => computeSessionState(configuration, rawType))
+  const session = startSessionManagement(RUM_SESSION_KEY, (rawTrackingType) =>
+    computeSessionState(configuration, rawTrackingType)
+  )
 
   session.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -24,40 +26,40 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
 
   return {
     getId: session.getId,
-    isTracked: () => session.getId() !== undefined && isTracked(session.getType()),
+    isTracked: () => session.getId() !== undefined && isTracked(session.getTrackingType()),
     isTrackedWithResource: () =>
-      session.getId() !== undefined && session.getType() === RumSessionType.TRACKED_WITH_RESOURCES,
+      session.getId() !== undefined && session.getTrackingType() === RumTrackingType.TRACKED_WITH_RESOURCES,
   }
 }
 
-function computeSessionState(configuration: Configuration, rawSessionType?: string) {
-  let sessionType: RumSessionType
-  if (hasValidRumSession(rawSessionType)) {
-    sessionType = rawSessionType
+function computeSessionState(configuration: Configuration, rawTrackingType?: string) {
+  let trackingType: RumTrackingType
+  if (hasValidRumSession(rawTrackingType)) {
+    trackingType = rawTrackingType
   } else if (!performDraw(configuration.sampleRate)) {
-    sessionType = RumSessionType.NOT_TRACKED
+    trackingType = RumTrackingType.NOT_TRACKED
   } else if (!performDraw(configuration.resourceSampleRate)) {
-    sessionType = RumSessionType.TRACKED_WITHOUT_RESOURCES
+    trackingType = RumTrackingType.TRACKED_WITHOUT_RESOURCES
   } else {
-    sessionType = RumSessionType.TRACKED_WITH_RESOURCES
+    trackingType = RumTrackingType.TRACKED_WITH_RESOURCES
   }
   return {
-    isTracked: isTracked(sessionType),
-    type: sessionType,
+    trackingType,
+    isTracked: isTracked(trackingType),
   }
 }
 
-function hasValidRumSession(type?: string): type is RumSessionType {
+function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
   return (
-    type === RumSessionType.NOT_TRACKED ||
-    type === RumSessionType.TRACKED_WITH_RESOURCES ||
-    type === RumSessionType.TRACKED_WITHOUT_RESOURCES
+    trackingType === RumTrackingType.NOT_TRACKED ||
+    trackingType === RumTrackingType.TRACKED_WITH_RESOURCES ||
+    trackingType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
   )
 }
 
-function isTracked(rumSessionType: RumSessionType | undefined) {
+function isTracked(rumSessionType: RumTrackingType | undefined) {
   return (
-    rumSessionType === RumSessionType.TRACKED_WITH_RESOURCES ||
-    rumSessionType === RumSessionType.TRACKED_WITHOUT_RESOURCES
+    rumSessionType === RumTrackingType.TRACKED_WITH_RESOURCES ||
+    rumSessionType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
   )
 }

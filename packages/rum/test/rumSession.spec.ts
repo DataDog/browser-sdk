@@ -10,7 +10,7 @@ import {
 } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { RUM_SESSION_KEY, RumSessionType, startRumSession } from '../src/rumSession'
+import { RUM_SESSION_KEY, RumTrackingType, startRumSession } from '../src/rumSession'
 
 function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
   spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithResources ? 0 : 1)
@@ -52,7 +52,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
   })
 
@@ -62,7 +62,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITHOUT_RESOURCES}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_RESOURCES}`)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
   })
 
@@ -72,7 +72,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
     expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
   })
 
@@ -82,7 +82,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
     expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcdef')
   })
 
@@ -92,7 +92,7 @@ describe('rum session', () => {
     startRumSession(configuration as Configuration, lifeCycle)
 
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.NOT_TRACKED}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
   })
 
   it('should renew on activity after expiration', () => {
@@ -107,7 +107,7 @@ describe('rum session', () => {
     document.dispatchEvent(new CustomEvent('click'))
 
     expect(renewSessionSpy).toHaveBeenCalled()
-    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumSessionType.TRACKED_WITH_RESOURCES}`)
+    expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
     expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
   })
 })

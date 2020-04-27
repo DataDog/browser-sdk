@@ -4,6 +4,7 @@ describe('utils', () => {
   describe('throttle', () => {
     let spy: jasmine.Spy
     let throttled: () => void
+    let stop: () => void
 
     beforeEach(() => {
       jasmine.clock().install()
@@ -17,7 +18,7 @@ describe('utils', () => {
 
     describe('when {leading: false, trailing:false}', () => {
       beforeEach(() => {
-        throttled = throttle(spy, 2, { leading: false, trailing: false })
+        throttled = throttle(spy, 2, { leading: false, trailing: false }).throttled
       })
 
       it('should not call throttled function', () => {
@@ -61,7 +62,7 @@ describe('utils', () => {
 
     describe('when {leading: false, trailing:true}', () => {
       beforeEach(() => {
-        throttled = throttle(spy, 2, { leading: false })
+        throttled = throttle(spy, 2, { leading: false }).throttled
       })
 
       it('should call throttled function after the wait period', () => {
@@ -105,7 +106,7 @@ describe('utils', () => {
 
     describe('when {leading: true, trailing:false}', () => {
       beforeEach(() => {
-        throttled = throttle(spy, 2, { trailing: false })
+        throttled = throttle(spy, 2, { trailing: false }).throttled
       })
 
       it('should call throttled function immediately', () => {
@@ -149,7 +150,7 @@ describe('utils', () => {
 
     describe('when {leading: true, trailing:true}', () => {
       beforeEach(() => {
-        throttled = throttle(spy, 2)
+        throttled = throttle(spy, 2).throttled
       })
 
       it('should call throttled function immediately', () => {
@@ -188,6 +189,32 @@ describe('utils', () => {
         throttled()
         jasmine.clock().tick(2)
         expect(spy).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    describe('stop', () => {
+      beforeEach(() => {
+        const result = throttle(spy, 2)
+        stop = result.stop
+        throttled = result.throttled
+      })
+
+      it('should abort pending execution', () => {
+        throttled()
+        throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
+
+        stop()
+
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should dismiss future calls', () => {
+        stop()
+        throttled()
+        jasmine.clock().tick(2)
+        expect(spy).toHaveBeenCalledTimes(0)
       })
     })
   })
