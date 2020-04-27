@@ -530,7 +530,7 @@ describe('RUM hidden page', () => {
   let stubBuilder: PerformanceObserverStubBuilder
   let original: PerformanceObserver | undefined
   const session = {
-    getId: () => '42',
+    getId: () => undefined,
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }
@@ -583,7 +583,6 @@ describe('RUM hidden page', () => {
 
     initialRequests.map((request) => {
       if (request.evt.category === 'view') {
-        console.log(request)
         expect(request.view.measures.first_contentful_paint).toBeUndefined()
       }
     })
