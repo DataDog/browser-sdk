@@ -23,6 +23,7 @@ beforeEach(startSpec)
 afterEach(tearDown)
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
+const REQUEST_DURATION = 500
 
 describe('logs', () => {
   it('should send logs', async () => {
@@ -71,7 +72,7 @@ describe('rum', () => {
   })
 
   it('should track xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok`))!
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/ok?duration=${REQUEST_DURATION}`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
     expect(timing.http.status_code).toEqual(200)
@@ -79,7 +80,7 @@ describe('rum', () => {
   })
 
   it('should track redirect xhr timings', async () => {
-    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect`))!
+    const timing = (await makeXHRAndCollectEvent(`${serverUrl.sameOrigin}/redirect?duration=${REQUEST_DURATION}`))!
     expect(timing).not.toBeUndefined()
     expect(timing.http.method).toEqual('GET')
     expect(timing.http.status_code).toEqual(200)
@@ -92,7 +93,7 @@ describe('rum', () => {
     if (browser.capabilities.browserName === 'MicrosoftEdge') {
       pending('Edge 18 seems to track cross origin xhr timings anyway')
     }
-    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok`))!
+    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?duration=${REQUEST_DURATION}`))!
     expect(resourceEvent).not.toBeUndefined()
     expect(resourceEvent.http.method).toEqual('GET')
     expect(resourceEvent.http.status_code).toEqual(200)
@@ -101,7 +102,9 @@ describe('rum', () => {
   })
 
   it('should track allowed cross origin xhr timings', async () => {
-    const resourceEvent = (await makeXHRAndCollectEvent(`${serverUrl.crossOrigin}/ok?timing-allow-origin=true`))!
+    const resourceEvent = (await makeXHRAndCollectEvent(
+      `${serverUrl.crossOrigin}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`
+    ))!
     expect(resourceEvent).not.toBeUndefined()
     expect(resourceEvent.http.method).toEqual('GET')
     expect(resourceEvent.http.status_code).toEqual(200)
