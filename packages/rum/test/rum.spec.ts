@@ -570,8 +570,8 @@ describe('RUM hidden page', () => {
 
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startPerformanceCollection(lifeCycle, session)
     startViewCollection(location, lifeCycle, session)
+    startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -602,8 +602,8 @@ describe('RUM hidden page', () => {
 
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startPerformanceCollection(lifeCycle, session)
     startViewCollection(location, lifeCycle, session)
+    startPerformanceCollection(lifeCycle, session)
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -614,7 +614,6 @@ describe('RUM hidden page', () => {
 
     initialRequests.map((request) => {
       if (request.evt.category === 'view') {
-        console.log(request)
         expect(request.view.measures.first_contentful_paint).toBeDefined()
       }
     })
