@@ -542,6 +542,9 @@ describe('RUM hidden page', () => {
   }
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
     server = sinon.fakeServer.create()
     original = browserWindow.PerformanceObserver
     stubBuilder = new PerformanceObserverStubBuilder()
