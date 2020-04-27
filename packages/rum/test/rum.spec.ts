@@ -562,11 +562,7 @@ describe('RUM hidden page', () => {
       isTrackedWithResource: () => true,
     }
     const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-    const performanceEntry = {
-      entryType: 'view',
-      name: 'first-contentful-paint',
-      startTime: 123,
-    }
+    const performanceEntry = { entryType: 'view', name: 'first-contentful-paint' }
 
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
@@ -594,11 +590,7 @@ describe('RUM hidden page', () => {
       isTrackedWithResource: () => true,
     }
     const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-    const performanceEntry = {
-      entryType: 'view',
-      name: 'first-contentful-paint',
-      startTime: 123,
-    }
+    const performanceEntry = { entryType: 'view', name: 'first-contentful-paint' }
 
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
