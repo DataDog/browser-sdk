@@ -548,10 +548,9 @@ describe('RUM hidden page', () => {
 
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
   const performanceEntry = {
-    duration: 1234567,
     entryType: 'view',
     name: 'first-contentful-paint',
-    startTime: 0,
+    startTime: 123,
   }
 
   beforeEach(() => {
