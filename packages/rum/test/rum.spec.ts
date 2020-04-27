@@ -529,11 +529,6 @@ describe('RUM hidden page', () => {
   const browserWindow = window as BrowserWindow
   let stubBuilder: PerformanceObserverStubBuilder
   let original: PerformanceObserver | undefined
-  const session = {
-    getId: () => undefined,
-    isTracked: () => true,
-    isTrackedWithResource: () => true,
-  }
 
   interface ExpectedRequestBody {
     evt: {
@@ -568,6 +563,12 @@ describe('RUM hidden page', () => {
   })
 
   it('should not collect first_contentful_paint if page is not visible', () => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
     startPerformanceCollection(lifeCycle, session)
@@ -588,6 +589,12 @@ describe('RUM hidden page', () => {
   })
 
   it('should collect first_contentful_paint if page is visible', () => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
     startPerformanceCollection(lifeCycle, session)
