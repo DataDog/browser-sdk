@@ -526,45 +526,86 @@ describe('RUM hidden page', () => {
   let lifeCycle: LifeCycle
   let RUM: RumApi
   let server: sinon.SinonFakeServer
+  const browserWindow = window as BrowserWindow
+  let stubBuilder: PerformanceObserverStubBuilder
+  let original: PerformanceObserver | undefined
   const session = {
-    getId: () => undefined,
+    getId: () => '42',
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }
 
+  interface ExpectedRequestBody {
+    evt: {
+      category: string
+    }
+    view: {
+      measures: {
+        first_contentful_paint: number
+      }
+    }
+  }
+
+  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
+  const performanceEntry = {
+    duration: 1234567,
+    entryType: 'view',
+    name: 'first-contentful-paint',
+    startTime: 0,
+  }
+
   beforeEach(() => {
-    setPageVisibility('hidden')
     server = sinon.fakeServer.create()
+    original = browserWindow.PerformanceObserver
+    stubBuilder = new PerformanceObserverStubBuilder()
+    browserWindow.PerformanceObserver = stubBuilder.getStub()
     lifeCycle = new LifeCycle()
-    server.requests = []
-    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startPerformanceCollection(lifeCycle, session)
-    history.pushState({}, '', '/bar')
   })
 
   afterEach(() => {
+    browserWindow.PerformanceObserver = original
     restorePageVisibility()
     server.restore()
   })
 
   it('should not collect first_contentful_paint if page is not visible', () => {
-    interface ExpectedRequestBody {
-      evt: {
-        category: string
-      }
-      view: {
-        measures: {
-          first_contentful_paint: number
-        }
-      }
-    }
+    setPageVisibility('hidden')
+    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startPerformanceCollection(lifeCycle, session)
+    startViewCollection(location, lifeCycle, session)
+    server.requests = []
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
 
     const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
     expect(initialRequests.length).toBeGreaterThan(0)
 
     initialRequests.map((request) => {
       if (request.evt.category === 'view') {
+        console.log(request)
         expect(request.view.measures.first_contentful_paint).toBeUndefined()
+      }
+    })
+  })
+
+  it('should collect first_contentful_paint if page is visible', () => {
+    setPageVisibility('visible')
+    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startPerformanceCollection(lifeCycle, session)
+    startViewCollection(location, lifeCycle, session)
+    server.requests = []
+
+    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests.length).toBeGreaterThan(0)
+
+    initialRequests.map((request) => {
+      if (request.evt.category === 'view') {
+        console.log(request)
+        expect(request.view.measures.first_contentful_paint).toBeDefined()
       }
     })
   })
