@@ -523,17 +523,10 @@ describe('rum user action', () => {
 })
 
 describe('rum first_contentful_paint', () => {
-  let lifeCycle: LifeCycle
   let RUM: RumApi
   let stubBuilder: PerformanceObserverStubBuilder
   let original: PerformanceObserver | undefined
   const browserWindow = window as BrowserWindow
-
-  const session = {
-    getId: () => '42',
-    isTracked: () => true,
-    isTrackedWithResource: () => true,
-  }
 
   beforeEach(() => {
     if (isIE()) {
@@ -542,7 +535,6 @@ describe('rum first_contentful_paint', () => {
     original = browserWindow.PerformanceObserver
     stubBuilder = new PerformanceObserverStubBuilder()
     browserWindow.PerformanceObserver = stubBuilder.getStub()
-    lifeCycle = new LifeCycle()
   })
 
   afterEach(() => {
@@ -551,6 +543,13 @@ describe('rum first_contentful_paint', () => {
   })
 
   it('should not be collected when page starts not visible', () => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const lifeCycle = new LifeCycle()
+
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
     startPerformanceCollection(lifeCycle, session)
@@ -559,6 +558,13 @@ describe('rum first_contentful_paint', () => {
   })
 
   it('should be collected when page starts visible', () => {
+    const session = {
+      getId: () => undefined,
+      isTracked: () => true,
+      isTrackedWithResource: () => true,
+    }
+    const lifeCycle = new LifeCycle()
+
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
     startPerformanceCollection(lifeCycle, session)
