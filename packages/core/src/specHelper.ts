@@ -96,6 +96,11 @@ export interface FetchStubPromise extends Promise<Response> {
 export class PerformanceObserverStubBuilder {
   public instance: any
 
+  getEntryTypes() {
+    // tslint:disable-next-line: no-unsafe-any
+    return this.instance.entryTypes
+  }
+
   fakeEntry(entry: PerformanceEntry, entryType: string) {
     const asEntryList = () => [entry]
     // tslint:disable-next-line: no-unsafe-any
@@ -120,8 +125,24 @@ export class PerformanceObserverStubBuilder {
         builder.instance = this
       }
       observe(options?: PerformanceObserverInit) {
-        // do nothing
+        if (options) {
+          // tslint:disable-next-line: no-unsafe-any
+          builder.instance.entryTypes = options.entryTypes
+        }
       }
     } as unknown) as PerformanceObserver
   }
+}
+
+export function setPageVisibility(visibility: 'visible' | 'hidden') {
+  Object.defineProperty(document, 'visibilityState', {
+    get() {
+      return visibility
+    },
+    configurable: true,
+  })
+}
+
+export function restorePageVisibility() {
+  delete (document as any).visibilityState
 }

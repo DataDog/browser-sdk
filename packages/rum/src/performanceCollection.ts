@@ -31,7 +31,13 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(session, lifeCycle, entries.getEntries()))
     )
-    observer.observe({ entryTypes: ['resource', 'navigation', 'paint', 'longtask'] })
+    const entryTypes = ['resource', 'navigation', 'longtask']
+
+    // cf https://github.com/w3c/paint-timing/issues/40
+    if (document.visibilityState === 'visible') {
+      entryTypes.push('paint')
+    }
+    observer.observe({ entryTypes })
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
