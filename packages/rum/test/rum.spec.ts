@@ -522,7 +522,7 @@ describe('rum user action', () => {
   })
 })
 
-describe('RUM hidden page', () => {
+describe('rum first_contentful_paint', () => {
   let lifeCycle: LifeCycle
   let RUM: RumApi
   let server: sinon.SinonFakeServer
