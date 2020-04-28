@@ -11,7 +11,6 @@ import {
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
-import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { startPerformanceCollection } from '../src/performanceCollection'
 import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
@@ -519,58 +518,5 @@ describe('rum user action', () => {
     })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
-  })
-})
-
-describe('rum first_contentful_paint', () => {
-  let RUM: RumApi
-  let stubBuilder: PerformanceObserverStubBuilder
-  let original: PerformanceObserver | undefined
-  const browserWindow = window as BrowserWindow
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-    original = browserWindow.PerformanceObserver
-    stubBuilder = new PerformanceObserverStubBuilder()
-    browserWindow.PerformanceObserver = stubBuilder.getStub()
-  })
-
-  afterEach(() => {
-    browserWindow.PerformanceObserver = original
-    restorePageVisibility()
-  })
-
-  it('should not be collected when page starts not visible', () => {
-    const session = {
-      getId: () => '42',
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const lifeCycle = new LifeCycle()
-
-    setPageVisibility('hidden')
-    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
-    startPerformanceCollection(lifeCycle, session)
-
-    expect(stubBuilder.getEntryTypes()).not.toContain('paint')
-  })
-
-  it('should be collected when page starts visible', () => {
-    const session = {
-      getId: () => '42',
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const lifeCycle = new LifeCycle()
-
-    setPageVisibility('visible')
-    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
-    startPerformanceCollection(lifeCycle, session)
-
-    expect(stubBuilder.getEntryTypes()).toContain('paint')
   })
 })
