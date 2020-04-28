@@ -5,7 +5,7 @@ describe('configuration', () => {
   const prodEnv = {
     datacenter: 'us' as 'us',
     env: 'production' as 'production',
-    version: 'some_version',
+    sdkVersion: 'some_version',
   }
 
   describe('internal monitoring endpoint', () => {
@@ -35,7 +35,7 @@ describe('configuration', () => {
       const e2eEnv = {
         datacenter: 'us' as 'us',
         env: 'e2e-test' as 'e2e-test',
-        version: 'some_version',
+        sdkVersion: 'some_version',
       }
       const configuration = buildConfiguration(
         { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },

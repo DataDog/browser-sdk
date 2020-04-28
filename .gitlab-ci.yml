@@ -152,9 +152,9 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DATACENTER=eu TARGET_ENV=staging VERSION=staging yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=staging BUILD_MODE=staging yarn build:bundle
     - ./scripts/deploy.sh staging eu
-    - TARGET_DATACENTER=us TARGET_ENV=staging VERSION=staging yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=staging BUILD_MODE=staging yarn build:bundle
     - ./scripts/deploy.sh staging us
 
 deploy-release:
@@ -168,9 +168,9 @@ deploy-release:
   image: $CI_IMAGE
   script:
     - yarn
-    - TARGET_DATACENTER=us TARGET_ENV=production VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=us TARGET_ENV=production BUILD_MODE=release yarn build:bundle
     - ./scripts/deploy.sh prod us
-    - TARGET_DATACENTER=eu TARGET_ENV=production VERSION=release yarn build:bundle
+    - TARGET_DATACENTER=eu TARGET_ENV=production BUILD_MODE=release yarn build:bundle
     - ./scripts/deploy.sh prod eu
 
 ########################################################################################################################

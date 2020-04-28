@@ -28,7 +28,7 @@ export type Environment = 'production' | 'staging' | 'e2e-test'
 export interface BuildEnv {
   datacenter: Datacenter
   env: Environment
-  version: string
+  sdkVersion: string
 }
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
