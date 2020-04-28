@@ -558,7 +558,7 @@ describe('rum first_contentful_paint', () => {
     server.restore()
   })
 
-  it('should not collect first_contentful_paint if page is not visible', () => {
+  it('should not be collected when page starts not visible', () => {
     const session = {
       getId: () => undefined,
       isTracked: () => true,
