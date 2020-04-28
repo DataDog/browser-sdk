@@ -544,7 +544,7 @@ describe('rum first_contentful_paint', () => {
 
   it('should not be collected when page starts not visible', () => {
     const session = {
-      getId: () => undefined,
+      getId: () => '42',
       isTracked: () => true,
       isTrackedWithResource: () => true,
     }
@@ -559,7 +559,7 @@ describe('rum first_contentful_paint', () => {
 
   it('should be collected when page starts visible', () => {
     const session = {
-      getId: () => undefined,
+      getId: () => '42',
       isTracked: () => true,
       isTrackedWithResource: () => true,
     }
