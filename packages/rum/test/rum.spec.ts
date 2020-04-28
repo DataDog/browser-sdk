@@ -586,7 +586,7 @@ describe('rum first_contentful_paint', () => {
     })
   })
 
-  it('should collect first_contentful_paint if page is visible', () => {
+  it('should be collected when page starts visible', () => {
     const session = {
       getId: () => undefined,
       isTracked: () => true,
