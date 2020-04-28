@@ -552,6 +552,7 @@ describe('rum first_contentful_paint', () => {
 
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
 
     expect(stubBuilder.getEntryTypes()).not.toContain('paint')
@@ -567,6 +568,7 @@ describe('rum first_contentful_paint', () => {
 
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
+    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
 
     expect(stubBuilder.getEntryTypes()).toContain('paint')
