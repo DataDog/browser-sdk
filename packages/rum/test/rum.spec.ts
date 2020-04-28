@@ -525,27 +525,20 @@ describe('rum user action', () => {
 describe('rum first_contentful_paint', () => {
   let lifeCycle: LifeCycle
   let RUM: RumApi
-  let server: sinon.SinonFakeServer
-  const browserWindow = window as BrowserWindow
   let stubBuilder: PerformanceObserverStubBuilder
   let original: PerformanceObserver | undefined
+  const browserWindow = window as BrowserWindow
 
-  interface ExpectedRequestBody {
-    evt: {
-      category: string
-    }
-    view: {
-      measures: {
-        first_contentful_paint: number
-      }
-    }
+  const session = {
+    getId: () => '42',
+    isTracked: () => true,
+    isTrackedWithResource: () => true,
   }
 
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
-    server = sinon.fakeServer.create()
     original = browserWindow.PerformanceObserver
     stubBuilder = new PerformanceObserverStubBuilder()
     browserWindow.PerformanceObserver = stubBuilder.getStub()
@@ -555,62 +548,21 @@ describe('rum first_contentful_paint', () => {
   afterEach(() => {
     browserWindow.PerformanceObserver = original
     restorePageVisibility()
-    server.restore()
   })
 
   it('should not be collected when page starts not visible', () => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-    const performanceEntry = { entryType: 'view', name: 'first-contentful-paint' }
-
     setPageVisibility('hidden')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
-    server.requests = []
 
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
-
-    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(initialRequests.length).toBeGreaterThan(0)
-
-    initialRequests.map((request) => {
-      if (request.evt.category === 'view') {
-        expect(request.view.measures.first_contentful_paint).toBeUndefined()
-      }
-    })
+    expect(stubBuilder.getEntryTypes()).not.toContain('paint')
   })
 
   it('should be collected when page starts visible', () => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
-    const performanceEntry = { entryType: 'view', name: 'first-contentful-paint' }
-
     setPageVisibility('visible')
     RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
     startPerformanceCollection(lifeCycle, session)
-    server.requests = []
 
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
-
-    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(initialRequests.length).toBeGreaterThan(0)
-
-    initialRequests.map((request) => {
-      if (request.evt.category === 'view') {
-        expect(request.view.measures.first_contentful_paint).toBeDefined()
-      }
-    })
+    expect(stubBuilder.getEntryTypes()).toContain('paint')
   })
 })
