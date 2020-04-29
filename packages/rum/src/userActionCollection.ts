@@ -1,7 +1,8 @@
 import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
-import { trackEventCounts } from './trackEventCounts'
+import { EventCounts, trackEventCounts } from './trackEventCounts'
+import { View } from './viewCollection'
 
 // Automatic user action collection lifecycle overview:
 //
@@ -66,6 +67,12 @@ export interface AutoUserAction {
 export type UserAction = CustomUserAction | AutoUserAction
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
+  const subscriptions: Subscription[] = []
+  let currentViewId: string | undefined
+
+  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processLoadView))
+
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
@@ -74,26 +81,52 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
-  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+  function processLoadView(loadedView: View) {
+    if (!loadedView || loadedView.id === currentViewId) {
+      return
+    }
+    currentViewId = loadedView.id
+
+    const name = `Load page ${loadedView.location.pathname}`
+    newUserAction(lifeCycle, UserActionType.LOAD_VIEW, name, loadedView.startTime)
+  }
 
   return {
     stop() {
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+      subscriptions.forEach((s) => s.unsubscribe())
     },
   }
 }
 
-let currentUserAction: { id: string; startTime: number } | undefined
+interface PartialUserAction {
+  id: string
+  startTime: number
+  type: UserActionType
+  name: string
+}
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
-  if (currentUserAction) {
-    // Discard any new user action if another one is already occuring.
+let currentUserAction: PartialUserAction | undefined
+
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string, inputStartTime?: number) {
+  if (currentUserAction && (currentUserAction.type === UserActionType.LOAD_VIEW || type === UserActionType.CLICK)) {
+    // Discard any new click user action if another one is already occuring.
+    // Discard any new user action if a load_view is already occuring.
+    return
+  }
+
+  if (currentUserAction && currentUserAction.type === UserActionType.CLICK && type === UserActionType.LOAD_VIEW) {
+    currentUserAction.type = UserActionType.LOAD_VIEW
+    currentUserAction.name = name
+    if (inputStartTime) {
+      currentUserAction.startTime = Math.min(currentUserAction.startTime, inputStartTime)
+    }
     return
   }
 
   const id = generateUUID()
-  const startTime = performance.now()
-  currentUserAction = { id, startTime }
+  const startTime = inputStartTime || performance.now()
+  currentUserAction = { id, startTime, type, name }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
@@ -101,20 +134,21 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
     stopEventCountsTracking()
-    if (endTime !== undefined) {
+    if (endTime !== undefined && currentUserAction !== undefined) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
-        name,
-        startTime,
-        type,
-        duration: endTime - startTime,
+        duration: endTime - currentUserAction.startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
           resourceCount: eventCounts.resourceCount,
         },
+        name: currentUserAction.name,
+        startTime: currentUserAction.startTime,
+        type: currentUserAction.type,
       })
     }
+    currentUserAction = undefined
   })
 }
 
@@ -212,7 +246,6 @@ function waitUserActionCompletion(
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
-    currentUserAction = undefined
     completionCallback(endTime)
   }
 }
