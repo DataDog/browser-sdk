@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.3
+
+- [RUMF-447]: Only collect first-contentful-paint if page is visible ([#361](https://github.com/DataDog/browser-sdk/pull/361))
+
 ## v1.11.2
 
 - 🐛[RUMF-451] compute session type for each event ([#375](https://github.com/DataDog/browser-sdk/pull/375))
