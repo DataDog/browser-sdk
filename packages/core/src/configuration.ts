@@ -1,4 +1,4 @@
-import { BuildEnv, Datacenter, Environment } from './init'
+import { BuildEnv, BuildMode, Datacenter, Environment } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -45,7 +45,7 @@ export interface UserConfiguration {
   silentMultipleInit?: boolean
   proxyHost?: string
 
-  // Below is only taken into account for e2e-test bundle.
+  // Below is only taken into account for e2e-test build mode.
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
@@ -64,17 +64,19 @@ interface TransportConfiguration {
   clientToken: string
   datacenter: Datacenter
   env: Environment
-  version: string
+  buildMode: BuildMode
+  sdkVersion: string
   proxyHost?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
+    buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
     datacenter: userConfiguration.datacenter || buildEnv.datacenter,
     env: buildEnv.env,
     proxyHost: userConfiguration.proxyHost,
-    version: buildEnv.version,
+    sdkVersion: buildEnv.sdkVersion,
   }
 
   const enableExperimentalFeatures = Array.isArray(userConfiguration.enableExperimentalFeatures)
@@ -110,7 +112,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
   }
 
-  if (transportConfiguration.env === 'e2e-test') {
+  if (transportConfiguration.buildMode === 'e2e-test') {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
@@ -128,7 +130,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
   const tld = conf.datacenter === 'us' ? 'com' : 'eu'
   const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
-  const tags = `version:${conf.version}`
+  const tags = `sdk_version:${conf.sdkVersion}`
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''

@@ -3,9 +3,10 @@ import { buildConfiguration } from '../src/configuration'
 describe('configuration', () => {
   const clientToken = 'some_client_token'
   const prodEnv = {
+    buildMode: 'release' as 'release',
     datacenter: 'us' as 'us',
     env: 'production' as 'production',
-    version: 'some_version',
+    sdkVersion: 'some_version',
   }
 
   describe('internal monitoring endpoint', () => {
@@ -30,12 +31,13 @@ describe('configuration', () => {
       expect(configuration.internalMonitoringEndpoint).not.toEqual(endpoint)
     })
 
-    it('should be available for e2e-test env', () => {
+    it('should be available for e2e-test build mode', () => {
       const endpoint = 'bbbbbbbbbbbbbbb'
       const e2eEnv = {
+        buildMode: 'e2e-test' as 'e2e-test',
         datacenter: 'us' as 'us',
-        env: 'e2e-test' as 'e2e-test',
-        version: 'some_version',
+        env: 'staging' as 'staging',
+        sdkVersion: 'some_version',
       }
       const configuration = buildConfiguration(
         { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
