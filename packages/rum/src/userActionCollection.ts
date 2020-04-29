@@ -111,6 +111,9 @@ interface ViewLoadingState {
 let currentViewLoadingState: ViewLoadingState | undefined
 
 function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: number) {
+  // Cancel current user action
+  currentUserAction = undefined
+
   if (currentViewLoadingState) {
     currentViewLoadingState.stopPageActivitiesTracking()
   }
