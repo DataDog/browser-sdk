@@ -1,4 +1,4 @@
-import { BuildEnv, Datacenter, Environment } from './init'
+import { BuildEnv, BuildMode, Datacenter, Environment } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -45,7 +45,7 @@ export interface UserConfiguration {
   silentMultipleInit?: boolean
   proxyHost?: string
 
-  // Below is only taken into account for e2e-test bundle.
+  // Below is only taken into account for e2e-test build mode.
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
@@ -64,12 +64,14 @@ interface TransportConfiguration {
   clientToken: string
   datacenter: Datacenter
   env: Environment
+  buildMode: BuildMode
   sdkVersion: string
   proxyHost?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
+    buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
     datacenter: userConfiguration.datacenter || buildEnv.datacenter,
     env: buildEnv.env,
@@ -110,7 +112,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
   }
 
-  if (transportConfiguration.env === 'e2e-test') {
+  if (transportConfiguration.buildMode === 'e2e-test') {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }

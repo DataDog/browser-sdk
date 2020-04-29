@@ -23,11 +23,13 @@ export function makeGlobal<T>(stub: T): T {
 }
 
 export type Datacenter = 'eu' | 'us'
-export type Environment = 'production' | 'staging' | 'e2e-test'
+export type Environment = 'production' | 'staging'
+export type BuildMode = 'release' | 'staging' | 'e2e-test'
 
 export interface BuildEnv {
   datacenter: Datacenter
   env: Environment
+  buildMode: BuildMode
   sdkVersion: string
 }
 
