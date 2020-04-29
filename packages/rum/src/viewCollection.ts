@@ -14,6 +14,11 @@ export interface View {
   duration: number
 }
 
+export interface ViewLoad {
+  startTime: number
+  duration: number
+}
+
 export interface ViewMeasures {
   firstContentfulPaint?: number
   domInteractive?: number

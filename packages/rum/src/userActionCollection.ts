@@ -71,24 +71,20 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
   let currentViewId: string | undefined
 
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processLoadView))
-
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
     }
-
     newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
-  function processLoadView(loadedView: View) {
+  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processViewLoading))
+  function processViewLoading(loadedView: View) {
     if (!loadedView || loadedView.id === currentViewId) {
       return
     }
     currentViewId = loadedView.id
-
-    const name = `Load page ${loadedView.location.pathname}`
-    newUserAction(lifeCycle, UserActionType.LOAD_VIEW, name, loadedView.startTime)
+    newViewLoading(lifeCycle, loadedView.location.pathname, loadedView.startTime)
   }
 
   return {
@@ -105,27 +101,48 @@ interface PartialUserAction {
   type: UserActionType
   name: string
 }
-
 let currentUserAction: PartialUserAction | undefined
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string, inputStartTime?: number) {
-  if (currentUserAction && (currentUserAction.type === UserActionType.LOAD_VIEW || type === UserActionType.CLICK)) {
-    // Discard any new click user action if another one is already occuring.
-    // Discard any new user action if a load_view is already occuring.
-    return
+interface ViewLoadingState {
+  pathname: string
+  startTime: number
+  stopPageActivitiesTracking: () => void
+}
+let currentViewLoadingState: ViewLoadingState | undefined
+
+function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: number) {
+  if (currentViewLoadingState) {
+    currentViewLoadingState.stopPageActivitiesTracking()
   }
 
-  if (currentUserAction && currentUserAction.type === UserActionType.CLICK && type === UserActionType.LOAD_VIEW) {
-    currentUserAction.type = UserActionType.LOAD_VIEW
-    currentUserAction.name = name
-    if (inputStartTime) {
-      currentUserAction.startTime = Math.min(currentUserAction.startTime, inputStartTime)
+  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
+  currentViewLoadingState = {
+    pathname,
+    startTime,
+    stopPageActivitiesTracking,
+  }
+
+  waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
+    stopPageActivitiesTracking()
+    if (endTime !== undefined && currentViewLoadingState !== undefined) {
+      lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
+        duration: endTime - currentViewLoadingState.startTime,
+        startTime: currentViewLoadingState.startTime,
+      })
     }
+    currentViewLoadingState = undefined
+  })
+}
+
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
+  if (currentViewLoadingState || currentUserAction) {
+    // Discard any new click user action if another one is already occuring.
+    // Discard any new user action if page is in a loading state.
     return
   }
 
   const id = generateUUID()
-  const startTime = inputStartTime || performance.now()
+  const startTime = performance.now()
   currentUserAction = { id, startTime, type, name }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
