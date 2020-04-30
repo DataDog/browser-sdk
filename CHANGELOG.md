@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.11.4
+
+- ♻️[RUMF-471] rename version ([#382](https://github.com/DataDog/browser-sdk/pull/382))
+
 ## v1.11.3
 
 - [RUMF-447]: Only collect first-contentful-paint if page is visible ([#361](https://github.com/DataDog/browser-sdk/pull/361))
