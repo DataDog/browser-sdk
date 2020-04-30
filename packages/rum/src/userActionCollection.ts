@@ -127,9 +127,11 @@ function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: numbe
 
   waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
-    if (endTime !== undefined && currentViewLoadingState !== undefined) {
+    if (currentViewLoadingState !== undefined) {
+      // Validation timeout completion does not return an end time
+      const loadingEndTime = endTime || performance.now()
       lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
-        duration: endTime - currentViewLoadingState.startTime,
+        duration: loadingEndTime - currentViewLoadingState.startTime,
         startTime: currentViewLoadingState.startTime,
       })
     }

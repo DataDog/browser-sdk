@@ -12,6 +12,7 @@ export interface View {
   documentVersion: number
   startTime: number
   duration: number
+  loadDuration?: number
 }
 
 export interface ViewLoad {
@@ -82,6 +83,7 @@ function newView(
     userActionCount: 0,
   }
   let documentVersion = 0
+  let loadDuration: number
 
   viewContext = { id, location, sessionId: session.getId() }
 
@@ -100,6 +102,12 @@ function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
+  function updateLoadDuration(loadDurationValue: number) {
+    loadDuration = loadDurationValue
+    scheduleViewUpdate()
+  }
+  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, updateLoadDuration)
+
   // Initial view update
   updateView()
 
@@ -108,6 +116,7 @@ function newView(
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
       id,
+      loadDuration,
       location,
       measures,
       duration: performance.now() - startOrigin,
@@ -179,4 +188,14 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
     }
   )
   return { stop: stopPerformanceTracking }
+}
+
+function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
+  const { unsubscribe: stopViewLoadTracking } = lifeCycle.subscribe(
+    LifeCycleEventType.VIEW_LOAD_COMPLETED,
+    (viewLoad: ViewLoad) => {
+      callback(viewLoad.duration)
+    }
+  )
+  return { stop: stopViewLoadTracking }
 }
