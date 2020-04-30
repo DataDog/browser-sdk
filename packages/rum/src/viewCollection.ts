@@ -13,6 +13,7 @@ export interface View {
   startTime: number
   duration: number
   loadDuration?: number
+  loadType: ViewLoadType
 }
 
 export interface ViewLoad {
@@ -32,26 +33,33 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
+export enum ViewLoadType {
+  HARD = 'hard',
+  SOFT = 'soft',
+}
+
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, session, startOrigin)
+  let currentViewLoadType: ViewLoadType = ViewLoadType.HARD
+  let currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
+    currentViewLoadType = ViewLoadType.SOFT
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, session)
+      currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType)
     }
   })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, session)
+    currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType)
   })
 
   // End the current view on page unload
@@ -72,6 +80,7 @@ function newView(
   lifeCycle: LifeCycle,
   location: Location,
   session: RumSession,
+  loadType: ViewLoadType,
   startOrigin: number = performance.now()
 ) {
   // Setup initial values
@@ -117,6 +126,7 @@ function newView(
       documentVersion,
       id,
       loadDuration,
+      loadType,
       location,
       measures,
       duration: performance.now() - startOrigin,
