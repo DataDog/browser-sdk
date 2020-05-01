@@ -12,8 +12,8 @@ export function cacheCookieAccess(name: string): CookieCache {
 
   const cacheAccess = () => {
     hasCache = true
-    window.clearTimeout(timeout)
-    timeout = window.setTimeout(() => {
+    self.clearTimeout(timeout)
+    timeout = self.setTimeout(() => {
       hasCache = false
     }, COOKIE_ACCESS_DELAY)
   }
@@ -48,7 +48,7 @@ export function getCookie(name: string) {
 }
 
 export function areCookiesAuthorized(): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
+  if (typeof document === 'undefined' || document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {

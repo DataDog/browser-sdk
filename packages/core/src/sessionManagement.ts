@@ -145,24 +145,24 @@ export function trackActivity(expandOrRenewSession: () => void) {
   const options = { capture: true, passive: true }
   ;[utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL].forEach(
     (event: string) => {
-      document.addEventListener(event, doExpandOrRenewSession, options)
-      stopCallbacks.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
+      self.addEventListener(event, doExpandOrRenewSession, options)
+      stopCallbacks.push(() => self.removeEventListener(event, doExpandOrRenewSession, options))
     }
   )
 }
 
 function trackVisibility(expandSession: () => void) {
   const expandSessionWhenVisible = monitor(() => {
-    if (document.visibilityState === 'visible') {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
       expandSession()
     }
   })
 
-  const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
-  document.addEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const visibilityCheckInterval = self.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
+  self.addEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
 
   stopCallbacks.push(() => {
     clearInterval(visibilityCheckInterval)
-    document.removeEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+    self.removeEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   })
 }

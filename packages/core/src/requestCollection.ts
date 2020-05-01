@@ -116,12 +116,12 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
 }
 
 export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
-  if (!window.fetch) {
+  if (!self.fetch) {
     return
   }
-  const originalFetch = window.fetch
+  const originalFetch = self.fetch
   // tslint:disable promise-function-async
-  window.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
+  self.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const startTime = performance.now()
     const requestId = getNextRequestId()
@@ -191,9 +191,9 @@ export function isServerError(request: RequestCompleteEvent) {
  */
 function getTraceId(): number | undefined {
   // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+  return 'ddtrace' in self && (self as BrowserWindow).ddtrace.tracer.scope().active()
     ? // tslint:disable-next-line: no-unsafe-any
-      (window as BrowserWindow).ddtrace.tracer
+      (self as BrowserWindow).ddtrace.tracer
         .scope()
         .active()
         .context()

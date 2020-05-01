@@ -9,7 +9,7 @@
     <script type="text/javascript" src="./datadog-logs-us.js"></script>
     <script type="text/javascript">
       const intakeOrigin = `http://${window.location.hostname}:4000`
-      const specIdParam = /spec-id=\d+/.exec(window.location.search)[0]
+      const specIdParam = /spec-id=\d+/.exec(window.location.search) && /spec-id=\d+/.exec(window.location.search)[0]
       window.DD_LOGS &&
         window.DD_LOGS.init({
           clientToken: 'key',

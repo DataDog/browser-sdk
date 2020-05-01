@@ -77,8 +77,8 @@ export function startLogger(
           date: new Date().getTime(),
           session_id: session.getId(),
           view: {
-            referrer: document.referrer,
-            url: window.location.href,
+            referrer: typeof document !== 'undefined' ? document.referrer : self.origin,
+            url: location.href,
           },
         },
         globalContext,

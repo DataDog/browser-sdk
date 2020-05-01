@@ -289,8 +289,8 @@ export const report = (function reportModuleWrapper() {
       return
     }
 
-    oldOnerrorHandler = window.onerror
-    window.onerror = monitor(traceKitWindowOnError)
+    oldOnerrorHandler = self.onerror 
+    self.onerror = monitor(traceKitWindowOnError)
     onErrorHandlerInstalled = true
   }
 
@@ -300,7 +300,7 @@ export const report = (function reportModuleWrapper() {
    */
   function uninstallGlobalHandler() {
     if (onErrorHandlerInstalled) {
-      window.onerror = oldOnerrorHandler!
+      self.onerror = oldOnerrorHandler!
       onErrorHandlerInstalled = false
     }
   }
@@ -314,8 +314,8 @@ export const report = (function reportModuleWrapper() {
       return
     }
 
-    oldOnunhandledrejectionHandler = window.onunhandledrejection !== null ? window.onunhandledrejection : undefined
-    window.onunhandledrejection = monitor(traceKitWindowOnUnhandledRejection)
+    oldOnunhandledrejectionHandler = self.onunhandledrejection !== null ? self.onunhandledrejection : undefined
+    self.onunhandledrejection = monitor(traceKitWindowOnUnhandledRejection)
     onUnhandledRejectionHandlerInstalled = true
   }
 
@@ -325,7 +325,7 @@ export const report = (function reportModuleWrapper() {
    */
   function uninstallGlobalUnhandledRejectionHandler() {
     if (onUnhandledRejectionHandlerInstalled) {
-      window.onunhandledrejection = oldOnunhandledrejectionHandler as any
+      self.onunhandledrejection = oldOnunhandledrejectionHandler as any
       onUnhandledRejectionHandlerInstalled = false
     }
   }
@@ -373,7 +373,7 @@ export const report = (function reportModuleWrapper() {
       stack.incomplete ? 2000 : 0
     )
 
-    throw ex // re-throw to propagate to the top level (and cause window.onerror)
+    throw ex // re-throw to propagate to the top level (and cause self.onerror)
   }
 
   doReport.subscribe = subscribe
@@ -691,7 +691,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     const lineRE2 = /^\s*Line (\d+) of inline#(\d+) script in ((?:file|https?|blob)\S+)(?:: in function (\S+))?\s*$/i
     const lineRE3 = /^\s*Line (\d+) of function script\s*$/i
     const stack = []
-    const scripts = window && window.document && window.document.getElementsByTagName('script')
+    const scripts = typeof window !== 'undefined' && window.document && window.document.getElementsByTagName('script')
     const inlineScriptBlocks = []
     let parts
 
@@ -723,7 +723,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
         }
       } else if (lineRE3.exec(lines[line])) {
         parts = lineRE3.exec(lines[line])!
-        const url = window.location.href.replace(/#.*$/, '')
+        const url = location.href.replace(/#.*$/, '')
         item = {
           url,
           args: [],

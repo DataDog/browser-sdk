@@ -49,8 +49,8 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
           {
             date: new Date().getTime(),
             view: {
-              referrer: document.referrer,
-              url: window.location.href,
+              referrer: typeof document !== 'undefined' ? document.referrer : self.origin,
+              url: location.href,
             },
           },
           externalContextProvider !== undefined ? externalContextProvider() : {}

@@ -156,16 +156,16 @@ export class Batch<T> {
        * register first to be sure to be called before flush on beforeunload
        * caveat: unload can still be canceled by another listener
        */
-      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.beforeUnloadCallback))
+      self.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(this.beforeUnloadCallback))
 
       /**
        * Only event that guarantee to fire on mobile devices when the page transitions to background state
        * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
        */
-      document.addEventListener(
+      self.addEventListener(
         DOM_EVENT.VISIBILITY_CHANGE,
         monitor(() => {
-          if (document.visibilityState === 'hidden') {
+          if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
             this.flush()
           }
         })
@@ -175,7 +175,7 @@ export class Batch<T> {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      window.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(() => this.flush()))
+      self.addEventListener(DOM_EVENT.BEFORE_UNLOAD, monitor(() => this.flush()))
     }
   }
 }

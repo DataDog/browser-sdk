@@ -62,5 +62,5 @@ export function checkIsNotLocalFile() {
 }
 
 function isLocalFile() {
-  return window.location.protocol === 'file:'
+  return location.protocol === 'file:'
 }

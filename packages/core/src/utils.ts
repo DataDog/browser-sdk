@@ -57,7 +57,7 @@ export function throttle(
         hasPendingExecution = true
       }
       inWaitPeriod = true
-      pendingTimeoutId = window.setTimeout(() => {
+      pendingTimeoutId = self.setTimeout(() => {
         if (needTrailingExecution && hasPendingExecution) {
           fn.apply(this)
         }
@@ -66,7 +66,7 @@ export function throttle(
       }, wait)
     },
     stop() {
-      window.clearTimeout(pendingTimeoutId)
+      self.clearTimeout(pendingTimeoutId)
       isStopped = true
     },
   }
@@ -293,7 +293,7 @@ export function getGlobalObject<T>(): T {
 }
 
 export function getLocationOrigin() {
-  return getLinkElementOrigin(window.location)
+  return getLinkElementOrigin(location)
 }
 
 /**
