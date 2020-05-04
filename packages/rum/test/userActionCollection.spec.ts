@@ -1,4 +1,12 @@
-import { DOM_EVENT, ErrorMessage, Observable, RequestCompleteEvent } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ErrorMessage,
+  getHash,
+  getPathName,
+  getSearch,
+  Observable,
+  RequestCompleteEvent,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
   $$tests,
@@ -13,11 +21,14 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { waitUserActionCompletion, trackPageActivities, resetUserAction, newUserAction } = $$tests
+import { View, ViewLoadType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_USER_ACTION_VALIDATION_DELAY = USER_ACTION_VALIDATION_DELAY * 0.8
 // Used to wait some time before the (potential) end of a user action
 const BEFORE_USER_ACTION_END_DELAY = USER_ACTION_END_DELAY * 0.8
+// Used to wait some time after the (potential) end of a user action
+const AFTER_USER_ACTION_END_DELAY = USER_ACTION_END_DELAY * 1.2
 // Used to wait some time but it doesn't matter how much.
 const SOME_ARBITRARY_DELAY = 50
 // A long delay used to wait after any user action is finished.
@@ -81,7 +92,7 @@ describe('startUserActionCollection', () => {
     userActionCollectionSubscription.stop()
   })
 
-  it('starts a user action when clicking on an element', () => {
+  function mockValidatedClickUserAction() {
     button.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
@@ -92,6 +103,54 @@ describe('startUserActionCollection', () => {
     button.click()
 
     clock.expire()
+  }
+
+  it('cancels user action on view loading', () => {
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const mockView: Partial<View> = {
+      documentVersion: 0,
+      id: 'foo',
+      location: fakeLocation as Location,
+    }
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
+
+    mockValidatedClickUserAction()
+
+    expect(events).toEqual([])
+  })
+
+  it('starts a user action when clicking on an element after a view loading', () => {
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const mockView: Partial<View> = {
+      documentVersion: 0,
+      id: 'foo',
+      location: fakeLocation as Location,
+    }
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
+
+    // View loads are completed like a UA would have been completed when there is no activity for a given time
+    clock.tick(AFTER_USER_ACTION_END_DELAY)
+    clock.expire()
+
+    mockValidatedClickUserAction()
+    expect(events).toEqual([
+      {
+        duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
+        id: jasmine.any(String),
+        measures: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
+        name: 'Click me',
+        startTime: jasmine.any(Number),
+        type: UserActionType.CLICK,
+      },
+    ])
+  })
+
+  it('starts a user action when clicking on an element', () => {
+    mockValidatedClickUserAction()
     expect(events).toEqual([
       {
         duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
