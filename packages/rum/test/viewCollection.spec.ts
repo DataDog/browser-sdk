@@ -39,7 +39,7 @@ describe('rum track url change', () => {
   })
 
   it('should be a hard load before any path change', () => {
-    expect(viewContext.loadType).toEqual(ViewLoadType.HARD)
+    expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_PAGE_LOAD)
   })
 
   it('should update view id and be a soft load on path change', () => {
@@ -47,7 +47,7 @@ describe('rum track url change', () => {
 
     expect(viewContext.id).not.toEqual(initialView)
     expect(viewContext.location).not.toEqual(initialLocation)
-    expect(viewContext.loadType).toEqual(ViewLoadType.SOFT)
+    expect(viewContext.loadType).toEqual(ViewLoadType.ROUTE_CHANGE)
   })
 
   it('should not update view id on search change', () => {

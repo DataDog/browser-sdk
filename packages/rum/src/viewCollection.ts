@@ -34,8 +34,8 @@ export interface ViewMeasures {
 }
 
 export enum ViewLoadType {
-  HARD = 'hard',
-  SOFT = 'soft',
+  INITIAL_PAGE_LOAD = 'initial page load',
+  ROUTE_CHANGE = 'route change',
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -43,12 +43,12 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentViewLoadType: ViewLoadType = ViewLoadType.HARD
+  let currentViewLoadType: ViewLoadType = ViewLoadType.INITIAL_PAGE_LOAD
   let currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
-    currentViewLoadType = ViewLoadType.SOFT
+    currentViewLoadType = ViewLoadType.ROUTE_CHANGE
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
