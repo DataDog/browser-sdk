@@ -110,6 +110,32 @@ describe('rum track renew session', () => {
   })
 })
 
+describe('rum track load duration', () => {
+  let lifeCycle: LifeCycle
+  let getViewEvent: (index: number) => View
+  beforeEach(() => {
+    ;({ lifeCycle, getViewEvent } = spyOnViews())
+  })
+
+  it('should not have loadDuration before being notified', () => {
+    expect(getViewEvent(0).loadDuration).toBeUndefined()
+  })
+
+  it('should have loadDuration once notified', () => {
+    jasmine.clock().install()
+    const loadingEndTime = performance.now()
+    lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
+      duration: loadingEndTime,
+      startTime: 0,
+    })
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewEvent(1).loadDuration).toEqual(loadingEndTime)
+
+    jasmine.clock().uninstall()
+  })
+})
+
 describe('rum view measures', () => {
   const FAKE_LONG_TASK = {
     entryType: 'longtask',
