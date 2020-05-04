@@ -4,7 +4,13 @@ import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { startViewCollection, THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext } from '../src/viewCollection'
+import {
+  startViewCollection,
+  THROTTLE_VIEW_UPDATE_PERIOD,
+  View,
+  viewContext,
+  ViewLoadType,
+} from '../src/viewCollection'
 
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
@@ -32,11 +38,16 @@ describe('rum track url change', () => {
     initialLocation = viewContext.location
   })
 
-  it('should update view id on path change', () => {
+  it('should be a hard load before any path change', () => {
+    expect(viewContext.loadType).toEqual(ViewLoadType.HARD)
+  })
+
+  it('should update view id and be a soft load on path change', () => {
     history.pushState({}, '', '/bar')
 
     expect(viewContext.id).not.toEqual(initialView)
     expect(viewContext.location).not.toEqual(initialLocation)
+    expect(viewContext.loadType).toEqual(ViewLoadType.SOFT)
   })
 
   it('should not update view id on search change', () => {

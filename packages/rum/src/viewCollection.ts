@@ -72,6 +72,7 @@ interface ViewContext {
   id: string
   location: Location
   sessionId: string | undefined
+  loadType: ViewLoadType
 }
 
 export let viewContext: ViewContext
@@ -94,7 +95,7 @@ function newView(
   let documentVersion = 0
   let loadDuration: number
 
-  viewContext = { id, location, sessionId: session.getId() }
+  viewContext = { id, location, loadType, sessionId: session.getId() }
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
