@@ -12,7 +12,7 @@
     <script type="text/javascript">
       window.addEventListener('load', () => {
         const intakeOrigin = `http://${window.location.hostname}:4000`
-        const specIdParam = /spec-id=\d+/.exec(window.location.search)[0]
+        const specIdParam = /spec-id=\d+/.exec(window.location.search) && /spec-id=\d+/.exec(window.location.search)[0]
         const logs = document.createElement('script')
         logs.src = './datadog-logs-us.js'
         logs.onload = () => {
