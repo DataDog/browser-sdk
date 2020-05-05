@@ -10,7 +10,7 @@ import {
 } from '../src/trackPageActivities'
 import {
   $$tests,
-  ClickUserAction,
+  AutoUserAction,
   getUserActionReference,
   startUserActionCollection,
   UserAction,
@@ -220,7 +220,7 @@ describe('getUserActionReference', () => {
 
     expect(getUserActionReference()).toBeUndefined()
 
-    const userAction = events[0] as ClickUserAction
+    const userAction = events[0] as AutoUserAction
     expect(userAction.id).toBe(userActionReference.id)
   })
 
@@ -277,7 +277,7 @@ describe('newUserAction', () => {
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
 
     expect(events.length).toBe(1)
-    const userAction = events[0] as ClickUserAction
+    const userAction = events[0] as AutoUserAction
     expect(userAction.measures).toEqual({
       errorCount: 2,
       longTaskCount: 0,

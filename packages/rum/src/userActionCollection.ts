@@ -1,26 +1,50 @@
-import { Context, DOM_EVENT, generateUUID, monitor, Observable } from '@datadog/browser-core'
+import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
-import { waitIdlePageActivity, trackPageActivities, waitPageActivitiesCompletion } from './trackPageActivities'
+import { waitIdlePageActivity } from './trackPageActivities'
 import { View } from './viewCollection'
 
 // Automatic user action collection lifecycle overview:
-//
-//                               (Start)
-//                   .--------------'----------------------.
-//                   v                                     v
+//                           (Start new view)                            ____,,
+//                 .------------------'------------------.                   ||
+//                 v                                     v                   ||
+//     [Wait for a page activity ]          [Wait for a maximum duration]    ||
+//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]    ||
+//         /                  \                             |                ||
+//        v                    v                            |                ||
+// [No page activity]   [Page activity]                     |                ||
+//        |                    |,-----------------------.   |                ||
+//        |                    v                        |   |                ||
+//        |          [Wait for a page activity]         |   |                ||-- NO USER ACTION COLLECTION
+//        |          [   timeout: END_DELAY   ]         |   |                ||
+//        |              /                \             |   |                ||
+//        |             v                  v            |   |                ||
+//        |     [No page activity]    [Page activity]   |   |                ||
+//        |             |                  |            |   |                ||
+//        |             |                  '------------'   |                ||
+//        |             |                                   |                ||
+//        '------------. ,----------------------------------'                ||
+//                      v                                                    ||
+//              (View load complete)                                     ____||
+//                      |
+//                      |
+//                      '-----------.
+//                                  v
+//                        (Start new user action)
+//              .-------------------'--------------------.
+//              v                                        v
 //     [Wait for a page activity ]          [Wait for a maximum duration]
 //     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
 //          /                  \                           |
-//         v                   v                           |
+//         v                    v                          |
 //  [No page activity]   [Page activity]                   |
 //         |                   |,----------------------.   |
 //         v                   v                       |   |
 //     (Discard)     [Wait for a page activity]        |   |
 //                   [   timeout: END_DELAY   ]        |   |
 //                       /                \            |   |
-//                      v                 v            |   |
+//                      v                  v           |   |
 //             [No page activity]    [Page activity]   |   |
 //                      |                 |            |   |
 //                      |                 '------------'   |
@@ -48,7 +72,7 @@ interface CustomUserAction {
   context?: Context
 }
 
-export interface ClickUserAction {
+export interface AutoUserAction {
   type: UserActionType.CLICK
   id: string
   name: string
@@ -57,7 +81,7 @@ export interface ClickUserAction {
   measures: UserActionMeasures
 }
 
-export type UserAction = CustomUserAction | ClickUserAction
+export type UserAction = CustomUserAction | AutoUserAction
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
@@ -88,11 +112,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
   }
 }
 
-interface PartialUserAction {
+interface PendingAutoUserAction {
   id: string
   startTime: number
 }
-let currentUserAction: PartialUserAction | undefined
+let currentUserAction: PendingAutoUserAction | undefined
 
 interface ViewLoadingState {
   pathname: string
