@@ -1,13 +1,4 @@
-import {
-  DOM_EVENT,
-  ErrorMessage,
-  getHash,
-  getPathName,
-  getSearch,
-  noop,
-  Observable,
-  RequestCompleteEvent,
-} from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage, noop, Observable, RequestCompleteEvent } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
   PageActivityEvent,
@@ -26,7 +17,7 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { resetUserAction, newUserAction } = $$tests
-import { View, ViewLoadType } from '../src/viewCollection'
+import { View } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_USER_ACTION_VALIDATION_DELAY = USER_ACTION_VALIDATION_DELAY * 0.8
@@ -110,7 +101,7 @@ describe('startUserActionCollection', () => {
     clock.expire()
   }
 
-  it('cancels user action on view loading', () => {
+  it('cancels new user action on view loading', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     const mockView: Partial<View> = {
       documentVersion: 0,
@@ -120,6 +111,27 @@ describe('startUserActionCollection', () => {
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
 
     mockValidatedClickUserAction()
+
+    expect(events).toEqual([])
+  })
+
+  it('cancels ongoing user action on view loading', () => {
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const mockView: Partial<View> = {
+      documentVersion: 0,
+      id: 'foo',
+      location: fakeLocation as Location,
+    }
+    button.addEventListener(DOM_EVENT.CLICK, () => {
+      clock.tick(BEFORE_USER_ACTION_VALIDATION_DELAY)
+      // Since we don't collect dom mutations for this test, manually dispatch one
+      lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    })
+
+    clock.tick(SOME_ARBITRARY_DELAY)
+    button.click()
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
+    clock.expire()
 
     expect(events).toEqual([])
   })

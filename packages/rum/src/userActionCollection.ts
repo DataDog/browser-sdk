@@ -97,7 +97,7 @@ let currentUserAction: PartialUserAction | undefined
 interface ViewLoadingState {
   pathname: string
   startTime: number
-  stopPageActivitiesTracking: () => void
+  stopWaitIdlePageActivity: () => void
 }
 let currentViewLoadingState: ViewLoadingState | undefined
 
@@ -106,10 +106,10 @@ function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: numbe
   currentUserAction = undefined
 
   if (currentViewLoadingState) {
-    currentViewLoadingState.stopPageActivitiesTracking()
+    currentViewLoadingState.stopWaitIdlePageActivity()
   }
 
-  const stopPageActivitiesTracking = waitIdlePageActivity(lifeCycle, (endTime) => {
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
     if (currentViewLoadingState !== undefined) {
       // Validation timeout completion does not return an end time
       const loadingEndTime = endTime || performance.now()
@@ -123,7 +123,7 @@ function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: numbe
   currentViewLoadingState = {
     pathname,
     startTime,
-    stopPageActivitiesTracking,
+    stopWaitIdlePageActivity,
   }
 }
 

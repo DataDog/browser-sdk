@@ -15,14 +15,14 @@ export interface PageActivityEvent {
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   completionCallback: (endTime: number | undefined) => void
-): () => void {
+): { stop(): void } {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
   waitPageActivitiesCompletion(pageActivitiesObservable, stopPageActivitiesTracking, (endTime) => {
     completionCallback(endTime)
   })
 
-  return stopPageActivitiesTracking
+  return { stop: stopPageActivitiesTracking }
 }
 
 export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {

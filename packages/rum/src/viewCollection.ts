@@ -138,6 +138,7 @@ function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
+      stopLoadDurationTracking()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update

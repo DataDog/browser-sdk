@@ -38,11 +38,11 @@ describe('rum track url change', () => {
     initialLocation = viewContext.location
   })
 
-  it('should be a hard load before any path change', () => {
+  it('should collect initial view type as "initial page load"', () => {
     expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_PAGE_LOAD)
   })
 
-  it('should update view id and be a soft load on path change', () => {
+  it('should update view id and type on path change', () => {
     history.pushState({}, '', '/bar')
 
     expect(viewContext.id).not.toEqual(initialView)
@@ -117,13 +117,10 @@ describe('rum track load duration', () => {
     ;({ lifeCycle, getViewEvent } = spyOnViews())
   })
 
-  it('should not have loadDuration before being notified', () => {
-    expect(getViewEvent(0).loadDuration).toBeUndefined()
-  })
-
-  it('should have loadDuration once notified', () => {
+  it('should set a loadDuration once the load is complete', () => {
     jasmine.clock().install()
     const loadingEndTime = performance.now()
+    expect(getViewEvent(0).loadDuration).toBeUndefined()
     lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
       duration: loadingEndTime,
     })
