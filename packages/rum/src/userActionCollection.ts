@@ -98,8 +98,6 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 interface PartialUserAction {
   id: string
   startTime: number
-  type: UserActionType
-  name: string
 }
 let currentUserAction: PartialUserAction | undefined
 
@@ -132,7 +130,6 @@ function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: numbe
       const loadingEndTime = endTime || performance.now()
       lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
         duration: loadingEndTime - currentViewLoadingState.startTime,
-        startTime: currentViewLoadingState.startTime,
       })
     }
     currentViewLoadingState = undefined
@@ -148,7 +145,8 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
 
   const id = generateUUID()
   const startTime = performance.now()
-  currentUserAction = { id, startTime, type, name }
+
+  currentUserAction = { id, startTime }
 
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
@@ -156,18 +154,18 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   waitUserActionCompletion(pageActivitiesObservable, (endTime) => {
     stopPageActivitiesTracking()
     stopEventCountsTracking()
-    if (endTime !== undefined && currentUserAction !== undefined) {
+    if (endTime !== undefined && currentUserAction !== undefined && currentUserAction.id === id) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
+        name,
+        type,
         duration: endTime - currentUserAction.startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
           resourceCount: eventCounts.resourceCount,
         },
-        name: currentUserAction.name,
         startTime: currentUserAction.startTime,
-        type: currentUserAction.type,
       })
     }
     currentUserAction = undefined

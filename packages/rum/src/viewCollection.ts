@@ -17,7 +17,6 @@ export interface View {
 }
 
 export interface ViewLoad {
-  startTime: number
   duration: number
 }
 

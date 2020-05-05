@@ -126,7 +126,6 @@ describe('rum track load duration', () => {
     const loadingEndTime = performance.now()
     lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
       duration: loadingEndTime,
-      startTime: 0,
     })
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

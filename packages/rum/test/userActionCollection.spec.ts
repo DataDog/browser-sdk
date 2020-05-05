@@ -130,7 +130,6 @@ describe('startUserActionCollection', () => {
 
     // View loads are completed like a UA would have been completed when there is no activity for a given time
     clock.tick(AFTER_USER_ACTION_END_DELAY)
-    clock.expire()
 
     mockValidatedClickUserAction()
     expect(events).toEqual([
