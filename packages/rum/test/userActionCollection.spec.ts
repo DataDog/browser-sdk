@@ -165,6 +165,32 @@ describe('startUserActionCollection', () => {
     ])
   })
 
+  it('starts a user action when clicking on an element when the View does not have an id', () => {
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const mockView: Partial<View> = {
+      documentVersion: 0,
+      location: fakeLocation as Location,
+    }
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
+
+    mockValidatedClickUserAction()
+
+    expect(events).toEqual([
+      {
+        duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
+        id: jasmine.any(String),
+        measures: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
+        name: 'Click me',
+        startTime: jasmine.any(Number),
+        type: UserActionType.CLICK,
+      },
+    ])
+  })
+
   it('starts a user action when clicking on an element when the View is updated but has already been loaded', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     const mockView: Partial<View> = {
