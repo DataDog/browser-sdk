@@ -4,23 +4,28 @@ import {
   getHash,
   getPathName,
   getSearch,
+  noop,
   Observable,
   RequestCompleteEvent,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
-  $$tests,
-  AutoUserAction,
-  getUserActionReference,
   PageActivityEvent,
-  startUserActionCollection,
+  trackPageActivities,
   USER_ACTION_END_DELAY,
   USER_ACTION_MAX_DURATION,
   USER_ACTION_VALIDATION_DELAY,
+  waitPageActivitiesCompletion,
+} from '../src/trackPageActivities'
+import {
+  $$tests,
+  ClickUserAction,
+  getUserActionReference,
+  startUserActionCollection,
   UserAction,
   UserActionType,
 } from '../src/userActionCollection'
-const { waitUserActionCompletion, trackPageActivities, resetUserAction, newUserAction } = $$tests
+const { resetUserAction, newUserAction } = $$tests
 import { View, ViewLoadType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
@@ -203,7 +208,7 @@ describe('getUserActionReference', () => {
 
     expect(getUserActionReference()).toBeUndefined()
 
-    const userAction = events[0] as AutoUserAction
+    const userAction = events[0] as ClickUserAction
     expect(userAction.id).toBe(userActionReference.id)
   })
 
@@ -260,7 +265,7 @@ describe('newUserAction', () => {
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
 
     expect(events.length).toBe(1)
-    const userAction = events[0] as AutoUserAction
+    const userAction = events[0] as ClickUserAction
     expect(userAction.measures).toEqual({
       errorCount: 2,
       longTaskCount: 0,
@@ -361,11 +366,11 @@ describe('trackPagePageActivities', () => {
   })
 })
 
-describe('waitUserActionCompletion', () => {
+describe('waitPageActivitiesCompletion', () => {
   const clock = mockClock()
 
   it('should not collect an event that is not followed by page activity', (done) => {
-    waitUserActionCompletion(new Observable(), (endTime) => {
+    waitPageActivitiesCompletion(new Observable(), noop, (endTime) => {
       expect(endTime).toBeUndefined()
       done()
     })
@@ -377,7 +382,7 @@ describe('waitUserActionCompletion', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = performance.now()
-    waitUserActionCompletion(activityObservable, (endTime) => {
+    waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
       expect(endTime).toEqual(startTime + BEFORE_USER_ACTION_VALIDATION_DELAY)
       done()
     })
@@ -396,7 +401,7 @@ describe('waitUserActionCompletion', () => {
       // Extend the user action but stops before USER_ACTION_MAX_DURATION
       const extendCount = Math.floor(USER_ACTION_MAX_DURATION / BEFORE_USER_ACTION_END_DELAY - 1)
 
-      waitUserActionCompletion(activityObservable, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
         expect(endTime).toBe(startTime + (extendCount + 1) * BEFORE_USER_ACTION_END_DELAY)
         done()
       })
@@ -417,7 +422,7 @@ describe('waitUserActionCompletion', () => {
       // Extend the user action until it's more than USER_ACTION_MAX_DURATION
       const extendCount = Math.ceil(USER_ACTION_MAX_DURATION / BEFORE_USER_ACTION_END_DELAY + 1)
 
-      waitUserActionCompletion(activityObservable, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
         expect(endTime).toBe(startTime + USER_ACTION_MAX_DURATION)
         stop = true
         done()
@@ -436,7 +441,7 @@ describe('waitUserActionCompletion', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitUserActionCompletion(activityObservable, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
         expect(endTime).toBe(startTime + BEFORE_USER_ACTION_VALIDATION_DELAY + USER_ACTION_END_DELAY * 2)
         done()
       })
@@ -453,7 +458,7 @@ describe('waitUserActionCompletion', () => {
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitUserActionCompletion(activityObservable, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
         expect(endTime).toBe(startTime + USER_ACTION_MAX_DURATION)
         done()
       })
