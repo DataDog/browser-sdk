@@ -24,12 +24,12 @@ import { View } from './viewCollection'
 //        |             |                  |            |   |                ||
 //        |             |                  '------------'   |                ||
 //        |             |                                   |                ||
-//        '------------. ,----------------------------------'                ||
-//                      v                                                    ||
-//              (View load complete)                                     ____||
-//                      |
-//                      |
-//                      '-----------.
+//        '-------------'----------. ,----------------------'                ||
+//                                  v                                        ||
+//                         (View load complete)                          ____||
+//                                  |
+//                                  |
+//                                  |
 //                                  v
 //                        (Start new user action)
 //              .-------------------'--------------------.
@@ -101,7 +101,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
       return
     }
     currentViewId = loadedView.id
-    newViewLoading(lifeCycle, loadedView.location.pathname, loadedView.startTime)
+    newViewLoading(lifeCycle, currentViewId, loadedView.location.pathname, loadedView.startTime)
   }
 
   return {
@@ -125,7 +125,7 @@ interface ViewLoadingState {
 }
 let currentViewLoadingState: ViewLoadingState | undefined
 
-function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: number) {
+function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, startTime: number) {
   // Cancel current user action
   currentUserAction = undefined
 
@@ -138,6 +138,7 @@ function newViewLoading(lifeCycle: LifeCycle, pathname: string, startTime: numbe
       // Validation timeout completion does not return an end time
       const loadingEndTime = endTime || performance.now()
       lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
+        id,
         duration: loadingEndTime - currentViewLoadingState.startTime,
       })
     }

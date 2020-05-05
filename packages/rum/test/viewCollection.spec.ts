@@ -123,6 +123,7 @@ describe('rum track load duration', () => {
     expect(getViewEvent(0).loadDuration).toBeUndefined()
     lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
       duration: loadingEndTime,
+      id: viewContext.id,
     })
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

@@ -17,6 +17,7 @@ export interface View {
 }
 
 export interface ViewLoad {
+  id: string
   duration: number
 }
 
@@ -115,7 +116,7 @@ function newView(
     loadDuration = loadDurationValue
     scheduleViewUpdate()
   }
-  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, updateLoadDuration)
+  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, id, updateLoadDuration)
 
   // Initial view update
   updateView()
@@ -201,11 +202,13 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
+function trackLoadDuration(lifeCycle: LifeCycle, id: string, callback: (loadDurationValue: number) => void) {
   const { unsubscribe: stopViewLoadTracking } = lifeCycle.subscribe(
     LifeCycleEventType.VIEW_LOAD_COMPLETED,
     (viewLoad: ViewLoad) => {
-      callback(viewLoad.duration)
+      if (viewLoad.id === id) {
+        callback(viewLoad.duration)
+      }
     }
   )
   return { stop: stopViewLoadTracking }
