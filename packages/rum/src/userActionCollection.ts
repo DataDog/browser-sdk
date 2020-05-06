@@ -6,27 +6,27 @@ import { waitIdlePageActivity } from './trackPageActivities'
 import { View } from './viewCollection'
 
 // Automatic user action collection lifecycle overview:
-//                           (Start new view)                            ____,,
-//                 .------------------'------------------.                   ||
-//                 v                                     v                   ||
-//     [Wait for a page activity ]          [Wait for a maximum duration]    ||
-//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]    ||
-//         /                  \                             |                ||
-//        v                    v                            |                ||
-// [No page activity]   [Page activity]                     |                ||
-//        |                    |,-----------------------.   |                ||
-//        |                    v                        |   |                ||
-//        |          [Wait for a page activity]         |   |                ||-- NO USER ACTION COLLECTION
-//        |          [   timeout: END_DELAY   ]         |   |                ||
-//        |              /                \             |   |                ||
-//        |             v                  v            |   |                ||
-//        |     [No page activity]    [Page activity]   |   |                ||
-//        |             |                  |            |   |                ||
-//        |             |                  '------------'   |                ||
-//        |             |                                   |                ||
-//        '-------------'----------. ,----------------------'                ||
-//                                  v                                        ||
-//                         (View load complete)                          ____||
+//                           (Start new view)
+//                 .------------------'------------------.
+//                 v                                     v
+//     [Wait for a page activity ]          [Wait for a maximum duration]
+//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//         /                  \                             |
+//        v                    v                            |
+// [No page activity]   [Page activity]                     |
+//        |                    |,-----------------------.   |
+//        |                    v                        |   |
+//        |          [Wait for a page activity]         |   |
+//        |          [   timeout: END_DELAY   ]         |   |
+//        |              /                \             |   |
+//        |             v                  v            |   |
+//        |     [No page activity]    [Page activity]   |   |
+//        |             |                  |            |   |
+//        |             |                  '------------'   |
+//        |             |                                   |
+//        '-------------'----------. ,----------------------'
+//                                  v
+//                         (View load complete)
 //                                  |
 //                                  |
 //                                  |
@@ -153,9 +153,8 @@ function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, star
 }
 
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
-  if (currentViewLoadingState || currentUserAction) {
+  if (currentUserAction) {
     // Discard any new click user action if another one is already occuring.
-    // Discard any new user action if page is in a loading state.
     return
   }
 
