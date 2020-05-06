@@ -39,7 +39,7 @@ describe('rum track url change', () => {
   })
 
   it('should collect initial view type as "initial page load"', () => {
-    expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_PAGE_LOAD)
+    expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_LOAD)
   })
 
   it('should update view id and type on path change', () => {
