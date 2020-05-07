@@ -18,11 +18,20 @@ export function waitIdlePageActivity(
 ): { stop(): void } {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
-  waitPageActivitiesCompletion(pageActivitiesObservable, stopPageActivitiesTracking, (endTime) => {
-    completionCallback(endTime)
-  })
+  const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
+    pageActivitiesObservable,
+    stopPageActivitiesTracking,
+    (endTime) => {
+      completionCallback(endTime)
+    }
+  )
 
-  return { stop: stopPageActivitiesTracking }
+  function stop() {
+    stopWaitPageActivitiesCompletion()
+    stopPageActivitiesTracking()
+  }
+
+  return { stop }
 }
 
 export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
@@ -81,7 +90,7 @@ export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
   completionCallback: (endTime: number | undefined) => void
-) {
+): { stop(): void } {
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
 
@@ -97,15 +106,21 @@ export function waitPageActivitiesCompletion(
     }
   })
 
-  function complete(endTime: number | undefined) {
-    if (hasCompleted) {
-      return
-    }
+  function stop() {
     hasCompleted = true
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     clearTimeout(maxDurationTimeoutId)
     stopPageActivitiesTracking()
+  }
+
+  function complete(endTime: number | undefined) {
+    if (hasCompleted) {
+      return
+    }
+    stop()
     completionCallback(endTime)
   }
+
+  return { stop }
 }

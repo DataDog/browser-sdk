@@ -1,8 +1,7 @@
-import { DOM_EVENT, ErrorMessage, noop, Observable, RequestCompleteEvent } from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage, noop, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
   PageActivityEvent,
-  trackPageActivities,
   USER_ACTION_END_DELAY,
   USER_ACTION_MAX_DURATION,
   USER_ACTION_VALIDATION_DELAY,
@@ -120,62 +119,6 @@ describe('startUserActionCollection', () => {
     clock.expire()
 
     expect(events).toEqual([])
-  })
-
-  it('starts a user action when clicking on an element during a view loading', () => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const mockView: Partial<View> = {
-      documentVersion: 0,
-      id: 'foo',
-      location: fakeLocation as Location,
-    }
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
-
-    mockValidatedClickUserAction()
-
-    expect(events).toEqual([
-      {
-        duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
-        id: jasmine.any(String),
-        measures: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-        },
-        name: 'Click me',
-        startTime: jasmine.any(Number),
-        type: UserActionType.CLICK,
-      },
-    ])
-  })
-
-  it('starts a user action when clicking on an element after a view loading', () => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const mockView: Partial<View> = {
-      documentVersion: 0,
-      id: 'foo',
-      location: fakeLocation as Location,
-    }
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
-
-    // View loads are completed like a UA would have been completed when there is no activity for a given time
-    clock.tick(AFTER_USER_ACTION_END_DELAY)
-
-    mockValidatedClickUserAction()
-    expect(events).toEqual([
-      {
-        duration: BEFORE_USER_ACTION_VALIDATION_DELAY,
-        id: jasmine.any(String),
-        measures: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-        },
-        name: 'Click me',
-        startTime: jasmine.any(Number),
-        type: UserActionType.CLICK,
-      },
-    ])
   })
 
   it('starts a user action when clicking on an element when the View does not have an id', () => {
@@ -354,98 +297,6 @@ describe('newUserAction', () => {
       errorCount: 2,
       longTaskCount: 0,
       resourceCount: 0,
-    })
-  })
-})
-
-describe('trackPagePageActivities', () => {
-  const { events, pushEvent } = eventsCollector<PageActivityEvent>()
-  it('emits an activity event on dom mutation', () => {
-    const lifeCycle = new LifeCycle()
-    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    expect(events).toEqual([{ isBusy: false }])
-  })
-
-  it('emits an activity event on resource collected', () => {
-    const lifeCycle = new LifeCycle()
-    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    const performanceEntry = {
-      entryType: 'resource',
-    }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
-    expect(events).toEqual([{ isBusy: false }])
-  })
-
-  it('does not emit an activity event when a navigation occurs', () => {
-    const lifeCycle = new LifeCycle()
-    trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    const performanceEntry = {
-      entryType: 'navigation',
-    }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
-    expect(events).toEqual([])
-  })
-
-  it('stops emiting activities after calling stop()', () => {
-    const lifeCycle = new LifeCycle()
-    const { stop, observable } = trackPageActivities(lifeCycle)
-    observable.subscribe(pushEvent)
-
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    expect(events).toEqual([{ isBusy: false }])
-
-    stop()
-
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-
-    expect(events).toEqual([{ isBusy: false }])
-  })
-
-  describe('requests', () => {
-    function makeFakeRequestCompleteEvent(requestId: number): RequestCompleteEvent {
-      return { requestId } as any
-    }
-    it('emits an activity event when a request starts', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
-      })
-      expect(events).toEqual([{ isBusy: true }])
-    })
-
-    it('emits an activity event when a request completes', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
-      })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
-      expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
-    })
-
-    it('ignores requests that has started before', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
-      expect(events).toEqual([])
-    })
-
-    it('keeps emiting busy events while all requests are not completed', () => {
-      const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
-      })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 11,
-      })
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
-      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
-      expect(events).toEqual([{ isBusy: true }, { isBusy: true }, { isBusy: true }, { isBusy: false }])
     })
   })
 })
