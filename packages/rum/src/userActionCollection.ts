@@ -32,24 +32,26 @@ export interface AutoUserAction {
 
 export type UserAction = CustomUserAction | AutoUserAction
 
-export let currentUserActionProcess = { stop: noop }
+export function stopCurrentUserAction() {
+  if (currentUserAction) {
+    currentUserAction.stop()
+  }
+}
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
-  const subscriptions: Subscription[] = []
-
+  let stopNewUserAction: { stop(): void }
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
     }
-    currentUserActionProcess = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
+    stopNewUserAction = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
   return {
     stop() {
-      currentUserActionProcess.stop()
+      stopNewUserAction.stop()
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
-      subscriptions.forEach((s) => s.unsubscribe())
     },
   }
 }
@@ -57,18 +59,18 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
 interface PendingAutoUserAction {
   id: string
   startTime: number
+  stop(): void
 }
-let currentUserAction: PendingAutoUserAction | undefined
+export let currentUserAction: PendingAutoUserAction | undefined
 
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
   if (currentUserAction) {
     // Discard any new click user action if another one is already occuring.
-    return { stop: currentUserActionProcess.stop }
+    return { stop: currentUserAction.stop }
   }
 
   const id = generateUUID()
   const startTime = performance.now()
-  currentUserAction = { id, startTime }
 
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
@@ -78,14 +80,14 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
         name,
+        startTime,
         type,
-        duration: endTime - currentUserAction.startTime,
+        duration: endTime - startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
           resourceCount: eventCounts.resourceCount,
         },
-        startTime: currentUserAction.startTime,
       })
     }
     currentUserAction = undefined
@@ -94,6 +96,12 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   function stop() {
     stopEventCountsTracking()
     currentUserAction = undefined
+  }
+
+  currentUserAction = {
+    id,
+    startTime,
+    stop,
   }
 
   return { stop }

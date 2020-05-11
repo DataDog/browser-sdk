@@ -5,7 +5,7 @@ import { PerformancePaintTiming } from './rum'
 import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
-import { currentUserActionProcess } from './userActionCollection'
+import { stopCurrentUserAction } from './userActionCollection'
 
 export interface View {
   id: string
@@ -199,34 +199,17 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-interface ViewLoadingState {
-  stop: () => void
-}
-let currentViewLoadingState: ViewLoadingState | undefined
-
 export function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
-  // Stop the current user action if there is one
-  currentUserActionProcess.stop()
-
-  if (currentViewLoadingState) {
-    currentViewLoadingState.stop()
-  }
+  // Stop the current user action
+  stopCurrentUserAction()
 
   const startTime: number = performance.now()
-
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
-    if (currentViewLoadingState !== undefined) {
-      // If there is no activity during waitIdlePageActivity validation timeout,
-      // it will not return an end time but the view is loaded as no activity has occured
-      const loadingEndTime = endTime || performance.now()
-      callback(loadingEndTime - startTime)
-      currentViewLoadingState = undefined
-    }
+    // If there is no activity during waitIdlePageActivity validation timeout,
+    // it will not return an end time but the view is loaded as no activity has occured
+    const loadingEndTime = endTime || performance.now()
+    callback(loadingEndTime - startTime)
   })
-
-  currentViewLoadingState = {
-    stop: stopWaitIdlePageActivity,
-  }
 
   return { stop: stopWaitIdlePageActivity }
 }
