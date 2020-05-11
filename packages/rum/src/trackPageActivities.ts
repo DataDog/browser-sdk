@@ -34,6 +34,30 @@ export function waitIdlePageActivity(
   return { stop }
 }
 
+// Automatic user action collection lifecycle overview:
+//                      (Start new trackPageActivities)
+//              .-------------------'--------------------.
+//              v                                        v
+//     [Wait for a page activity ]          [Wait for a maximum duration]
+//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//          /                  \                           |
+//         v                    v                          |
+//  [No page activity]   [Page activity]                   |
+//         |                   |,----------------------.   |
+//         v                   v                       |   |
+//     (Discard)     [Wait for a page activity]        |   |
+//                   [   timeout: END_DELAY   ]        |   |
+//                       /                \            |   |
+//                      v                  v           |   |
+//             [No page activity]    [Page activity]   |   |
+//                      |                 |            |   |
+//                      |                 '------------'   |
+//                      '-----------. ,--------------------'
+//                                   v
+//                                 (End)
+//
+// Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
+// after MAX_DURATION, it has been validated.
 export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []

@@ -204,29 +204,6 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-// Automatic load view duration collection lifecycle overview:
-//                           (Start new view)
-//                 .------------------'------------------.
-//                 v                                     v
-//     [Wait for a page activity ]          [Wait for a maximum duration]
-//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
-//         /                  \                             |
-//        v                    v                            |
-// [No page activity]   [Page activity]                     |
-//        |                    |,-----------------------.   |
-//        |                    v                        |   |
-//        |          [Wait for a page activity]         |   |
-//        |          [   timeout: END_DELAY   ]         |   |
-//        |              /                \             |   |
-//        |             v                  v            |   |
-//        |     [No page activity]    [Page activity]   |   |
-//        |             |                  |            |   |
-//        |             |                  '------------'   |
-//        |             |                                   |
-//        '-------------'----------. ,----------------------'
-//                                  v
-//                         (View load complete)
-
 interface ViewLoadingState {
   stop: () => void
 }
@@ -244,7 +221,8 @@ export function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationV
 
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
     if (currentViewLoadingState !== undefined) {
-      // If no activity before the validation timeout completion does not return an end time
+      // If there is no activity during waitIdlePageActivity validation timeout,
+      // it will not return an end time but the view is loaded as no activity has occured
       const loadingEndTime = endTime || performance.now()
       callback(loadingEndTime - startTime)
       currentViewLoadingState = undefined
