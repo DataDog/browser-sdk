@@ -18,11 +18,6 @@ export interface View {
   loadType: ViewLoadType
 }
 
-export interface ViewLoad {
-  id: string
-  duration: number
-}
-
 export interface ViewMeasures {
   firstContentfulPaint?: number
   domInteractive?: number

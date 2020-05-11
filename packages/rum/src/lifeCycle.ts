@@ -1,6 +1,6 @@
 import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
 import { UserAction } from './userActionCollection'
-import { View, ViewLoad } from './viewCollection'
+import { View } from './viewCollection'
 
 export enum LifeCycleEventType {
   ERROR_COLLECTED,
