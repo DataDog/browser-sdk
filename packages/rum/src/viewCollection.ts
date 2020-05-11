@@ -81,6 +81,9 @@ function newView(
   loadType: ViewLoadType,
   startOrigin: number = performance.now()
 ) {
+  // Stop the current user action
+  stopCurrentUserAction()
+
   // Setup initial values
   const id = generateUUID()
   let measures: ViewMeasures = {
@@ -200,9 +203,6 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
 }
 
 export function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
-  // Stop the current user action
-  stopCurrentUserAction()
-
   const startTime: number = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
     // If there is no activity during waitIdlePageActivity validation timeout,

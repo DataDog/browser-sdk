@@ -1,6 +1,6 @@
 import { Context, DOM_EVENT, generateUUID, noop } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
-import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
@@ -39,7 +39,9 @@ export function stopCurrentUserAction() {
 }
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
-  let stopNewUserAction: { stop(): void }
+  let stopNewUserAction: { stop(): void } = {
+    stop: noop,
+  }
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
