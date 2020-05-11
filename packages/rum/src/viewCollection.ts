@@ -74,7 +74,7 @@ interface ViewContext {
 
 export let viewContext: ViewContext
 
-function newView(
+export function newView(
   lifeCycle: LifeCycle,
   location: Location,
   session: RumSession,
@@ -202,7 +202,7 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-export function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
+function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
   const startTime: number = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
     // If there is no activity during waitIdlePageActivity validation timeout,

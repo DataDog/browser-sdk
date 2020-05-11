@@ -1,5 +1,6 @@
 import { DOM_EVENT, ErrorMessage, noop, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RumSession } from '../src/rumSession'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
@@ -16,7 +17,7 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { resetUserAction, newUserAction } = $$tests
-import { trackLoadDuration, View } from '../src/viewCollection'
+import { newView, ViewLoadType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -102,11 +103,12 @@ describe('startUserActionCollection', () => {
 
   it('cancels ongoing user action on view loading', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const mockView: Partial<View> = {
-      documentVersion: 0,
-      id: 'foo',
-      location: fakeLocation as Location,
+    const fakeSession = {
+      getId() {
+        return '42'
+      },
     }
+
     button.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
@@ -116,7 +118,7 @@ describe('startUserActionCollection', () => {
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
     function updateLoadDuration(loadDurationValue: number) {}
-    trackLoadDuration(lifeCycle, updateLoadDuration)
+    newView(lifeCycle, fakeLocation as Location, fakeSession as RumSession, ViewLoadType.INITIAL_LOAD)
     clock.expire()
 
     expect(events).toEqual([])

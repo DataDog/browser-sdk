@@ -32,6 +32,13 @@ export interface AutoUserAction {
 
 export type UserAction = CustomUserAction | AutoUserAction
 
+interface PendingAutoUserAction {
+  id: string
+  startTime: number
+  stop(): void
+}
+export let currentUserAction: PendingAutoUserAction | undefined
+
 export function stopCurrentUserAction() {
   if (currentUserAction) {
     currentUserAction.stop()
@@ -57,13 +64,6 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     },
   }
 }
-
-interface PendingAutoUserAction {
-  id: string
-  startTime: number
-  stop(): void
-}
-export let currentUserAction: PendingAutoUserAction | undefined
 
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
   if (currentUserAction) {
