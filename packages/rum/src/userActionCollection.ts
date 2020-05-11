@@ -1,4 +1,4 @@
-import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
+import { Context, DOM_EVENT, generateUUID, noop } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
@@ -86,13 +86,15 @@ export type UserAction = CustomUserAction | AutoUserAction
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
   let currentViewId: string | undefined
+  let currentUserActionProcess = { stop: noop }
+  let currentViewLoadingProcess = { stop: noop }
 
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
     }
-    newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
+    currentUserActionProcess = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
   subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processViewLoading))
@@ -101,11 +103,18 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
       return
     }
     currentViewId = loadedView.id
-    newViewLoading(lifeCycle, currentViewId, loadedView.location.pathname, loadedView.startTime)
+    currentViewLoadingProcess = newViewLoading(
+      lifeCycle,
+      currentViewId,
+      loadedView.location.pathname,
+      loadedView.startTime
+    )
   }
 
   return {
     stop() {
+      currentUserActionProcess.stop()
+      currentViewLoadingProcess.stop()
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
       subscriptions.forEach((s) => s.unsubscribe())
     },
@@ -125,7 +134,7 @@ interface ViewLoadingState {
 }
 let currentViewLoadingState: ViewLoadingState | undefined
 
-function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, startTime: number) {
+function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, startTime: number): { stop(): void } {
   // Cancel current user action
   currentUserAction = undefined
 
@@ -150,12 +159,14 @@ function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, star
     startTime,
     stopWaitIdlePageActivity,
   }
+
+  return { stop: stopWaitIdlePageActivity }
 }
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
   if (currentUserAction) {
     // Discard any new click user action if another one is already occuring.
-    return
+    return { stop: noop }
   }
 
   const id = generateUUID()
@@ -182,6 +193,8 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
     }
     currentUserAction = undefined
   })
+
+  return { stop: stopEventCountsTracking }
 }
 
 export interface UserActionReference {

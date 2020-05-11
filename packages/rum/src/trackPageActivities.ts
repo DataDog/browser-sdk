@@ -1,12 +1,12 @@
 import { monitor, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
-// Delay to wait for a page activity to validate the user action
-export const USER_ACTION_VALIDATION_DELAY = 100
-// Delay to wait after a page activity to end the user action
-export const USER_ACTION_END_DELAY = 100
-// Maximum duration of a user action
-export const USER_ACTION_MAX_DURATION = 10_000
+// Delay to wait for a page activity to validate the tracking process
+export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
+// Delay to wait after a page activity to end the tracking process
+export const PAGE_ACTIVITY_END_DELAY = 100
+// Maximum duration of the tracking process
+export const PAGE_ACTIVITY_MAX_DURATION = 10_000
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -94,15 +94,15 @@ export function waitPageActivitiesCompletion(
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
 
-  const validationTimeoutId = setTimeout(monitor(() => complete(undefined)), USER_ACTION_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(monitor(() => complete(performance.now())), USER_ACTION_MAX_DURATION)
+  const validationTimeoutId = setTimeout(monitor(() => complete(undefined)), PAGE_ACTIVITY_VALIDATION_DELAY)
+  const maxDurationTimeoutId = setTimeout(monitor(() => complete(performance.now())), PAGE_ACTIVITY_MAX_DURATION)
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => complete(lastChangeTime)), USER_ACTION_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => complete(lastChangeTime)), PAGE_ACTIVITY_END_DELAY)
     }
   })
 
