@@ -4,6 +4,8 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
 import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
+import { waitIdlePageActivity } from './trackPageActivities'
+import { currentUserActionProcess } from './userActionCollection'
 
 export interface View {
   id: string
@@ -116,7 +118,7 @@ function newView(
     loadDuration = loadDurationValue
     scheduleViewUpdate()
   }
-  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, id, updateLoadDuration)
+  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, updateLoadDuration)
 
   // Initial view update
   updateView()
@@ -202,14 +204,56 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadDuration(lifeCycle: LifeCycle, id: string, callback: (loadDurationValue: number) => void) {
-  const { unsubscribe: stopViewLoadTracking } = lifeCycle.subscribe(
-    LifeCycleEventType.VIEW_LOAD_COMPLETED,
-    (viewLoad: ViewLoad) => {
-      if (viewLoad.id === id) {
-        callback(viewLoad.duration)
-      }
+// Automatic load view duration collection lifecycle overview:
+//                           (Start new view)
+//                 .------------------'------------------.
+//                 v                                     v
+//     [Wait for a page activity ]          [Wait for a maximum duration]
+//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//         /                  \                             |
+//        v                    v                            |
+// [No page activity]   [Page activity]                     |
+//        |                    |,-----------------------.   |
+//        |                    v                        |   |
+//        |          [Wait for a page activity]         |   |
+//        |          [   timeout: END_DELAY   ]         |   |
+//        |              /                \             |   |
+//        |             v                  v            |   |
+//        |     [No page activity]    [Page activity]   |   |
+//        |             |                  |            |   |
+//        |             |                  '------------'   |
+//        |             |                                   |
+//        '-------------'----------. ,----------------------'
+//                                  v
+//                         (View load complete)
+
+interface ViewLoadingState {
+  stop: () => void
+}
+let currentViewLoadingState: ViewLoadingState | undefined
+
+export function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
+  // Stop the current user action if there is one
+  currentUserActionProcess.stop()
+
+  if (currentViewLoadingState) {
+    currentViewLoadingState.stop()
+  }
+
+  const startTime: number = performance.now()
+
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
+    if (currentViewLoadingState !== undefined) {
+      // If no activity before the validation timeout completion does not return an end time
+      const loadingEndTime = endTime || performance.now()
+      callback(loadingEndTime - startTime)
+      currentViewLoadingState = undefined
     }
-  )
-  return { stop: stopViewLoadTracking }
+  })
+
+  currentViewLoadingState = {
+    stop: stopWaitIdlePageActivity,
+  }
+
+  return { stop: stopWaitIdlePageActivity }
 }

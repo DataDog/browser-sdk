@@ -3,34 +3,8 @@ import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
-import { View } from './viewCollection'
 
 // Automatic user action collection lifecycle overview:
-//                           (Start new view)
-//                 .------------------'------------------.
-//                 v                                     v
-//     [Wait for a page activity ]          [Wait for a maximum duration]
-//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
-//         /                  \                             |
-//        v                    v                            |
-// [No page activity]   [Page activity]                     |
-//        |                    |,-----------------------.   |
-//        |                    v                        |   |
-//        |          [Wait for a page activity]         |   |
-//        |          [   timeout: END_DELAY   ]         |   |
-//        |              /                \             |   |
-//        |             v                  v            |   |
-//        |     [No page activity]    [Page activity]   |   |
-//        |             |                  |            |   |
-//        |             |                  '------------'   |
-//        |             |                                   |
-//        '-------------'----------. ,----------------------'
-//                                  v
-//                         (View load complete)
-//                                  |
-//                                  |
-//                                  |
-//                                  v
 //                        (Start new user action)
 //              .-------------------'--------------------.
 //              v                                        v
@@ -83,11 +57,10 @@ export interface AutoUserAction {
 
 export type UserAction = CustomUserAction | AutoUserAction
 
+export let currentUserActionProcess = { stop: noop }
+
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
-  let currentViewId: string | undefined
-  let currentUserActionProcess = { stop: noop }
-  let currentViewLoadingProcess = { stop: noop }
 
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
@@ -97,24 +70,9 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     currentUserActionProcess = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, processViewLoading))
-  function processViewLoading(loadedView: View) {
-    if (!loadedView || loadedView.id === currentViewId) {
-      return
-    }
-    currentViewId = loadedView.id
-    currentViewLoadingProcess = newViewLoading(
-      lifeCycle,
-      currentViewId,
-      loadedView.location.pathname,
-      loadedView.startTime
-    )
-  }
-
   return {
     stop() {
       currentUserActionProcess.stop()
-      currentViewLoadingProcess.stop()
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
       subscriptions.forEach((s) => s.unsubscribe())
     },
@@ -127,46 +85,10 @@ interface PendingAutoUserAction {
 }
 let currentUserAction: PendingAutoUserAction | undefined
 
-interface ViewLoadingState {
-  pathname: string
-  startTime: number
-  stopWaitIdlePageActivity: () => void
-}
-let currentViewLoadingState: ViewLoadingState | undefined
-
-function newViewLoading(lifeCycle: LifeCycle, id: string, pathname: string, startTime: number): { stop(): void } {
-  // Cancel current user action
-  currentUserAction = undefined
-
-  if (currentViewLoadingState) {
-    currentViewLoadingState.stopWaitIdlePageActivity()
-  }
-
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
-    if (currentViewLoadingState !== undefined) {
-      // Validation timeout completion does not return an end time
-      const loadingEndTime = endTime || performance.now()
-      lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
-        id,
-        duration: loadingEndTime - currentViewLoadingState.startTime,
-      })
-    }
-    currentViewLoadingState = undefined
-  })
-
-  currentViewLoadingState = {
-    pathname,
-    startTime,
-    stopWaitIdlePageActivity,
-  }
-
-  return { stop: stopWaitIdlePageActivity }
-}
-
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
   if (currentUserAction) {
     // Discard any new click user action if another one is already occuring.
-    return { stop: noop }
+    return { stop: currentUserActionProcess.stop }
   }
 
   const id = generateUUID()
@@ -194,7 +116,12 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
     currentUserAction = undefined
   })
 
-  return { stop: stopEventCountsTracking }
+  function stop() {
+    stopEventCountsTracking()
+    currentUserAction = undefined
+  }
+
+  return { stop }
 }
 
 export interface UserActionReference {

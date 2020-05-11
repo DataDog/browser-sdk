@@ -12,6 +12,10 @@ import {
   ViewLoadType,
 } from '../src/viewCollection'
 
+import { PAGE_ACTIVITY_MAX_DURATION } from '../src/trackPageActivities'
+
+const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
+
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = `http://localhost${pathname}`
@@ -114,22 +118,19 @@ describe('rum track load duration', () => {
   let lifeCycle: LifeCycle
   let getViewEvent: (index: number) => View
   beforeEach(() => {
+    jasmine.clock().install()
     ;({ lifeCycle, getViewEvent } = spyOnViews())
   })
 
+  afterEach(() => {
+    jasmine.clock().uninstall()
+  })
+
   it('should set a loadDuration once the load is complete', () => {
-    jasmine.clock().install()
-    const loadingEndTime = performance.now()
-    expect(getViewEvent(0).loadDuration).toBeUndefined()
-    lifeCycle.notify(LifeCycleEventType.VIEW_LOAD_COMPLETED, {
-      duration: loadingEndTime,
-      id: viewContext.id,
-    })
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadDuration).toEqual(loadingEndTime)
-
-    jasmine.clock().uninstall()
+    expect(getViewEvent(1).loadDuration).toBeDefined()
   })
 })
 

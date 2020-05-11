@@ -7,7 +7,6 @@ export enum LifeCycleEventType {
   PERFORMANCE_ENTRY_COLLECTED,
   USER_ACTION_COLLECTED,
   VIEW_COLLECTED,
-  VIEW_LOAD_COMPLETED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
@@ -29,7 +28,6 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, data: UserAction): void
   notify(eventType: LifeCycleEventType.VIEW_COLLECTED, data: View): void
-  notify(eventType: LifeCycleEventType.VIEW_LOAD_COMPLETED, data: ViewLoad): void
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
@@ -56,7 +54,6 @@ export class LifeCycle {
   ): Subscription
   subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_COLLECTED, callback: (data: View) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_LOAD_COMPLETED, callback: (data: ViewLoad) => void): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED

@@ -1,10 +1,10 @@
 import { DOM_EVENT, ErrorMessage, noop, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
-  PageActivityEvent,
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
+  PageActivityEvent,
   waitPageActivitiesCompletion,
 } from '../src/trackPageActivities'
 import {
@@ -16,7 +16,7 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { resetUserAction, newUserAction } = $$tests
-import { View } from '../src/viewCollection'
+import { trackLoadDuration, View } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -115,69 +115,11 @@ describe('startUserActionCollection', () => {
 
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
+    function updateLoadDuration(loadDurationValue: number) {}
+    trackLoadDuration(lifeCycle, updateLoadDuration)
     clock.expire()
 
     expect(events).toEqual([])
-  })
-
-  it('starts a user action when clicking on an element when the View does not have an id', () => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const mockView: Partial<View> = {
-      documentVersion: 0,
-      location: fakeLocation as Location,
-    }
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
-
-    mockValidatedClickUserAction()
-
-    expect(events).toEqual([
-      {
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
-        id: jasmine.any(String),
-        measures: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-        },
-        name: 'Click me',
-        startTime: jasmine.any(Number),
-        type: UserActionType.CLICK,
-      },
-    ])
-  })
-
-  it('starts a user action when clicking on an element when the View is updated but has already been loaded', () => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const mockView: Partial<View> = {
-      documentVersion: 0,
-      id: 'foo',
-      location: fakeLocation as Location,
-    }
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
-
-    // View loads are completed like a UA would have been completed when there is no activity for a given time
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-
-    // View is updated to documentVersion = 1
-    mockView.documentVersion = 1
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, mockView as View)
-    mockValidatedClickUserAction()
-
-    expect(events).toEqual([
-      {
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
-        id: jasmine.any(String),
-        measures: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-        },
-        name: 'Click me',
-        startTime: jasmine.any(Number),
-        type: UserActionType.CLICK,
-      },
-    ])
   })
 
   it('starts a user action when clicking on an element', () => {
