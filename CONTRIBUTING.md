@@ -3,7 +3,7 @@
 First of all, thanks for contributing!
 
 This document provides some basic guidelines for contributing to this repository.  To propose
-improvements, feel free to submit a PR.
+improvements, feel free to submit a pull request.
 
 ## Submitting issues
 
@@ -16,15 +16,15 @@ our [support][1].
 Have you fixed a bug or written a new feature and want to share it? Many thanks!
 
 In order to ease/speed up our review, here are some items you can check/improve when submitting your
-PR:
+pull request:
 
 - Keep commits small and focused, rebase your branch if needed.
 - Write unit and e2e tests for the code you wrote.
 - Write meaningful [Commit messages and Pull Request
   titles](#commit-messages-and-pull-request-titles)
 
-Our CI is not (yet) public, so it may be difficult to understand why your PR status is failing.
-Make sure that all tests pass locally, and we'll try to sort it out in our CI.
+Our CI is not (yet) public, so it may be difficult to understand why your pull request status is
+failing.  Make sure that all tests pass locally, and we'll try to sort it out in our CI.
 
 ## Commit messages and Pull Request titles
 

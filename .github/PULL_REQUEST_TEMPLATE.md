@@ -1,10 +1,10 @@
 ## Motivation
 
-<!-- Why are you making this change, what problem does it solve? Include links to relevant tickets -->
+<!-- Why are you making this change, what problem does it solve? Include links to relevant tickets. -->
 
 ## Changes
 
-<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links -->
+<!-- What does this change exactly? Who will be affected? Include relevant screenshots, videos, links. -->
 
 ## Testing
 
