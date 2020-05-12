@@ -117,7 +117,6 @@ describe('startUserActionCollection', () => {
 
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
-    function updateLoadDuration(loadDurationValue: number) {}
     newView(lifeCycle, fakeLocation as Location, fakeSession as RumSession, ViewLoadType.INITIAL_LOAD)
     clock.expire()
 
