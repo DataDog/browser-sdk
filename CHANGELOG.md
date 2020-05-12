@@ -1,5 +1,19 @@
 # Changelog
 
+> **Legend**
+>
+> 💥 - Breaking change.
+>
+> ✨ - New feature.
+>
+> 🐛 - Bug fix.
+>
+> ⚡️ - Performance improvement.
+>
+> 📝 - Documentation.
+
+---
+
 ## v1.11.4
 
 - ♻️[RUMF-471] rename version ([#382](https://github.com/DataDog/browser-sdk/pull/382))
