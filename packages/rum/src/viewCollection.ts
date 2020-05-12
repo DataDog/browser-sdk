@@ -40,23 +40,21 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentViewLoadType: ViewLoadType = ViewLoadType.INITIAL_LOAD
-  let currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType, startOrigin)
+  let currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.INITIAL_LOAD, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
-    currentViewLoadType = ViewLoadType.ROUTE_CHANGE
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType)
+      currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.ROUTE_CHANGE)
     }
   })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, session, currentViewLoadType)
+    currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
