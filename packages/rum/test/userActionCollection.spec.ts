@@ -1,4 +1,4 @@
-import { DOM_EVENT, ErrorMessage, noop, Observable } from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumSession } from '../src/rumSession'
 import {
@@ -21,10 +21,6 @@ import { newView, ViewLoadType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
-// Used to wait some time before the (potential) end of a user action
-const BEFORE_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 0.8
-// Used to wait some time after the (potential) end of a user action
-const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.2
 // Used to wait some time but it doesn't matter how much.
 const SOME_ARBITRARY_DELAY = 50
 // A long delay used to wait after any user action is finished.
@@ -240,117 +236,6 @@ describe('newUserAction', () => {
       errorCount: 2,
       longTaskCount: 0,
       resourceCount: 0,
-    })
-  })
-})
-
-describe('waitPageActivitiesCompletion', () => {
-  const clock = mockClock()
-
-  it('should not collect an event that is not followed by page activity', (done) => {
-    waitPageActivitiesCompletion(new Observable(), noop, (hadActivity, endTime) => {
-      expect(hadActivity).toBeFalse()
-      expect(endTime).toBeFalsy()
-      done()
-    })
-
-    clock.expire()
-  })
-
-  it('should collect an event that is followed by page activity', (done) => {
-    const activityObservable = new Observable<PageActivityEvent>()
-
-    const startTime = performance.now()
-    waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-      expect(hadActivity).toBeTrue()
-      expect(endTime).toEqual(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      done()
-    })
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    activityObservable.notify({ isBusy: false })
-
-    clock.expire()
-  })
-
-  describe('extend with activities', () => {
-    it('is extended while there is page activities', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
-
-      // Extend the user action but stops before PAGE_ACTIVITY_MAX_DURATION
-      const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
-
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY)
-        done()
-      })
-
-      for (let i = 0; i < extendCount; i += 1) {
-        clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
-        activityObservable.notify({ isBusy: false })
-      }
-
-      clock.expire()
-    })
-
-    it('expires after a limit', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      let stop = false
-      const startTime = performance.now()
-
-      // Extend the user action until it's more than PAGE_ACTIVITY_MAX_DURATION
-      const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
-
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
-        stop = true
-        done()
-      })
-
-      for (let i = 0; i < extendCount && !stop; i += 1) {
-        clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
-        activityObservable.notify({ isBusy: false })
-      }
-
-      clock.expire()
-    })
-  })
-
-  describe('busy activities', () => {
-    it('is extended while the page is busy', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2)
-        done()
-      })
-
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      activityObservable.notify({ isBusy: true })
-
-      clock.tick(PAGE_ACTIVITY_END_DELAY * 2)
-      activityObservable.notify({ isBusy: false })
-
-      clock.expire()
-    })
-
-    it('expires is the page is busy for too long', (done) => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
-        done()
-      })
-
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      activityObservable.notify({ isBusy: true })
-
-      clock.expire()
     })
   })
 })

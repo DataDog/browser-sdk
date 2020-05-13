@@ -13,9 +13,9 @@ import {
 } from '../src/viewCollection'
 
 import {
+  PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
-  PAGE_ACTIVITY_END_DELAY,
 } from '../src/trackPageActivities'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
