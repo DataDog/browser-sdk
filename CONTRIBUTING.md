@@ -2,7 +2,7 @@
 
 First of all, thanks for contributing!
 
-This document provides some basic guidelines for contributing to this repository.  To propose
+This document provides some basic guidelines for contributing to this repository. To propose
 improvements, feel free to submit a pull request.
 
 ## Submitting issues
@@ -24,7 +24,7 @@ pull request:
   titles](#commit-messages-and-pull-request-titles)
 
 Our CI is not (yet) public, so it may be difficult to understand why your pull request status is
-failing.  Make sure that all tests pass locally, and we'll try to sort it out in our CI.
+failing. Make sure that all tests pass locally, and we'll try to sort it out in our CI.
 
 ## Commit messages and Pull Request titles
 
