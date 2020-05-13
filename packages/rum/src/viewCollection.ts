@@ -31,8 +31,8 @@ export interface ViewMeasures {
 }
 
 export enum ViewLoadType {
-  INITIAL_LOAD = 'initial load',
-  ROUTE_CHANGE = 'route change',
+  INITIAL_LOAD = 'initial_load',
+  ROUTE_CHANGE = 'route_change',
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -67,7 +67,6 @@ interface ViewContext {
   id: string
   location: Location
   sessionId: string | undefined
-  loadType: ViewLoadType
 }
 
 export let viewContext: ViewContext
@@ -93,7 +92,7 @@ export function newView(
   let documentVersion = 0
   let loadDuration: number
 
-  viewContext = { id, location, loadType, sessionId: session.getId() }
+  viewContext = { id, location, sessionId: session.getId() }
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(

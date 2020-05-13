@@ -48,16 +48,11 @@ describe('rum track url change', () => {
     initialLocation = viewContext.location
   })
 
-  it('should collect initial view type as "initial load"', () => {
-    expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_LOAD)
-  })
-
-  it('should update view id and type on route change', () => {
+  it('should update view id on path change', () => {
     history.pushState({}, '', '/bar')
 
     expect(viewContext.id).not.toEqual(initialView)
     expect(viewContext.location).not.toEqual(initialLocation)
-    expect(viewContext.loadType).toEqual(ViewLoadType.ROUTE_CHANGE)
   })
 
   it('should not update view id on search change', () => {
@@ -117,6 +112,33 @@ describe('rum track renew session', () => {
     expect(getViewEvent(0).id).toBe(getViewEvent(1).id)
     expect(getViewEvent(0).id).not.toBe(getViewEvent(2).id)
     expect(getRumEventCount()).toEqual(3)
+  })
+})
+
+describe('rum track load duration', () => {
+  let lifeCycle: LifeCycle
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    jasmine.clock().install()
+    ;({ lifeCycle, getViewEvent } = spyOnViews())
+  })
+
+  afterEach(() => {
+    jasmine.clock().uninstall()
+  })
+
+  it('should collect intital view type as "initial_load"', () => {
+    expect(getViewEvent(0).loadType).toEqual(ViewLoadType.INITIAL_LOAD)
+  })
+
+  it('should collect view type as "route_change" after a route change', () => {
+    history.pushState({}, '', '/bar')
+    expect(getViewEvent(1).location.pathname).toEqual('/foo')
+    expect(getViewEvent(1).loadType).toEqual(ViewLoadType.INITIAL_LOAD)
+
+    expect(getViewEvent(2).location.pathname).toEqual('/bar')
+    expect(getViewEvent(2).loadType).toEqual(ViewLoadType.ROUTE_CHANGE)
   })
 })
 
