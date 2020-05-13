@@ -12,9 +12,15 @@ import {
   ViewLoadType,
 } from '../src/viewCollection'
 
-import { PAGE_ACTIVITY_MAX_DURATION } from '../src/trackPageActivities'
+import {
+  PAGE_ACTIVITY_MAX_DURATION,
+  PAGE_ACTIVITY_VALIDATION_DELAY,
+  PAGE_ACTIVITY_END_DELAY,
+} from '../src/trackPageActivities'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
+const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
+const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
@@ -117,7 +123,20 @@ describe('rum track renew session', () => {
 describe('rum track load duration', () => {
   let lifeCycle: LifeCycle
   let getViewEvent: (index: number) => View
+
+  const mockDateNowT1 = 1500000000000
+  const mockDateNowT2 = 1500001000000
+
   beforeEach(() => {
+    let isFirstPerformanceNow = true
+    spyOn(performance, 'now').and.callFake(() => {
+      if (isFirstPerformanceNow) {
+        isFirstPerformanceNow = false
+        return mockDateNowT1
+      }
+      return mockDateNowT2
+    })
+
     jasmine.clock().install()
     ;({ lifeCycle, getViewEvent } = spyOnViews())
   })
@@ -126,11 +145,19 @@ describe('rum track load duration', () => {
     jasmine.clock().uninstall()
   })
 
-  it('should set a loadDuration once the load is complete', () => {
+  it('should set a loadDuration once the load is complete without having any activity', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadDuration).toBeDefined()
+    expect(getViewEvent(1).loadDuration).toEqual(mockDateNowT2 - mockDateNowT1)
+  })
+
+  it('should set a loadDuration once the load is complete after having some activity', () => {
+    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    expect(getViewEvent(1).loadDuration).toEqual(mockDateNowT2 - mockDateNowT1)
   })
 })
 

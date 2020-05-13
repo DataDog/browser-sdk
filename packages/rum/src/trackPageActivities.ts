@@ -14,16 +14,14 @@ export interface PageActivityEvent {
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
-  completionCallback: (endTime: number | undefined) => void
+  completionCallback: (hadActivity: boolean, endTime: number) => void
 ): { stop(): void } {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
     stopPageActivitiesTracking,
-    (endTime) => {
-      completionCallback(endTime)
-    }
+    completionCallback
   )
 
   function stop() {
@@ -113,20 +111,20 @@ export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observa
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  completionCallback: (endTime: number | undefined) => void
+  completionCallback: (hadActivity: boolean, endTime: number) => void
 ): { stop(): void } {
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
 
-  const validationTimeoutId = setTimeout(monitor(() => complete(undefined)), PAGE_ACTIVITY_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(monitor(() => complete(performance.now())), PAGE_ACTIVITY_MAX_DURATION)
+  const validationTimeoutId = setTimeout(monitor(() => complete(false, 0)), PAGE_ACTIVITY_VALIDATION_DELAY)
+  const maxDurationTimeoutId = setTimeout(monitor(() => complete(true, performance.now())), PAGE_ACTIVITY_MAX_DURATION)
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => complete(lastChangeTime)), PAGE_ACTIVITY_END_DELAY)
+      idleTimeoutId = setTimeout(monitor(() => complete(true, lastChangeTime)), PAGE_ACTIVITY_END_DELAY)
     }
   })
 
@@ -138,12 +136,12 @@ export function waitPageActivitiesCompletion(
     stopPageActivitiesTracking()
   }
 
-  function complete(endTime: number | undefined) {
+  function complete(hadActivity: boolean, endTime: number) {
     if (hasCompleted) {
       return
     }
     stop()
-    completionCallback(endTime)
+    completionCallback(hadActivity, endTime)
   }
 
   return { stop }

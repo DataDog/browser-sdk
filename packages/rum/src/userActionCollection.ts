@@ -35,40 +35,34 @@ export type UserAction = CustomUserAction | AutoUserAction
 interface PendingAutoUserAction {
   id: string
   startTime: number
-  stop(): void
 }
-export let currentUserAction: PendingAutoUserAction | undefined
+export let pendingAutoUserAction: PendingAutoUserAction | undefined
 
-export function stopCurrentUserAction() {
-  if (currentUserAction) {
-    currentUserAction.stop()
-  }
+export let stopPendingAutoUserAction: { stop(): void } = {
+  stop: noop,
 }
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
-  let stopNewUserAction: { stop(): void } = {
-    stop: noop,
-  }
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
       return
     }
-    stopNewUserAction = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
+    stopPendingAutoUserAction = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
   return {
     stop() {
-      stopNewUserAction.stop()
+      stopPendingAutoUserAction.stop()
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
     },
   }
 }
 
 function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
-  if (currentUserAction) {
-    // Discard any new click user action if another one is already occuring.
-    return { stop: currentUserAction.stop }
+  if (pendingAutoUserAction) {
+    // Discard any new user action if another one is already occurring.
+    return { stop: stopPendingAutoUserAction.stop }
   }
 
   const id = generateUUID()
@@ -76,13 +70,13 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
 
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
-  function closeUserAction() {
+  function stopUserAction() {
     stopEventCountsTracking()
-    currentUserAction = undefined
+    pendingAutoUserAction = undefined
   }
 
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (endTime) => {
-    if (endTime !== undefined) {
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
+    if (hadActivity) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
         id,
         name,
@@ -96,18 +90,17 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
         },
       })
     }
-    closeUserAction()
+    stopUserAction()
   })
 
   function stop() {
-    closeUserAction()
+    stopUserAction()
     stopWaitIdlePageActivity()
   }
 
-  currentUserAction = {
+  pendingAutoUserAction = {
     id,
     startTime,
-    stop,
   }
 
   return { stop }
@@ -117,16 +110,16 @@ export interface UserActionReference {
   id: string
 }
 export function getUserActionReference(time?: number): UserActionReference | undefined {
-  if (!currentUserAction || (time !== undefined && time < currentUserAction.startTime)) {
+  if (!pendingAutoUserAction || (time !== undefined && time < pendingAutoUserAction.startTime)) {
     return undefined
   }
 
-  return { id: currentUserAction.id }
+  return { id: pendingAutoUserAction.id }
 }
 
 export const $$tests = {
   newUserAction,
   resetUserAction() {
-    currentUserAction = undefined
+    pendingAutoUserAction = undefined
   },
 }

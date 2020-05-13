@@ -248,8 +248,9 @@ describe('waitPageActivitiesCompletion', () => {
   const clock = mockClock()
 
   it('should not collect an event that is not followed by page activity', (done) => {
-    waitPageActivitiesCompletion(new Observable(), noop, (endTime) => {
-      expect(endTime).toBeUndefined()
+    waitPageActivitiesCompletion(new Observable(), noop, (hadActivity, endTime) => {
+      expect(hadActivity).toBeFalse()
+      expect(endTime).toBeFalsy()
       done()
     })
 
@@ -260,7 +261,8 @@ describe('waitPageActivitiesCompletion', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = performance.now()
-    waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
+    waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
+      expect(hadActivity).toBeTrue()
       expect(endTime).toEqual(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       done()
     })
@@ -279,7 +281,8 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the user action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
+        expect(hadActivity).toBeTrue()
         expect(endTime).toBe(startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY)
         done()
       })
@@ -300,7 +303,8 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the user action until it's more than PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
+        expect(hadActivity).toBeTrue()
         expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
         stop = true
         done()
@@ -319,7 +323,8 @@ describe('waitPageActivitiesCompletion', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
+        expect(hadActivity).toBeTrue()
         expect(endTime).toBe(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2)
         done()
       })
@@ -336,7 +341,8 @@ describe('waitPageActivitiesCompletion', () => {
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (endTime) => {
+      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
+        expect(hadActivity).toBeTrue()
         expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
         done()
       })
