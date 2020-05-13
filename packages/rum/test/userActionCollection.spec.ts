@@ -97,7 +97,7 @@ describe('startUserActionCollection', () => {
     clock.expire()
   }
 
-  it('cancels ongoing user action on view loading', () => {
+  it('cancels pending user action on view loading', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     const fakeSession = {
       getId() {

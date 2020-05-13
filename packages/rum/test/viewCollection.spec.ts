@@ -48,11 +48,11 @@ describe('rum track url change', () => {
     initialLocation = viewContext.location
   })
 
-  it('should collect initial view type as "initial page load"', () => {
+  it('should collect initial view type as "initial load"', () => {
     expect(viewContext.loadType).toEqual(ViewLoadType.INITIAL_LOAD)
   })
 
-  it('should update view id and type on path change', () => {
+  it('should update view id and type on route change', () => {
     history.pushState({}, '', '/bar')
 
     expect(viewContext.id).not.toEqual(initialView)
