@@ -13,7 +13,7 @@ export interface View {
   documentVersion: number
   startTime: number
   duration: number
-  loadDuration?: number
+  loadingTime?: number
   loadType: ViewLoadType
 }
 
@@ -86,7 +86,7 @@ export function newView(
     userActionCount: 0,
   }
   let documentVersion = 0
-  let loadDuration: number
+  let loadingTime: number
 
   viewContext = { id, location, sessionId: session.getId() }
 
@@ -105,11 +105,11 @@ export function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadDuration(loadDurationValue: number) {
-    loadDuration = loadDurationValue
+  function updateLoadingTime(loadingTimeValue: number) {
+    loadingTime = loadingTimeValue
     scheduleViewUpdate()
   }
-  const { stop: stopLoadDurationTracking } = trackLoadDuration(lifeCycle, updateLoadDuration)
+  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, updateLoadingTime)
 
   // Initial view update
   updateView()
@@ -119,8 +119,8 @@ export function newView(
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
       id,
-      loadDuration,
       loadType,
+      loadingTime,
       location,
       measures,
       duration: performance.now() - startOrigin,
@@ -132,7 +132,7 @@ export function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
-      stopLoadDurationTracking()
+      stopLoadingTimeTracking()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update
@@ -195,7 +195,7 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadDuration(lifeCycle: LifeCycle, callback: (loadDurationValue: number) => void) {
+function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
   const startTime: number = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     const loadingEndTime = hadActivity ? endTime : performance.now()

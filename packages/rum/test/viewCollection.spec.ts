@@ -167,19 +167,19 @@ describe('rum track load duration', () => {
     jasmine.clock().uninstall()
   })
 
-  it('should set a loadDuration once the load is complete without having any activity', () => {
+  it('should set a loadingTime once the load is complete without having any activity', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadDuration).toEqual(mockDateNowT2 - mockDateNowT1)
+    expect(getViewEvent(1).loadingTime).toEqual(mockDateNowT2 - mockDateNowT1)
   })
 
-  it('should set a loadDuration once the load is complete after having some activity', () => {
+  it('should set a loadingTime once the load is complete after having some activity', () => {
     jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-    expect(getViewEvent(1).loadDuration).toEqual(mockDateNowT2 - mockDateNowT1)
+    expect(getViewEvent(1).loadingTime).toEqual(mockDateNowT2 - mockDateNowT1)
   })
 })
 
