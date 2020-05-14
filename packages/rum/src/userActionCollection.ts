@@ -36,9 +36,9 @@ interface PendingAutoUserAction {
   id: string
   startTime: number
 }
-export let pendingAutoUserAction: PendingAutoUserAction | undefined
+let pendingAutoUserAction: PendingAutoUserAction | undefined
 
-export let stopPendingAutoUserAction: { stop(): void } = {
+let stopPendingAutoUserAction: { stop(): void } = {
   stop: noop,
 }
 
@@ -50,6 +50,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     }
     stopPendingAutoUserAction = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
+
+  // New views trigger the cancellation of the current pending User Action
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, () => {
+    stopPendingAutoUserAction.stop()
+  })
 
   return {
     stop() {

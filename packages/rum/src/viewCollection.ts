@@ -5,7 +5,6 @@ import { PerformancePaintTiming } from './rum'
 import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
-import { stopPendingAutoUserAction } from './userActionCollection'
 
 export interface View {
   id: string
@@ -78,9 +77,6 @@ export function newView(
   loadType: ViewLoadType,
   startOrigin: number = performance.now()
 ) {
-  // Stop the current user action
-  stopPendingAutoUserAction.stop()
-
   // Setup initial values
   const id = generateUUID()
   let measures: ViewMeasures = {
