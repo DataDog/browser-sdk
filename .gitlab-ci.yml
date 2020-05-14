@@ -134,7 +134,7 @@ unit-bs:
   image: $CI_IMAGE
   artifacts:
     reports:
-      junit: test-report/unit-cbt/*.xml
+      junit: test-report/unit-bs/*.xml
   script:
     - yarn
     - ./scripts/ci-bs.sh test:unit
@@ -149,7 +149,7 @@ e2e-bs:
   image: $CI_IMAGE
   artifacts:
     reports:
-      junit: test-report/e2e-cbt/*.xml
+      junit: test-report/e2e-bs/*.xml
     paths:
       - test/server/test-server.log
     when: always
