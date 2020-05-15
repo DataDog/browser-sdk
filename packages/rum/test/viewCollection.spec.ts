@@ -9,7 +9,7 @@ import {
   THROTTLE_VIEW_UPDATE_PERIOD,
   View,
   viewContext,
-  ViewLoadType,
+  ViewLoadingType,
 } from '../src/viewCollection'
 
 import {
@@ -129,16 +129,16 @@ describe('rum track load duration', () => {
   })
 
   it('should collect intital view type as "initial_load"', () => {
-    expect(getViewEvent(0).loadType).toEqual(ViewLoadType.INITIAL_LOAD)
+    expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
 
   it('should collect view type as "route_change" after a route change', () => {
     history.pushState({}, '', '/bar')
     expect(getViewEvent(1).location.pathname).toEqual('/foo')
-    expect(getViewEvent(1).loadType).toEqual(ViewLoadType.INITIAL_LOAD)
+    expect(getViewEvent(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
 
     expect(getViewEvent(2).location.pathname).toEqual('/bar')
-    expect(getViewEvent(2).loadType).toEqual(ViewLoadType.ROUTE_CHANGE)
+    expect(getViewEvent(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
   })
 })
 

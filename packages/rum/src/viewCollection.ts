@@ -14,7 +14,7 @@ export interface View {
   startTime: number
   duration: number
   loadingTime?: number
-  loadType: ViewLoadType
+  loadingType: ViewLoadingType
 }
 
 export interface ViewMeasures {
@@ -29,7 +29,7 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
-export enum ViewLoadType {
+export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
 }
@@ -39,21 +39,21 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.INITIAL_LOAD, startOrigin)
+  let currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
     }
   })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, session, ViewLoadType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
@@ -74,7 +74,7 @@ export function newView(
   lifeCycle: LifeCycle,
   location: Location,
   session: RumSession,
-  loadType: ViewLoadType,
+  loadingType: ViewLoadingType,
   startOrigin: number = performance.now()
 ) {
   // Setup initial values
@@ -119,7 +119,7 @@ export function newView(
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
       id,
-      loadType,
+      loadingType,
       loadingTime,
       location,
       measures,

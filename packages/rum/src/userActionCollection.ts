@@ -35,12 +35,9 @@ export type UserAction = CustomUserAction | AutoUserAction
 interface PendingAutoUserAction {
   id: string
   startTime: number
+  stop(): void
 }
 let pendingAutoUserAction: PendingAutoUserAction | undefined
-
-let stopPendingAutoUserAction: { stop(): void } = {
-  stop: noop,
-}
 
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
@@ -48,26 +45,30 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     if (!(event.target instanceof Element)) {
       return
     }
-    stopPendingAutoUserAction = newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
+    newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
   }
 
   // New views trigger the cancellation of the current pending User Action
   lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, () => {
-    stopPendingAutoUserAction.stop()
+    if (pendingAutoUserAction) {
+      pendingAutoUserAction.stop()
+    }
   })
 
   return {
     stop() {
-      stopPendingAutoUserAction.stop()
+      if (pendingAutoUserAction) {
+        pendingAutoUserAction.stop()
+      }
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
     },
   }
 }
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string): { stop(): void } {
+function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
   if (pendingAutoUserAction) {
     // Discard any new user action if another one is already occurring.
-    return { stop: stopPendingAutoUserAction.stop }
+    return
   }
 
   const id = generateUUID()
@@ -98,17 +99,14 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
     stopUserAction()
   })
 
-  function stop() {
-    stopUserAction()
-    stopWaitIdlePageActivity()
-  }
-
   pendingAutoUserAction = {
     id,
     startTime,
+    stop() {
+      stopUserAction()
+      stopWaitIdlePageActivity()
+    },
   }
-
-  return { stop }
 }
 
 export interface UserActionReference {
