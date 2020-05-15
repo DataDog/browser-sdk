@@ -263,8 +263,8 @@ function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, k
           documentVersion: view.documentVersion,
         },
         view: {
-          loadingType: view.loadingType,
           loadingTime: view.loadingTime,
+          loadingType: view.loadingType,
           measures: view.measures,
         },
       },

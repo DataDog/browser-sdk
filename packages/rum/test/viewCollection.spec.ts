@@ -142,24 +142,14 @@ describe('rum track load duration', () => {
   })
 })
 
-describe('rum track load duration', () => {
+describe('rum track loading time', () => {
   let lifeCycle: LifeCycle
   let getViewEvent: (index: number) => View
 
-  const mockDateNowT1 = 1500000000000
-  const mockDateNowT2 = 1500001000000
-
   beforeEach(() => {
-    let isFirstPerformanceNow = true
-    spyOn(performance, 'now').and.callFake(() => {
-      if (isFirstPerformanceNow) {
-        isFirstPerformanceNow = false
-        return mockDateNowT1
-      }
-      return mockDateNowT2
-    })
-
     jasmine.clock().install()
+    jasmine.clock().mockDate()
+    spyOn(performance, 'now').and.callFake(() => Date.now())
     ;({ lifeCycle, getViewEvent } = spyOnViews())
   })
 
@@ -167,19 +157,20 @@ describe('rum track load duration', () => {
     jasmine.clock().uninstall()
   })
 
-  it('should set a loadingTime once the load is complete without having any activity', () => {
+  it('should have an undefined loading time if the load is complete without having any activity', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadingTime).toEqual(mockDateNowT2 - mockDateNowT1)
+    expect(getViewEvent(1).loadingTime).toBeUndefined()
   })
 
-  it('should set a loadingTime once the load is complete after having some activity', () => {
+  it('should have a loading time equal to the activity time if the load is complete with a unique activity', () => {
     jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-    expect(getViewEvent(1).loadingTime).toEqual(mockDateNowT2 - mockDateNowT1)
+
+    expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 })
 

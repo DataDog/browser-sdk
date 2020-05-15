@@ -17,7 +17,7 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { resetUserAction, newUserAction } = $$tests
-import { newView, ViewLoadingType } from '../src/viewCollection'
+import { startViewCollection, ViewLoadingType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -113,7 +113,7 @@ describe('startUserActionCollection', () => {
 
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
-    newView(lifeCycle, fakeLocation as Location, fakeSession as RumSession, ViewLoadingType.INITIAL_LOAD)
+    startViewCollection(fakeLocation as Location, lifeCycle, fakeSession as RumSession)
     clock.expire()
 
     expect(events).toEqual([])

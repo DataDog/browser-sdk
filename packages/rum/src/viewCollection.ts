@@ -13,7 +13,7 @@ export interface View {
   documentVersion: number
   startTime: number
   duration: number
-  loadingTime?: number
+  loadingTime?: number | undefined
   loadingType: ViewLoadingType
 }
 
@@ -70,7 +70,7 @@ interface ViewContext {
 
 export let viewContext: ViewContext
 
-export function newView(
+function newView(
   lifeCycle: LifeCycle,
   location: Location,
   session: RumSession,
@@ -86,7 +86,7 @@ export function newView(
     userActionCount: 0,
   }
   let documentVersion = 0
-  let loadingTime: number
+  let loadingTime: number | undefined
 
   viewContext = { id, location, sessionId: session.getId() }
 
@@ -105,7 +105,7 @@ export function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadingTime(loadingTimeValue: number) {
+  function updateLoadingTime(loadingTimeValue: number | undefined) {
     loadingTime = loadingTimeValue
     scheduleViewUpdate()
   }
@@ -119,8 +119,8 @@ export function newView(
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
       id,
-      loadingType,
       loadingTime,
+      loadingType,
       location,
       measures,
       duration: performance.now() - startOrigin,
@@ -195,11 +195,14 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
+function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
   const startTime: number = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-    const loadingEndTime = hadActivity ? endTime : performance.now()
-    callback(loadingEndTime - startTime)
+    if (hadActivity) {
+      callback(endTime - startTime)
+    } else {
+      callback(undefined)
+    }
   })
 
   return { stop: stopWaitIdlePageActivity }
