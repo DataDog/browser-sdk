@@ -9,8 +9,9 @@ import {
   UserAction,
   UserActionType,
 } from '../src/userActionCollection'
+import { View } from '../src/viewCollection'
+
 const { resetUserAction, newUserAction } = $$tests
-import { View, ViewLoadingType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -91,13 +92,6 @@ describe('startUserActionCollection', () => {
   }
 
   it('cancels pending user action on view loading', () => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    const fakeSession = {
-      getId() {
-        return '42'
-      },
-    }
-
     button.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
@@ -106,20 +100,8 @@ describe('startUserActionCollection', () => {
 
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
-      documentVersion: 0,
-      duration: 0,
-      id: 'foo',
-      loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: fakeLocation as Location,
-      measures: {
-        errorCount: 0,
-        longTaskCount: 0,
-        resourceCount: 0,
-        userActionCount: 0,
-      },
-      startTime: 0,
-    })
+    const fakeView = {}
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, fakeView as View)
     clock.expire()
 
     expect(events).toEqual([])
