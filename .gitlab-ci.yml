@@ -53,6 +53,8 @@ build:
   script:
     - yarn
     - yarn build
+    - scripts/cli lint test/app
+    - scripts/cli typecheck test/app
 
 compatibility:
   stage: test
@@ -67,6 +69,9 @@ unit:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  artifacts:
+    reports:
+      junit: test-report/unit/*.xml
   script:
     - yarn
     - yarn test:unit
@@ -80,6 +85,8 @@ bundle-e2e:
     paths:
       - test/server/test-server.log
     when: always
+    reports:
+      junit: test-report/bundle-e2e/*.xml
   script:
     - yarn
     - yarn test:e2e:bundle
@@ -89,6 +96,8 @@ npm-e2e:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    reports:
+      junit: test-report/npm-e2e/*.xml
     paths:
       - test/server/test-server.log
     when: always
@@ -101,6 +110,8 @@ async-e2e:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    reports:
+      junit: test-report/async-e2e/*.xml
     paths:
       - test/server/test-server.log
     when: always
@@ -123,6 +134,9 @@ unit-bs:
   stage: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  artifacts:
+    reports:
+      junit: test-report/unit-bs/*.xml
   script:
     - yarn
     - ./scripts/ci-bs.sh test:unit
@@ -136,6 +150,8 @@ e2e-bs:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    reports:
+      junit: test-report/e2e-bs/*.xml
     paths:
       - test/server/test-server.log
     when: always
