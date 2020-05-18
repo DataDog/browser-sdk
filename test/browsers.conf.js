@@ -47,11 +47,4 @@ module.exports = {
     os: 'Windows',
     os_version: '10',
   },
-  IE_10: {
-    base: 'BrowserStack',
-    browser: 'IE',
-    browser_version: '10.0',
-    os: 'Windows',
-    os_version: '7',
-  },
 }
