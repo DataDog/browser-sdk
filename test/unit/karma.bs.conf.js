@@ -7,8 +7,6 @@ const { getBuildInfos, getIp } = require('../utils')
 // https://github.com/sinonjs/sinon/blob/894951c/package.json#L113
 karmaBaseConf.webpack.resolve.mainFields = ['cdn', 'main']
 
-const ONE_MINUTE = 60000
-
 module.exports = function(config) {
   config.set({
     ...karmaBaseConf,
