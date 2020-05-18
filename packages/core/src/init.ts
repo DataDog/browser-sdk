@@ -28,7 +28,7 @@ export type BuildMode = 'release' | 'staging' | 'e2e-test'
 
 export interface BuildEnv {
   datacenter: Datacenter
-  env: Environment
+  sdkEnv: Environment
   buildMode: BuildMode
   sdkVersion: string
 }

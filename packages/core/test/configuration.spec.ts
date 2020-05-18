@@ -5,7 +5,7 @@ describe('configuration', () => {
   const prodEnv = {
     buildMode: 'release' as 'release',
     datacenter: 'us' as 'us',
-    env: 'production' as 'production',
+    sdkEnv: 'production' as 'production',
     sdkVersion: 'some_version',
   }
 
@@ -36,7 +36,7 @@ describe('configuration', () => {
       const e2eEnv = {
         buildMode: 'e2e-test' as 'e2e-test',
         datacenter: 'us' as 'us',
-        env: 'staging' as 'staging',
+        sdkEnv: 'staging' as 'staging',
         sdkVersion: 'some_version',
       }
       const configuration = buildConfiguration(
@@ -78,6 +78,30 @@ describe('configuration', () => {
       const configuration = buildConfiguration({ clientToken, proxyHost: 'proxy.io' }, prodEnv)
       expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
       expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.com&')
+    })
+  })
+
+  describe('sdk_version, env, version and service', () => {
+    it('should not modify the logs and rum endpoints tags when not defined', () => {
+      const configuration = buildConfiguration({ clientToken }, prodEnv)
+      expect(configuration.rumEndpoint).toContain(`&ddtags=sdk_version:${prodEnv.sdkVersion}`)
+
+      expect(configuration.rumEndpoint).not.toContain(',env:')
+      expect(configuration.rumEndpoint).not.toContain(',service:')
+      expect(configuration.rumEndpoint).not.toContain(',version:')
+      expect(configuration.logsEndpoint).not.toContain(',env:')
+      expect(configuration.logsEndpoint).not.toContain(',service:')
+      expect(configuration.logsEndpoint).not.toContain(',version:')
+    })
+
+    it('should be set as tags in the logs and rum endpoints', () => {
+      const configuration = buildConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' }, prodEnv)
+      expect(configuration.rumEndpoint).toContain(
+        `&ddtags=sdk_version:${prodEnv.sdkVersion},env:foo,service:bar,version:baz`
+      )
+      expect(configuration.logsEndpoint).toContain(
+        `&ddtags=sdk_version:${prodEnv.sdkVersion},env:foo,service:bar,version:baz`
+      )
     })
   })
 })
