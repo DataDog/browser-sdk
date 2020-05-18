@@ -141,9 +141,11 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
   const tld = conf.datacenter === 'us' ? 'com' : 'eu'
   const domain = conf.sdkEnv === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
-  const tags = `sdk_version:${conf.sdkVersion}${conf.env ? `,env:${conf.env}` : ''}${
-    conf.service ? `,service:${conf.service}` : ''
-  }${conf.version ? `,version:${conf.version}` : ''}`
+  const tags =
+    `sdk_version:${conf.sdkVersion}` +
+    `${conf.env ? `,env:${conf.env}` : ''}` +
+    `${conf.service ? `,service:${conf.service}` : ''}` +
+    `${conf.version ? `,version:${conf.version}` : ''}`
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
