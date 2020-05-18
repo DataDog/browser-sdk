@@ -53,6 +53,8 @@ build:
   script:
     - yarn
     - yarn build
+    - scripts/cli lint test/app
+    - scripts/cli typecheck test/app
 
 compatibility:
   stage: test

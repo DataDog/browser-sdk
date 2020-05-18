@@ -18,8 +18,8 @@ datadogLogs.init({
 datadogRum.init({
   applicationId: 'rum',
   clientToken: 'key',
+  enableExperimentalFeatures: ['collect-user-actions'],
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
-  enableExperimentalFeatures: ['collect-user-actions'],
 })
