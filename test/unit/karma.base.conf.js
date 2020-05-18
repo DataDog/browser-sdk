@@ -1,4 +1,12 @@
 const webpackConfig = require('../../webpack.base')('development')
+const getTestReportDirectory = require('../getTestReportDirectory')
+
+const reporters = ['spec']
+
+const testReportDirectory = getTestReportDirectory()
+if (testReportDirectory) {
+  reporters.push('junit')
+}
 
 module.exports = {
   basePath: '../..',
@@ -13,11 +21,14 @@ module.exports = {
   preprocessors: {
     'packages/*/+(src|test)/**/*.ts': ['webpack'],
   },
-  reporters: ['spec'],
+  reporters,
   specReporter: {
     suppressErrorSummary: true,
     suppressPassed: true,
     suppressSkipped: true,
+  },
+  junitReporter: {
+    outputDir: testReportDirectory,
   },
   singleRun: true,
   webpack: {

@@ -1,9 +1,25 @@
 const path = require('path')
 const { exec } = require('child_process')
+const getTestReportDirectory = require('../getTestReportDirectory')
 const { unlinkSync } = require('fs')
 const { CurrentSpecReporter } = require('./currentSpecReporter')
 
 let servers
+
+const reporters = ['spec']
+
+const testReportDirectory = getTestReportDirectory()
+if (testReportDirectory) {
+  reporters.push([
+    'junit',
+    {
+      outputDir: testReportDirectory,
+      outputFileFormat: function(options) {
+        return `results-${options.cid}.${options.capabilities.browserName}.xml`
+      },
+    },
+  ])
+}
 
 module.exports = {
   runner: 'local',
@@ -14,7 +30,7 @@ module.exports = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 0,
   framework: 'jasmine',
-  reporters: ['spec'],
+  reporters,
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
     requires: [path.resolve(__dirname, './ts-node')],
