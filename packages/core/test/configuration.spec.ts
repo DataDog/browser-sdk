@@ -81,8 +81,20 @@ describe('configuration', () => {
     })
   })
 
-  describe('env, version and service', () => {
-    it('should set the env, version and services tags in the logs and rum endpoints', () => {
+  describe('sdk_version, env, version and service', () => {
+    it('should not modify the logs and rum endpoints tags when not defined', () => {
+      const configuration = buildConfiguration({ clientToken }, prodEnv)
+      expect(configuration.rumEndpoint).toContain(`&ddtags=sdk_version:${prodEnv.sdkVersion}`)
+
+      expect(configuration.rumEndpoint).not.toContain(',env:')
+      expect(configuration.rumEndpoint).not.toContain(',service:')
+      expect(configuration.rumEndpoint).not.toContain(',version:')
+      expect(configuration.logsEndpoint).not.toContain(',env:')
+      expect(configuration.logsEndpoint).not.toContain(',service:')
+      expect(configuration.logsEndpoint).not.toContain(',version:')
+    })
+
+    it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = buildConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' }, prodEnv)
       expect(configuration.rumEndpoint).toContain(
         `&ddtags=sdk_version:${prodEnv.sdkVersion},env:foo,service:bar,version:baz`
