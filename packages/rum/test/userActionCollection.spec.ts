@@ -1,13 +1,6 @@
 import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { RumSession } from '../src/rumSession'
-import {
-  PAGE_ACTIVITY_END_DELAY,
-  PAGE_ACTIVITY_MAX_DURATION,
-  PAGE_ACTIVITY_VALIDATION_DELAY,
-  PageActivityEvent,
-  waitPageActivitiesCompletion,
-} from '../src/trackPageActivities'
+import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import {
   $$tests,
   AutoUserAction,
@@ -17,7 +10,7 @@ import {
   UserActionType,
 } from '../src/userActionCollection'
 const { resetUserAction, newUserAction } = $$tests
-import { startViewCollection, ViewLoadingType } from '../src/viewCollection'
+import { View, ViewLoadingType } from '../src/viewCollection'
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -113,7 +106,20 @@ describe('startUserActionCollection', () => {
 
     clock.tick(SOME_ARBITRARY_DELAY)
     button.click()
-    startViewCollection(fakeLocation as Location, lifeCycle, fakeSession as RumSession)
+    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
+      documentVersion: 0,
+      duration: 0,
+      id: 'foo',
+      loadingType: ViewLoadingType.INITIAL_LOAD,
+      location: fakeLocation as Location,
+      measures: {
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 0,
+        userActionCount: 0,
+      },
+      startTime: 0,
+    })
     clock.expire()
 
     expect(events).toEqual([])
