@@ -76,11 +76,6 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
 
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
-  function stopUserAction() {
-    stopEventCountsTracking()
-    pendingAutoUserAction = undefined
-  }
-
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
       lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
@@ -96,15 +91,18 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
         },
       })
     }
-    stopUserAction()
+
+    stopEventCountsTracking()
+    pendingAutoUserAction = undefined
   })
 
   pendingAutoUserAction = {
     id,
     startTime,
     stop() {
-      stopUserAction()
+      stopEventCountsTracking()
       stopWaitIdlePageActivity()
+      pendingAutoUserAction = undefined
     },
   }
 }
