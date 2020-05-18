@@ -45,6 +45,10 @@ export interface UserConfiguration {
   silentMultipleInit?: boolean
   proxyHost?: string
 
+  service?: string
+  env?: string
+  version?: string
+
   // Below is only taken into account for e2e-test build mode.
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
@@ -63,10 +67,14 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 interface TransportConfiguration {
   clientToken: string
   datacenter: Datacenter
-  env: Environment
+  sdkEnv: Environment
   buildMode: BuildMode
   sdkVersion: string
   proxyHost?: string
+
+  service?: string
+  env?: string
+  version?: string
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
@@ -74,9 +82,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
     datacenter: userConfiguration.datacenter || buildEnv.datacenter,
-    env: buildEnv.env,
+    env: userConfiguration.env,
     proxyHost: userConfiguration.proxyHost,
+    sdkEnv: buildEnv.sdkEnv,
     sdkVersion: buildEnv.sdkVersion,
+    service: userConfiguration.service,
+    version: userConfiguration.version,
   }
 
   const enableExperimentalFeatures = Array.isArray(userConfiguration.enableExperimentalFeatures)
@@ -129,8 +140,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
   const tld = conf.datacenter === 'us' ? 'com' : 'eu'
-  const domain = conf.env === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
-  const tags = `sdk_version:${conf.sdkVersion}`
+  const domain = conf.sdkEnv === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
+  const tags =
+    `sdk_version:${conf.sdkVersion}` +
+    `${conf.env ? `,env:${conf.env}` : ''}` +
+    `${conf.service ? `,service:${conf.service}` : ''}` +
+    `${conf.version ? `,version:${conf.version}` : ''}`
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
