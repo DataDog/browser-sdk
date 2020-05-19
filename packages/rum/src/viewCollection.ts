@@ -45,6 +45,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
+      currentView.triggerUpdate()
       currentView.end()
       currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
     }
@@ -52,12 +53,14 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    // do not trigger view update to avoid wrong data
     currentView.end()
     currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
+    currentView.triggerUpdate()
     currentView.end()
   })
 }
@@ -135,7 +138,8 @@ function newView(
       stopLoadingTimeTracking()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
-      // Make a final view update
+    },
+    triggerUpdate() {
       updateView()
     },
   }

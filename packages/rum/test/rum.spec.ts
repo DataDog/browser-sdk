@@ -360,7 +360,7 @@ describe('rum session', () => {
     expect(server.requests.length).toEqual(2)
   })
 
-  it('when the session is renewed, a final view event then a new view event should be sent', () => {
+  it('when the session is renewed, a new view event should be sent', () => {
     let sessionId = '42'
     const { server, lifeCycle } = setupBuilder
       .withSession({
@@ -381,17 +381,12 @@ describe('rum session', () => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(subsequentRequests.length).toEqual(2)
-
-    // Final view event
-    expect(subsequentRequests[0].evt.category).toEqual('view')
-    expect(subsequentRequests[0].session_id).toEqual('42')
-    expect(subsequentRequests[0].view.id).toEqual(initialRequests[0].view.id)
+    expect(subsequentRequests.length).toEqual(1)
 
     // New view event
-    expect(subsequentRequests[1].evt.category).toEqual('view')
-    expect(subsequentRequests[1].session_id).toEqual('43')
-    expect(subsequentRequests[1].view.id).not.toEqual(initialRequests[0].view.id)
+    expect(subsequentRequests[0].evt.category).toEqual('view')
+    expect(subsequentRequests[0].session_id).toEqual('43')
+    expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
   })
 })
 
