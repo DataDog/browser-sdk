@@ -10,7 +10,9 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { handleResourceEntry, RumEvent, RumResourceEvent } from '../src/rum'
+import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
@@ -387,6 +389,81 @@ describe('rum session', () => {
     expect(subsequentRequests[0].evt.category).toEqual('view')
     expect(subsequentRequests[0].session_id).toEqual('43')
     expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
+  })
+})
+
+describe('rum session keep alive', () => {
+  let isSessionTracked: boolean
+  let requests: ExpectedRequestBody[]
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('no full rum support')
+    }
+    isSessionTracked = true
+    setupBuilder = setup()
+      .withFakeServer()
+      .withFakeClock()
+      .withSession({
+        getId: () => undefined,
+        isTracked: () => isSessionTracked,
+        isTrackedWithResource: () => true,
+      })
+      .withRum()
+      .withViewCollection()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should send a view update regularly', () => {
+    const { server, clock } = setupBuilder.build()
+
+    // initial view & loading time update
+    clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY + THROTTLE_VIEW_UPDATE_PERIOD)
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(2)
+    expect(requests[0].evt.category).toEqual('view')
+    expect(requests[1].evt.category).toEqual('view')
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].evt.category).toEqual('view')
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].evt.category).toEqual('view')
+  })
+
+  it('should not send view update when session is expired', () => {
+    const { server, clock } = setupBuilder.build()
+
+    // initial view & loading time update
+    clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY + THROTTLE_VIEW_UPDATE_PERIOD)
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(2)
+    expect(requests[0].evt.category).toEqual('view')
+    expect(requests[1].evt.category).toEqual('view')
+
+    // expire session
+    isSessionTracked = false
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(requests.length).toEqual(0)
   })
 })
 
