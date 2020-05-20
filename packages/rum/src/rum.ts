@@ -32,7 +32,7 @@ import {
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { getUserActionReference, UserActionMeasures, UserActionReference, UserActionType } from './userActionCollection'
-import { viewContext, ViewMeasures } from './viewCollection'
+import { viewContext, ViewLoadingType, ViewMeasures } from './viewCollection'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -108,6 +108,8 @@ export interface RumViewEvent {
     documentVersion: number
   }
   view: {
+    loadingTime?: number
+    loadingType: ViewLoadingType
     measures: ViewMeasures
   }
 }
@@ -261,6 +263,8 @@ function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, k
           documentVersion: view.documentVersion,
         },
         view: {
+          loadingTime: view.loadingTime,
+          loadingType: view.loadingType,
           measures: view.measures,
         },
       },

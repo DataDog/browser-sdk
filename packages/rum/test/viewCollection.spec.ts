@@ -4,7 +4,23 @@ import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { startViewCollection, THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext } from '../src/viewCollection'
+import {
+  startViewCollection,
+  THROTTLE_VIEW_UPDATE_PERIOD,
+  View,
+  viewContext,
+  ViewLoadingType,
+} from '../src/viewCollection'
+
+import {
+  PAGE_ACTIVITY_END_DELAY,
+  PAGE_ACTIVITY_MAX_DURATION,
+  PAGE_ACTIVITY_VALIDATION_DELAY,
+} from '../src/trackPageActivities'
+
+const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
+const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
+const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
@@ -96,6 +112,65 @@ describe('rum track renew session', () => {
     expect(getViewEvent(0).id).toBe(getViewEvent(1).id)
     expect(getViewEvent(0).id).not.toBe(getViewEvent(2).id)
     expect(getRumEventCount()).toEqual(3)
+  })
+})
+
+describe('rum track load duration', () => {
+  let lifeCycle: LifeCycle
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    jasmine.clock().install()
+    ;({ lifeCycle, getViewEvent } = spyOnViews())
+  })
+
+  afterEach(() => {
+    jasmine.clock().uninstall()
+  })
+
+  it('should collect intital view type as "initial_load"', () => {
+    expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+  })
+
+  it('should collect view type as "route_change" after a route change', () => {
+    history.pushState({}, '', '/bar')
+    expect(getViewEvent(1).location.pathname).toEqual('/foo')
+    expect(getViewEvent(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+
+    expect(getViewEvent(2).location.pathname).toEqual('/bar')
+    expect(getViewEvent(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
+  })
+})
+
+describe('rum track loading time', () => {
+  let lifeCycle: LifeCycle
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    jasmine.clock().install()
+    jasmine.clock().mockDate()
+    spyOn(performance, 'now').and.callFake(() => Date.now())
+    ;({ lifeCycle, getViewEvent } = spyOnViews())
+  })
+
+  afterEach(() => {
+    jasmine.clock().uninstall()
+  })
+
+  it('should have an undefined loading time if the load is complete without having any activity', () => {
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewEvent(1).loadingTime).toBeUndefined()
+  })
+
+  it('should have a loading time equal to the activity time if the load is complete with a unique activity', () => {
+    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 })
 

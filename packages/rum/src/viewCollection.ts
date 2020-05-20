@@ -4,6 +4,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
 import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
+import { waitIdlePageActivity } from './trackPageActivities'
 
 export interface View {
   id: string
@@ -12,6 +13,8 @@ export interface View {
   documentVersion: number
   startTime: number
   duration: number
+  loadingTime?: number | undefined
+  loadingType: ViewLoadingType
 }
 
 export interface ViewMeasures {
@@ -26,26 +29,31 @@ export interface ViewMeasures {
   userActionCount: number
 }
 
+export enum ViewLoadingType {
+  INITIAL_LOAD = 'initial_load',
+  ROUTE_CHANGE = 'route_change',
+}
+
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, session, startOrigin)
+  let currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, session)
+      currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
     }
   })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, session)
+    currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
@@ -66,6 +74,7 @@ function newView(
   lifeCycle: LifeCycle,
   location: Location,
   session: RumSession,
+  loadingType: ViewLoadingType,
   startOrigin: number = performance.now()
 ) {
   // Setup initial values
@@ -77,6 +86,7 @@ function newView(
     userActionCount: 0,
   }
   let documentVersion = 0
+  let loadingTime: number | undefined
 
   viewContext = { id, location, sessionId: session.getId() }
 
@@ -95,6 +105,12 @@ function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
+  function updateLoadingTime(loadingTimeValue: number | undefined) {
+    loadingTime = loadingTimeValue
+    scheduleViewUpdate()
+  }
+  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, updateLoadingTime)
+
   // Initial view update
   updateView()
 
@@ -103,6 +119,8 @@ function newView(
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
       id,
+      loadingTime,
+      loadingType,
       location,
       measures,
       duration: performance.now() - startOrigin,
@@ -114,6 +132,7 @@ function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
+      stopLoadingTimeTracking()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update
@@ -174,4 +193,17 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
     }
   )
   return { stop: stopPerformanceTracking }
+}
+
+function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
+  const startTime: number = performance.now()
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
+    if (hadActivity) {
+      callback(endTime - startTime)
+    } else {
+      callback(undefined)
+    }
+  })
+
+  return { stop: stopWaitIdlePageActivity }
 }
