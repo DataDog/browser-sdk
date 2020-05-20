@@ -14,6 +14,10 @@
 
 ---
 
+## v1.11.5
+
+- ✨[RUMF-465] collect client service, env and version ([#392](https://github.com/DataDog/browser-sdk/pull/392))
+
 ## v1.11.4
 
 - ♻️[RUMF-471] rename version ([#382](https://github.com/DataDog/browser-sdk/pull/382))
