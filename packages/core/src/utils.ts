@@ -72,6 +72,9 @@ export function throttle(
   }
 }
 
+const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
+const isContext = (value: ContextValue): value is Context => !Array.isArray(value) && typeof value === 'object'
+
 /**
  * Performs a deep merge of objects and arrays
  * - arrays values are merged index by index
@@ -80,12 +83,7 @@ export function throttle(
  *
  * ⚠️ this method does not prevent infinite loops while merging circular references ⚠️
  *
- * @param {destination, ...toMerge} any - values to merge
- * @returns {any} New merged value
  */
-const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
-const isContext = (value: ContextValue): value is Context => !Array.isArray(value) && typeof value === 'object'
-
 export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
   return toMerge.reduce((value1: ContextValue, value2: ContextValue): ContextValue => {
     if (isContextArray(value1) && isContextArray(value2)) {

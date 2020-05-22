@@ -82,7 +82,7 @@ export function startLogger(
           },
         },
         globalContext,
-        getRUMInternalContext() as ContextValue
+        getRUMInternalContext() as Context
       ) as Context
   )
   const handlers = {

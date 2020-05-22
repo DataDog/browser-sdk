@@ -57,7 +57,7 @@ const STUBBED_RUM = {
 
 export type RumGlobal = typeof STUBBED_RUM
 
-export let datadogRum = makeGlobal(STUBBED_RUM)
+export const datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   if (!checkCookiesAuthorized() || !checkIsNotLocalFile() || !canInitRum(userConfiguration)) {
