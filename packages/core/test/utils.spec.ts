@@ -1,13 +1,4 @@
-import {
-  Context,
-  deepMerge,
-  jsonStringify,
-  performDraw,
-  round,
-  throttle,
-  toSnakeCase,
-  withSnakeCaseKeys,
-} from '../src/utils'
+import { deepMerge, jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
 
 describe('utils', () => {
   describe('deepMerge', () => {
