@@ -405,35 +405,6 @@ describe('rum session', () => {
   })
 })
 
-describe('rum init', () => {
-  let server: sinon.SinonFakeServer
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-    server = sinon.fakeServer.create()
-  })
-
-  afterEach(() => {
-    server.restore()
-  })
-
-  it('should send buffered performance entries', () => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
-    startViewCollection(location, lifeCycle, session)
-
-    expect(server.requests.length).toBeGreaterThan(0)
-  })
-})
-
 type RumApi = Omit<RumGlobal, 'init'>
 function getRumMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as RumEvent
