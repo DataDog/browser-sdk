@@ -1,4 +1,5 @@
 import {
+  assign,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
   commonInit,
@@ -12,7 +13,6 @@ import {
   startRequestCollection,
   UserConfiguration,
 } from '@datadog/browser-core'
-import lodashAssign from 'lodash.assign'
 
 import { buildEnv } from './buildEnv'
 import { startDOMMutationCollection } from './domMutationCollection'
@@ -57,7 +57,7 @@ const STUBBED_RUM = {
 
 export type RumGlobal = typeof STUBBED_RUM
 
-export const datadogRum = makeGlobal(STUBBED_RUM)
+export let datadogRum = makeGlobal(STUBBED_RUM)
 let isAlreadyInitialized = false
 datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   if (!checkCookiesAuthorized() || !checkIsNotLocalFile() || !canInitRum(userConfiguration)) {
@@ -85,7 +85,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   requestStartObservable.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
   requestCompleteObservable.subscribe((request) => lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, request))
 
-  lodashAssign(datadogRum, globalApi)
+  assign(datadogRum, globalApi)
   isAlreadyInitialized = true
 })
 
