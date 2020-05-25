@@ -145,12 +145,13 @@ describe('rum track load duration', () => {
 describe('rum track loading time', () => {
   let lifeCycle: LifeCycle
   let getViewEvent: (index: number) => View
+  let getRumEventCount: () => number
 
   beforeEach(() => {
     jasmine.clock().install()
     jasmine.clock().mockDate()
     spyOn(performance, 'now').and.callFake(() => Date.now())
-    ;({ lifeCycle, getViewEvent } = spyOnViews())
+    ;({ lifeCycle, getRumEventCount, getViewEvent } = spyOnViews())
   })
 
   afterEach(() => {
@@ -161,7 +162,8 @@ describe('rum track loading time', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadingTime).toBeUndefined()
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).loadingTime).toBeUndefined()
   })
 
   it('should have a loading time equal to the activity time if the load is complete with a unique activity', () => {
@@ -170,6 +172,80 @@ describe('rum track loading time', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
+    expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+  })
+
+  const FAKE_NAVIGATION_ENTRY = {
+    domComplete: 456,
+    domContentLoadedEventEnd: 345,
+    domInteractive: 234,
+    entryType: 'navigation',
+    loadEventEnd: 567,
+  }
+  const FAKE_NAVIGATION_ENTRY_2 = {
+    domComplete: 2,
+    domContentLoadedEventEnd: 1,
+    domInteractive: 1,
+    entryType: 'navigation',
+    loadEventEnd: 1,
+  }
+
+  it('should use loadEventEnd for initial view when having no activity', () => {
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
+  })
+
+  it('should use loadEventEnd for initial view when load event is bigger than computed loading time  ', () => {
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(FAKE_NAVIGATION_ENTRY.loadEventEnd).toBeGreaterThan(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
+  })
+
+  it('should not use loadEventEnd for initial view when load event is smaller than computed loading time  ', () => {
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY_2 as PerformanceNavigationTiming
+    )
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(FAKE_NAVIGATION_ENTRY_2.loadEventEnd).toBeLessThan(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 })
@@ -304,71 +380,6 @@ describe('rum view measures', () => {
       resourceCount: 0,
       userActionCount: 0,
     })
-
-    jasmine.clock().uninstall()
-  })
-
-  it('should have a loadEventEnd loading time when having no activity', () => {
-    jasmine.clock().install()
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
-
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
-
-    expect(getRumEventCount()).toEqual(1)
-
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).measures.loadEventEnd).toEqual(
-      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(1).startTime)
-    )
-    expect(getViewEvent(1).loadingTime).toEqual(getViewEvent(1).measures.loadEventEnd)
-
-    jasmine.clock().uninstall()
-  })
-
-  it('should have a loadEventEnd loading time when load event happens after all activity completions', () => {
-    jasmine.clock().install()
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
-
-    expect(getRumEventCount()).toEqual(1)
-
-    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toBeLessThan(
-      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(1).startTime)
-    )
-
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(2).measures.loadEventEnd).toEqual(
-      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(2).startTime)
-    )
-    expect(getViewEvent(2).loadingTime).toEqual(getViewEvent(2).measures.loadEventEnd)
 
     jasmine.clock().uninstall()
   })

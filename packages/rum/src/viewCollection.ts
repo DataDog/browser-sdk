@@ -1,4 +1,4 @@
-import { DOM_EVENT, generateUUID, monitor, msToNs, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, msToNs, throttle, noop } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
@@ -105,20 +105,23 @@ function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadingTime(loadingTimeValue: number | undefined) {
-    loadingTime = loadingTimeValue
-    scheduleViewUpdate()
+  function updateLoadingTime(loadingTimeValue: number) {
+    if (loadingTime === undefined || loadingTimeValue > loadingTime) {
+      loadingTime = loadingTimeValue
+      scheduleViewUpdate()
+    }
   }
-  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, updateLoadingTime)
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, updateLoadingTime)
+
+  let loadEventLoadingTime = { stop: noop }
+  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
+    loadEventLoadingTime = trackLoadEventLoadingTime(lifeCycle, startOrigin, updateLoadingTime)
+  }
 
   // Initial view update
   updateView()
 
   function updateView() {
-    if (measures.loadEventEnd) {
-      loadingTime = Math.max(measures.loadEventEnd - startOrigin, loadingTime || 0)
-    }
-
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,
@@ -136,7 +139,8 @@ function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
-      stopLoadingTimeTracking()
+      stopActivityLoadingTimeTracking()
+      loadEventLoadingTime.stop()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update
@@ -199,13 +203,30 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
+function trackLoadEventLoadingTime(
+  lifeCycle: LifeCycle,
+  startOrigin: number,
+  callback: (loadingTimeValue: number) => void
+) {
+  const startTime = performance.now()
+  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
+    LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+    (entry) => {
+      if (entry.entryType === 'navigation') {
+        const navigationEntry = entry as PerformanceNavigationTiming
+        callback(msToNs(navigationEntry.loadEventEnd - startOrigin))
+      }
+    }
+  )
+
+  return { stop: stopPerformanceTracking }
+}
+
+function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
   const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
       callback(msToNs(endTime - startTime))
-    } else {
-      callback(undefined)
     }
   })
 
