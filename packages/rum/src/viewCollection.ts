@@ -115,6 +115,10 @@ function newView(
   updateView()
 
   function updateView() {
+    if (measures.loadEventEnd) {
+      loadingTime = Math.max(measures.loadEventEnd, loadingTime || 0)
+    }
+
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
       documentVersion,

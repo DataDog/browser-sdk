@@ -308,6 +308,65 @@ describe('rum view measures', () => {
     jasmine.clock().uninstall()
   })
 
+  it('should have a loadEventEnd loading time when having no activity', () => {
+    jasmine.clock().install()
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(getViewEvent(1).measures.loadEventEnd).toEqual(567e6)
+    expect(getViewEvent(1).loadingTime).toEqual(getViewEvent(1).measures.loadEventEnd)
+
+    jasmine.clock().uninstall()
+  })
+
+  it('should have a loadEventEnd loading time when load event happens after all activity completions', () => {
+    jasmine.clock().install()
+    expect(getRumEventCount()).toEqual(1)
+    expect(getViewEvent(0).measures).toEqual({
+      errorCount: 0,
+      longTaskCount: 0,
+      resourceCount: 0,
+      userActionCount: 0,
+    })
+
+    expect(getRumEventCount()).toEqual(1)
+
+    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(2)
+    expect(getViewEvent(1).loadingTime).toBeLessThan(567e6)
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getRumEventCount()).toEqual(3)
+    expect(getViewEvent(2).measures.loadEventEnd).toEqual(567e6)
+    expect(getViewEvent(2).loadingTime).toEqual(getViewEvent(2).measures.loadEventEnd)
+
+    jasmine.clock().uninstall()
+  })
+
   it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
     jasmine.clock().install()
     expect(getRumEventCount()).toEqual(1)
