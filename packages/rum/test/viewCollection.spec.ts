@@ -1,51 +1,60 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
-import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
-import { RumSession } from '../src/rumSession'
-import { UserAction, UserActionType } from '../src/userActionCollection'
-import {
-  startViewCollection,
-  THROTTLE_VIEW_UPDATE_PERIOD,
-  View,
-  viewContext,
-  ViewLoadingType,
-} from '../src/viewCollection'
 
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
+import { UserAction, UserActionType } from '../src/userActionCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext, ViewLoadingType } from '../src/viewCollection'
+import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
-function setup(lifeCycle: LifeCycle = new LifeCycle()) {
+function mockHistory(location: Partial<Location>) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = `http://localhost${pathname}`
-    fakeLocation.pathname = getPathName(url)
-    fakeLocation.search = getSearch(url)
-    fakeLocation.hash = getHash(url)
+    location.pathname = getPathName(url)
+    location.search = getSearch(url)
+    location.hash = getHash(url)
   })
-  const fakeLocation: Partial<Location> = { pathname: '/foo' }
-  const fakeSession = {
-    getId() {
-      return '42'
-    },
+}
+
+function spyOnViews() {
+  const addRumEvent = jasmine.createSpy()
+
+  function getViewEvent(index: number) {
+    return addRumEvent.calls.argsFor(index)[0] as View
   }
-  startViewCollection(fakeLocation as Location, lifeCycle, fakeSession as RumSession)
+
+  function getRumEventCount() {
+    return addRumEvent.calls.count()
+  }
+
+  return { addRumEvent, getViewEvent, getRumEventCount }
 }
 
 describe('rum track url change', () => {
+  let setupBuilder: TestSetupBuilder
   let initialView: string
   let initialLocation: Location
 
   beforeEach(() => {
-    setup()
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    mockHistory(fakeLocation)
+    setupBuilder = setup().withViewCollection(fakeLocation)
+    setupBuilder.build()
     initialView = viewContext.id
     initialLocation = viewContext.location
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('should update view id on path change', () => {
@@ -70,35 +79,28 @@ describe('rum track url change', () => {
   })
 })
 
-function spyOnViews() {
-  let addRumEvent: jasmine.Spy
-  let lifeCycle: LifeCycle
-
-  function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as View
-  }
-
-  function getRumEventCount() {
-    return addRumEvent.calls.count()
-  }
-
-  addRumEvent = jasmine.createSpy()
-  lifeCycle = new LifeCycle()
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent)
-  setup(lifeCycle)
-
-  return { lifeCycle, getViewEvent, getRumEventCount }
-}
-
 describe('rum track renew session', () => {
-  let lifeCycle: LifeCycle
+  let setupBuilder: TestSetupBuilder
+  let addRumEvent: jasmine.Spy
   let getRumEventCount: () => number
   let getViewEvent: (index: number) => View
+
   beforeEach(() => {
-    ;({ lifeCycle, getRumEventCount, getViewEvent } = spyOnViews())
+    ;({ addRumEvent, getViewEvent, getRumEventCount } = spyOnViews())
+
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    mockHistory(fakeLocation)
+    setupBuilder = setup()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('should update page view id on renew session', () => {
+    const { lifeCycle } = setupBuilder.build()
     const initialView = viewContext.id
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -106,6 +108,7 @@ describe('rum track renew session', () => {
   })
 
   it('should send a final view event when the session is renewed', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -116,23 +119,32 @@ describe('rum track renew session', () => {
 })
 
 describe('rum track load duration', () => {
-  let lifeCycle: LifeCycle
+  let setupBuilder: TestSetupBuilder
+  let addRumEvent: jasmine.Spy
   let getViewEvent: (index: number) => View
 
   beforeEach(() => {
-    jasmine.clock().install()
-    ;({ lifeCycle, getViewEvent } = spyOnViews())
+    ;({ addRumEvent, getViewEvent } = spyOnViews())
+
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    mockHistory(fakeLocation)
+    setupBuilder = setup()
+      .withFakeClock()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
   })
 
   afterEach(() => {
-    jasmine.clock().uninstall()
+    setupBuilder.cleanup()
   })
 
   it('should collect intital view type as "initial_load"', () => {
+    setupBuilder.build()
     expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
 
   it('should collect view type as "route_change" after a route change', () => {
+    setupBuilder.build()
     history.pushState({}, '', '/bar')
     expect(getViewEvent(1).location.pathname).toEqual('/foo')
     expect(getViewEvent(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
@@ -143,32 +155,39 @@ describe('rum track load duration', () => {
 })
 
 describe('rum track loading time', () => {
-  let lifeCycle: LifeCycle
+  let setupBuilder: TestSetupBuilder
+  let addRumEvent: jasmine.Spy
   let getViewEvent: (index: number) => View
 
   beforeEach(() => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate()
-    spyOn(performance, 'now').and.callFake(() => Date.now())
-    ;({ lifeCycle, getViewEvent } = spyOnViews())
+    ;({ addRumEvent, getViewEvent } = spyOnViews())
+
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    mockHistory(fakeLocation)
+    setupBuilder = setup()
+      .withFakeClock()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
   })
 
   afterEach(() => {
-    jasmine.clock().uninstall()
+    setupBuilder.cleanup()
   })
 
   it('should have an undefined loading time if the load is complete without having any activity', () => {
-    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const { clock } = setupBuilder.build()
+    clock.tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewEvent(1).loadingTime).toBeUndefined()
   })
 
   it('should have a loading time equal to the activity time if the load is complete with a unique activity', () => {
-    jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    const { lifeCycle, clock } = setupBuilder.build()
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
@@ -198,14 +217,27 @@ describe('rum view measures', () => {
     entryType: 'navigation',
     loadEventEnd: 567,
   }
-  let lifeCycle: LifeCycle
+  let setupBuilder: TestSetupBuilder
+  let addRumEvent: jasmine.Spy
   let getRumEventCount: () => number
   let getViewEvent: (index: number) => View
+
   beforeEach(() => {
-    ;({ lifeCycle, getRumEventCount, getViewEvent } = spyOnViews())
+    ;({ addRumEvent, getViewEvent, getRumEventCount } = spyOnViews())
+
+    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    mockHistory(fakeLocation)
+    setupBuilder = setup()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('should track error count', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.errorCount).toEqual(0)
 
@@ -219,6 +251,7 @@ describe('rum view measures', () => {
   })
 
   it('should track long task count', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.longTaskCount).toEqual(0)
 
@@ -231,6 +264,7 @@ describe('rum view measures', () => {
   })
 
   it('should track resource count', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.resourceCount).toEqual(0)
 
@@ -243,6 +277,7 @@ describe('rum view measures', () => {
   })
 
   it('should track user action count', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
@@ -255,6 +290,7 @@ describe('rum view measures', () => {
   })
 
   it('should reset event count when the view changes', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.resourceCount).toEqual(0)
 
@@ -275,7 +311,7 @@ describe('rum view measures', () => {
   })
 
   it('should update measures when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
-    jasmine.clock().install()
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
@@ -291,7 +327,7 @@ describe('rum view measures', () => {
 
     expect(getRumEventCount()).toEqual(1)
 
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
@@ -304,12 +340,10 @@ describe('rum view measures', () => {
       resourceCount: 0,
       userActionCount: 0,
     })
-
-    jasmine.clock().uninstall()
   })
 
   it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
-    jasmine.clock().install()
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
@@ -322,7 +356,7 @@ describe('rum view measures', () => {
 
     expect(getRumEventCount()).toEqual(1)
 
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
@@ -331,11 +365,10 @@ describe('rum view measures', () => {
       resourceCount: 1,
       userActionCount: 0,
     })
-
-    jasmine.clock().uninstall()
   })
 
   it('should update measures when ending a view', () => {
+    const { lifeCycle } = setupBuilder.build()
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
@@ -374,7 +407,7 @@ describe('rum view measures', () => {
   })
 
   it('should not update measures after ending a view', () => {
-    jasmine.clock().install()
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getRumEventCount()).toEqual(1)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
@@ -387,10 +420,8 @@ describe('rum view measures', () => {
     expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
     expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
 
-    jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(3)
-
-    jasmine.clock().uninstall()
   })
 })
