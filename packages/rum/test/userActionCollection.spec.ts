@@ -111,7 +111,7 @@ describe('startUserActionCollection', () => {
     mockValidatedClickUserAction()
     expect(events).toEqual([
       {
-        duration: msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY),
+        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
         id: jasmine.any(String),
         measures: {
           errorCount: 0,

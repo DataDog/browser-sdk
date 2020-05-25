@@ -83,7 +83,7 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
         name,
         startTime,
         type,
-        duration: msToNs(endTime - startTime),
+        duration: endTime - startTime,
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
