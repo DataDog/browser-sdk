@@ -328,7 +328,9 @@ describe('rum view measures', () => {
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).measures.loadEventEnd).toEqual(567e6)
+    expect(getViewEvent(1).measures.loadEventEnd).toEqual(
+      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(1).startTime)
+    )
     expect(getViewEvent(1).loadingTime).toEqual(getViewEvent(1).measures.loadEventEnd)
 
     jasmine.clock().uninstall()
@@ -352,7 +354,9 @@ describe('rum view measures', () => {
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toBeLessThan(567e6)
+    expect(getViewEvent(1).loadingTime).toBeLessThan(
+      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(1).startTime)
+    )
 
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
@@ -361,7 +365,9 @@ describe('rum view measures', () => {
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(3)
-    expect(getViewEvent(2).measures.loadEventEnd).toEqual(567e6)
+    expect(getViewEvent(2).measures.loadEventEnd).toEqual(
+      msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd - getViewEvent(2).startTime)
+    )
     expect(getViewEvent(2).loadingTime).toEqual(getViewEvent(2).measures.loadEventEnd)
 
     jasmine.clock().uninstall()
