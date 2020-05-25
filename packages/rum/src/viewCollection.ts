@@ -116,7 +116,7 @@ function newView(
 
   function updateView() {
     if (measures.loadEventEnd) {
-      loadingTime = Math.max(measures.loadEventEnd, loadingTime || 0)
+      loadingTime = Math.max(measures.loadEventEnd - startOrigin, loadingTime || 0)
     }
 
     documentVersion += 1
