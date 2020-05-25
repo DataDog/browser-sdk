@@ -1,4 +1,4 @@
-import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage, msToNs } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import {
@@ -111,7 +111,7 @@ describe('startUserActionCollection', () => {
     mockValidatedClickUserAction()
     expect(events).toEqual([
       {
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+        duration: msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY),
         id: jasmine.any(String),
         measures: {
           errorCount: 0,

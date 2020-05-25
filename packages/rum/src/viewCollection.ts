@@ -196,10 +196,10 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
 }
 
 function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
-  const startTime: number = performance.now()
+  const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
-      callback(endTime - startTime)
+      callback(msToNs(endTime - startTime))
     } else {
       callback(undefined)
     }

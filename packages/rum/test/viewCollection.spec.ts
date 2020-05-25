@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch, msToNs } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
@@ -170,7 +170,7 @@ describe('rum track loading time', () => {
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 })
 

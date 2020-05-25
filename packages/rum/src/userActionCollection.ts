@@ -1,4 +1,4 @@
-import { Context, DOM_EVENT, generateUUID, noop } from '@datadog/browser-core'
+import { Context, DOM_EVENT, generateUUID, msToNs } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
@@ -83,7 +83,7 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
         name,
         startTime,
         type,
-        duration: endTime - startTime,
+        duration: msToNs(endTime - startTime),
         measures: {
           errorCount: eventCounts.errorCount,
           longTaskCount: eventCounts.longTaskCount,
