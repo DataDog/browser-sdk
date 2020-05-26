@@ -2,25 +2,16 @@ import {
   Configuration,
   DEFAULT_CONFIGURATION,
   ErrorMessage,
-  InternalMonitoring,
   isIE,
-  Omit,
-  PerformanceObserverStubBuilder,
   RequestCompleteEvent,
   SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { startPerformanceCollection } from '../src/performanceCollection'
-import { handleResourceEntry, RumEvent, RumResourceEvent, startRum } from '../src/rum'
-import { RumGlobal } from '../src/rum.entry'
+import { handleResourceEntry, RumEvent, RumResourceEvent } from '../src/rum'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { startViewCollection } from '../src/viewCollection'
-
-interface BrowserWindow extends Window {
-  PerformanceObserver?: PerformanceObserver
-}
+import { setup, TestSetupBuilder } from './specHelper'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
   return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
@@ -36,8 +27,18 @@ const configuration = {
   maxBatchSize: 1,
 }
 
-const internalMonitoring: InternalMonitoring = {
-  setExternalContextProvider: () => undefined,
+function getRumMessage(server: sinon.SinonFakeServer, index: number) {
+  return JSON.parse(server.requests[index].requestBody) as RumEvent
+}
+
+interface ExpectedRequestBody {
+  evt: {
+    category: string
+  }
+  session_id: string
+  view: {
+    id: string
+  }
 }
 
 describe('rum handle performance entry', () => {
@@ -230,36 +231,29 @@ describe('rum session', () => {
     name: 'action',
     type: UserActionType.CUSTOM,
   }
-  const browserWindow = window as BrowserWindow
-  let server: sinon.SinonFakeServer
-  let original: PerformanceObserver | undefined
-  let stubBuilder: PerformanceObserverStubBuilder
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
-    server = sinon.fakeServer.create()
-    original = browserWindow.PerformanceObserver
-    stubBuilder = new PerformanceObserverStubBuilder()
-    browserWindow.PerformanceObserver = stubBuilder.getStub()
+
+    setupBuilder = setup()
+      .withFakeServer()
+      .withRum()
   })
 
   afterEach(() => {
-    server.restore()
-    browserWindow.PerformanceObserver = original
+    setupBuilder.cleanup()
   })
 
   it('when tracked with resources should enable full tracking', () => {
-    const trackedWithResourcesSession = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession, internalMonitoring)
-    startViewCollection(location, lifeCycle, trackedWithResourcesSession)
-    startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
+    const { server, stubBuilder, lifeCycle } = setupBuilder
+      .withPerformanceObserverStubBuilder()
+      .withViewCollection()
+      .withPerformanceCollection()
+      .build()
+
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -271,15 +265,17 @@ describe('rum session', () => {
   })
 
   it('when tracked without resources should not track resources', () => {
-    const trackedWithResourcesSession = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => false,
-    }
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, trackedWithResourcesSession, internalMonitoring)
-    startViewCollection(location, lifeCycle, trackedWithResourcesSession)
-    startPerformanceCollection(lifeCycle, trackedWithResourcesSession)
+    const { server, stubBuilder, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => undefined,
+        isTracked: () => true,
+        isTrackedWithResource: () => false,
+      })
+      .withPerformanceObserverStubBuilder()
+      .withViewCollection()
+      .withPerformanceCollection()
+      .build()
+
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -291,14 +287,16 @@ describe('rum session', () => {
   })
 
   it('when not tracked should disable tracking', () => {
-    const notTrackedSession = {
-      getId: () => undefined,
-      isTracked: () => false,
-      isTrackedWithResource: () => false,
-    }
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, notTrackedSession, internalMonitoring)
-    startPerformanceCollection(lifeCycle, notTrackedSession)
+    const { server, stubBuilder, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => undefined,
+        isTracked: () => false,
+        isTrackedWithResource: () => false,
+      })
+      .withPerformanceObserverStubBuilder()
+      .withPerformanceCollection()
+      .build()
+
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -311,15 +309,17 @@ describe('rum session', () => {
 
   it('when type change should enable/disable existing resource tracking', () => {
     let isTracked = true
-    const session = {
-      getId: () => undefined,
-      isTracked: () => isTracked,
-      isTrackedWithResource: () => isTracked,
-    }
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
-    startViewCollection(location, lifeCycle, session)
-    startPerformanceCollection(lifeCycle, session)
+    const { server, stubBuilder } = setupBuilder
+      .withSession({
+        getId: () => undefined,
+        isTracked: () => isTracked,
+        isTrackedWithResource: () => isTracked,
+      })
+      .withPerformanceObserverStubBuilder()
+      .withViewCollection()
+      .withPerformanceCollection()
+      .build()
+
     server.requests = []
 
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
@@ -336,15 +336,16 @@ describe('rum session', () => {
 
   it('when type change should enable/disable existing request tracking', () => {
     let isTrackedWithResource = true
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => isTrackedWithResource,
-    }
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
-    startViewCollection(location, lifeCycle, session)
-    startPerformanceCollection(lifeCycle, session)
+    const { server, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => undefined,
+        isTracked: () => true,
+        isTrackedWithResource: () => isTrackedWithResource,
+      })
+      .withViewCollection()
+      .withPerformanceCollection()
+      .build()
+
     server.requests = []
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
@@ -361,25 +362,14 @@ describe('rum session', () => {
 
   it('when the session is renewed, a final view event then a new view event should be sent', () => {
     let sessionId = '42'
-    const session = {
-      getId: () => sessionId,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    const lifeCycle = new LifeCycle()
-    server.requests = []
-    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
-    startViewCollection(location, lifeCycle, session)
-
-    interface ExpectedRequestBody {
-      evt: {
-        category: string
-      }
-      session_id: string
-      view: {
-        id: string
-      }
-    }
+    const { server, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => true,
+        isTrackedWithResource: () => true,
+      })
+      .withViewCollection()
+      .build()
 
     const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
     expect(initialRequests.length).toEqual(1)
@@ -405,45 +395,9 @@ describe('rum session', () => {
   })
 })
 
-describe('rum init', () => {
-  let server: sinon.SinonFakeServer
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-    server = sinon.fakeServer.create()
-  })
-
-  afterEach(() => {
-    server.restore()
-  })
-
-  it('should send buffered performance entries', () => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-
-    const lifeCycle = new LifeCycle()
-    startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring)
-    startViewCollection(location, lifeCycle, session)
-
-    expect(server.requests.length).toBeGreaterThan(0)
-  })
-})
-
-type RumApi = Omit<RumGlobal, 'init'>
-function getRumMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as RumEvent
-}
-
 describe('rum global context', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  let lifeCycle: LifeCycle
-  let RUM: RumApi
-  let server: sinon.SinonFakeServer
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
     const session = {
@@ -451,28 +405,33 @@ describe('rum global context', () => {
       isTracked: () => true,
       isTrackedWithResource: () => true,
     }
-    server = sinon.fakeServer.create()
-    lifeCycle = new LifeCycle()
-    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
-    server.requests = []
+    setupBuilder = setup()
+      .withFakeServer()
+      .withRum()
+      .withViewCollection()
   })
 
   afterEach(() => {
-    server.restore()
+    setupBuilder.cleanup()
   })
 
   it('should be added to the request', () => {
-    RUM.setRumGlobalContext({ bar: 'foo' })
+    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    server.requests = []
+
+    rumApi.setRumGlobalContext({ bar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
   it('should be updatable', () => {
-    RUM.setRumGlobalContext({ bar: 'foo' })
+    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    server.requests = []
+
+    rumApi.setRumGlobalContext({ bar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    RUM.setRumGlobalContext({ foo: 'bar' })
+    rumApi.setRumGlobalContext({ foo: 'bar' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
@@ -481,7 +440,10 @@ describe('rum global context', () => {
   })
 
   it('should not be automatically snake cased', () => {
-    RUM.setRumGlobalContext({ fooBar: 'foo' })
+    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    server.requests = []
+
+    rumApi.setRumGlobalContext({ fooBar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
@@ -489,28 +451,23 @@ describe('rum global context', () => {
 })
 
 describe('rum user action', () => {
-  let lifeCycle: LifeCycle
-  let RUM: RumApi
-  let server: sinon.SinonFakeServer
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
-    server = sinon.fakeServer.create()
-    lifeCycle = new LifeCycle()
-    RUM = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoring) as RumApi
-    startViewCollection(location, lifeCycle, session)
-    server.requests = []
+    setupBuilder = setup()
+      .withFakeServer()
+      .withRum()
+      .withViewCollection()
   })
 
   afterEach(() => {
-    server.restore()
+    setupBuilder.cleanup()
   })
 
   it('should not be automatically snake cased', () => {
+    const { server, lifeCycle } = setupBuilder.build()
+    server.requests = []
+
     lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
       context: { fooBar: 'foo' },
       name: 'hello',
