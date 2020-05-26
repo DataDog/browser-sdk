@@ -40,12 +40,20 @@ const FAKE_NAVIGATION_ENTRY = {
   loadEventEnd: 567,
 }
 
-const FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING = {
+const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING = {
   domComplete: 2,
   domContentLoadedEventEnd: 1,
   domInteractive: 1,
   entryType: 'navigation',
-  loadEventEnd: 1,
+  loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8,
+}
+
+const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING = {
+  domComplete: 2,
+  domContentLoadedEventEnd: 1,
+  domInteractive: 1,
+  entryType: 'navigation',
+  loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2,
 }
 
 function mockHistory(location: Partial<Location>) {
@@ -252,7 +260,7 @@ describe('rum track loading time', () => {
 
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING as PerformanceNavigationTiming
     )
 
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
@@ -261,8 +269,7 @@ describe('rum track loading time', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(FAKE_NAVIGATION_ENTRY.loadEventEnd).toBeGreaterThan(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -272,16 +279,13 @@ describe('rum track loading time', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING as PerformanceNavigationTiming
+      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING as PerformanceNavigationTiming
     )
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING.loadEventEnd).toBeLessThan(
-      BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
-    )
     expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 })
