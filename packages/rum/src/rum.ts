@@ -263,7 +263,7 @@ function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, k
           documentVersion: view.documentVersion,
         },
         view: {
-          loadingTime: view.loadingTime,
+          loadingTime: view.loadingTime ? msToNs(view.loadingTime) : undefined,
           loadingType: view.loadingType,
           measures: view.measures,
         },
