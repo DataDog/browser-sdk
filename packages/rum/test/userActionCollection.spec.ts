@@ -1,4 +1,4 @@
-import { DOM_EVENT, ErrorMessage, msToNs } from '@datadog/browser-core'
+import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import {

@@ -1,4 +1,4 @@
-import { DOM_EVENT, generateUUID, monitor, msToNs, throttle, noop } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, msToNs, noop, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
@@ -113,9 +113,9 @@ function newView(
   }
   const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, updateLoadingTime)
 
-  let loadEventLoadingTime = { stop: noop }
+  let stopLoadEventLoadingTime = noop
   if (loadingType === ViewLoadingType.INITIAL_LOAD) {
-    loadEventLoadingTime = trackLoadEventLoadingTime(lifeCycle, startOrigin, updateLoadingTime)
+    ;({ stop: stopLoadEventLoadingTime } = trackLoadEventLoadingTime(lifeCycle, updateLoadingTime))
   }
 
   // Initial view update
@@ -140,7 +140,7 @@ function newView(
       stopTimingsTracking()
       stopEventCountsTracking()
       stopActivityLoadingTimeTracking()
-      loadEventLoadingTime.stop()
+      stopLoadEventLoadingTime()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update
@@ -203,18 +203,13 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadEventLoadingTime(
-  lifeCycle: LifeCycle,
-  startOrigin: number,
-  callback: (loadingTimeValue: number) => void
-) {
-  const startTime = performance.now()
+function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
   const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
       if (entry.entryType === 'navigation') {
         const navigationEntry = entry as PerformanceNavigationTiming
-        callback(msToNs(navigationEntry.loadEventEnd - startOrigin))
+        callback(msToNs(navigationEntry.loadEventEnd))
       }
     }
   )

@@ -22,6 +22,38 @@ const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
+const FAKE_LONG_TASK = {
+  entryType: 'longtask',
+  startTime: 456,
+}
+const FAKE_USER_ACTION = {
+  context: {
+    bar: 123,
+  },
+  name: 'foo',
+  type: UserActionType.CUSTOM,
+}
+const FAKE_PAINT_ENTRY = {
+  entryType: 'paint',
+  name: 'first-contentful-paint',
+  startTime: 123,
+}
+const FAKE_NAVIGATION_ENTRY = {
+  domComplete: 456,
+  domContentLoadedEventEnd: 345,
+  domInteractive: 234,
+  entryType: 'navigation',
+  loadEventEnd: 567,
+}
+
+const FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING = {
+  domComplete: 2,
+  domContentLoadedEventEnd: 1,
+  domInteractive: 1,
+  entryType: 'navigation',
+  loadEventEnd: 1,
+}
+
 function setup(lifeCycle: LifeCycle = new LifeCycle()) {
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     const url = `http://localhost${pathname}`
@@ -175,44 +207,20 @@ describe('rum track loading time', () => {
     expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
-  const FAKE_NAVIGATION_ENTRY = {
-    domComplete: 456,
-    domContentLoadedEventEnd: 345,
-    domInteractive: 234,
-    entryType: 'navigation',
-    loadEventEnd: 567,
-  }
-  const FAKE_NAVIGATION_ENTRY_2 = {
-    domComplete: 2,
-    domContentLoadedEventEnd: 1,
-    domInteractive: 1,
-    entryType: 'navigation',
-    loadEventEnd: 1,
-  }
-
   it('should use loadEventEnd for initial view when having no activity', () => {
     expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
 
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
       FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
     )
-
-    expect(getRumEventCount()).toEqual(1)
-
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
     expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
   })
 
-  it('should use loadEventEnd for initial view when load event is bigger than computed loading time  ', () => {
+  it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
     expect(getRumEventCount()).toEqual(1)
 
     jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -232,48 +240,27 @@ describe('rum track loading time', () => {
     expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
   })
 
-  it('should not use loadEventEnd for initial view when load event is smaller than computed loading time  ', () => {
+  it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
     expect(getRumEventCount()).toEqual(1)
 
     jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_2 as PerformanceNavigationTiming
+      FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING as PerformanceNavigationTiming
     )
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(FAKE_NAVIGATION_ENTRY_2.loadEventEnd).toBeLessThan(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    expect(FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING.loadEventEnd).toBeLessThan(
+      BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
+    )
     expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 })
 
 describe('rum view measures', () => {
-  const FAKE_LONG_TASK = {
-    entryType: 'longtask',
-    startTime: 456,
-  }
-  const FAKE_USER_ACTION = {
-    context: {
-      bar: 123,
-    },
-    name: 'foo',
-    type: UserActionType.CUSTOM,
-  }
-  const FAKE_PAINT_ENTRY = {
-    entryType: 'paint',
-    name: 'first-contentful-paint',
-    startTime: 123,
-  }
-  const FAKE_NAVIGATION_ENTRY = {
-    domComplete: 456,
-    domContentLoadedEventEnd: 345,
-    domInteractive: 234,
-    entryType: 'navigation',
-    loadEventEnd: 567,
-  }
   let lifeCycle: LifeCycle
   let getRumEventCount: () => number
   let getViewEvent: (index: number) => View

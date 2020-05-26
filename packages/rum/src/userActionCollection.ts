@@ -1,4 +1,4 @@
-import { Context, DOM_EVENT, generateUUID, msToNs } from '@datadog/browser-core'
+import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
 import { getElementContent } from './getElementContent'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
