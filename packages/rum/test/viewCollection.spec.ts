@@ -190,21 +190,23 @@ describe('rum track loading time', () => {
     jasmine.clock().uninstall()
   })
 
-  it('should have an undefined loading time if the load is complete without having any activity', () => {
+  it('should have an undefined loading time if there is no activity on a route change', () => {
+    history.pushState({}, '', '/bar')
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(1)
-    expect(getViewEvent(0).loadingTime).toBeUndefined()
+    expect(getRumEventCount()).toEqual(3)
+    expect(getViewEvent(2).loadingTime).toBeUndefined()
   })
 
-  it('should have a loading time equal to the activity time if the load is complete with a unique activity', () => {
+  it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
+    history.pushState({}, '', '/bar')
     jasmine.clock().tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     jasmine.clock().tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     jasmine.clock().tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+    expect(getViewEvent(3).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {

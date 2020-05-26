@@ -1,11 +1,11 @@
 import { monitor, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
-// Delay to wait for a page activity to validate the tracking process in ms
+// Delay to wait for a page activity to validate the tracking process
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
-// Delay to wait after a page activity to end the tracking process in ms
+// Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
-// Maximum duration of the tracking process in ms
+// Maximum duration of the tracking process
 export const PAGE_ACTIVITY_MAX_DURATION = 10_000
 
 export interface PageActivityEvent {

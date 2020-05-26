@@ -106,17 +106,10 @@ function newView(
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
   function updateLoadingTime(loadingTimeValue: number) {
-    if (loadingTime === undefined || loadingTimeValue > loadingTime) {
-      loadingTime = loadingTimeValue
-      scheduleViewUpdate()
-    }
+    loadingTime = loadingTimeValue
+    scheduleViewUpdate()
   }
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, updateLoadingTime)
-
-  let stopLoadEventLoadingTime = noop
-  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
-    ;({ stop: stopLoadEventLoadingTime } = trackLoadEventLoadingTime(lifeCycle, updateLoadingTime))
-  }
+  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
 
   // Initial view update
   updateView()
@@ -139,8 +132,7 @@ function newView(
     end() {
       stopTimingsTracking()
       stopEventCountsTracking()
-      stopActivityLoadingTimeTracking()
-      stopLoadEventLoadingTime()
+      stopLoadingTimeTracking()
       // prevent pending view updates execution
       stopScheduleViewUpdate()
       // Make a final view update
@@ -203,6 +195,41 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
+function trackLoadingTime(
+  lifeCycle: LifeCycle,
+  loadingType: ViewLoadingType,
+  callback: (loadingTimeValue: number) => void
+) {
+  let expectedTiming = 1
+  const receivedTimings: number[] = []
+
+  let stopLoadEventLoadingTime = noop
+  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
+    expectedTiming += 1
+    ;({ stop: stopLoadEventLoadingTime } = trackLoadEventLoadingTime(lifeCycle, onTimingValue))
+  }
+
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, onTimingValue)
+
+  function onTimingValue(timingValue: number | undefined) {
+    expectedTiming -= 1
+    if (timingValue) {
+      receivedTimings.push(timingValue)
+    }
+
+    if (expectedTiming === 0 && receivedTimings.length) {
+      callback(Math.max(...receivedTimings))
+    }
+  }
+
+  return {
+    stop() {
+      stopActivityLoadingTimeTracking()
+      stopLoadEventLoadingTime()
+    },
+  }
+}
+
 function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
   const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
@@ -217,11 +244,13 @@ function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeV
   return { stop: stopPerformanceTracking }
 }
 
-function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
+function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
   const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
       callback(msToNs(endTime - startTime))
+    } else {
+      callback(undefined)
     }
   })
 
