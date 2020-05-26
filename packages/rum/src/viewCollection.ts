@@ -236,7 +236,7 @@ function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeV
     (entry) => {
       if (entry.entryType === 'navigation') {
         const navigationEntry = entry as PerformanceNavigationTiming
-        callback(msToNs(navigationEntry.loadEventEnd))
+        callback(navigationEntry.loadEventEnd)
       }
     }
   )
@@ -248,7 +248,7 @@ function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeVa
   const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
-      callback(msToNs(endTime - startTime))
+      callback(endTime - startTime)
     } else {
       callback(undefined)
     }

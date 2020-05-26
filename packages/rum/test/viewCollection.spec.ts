@@ -227,7 +227,7 @@ describe('rum track loading time', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getViewEvent(3).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+    expect(getViewEvent(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 
   it('should use loadEventEnd for initial view when having no activity', () => {
@@ -241,7 +241,7 @@ describe('rum track loading time', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getRumEventCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
+    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
@@ -262,7 +262,7 @@ describe('rum track loading time', () => {
 
     expect(getRumEventCount()).toEqual(2)
     expect(FAKE_NAVIGATION_ENTRY.loadEventEnd).toBeGreaterThan(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    expect(getViewEvent(1).loadingTime).toEqual(msToNs(FAKE_NAVIGATION_ENTRY.loadEventEnd))
+    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
@@ -282,7 +282,7 @@ describe('rum track loading time', () => {
     expect(FAKE_NAVIGATION_ENTRY_WITH_FAST_LOADEVENT_TIMING.loadEventEnd).toBeLessThan(
       BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
     )
-    expect(getViewEvent(1).loadingTime).toEqual(msToNs(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
+    expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 })
 
