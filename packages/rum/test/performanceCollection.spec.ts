@@ -1,51 +1,35 @@
-import { isIE, PerformanceObserverStubBuilder } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 
 import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
-import { LifeCycle } from '../src/lifeCycle'
-import { startPerformanceCollection } from '../src/performanceCollection'
-
-interface BrowserWindow extends Window {
-  PerformanceObserver?: PerformanceObserver
-}
+import { setup, TestSetupBuilder } from './specHelper'
 
 describe('rum first_contentful_paint', () => {
-  let stubBuilder: PerformanceObserverStubBuilder
-  let original: PerformanceObserver | undefined
-  let lifeCycle: LifeCycle
-
-  const browserWindow = window as BrowserWindow
-  const session = {
-    getId: () => undefined,
-    isTracked: () => true,
-    isTrackedWithResource: () => true,
-  }
-
+  let setupBuilder: TestSetupBuilder
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
 
-    lifeCycle = new LifeCycle()
-    original = browserWindow.PerformanceObserver
-    stubBuilder = new PerformanceObserverStubBuilder()
-    browserWindow.PerformanceObserver = stubBuilder.getStub()
+    setupBuilder = setup()
+      .withPerformanceObserverStubBuilder()
+      .withPerformanceCollection()
   })
 
   afterEach(() => {
-    browserWindow.PerformanceObserver = original
+    setupBuilder.cleanup()
     restorePageVisibility()
   })
 
   it('should not be collected when page starts not visible', () => {
     setPageVisibility('hidden')
-    startPerformanceCollection(lifeCycle, session)
+    const { stubBuilder } = setupBuilder.build()
 
     expect(stubBuilder.getEntryTypes()).not.toContain('paint')
   })
 
   it('should be collected when page starts visible', () => {
     setPageVisibility('visible')
-    startPerformanceCollection(lifeCycle, session)
+    const { stubBuilder } = setupBuilder.build()
 
     expect(stubBuilder.getEntryTypes()).toContain('paint')
   })
