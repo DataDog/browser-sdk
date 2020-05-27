@@ -42,9 +42,9 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
   - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
   - `silentMultipleInit`: prevent logging errors while having multiple Init
-  - `service`: defined the service name
-  - `env`: defined the environment of the service
-  - `version`: defined the version of the service
+  - `service`: name of the corresponding service
+  - `env`: environment of the service
+  - `version`: version of the service
 
   ```
   init(configuration: {
