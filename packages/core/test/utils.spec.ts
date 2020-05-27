@@ -1,6 +1,24 @@
-import { jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
+import { deepMerge, jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
 
 describe('utils', () => {
+  describe('deepMerge', () => {
+    it('should deeply add and replace keys', () => {
+      const target = { a: { b: 'toBeReplaced', c: 'target' } }
+      const source = { a: { b: 'replaced', d: 'source' } }
+      expect(deepMerge(target, source)).toEqual({ a: { b: 'replaced', c: 'target', d: 'source' } })
+    })
+
+    it('should not replace with undefined', () => {
+      expect(deepMerge({ a: 1 }, { a: undefined })).toEqual({ a: 1 })
+    })
+
+    it('should merge arrays', () => {
+      const target = [{ a: 'target' }, 'extraString']
+      const source = [{ b: 'source' }]
+      expect(deepMerge(target, source)).toEqual([{ a: 'target', b: 'source' }, 'extraString'])
+    })
+  })
+
   describe('throttle', () => {
     let spy: jasmine.Spy
     let throttled: () => void

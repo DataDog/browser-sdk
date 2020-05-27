@@ -11,13 +11,9 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "lodash.assign": "4.2.0",
-    "lodash.merge": "4.6.2",
     "tslib": "1.10.0"
   },
   "devDependencies": {
-    "@types/lodash.assign": "4.2.6",
-    "@types/lodash.merge": "4.6.6",
     "@types/sinon": "7.0.13",
     "sinon": "7.3.2"
   },

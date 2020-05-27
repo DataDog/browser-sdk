@@ -1,11 +1,7 @@
 Component,Origin,License,Copyright
-require,lodash.assign,MIT,Copyright jQuery Foundation and other contributors
-require,lodash.merge,MIT,Copyright OpenJS Foundation and other contributors
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
-dev,@types/lodash.assign,MIT,Copyright Microsoft Corporation
-dev,@types/lodash.merge,MIT,Copyright Microsoft Corporation
 dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
