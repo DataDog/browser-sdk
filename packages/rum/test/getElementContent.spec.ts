@@ -1,12 +1,28 @@
 import { getElementContent } from '../src/getElementContent'
 
-function element(s: TemplateStringsArray) {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(s[0], 'text/html')
-  return doc.body.children[0]
-}
-
 describe('getElementContent', () => {
+  const iframes: HTMLIFrameElement[] = []
+
+  function element(s: TemplateStringsArray) {
+    // Simply using a DOMParser does not fit here, because script tags created this way are
+    // considered as normal markup, so they are not ignored when getting the textual content of the
+    // target via innerText
+
+    const iframe = document.createElement('iframe')
+    iframes.push(iframe)
+    document.body.appendChild(iframe)
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(`<html><body>${s[0]}</body></html>`)
+    doc.close()
+    return doc.querySelector('[target]') || doc.body.children[0]
+  }
+
+  afterEach(() => {
+    iframes.forEach((iframe) => iframe.parentNode!.removeChild(iframe))
+    iframes.length = 0
+  })
+
   it('extracts the text content of an element', () => {
     expect(getElementContent(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
   })
@@ -28,8 +44,7 @@ describe('getElementContent', () => {
   })
 
   it('gets the parent element content if everything else fails', () => {
-    const root = element`<div>Foo <img /></div>`
-    expect(getElementContent(root.querySelector('img')!)).toBe('Foo')
+    expect(getElementContent(element`<div>Foo <img target /></div>`)).toBe('Foo')
   })
 
   it("doesn't get the value of a text input", () => {
@@ -50,5 +65,183 @@ describe('getElementContent', () => {
       // tslint:disable-next-line max-line-length
       'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
     )
+  })
+
+  it('normalize white spaces', () => {
+    expect(getElementContent(element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
+  })
+
+  it('ignores the inline script content', () => {
+    expect(getElementContent(element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
+  })
+
+  it('extracts text from SVG elements', () => {
+    expect(getElementContent(element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
+  })
+
+  it('extracts text from an associated label', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <label for="toto">label text</label>
+          <div>ignored</div>
+          <input id="toto" target />
+        </div>
+      `)
+    ).toBe('label text')
+  })
+
+  it('extracts text from a parent label', () => {
+    expect(
+      getElementContent(element`
+        <label>
+          foo
+          <div>
+            bar
+            <input target />
+          </div>
+        </label>
+      `)
+    ).toBe('foo bar')
+  })
+
+  it('extracts text from the first OPTION element when clicking on a SELECT', () => {
+    expect(
+      getElementContent(element`
+        <select>
+          <option>foo</option>
+          <option>bar</option>
+        </select>
+      `)
+    ).toBe('foo')
+  })
+
+  it('extracts text from a aria-labelledby associated element', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <label id="toto">label text</label>
+          <div>ignored</div>
+          <input aria-labelledby="toto" target />
+        </div>
+      `)
+    ).toBe('label text')
+  })
+
+  it('extracts text from multiple aria-labelledby associated elements', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <label id="toto1">label</label>
+          <div>ignored</div>
+          <input aria-labelledby="toto1 toto2" target />
+          <div>ignored</div>
+          <label id="toto2">text</label>
+        </div>
+      `)
+    ).toBe('label text')
+  })
+
+  it('extracts text from a BUTTON element', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <div>ignored</div>
+          <button target>foo</button>
+        </div>
+      `)
+    ).toBe('foo')
+  })
+
+  it('extracts text from a role=button element', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <div>ignored</div>
+          <div role="button" target>foo</div>
+        </div>
+      `)
+    ).toBe('foo')
+  })
+
+  it('limits the recursion to the 10th parent', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <div>ignored</div>
+          <i><i><i><i><i><i><i><i><i><i>
+            <i target></i>
+          </i></i></i></i></i></i></i></i></i></i>
+        </div>
+      `)
+    ).toBe('')
+  })
+
+  it('limits the recursion to the BODY element', () => {
+    expect(
+      getElementContent(element`
+        <div>ignored</div>
+        <i target></i>
+      `)
+    ).toBe('')
+  })
+
+  it('limits the recursion to a FORM element', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <div>ignored</div>
+          <form>
+            <i target></i>
+          </form>
+        </div>
+      `)
+    ).toBe('')
+  })
+
+  it('extracts the name from a parent FORM element', () => {
+    expect(
+      getElementContent(element`
+        <div>
+          <div>ignored</div>
+          <form title="foo">
+            <i target></i>
+          </form>
+        </div>
+      `)
+    ).toBe('foo')
+  })
+
+  it('extracts the whole content of a button', () => {
+    expect(
+      getElementContent(element`
+        <button>
+          foo
+          <i target>bar</i>
+        </button>
+      `)
+    ).toBe('foo bar')
+  })
+
+  it('ignores the content of contenteditable elements', () => {
+    expect(
+      getElementContent(element`
+        <div contenteditable>
+          <i target>ignored</i>
+          ignored
+        </div>
+      `)
+    ).toBe('')
+  })
+
+  it('extracts the content from attributes of contenteditable elements', () => {
+    expect(
+      getElementContent(element`
+        <div contenteditable>
+          <i aria-label="foo" target>ignored</i>
+          ignored
+        </div>
+      `)
+    ).toBe('foo')
   })
 })
