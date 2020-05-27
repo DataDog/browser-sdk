@@ -45,7 +45,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     if (!(event.target instanceof Element)) {
       return
     }
-    newUserAction(lifeCycle, UserActionType.CLICK, getElementContent(event.target))
+    const content = getElementContent(event.target)
+    if (!content) {
+      return
+    }
+    newUserAction(lifeCycle, UserActionType.CLICK, content)
   }
 
   // New views trigger the cancellation of the current pending User Action
