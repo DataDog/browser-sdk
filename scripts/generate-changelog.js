@@ -61,6 +61,7 @@ async function getEmojisLegend() {
 }
 
 async function getChangesList() {
+  await executeCommand('git fetch --tags')
   const lastTagHash = await executeCommand('git rev-list --tags --max-count=1')
   const lastTagName = await executeCommand(`git describe --tags ${lastTagHash}`)
 
