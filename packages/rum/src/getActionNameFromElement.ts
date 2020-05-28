@@ -1,4 +1,9 @@
 export function getActionNameFromElement(element: Element): string {
+  // Proceed to get the action name in two steps:
+  // * first, use strategies that are known to return good results. Those strategies will be used on
+  //   the element and a few parents, but it's likely that they won't succeed at all.
+  // * if no name is found this way, use strategies returning less accurate names as a fallback.
+  //   Those are much likely to succeed.
   return (
     getActionNameFromElementForGetters(element, priorityGetters) ||
     getActionNameFromElementForGetters(element, fallbackGetters) ||
@@ -39,7 +44,6 @@ const priorityGetters: NameGetter[] = [
       return getTextualContent(element)
     }
   },
-  // aria-label attribute value
   (element) => element.getAttribute('aria-label'),
   // associated element text designated by the aria-labelledby attribute
   (element) => {
@@ -53,13 +57,9 @@ const priorityGetters: NameGetter[] = [
         .join(' ')
     }
   },
-  // alt attribute value
   (element) => element.getAttribute('alt'),
-  // name attribute value
   (element) => element.getAttribute('name'),
-  // title attribute value
   (element) => element.getAttribute('title'),
-  // placeholder attribute value
   (element) => element.getAttribute('placeholder'),
   // SELECT first OPTION text
   (element) => {
@@ -70,17 +70,21 @@ const priorityGetters: NameGetter[] = [
 ]
 
 const fallbackGetters: NameGetter[] = [
-  // element text
   (element) => {
     return getTextualContent(element)
   },
 ]
 
+/**
+ * Iterates over the target element and its parent, using the getters list to get an action name.
+ * Each getters are applied on each element, stopping as soon as a non-empty value is returned.
+ */
+const MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForGetters(targetElement: Element, getters: NameGetter[]) {
   let element: Element | null = targetElement
   let recursionCounter = 0
   while (
-    recursionCounter <= 10 &&
+    recursionCounter <= MAX_PARENTS_TO_CONSIDER &&
     element &&
     element.nodeName !== 'BODY' &&
     element.nodeName !== 'HTML' &&
@@ -89,13 +93,14 @@ function getActionNameFromElementForGetters(targetElement: Element, getters: Nam
     for (const getter of getters) {
       const name = getter(element)
       if (typeof name === 'string') {
-        const trimedName = name.trim()
-        if (trimedName) {
-          return truncate(normalizeWhitespace(trimedName))
+        const trimmedName = name.trim()
+        if (trimmedName) {
+          return truncate(normalizeWhitespace(trimmedName))
         }
       }
     }
-    // Don't consider parents of FORM elements
+    // Consider a FORM as a contextual limit to get the action name.  This is experimental and may
+    // be reconsidered in the future.
     if (element.nodeName === 'FORM') {
       break
     }
@@ -113,6 +118,8 @@ function truncate(s: string) {
 }
 
 function getElementById(refElement: Element, id: string) {
+  // Use the element ownerDocument here, because tests are executed in an iframe, so
+  // document.getElementById won't work.
   // tslint:disable-next-line: no-null-keyword
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
@@ -127,10 +134,10 @@ function getTextualContent(element: Element | HTMLElement) {
     if (!supportsInnerTextScriptAndStyleRemoval()) {
       // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
       // be relatively fast and work in most cases.
-      const elementsToRemove: NodeListOf<HTMLElement> = element.querySelectorAll('script, style')
+      const elementsTextToRemove: NodeListOf<HTMLElement> = element.querySelectorAll('script, style')
       // tslint:disable-next-line: prefer-for-of
-      for (let i = 0; i < elementsToRemove.length; i += 1) {
-        const innerText = elementsToRemove[i].innerText
+      for (let i = 0; i < elementsTextToRemove.length; i += 1) {
+        const innerText = elementsTextToRemove[i].innerText
         if (innerText.trim().length > 0) {
           text = text.replace(innerText, '')
         }
