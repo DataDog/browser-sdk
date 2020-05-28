@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.0
+
+- 👷 Removing lodash dependencies ([#396](https://github.com/DataDog/browser-sdk/pull/396))
+
 ## v1.11.6
 
 - ✨[RUMF-473] collect view loading time in ns and integrate the load event timing in the loading time calculation ([#401](https://github.com/DataDog/browser-sdk/pull/401))
