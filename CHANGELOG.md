@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.1
+
+- 👷 [RUM] add application id as query parameter ([#405](https://github.com/DataDog/browser-sdk/pull/405))
+
 ## v1.12.0
 
 - 👷 Removing lodash dependencies ([#396](https://github.com/DataDog/browser-sdk/pull/396))
