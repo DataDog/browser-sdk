@@ -36,6 +36,7 @@ export const DEFAULT_CONFIGURATION = {
 export interface UserConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
+  applicationId?: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
   sampleRate?: number
@@ -70,6 +71,7 @@ interface TransportConfiguration {
   sdkEnv: Environment
   buildMode: BuildMode
   sdkVersion: string
+  applicationId?: string
   proxyHost?: string
 
   service?: string
@@ -79,6 +81,7 @@ interface TransportConfiguration {
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
+    applicationId: userConfiguration.applicationId,
     buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
     datacenter: userConfiguration.datacenter || buildEnv.datacenter,
@@ -149,6 +152,8 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
+  const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
+  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
 
-  return `https://${host}/v1/input/${conf.clientToken}?${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
+  return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
