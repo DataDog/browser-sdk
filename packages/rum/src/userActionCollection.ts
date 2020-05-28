@@ -1,5 +1,5 @@
 import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
-import { getElementContent } from './getElementContent'
+import { getActionNameFromElement } from './getActionNameFromElement'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
@@ -45,11 +45,11 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     if (!(event.target instanceof Element)) {
       return
     }
-    const content = getElementContent(event.target)
-    if (!content) {
+    const name = getActionNameFromElement(event.target)
+    if (!name) {
       return
     }
-    newUserAction(lifeCycle, UserActionType.CLICK, content)
+    newUserAction(lifeCycle, UserActionType.CLICK, name)
   }
 
   // New views trigger the cancellation of the current pending User Action

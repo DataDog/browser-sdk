@@ -1,14 +1,14 @@
-export function getElementContent(element: Element): string {
+export function getActionNameFromElement(element: Element): string {
   return (
-    getElementContentForGetters(element, priorityGetters) || getElementContentForGetters(element, fallbackGetters) || ''
+    getActionNameFromElementForGetters(element, priorityGetters) ||
+    getActionNameFromElementForGetters(element, fallbackGetters) ||
+    ''
   )
 }
 
-type ContentGetter = (
-  element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement
-) => string | undefined | null
+type NameGetter = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
 
-const priorityGetters: ContentGetter[] = [
+const priorityGetters: NameGetter[] = [
   // associated LABEL text
   (element) => {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
@@ -69,14 +69,14 @@ const priorityGetters: ContentGetter[] = [
   },
 ]
 
-const fallbackGetters: ContentGetter[] = [
+const fallbackGetters: NameGetter[] = [
   // element text
   (element) => {
     return getTextualContent(element)
   },
 ]
 
-function getElementContentForGetters(targetElement: Element, getters: ContentGetter[]) {
+function getActionNameFromElementForGetters(targetElement: Element, getters: NameGetter[]) {
   let element: Element | null = targetElement
   let recursionCounter = 0
   while (
@@ -87,11 +87,11 @@ function getElementContentForGetters(targetElement: Element, getters: ContentGet
     element.nodeName !== 'HEAD'
   ) {
     for (const getter of getters) {
-      const content = getter(element)
-      if (typeof content === 'string') {
-        const trimedContent = content.trim()
-        if (trimedContent) {
-          return truncate(normalizeWhitespace(trimedContent))
+      const name = getter(element)
+      if (typeof name === 'string') {
+        const trimedName = name.trim()
+        if (trimedName) {
+          return truncate(normalizeWhitespace(trimedName))
         }
       }
     }

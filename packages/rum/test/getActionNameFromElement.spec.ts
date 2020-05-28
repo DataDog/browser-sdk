@@ -1,6 +1,6 @@
-import { getElementContent } from '../src/getElementContent'
+import { getActionNameFromElement } from '../src/getActionNameFromElement'
 
-describe('getElementContent', () => {
+describe('getActionNameFromElement', () => {
   const iframes: HTMLIFrameElement[] = []
 
   function element(s: TemplateStringsArray) {
@@ -23,41 +23,41 @@ describe('getElementContent', () => {
     iframes.length = 0
   })
 
-  it('extracts the text content of an element', () => {
-    expect(getElementContent(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
+  it('extracts the textual content of an element', () => {
+    expect(getActionNameFromElement(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
   })
 
   it('extracts the text of an input button', () => {
-    expect(getElementContent(element`<input type="button" value="Click" />`)).toBe('Click')
+    expect(getActionNameFromElement(element`<input type="button" value="Click" />`)).toBe('Click')
   })
 
   it('extracts the alt text of an image', () => {
-    expect(getElementContent(element`<img title="foo" alt="bar" />`)).toBe('bar')
+    expect(getActionNameFromElement(element`<img title="foo" alt="bar" />`)).toBe('bar')
   })
 
   it('extracts the title text of an image', () => {
-    expect(getElementContent(element`<img title="foo" />`)).toBe('foo')
+    expect(getActionNameFromElement(element`<img title="foo" />`)).toBe('foo')
   })
 
   it('extracts the text of an aria-label attribute', () => {
-    expect(getElementContent(element`<span aria-label="Foo" />`)).toBe('Foo')
+    expect(getActionNameFromElement(element`<span aria-label="Foo" />`)).toBe('Foo')
   })
 
-  it('gets the parent element content if everything else fails', () => {
-    expect(getElementContent(element`<div>Foo <img target /></div>`)).toBe('Foo')
+  it('gets the parent element textual content if everything else fails', () => {
+    expect(getActionNameFromElement(element`<div>Foo <img target /></div>`)).toBe('Foo')
   })
 
   it("doesn't get the value of a text input", () => {
-    expect(getElementContent(element`<input type="text" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(element`<input type="text" value="foo" />`)).toBe('')
   })
 
   it("doesn't get the value of a password input", () => {
-    expect(getElementContent(element`<input type="password" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(element`<input type="password" value="foo" />`)).toBe('')
   })
 
-  it('limits the content length to a reasonable size', () => {
+  it('limits the name length to a reasonable size', () => {
     expect(
-      getElementContent(
+      getActionNameFromElement(
         // tslint:disable-next-line max-line-length
         element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
       )
@@ -68,20 +68,20 @@ describe('getElementContent', () => {
   })
 
   it('normalize white spaces', () => {
-    expect(getElementContent(element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
+    expect(getActionNameFromElement(element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
   })
 
-  it('ignores the inline script content', () => {
-    expect(getElementContent(element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
+  it('ignores the inline script textual content', () => {
+    expect(getActionNameFromElement(element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
   })
 
   it('extracts text from SVG elements', () => {
-    expect(getElementContent(element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
+    expect(getActionNameFromElement(element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
   })
 
   it('extracts text from an associated label', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <label for="toto">label text</label>
           <div>ignored</div>
@@ -93,7 +93,7 @@ describe('getElementContent', () => {
 
   it('extracts text from a parent label', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <label>
           foo
           <div>
@@ -107,7 +107,7 @@ describe('getElementContent', () => {
 
   it('extracts text from the first OPTION element when clicking on a SELECT', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <select>
           <option>foo</option>
           <option>bar</option>
@@ -118,7 +118,7 @@ describe('getElementContent', () => {
 
   it('extracts text from a aria-labelledby associated element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <label id="toto">label text</label>
           <div>ignored</div>
@@ -130,7 +130,7 @@ describe('getElementContent', () => {
 
   it('extracts text from multiple aria-labelledby associated elements', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <label id="toto1">label</label>
           <div>ignored</div>
@@ -144,7 +144,7 @@ describe('getElementContent', () => {
 
   it('extracts text from a BUTTON element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <div>ignored</div>
           <button target>foo</button>
@@ -155,7 +155,7 @@ describe('getElementContent', () => {
 
   it('extracts text from a role=button element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <div>ignored</div>
           <div role="button" target>foo</div>
@@ -166,7 +166,7 @@ describe('getElementContent', () => {
 
   it('limits the recursion to the 10th parent', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <div>ignored</div>
           <i><i><i><i><i><i><i><i><i><i>
@@ -179,7 +179,7 @@ describe('getElementContent', () => {
 
   it('limits the recursion to the BODY element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>ignored</div>
         <i target></i>
       `)
@@ -188,7 +188,7 @@ describe('getElementContent', () => {
 
   it('limits the recursion to a FORM element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <div>ignored</div>
           <form>
@@ -201,7 +201,7 @@ describe('getElementContent', () => {
 
   it('extracts the name from a parent FORM element', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div>
           <div>ignored</div>
           <form title="foo">
@@ -212,9 +212,9 @@ describe('getElementContent', () => {
     ).toBe('foo')
   })
 
-  it('extracts the whole content of a button', () => {
+  it('extracts the whole textual content of a button', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <button>
           foo
           <i target>bar</i>
@@ -223,9 +223,9 @@ describe('getElementContent', () => {
     ).toBe('foo bar')
   })
 
-  it('ignores the content of contenteditable elements', () => {
+  it('ignores the textual content of contenteditable elements', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div contenteditable>
           <i target>ignored</i>
           ignored
@@ -234,9 +234,9 @@ describe('getElementContent', () => {
     ).toBe('')
   })
 
-  it('extracts the content from attributes of contenteditable elements', () => {
+  it('extracts the name from attributes of contenteditable elements', () => {
     expect(
-      getElementContent(element`
+      getActionNameFromElement(element`
         <div contenteditable>
           <i aria-label="foo" target>ignored</i>
           ignored
