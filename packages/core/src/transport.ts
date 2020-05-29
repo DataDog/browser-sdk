@@ -1,3 +1,4 @@
+import { isIE } from '@datadog/browser-core'
 import { monitor } from './internalMonitoring'
 import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
@@ -177,6 +178,9 @@ export class Batch<T> {
   }
 
   private sizeInBytes(candidate: string) {
+    if (isIE()) {
+      return new TextEncoder().encode(candidate).length
+    }
     return new TextEncoder().encode(candidate).length
   }
 
