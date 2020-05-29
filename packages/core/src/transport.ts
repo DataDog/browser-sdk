@@ -179,7 +179,7 @@ export class Batch<T> {
 
   private sizeInBytes(candidate: string) {
     if (isIE()) {
-      return new TextEncoder().encode(candidate).length
+      return new Blob([candidate]).size
     }
     return new TextEncoder().encode(candidate).length
   }
