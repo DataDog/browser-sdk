@@ -32,11 +32,19 @@ function addBatchTime(url: string) {
   return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
 }
 
+export interface ProcessedMessageEntity<T> {
+  message: T
+  key?: string
+  processedMessage: string
+}
+
 export class Batch<T> {
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
   private bufferMessageCount = 0
+  private messagesBatch: Array<ProcessedMessageEntity<T>> = []
+  private concatenatedMessagesBatch: string = ''
 
   constructor(
     private request: HttpRequest,
@@ -70,32 +78,62 @@ export class Batch<T> {
     }
   }
 
-  private addOrUpdate(message: T, key?: string) {
-    const { processedMessage, messageBytesSize } = this.process(message)
-    if (messageBytesSize >= this.maxMessageSize) {
-      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
-      return
-    }
-    if (this.hasMessageFor(key)) {
-      this.remove(key)
-    }
-    if (this.willReachedBytesLimitWith(messageBytesSize)) {
-      this.flush()
-    }
-    this.push(processedMessage, messageBytesSize, key)
-    if (this.isFull()) {
-      this.flush()
-    }
-  }
-
-  private process(message: T) {
+  private debouncedAddOrUpdate(
+    message: T,
+    completionCallback: (
+      batch: Batch<T>,
+      processedMessages: Array<ProcessedMessageEntity<T>>,
+      messagesBytesSize: number
+    ) => void,
+    key?: string
+  ) {
     const contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
-    const messageBytesSize = this.sizeInBytes(processedMessage)
-    return { processedMessage, messageBytesSize }
+    this.messagesBatch.push({ message, key, processedMessage })
+    this.concatenatedMessagesBatch += processedMessage
+
+    setTimeout(() => {
+      if (this.messagesBatch.length) {
+        const processedMessages: Array<ProcessedMessageEntity<T>> = [...this.messagesBatch]
+        const messageBytesSize = this.sizeInBytes(this.concatenatedMessagesBatch)
+        completionCallback(this, this.messagesBatch, messageBytesSize)
+
+        this.messagesBatch = []
+        this.concatenatedMessagesBatch = ''
+      }
+    }, 1000)
   }
 
-  private push(processedMessage: string, messageBytesSize: number, key?: string) {
+  private addOrUpdate(message: T, key?: string) {
+    function handleResult(
+      batch: Batch<T>,
+      processedMessages: Array<ProcessedMessageEntity<T>>,
+      messagesBytesSize: number
+    ) {
+      processedMessages.forEach((processedMessageEntity: ProcessedMessageEntity<T>) => {
+        if (batch.hasMessageFor(processedMessageEntity.key)) {
+          batch.remove(processedMessageEntity.key)
+        }
+      })
+
+      if (batch.willReachedBytesLimitWith(messagesBytesSize)) {
+        batch.flush()
+      }
+
+      batch.addBytesSize(messagesBytesSize)
+
+      processedMessages.forEach((processedMessageEntity: ProcessedMessageEntity<T>) => {
+        batch.push(processedMessageEntity.processedMessage, processedMessageEntity.key)
+        if (batch.isFull()) {
+          batch.flush()
+        }
+      })
+    }
+
+    this.debouncedAddOrUpdate(message, handleResult)
+  }
+
+  private push(processedMessage: string, key?: string) {
     if (this.bufferMessageCount > 0) {
       // \n separator at serialization
       this.bufferBytesSize += 1
@@ -105,8 +143,11 @@ export class Batch<T> {
     } else {
       this.pushOnlyBuffer.push(processedMessage)
     }
-    this.bufferBytesSize += messageBytesSize
     this.bufferMessageCount += 1
+  }
+
+  private addBytesSize(messagesBytesSize: number) {
+    this.bufferBytesSize += messagesBytesSize
   }
 
   private remove(key: string) {
@@ -134,8 +175,7 @@ export class Batch<T> {
   }
 
   private sizeInBytes(candidate: string) {
-    // tslint:disable-next-line no-bitwise
-    return ~-encodeURI(candidate).split(/%..|./).length
+    return new TextEncoder().encode(candidate).length
   }
 
   private flushPeriodically() {
