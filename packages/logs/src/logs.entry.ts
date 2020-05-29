@@ -1,5 +1,6 @@
 import {
   areCookiesAuthorized,
+  assign,
   checkIsNotLocalFile,
   commonInit,
   Context,
@@ -11,7 +12,6 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import lodashAssign from 'lodash.assign'
 import { buildEnv } from './buildEnv'
 import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
 import { startLoggerSession } from './loggerSession'
@@ -94,7 +94,7 @@ datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
   const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
   const session = startLoggerSession(configuration, areCookiesAuthorized())
   const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
-  lodashAssign(datadogLogs, globalApi)
+  assign(datadogLogs, globalApi)
   isAlreadyInitialized = true
 })
 
