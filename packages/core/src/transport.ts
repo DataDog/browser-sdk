@@ -30,7 +30,7 @@ function addBatchTime(url: string) {
   return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
 }
 
-export interface ProcessedMessageEntity<T> {
+export interface ProcessedMessage<T> {
   message: T
   key?: string
   processedMessage: string
@@ -41,8 +41,8 @@ export class Batch<T> {
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
   private bufferMessageCount = 0
-  private messagesBatch: Array<ProcessedMessageEntity<T>> = []
-  private concatenatedMessagesBatch: string = ''
+  private processedMessageBatched: Array<ProcessedMessage<T>> = []
+  private concatenatedMessagesBatchStringified: string = ''
 
   constructor(
     private request: HttpRequest,
@@ -80,37 +80,40 @@ export class Batch<T> {
     message: T,
     completionCallback: (
       batch: Batch<T>,
-      processedMessages: Array<ProcessedMessageEntity<T>>,
+      processedMessages: Array<ProcessedMessage<T>>,
       messagesBytesSize: number
     ) => void,
     key?: string
   ) {
     const contextualizedMessage = deepMerge({}, this.contextProvider(), (message as unknown) as Context) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
-    this.messagesBatch.push({ message, key, processedMessage })
-    this.concatenatedMessagesBatch += processedMessage
+    this.processedMessageBatched.push({ message, key, processedMessage })
+    this.concatenatedMessagesBatchStringified += processedMessage
 
     setTimeout(() => {
-      if (this.messagesBatch.length) {
-        const processedMessages: Array<ProcessedMessageEntity<T>> = [...this.messagesBatch]
-        const messageBytesSize = this.sizeInBytes(this.concatenatedMessagesBatch)
-        completionCallback(this, this.messagesBatch, messageBytesSize)
+      if (this.processedMessageBatched.length) {
+        const processedMessages: Array<ProcessedMessage<T>> = [...this.processedMessageBatched]
+        const messageBytesSize = this.sizeInBytes(this.concatenatedMessagesBatchStringified)
+        completionCallback(this, processedMessages, messageBytesSize)
 
-        this.messagesBatch = []
-        this.concatenatedMessagesBatch = ''
+        this.processedMessageBatched = []
+        this.concatenatedMessagesBatchStringified = ''
       }
     }, 1000)
   }
 
   private addOrUpdate(message: T, key?: string) {
-    function handleResult(
-      batch: Batch<T>,
-      processedMessages: Array<ProcessedMessageEntity<T>>,
-      messagesBytesSize: number
-    ) {
-      processedMessages.forEach((processedMessageEntity: ProcessedMessageEntity<T>) => {
-        if (batch.hasMessageFor(processedMessageEntity.key)) {
-          batch.remove(processedMessageEntity.key)
+    function handleResult(batch: Batch<T>, processedMessages: Array<ProcessedMessage<T>>, messagesBytesSize: number) {
+      if (messagesBytesSize >= batch.maxMessageSize * processedMessages.length) {
+        console.warn(
+          `Discarded a message whose size was bigger than the maximum allowed size ${batch.maxMessageSize}KB.`
+        )
+        return
+      }
+
+      processedMessages.forEach((processedMessage: ProcessedMessage<T>) => {
+        if (batch.hasMessageFor(processedMessage.key)) {
+          batch.remove(processedMessage.key)
         }
       })
 
@@ -120,12 +123,13 @@ export class Batch<T> {
 
       batch.addBytesSize(messagesBytesSize)
 
-      processedMessages.forEach((processedMessageEntity: ProcessedMessageEntity<T>) => {
-        batch.push(processedMessageEntity.processedMessage, processedMessageEntity.key)
-        if (batch.isFull()) {
-          batch.flush()
-        }
+      processedMessages.forEach((processedMessage: ProcessedMessage<T>) => {
+        batch.push(processedMessage.processedMessage, processedMessage.key)
       })
+
+      if (batch.isFull()) {
+        batch.flush()
+      }
     }
 
     this.debouncedAddOrUpdate(message, handleResult)
