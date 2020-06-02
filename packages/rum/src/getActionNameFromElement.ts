@@ -7,8 +7,8 @@ export function getActionNameFromElement(element: Element): string {
   //   Those are much likely to succeed.
   return (
     getActionNameFromElementProgrammatically(element) ||
-    getActionNameFromElementForGetters(element, priorityGetters) ||
-    getActionNameFromElementForGetters(element, fallbackGetters) ||
+    getActionNameFromElementForStrategies(element, priorityStrategies) ||
+    getActionNameFromElementForStrategies(element, fallbackStrategies) ||
     ''
   )
 }
@@ -19,7 +19,7 @@ export function getActionNameFromElement(element: Element): string {
 const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
 function getActionNameFromElementProgrammatically(targetElement: Element) {
   let elementWithAttribute
-  // We don't use getActionNameFromElementForGetters here, because we want to consider all parents,
+  // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevent naming strategy.
   // If available, use element.closest() to match get the attribute from the element or any of its
   // parent.  Else fallback to a more traditional implementation.
@@ -43,9 +43,9 @@ function getActionNameFromElementProgrammatically(targetElement: Element) {
   return truncate(normalizeWhitespace(name.trim()))
 }
 
-type NameGetter = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
+type NameStrategy = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
 
-const priorityGetters: NameGetter[] = [
+const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
   (element) => {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
@@ -101,18 +101,18 @@ const priorityGetters: NameGetter[] = [
   },
 ]
 
-const fallbackGetters: NameGetter[] = [
+const fallbackStrategies: NameStrategy[] = [
   (element) => {
     return getTextualContent(element)
   },
 ]
 
 /**
- * Iterates over the target element and its parent, using the getters list to get an action name.
- * Each getters are applied on each element, stopping as soon as a non-empty value is returned.
+ * Iterates over the target element and its parent, using the strategies list to get an action name.
+ * Each strategies are applied on each element, stopping as soon as a non-empty value is returned.
  */
 const MAX_PARENTS_TO_CONSIDER = 10
-function getActionNameFromElementForGetters(targetElement: Element, getters: NameGetter[]) {
+function getActionNameFromElementForStrategies(targetElement: Element, strategies: NameStrategy[]) {
   let element: Element | null = targetElement
   let recursionCounter = 0
   while (
@@ -122,8 +122,8 @@ function getActionNameFromElementForGetters(targetElement: Element, getters: Nam
     element.nodeName !== 'HTML' &&
     element.nodeName !== 'HEAD'
   ) {
-    for (const getter of getters) {
-      const name = getter(element)
+    for (const strategy of strategies) {
+      const name = strategy(element)
       if (typeof name === 'string') {
         const trimmedName = name.trim()
         if (trimmedName) {
