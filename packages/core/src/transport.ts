@@ -133,7 +133,7 @@ export class Batch<T> {
 
   private maxSizeInBytes(candidate: string) {
     // the candidate byte size, once URI encoded can be maximized by 4 time its length
-    // Using this maximized value prevent any costly calculation while checking the byte size requirement
+    // Using this maximized value prevent any costly calculation while validating the byte size requirement
     return candidate.length * 4
   }
 
