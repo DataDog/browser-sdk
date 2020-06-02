@@ -89,7 +89,7 @@ export class Batch<T> {
   private process(message: T) {
     const contextualizedMessage = deepMerge({}, this.contextProvider(), (message as unknown) as Context) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
-    const messageBytesSize = this.sizeInBytes(processedMessage)
+    const messageBytesSize = this.maxSizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }
 
@@ -110,7 +110,7 @@ export class Batch<T> {
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesSize = this.sizeInBytes(removedMessage)
+    const messageBytesSize = this.maxSizeInBytes(removedMessage)
     this.bufferBytesSize -= messageBytesSize
     this.bufferMessageCount -= 1
     if (this.bufferMessageCount > 0) {
@@ -131,9 +131,10 @@ export class Batch<T> {
     return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
 
-  private sizeInBytes(candidate: string) {
-    // tslint:disable-next-line no-bitwise
-    return ~-encodeURI(candidate).split(/%..|./).length
+  private maxSizeInBytes(candidate: string) {
+    // the candidate byte size, once URI encoded can be maximized by 4 time its length
+    // Using this maximized value prevent any costly calculation while checking the byte size requirement
+    return candidate.length * 4
   }
 
   private flushPeriodically() {
