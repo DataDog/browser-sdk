@@ -77,7 +77,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
   startDOMMutationCollection(lifeCycle)
-  if (configuration.isEnabled('collect-user-actions')) {
+  if (configuration.trackInteractions) {
     startUserActionCollection(lifeCycle)
   }
 
