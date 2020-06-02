@@ -71,6 +71,18 @@ datadogRum.init({
   addUserAction (name: string, context: Context)
   ```
 
+## Declarative API
+
+### Click action naming
+
+The RUM library will use various strategies to get a name for click actions, but if you want more
+control, you can define a `data-dd-action-name` attribute on clickable elements (or any of their
+parents) that will be used to name the action. Example:
+
+```html
+<a class="btn btn-default" href="#" role="button" data-dd-action-name="Login button">Try it out!</a>
+```
+
 ## TypeScript support
 
 Types are compatible with TypeScript >= 3.0.
