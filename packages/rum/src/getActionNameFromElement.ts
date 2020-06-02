@@ -1,19 +1,51 @@
 export function getActionNameFromElement(element: Element): string {
   // Proceed to get the action name in two steps:
-  // * first, use strategies that are known to return good results. Those strategies will be used on
+  // * first, get the name programmatically, explicitly defined by the user.
+  // * then, use strategies that are known to return good results. Those strategies will be used on
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   return (
-    getActionNameFromElementForGetters(element, priorityGetters) ||
-    getActionNameFromElementForGetters(element, fallbackGetters) ||
+    getActionNameFromElementProgrammatically(element) ||
+    getActionNameFromElementForStrategies(element, priorityStrategies) ||
+    getActionNameFromElementForStrategies(element, fallbackStrategies) ||
     ''
   )
 }
 
-type NameGetter = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
+/**
+ * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
+ */
+const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
+function getActionNameFromElementProgrammatically(targetElement: Element) {
+  let elementWithAttribute
+  // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
+  // without limit. It is up to the user to declare a relevant naming strategy.
+  // If available, use element.closest() to match get the attribute from the element or any of its
+  // parent.  Else fallback to a more traditional implementation.
+  if (supportsElementClosest()) {
+    elementWithAttribute = targetElement.closest(`[${PROGRAMMATIC_ATTRIBUTE}]`)
+  } else {
+    let element: Element | null = targetElement
+    while (element) {
+      if (element.hasAttribute(PROGRAMMATIC_ATTRIBUTE)) {
+        elementWithAttribute = element
+        break
+      }
+      element = element.parentElement
+    }
+  }
 
-const priorityGetters: NameGetter[] = [
+  if (!elementWithAttribute) {
+    return
+  }
+  const name = elementWithAttribute.getAttribute(PROGRAMMATIC_ATTRIBUTE)!
+  return truncate(normalizeWhitespace(name.trim()))
+}
+
+type NameStrategy = (element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement) => string | undefined | null
+
+const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
   (element) => {
     // IE does not support element.labels, so we fallback to a CSS selector based on the element id
@@ -69,18 +101,18 @@ const priorityGetters: NameGetter[] = [
   },
 ]
 
-const fallbackGetters: NameGetter[] = [
+const fallbackStrategies: NameStrategy[] = [
   (element) => {
     return getTextualContent(element)
   },
 ]
 
 /**
- * Iterates over the target element and its parent, using the getters list to get an action name.
- * Each getters are applied on each element, stopping as soon as a non-empty value is returned.
+ * Iterates over the target element and its parent, using the strategies list to get an action name.
+ * Each strategies are applied on each element, stopping as soon as a non-empty value is returned.
  */
 const MAX_PARENTS_TO_CONSIDER = 10
-function getActionNameFromElementForGetters(targetElement: Element, getters: NameGetter[]) {
+function getActionNameFromElementForStrategies(targetElement: Element, strategies: NameStrategy[]) {
   let element: Element | null = targetElement
   let recursionCounter = 0
   while (
@@ -90,8 +122,8 @@ function getActionNameFromElementForGetters(targetElement: Element, getters: Nam
     element.nodeName !== 'HTML' &&
     element.nodeName !== 'HEAD'
   ) {
-    for (const getter of getters) {
-      const name = getter(element)
+    for (const strategy of strategies) {
+      const name = strategy(element)
       if (typeof name === 'string') {
         const trimmedName = name.trim()
         if (trimmedName) {
@@ -180,4 +212,18 @@ function supportsLabelProperty() {
     supportsLabelPropertyResult = 'labels' in HTMLInputElement.prototype
   }
   return supportsLabelPropertyResult
+}
+
+/**
+ * Returns true if the browser supports the element.closest method.  This should be the case
+ * everywhere except on Internet Explorer.
+ * Note: The result is computed lazily, because we don't want any DOM access when the SDK is
+ * evaluated.
+ */
+let supportsElementClosestResult: boolean | undefined
+function supportsElementClosest() {
+  if (supportsElementClosestResult === undefined) {
+    supportsElementClosestResult = 'closest' in HTMLElement.prototype
+  }
+  return supportsElementClosestResult
 }

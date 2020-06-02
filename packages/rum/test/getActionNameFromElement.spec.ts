@@ -244,4 +244,47 @@ describe('getActionNameFromElement', () => {
       `)
     ).toBe('foo')
   })
+
+  describe('programmatically declared action name', () => {
+    it('extracts the name from the data-dd-action-name attribute', () => {
+      expect(
+        getActionNameFromElement(element`
+          <div data-dd-action-name="foo">ignored</div>
+        `)
+      ).toBe('foo')
+    })
+
+    it('considers any parent', () => {
+      const target = element`
+        <form>
+          <i><i><i><i><i><i><i><i><i><i><i><i>
+            <span target>ignored</span>
+          </i></i></i></i></i></i></i></i></i></i></i></i>
+        </form>
+      `
+      // Set the attribute on the <HTML> element
+      target.ownerDocument!.documentElement.setAttribute('data-dd-action-name', 'foo')
+      expect(getActionNameFromElement(target)).toBe('foo')
+    })
+
+    it('normalizes the value', () => {
+      expect(
+        getActionNameFromElement(element`
+          <div data-dd-action-name="   foo  \t bar  ">ignored</div>
+        `)
+      ).toBe('foo bar')
+    })
+
+    it('fallback on an automatic strategy if the attribute is empty', () => {
+      expect(
+        getActionNameFromElement(element`
+          <div data-dd-action-name="ignored">
+            <div data-dd-action-name="">
+              <span target>foo</span>
+            </div>
+          </div>
+      `)
+      ).toBe('foo')
+    })
+  })
 })
