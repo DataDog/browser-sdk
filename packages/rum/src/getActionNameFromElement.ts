@@ -1,6 +1,6 @@
 export function getActionNameFromElement(element: Element): string {
   // Proceed to get the action name in two steps:
-  // * first, get the name programmatically, explicitely defined by the user.
+  // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
@@ -20,7 +20,7 @@ const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
 function getActionNameFromElementProgrammatically(targetElement: Element) {
   let elementWithAttribute
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
-  // without limit. It is up to the user to declare a relevent naming strategy.
+  // without limit. It is up to the user to declare a relevant naming strategy.
   // If available, use element.closest() to match get the attribute from the element or any of its
   // parent.  Else fallback to a more traditional implementation.
   if (supportsElementClosest()) {
