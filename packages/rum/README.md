@@ -40,6 +40,7 @@ datadogRum.init({
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
   - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
   - `silentMultipleInit`: prevent logging errors while having multiple Init
+  - `trackInteractions`: collect actions initiated by user interactions
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
@@ -52,6 +53,7 @@ datadogRum.init({
       resourceSampleRate?: number
       sampleRate?: number,
       silentMultipleInit?: boolean,
+      trackInteractions?: boolean,
       service?: string,
       env?: string,
       version?: string,
