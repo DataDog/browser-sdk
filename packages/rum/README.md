@@ -44,6 +44,7 @@ datadogRum.init({
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
+  - `tags`: comma separated tags to append to tags
 
   ```
   init(configuration: {
@@ -54,6 +55,7 @@ datadogRum.init({
       sampleRate?: number,
       silentMultipleInit?: boolean,
       trackInteractions?: boolean,
+      tags?: string,
       service?: string,
       env?: string,
       version?: string,
