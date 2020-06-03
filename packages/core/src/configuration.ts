@@ -8,6 +8,7 @@ export const DEFAULT_CONFIGURATION = {
   resourceSampleRate: 100,
   sampleRate: 100,
   silentMultipleInit: false,
+  trackInteractions: false,
 
   /**
    * arbitrary value, byte precision not needed
@@ -44,6 +45,7 @@ export interface UserConfiguration {
   datacenter?: Datacenter
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
+  trackInteractions?: boolean
   proxyHost?: string
 
   service?: string
@@ -124,6 +126,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('resourceSampleRate' in userConfiguration) {
     configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
+  }
+
+  if ('trackInteractions' in userConfiguration) {
+    configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
   if (transportConfiguration.buildMode === 'e2e-test') {
