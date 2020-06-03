@@ -35,7 +35,7 @@ export class Batch<T> {
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
   private bufferMessageCount = 0
-  private biggerThanOneByteRegex = /([^\u0000-\u007F])/
+  private biggerThanOneByteRegex = /[^\u0000-\u007F]/g
 
   constructor(
     private request: HttpRequest,

@@ -122,17 +122,20 @@ describe('batch', () => {
   })
 
   it('should consider separator size when computing the size', () => {
-    batch.add({ message: '30 b' }) // batch: 30 sep: 0
-    batch.add({ message: '30 b' }) // batch: 60 sep: 1
-    batch.add({ message: '39 bytes - xx' }) // batch: 99 sep: 2
+    batch.add({ message: '67 bytes - 🪐🪐🪐' }) // batch: 67 sep: 0
+    batch.add({ message: '30 b' }) // batch: 97 sep: 1
+    batch.add({ message: '39 bytes - xx' }) // batch: 39 sep: 2
 
-    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
+    expect(transport.send).toHaveBeenCalledWith(
+      '{"foo":"bar","message":"67 bytes - 🪐🪐🪐"}\n{"foo":"bar","message":"30 b"}',
+      98
+    )
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
-    const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    const message = '111 bytes - 🪐🪐xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).toHaveBeenCalledWith(`{"foo":"bar","message":"${message}"}`, 101)
+    expect(transport.send).toHaveBeenCalledWith(`{"foo":"bar","message":"${message}"}`, 111)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
