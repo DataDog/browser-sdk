@@ -45,6 +45,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
+  - `tags`: comma separated tags to append to tags
 
   ```
   init(configuration: {
@@ -53,6 +54,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
       isCollectingError?: boolean,
       sampleRate?: number,
       silentMultipleInit?: boolean,
+      tags?: string,
       service?: string,
       env?: string,
       version?: string,

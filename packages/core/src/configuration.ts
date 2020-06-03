@@ -48,6 +48,7 @@ export interface UserConfiguration {
   trackInteractions?: boolean
   proxyHost?: string
 
+  tags?: string
   service?: string
   env?: string
   version?: string
@@ -76,6 +77,7 @@ interface TransportConfiguration {
   applicationId?: string
   proxyHost?: string
 
+  tags?: string
   service?: string
   env?: string
   version?: string
@@ -91,6 +93,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     proxyHost: userConfiguration.proxyHost,
     sdkEnv: buildEnv.sdkEnv,
     sdkVersion: buildEnv.sdkVersion,
+    tags: userConfiguration.tags,
     service: userConfiguration.service,
     version: userConfiguration.version,
   }
@@ -154,7 +157,8 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
-    `${conf.version ? `,version:${conf.version}` : ''}`
+    `${conf.version ? `,version:${conf.version}` : ''}` +
+    `${conf.tags ? `,${conf.tags}` : ''}`
   const datadogHost = `${type}-http-intake.logs.${domain}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
