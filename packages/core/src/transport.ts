@@ -35,6 +35,7 @@ export class Batch<T> {
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
   private bufferMessageCount = 0
+  private biggerThanOneByteRegex = /([^\u0000-\u007F])/
 
   constructor(
     private request: HttpRequest,
@@ -89,7 +90,7 @@ export class Batch<T> {
   private process(message: T) {
     const contextualizedMessage = deepMerge({}, this.contextProvider(), (message as unknown) as Context) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
-    const messageBytesSize = this.maxSizeInBytes(processedMessage)
+    const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }
 
@@ -110,7 +111,7 @@ export class Batch<T> {
   private remove(key: string) {
     const removedMessage = this.upsertBuffer[key]
     delete this.upsertBuffer[key]
-    const messageBytesSize = this.maxSizeInBytes(removedMessage)
+    const messageBytesSize = this.sizeInBytes(removedMessage)
     this.bufferBytesSize -= messageBytesSize
     this.bufferMessageCount -= 1
     if (this.bufferMessageCount > 0) {
@@ -131,10 +132,13 @@ export class Batch<T> {
     return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
   }
 
-  private maxSizeInBytes(candidate: string) {
-    // the candidate byte size, once URI encoded can be maximized by 4 time its length
-    // Using this maximized value prevent any costly calculation while validating the byte size requirement
-    return candidate.length * 4
+  private sizeInBytes(candidate: string) {
+    // Using this approximate value prevent any costly calculation while validating the byte size requirement
+    if (!this.biggerThanOneByteRegex.test(candidate)) {
+      return candidate.length
+    }
+
+    return candidate.length + 4 * (candidate.match(this.biggerThanOneByteRegex) || '').length
   }
 
   private flushPeriodically() {

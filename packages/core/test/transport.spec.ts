@@ -5,7 +5,7 @@ import { noop } from '../src/utils'
 
 describe('request', () => {
   const ENDPOINT_URL = 'http://my.website'
-  const BATCH_BYTES_LIMIT = 400
+  const BATCH_BYTES_LIMIT = 100
   let server: sinon.SinonFakeServer
   let request: HttpRequest
 
@@ -56,7 +56,7 @@ describe('request', () => {
 
 describe('batch', () => {
   const MAX_SIZE = 3
-  const BATCH_BYTES_LIMIT = 400
+  const BATCH_BYTES_LIMIT = 100
   const MESSAGE_BYTES_LIMIT = 50 * 1024
   let CONTEXT: { foo: string }
   const FLUSH_TIMEOUT = 60 * 1000
@@ -115,27 +115,24 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' })
-    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 200)
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"50 bytes - xxxxxxxxxxxxx"}', 50)
 
     batch.flush()
-    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 240)
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
   it('should consider separator size when computing the size', () => {
-    batch.add({ message: '39 bytes - xx' }) // batch: 156 (39*4) sep: 0
-    batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxx' }) // batch: 396 (39*4 + 60*4) sep: 1
-    batch.add({ message: '39 bytes - xx' }) // batch: 156 (39*4) sep: 2
+    batch.add({ message: '30 b' }) // batch: 30 sep: 0
+    batch.add({ message: '30 b' }) // batch: 60 sep: 1
+    batch.add({ message: '39 bytes - xx' }) // batch: 99 sep: 2
 
-    expect(transport.send).toHaveBeenCalledWith(
-      '{"foo":"bar","message":"39 bytes - xx"}\n{"foo":"bar","message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxx"}',
-      397
-    )
+    expect(transport.send).toHaveBeenCalledWith('{"foo":"bar","message":"30 b"}\n{"foo":"bar","message":"30 b"}', 61)
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
-    expect(transport.send).toHaveBeenCalledWith(`{"foo":"bar","message":"${message}"}`, 404)
+    expect(transport.send).toHaveBeenCalledWith(`{"foo":"bar","message":"${message}"}`, 101)
   })
 
   it('should flush the batch and send the message when the message is too heavy', () => {
