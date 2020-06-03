@@ -1,5 +1,6 @@
+import { isIE } from '@datadog/browser-core'
 import { monitor } from './internalMonitoring'
-import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
+import { Context, deepMerge, DOM_EVENT, HAS_MULTI_BYTES_CHARACTERS, jsonStringify, noop, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -35,7 +36,6 @@ export class Batch<T> {
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
   private bufferMessageCount = 0
-  private biggerThanOneByteRegex = /[^\u0000-\u007F]/g
 
   constructor(
     private request: HttpRequest,
@@ -67,6 +67,19 @@ export class Batch<T> {
       this.bufferBytesSize = 0
       this.bufferMessageCount = 0
     }
+  }
+
+  sizeInBytes(candidate: string) {
+    // Accurate byte size computations can degrade performances when there is a lot of events to process
+    if (!HAS_MULTI_BYTES_CHARACTERS.test(candidate)) {
+      return candidate.length
+    }
+
+    if (isIE()) {
+      return new Blob([candidate]).size
+    }
+
+    return new TextEncoder().encode(candidate).length
   }
 
   private addOrUpdate(message: T, key?: string) {
@@ -130,15 +143,6 @@ export class Batch<T> {
 
   private isFull() {
     return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
-  }
-
-  private sizeInBytes(candidate: string) {
-    // Using this approximate value prevent any costly calculation while validating the byte size requirement
-    if (!this.biggerThanOneByteRegex.test(candidate)) {
-      return candidate.length
-    }
-
-    return candidate.length + 4 * (candidate.match(this.biggerThanOneByteRegex) || '').length
   }
 
   private flushPeriodically() {
