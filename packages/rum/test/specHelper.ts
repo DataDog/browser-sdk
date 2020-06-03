@@ -82,7 +82,8 @@ export function setup(): TestSetupBuilder {
     },
     withViewCollection(fakeLocation?: Partial<Location>) {
       buildTasks.push(() => {
-        startViewCollection((fakeLocation as Location) || location, lifeCycle, session)
+        const { stop } = startViewCollection((fakeLocation as Location) || location, lifeCycle, session)
+        cleanupTasks.push(stop)
       })
       return setupBuilder
     },

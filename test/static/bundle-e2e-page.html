@@ -29,7 +29,8 @@
           internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
           logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
           rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
-          enableExperimentalFeatures: ['collect-user-actions'],
+          enableExperimentalFeatures: [],
+          trackInteractions: true,
         })
     </script>
   </head>
