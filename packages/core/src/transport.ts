@@ -1,7 +1,5 @@
-import lodashMerge from 'lodash.merge'
-
 import { monitor } from './internalMonitoring'
-import { Context, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
+import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
 /**
  * Use POST request without content type to:
@@ -89,7 +87,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    const contextualizedMessage = lodashMerge({}, this.contextProvider(), message) as Context
+    const contextualizedMessage = deepMerge({}, this.contextProvider(), (message as unknown) as Context) as Context
     const processedMessage = jsonStringify(contextualizedMessage)!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }

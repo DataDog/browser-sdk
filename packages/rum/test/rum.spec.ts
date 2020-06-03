@@ -421,15 +421,11 @@ describe('rum session keep alive', () => {
   it('should send a view update regularly', () => {
     const { server, clock } = setupBuilder.build()
 
-    // initial view & loading time update
-    clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY + THROTTLE_VIEW_UPDATE_PERIOD)
-    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    // clear initial events
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
     server.requests = []
-    expect(requests.length).toEqual(2)
-    expect(requests[0].evt.category).toEqual('view')
-    expect(requests[1].evt.category).toEqual('view')
 
-    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
 
     // view update
     requests = getServerRequestBodies<ExpectedRequestBody>(server)
@@ -449,18 +445,14 @@ describe('rum session keep alive', () => {
   it('should not send view update when session is expired', () => {
     const { server, clock } = setupBuilder.build()
 
-    // initial view & loading time update
-    clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY + THROTTLE_VIEW_UPDATE_PERIOD)
-    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    // clear initial events
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
     server.requests = []
-    expect(requests.length).toEqual(2)
-    expect(requests[0].evt.category).toEqual('view')
-    expect(requests[1].evt.category).toEqual('view')
 
     // expire session
     isSessionTracked = false
 
-    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
 
     requests = getServerRequestBodies<ExpectedRequestBody>(server)
     expect(requests.length).toEqual(0)

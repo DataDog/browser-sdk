@@ -36,19 +36,18 @@ function eventsCollector<T>() {
 describe('startUserActionCollection', () => {
   const { events, pushEvent } = eventsCollector()
   let button: HTMLButtonElement
+  let emptyElement: HTMLHRElement
   let setupBuilder: TestSetupBuilder
 
-  function mockValidatedClickUserAction(lifeCycle: LifeCycle, clock: jasmine.Clock) {
-    button.addEventListener(DOM_EVENT.CLICK, () => {
+  function mockValidatedClickUserAction(lifeCycle: LifeCycle, clock: jasmine.Clock, target: HTMLElement) {
+    target.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
       lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     })
 
     clock.tick(SOME_ARBITRARY_DELAY)
-    button.click()
-
-    clock.tick(EXPIRE_DELAY)
+    target.click()
   }
 
   beforeEach(() => {
@@ -56,6 +55,9 @@ describe('startUserActionCollection', () => {
     button.type = 'button'
     button.appendChild(document.createTextNode('Click me'))
     document.body.appendChild(button)
+
+    emptyElement = document.createElement('hr')
+    document.body.appendChild(emptyElement)
 
     setupBuilder = setup()
       .withFakeClock()
@@ -65,20 +67,14 @@ describe('startUserActionCollection', () => {
 
   afterEach(() => {
     button.parentNode!.removeChild(button)
+    emptyElement.parentNode!.removeChild(emptyElement)
     setupBuilder.cleanup()
   })
 
   it('cancels pending user action on view loading', () => {
     const { lifeCycle, clock } = setupBuilder.build()
+    mockValidatedClickUserAction(lifeCycle, clock, button)
 
-    button.addEventListener(DOM_EVENT.CLICK, () => {
-      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      // Since we don't collect dom mutations for this test, manually dispatch one
-      lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    })
-
-    clock.tick(SOME_ARBITRARY_DELAY)
-    button.click()
     const fakeView = {}
     lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, fakeView as View)
     clock.tick(EXPIRE_DELAY)
@@ -88,7 +84,8 @@ describe('startUserActionCollection', () => {
 
   it('starts a user action when clicking on an element', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    mockValidatedClickUserAction(lifeCycle, clock)
+    mockValidatedClickUserAction(lifeCycle, clock, button)
+    clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
       {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
@@ -111,6 +108,14 @@ describe('startUserActionCollection', () => {
     button.click()
 
     clock.tick(EXPIRE_DELAY)
+    expect(events).toEqual([])
+  })
+
+  it('ignores a user actions if it fails to find a name', () => {
+    const { lifeCycle, clock } = setupBuilder.build()
+    mockValidatedClickUserAction(lifeCycle, clock, emptyElement)
+    clock.tick(EXPIRE_DELAY)
+
     expect(events).toEqual([])
   })
 })

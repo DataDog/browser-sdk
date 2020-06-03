@@ -14,6 +14,19 @@
 
 ---
 
+## v1.12.1
+
+- 👷 [RUM] add application id as query parameter ([#405](https://github.com/DataDog/browser-sdk/pull/405))
+
+## v1.12.0
+
+- 👷 Removing lodash dependencies ([#396](https://github.com/DataDog/browser-sdk/pull/396))
+
+## v1.11.6
+
+- ✨[RUMF-473] collect view loading time in ns and integrate the load event timing in the loading time calculation ([#401](https://github.com/DataDog/browser-sdk/pull/401))
+- ✨[RUMF-373] Add View load duration and load type ([#388](https://github.com/DataDog/browser-sdk/pull/388))
+
 ## v1.11.5
 
 - ✨[RUMF-465] collect client service, env and version ([#392](https://github.com/DataDog/browser-sdk/pull/392))

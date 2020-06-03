@@ -40,6 +40,9 @@ datadogRum.init({
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
   - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
   - `silentMultipleInit`: prevent logging errors while having multiple Init
+  - `service`: name of the corresponding service
+  - `env`: environment of the service
+  - `version`: version of the service
 
   ```
   init(configuration: {
@@ -48,7 +51,10 @@ datadogRum.init({
       datacenter?: string,
       resourceSampleRate?: number
       sampleRate?: number,
-      silentMultipleInit?: boolean
+      silentMultipleInit?: boolean,
+      service?: string,
+      env?: string,
+      version?: string,
   })
   ```
 
@@ -64,6 +70,26 @@ datadogRum.init({
   ```
   addUserAction (name: string, context: Context)
   ```
+
+## Declarative API
+
+### Click action naming
+
+The RUM library is using various strategies to get a name for click actions, but if you want more
+control, you can define a `data-dd-action-name` attribute on clickable elements (or any of their
+parents) that will be used to name the action. Examples:
+
+```html
+<a class="btn btn-default" href="#" role="button" data-dd-action-name="Login button">Try it out!</a>
+```
+
+```html
+<div class="alert alert-danger" role="alert" data-dd-action-name="Dismiss alert">
+  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  <span class="sr-only">Error:</span>
+  Enter a valid email address
+</div>
+```
 
 ## TypeScript support
 

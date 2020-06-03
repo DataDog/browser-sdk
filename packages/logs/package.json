@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "1.11.5",
+  "version": "1.12.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -13,14 +13,10 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "1.11.5",
-    "lodash.assign": "4.2.0",
-    "lodash.merge": "4.6.2",
+    "@datadog/browser-core": "1.12.1",
     "tslib": "1.10.0"
   },
   "devDependencies": {
-    "@types/lodash.assign": "4.2.6",
-    "@types/lodash.merge": "4.6.6",
     "@types/sinon": "7.0.13",
     "sinon": "7.3.2"
   },

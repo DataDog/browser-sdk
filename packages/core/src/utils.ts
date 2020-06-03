@@ -72,6 +72,52 @@ export function throttle(
   }
 }
 
+const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
+const isContext = (value: ContextValue): value is Context => !Array.isArray(value) && typeof value === 'object'
+
+/**
+ * Performs a deep merge of objects and arrays
+ * - arrays values are merged index by index
+ * - objects are merged by keys
+ * - values get replaced, unless undefined
+ *
+ * ⚠️ this method does not prevent infinite loops while merging circular references ⚠️
+ *
+ */
+export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
+  return toMerge.reduce((value1: ContextValue, value2: ContextValue): ContextValue => {
+    if (isContextArray(value1) && isContextArray(value2)) {
+      return [...Array(Math.max(value1.length, value2.length))].map((_, index) =>
+        deepMerge(value1[index], value2[index])
+      )
+    }
+    if (isContext(value1) && isContext(value2)) {
+      return Object.keys(value2).reduce(
+        (merged, key) => ({
+          ...merged,
+          [key]: deepMerge(value1[key], value2[key]),
+        }),
+        value1
+      )
+    }
+    return value2 === undefined ? value1 : value2
+  }, destination)
+}
+
+interface Assignable {
+  [key: string]: any
+}
+
+export function assign(target: Assignable, ...toAssign: Assignable[]) {
+  toAssign.forEach((source: Assignable) => {
+    for (const key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key]
+      }
+    }
+  })
+}
+
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883

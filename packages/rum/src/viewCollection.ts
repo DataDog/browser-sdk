@@ -1,4 +1,4 @@
-import { DOM_EVENT, generateUUID, monitor, msToNs, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, msToNs, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
@@ -124,11 +124,11 @@ function newView(
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
   const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadingTime(loadingTimeValue: number | undefined) {
+  function updateLoadingTime(loadingTimeValue: number) {
     loadingTime = loadingTimeValue
     scheduleViewUpdate()
   }
-  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, updateLoadingTime)
+  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
 
   // Initial view update
   updateView()
@@ -215,8 +215,57 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
-  const startTime: number = performance.now()
+function trackLoadingTime(
+  lifeCycle: LifeCycle,
+  loadingType: ViewLoadingType,
+  callback: (loadingTimeValue: number) => void
+) {
+  let expectedTiming = 1
+  const receivedTimings: number[] = []
+
+  let stopLoadEventLoadingTime = noop
+  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
+    expectedTiming += 1
+    ;({ stop: stopLoadEventLoadingTime } = trackLoadEventLoadingTime(lifeCycle, onTimingValue))
+  }
+
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, onTimingValue)
+
+  function onTimingValue(timingValue: number | undefined) {
+    expectedTiming -= 1
+    if (timingValue) {
+      receivedTimings.push(timingValue)
+    }
+
+    if (expectedTiming === 0 && receivedTimings.length) {
+      callback(Math.max(...receivedTimings))
+    }
+  }
+
+  return {
+    stop() {
+      stopActivityLoadingTimeTracking()
+      stopLoadEventLoadingTime()
+    },
+  }
+}
+
+function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
+  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
+    LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+    (entry) => {
+      if (entry.entryType === 'navigation') {
+        const navigationEntry = entry as PerformanceNavigationTiming
+        callback(navigationEntry.loadEventEnd)
+      }
+    }
+  )
+
+  return { stop: stopPerformanceTracking }
+}
+
+function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
+  const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
       callback(endTime - startTime)
