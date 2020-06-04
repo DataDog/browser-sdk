@@ -100,6 +100,14 @@ describe('batch', () => {
     expect(transport.send).not.toHaveBeenCalled()
   })
 
+  it('should calculate the byte size of message composed of 1 byte characters ', () => {
+    expect(batch.sizeInBytes('1234')).toEqual(4)
+  })
+
+  it('should calculate the byte size of message composed of multiple bytes characters ', () => {
+    expect(batch.sizeInBytes('🪐')).toEqual(4)
+  })
+
   it('should flush when max size is reached', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })

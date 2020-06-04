@@ -1,6 +1,9 @@
 import { monitor } from './internalMonitoring'
 import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
+// https://en.wikipedia.org/wiki/UTF-8
+const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
+
 /**
  * Use POST request without content type to:
  * - avoid CORS preflight requests
@@ -68,6 +71,19 @@ export class Batch<T> {
     }
   }
 
+  sizeInBytes(candidate: string) {
+    // Accurate byte size computations can degrade performances when there is a lot of events to process
+    if (!HAS_MULTI_BYTES_CHARACTERS.test(candidate)) {
+      return candidate.length
+    }
+
+    if (window.TextEncoder !== undefined) {
+      return new TextEncoder().encode(candidate).length
+    }
+
+    return new Blob([candidate]).size
+  }
+
   private addOrUpdate(message: T, key?: string) {
     const { processedMessage, messageBytesSize } = this.process(message)
     if (messageBytesSize >= this.maxMessageSize) {
@@ -129,11 +145,6 @@ export class Batch<T> {
 
   private isFull() {
     return this.bufferMessageCount === this.maxSize || this.bufferBytesSize >= this.bytesLimit
-  }
-
-  private sizeInBytes(candidate: string) {
-    // tslint:disable-next-line no-bitwise
-    return ~-encodeURI(candidate).split(/%..|./).length
   }
 
   private flushPeriodically() {
