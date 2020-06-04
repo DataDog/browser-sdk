@@ -5,9 +5,6 @@ export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
 export const ONE_KILO_BYTE = 1024
 
-// https://en.wikipedia.org/wiki/UTF-8
-export const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/g
-
 export enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',

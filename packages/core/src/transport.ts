@@ -1,5 +1,8 @@
 import { monitor } from './internalMonitoring'
-import { Context, deepMerge, DOM_EVENT, HAS_MULTI_BYTES_CHARACTERS, jsonStringify, noop, objectValues } from './utils'
+import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
+
+// https://en.wikipedia.org/wiki/UTF-8
+const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/g
 
 /**
  * Use POST request without content type to:
