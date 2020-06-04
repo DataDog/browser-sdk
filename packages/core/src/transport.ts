@@ -2,7 +2,7 @@ import { monitor } from './internalMonitoring'
 import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
-const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/g
+const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 
 /**
  * Use POST request without content type to:
@@ -81,12 +81,7 @@ export class Batch<T> {
       return new TextEncoder().encode(candidate).length
     }
 
-    if (window.Blob !== undefined) {
-      return new Blob([candidate]).size
-    }
-
-    // tslint:disable-next-line no-bitwise
-    return ~-encodeURI(candidate).split(/%..|./).length
+    return new Blob([candidate]).size
   }
 
   private addOrUpdate(message: T, key?: string) {
