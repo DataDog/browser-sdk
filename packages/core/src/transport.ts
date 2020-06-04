@@ -74,7 +74,7 @@ export class Batch<T> {
       return candidate.length
     }
 
-    if (window.TextDecoder !== undefined) {
+    if (window.TextEncoder !== undefined) {
       return new TextEncoder().encode(candidate).length
     }
 
