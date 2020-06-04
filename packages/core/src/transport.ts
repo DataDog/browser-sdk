@@ -1,4 +1,3 @@
-import { isIE } from '@datadog/browser-core'
 import { monitor } from './internalMonitoring'
 import { Context, deepMerge, DOM_EVENT, HAS_MULTI_BYTES_CHARACTERS, jsonStringify, noop, objectValues } from './utils'
 
@@ -75,11 +74,16 @@ export class Batch<T> {
       return candidate.length
     }
 
-    if (isIE()) {
+    if (window.TextDecoder !== undefined) {
+      return new TextEncoder().encode(candidate).length
+    }
+
+    if (window.Blob !== undefined) {
       return new Blob([candidate]).size
     }
 
-    return new TextEncoder().encode(candidate).length
+    // tslint:disable-next-line no-bitwise
+    return ~-encodeURI(candidate).split(/%..|./).length
   }
 
   private addOrUpdate(message: T, key?: string) {
