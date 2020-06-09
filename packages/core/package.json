@@ -5,6 +5,7 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "run-p build:cjs build:esm",
     "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
