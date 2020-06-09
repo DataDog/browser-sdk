@@ -27,6 +27,7 @@ const internalMonitoringStub: InternalMonitoring = {
 const configuration = {
   ...DEFAULT_CONFIGURATION,
   ...SPEC_ENDPOINTS,
+  isEnabled: () => true,
   maxBatchSize: 1,
 }
 
@@ -82,7 +83,12 @@ export function setup(): TestSetupBuilder {
     },
     withViewCollection(fakeLocation?: Partial<Location>) {
       buildTasks.push(() => {
-        const { stop } = startViewCollection((fakeLocation as Location) || location, lifeCycle, session)
+        const { stop } = startViewCollection(
+          (fakeLocation as Location) || location,
+          lifeCycle,
+          session,
+          configuration as Configuration
+        )
         cleanupTasks.push(stop)
       })
       return setupBuilder
