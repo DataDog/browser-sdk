@@ -1,13 +1,4 @@
-import {
-  Configuration,
-  DOM_EVENT,
-  generateUUID,
-  monitor,
-  msToNs,
-  noop,
-  ONE_MINUTE,
-  throttle,
-} from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, msToNs, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
@@ -46,12 +37,7 @@ export enum ViewLoadingType {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function startViewCollection(
-  location: Location,
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  configuration: Configuration
-) {
+export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
   let currentLocation = { ...location }
   const startOrigin = 0
   let currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.INITIAL_LOAD, startOrigin)
@@ -80,15 +66,12 @@ export function startViewCollection(
   })
 
   // Session keep alive
-  let keepAliveInterval: number
-  if (configuration.isEnabled('keep-alive')) {
-    keepAliveInterval = window.setInterval(
-      monitor(() => {
-        currentView.triggerUpdate()
-      }),
-      SESSION_KEEP_ALIVE_INTERVAL
-    )
-  }
+  const keepAliveInterval = window.setInterval(
+    monitor(() => {
+      currentView.triggerUpdate()
+    }),
+    SESSION_KEEP_ALIVE_INTERVAL
+  )
 
   return {
     stop() {
