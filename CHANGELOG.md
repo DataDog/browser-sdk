@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.4
+
+- ✨[RUMF-513] enable keep alive mechanism ([#421](https://github.com/DataDog/browser-sdk/pull/421))
+
 ## v1.12.3
 
 - 👷[build] improve core tree-shaking ([#417](https://github.com/DataDog/browser-sdk/pull/417))
