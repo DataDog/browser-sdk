@@ -26,8 +26,10 @@ import { startViewCollection } from './viewCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string,
-  collectErrorMessage?: boolean, //default behavior as if true
-  collectErrorStack?: boolean, //default behavior as if true
+  //default behavior as if true
+  collectErrorMessage?: boolean,
+  collectErrorStack?: boolean,
+  isCollectingError?: boolean
 }
 
 export interface InternalContext {
@@ -69,7 +71,7 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
   if (userConfiguration.publicApiKey) {
     userConfiguration.clientToken = userConfiguration.publicApiKey
   }
-  const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
+  const rumUserConfiguration = { isCollectingError: true, ...userConfiguration }
   const lifeCycle = new LifeCycle()
 
   const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
