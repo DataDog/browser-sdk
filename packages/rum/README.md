@@ -44,6 +44,9 @@ datadogRum.init({
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
+  - `isCollectingError`: if RUM should collect errors. Default is `true`
+  - `collectErrorMessage`: when collecting errors, if RUM should collect error message. Default is `true`. Depends on `isCollectingError`.
+  - `collectErrorStack`: when collecting errors, if RUM should collect error stack trace. Default is `true`. Depends on `isCollectingError`.
 
   ```
   init(configuration: {
@@ -57,6 +60,9 @@ datadogRum.init({
       service?: string,
       env?: string,
       version?: string,
+      isCollectingError?: boolean,
+      collectErrorMessage?: boolean,
+      collectErrorStack?: boolean
   })
   ```
 
