@@ -1,4 +1,5 @@
 import {
+  addMonitoringMessage,
   Batch,
   Configuration,
   Context,
@@ -6,6 +7,7 @@ import {
   deepMerge,
   ErrorContext,
   ErrorMessage,
+  getCookie,
   getTimestamp,
   HttpContext,
   HttpRequest,
@@ -17,6 +19,7 @@ import {
   RequestCompleteEvent,
   RequestType,
   ResourceKind,
+  SESSION_COOKIE_NAME,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 
@@ -240,14 +243,40 @@ function startRumBatch(
   return {
     addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked()) {
-        batch.add({ ...context, ...withSnakeCaseKeys((event as unknown) as Context) })
+        const message = { ...context, ...withSnakeCaseKeys((event as unknown) as Context) }
+        logInvalidSessionId(message)
+        batch.add(message)
       }
     },
     upsertRumEvent: (event: RumEvent, key: string) => {
       if (session.isTracked()) {
-        batch.upsert(withSnakeCaseKeys((event as unknown) as Context), key)
+        const context = withSnakeCaseKeys((event as unknown) as Context)
+        logInvalidSessionId(context)
+        batch.upsert(context, key)
       }
     },
+  }
+}
+
+function logInvalidSessionId(context: Context) {
+  if (viewContext.sessionId === undefined) {
+    const cookieString = getCookie(SESSION_COOKIE_NAME) || ''
+    const cookie: Context = {}
+    cookieString.split('&').forEach((entry) => {
+      const [key, value] = entry.split('=')
+      cookie[key] = value
+    })
+    addMonitoringMessage('undefined sessionId', {
+      debug: {
+        _dd_s: cookie,
+        event: context,
+        viewContext: {
+          href: viewContext.location.href,
+          id: viewContext.id,
+          sessionId: viewContext.sessionId,
+        },
+      },
+    })
   }
 }
 

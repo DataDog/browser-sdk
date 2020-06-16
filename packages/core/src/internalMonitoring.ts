@@ -93,10 +93,11 @@ export function monitor<T extends Function>(fn: T): T {
   } as unknown) as T // consider output type has input type
 }
 
-export function addMonitoringMessage(message: string) {
+export function addMonitoringMessage(message: string, context?: utils.Context) {
   logMessageIfDebug(message)
   addToMonitoringBatch({
     message,
+    ...context,
     status: StatusType.info,
   })
 }
