@@ -10,9 +10,8 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { handleResourceEntry, RumEvent, RumResourceEvent } from '../src/rum'
-import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
@@ -269,7 +268,7 @@ describe('rum session', () => {
   it('when tracked without resources should not track resources', () => {
     const { server, stubBuilder, lifeCycle } = setupBuilder
       .withSession({
-        getId: () => undefined,
+        getId: () => '1234',
         isTracked: () => true,
         isTrackedWithResource: () => false,
       })
@@ -313,7 +312,7 @@ describe('rum session', () => {
     let isTracked = true
     const { server, stubBuilder } = setupBuilder
       .withSession({
-        getId: () => undefined,
+        getId: () => '1234',
         isTracked: () => isTracked,
         isTrackedWithResource: () => isTracked,
       })
@@ -340,7 +339,7 @@ describe('rum session', () => {
     let isTrackedWithResource = true
     const { server, lifeCycle } = setupBuilder
       .withSession({
-        getId: () => undefined,
+        getId: () => '1234',
         isTracked: () => true,
         isTrackedWithResource: () => isTrackedWithResource,
       })
@@ -390,6 +389,30 @@ describe('rum session', () => {
     expect(subsequentRequests[0].session_id).toEqual('43')
     expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
   })
+
+  it('when switching from not tracked to tracked, it should not send events without sessionId', () => {
+    let sessionId = undefined as string | undefined
+    let isTracked = false
+    const { server, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => isTracked,
+        isTrackedWithResource: () => false,
+      })
+      .withViewCollection()
+      .build()
+
+    server.requests = []
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    expect(getServerRequestBodies<ExpectedRequestBody>(server).length).toEqual(0)
+
+    // it can happen without a renew session if the session is renewed on another tab
+    isTracked = true
+    sessionId = '1234'
+
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    expect(getServerRequestBodies<ExpectedRequestBody>(server).length).toEqual(0)
+  })
 })
 
 describe('rum session keep alive', () => {
@@ -406,7 +429,7 @@ describe('rum session keep alive', () => {
       .withFakeServer()
       .withFakeClock()
       .withSession({
-        getId: () => undefined,
+        getId: () => '1234',
         isTracked: () => isSessionTracked,
         isTrackedWithResource: () => true,
       })
@@ -464,11 +487,6 @@ describe('rum global context', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    const session = {
-      getId: () => undefined,
-      isTracked: () => true,
-      isTrackedWithResource: () => true,
-    }
     setupBuilder = setup()
       .withFakeServer()
       .withRum()
