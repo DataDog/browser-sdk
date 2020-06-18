@@ -56,7 +56,7 @@ export interface TestIO {
 
 export function setup(): TestSetupBuilder {
   let session = {
-    getId: () => undefined as string | undefined,
+    getId: () => '1234' as string | undefined,
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }
