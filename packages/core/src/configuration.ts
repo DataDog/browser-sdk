@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, Environment } from './init'
+import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -88,7 +88,7 @@ interface SlaveConfiguration {
 interface TransportConfiguration {
   clientToken: string
   datacenter: Datacenter
-  sdkEnv: Environment
+  sdkEnv: SdkEnv
   buildMode: BuildMode
   sdkVersion: string
   applicationId?: string
@@ -150,7 +150,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  if (transportConfiguration.buildMode === 'e2e-test') {
+  if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
@@ -162,13 +162,13 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     }
   }
 
-  if (transportConfiguration.buildMode === 'staging') {
+  if (transportConfiguration.buildMode === BuildMode.STAGING) {
     if (userConfiguration.slave !== undefined) {
       const slaveTransportConfiguration = {
         ...transportConfiguration,
         applicationId: userConfiguration.slave.applicationId,
         clientToken: userConfiguration.slave.clientToken,
-        sdkEnv: 'production' as Environment,
+        sdkEnv: SdkEnv.PRODUCTION,
       }
       configuration.slave = {
         applicationId: userConfiguration.slave.applicationId,
@@ -187,8 +187,8 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
-  const tld = conf.datacenter === 'us' ? 'com' : 'eu'
-  const domain = conf.sdkEnv === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
+  const tld = conf.datacenter === Datacenter.US ? 'com' : 'eu'
+  const domain = conf.sdkEnv === SdkEnv.PRODUCTION ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
