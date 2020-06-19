@@ -52,10 +52,18 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
-  // Below is only taken into account for e2e-test build mode.
+  // only on staging build mode
+  slave?: SlaveUserConfiguration
+
+  // only on e2e-test build mode
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
+}
+
+interface SlaveUserConfiguration {
+  applicationId?: string
+  clientToken: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
@@ -65,6 +73,16 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
 
   isEnabled: (feature: string) => boolean
+
+  // only on staging build mode
+  slave?: SlaveConfiguration
+}
+
+interface SlaveConfiguration {
+  applicationId?: string
+  logsEndpoint: string
+  rumEndpoint: string
+  internalMonitoringEndpoint: string
 }
 
 interface TransportConfiguration {
@@ -141,6 +159,27 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     }
     if (userConfiguration.rumEndpoint !== undefined) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
+    }
+  }
+
+  if (transportConfiguration.buildMode === 'staging') {
+    if (userConfiguration.slave !== undefined) {
+      const slaveTransportConfiguration = {
+        ...transportConfiguration,
+        applicationId: userConfiguration.slave.applicationId,
+        clientToken: userConfiguration.slave.clientToken,
+        sdkEnv: 'production' as Environment,
+      }
+      configuration.slave = {
+        applicationId: userConfiguration.slave.applicationId,
+        internalMonitoringEndpoint: getEndpoint(
+          'browser',
+          slaveTransportConfiguration,
+          'browser-agent-internal-monitoring'
+        ),
+        logsEndpoint: getEndpoint('browser', slaveTransportConfiguration),
+        rumEndpoint: getEndpoint('rum', slaveTransportConfiguration),
+      }
     }
   }
 

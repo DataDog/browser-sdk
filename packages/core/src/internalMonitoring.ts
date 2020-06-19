@@ -34,8 +34,35 @@ let externalContextProvider: () => utils.Context
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   if (configuration.internalMonitoringEndpoint) {
-    const batch = new Batch<MonitoringMessage>(
-      new HttpRequest(configuration.internalMonitoringEndpoint, configuration.batchBytesLimit),
+    const batch = startMonitoringBatch(configuration)
+
+    utils.assign(monitoringConfiguration, {
+      batch,
+      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
+      sentMessageCount: 0,
+    })
+  }
+  return {
+    setExternalContextProvider: (provider: () => utils.Context) => {
+      externalContextProvider = provider
+    },
+  }
+}
+
+function startMonitoringBatch(configuration: Configuration) {
+  const masterBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
+  let slaveBatch: Batch<MonitoringMessage>
+  if (configuration.slave !== undefined) {
+    slaveBatch = createMonitoringBatch(configuration.slave.internalMonitoringEndpoint)
+  } else {
+    slaveBatch = ({
+      add: utils.noop,
+    } as unknown) as Batch<MonitoringMessage>
+  }
+
+  function createMonitoringBatch(endpointUrl: string) {
+    return new Batch<MonitoringMessage>(
+      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
@@ -52,16 +79,12 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
           externalContextProvider !== undefined ? externalContextProvider() : {}
         ) as utils.Context
     )
-
-    utils.assign(monitoringConfiguration, {
-      batch,
-      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-      sentMessageCount: 0,
-    })
   }
+
   return {
-    setExternalContextProvider: (provider: () => utils.Context) => {
-      externalContextProvider = provider
+    add(message: MonitoringMessage) {
+      masterBatch.add(message)
+      slaveBatch.add(message)
     },
   }
 }
