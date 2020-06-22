@@ -13,7 +13,6 @@ import {
   InternalMonitoring,
   monitor,
   msToNs,
-  noop,
   Omit,
   RequestCompleteEvent,
   RequestType,
@@ -229,19 +228,14 @@ function startRumBatch(
   globalContextProvider: () => Context,
   beforeUnloadCallback: () => void
 ) {
-  const masterBatch = createRumBatch(configuration.rumEndpoint)
+  const primaryBatch = createRumBatch(configuration.rumEndpoint)
 
-  let slaveBatch: Batch<Context>
-  const slave = configuration.slave
-  if (slave !== undefined) {
-    slaveBatch = createRumBatch(slave.rumEndpoint, () => ({
-      application_id: slave.applicationId,
+  let replicaBatch: Batch<Context> | undefined
+  const replica = configuration.replica
+  if (replica !== undefined) {
+    replicaBatch = createRumBatch(replica.rumEndpoint, () => ({
+      application_id: replica.applicationId,
     }))
-  } else {
-    slaveBatch = ({
-      add: noop,
-      upsert: noop,
-    } as unknown) as Batch<Context>
   }
 
   function createRumBatch(endpointUrl: string, extraContextProvider?: () => Context) {
@@ -269,15 +263,19 @@ function startRumBatch(
     addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked() && viewContext.sessionId) {
         const message = { ...context, ...withSnakeCaseKeys((event as unknown) as Context) }
-        masterBatch.add(message)
-        slaveBatch.add(message)
+        primaryBatch.add(message)
+        if (replicaBatch) {
+          replicaBatch.add(message)
+        }
       }
     },
     upsertRumEvent: (event: RumEvent, key: string) => {
       if (session.isTracked() && viewContext.sessionId) {
         const message = withSnakeCaseKeys((event as unknown) as Context)
-        masterBatch.upsert(message, key)
-        slaveBatch.upsert(message, key)
+        primaryBatch.upsert(message, key)
+        if (replicaBatch) {
+          replicaBatch.upsert(message, key)
+        }
       }
     },
   }

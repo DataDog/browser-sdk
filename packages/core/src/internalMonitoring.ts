@@ -50,14 +50,10 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 }
 
 function startMonitoringBatch(configuration: Configuration) {
-  const masterBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
-  let slaveBatch: Batch<MonitoringMessage>
-  if (configuration.slave !== undefined) {
-    slaveBatch = createMonitoringBatch(configuration.slave.internalMonitoringEndpoint)
-  } else {
-    slaveBatch = ({
-      add: utils.noop,
-    } as unknown) as Batch<MonitoringMessage>
+  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
+  let replicaBatch: Batch<MonitoringMessage> | undefined
+  if (configuration.replica !== undefined) {
+    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpoint)
   }
 
   function createMonitoringBatch(endpointUrl: string) {
@@ -83,8 +79,10 @@ function startMonitoringBatch(configuration: Configuration) {
 
   return {
     add(message: MonitoringMessage) {
-      masterBatch.add(message)
-      slaveBatch.add(message)
+      primaryBatch.add(message)
+      if (replicaBatch) {
+        replicaBatch.add(message)
+      }
     },
   }
 }

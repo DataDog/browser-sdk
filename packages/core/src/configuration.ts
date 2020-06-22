@@ -53,7 +53,7 @@ export interface UserConfiguration {
   version?: string
 
   // only on staging build mode
-  slave?: SlaveUserConfiguration
+  replica?: ReplicaUserConfiguration
 
   // only on e2e-test build mode
   internalMonitoringEndpoint?: string
@@ -61,7 +61,7 @@ export interface UserConfiguration {
   rumEndpoint?: string
 }
 
-interface SlaveUserConfiguration {
+interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
 }
@@ -75,10 +75,10 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   isEnabled: (feature: string) => boolean
 
   // only on staging build mode
-  slave?: SlaveConfiguration
+  replica?: ReplicaConfiguration
 }
 
-interface SlaveConfiguration {
+interface ReplicaConfiguration {
   applicationId?: string
   logsEndpoint: string
   rumEndpoint: string
@@ -163,22 +163,22 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {
-    if (userConfiguration.slave !== undefined) {
-      const slaveTransportConfiguration = {
+    if (userConfiguration.replica !== undefined) {
+      const replicaTransportConfiguration = {
         ...transportConfiguration,
-        applicationId: userConfiguration.slave.applicationId,
-        clientToken: userConfiguration.slave.clientToken,
+        applicationId: userConfiguration.replica.applicationId,
+        clientToken: userConfiguration.replica.clientToken,
         sdkEnv: SdkEnv.PRODUCTION,
       }
-      configuration.slave = {
-        applicationId: userConfiguration.slave.applicationId,
+      configuration.replica = {
+        applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
           'browser',
-          slaveTransportConfiguration,
+          replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint('browser', slaveTransportConfiguration),
-        rumEndpoint: getEndpoint('rum', slaveTransportConfiguration),
+        logsEndpoint: getEndpoint('browser', replicaTransportConfiguration),
+        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
       }
     }
   }

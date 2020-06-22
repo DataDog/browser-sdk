@@ -91,15 +91,11 @@ export function startLogger(
 }
 
 function startLoggerBatch(configuration: Configuration, session: LoggerSession, globalContextProvider: () => Context) {
-  const masterBatch = createLoggerBatch(configuration.logsEndpoint)
+  const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
 
-  let slaveBatch: Batch<LogsMessage>
-  if (configuration.slave !== undefined) {
-    slaveBatch = createLoggerBatch(configuration.slave.logsEndpoint)
-  } else {
-    slaveBatch = ({
-      add: noop,
-    } as unknown) as Batch<LogsMessage>
+  let replicaBatch: Batch<LogsMessage> | undefined
+  if (configuration.replica !== undefined) {
+    replicaBatch = createLoggerBatch(configuration.replica.logsEndpoint)
   }
 
   function createLoggerBatch(endpointUrl: string) {
@@ -126,8 +122,10 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
   }
   return {
     add(message: LogsMessage) {
-      masterBatch.add(message)
-      slaveBatch.add(message)
+      primaryBatch.add(message)
+      if (replicaBatch) {
+        replicaBatch.add(message)
+      }
     },
   }
 }
