@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, Environment } from './init'
+import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -52,10 +52,18 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
-  // Below is only taken into account for e2e-test build mode.
+  // only on staging build mode
+  replica?: ReplicaUserConfiguration
+
+  // only on e2e-test build mode
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
+}
+
+interface ReplicaUserConfiguration {
+  applicationId?: string
+  clientToken: string
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
@@ -65,12 +73,22 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
 
   isEnabled: (feature: string) => boolean
+
+  // only on staging build mode
+  replica?: ReplicaConfiguration
+}
+
+interface ReplicaConfiguration {
+  applicationId?: string
+  logsEndpoint: string
+  rumEndpoint: string
+  internalMonitoringEndpoint: string
 }
 
 interface TransportConfiguration {
   clientToken: string
   datacenter: Datacenter
-  sdkEnv: Environment
+  sdkEnv: SdkEnv
   buildMode: BuildMode
   sdkVersion: string
   applicationId?: string
@@ -132,7 +150,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  if (transportConfiguration.buildMode === 'e2e-test') {
+  if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
       configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
     }
@@ -144,12 +162,33 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     }
   }
 
+  if (transportConfiguration.buildMode === BuildMode.STAGING) {
+    if (userConfiguration.replica !== undefined) {
+      const replicaTransportConfiguration = {
+        ...transportConfiguration,
+        applicationId: userConfiguration.replica.applicationId,
+        clientToken: userConfiguration.replica.clientToken,
+        sdkEnv: SdkEnv.PRODUCTION,
+      }
+      configuration.replica = {
+        applicationId: userConfiguration.replica.applicationId,
+        internalMonitoringEndpoint: getEndpoint(
+          'browser',
+          replicaTransportConfiguration,
+          'browser-agent-internal-monitoring'
+        ),
+        logsEndpoint: getEndpoint('browser', replicaTransportConfiguration),
+        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
+      }
+    }
+  }
+
   return configuration
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
-  const tld = conf.datacenter === 'us' ? 'com' : 'eu'
-  const domain = conf.sdkEnv === 'production' ? `datadoghq.${tld}` : `datad0g.${tld}`
+  const tld = conf.datacenter === Datacenter.US ? 'com' : 'eu'
+  const domain = conf.sdkEnv === SdkEnv.PRODUCTION ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +

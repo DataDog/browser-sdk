@@ -228,24 +228,54 @@ function startRumBatch(
   globalContextProvider: () => Context,
   beforeUnloadCallback: () => void
 ) {
-  const batch = new Batch<Context>(
-    new HttpRequest(configuration.rumEndpoint, configuration.batchBytesLimit, true),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () => deepMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider()) as Context,
-    beforeUnloadCallback
-  )
+  const primaryBatch = createRumBatch(configuration.rumEndpoint)
+
+  let replicaBatch: Batch<Context> | undefined
+  const replica = configuration.replica
+  if (replica !== undefined) {
+    replicaBatch = createRumBatch(replica.rumEndpoint, () => ({
+      application_id: replica.applicationId,
+    }))
+  }
+
+  function createRumBatch(endpointUrl: string, extraContextProvider?: () => Context) {
+    return new Batch<Context>(
+      new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
+      configuration.maxBatchSize,
+      configuration.batchBytesLimit,
+      configuration.maxMessageSize,
+      configuration.flushTimeout,
+      () => {
+        const context = deepMerge(withSnakeCaseKeys(rumContextProvider()), globalContextProvider()) as Context
+        if (!extraContextProvider) {
+          return context
+        }
+        return {
+          ...context,
+          ...extraContextProvider(),
+        }
+      },
+      beforeUnloadCallback
+    )
+  }
+
   return {
     addRumEvent: (event: RumEvent, context?: Context) => {
       if (session.isTracked() && viewContext.sessionId) {
-        batch.add({ ...context, ...withSnakeCaseKeys((event as unknown) as Context) })
+        const message = { ...context, ...withSnakeCaseKeys((event as unknown) as Context) }
+        primaryBatch.add(message)
+        if (replicaBatch) {
+          replicaBatch.add(message)
+        }
       }
     },
     upsertRumEvent: (event: RumEvent, key: string) => {
       if (session.isTracked() && viewContext.sessionId) {
-        batch.upsert(withSnakeCaseKeys((event as unknown) as Context), key)
+        const message = withSnakeCaseKeys((event as unknown) as Context)
+        primaryBatch.upsert(message, key)
+        if (replicaBatch) {
+          replicaBatch.upsert(message, key)
+        }
       }
     },
   }
