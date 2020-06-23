@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.5
+
+- 🐛[RUMF-559] prevent event without sessionId ([#425](https://github.com/DataDog/browser-sdk/pull/425))
+
 ## v1.12.4
 
 - ✨[RUMF-513] enable keep alive mechanism ([#421](https://github.com/DataDog/browser-sdk/pull/421))

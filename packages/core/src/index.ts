@@ -2,8 +2,9 @@ export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration } from './confi
 export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
 export {
   BuildEnv,
+  BuildMode,
   Datacenter,
-  Environment,
+  SdkEnv,
   makeStub,
   makeGlobal,
   commonInit,

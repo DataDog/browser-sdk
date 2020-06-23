@@ -65,26 +65,7 @@ export function startLogger(
     () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
   )
 
-  const batch = new Batch<LogsMessage>(
-    new HttpRequest(configuration.logsEndpoint, configuration.batchBytesLimit),
-    configuration.maxBatchSize,
-    configuration.batchBytesLimit,
-    configuration.maxMessageSize,
-    configuration.flushTimeout,
-    () =>
-      deepMerge(
-        {
-          date: new Date().getTime(),
-          session_id: session.getId(),
-          view: {
-            referrer: document.referrer,
-            url: window.location.href,
-          },
-        },
-        globalContext,
-        getRUMInternalContext() as Context
-      ) as Context
-  )
+  const batch = startLoggerBatch(configuration, session, () => globalContext)
   const handlers = {
     [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
     [HandlerType.http]: (message: LogsMessage) => batch.add(message),
@@ -107,6 +88,46 @@ export function startLogger(
   globalApi.getLogger = getLogger
   globalApi.logger = logger
   return globalApi
+}
+
+function startLoggerBatch(configuration: Configuration, session: LoggerSession, globalContextProvider: () => Context) {
+  const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
+
+  let replicaBatch: Batch<LogsMessage> | undefined
+  if (configuration.replica !== undefined) {
+    replicaBatch = createLoggerBatch(configuration.replica.logsEndpoint)
+  }
+
+  function createLoggerBatch(endpointUrl: string) {
+    return new Batch<LogsMessage>(
+      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
+      configuration.maxBatchSize,
+      configuration.batchBytesLimit,
+      configuration.maxMessageSize,
+      configuration.flushTimeout,
+      () =>
+        deepMerge(
+          {
+            date: new Date().getTime(),
+            session_id: session.getId(),
+            view: {
+              referrer: document.referrer,
+              url: window.location.href,
+            },
+          },
+          globalContextProvider(),
+          getRUMInternalContext() as Context
+        ) as Context
+    )
+  }
+  return {
+    add(message: LogsMessage) {
+      primaryBatch.add(message)
+      if (replicaBatch) {
+        replicaBatch.add(message)
+      }
+    },
+  }
 }
 
 let customLoggers: { [name: string]: Logger }

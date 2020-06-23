@@ -1,11 +1,12 @@
+import { BuildMode, Datacenter, SdkEnv } from '../src'
 import { buildConfiguration } from '../src/configuration'
 
 describe('configuration', () => {
   const clientToken = 'some_client_token'
   const prodEnv = {
-    buildMode: 'release' as 'release',
-    datacenter: 'us' as 'us',
-    sdkEnv: 'production' as 'production',
+    buildMode: BuildMode.RELEASE,
+    datacenter: Datacenter.US,
+    sdkEnv: SdkEnv.PRODUCTION,
     sdkVersion: 'some_version',
   }
 
@@ -34,9 +35,9 @@ describe('configuration', () => {
     it('should be available for e2e-test build mode', () => {
       const endpoint = 'bbbbbbbbbbbbbbb'
       const e2eEnv = {
-        buildMode: 'e2e-test' as 'e2e-test',
-        datacenter: 'us' as 'us',
-        sdkEnv: 'staging' as 'staging',
+        buildMode: BuildMode.E2E_TEST,
+        datacenter: Datacenter.US,
+        sdkEnv: SdkEnv.STAGING,
         sdkVersion: 'some_version',
       }
       const configuration = buildConfiguration(
@@ -68,7 +69,7 @@ describe('configuration', () => {
     })
 
     it('should use user value when set', () => {
-      const configuration = buildConfiguration({ clientToken, datacenter: 'eu' }, prodEnv)
+      const configuration = buildConfiguration({ clientToken, datacenter: Datacenter.EU }, prodEnv)
       expect(configuration.rumEndpoint).toContain('datadoghq.eu')
     })
   })

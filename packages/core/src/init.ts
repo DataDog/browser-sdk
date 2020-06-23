@@ -22,13 +22,23 @@ export function makeGlobal<T>(stub: T): T {
   return global
 }
 
-export type Datacenter = 'eu' | 'us'
-export type Environment = 'production' | 'staging'
-export type BuildMode = 'release' | 'staging' | 'e2e-test'
+export enum Datacenter {
+  US = 'us',
+  EU = 'eu',
+}
+export enum SdkEnv {
+  PRODUCTION = 'production',
+  STAGING = 'staging',
+}
+export enum BuildMode {
+  RELEASE = 'release',
+  STAGING = 'staging',
+  E2E_TEST = 'e2e-test',
+}
 
 export interface BuildEnv {
   datacenter: Datacenter
-  sdkEnv: Environment
+  sdkEnv: SdkEnv
   buildMode: BuildMode
   sdkVersion: string
 }

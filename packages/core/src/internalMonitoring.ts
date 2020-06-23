@@ -34,8 +34,31 @@ let externalContextProvider: () => utils.Context
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   if (configuration.internalMonitoringEndpoint) {
-    const batch = new Batch<MonitoringMessage>(
-      new HttpRequest(configuration.internalMonitoringEndpoint, configuration.batchBytesLimit),
+    const batch = startMonitoringBatch(configuration)
+
+    utils.assign(monitoringConfiguration, {
+      batch,
+      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
+      sentMessageCount: 0,
+    })
+  }
+  return {
+    setExternalContextProvider: (provider: () => utils.Context) => {
+      externalContextProvider = provider
+    },
+  }
+}
+
+function startMonitoringBatch(configuration: Configuration) {
+  const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
+  let replicaBatch: Batch<MonitoringMessage> | undefined
+  if (configuration.replica !== undefined) {
+    replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpoint)
+  }
+
+  function createMonitoringBatch(endpointUrl: string) {
+    return new Batch<MonitoringMessage>(
+      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
@@ -52,16 +75,14 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
           externalContextProvider !== undefined ? externalContextProvider() : {}
         ) as utils.Context
     )
-
-    utils.assign(monitoringConfiguration, {
-      batch,
-      maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
-      sentMessageCount: 0,
-    })
   }
+
   return {
-    setExternalContextProvider: (provider: () => utils.Context) => {
-      externalContextProvider = provider
+    add(message: MonitoringMessage) {
+      primaryBatch.add(message)
+      if (replicaBatch) {
+        replicaBatch.add(message)
+      }
     },
   }
 }
