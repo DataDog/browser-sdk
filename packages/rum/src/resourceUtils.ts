@@ -23,7 +23,7 @@ const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string)
   [
     ResourceKind.IMAGE,
     (initiatorType: string, path: string) =>
-      includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg)$/i) !== null,
+      includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i) !== null,
   ],
   [ResourceKind.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
   [
