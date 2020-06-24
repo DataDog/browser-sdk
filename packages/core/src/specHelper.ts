@@ -23,7 +23,7 @@ export function isIE() {
 
 export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
-    document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+    document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)
   })
 }
 
