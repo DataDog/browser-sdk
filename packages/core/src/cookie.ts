@@ -39,7 +39,7 @@ export function setCookie(name: string, value: string, expireDelay: number) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
-  document.cookie = `${name}=${value};${expires};path=/`
+  document.cookie = `${name}=${value};${expires};path=/;samesite=strict`
 }
 
 export function getCookie(name: string) {
