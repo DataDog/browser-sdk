@@ -14,6 +14,11 @@
 
 ---
 
+## v1.12.6
+
+- ✨[RUMF-594] specify same site attribute on cookies ([#431](https://github.com/DataDog/browser-sdk/pull/431))
+- ✨[resources] resolve .ico resources as kind:image ([#428](https://github.com/DataDog/browser-sdk/pull/428))
+
 ## v1.12.5
 
 - 🐛[RUMF-559] prevent event without sessionId ([#425](https://github.com/DataDog/browser-sdk/pull/425))
