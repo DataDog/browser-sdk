@@ -53,7 +53,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
   }
 
   // New views trigger the cancellation of the current pending User Action
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, () => {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     if (pendingAutoUserAction) {
       pendingAutoUserAction.stop()
     }
@@ -78,11 +78,13 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   const id = generateUUID()
   const startTime = performance.now()
 
+  lifeCycle.notify(LifeCycleEventType.ACTION_CREATED)
+
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
-      lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
         id,
         name,
         startTime,
@@ -94,6 +96,8 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
           resourceCount: eventCounts.resourceCount,
         },
       })
+    } else {
+      lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED)
     }
 
     stopEventCountsTracking()

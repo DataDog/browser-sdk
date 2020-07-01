@@ -109,6 +109,8 @@ function newView(
 
   viewContext = { id, location, sessionId: session.getId() }
 
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED)
+
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
     monitor(updateView),
@@ -135,7 +137,7 @@ function newView(
 
   function updateView() {
     documentVersion += 1
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       documentVersion,
       id,
       loadingTime,

@@ -34,7 +34,7 @@ describe('trackEventCounts', () => {
   it('tracks user actions', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     const userAction = {}
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, userAction as UserAction)
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, userAction as UserAction)
     expect(eventCounts.userActionCount).toBe(1)
   })
 

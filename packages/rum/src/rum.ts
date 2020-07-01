@@ -201,7 +201,7 @@ export function startRum(
       globalContext[key] = value
     }),
     addUserAction: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
+      lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, { context, name, type: UserActionType.CUSTOM })
     }),
     getInternalContext: monitor(
       (): InternalContext => {
@@ -282,7 +282,7 @@ function startRumBatch(
 }
 
 function trackView(lifeCycle: LifeCycle, upsertRumEvent: (event: RumViewEvent, key: string) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, (view) => {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     upsertRumEvent(
       {
         date: getTimestamp(view.startTime),
@@ -322,7 +322,7 @@ function trackCustomUserAction(
   lifeCycle: LifeCycle,
   addRumEvent: (event: RumUserActionEvent, context?: Context) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
+  lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, (userAction) => {
     if (userAction.type === UserActionType.CUSTOM) {
       addRumEvent(
         {
@@ -341,7 +341,7 @@ function trackCustomUserAction(
 }
 
 function trackAutoUserAction(lifeCycle: LifeCycle, addRumEvent: (event: RumUserActionEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, (userAction) => {
+  lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, (userAction) => {
     if (userAction.type !== UserActionType.CUSTOM) {
       addRumEvent({
         date: getTimestamp(userAction.startTime),

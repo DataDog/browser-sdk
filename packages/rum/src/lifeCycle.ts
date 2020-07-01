@@ -5,8 +5,11 @@ import { View } from './viewCollection'
 export enum LifeCycleEventType {
   ERROR_COLLECTED,
   PERFORMANCE_ENTRY_COLLECTED,
-  USER_ACTION_COLLECTED,
-  VIEW_COLLECTED,
+  ACTION_CREATED,
+  ACTION_COMPLETED,
+  ACTION_DISCARDED,
+  VIEW_CREATED,
+  VIEW_UPDATED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
@@ -26,14 +29,17 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
-  notify(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, data: UserAction): void
-  notify(eventType: LifeCycleEventType.VIEW_COLLECTED, data: View): void
+  notify(eventType: LifeCycleEventType.ACTION_COMPLETED, data: UserAction): void
+  notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
+      | LifeCycleEventType.ACTION_CREATED
+      | LifeCycleEventType.ACTION_DISCARDED
+      | LifeCycleEventType.VIEW_CREATED
   ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -52,14 +58,17 @@ export class LifeCycle {
     eventType: LifeCycleEventType.REQUEST_COMPLETED,
     callback: (data: RequestCompleteEvent) => void
   ): Subscription
-  subscribe(eventType: LifeCycleEventType.USER_ACTION_COLLECTED, callback: (data: UserAction) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_COLLECTED, callback: (data: View) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.ACTION_COMPLETED, callback: (data: UserAction) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
-      | LifeCycleEventType.BEFORE_UNLOAD,
+      | LifeCycleEventType.BEFORE_UNLOAD
+      | LifeCycleEventType.ACTION_CREATED
+      | LifeCycleEventType.ACTION_DISCARDED
+      | LifeCycleEventType.VIEW_CREATED,
     callback: () => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {

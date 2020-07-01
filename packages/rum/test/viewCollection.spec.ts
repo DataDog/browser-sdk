@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch, msToNs } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
@@ -132,7 +132,7 @@ describe('rum track renew session', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
@@ -170,14 +170,14 @@ describe('rum track load duration', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should collect intital view type as "initial_load"', () => {
+  it('should collect initial view type as "initial_load"', () => {
     setupBuilder.build()
     expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
@@ -207,7 +207,7 @@ describe('rum track loading time', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
@@ -302,7 +302,7 @@ describe('rum view measures', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
@@ -354,7 +354,7 @@ describe('rum view measures', () => {
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION as UserAction)
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)

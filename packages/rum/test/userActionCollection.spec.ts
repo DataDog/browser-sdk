@@ -8,7 +8,6 @@ import {
   UserAction,
   UserActionType,
 } from '../src/userActionCollection'
-import { View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const { resetUserAction, newUserAction } = $$tests
@@ -62,7 +61,7 @@ describe('startUserActionCollection', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withUserActionCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent))
   })
 
   afterEach(() => {
@@ -75,8 +74,7 @@ describe('startUserActionCollection', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     mockValidatedClickUserAction(lifeCycle, clock, button)
 
-    const fakeView = {}
-    lifeCycle.notify(LifeCycleEventType.VIEW_COLLECTED, fakeView as View)
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED)
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
@@ -137,7 +135,7 @@ describe('getUserActionReference', () => {
     const { clock } = setupBuilder.build()
     expect(getUserActionReference()).toBeUndefined()
     const lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
+    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test')
 
@@ -158,7 +156,7 @@ describe('getUserActionReference', () => {
     expect(userAction.id).toBe(userActionReference.id)
   })
 
-  it('do not return the user action reference for events occuring before the start of the user action', () => {
+  it('do not return the user action reference for events occurring before the start of the user action', () => {
     const { clock } = setupBuilder.build()
     const timeBeforeStartingUserAction = Date.now()
 
@@ -191,7 +189,7 @@ describe('newUserAction', () => {
 
   it('cancels any starting user action while another one is happening', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
+    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-2')
@@ -204,10 +202,10 @@ describe('newUserAction', () => {
     expect(events[0].name).toBe('test-1')
   })
 
-  it('counts errors occuring during the user action', () => {
+  it('counts errors occurring during the user action', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     const error = {}
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, pushEvent)
+    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
 
     newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
 
