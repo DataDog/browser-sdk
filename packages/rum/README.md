@@ -7,8 +7,7 @@ Datadog browser rum library.
 ### NPM
 
 ```
-import { Datacenter } from '@datadog/browser-core'
-import { datadogRum } from '@datadog/browser-rum'
+import { Datacenter, datadogRum } from '@datadog/browser-rum'
 datadogRum.init({
   applicationId: 'XXX',
   clientToken: 'XXX',

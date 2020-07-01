@@ -9,8 +9,7 @@ Datadog browser logs library.
 ### NPM
 
 ```
-import { Datacenter } from '@datadog/browser-core'
-import { datadogLogs } from '@datadog/browser-logs'
+import { Datacenter, datadogLogs } from '@datadog/browser-logs'
 datadogLogs.init({
   clientToken: 'XXX',
   datacenter: Datacenter.US,
