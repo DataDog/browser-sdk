@@ -81,7 +81,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   }
 }
 
-interface ViewContext {
+export interface ViewContext {
   id: string
   location: Location
   sessionId: string | undefined
@@ -109,7 +109,7 @@ function newView(
 
   viewContext = { id, location, sessionId: session.getId() }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED)
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewContext)
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(

@@ -9,7 +9,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext, ViewLoadingType } from '../src/viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -81,47 +81,62 @@ function spyOnViews() {
 
 describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
-  let initialView: string
+  let initialViewId: string
   let initialLocation: Location
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
-    setupBuilder = setup().withViewCollection(fakeLocation)
-    setupBuilder.build()
-    initialView = viewContext.id
-    initialLocation = viewContext.location
+    setupBuilder = setup()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => {
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+          initialViewId = viewContext.id
+          initialLocation = viewContext.location
+          subscription.unsubscribe()
+        })
+      })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should update view id on path change', () => {
+  it('should create new view on path change', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+      expect(viewContext.id).not.toEqual(initialViewId)
+      expect(viewContext.location).not.toEqual(initialLocation)
+    })
+
     history.pushState({}, '', '/bar')
-
-    expect(viewContext.id).not.toEqual(initialView)
-    expect(viewContext.location).not.toEqual(initialLocation)
   })
 
-  it('should not update view id on search change', () => {
+  it('should create new view on search change', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+      expect(viewContext.id).toEqual(initialViewId)
+      expect(viewContext.location).toEqual(initialLocation)
+    })
+
     history.pushState({}, '', '/foo?bar=qux')
-
-    expect(viewContext.id).toEqual(initialView)
-    expect(viewContext.location).toEqual(initialLocation)
   })
 
-  it('should not update view id on hash change', () => {
-    history.pushState({}, '', '/foo#bar')
+  it('should not create a new view on hash change', () => {
+    const { lifeCycle } = setupBuilder.build()
 
-    expect(viewContext.id).toEqual(initialView)
-    expect(viewContext.location).toEqual(initialLocation)
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, fail)
+
+    history.pushState({}, '', '/foo#bar')
   })
 })
 
 describe('rum track renew session', () => {
   let setupBuilder: TestSetupBuilder
   let addRumEvent: jasmine.Spy
+  let initialViewId: string
   let getRumEventCount: () => number
   let getViewEvent: (index: number) => View
 
@@ -132,19 +147,27 @@ describe('rum track renew session', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
+      .beforeBuild((lifeCycle) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent)
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+          initialViewId = viewContext.id
+          subscription.unsubscribe()
+        })
+      })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should update page view id on renew session', () => {
+  it('should create new view on renew session', () => {
     const { lifeCycle } = setupBuilder.build()
-    const initialView = viewContext.id
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    expect(viewContext.id).not.toEqual(initialView)
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+      expect(viewContext.id).not.toEqual(initialViewId)
+    })
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 
   it('should send a final view event when the session is renewed', () => {
