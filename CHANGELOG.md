@@ -14,6 +14,11 @@
 
 ---
 
+## v1.12.7
+
+- ✨[RUMF-609] export Datacenter enum from logs and rum ([#436](https://github.com/DataDog/browser-sdk/pull/436))
+- 🐛 use Datacenter enum in setup doc ([#435](https://github.com/DataDog/browser-sdk/pull/435))
+
 ## v1.12.6
 
 - ✨[RUMF-594] specify same site attribute on cookies ([#431](https://github.com/DataDog/browser-sdk/pull/431))
