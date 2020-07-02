@@ -1,6 +1,7 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
+import { ViewContext } from '../src/parentContexts'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
 
 import {
@@ -9,7 +10,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewContext, ViewLoadingType } from '../src/viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -91,7 +92,7 @@ describe('rum track url change', () => {
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
       .beforeBuild((lifeCycle) => {
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ viewContext }) => {
           initialViewId = viewContext.id
           initialLocation = viewContext.location
           subscription.unsubscribe()
@@ -111,7 +112,7 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/bar')
 
     expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    const viewContext = (createSpy.calls.argsFor(0)[0] as { viewContext: ViewContext }).viewContext
     expect(viewContext.id).not.toEqual(initialViewId)
     expect(viewContext.location).not.toEqual(initialLocation)
   })
@@ -151,7 +152,7 @@ describe('rum track renew session', () => {
       .withViewCollection(fakeLocation)
       .beforeBuild((lifeCycle) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent)
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ viewContext }) => {
           initialViewId = viewContext.id
           subscription.unsubscribe()
         })

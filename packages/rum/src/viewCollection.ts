@@ -1,6 +1,7 @@
 import { DOM_EVENT, generateUUID, monitor, msToNs, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { ViewContext } from './parentContexts'
 import { PerformancePaintTiming } from './rum'
 import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
@@ -81,12 +82,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   }
 }
 
-export interface ViewContext {
-  id: string
-  location: Location
-  sessionId: string | undefined
-}
-
 export let viewContext: ViewContext
 
 function newView(
@@ -94,7 +89,7 @@ function newView(
   location: Location,
   session: RumSession,
   loadingType: ViewLoadingType,
-  startOrigin: number = performance.now()
+  startTime: number = performance.now()
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -109,7 +104,7 @@ function newView(
 
   viewContext = { id, location, sessionId: session.getId() }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewContext)
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { viewContext, startTime })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
@@ -144,8 +139,8 @@ function newView(
       loadingType,
       location,
       measures,
-      duration: performance.now() - startOrigin,
-      startTime: startOrigin,
+      startTime,
+      duration: performance.now() - startTime,
     })
   }
 
