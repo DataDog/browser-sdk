@@ -24,7 +24,7 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
     })
   )
   subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.USER_ACTION_COLLECTED, () => {
+    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, () => {
       eventCounts.userActionCount += 1
       callback(eventCounts)
     })

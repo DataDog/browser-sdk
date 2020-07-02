@@ -260,7 +260,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(4)
   })
@@ -303,7 +303,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -550,7 +550,7 @@ describe('rum user action', () => {
     const { server, lifeCycle } = setupBuilder.build()
     server.requests = []
 
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, {
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
       context: { fooBar: 'foo' },
       name: 'hello',
       type: UserActionType.CUSTOM,

@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch, msToNs } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
@@ -9,7 +9,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, viewContext, ViewLoadingType } from '../src/viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewContext, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -81,47 +81,64 @@ function spyOnViews() {
 
 describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
-  let initialView: string
+  let initialViewId: string
   let initialLocation: Location
+  let createSpy: jasmine.Spy
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
-    setupBuilder = setup().withViewCollection(fakeLocation)
-    setupBuilder.build()
-    initialView = viewContext.id
-    initialLocation = viewContext.location
+    setupBuilder = setup()
+      .withViewCollection(fakeLocation)
+      .beforeBuild((lifeCycle) => {
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+          initialViewId = viewContext.id
+          initialLocation = viewContext.location
+          subscription.unsubscribe()
+        })
+      })
+    createSpy = jasmine.createSpy('create')
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should update view id on path change', () => {
+  it('should create new view on path change', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
     history.pushState({}, '', '/bar')
 
-    expect(viewContext.id).not.toEqual(initialView)
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
     expect(viewContext.location).not.toEqual(initialLocation)
   })
 
-  it('should not update view id on search change', () => {
+  it('should not create new view on search change', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
     history.pushState({}, '', '/foo?bar=qux')
 
-    expect(viewContext.id).toEqual(initialView)
-    expect(viewContext.location).toEqual(initialLocation)
+    expect(createSpy).not.toHaveBeenCalled()
   })
 
-  it('should not update view id on hash change', () => {
+  it('should not create a new view on hash change', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
     history.pushState({}, '', '/foo#bar')
 
-    expect(viewContext.id).toEqual(initialView)
-    expect(viewContext.location).toEqual(initialLocation)
+    expect(createSpy).not.toHaveBeenCalled()
   })
 })
 
 describe('rum track renew session', () => {
   let setupBuilder: TestSetupBuilder
   let addRumEvent: jasmine.Spy
+  let initialViewId: string
   let getRumEventCount: () => number
   let getViewEvent: (index: number) => View
 
@@ -132,19 +149,29 @@ describe('rum track renew session', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent)
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
+          initialViewId = viewContext.id
+          subscription.unsubscribe()
+        })
+      })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should update page view id on renew session', () => {
+  it('should create new view on renew session', () => {
     const { lifeCycle } = setupBuilder.build()
-    const initialView = viewContext.id
+    const createSpy = jasmine.createSpy('create')
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    expect(viewContext.id).not.toEqual(initialView)
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
   })
 
   it('should send a final view event when the session is renewed', () => {
@@ -170,14 +197,14 @@ describe('rum track load duration', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should collect intital view type as "initial_load"', () => {
+  it('should collect initial view type as "initial_load"', () => {
     setupBuilder.build()
     expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
@@ -207,7 +234,7 @@ describe('rum track loading time', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
@@ -302,7 +329,7 @@ describe('rum view measures', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withViewCollection(fakeLocation)
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_COLLECTED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
   afterEach(() => {
@@ -354,7 +381,7 @@ describe('rum view measures', () => {
     expect(getRumEventCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.USER_ACTION_COLLECTED, FAKE_USER_ACTION as UserAction)
+    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
     expect(getRumEventCount()).toEqual(3)
