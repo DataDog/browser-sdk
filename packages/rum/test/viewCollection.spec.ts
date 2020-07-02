@@ -9,7 +9,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewLoadingType } from '../src/viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewContext, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -83,6 +83,7 @@ describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
   let initialLocation: Location
+  let createSpy: jasmine.Spy
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
@@ -96,6 +97,7 @@ describe('rum track url change', () => {
           subscription.unsubscribe()
         })
       })
+    createSpy = jasmine.createSpy('create')
   })
 
   afterEach(() => {
@@ -104,32 +106,32 @@ describe('rum track url change', () => {
 
   it('should create new view on path change', () => {
     const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
-      expect(viewContext.id).not.toEqual(initialViewId)
-      expect(viewContext.location).not.toEqual(initialLocation)
-    })
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
+    expect(viewContext.location).not.toEqual(initialLocation)
   })
 
-  it('should create new view on search change', () => {
+  it('should not create new view on search change', () => {
     const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
-      expect(viewContext.id).toEqual(initialViewId)
-      expect(viewContext.location).toEqual(initialLocation)
-    })
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/foo?bar=qux')
+
+    expect(createSpy).not.toHaveBeenCalled()
   })
 
   it('should not create a new view on hash change', () => {
     const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, fail)
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).not.toHaveBeenCalled()
   })
 })
 
