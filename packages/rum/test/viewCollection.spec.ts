@@ -164,12 +164,14 @@ describe('rum track renew session', () => {
 
   it('should create new view on renew session', () => {
     const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (viewContext) => {
-      expect(viewContext.id).not.toEqual(initialViewId)
-    })
+    const createSpy = jasmine.createSpy('create')
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
   })
 
   it('should send a final view event when the session is renewed', () => {
