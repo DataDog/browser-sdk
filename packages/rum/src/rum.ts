@@ -168,23 +168,18 @@ export function startRum(
     configuration,
     session,
     parentContexts,
-    () => {
-      return deepMerge(
-        {
-          applicationId,
-          date: new Date().getTime(),
-          session: {
-            // must be computed on each event because synthetics instrumentation can be done after sdk execution
-            // cf https://github.com/puppeteer/puppeteer/issues/3667
-            type: getSessionType(),
-          },
-          view: {
-            referrer: document.referrer,
-          },
-        },
-        parentContexts.findView()
-      ) as Context
-    },
+    () => ({
+      applicationId,
+      date: new Date().getTime(),
+      session: {
+        // must be computed on each event because synthetics instrumentation can be done after sdk execution
+        // cf https://github.com/puppeteer/puppeteer/issues/3667
+        type: getSessionType(),
+      },
+      view: {
+        referrer: document.referrer,
+      },
+    }),
     () => globalContext,
     () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
   )
@@ -204,11 +199,11 @@ export function startRum(
       lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, { context, name, type: UserActionType.CUSTOM })
     }),
     getInternalContext: monitor(
-      (): InternalContext => {
+      (startTime?: number): InternalContext => {
         return (withSnakeCaseKeys(deepMerge(
           { applicationId },
-          parentContexts.findView(),
-          parentContexts.findAction()
+          parentContexts.findView(startTime),
+          parentContexts.findAction(startTime)
         ) as Context) as unknown) as InternalContext
       }
     ),
@@ -258,13 +253,25 @@ function startRumBatch(
   }
 
   function addRumEvent(startTime: number, event: RumEvent, context?: Context) {
-    const parentView = parentContexts.findView(startTime)
-    if (session.isTracked() && parentView && parentView.sessionId) {
-      const message = { ...context, ...withSnakeCaseKeys((event as unknown) as Context) }
+    buildValidMessage({ startTime, event, context }, (message) => {
       primaryBatch.add(message)
       if (replicaBatch) {
         replicaBatch.add(message)
       }
+    })
+  }
+
+  function buildValidMessage(
+    { startTime, event, context }: { startTime: number; event: RumEvent; context?: Context },
+    callback: (message: Context) => void
+  ) {
+    const parentView = parentContexts.findView(startTime)
+    if (session.isTracked() && parentView && parentView.sessionId) {
+      const message = {
+        ...context,
+        ...withSnakeCaseKeys(deepMerge((event as unknown) as Context, parentView) as Context),
+      }
+      callback(message)
     }
   }
 
@@ -275,14 +282,12 @@ function startRumBatch(
       addRumEvent(startTime, eventWithParentAction as RumEvent, context)
     },
     upsertRumEvent: (startTime: number, event: RumEvent, key: string) => {
-      const parentView = parentContexts.findView()
-      if (session.isTracked() && parentView && parentView.sessionId) {
-        const message = withSnakeCaseKeys((event as unknown) as Context)
+      buildValidMessage({ startTime, event }, (message) => {
         primaryBatch.upsert(message, key)
         if (replicaBatch) {
           replicaBatch.upsert(message, key)
         }
-      }
+      })
     },
   }
 }

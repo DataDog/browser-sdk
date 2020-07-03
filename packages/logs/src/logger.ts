@@ -74,7 +74,13 @@ export function startLogger(
   const logger = new Logger(session, handlers)
   customLoggers = {}
   errorObservable.subscribe((e: ErrorMessage) =>
-    logger.error(e.message, { date: getTimestamp(e.startTime), ...e.context })
+    logger.error(
+      e.message,
+      deepMerge(
+        ({ date: getTimestamp(e.startTime), ...e.context } as unknown) as Context,
+        getRUMInternalContext(e.startTime)
+      )
+    )
   )
 
   const globalApi: Partial<LogsGlobal> = {}
@@ -205,10 +211,10 @@ export class Logger {
 }
 
 interface Rum {
-  getInternalContext: () => object
+  getInternalContext: (startTime?: number) => Context
 }
 
-function getRUMInternalContext(): object | undefined {
+function getRUMInternalContext(startTime?: number): Context | undefined {
   const rum = (window as any).DD_RUM as Rum
-  return rum && rum.getInternalContext ? rum.getInternalContext() : undefined
+  return rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
 }
