@@ -1,9 +1,7 @@
 import { DOM_EVENT, generateUUID, monitor, msToNs, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { ViewContext } from './parentContexts'
 import { PerformancePaintTiming } from './rum'
-import { RumSession } from './rumSession'
 import { trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
@@ -38,10 +36,10 @@ export enum ViewLoadingType {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function startViewCollection(location: Location, lifeCycle: LifeCycle, session: RumSession) {
+export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  let currentView = newView(lifeCycle, currentLocation, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
   // Renew view on history changes
   trackHistory(() => {
@@ -49,7 +47,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
       currentLocation = { ...location }
       currentView.triggerUpdate()
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
     }
   })
 
@@ -57,7 +55,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, session, ViewLoadingType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
@@ -85,7 +83,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
 function newView(
   lifeCycle: LifeCycle,
   location: Location,
-  session: RumSession,
   loadingType: ViewLoadingType,
   startTime: number = performance.now()
 ) {
@@ -100,9 +97,7 @@ function newView(
   let documentVersion = 0
   let loadingTime: number | undefined
 
-  const viewContext = { id, location, sessionId: session.getId() }
-
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { viewContext, startTime })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(

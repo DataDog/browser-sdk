@@ -1,5 +1,4 @@
 import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
-import { ActionContext, ViewContext } from './parentContexts'
 import { UserAction } from './userActionCollection'
 import { View } from './viewCollection'
 
@@ -32,12 +31,8 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.ACTION_COMPLETED, data: UserAction): void
   notify(
-    eventType: LifeCycleEventType.ACTION_CREATED,
-    { actionContext, startTime }: { actionContext: ActionContext; startTime: number }
-  ): void
-  notify(
-    eventType: LifeCycleEventType.VIEW_CREATED,
-    { viewContext, startTime }: { viewContext: ViewContext; startTime: number }
+    eventType: LifeCycleEventType.ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
+    { id, startTime }: { id: string; startTime: number }
   ): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
   notify(
@@ -67,12 +62,8 @@ export class LifeCycle {
   ): Subscription
   subscribe(eventType: LifeCycleEventType.ACTION_COMPLETED, callback: (data: UserAction) => void): Subscription
   subscribe(
-    eventType: LifeCycleEventType.ACTION_CREATED,
-    callback: ({ actionContext, startTime }: { actionContext: ActionContext; startTime: number }) => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.VIEW_CREATED,
-    callback: ({ viewContext, startTime }: { viewContext: ViewContext; startTime: number }) => void
+    eventType: LifeCycleEventType.ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
+    callback: ({ id, startTime }: { id: string; startTime: number }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
   subscribe(

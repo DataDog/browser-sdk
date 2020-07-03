@@ -83,18 +83,17 @@ function spyOnViews() {
 describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
-  let initialLocation: Location
   let createSpy: jasmine.Spy
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
     setupBuilder = setup()
-      .withViewCollection(fakeLocation)
+      .withFakeLocation(fakeLocation)
+      .withViewCollection()
       .beforeBuild((lifeCycle) => {
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ viewContext }) => {
-          initialViewId = viewContext.id
-          initialLocation = viewContext.location
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
+          initialViewId = id
           subscription.unsubscribe()
         })
       })
@@ -112,9 +111,8 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/bar')
 
     expect(createSpy).toHaveBeenCalled()
-    const viewContext = (createSpy.calls.argsFor(0)[0] as { viewContext: ViewContext }).viewContext
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
     expect(viewContext.id).not.toEqual(initialViewId)
-    expect(viewContext.location).not.toEqual(initialLocation)
   })
 
   it('should not create new view on search change', () => {
@@ -149,11 +147,12 @@ describe('rum track renew session', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
     setupBuilder = setup()
-      .withViewCollection(fakeLocation)
+      .withFakeLocation(fakeLocation)
+      .withViewCollection()
       .beforeBuild((lifeCycle) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent)
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ viewContext }) => {
-          initialViewId = viewContext.id
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
+          initialViewId = id
           subscription.unsubscribe()
         })
       })
@@ -197,7 +196,8 @@ describe('rum track load duration', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withFakeClock()
-      .withViewCollection(fakeLocation)
+      .withFakeLocation(fakeLocation)
+      .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
@@ -234,7 +234,8 @@ describe('rum track loading time', () => {
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withFakeClock()
-      .withViewCollection(fakeLocation)
+      .withFakeLocation(fakeLocation)
+      .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 
@@ -329,7 +330,8 @@ describe('rum view measures', () => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
     setupBuilder = setup()
-      .withViewCollection(fakeLocation)
+      .withFakeLocation(fakeLocation)
+      .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
   })
 

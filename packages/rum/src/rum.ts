@@ -144,6 +144,7 @@ enum SessionType {
 
 export function startRum(
   applicationId: string,
+  location: Location,
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
@@ -151,7 +152,7 @@ export function startRum(
 ): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
 
-  const parentContexts = startParentContexts(lifeCycle)
+  const parentContexts = startParentContexts(window.location, lifeCycle, session)
 
   internalMonitoring.setExternalContextProvider(() => {
     const parentView = parentContexts.findView()!
@@ -185,7 +186,7 @@ export function startRum(
         view: {
           id: parentView.id,
           referrer: document.referrer,
-          url: parentView.location.href,
+          url: parentView.url,
         },
       }
     },

@@ -1,6 +1,5 @@
 import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { ViewContext } from '../src/parentContexts'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import { $$tests, AutoUserAction, UserAction, UserActionType } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
@@ -79,8 +78,7 @@ describe('startUserActionCollection', () => {
     mockValidatedClickUserAction(lifeCycle, clock, button)
     expect(createSpy).toHaveBeenCalled()
 
-    const fakeViewContext = {}
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { viewContext: fakeViewContext as ViewContext, startTime: 0 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id: 'fake', startTime: 0 })
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])

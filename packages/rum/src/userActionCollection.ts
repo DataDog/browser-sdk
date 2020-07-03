@@ -79,8 +79,7 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
 
   const id = generateUUID()
   const startTime = performance.now()
-
-  lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, actionContext: { id } })
+  lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { id, startTime })
 
   const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
 
