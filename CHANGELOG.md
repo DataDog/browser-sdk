@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.8
+
+- ✨[RUMF-603] Introduce and use new lifecycle events ([#438](https://github.com/DataDog/browser-sdk/pull/438))
+
 ## v1.12.7
 
 - ✨[RUMF-609] export Datacenter enum from logs and rum ([#436](https://github.com/DataDog/browser-sdk/pull/436))
