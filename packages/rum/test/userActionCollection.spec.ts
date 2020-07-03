@@ -2,16 +2,10 @@ import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
-import {
-  $$tests,
-  AutoUserAction,
-  getUserActionReference,
-  UserAction,
-  UserActionType,
-} from '../src/userActionCollection'
+import { $$tests, AutoUserAction, UserAction, UserActionType } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
-const { resetUserAction, newUserAction } = $$tests
+const { newUserAction } = $$tests
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -131,63 +125,6 @@ describe('startUserActionCollection', () => {
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
-  })
-})
-
-describe('getUserActionReference', () => {
-  let setupBuilder: TestSetupBuilder
-  const { events, pushEvent } = eventsCollector<UserAction>()
-
-  beforeEach(() => {
-    setupBuilder = setup().withFakeClock()
-  })
-
-  afterEach(() => {
-    resetUserAction()
-    setupBuilder.cleanup()
-  })
-
-  it('returns the pending user action reference', () => {
-    const { clock } = setupBuilder.build()
-    expect(getUserActionReference()).toBeUndefined()
-    const lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
-
-    newUserAction(lifeCycle, UserActionType.CLICK, 'test')
-
-    const userActionReference = getUserActionReference(Date.now())!
-
-    expect(userActionReference).toBeDefined()
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-
-    expect(getUserActionReference()).toBeDefined()
-
-    clock.tick(EXPIRE_DELAY)
-
-    expect(getUserActionReference()).toBeUndefined()
-
-    const userAction = events[0] as AutoUserAction
-    expect(userAction.id).toBe(userActionReference.id)
-  })
-
-  it('do not return the user action reference for events occurring before the start of the user action', () => {
-    const { clock } = setupBuilder.build()
-    const timeBeforeStartingUserAction = Date.now()
-
-    clock.tick(SOME_ARBITRARY_DELAY)
-    newUserAction(new LifeCycle(), UserActionType.CLICK, 'test')
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.5)
-    const timeAfterStartingUserAction = Date.now()
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.5)
-
-    expect(getUserActionReference()).toBeDefined()
-    expect(getUserActionReference(timeAfterStartingUserAction)).toBeDefined()
-    expect(getUserActionReference(timeBeforeStartingUserAction)).toBeUndefined()
-
-    clock.tick(EXPIRE_DELAY)
   })
 })
 

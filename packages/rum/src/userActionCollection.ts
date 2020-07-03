@@ -125,20 +125,6 @@ function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string)
   }
 }
 
-export interface UserActionReference {
-  id: string
-}
-export function getUserActionReference(time?: number): UserActionReference | undefined {
-  if (!pendingAutoUserAction || (time !== undefined && time < pendingAutoUserAction.startTime)) {
-    return undefined
-  }
-
-  return { id: pendingAutoUserAction.id }
-}
-
 export const $$tests = {
   newUserAction,
-  resetUserAction() {
-    pendingAutoUserAction = undefined
-  },
 }

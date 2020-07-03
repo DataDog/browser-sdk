@@ -82,8 +82,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle, se
   }
 }
 
-export let viewContext: ViewContext
-
 function newView(
   lifeCycle: LifeCycle,
   location: Location,
@@ -102,7 +100,7 @@ function newView(
   let documentVersion = 0
   let loadingTime: number | undefined
 
-  viewContext = { id, location, sessionId: session.getId() }
+  const viewContext = { id, location, sessionId: session.getId() }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { viewContext, startTime })
 

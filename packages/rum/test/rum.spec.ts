@@ -14,8 +14,8 @@ import { UserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
-function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
-  return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
+function getEntry(addRumEvent: (startTime: number, event: RumEvent) => void, index: number) {
+  return (addRumEvent as jasmine.Spy).calls.argsFor(index)[1] as RumEvent
 }
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
@@ -43,7 +43,7 @@ interface ExpectedRequestBody {
 }
 
 describe('rum handle performance entry', () => {
-  let addRumEvent: (event: RumEvent) => void
+  let addRumEvent: (startTime: number, event: RumEvent) => void
 
   beforeEach(() => {
     if (isIE()) {

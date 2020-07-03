@@ -20,7 +20,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
-import { startUserActionCollection, UserActionReference } from './userActionCollection'
+import { startUserActionCollection } from './userActionCollection'
 import { startViewCollection } from './viewCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -33,7 +33,9 @@ export interface InternalContext {
   view: {
     id: string
   }
-  user_action?: UserActionReference
+  user_action?: {
+    id: string
+  }
 }
 
 const STUBBED_RUM = {

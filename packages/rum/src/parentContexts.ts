@@ -26,7 +26,7 @@ export interface ParentContexts {
 }
 
 export function startParentContexts(lifeCycle: LifeCycle): ParentContexts {
-  let currentView: InternalViewContext
+  let currentView: InternalViewContext | undefined
   let currentAction: InternalActionContext | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (data) => {
