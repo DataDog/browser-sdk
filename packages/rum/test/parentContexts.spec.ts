@@ -40,7 +40,7 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
 
       expect(parentContexts.findView()).toBeDefined()
-      expect(parentContexts.findView()!.id).toEqual(FAKE_ID)
+      expect(parentContexts.findView()!.view.id).toEqual(FAKE_ID)
     })
 
     it('should replace the current view context on VIEW_CREATED', () => {
@@ -50,18 +50,18 @@ describe('parentContexts', () => {
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: newViewId })
 
-      expect(parentContexts.findView()!.id).toEqual(newViewId)
+      expect(parentContexts.findView()!.view.id).toEqual(newViewId)
     })
 
     it('should return the current url with the current view', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
-      expect(parentContexts.findView()!.url).toBe('fake-url')
+      expect(parentContexts.findView()!.view.url).toBe('fake-url')
 
       fakeUrl = 'other-url'
 
-      expect(parentContexts.findView()!.url).toBe('other-url')
+      expect(parentContexts.findView()!.view.url).toBe('other-url')
     })
 
     it('should update session id only on VIEW_CREATED', () => {
@@ -91,7 +91,7 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, id: FAKE_ID })
 
       expect(parentContexts.findAction()).toBeDefined()
-      expect(parentContexts.findAction()!.id).toBe(FAKE_ID)
+      expect(parentContexts.findAction()!.userAction.id).toBe(FAKE_ID)
     })
 
     it('should return undefined if startTime is before the start of the current action', () => {

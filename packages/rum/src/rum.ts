@@ -155,15 +155,11 @@ export function startRum(
   const parentContexts = startParentContexts(window.location, lifeCycle, session)
 
   internalMonitoring.setExternalContextProvider(() => {
-    const parentView = parentContexts.findView()!
     return deepMerge(
       {
         application_id: applicationId,
-        session_id: parentView.sessionId,
-        view: {
-          id: parentView.id,
-        },
       },
+      parentContexts.findView(),
       globalContext
     ) as Context
   })
@@ -173,22 +169,21 @@ export function startRum(
     session,
     parentContexts,
     () => {
-      const parentView = parentContexts.findView()!
-      return {
-        applicationId,
-        date: new Date().getTime(),
-        session: {
-          // must be computed on each event because synthetics instrumentation can be done after sdk execution
-          // cf https://github.com/puppeteer/puppeteer/issues/3667
-          type: getSessionType(),
+      return deepMerge(
+        {
+          applicationId,
+          date: new Date().getTime(),
+          session: {
+            // must be computed on each event because synthetics instrumentation can be done after sdk execution
+            // cf https://github.com/puppeteer/puppeteer/issues/3667
+            type: getSessionType(),
+          },
+          view: {
+            referrer: document.referrer,
+          },
         },
-        sessionId: parentView.sessionId,
-        view: {
-          id: parentView.id,
-          referrer: document.referrer,
-          url: parentView.url,
-        },
-      }
+        parentContexts.findView()
+      ) as Context
     },
     () => globalContext,
     () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
@@ -210,15 +205,11 @@ export function startRum(
     }),
     getInternalContext: monitor(
       (): InternalContext => {
-        const parentView = parentContexts.findView()!
-        return {
-          application_id: applicationId,
-          session_id: parentView.sessionId,
-          user_action: parentContexts.findAction(),
-          view: {
-            id: parentView.id,
-          },
-        }
+        return (withSnakeCaseKeys(deepMerge(
+          { applicationId },
+          parentContexts.findView(),
+          parentContexts.findAction()
+        ) as Context) as unknown) as InternalContext
       }
     ),
     setRumGlobalContext: monitor((context: Context) => {
@@ -280,7 +271,7 @@ function startRumBatch(
   return {
     addRumEvent,
     addRumEventWithParentAction: (startTime: number, event: RumEvent, context?: Context) => {
-      const eventWithParentAction = { ...event, userAction: parentContexts.findAction(startTime) }
+      const eventWithParentAction = { ...event, ...parentContexts.findAction(startTime) }
       addRumEvent(startTime, eventWithParentAction as RumEvent, context)
     },
     upsertRumEvent: (startTime: number, event: RumEvent, key: string) => {

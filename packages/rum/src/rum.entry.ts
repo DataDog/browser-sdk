@@ -32,6 +32,7 @@ export interface InternalContext {
   session_id: string | undefined
   view: {
     id: string
+    url: string
   }
   user_action?: {
     id: string

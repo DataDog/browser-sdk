@@ -1,14 +1,19 @@
+import { Context } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
 
-export interface ViewContext {
-  id: string
+export interface ViewContext extends Context {
   sessionId: string | undefined
-  url: string
+  view: {
+    id: string
+    url: string
+  }
 }
 
-export interface ActionContext {
-  id: string
+export interface ActionContext extends Context {
+  userAction: {
+    id: string
+  }
 }
 
 interface InternalContext {
@@ -48,8 +53,8 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
       if (!currentAction || (startTime !== undefined && startTime < currentAction.startTime)) {
         return undefined
       }
-      return { id: currentAction.id }
+      return { userAction: { id: currentAction.id } }
     },
-    findView: () => currentView && { sessionId: currentSessionId, id: currentView.id, url: location.href },
+    findView: () => currentView && { sessionId: currentSessionId, view: { id: currentView.id, url: location.href } },
   }
 }
