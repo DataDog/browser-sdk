@@ -1,10 +1,8 @@
 import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
-import { $$tests, AutoUserAction, UserAction, UserActionType } from '../src/userActionCollection'
+import { AutoUserAction, UserAction, UserActionType } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
-
-const { newUserAction } = $$tests
 
 // Used to wait some time after the creation of a user action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -130,11 +128,24 @@ describe('newUserAction', () => {
   let setupBuilder: TestSetupBuilder
   const { events, pushEvent } = eventsCollector<UserAction>()
 
+  function newClick(name: string) {
+    const button = document.createElement('button')
+    button.setAttribute('title', name)
+    document.getElementById('root')!.appendChild(button)
+    button.click()
+  }
+
   beforeEach(() => {
-    setupBuilder = setup().withFakeClock()
+    const root = document.createElement('root')
+    root.setAttribute('id', 'root')
+    document.body.appendChild(root)
+    setupBuilder = setup()
+      .withFakeClock()
+      .withUserActionCollection()
   })
 
   afterEach(() => {
+    document.getElementById('root')!.remove()
     setupBuilder.cleanup()
   })
 
@@ -142,8 +153,8 @@ describe('newUserAction', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
 
-    newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
-    newUserAction(lifeCycle, UserActionType.CLICK, 'test-2')
+    newClick('test-1')
+    newClick('test-2')
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
@@ -158,7 +169,7 @@ describe('newUserAction', () => {
     const error = {}
     lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
 
-    newUserAction(lifeCycle, UserActionType.CLICK, 'test-1')
+    newClick('test-1')
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)

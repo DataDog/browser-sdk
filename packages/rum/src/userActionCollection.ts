@@ -1,7 +1,7 @@
 import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { trackEventCounts } from './trackEventCounts'
+import { EventCounts, trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
 export enum UserActionType {
@@ -32,16 +32,14 @@ export interface AutoUserAction {
 
 export type UserAction = CustomUserAction | AutoUserAction
 
-interface PendingAutoUserAction {
-  id: string
-  startTime: number
-  complete(endTime: number): void
-  discard(): void
-  stop(): void
-}
-let pendingAutoUserAction: PendingAutoUserAction | undefined
-
 export function startUserActionCollection(lifeCycle: LifeCycle) {
+  const userAction = startUserActionManagement(lifeCycle)
+
+  // New views trigger the discard of the current pending User Action
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
+    userAction.discardCurrent()
+  })
+
   addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
   function processClick(event: Event) {
     if (!(event.target instanceof Element)) {
@@ -51,79 +49,81 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
     if (!name) {
       return
     }
-    newUserAction(lifeCycle, UserActionType.CLICK, name)
-  }
 
-  // New views trigger the discard of the current pending User Action
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
-    if (pendingAutoUserAction) {
-      pendingAutoUserAction.discard()
-    }
-  })
+    userAction.create(UserActionType.CLICK, name)
+  }
 
   return {
     stop() {
-      if (pendingAutoUserAction) {
-        pendingAutoUserAction.discard()
-      }
+      userAction.discardCurrent()
       removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
     },
   }
 }
 
-function newUserAction(lifeCycle: LifeCycle, type: UserActionType, name: string) {
-  if (pendingAutoUserAction) {
-    // Ignore any new user action if another one is already occurring.
-    return
-  }
+function startUserActionManagement(lifeCycle: LifeCycle) {
+  let currentUserAction: PendingAutoUserAction | undefined
+  let currentIdlePageActivitySubscription: { stop: () => void }
 
-  const id = generateUUID()
-  const startTime = performance.now()
-  lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { id, startTime })
+  return {
+    create: (type: UserActionType, name: string) => {
+      if (currentUserAction) {
+        // Ignore any new user action if another one is already occurring.
+        return
+      }
+      const pendingAutoUserAction = new PendingAutoUserAction(lifeCycle, type, name)
 
-  const { eventCounts, stop: stopEventCountsTracking } = trackEventCounts(lifeCycle)
-
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-    if (!pendingAutoUserAction) {
-      return
-    }
-    if (hadActivity) {
-      pendingAutoUserAction.complete(endTime)
-    } else {
-      pendingAutoUserAction.discard()
-    }
-  })
-
-  pendingAutoUserAction = {
-    id,
-    startTime,
-    complete(endTime: number) {
-      lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
-        id,
-        name,
-        startTime,
-        type,
-        duration: endTime - startTime,
-        measures: {
-          errorCount: eventCounts.errorCount,
-          longTaskCount: eventCounts.longTaskCount,
-          resourceCount: eventCounts.resourceCount,
-        },
+      currentUserAction = pendingAutoUserAction
+      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
+        if (hadActivity) {
+          pendingAutoUserAction.complete(endTime)
+        } else {
+          pendingAutoUserAction.discard()
+        }
+        currentUserAction = undefined
       })
-      this.stop()
     },
-    discard() {
-      lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED)
-      this.stop()
-    },
-    stop() {
-      stopEventCountsTracking()
-      stopWaitIdlePageActivity()
-      pendingAutoUserAction = undefined
+    discardCurrent: () => {
+      if (currentUserAction) {
+        currentIdlePageActivitySubscription.stop()
+        currentUserAction.discard()
+        currentUserAction = undefined
+      }
     },
   }
 }
 
-export const $$tests = {
-  newUserAction,
+class PendingAutoUserAction {
+  private id: string
+  private startTime: number
+  private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
+
+  constructor(private lifeCycle: LifeCycle, private type: UserActionType, private name: string) {
+    this.id = generateUUID()
+    this.startTime = performance.now()
+    this.eventCountsSubscription = trackEventCounts(lifeCycle)
+    this.lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { id: this.id, startTime: this.startTime })
+  }
+
+  complete(endTime: number) {
+    const eventCounts = this.eventCountsSubscription.eventCounts
+    this.lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
+      duration: endTime - this.startTime,
+      id: this.id,
+      measures: {
+        errorCount: eventCounts.errorCount,
+        longTaskCount: eventCounts.longTaskCount,
+        resourceCount: eventCounts.resourceCount,
+      },
+      name: this.name,
+      startTime: this.startTime,
+      type: this.type,
+    })
+    this.eventCountsSubscription.stop()
+  }
+
+  discard() {
+    this.lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED)
+    this.eventCountsSubscription.stop()
+  }
 }
