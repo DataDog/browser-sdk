@@ -145,7 +145,8 @@ describe('newUserAction', () => {
   })
 
   afterEach(() => {
-    document.getElementById('root')!.remove()
+    const root = document.getElementById('root')!
+    root.parentNode!.removeChild(root)
     setupBuilder.cleanup()
   })
 
