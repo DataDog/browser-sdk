@@ -9,13 +9,13 @@ import {
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { handleResourceEntry, RumEvent, RumResourceEvent } from '../src/rum'
+import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
 import { UserAction, UserActionType } from '../src/userActionCollection'
-import { SESSION_KEEP_ALIVE_INTERVAL } from '../src/viewCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
-function getEntry(addRumEvent: (event: RumEvent) => void, index: number) {
-  return (addRumEvent as jasmine.Spy).calls.argsFor(index)[0] as RumEvent
+function getEntry(handler: (startTime: number, event: RumEvent) => void, index: number) {
+  return (handler as jasmine.Spy).calls.argsFor(index)[1] as RumEvent
 }
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
@@ -33,23 +33,26 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
 }
 
 interface ExpectedRequestBody {
+  application_id: string
+  date: number
   evt: {
     category: string
   }
   session_id: string
   view: {
     id: string
+    referrer: string
   }
 }
 
 describe('rum handle performance entry', () => {
-  let addRumEvent: (event: RumEvent) => void
+  let handler: (startTime: number, event: RawRumEvent) => void
 
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
-    addRumEvent = jasmine.createSpy()
+    handler = jasmine.createSpy()
   })
   ;[
     {
@@ -91,10 +94,10 @@ describe('rum handle performance entry', () => {
         handleResourceEntry(
           configuration as Configuration,
           entry as PerformanceResourceTiming,
-          addRumEvent,
+          handler,
           new LifeCycle()
         )
-        const entryAdded = (addRumEvent as jasmine.Spy).calls.all().length !== 0
+        const entryAdded = (handler as jasmine.Spy).calls.all().length !== 0
         expect(entryAdded).toEqual(expectEntryToBeAdded)
       })
     }
@@ -139,10 +142,10 @@ describe('rum handle performance entry', () => {
         handleResourceEntry(
           configuration as Configuration,
           entry as PerformanceResourceTiming,
-          addRumEvent,
+          handler,
           new LifeCycle()
         )
-        const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+        const resourceEvent = getEntry(handler, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
       })
     }
@@ -164,13 +167,8 @@ describe('rum handle performance entry', () => {
       secureConnectionStart: 0,
     }
 
-    handleResourceEntry(
-      configuration as Configuration,
-      entry as PerformanceResourceTiming,
-      addRumEvent,
-      new LifeCycle()
-    )
-    const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+    const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
   })
@@ -193,13 +191,8 @@ describe('rum handle performance entry', () => {
         secureConnectionStart: 0,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        entry as PerformanceResourceTiming,
-        addRumEvent,
-        new LifeCycle()
-      )
-      const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
 
@@ -211,13 +204,8 @@ describe('rum handle performance entry', () => {
         responseStart: 100,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        entry as PerformanceResourceTiming,
-        addRumEvent,
-        new LifeCycle()
-      )
-      const resourceEvent = getEntry(addRumEvent, 0) as RumResourceEvent
+      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
   })
@@ -251,7 +239,6 @@ describe('rum session', () => {
   it('when tracked with resources should enable full tracking', () => {
     const { server, stubBuilder, lifeCycle } = setupBuilder
       .withPerformanceObserverStubBuilder()
-      .withViewCollection()
       .withPerformanceCollection()
       .build()
 
@@ -273,7 +260,6 @@ describe('rum session', () => {
         isTrackedWithResource: () => false,
       })
       .withPerformanceObserverStubBuilder()
-      .withViewCollection()
       .withPerformanceCollection()
       .build()
 
@@ -317,7 +303,6 @@ describe('rum session', () => {
         isTrackedWithResource: () => isTracked,
       })
       .withPerformanceObserverStubBuilder()
-      .withViewCollection()
       .withPerformanceCollection()
       .build()
 
@@ -343,7 +328,6 @@ describe('rum session', () => {
         isTracked: () => true,
         isTrackedWithResource: () => isTrackedWithResource,
       })
-      .withViewCollection()
       .withPerformanceCollection()
       .build()
 
@@ -369,7 +353,6 @@ describe('rum session', () => {
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })
-      .withViewCollection()
       .build()
 
     const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
@@ -399,7 +382,6 @@ describe('rum session', () => {
         isTracked: () => isTracked,
         isTrackedWithResource: () => false,
       })
-      .withViewCollection()
       .build()
 
     server.requests = []
@@ -434,7 +416,6 @@ describe('rum session keep alive', () => {
         isTrackedWithResource: () => true,
       })
       .withRum()
-      .withViewCollection()
   })
 
   afterEach(() => {
@@ -490,7 +471,6 @@ describe('rum global context', () => {
     setupBuilder = setup()
       .withFakeServer()
       .withRum()
-      .withViewCollection()
   })
 
   afterEach(() => {
@@ -539,7 +519,6 @@ describe('rum user action', () => {
     setupBuilder = setup()
       .withFakeServer()
       .withRum()
-      .withViewCollection()
   })
 
   afterEach(() => {
@@ -557,5 +536,50 @@ describe('rum user action', () => {
     })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
+  })
+})
+
+describe('rum context', () => {
+  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeServer()
+      .withRum()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should be snake cased and added to request', () => {
+    const { server } = setupBuilder.build()
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests[0].application_id).toEqual('appId')
+  })
+
+  it('should be merge with event attributes', () => {
+    const { server } = setupBuilder.build()
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests[0].view.referrer).toBeDefined()
+    expect(initialRequests[0].view.id).toBeDefined()
+  })
+
+  it('should be overwritten by event attributes', () => {
+    const { server, lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests[0].evt.category).toEqual('view')
+    const initialViewDate = initialRequests[0].date
+
+    // generate view update
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    server.requests = []
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(subsequentRequests[0].evt.category).toEqual('view')
+    expect(subsequentRequests[0].date).toEqual(initialViewDate)
   })
 })

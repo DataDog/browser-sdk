@@ -8,6 +8,7 @@ import {
 import sinon from 'sinon'
 import { RumGlobal } from '../src'
 import { LifeCycle } from '../src/lifeCycle'
+import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
 import { startRum } from '../src/rum'
 import { RumSession } from '../src/rumSession'
@@ -32,11 +33,13 @@ const configuration = {
 }
 
 export interface TestSetupBuilder {
+  withFakeLocation: (location: Partial<Location>) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
   withRum: () => TestSetupBuilder
-  withViewCollection: (fakeLocation?: Partial<Location>) => TestSetupBuilder
+  withViewCollection: () => TestSetupBuilder
   withUserActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
+  withParentContexts: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
@@ -52,6 +55,7 @@ export interface TestIO {
   stubBuilder: PerformanceObserverStubBuilder
   rumApi: RumApi
   clock: jasmine.Clock
+  parentContexts: ParentContexts
 }
 
 export function setup(): TestSetupBuilder {
@@ -69,21 +73,35 @@ export function setup(): TestSetupBuilder {
   let clock: jasmine.Clock
   let stubBuilder: PerformanceObserverStubBuilder
   let rumApi: RumApi
+  let fakeLocation: Partial<Location> = location
+  let parentContexts: ParentContexts
 
   const setupBuilder = {
+    withFakeLocation(location: Partial<Location>) {
+      fakeLocation = location
+      return setupBuilder
+    },
     withSession(sessionStub: RumSession) {
       session = sessionStub
       return setupBuilder
     },
     withRum() {
       buildTasks.push(
-        () => (rumApi = startRum('appId', lifeCycle, configuration as Configuration, session, internalMonitoringStub))
+        () =>
+          (rumApi = startRum(
+            'appId',
+            fakeLocation as Location,
+            lifeCycle,
+            configuration as Configuration,
+            session,
+            internalMonitoringStub
+          ))
       )
       return setupBuilder
     },
-    withViewCollection(fakeLocation?: Partial<Location>) {
+    withViewCollection() {
       buildTasks.push(() => {
-        const { stop } = startViewCollection((fakeLocation as Location) || location, lifeCycle, session)
+        const { stop } = startViewCollection(fakeLocation as Location, lifeCycle)
         cleanupTasks.push(stop)
       })
       return setupBuilder
@@ -97,6 +115,12 @@ export function setup(): TestSetupBuilder {
     },
     withPerformanceCollection() {
       buildTasks.push(() => startPerformanceCollection(lifeCycle, session))
+      return setupBuilder
+    },
+    withParentContexts() {
+      buildTasks.push(() => {
+        parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session)
+      })
       return setupBuilder
     },
     withFakeClock() {
@@ -129,7 +153,7 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
-      return { server, lifeCycle, stubBuilder, rumApi, clock }
+      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts }
     },
     cleanup() {
       cleanupTasks.forEach((task) => task())

@@ -20,8 +20,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
-import { startUserActionCollection, UserActionReference } from './userActionCollection'
-import { startViewCollection } from './viewCollection'
+import { startUserActionCollection } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -30,10 +29,13 @@ export interface RumUserConfiguration extends UserConfiguration {
 export interface InternalContext {
   application_id: string
   session_id: string | undefined
-  view: {
+  view?: {
+    id: string
+    url: string
+  }
+  user_action?: {
     id: string
   }
-  user_action?: UserActionReference
 }
 
 const STUBBED_RUM = {
@@ -71,9 +73,15 @@ datadogRum.init = monitor((userConfiguration: RumUserConfiguration) => {
 
   const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
-  const globalApi = startRum(rumUserConfiguration.applicationId, lifeCycle, configuration, session, internalMonitoring)
+  const globalApi = startRum(
+    rumUserConfiguration.applicationId,
+    location,
+    lifeCycle,
+    configuration,
+    session,
+    internalMonitoring
+  )
 
-  startViewCollection(location, lifeCycle, session)
   const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
   startPerformanceCollection(lifeCycle, session)
   startDOMMutationCollection(lifeCycle)
