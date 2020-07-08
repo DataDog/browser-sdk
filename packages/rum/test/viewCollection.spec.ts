@@ -67,17 +67,17 @@ function mockHistory(location: Partial<Location>) {
 }
 
 function spyOnViews() {
-  const addRumEvent = jasmine.createSpy()
+  const handler = jasmine.createSpy()
 
   function getViewEvent(index: number) {
-    return addRumEvent.calls.argsFor(index)[0] as View
+    return handler.calls.argsFor(index)[0] as View
   }
 
-  function getRumEventCount() {
-    return addRumEvent.calls.count()
+  function getHandledCount() {
+    return handler.calls.count()
   }
 
-  return { addRumEvent, getViewEvent, getRumEventCount }
+  return { handler, getViewEvent, getHandledCount }
 }
 
 describe('rum track url change', () => {
@@ -136,13 +136,13 @@ describe('rum track url change', () => {
 
 describe('rum track renew session', () => {
   let setupBuilder: TestSetupBuilder
-  let addRumEvent: jasmine.Spy
+  let handler: jasmine.Spy
   let initialViewId: string
-  let getRumEventCount: () => number
+  let getHandledCount: () => number
   let getViewEvent: (index: number) => View
 
   beforeEach(() => {
-    ;({ addRumEvent, getViewEvent, getRumEventCount } = spyOnViews())
+    ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
 
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
@@ -150,7 +150,7 @@ describe('rum track renew session', () => {
       .withFakeLocation(fakeLocation)
       .withViewCollection()
       .beforeBuild((lifeCycle) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent)
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
@@ -176,21 +176,21 @@ describe('rum track renew session', () => {
 
   it('should send a final view event when the session is renewed', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(0).id).not.toBe(getViewEvent(1).id)
   })
 })
 
 describe('rum track load duration', () => {
   let setupBuilder: TestSetupBuilder
-  let addRumEvent: jasmine.Spy
+  let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
 
   beforeEach(() => {
-    ;({ addRumEvent, getViewEvent } = spyOnViews())
+    ;({ handler, getViewEvent } = spyOnViews())
 
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
@@ -198,7 +198,7 @@ describe('rum track load duration', () => {
       .withFakeClock()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {
@@ -223,12 +223,12 @@ describe('rum track load duration', () => {
 
 describe('rum track loading time', () => {
   let setupBuilder: TestSetupBuilder
-  let addRumEvent: jasmine.Spy
+  let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let getRumEventCount: () => number
+  let getHandledCount: () => number
 
   beforeEach(() => {
-    ;({ addRumEvent, getRumEventCount, getViewEvent } = spyOnViews())
+    ;({ handler, getHandledCount, getViewEvent } = spyOnViews())
 
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
@@ -236,7 +236,7 @@ describe('rum track loading time', () => {
       .withFakeClock()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {
@@ -250,7 +250,7 @@ describe('rum track loading time', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(2).loadingTime).toBeUndefined()
   })
 
@@ -268,7 +268,7 @@ describe('rum track loading time', () => {
 
   it('should use loadEventEnd for initial view when having no activity', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
@@ -276,13 +276,13 @@ describe('rum track loading time', () => {
     )
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
   })
 
   it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
@@ -296,13 +296,13 @@ describe('rum track loading time', () => {
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd)
   })
 
   it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(
@@ -313,26 +313,26 @@ describe('rum track loading time', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
   })
 })
 
 describe('rum view measures', () => {
   let setupBuilder: TestSetupBuilder
-  let addRumEvent: jasmine.Spy
-  let getRumEventCount: () => number
+  let handler: jasmine.Spy
+  let getHandledCount: () => number
   let getViewEvent: (index: number) => View
 
   beforeEach(() => {
-    ;({ addRumEvent, getViewEvent, getRumEventCount } = spyOnViews())
+    ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
 
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, addRumEvent))
+      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {
@@ -341,66 +341,66 @@ describe('rum view measures', () => {
 
   it('should track error count', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures.errorCount).toEqual(2)
     expect(getViewEvent(2).measures.errorCount).toEqual(0)
   })
 
   it('should track long task count', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK as PerformanceLongTaskTiming)
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures.longTaskCount).toEqual(1)
     expect(getViewEvent(2).measures.longTaskCount).toEqual(0)
   })
 
   it('should track resource count', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures.resourceCount).toEqual(1)
     expect(getViewEvent(2).measures.resourceCount).toEqual(0)
   })
 
   it('should track user action count', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION as UserAction)
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures.userActionCount).toEqual(1)
     expect(getViewEvent(2).measures.userActionCount).toEqual(0)
   })
 
   it('should reset event count when the view changes', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures.resourceCount).toEqual(1)
     expect(getViewEvent(2).measures.resourceCount).toEqual(0)
 
@@ -408,14 +408,14 @@ describe('rum view measures', () => {
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/baz')
 
-    expect(getRumEventCount()).toEqual(5)
+    expect(getHandledCount()).toEqual(5)
     expect(getViewEvent(3).measures.resourceCount).toEqual(2)
     expect(getViewEvent(4).measures.resourceCount).toEqual(0)
   })
 
   it('should update measures when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
@@ -428,11 +428,11 @@ describe('rum view measures', () => {
       FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
     )
 
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,
@@ -447,7 +447,7 @@ describe('rum view measures', () => {
 
   it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
@@ -457,11 +457,11 @@ describe('rum view measures', () => {
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(2)
+    expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
@@ -472,7 +472,7 @@ describe('rum view measures', () => {
 
   it('should update measures when ending a view', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures).toEqual({
       errorCount: 0,
       longTaskCount: 0,
@@ -485,11 +485,11 @@ describe('rum view measures', () => {
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
       FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
     )
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures).toEqual({
       domComplete: 456e6,
       domContentLoaded: 345e6,
@@ -511,20 +511,20 @@ describe('rum view measures', () => {
 
   it('should not update measures after ending a view', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 
-    expect(getRumEventCount()).toEqual(1)
+    expect(getHandledCount()).toEqual(1)
 
     history.pushState({}, '', '/bar')
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
     expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(getRumEventCount()).toEqual(3)
+    expect(getHandledCount()).toEqual(3)
   })
 })
