@@ -14,6 +14,10 @@
 
 ---
 
+## v1.12.9
+
+- ♻️ [RUMF-604] introduce parentContexts to return current contexts ([#440](https://github.com/DataDog/browser-sdk/pull/440))
+
 ## v1.12.8
 
 - ✨[RUMF-603] Introduce and use new lifecycle events ([#438](https://github.com/DataDog/browser-sdk/pull/438))
