@@ -1,13 +1,14 @@
 import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
-import { UserAction } from './userActionCollection'
+import { AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View } from './viewCollection'
 
 export enum LifeCycleEventType {
   ERROR_COLLECTED,
   PERFORMANCE_ENTRY_COLLECTED,
-  ACTION_CREATED,
-  ACTION_COMPLETED,
-  ACTION_DISCARDED,
+  CUSTOM_ACTION_COLLECTED,
+  AUTO_ACTION_CREATED,
+  AUTO_ACTION_COMPLETED,
+  AUTO_ACTION_DISCARDED,
   VIEW_CREATED,
   VIEW_UPDATED,
   REQUEST_STARTED,
@@ -29,9 +30,10 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
-  notify(eventType: LifeCycleEventType.ACTION_COMPLETED, data: UserAction): void
+  notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
+  notify(eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED, data: CustomUserAction): void
   notify(
-    eventType: LifeCycleEventType.ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
+    eventType: LifeCycleEventType.AUTO_ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
     { id, startTime }: { id: string; startTime: number }
   ): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
@@ -41,7 +43,7 @@ export class LifeCycle {
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
-      | LifeCycleEventType.ACTION_DISCARDED
+      | LifeCycleEventType.AUTO_ACTION_DISCARDED
   ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -60,10 +62,14 @@ export class LifeCycle {
     eventType: LifeCycleEventType.REQUEST_COMPLETED,
     callback: (data: RequestCompleteEvent) => void
   ): Subscription
-  subscribe(eventType: LifeCycleEventType.ACTION_COMPLETED, callback: (data: UserAction) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoUserAction) => void): Subscription
   subscribe(
-    eventType: LifeCycleEventType.ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
+    eventType: LifeCycleEventType.AUTO_ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
     callback: ({ id, startTime }: { id: string; startTime: number }) => void
+  ): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
+    callback: (data: CustomUserAction) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
   subscribe(
@@ -72,7 +78,7 @@ export class LifeCycle {
       | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
-      | LifeCycleEventType.ACTION_DISCARDED,
+      | LifeCycleEventType.AUTO_ACTION_DISCARDED,
     callback: () => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {

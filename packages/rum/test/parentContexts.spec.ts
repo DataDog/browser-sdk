@@ -88,7 +88,7 @@ describe('parentContexts', () => {
     it('should return the current action context', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
 
       expect(parentContexts.findAction()).toBeDefined()
       expect(parentContexts.findAction()!.userAction.id).toBe(FAKE_ID)
@@ -97,25 +97,25 @@ describe('parentContexts', () => {
     it('should return undefined if startTime is before the start of the current action', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
 
       expect(parentContexts.findAction(startTime - 1)).toBeUndefined()
     })
 
-    it('should clear the current action on ACTION_DISCARDED', () => {
+    it('should clear the current action on AUTO_ACTION_DISCARDED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, id: FAKE_ID })
-      lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED)
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
 
       expect(parentContexts.findAction()).toBeUndefined()
     })
 
-    it('should clear the current action on ACTION_COMPLETED', () => {
+    it('should clear the current action on AUTO_ACTION_COMPLETED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { startTime, id: FAKE_ID })
-      lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, undefined as any)
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, undefined as any)
 
       expect(parentContexts.findAction()).toBeUndefined()
     })

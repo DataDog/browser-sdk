@@ -9,20 +9,22 @@ export enum UserActionType {
   CUSTOM = 'custom',
 }
 
+type AutoUserActionType = UserActionType.CLICK
+
 export interface UserActionMeasures {
   errorCount: number
   longTaskCount: number
   resourceCount: number
 }
 
-interface CustomUserAction {
+export interface CustomUserAction {
   type: UserActionType.CUSTOM
   name: string
   context?: Context
 }
 
 export interface AutoUserAction {
-  type: UserActionType.CLICK
+  type: AutoUserActionType
   id: string
   name: string
   startTime: number
@@ -66,7 +68,7 @@ function startUserActionManagement(lifeCycle: LifeCycle) {
   let currentIdlePageActivitySubscription: { stop: () => void }
 
   return {
-    create: (type: UserActionType, name: string) => {
+    create: (type: AutoUserActionType, name: string) => {
       if (currentUserAction) {
         // Ignore any new user action if another one is already occurring.
         return
@@ -98,16 +100,16 @@ class PendingAutoUserAction {
   private startTime: number
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
-  constructor(private lifeCycle: LifeCycle, private type: UserActionType, private name: string) {
+  constructor(private lifeCycle: LifeCycle, private type: AutoUserActionType, private name: string) {
     this.id = generateUUID()
     this.startTime = performance.now()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
-    this.lifeCycle.notify(LifeCycleEventType.ACTION_CREATED, { id: this.id, startTime: this.startTime })
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
   }
 
   complete(endTime: number) {
     const eventCounts = this.eventCountsSubscription.eventCounts
-    this.lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       duration: endTime - this.startTime,
       id: this.id,
       measures: {
@@ -123,7 +125,7 @@ class PendingAutoUserAction {
   }
 
   discard() {
-    this.lifeCycle.notify(LifeCycleEventType.ACTION_DISCARDED)
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
     this.eventCountsSubscription.stop()
   }
 }
