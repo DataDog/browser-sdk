@@ -1,7 +1,7 @@
 import sinon from 'sinon'
 
 import { Batch, HttpRequest } from '../src/transport'
-import { noop } from '../src/utils'
+import { Context, deepMerge, noop } from '../src/utils'
 
 describe('request', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -67,7 +67,14 @@ describe('batch', () => {
     CONTEXT = { foo: 'bar' }
     transport = ({ send: noop } as unknown) as HttpRequest
     spyOn(transport, 'send')
-    batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, MESSAGE_BYTES_LIMIT, FLUSH_TIMEOUT, () => CONTEXT)
+    batch = new Batch(
+      transport,
+      MAX_SIZE,
+      BATCH_BYTES_LIMIT,
+      MESSAGE_BYTES_LIMIT,
+      FLUSH_TIMEOUT,
+      (message: Context) => deepMerge(CONTEXT, message) as Context
+    )
   })
 
   it('should add context to message', () => {

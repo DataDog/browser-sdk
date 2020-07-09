@@ -1,5 +1,5 @@
 import { monitor } from './internalMonitoring'
-import { Context, deepMerge, DOM_EVENT, jsonStringify, noop, objectValues } from './utils'
+import { Context, DOM_EVENT, identity, jsonStringify, noop, objectValues } from './utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -33,7 +33,7 @@ function addBatchTime(url: string) {
   return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
 }
 
-export class Batch<T> {
+export class Batch<T extends Context> {
   private pushOnlyBuffer: string[] = []
   private upsertBuffer: { [key: string]: string } = {}
   private bufferBytesSize = 0
@@ -45,7 +45,7 @@ export class Batch<T> {
     private bytesLimit: number,
     private maxMessageSize: number,
     private flushTimeout: number,
-    private contextProvider: () => Context,
+    private processor: (message: Context) => Context = identity,
     private beforeUnloadCallback: () => void = noop
   ) {
     this.flushOnVisibilityHidden()
@@ -103,8 +103,7 @@ export class Batch<T> {
   }
 
   private process(message: T) {
-    const contextualizedMessage = deepMerge({}, this.contextProvider(), (message as unknown) as Context) as Context
-    const processedMessage = jsonStringify(contextualizedMessage)!
+    const processedMessage = jsonStringify(this.processor(message))!
     const messageBytesSize = this.sizeInBytes(processedMessage)
     return { processedMessage, messageBytesSize }
   }

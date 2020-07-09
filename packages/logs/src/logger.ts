@@ -111,7 +111,7 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
       configuration.flushTimeout,
-      () =>
+      (message: Context) =>
         deepMerge(
           {
             date: new Date().getTime(),
@@ -122,7 +122,8 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
             },
           },
           globalContextProvider(),
-          getRUMInternalContext() as Context
+          getRUMInternalContext() as Context,
+          message
         ) as Context
     )
   }

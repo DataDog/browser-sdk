@@ -14,7 +14,7 @@ export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => utils.Context) => void
 }
 
-export interface MonitoringMessage {
+export interface MonitoringMessage extends utils.Context {
   message: string
   status: StatusType
   error?: {
@@ -63,7 +63,7 @@ function startMonitoringBatch(configuration: Configuration) {
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
       configuration.flushTimeout,
-      () =>
+      (message: utils.Context) =>
         utils.deepMerge(
           {
             date: new Date().getTime(),
@@ -72,7 +72,8 @@ function startMonitoringBatch(configuration: Configuration) {
               url: window.location.href,
             },
           },
-          externalContextProvider !== undefined ? externalContextProvider() : {}
+          externalContextProvider !== undefined ? externalContextProvider() : {},
+          message
         ) as utils.Context
     )
   }

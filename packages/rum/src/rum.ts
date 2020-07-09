@@ -237,22 +237,20 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
   let replicaBatch: Batch<Context> | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpoint, () => ({
-      application_id: replica.applicationId,
-    }))
+    replicaBatch = createRumBatch(
+      replica.rumEndpoint,
+      (message: Context) => deepMerge(message, { application_id: replica.applicationId }) as Context
+    )
   }
 
-  function createRumBatch(endpointUrl: string, extraContextProvider?: () => Context) {
-    const emptyContext = {}
+  function createRumBatch(endpointUrl: string, processor?: (message: Context) => Context) {
     return new Batch<Context>(
       new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
       configuration.flushTimeout,
-      () => {
-        return extraContextProvider ? extraContextProvider() : emptyContext
-      },
+      processor,
       () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
     )
   }

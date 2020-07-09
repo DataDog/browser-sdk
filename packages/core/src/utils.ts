@@ -189,6 +189,10 @@ export function toSnakeCase(word: string) {
 // tslint:disable-next-line:no-empty
 export function noop() {}
 
+export function identity<T>(a: T): T {
+  return a
+}
+
 interface ObjectWithToJSON {
   toJSON: (() => object) | undefined
 }
