@@ -234,38 +234,38 @@ interface RumBatch {
 function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBatch {
   const primaryBatch = createRumBatch(configuration.rumEndpoint)
 
-  let replicaBatch: Batch<Context> | undefined
+  let replicaBatch: Batch | undefined
   const replica = configuration.replica
   if (replica !== undefined) {
-    replicaBatch = createRumBatch(
-      replica.rumEndpoint,
-      (message: Context) => deepMerge(message, { application_id: replica.applicationId }) as Context
-    )
+    replicaBatch = createRumBatch(replica.rumEndpoint)
   }
 
-  function createRumBatch(endpointUrl: string, processor?: (message: Context) => Context) {
-    return new Batch<Context>(
+  function createRumBatch(endpointUrl: string) {
+    return new Batch(
       new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
       configuration.flushTimeout,
-      processor,
       () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
     )
+  }
+
+  function withReplicaApplicationId(message: Context) {
+    return deepMerge(message, { application_id: replica!.applicationId }) as Context
   }
 
   return {
     add: (message: Context) => {
       primaryBatch.add(message)
       if (replicaBatch) {
-        replicaBatch.add(message)
+        replicaBatch.add(withReplicaApplicationId(message))
       }
     },
     upsert: (message: Context, key: string) => {
       primaryBatch.upsert(message, key)
       if (replicaBatch) {
-        replicaBatch.upsert(message, key)
+        replicaBatch.upsert(withReplicaApplicationId(message), key)
       }
     },
   }

@@ -99,39 +99,43 @@ export function startLogger(
 function startLoggerBatch(configuration: Configuration, session: LoggerSession, globalContextProvider: () => Context) {
   const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
 
-  let replicaBatch: Batch<LogsMessage> | undefined
+  let replicaBatch: Batch | undefined
   if (configuration.replica !== undefined) {
     replicaBatch = createLoggerBatch(configuration.replica.logsEndpoint)
   }
 
   function createLoggerBatch(endpointUrl: string) {
-    return new Batch<LogsMessage>(
+    return new Batch(
       new HttpRequest(endpointUrl, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
-      configuration.flushTimeout,
-      (message: Context) =>
-        deepMerge(
-          {
-            date: new Date().getTime(),
-            session_id: session.getId(),
-            view: {
-              referrer: document.referrer,
-              url: window.location.href,
-            },
-          },
-          globalContextProvider(),
-          getRUMInternalContext() as Context,
-          message
-        ) as Context
+      configuration.flushTimeout
     )
   }
+
+  function withContext(message: LogsMessage) {
+    return deepMerge(
+      {
+        date: new Date().getTime(),
+        session_id: session.getId(),
+        view: {
+          referrer: document.referrer,
+          url: window.location.href,
+        },
+      },
+      globalContextProvider(),
+      getRUMInternalContext() as Context,
+      message
+    ) as Context
+  }
+
   return {
     add(message: LogsMessage) {
-      primaryBatch.add(message)
+      const contextualizedMessage = withContext(message)
+      primaryBatch.add(contextualizedMessage)
       if (replicaBatch) {
-        replicaBatch.add(message)
+        replicaBatch.add(contextualizedMessage)
       }
     },
   }
