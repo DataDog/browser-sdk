@@ -14,7 +14,7 @@ export interface InternalMonitoring {
   setExternalContextProvider: (provider: () => utils.Context) => void
 }
 
-export interface MonitoringMessage {
+export interface MonitoringMessage extends utils.Context {
   message: string
   status: StatusType
   error?: {
@@ -24,7 +24,7 @@ export interface MonitoringMessage {
 }
 
 const monitoringConfiguration: {
-  batch?: Batch<MonitoringMessage>
+  batch?: Batch
   debugMode?: boolean
   maxMessagesPerPage: number
   sentMessageCount: number
@@ -51,37 +51,41 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
 
 function startMonitoringBatch(configuration: Configuration) {
   const primaryBatch = createMonitoringBatch(configuration.internalMonitoringEndpoint!)
-  let replicaBatch: Batch<MonitoringMessage> | undefined
+  let replicaBatch: Batch | undefined
   if (configuration.replica !== undefined) {
     replicaBatch = createMonitoringBatch(configuration.replica.internalMonitoringEndpoint)
   }
 
   function createMonitoringBatch(endpointUrl: string) {
-    return new Batch<MonitoringMessage>(
+    return new Batch(
       new HttpRequest(endpointUrl, configuration.batchBytesLimit),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
-      configuration.flushTimeout,
-      () =>
-        utils.deepMerge(
-          {
-            date: new Date().getTime(),
-            view: {
-              referrer: document.referrer,
-              url: window.location.href,
-            },
-          },
-          externalContextProvider !== undefined ? externalContextProvider() : {}
-        ) as utils.Context
+      configuration.flushTimeout
     )
+  }
+
+  function withContext(message: MonitoringMessage) {
+    return utils.deepMerge(
+      {
+        date: new Date().getTime(),
+        view: {
+          referrer: document.referrer,
+          url: window.location.href,
+        },
+      },
+      externalContextProvider !== undefined ? externalContextProvider() : {},
+      message
+    ) as utils.Context
   }
 
   return {
     add(message: MonitoringMessage) {
-      primaryBatch.add(message)
+      const contextualizedMessage = withContext(message)
+      primaryBatch.add(contextualizedMessage)
       if (replicaBatch) {
-        replicaBatch.add(message)
+        replicaBatch.add(contextualizedMessage)
       }
     },
   }
