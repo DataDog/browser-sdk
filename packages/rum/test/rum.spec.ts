@@ -10,7 +10,7 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
-import { UserAction, UserActionType } from '../src/userActionCollection'
+import { CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -215,7 +215,7 @@ describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
-  const FAKE_USER_ACTION: UserAction = {
+  const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     context: { foo: 'bar' },
     name: 'action',
     type: UserActionType.CUSTOM,
@@ -247,7 +247,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
 
     expect(server.requests.length).toEqual(4)
   })
@@ -289,7 +289,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -529,7 +529,7 @@ describe('rum user action', () => {
     const { server, lifeCycle } = setupBuilder.build()
     server.requests = []
 
-    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, {
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
       context: { fooBar: 'foo' },
       name: 'hello',
       type: UserActionType.CUSTOM,

@@ -36,15 +36,15 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
     currentSessionId = session.getId()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.ACTION_CREATED, (internalContext) => {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (internalContext) => {
     currentAction = internalContext
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, () => {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, () => {
     currentAction = undefined
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, () => {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
     currentAction = undefined
   })
 
