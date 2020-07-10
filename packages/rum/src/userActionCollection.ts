@@ -32,8 +32,6 @@ export interface AutoUserAction {
   measures: UserActionMeasures
 }
 
-export type UserAction = CustomUserAction | AutoUserAction
-
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const userAction = startUserActionManagement(lifeCycle)
 
