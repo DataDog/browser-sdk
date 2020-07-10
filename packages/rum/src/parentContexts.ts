@@ -1,6 +1,7 @@
 import { Context } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
+import { AutoUserAction } from './userActionCollection'
 
 export interface ViewContext extends Context {
   sessionId: string | undefined
@@ -16,31 +17,59 @@ export interface ActionContext extends Context {
   }
 }
 
-interface InternalContext {
-  id: string
-  startTime: number
-}
-
 export interface ParentContexts {
   findAction: (startTime?: number) => ActionContext | undefined
   findView: (startTime?: number) => ViewContext | undefined
 }
 
-export function startParentContexts(location: Location, lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  let currentView: InternalContext | undefined
-  let currentAction: InternalContext | undefined
+interface CurrentContext {
+  id: string
+  startTime: number
+}
+
+interface PreviousContext<T> {
+  startTime: number
+  endTime: number
+  context: T
+}
+
+export function startParentContexts(
+  location: Location,
+  lifeCycle: LifeCycle,
+  session: RumSession,
+  withContextHistory: boolean
+): ParentContexts {
+  let currentView: CurrentContext | undefined
+  let currentAction: CurrentContext | undefined
   let currentSessionId: string | undefined
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (internalContext) => {
-    currentView = internalContext
+  const previousViews: Array<PreviousContext<ViewContext>> = []
+  const previousActions: Array<PreviousContext<ActionContext>> = []
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
+    if (currentView && withContextHistory) {
+      previousViews.unshift({
+        context: buildCurrentViewContext(),
+        endTime: currentContext.startTime,
+        startTime: currentView.startTime,
+      })
+    }
+    currentView = currentContext
     currentSessionId = session.getId()
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (internalContext) => {
-    currentAction = internalContext
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
+    currentAction = currentContext
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, () => {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (userAction: AutoUserAction) => {
+    if (currentAction && withContextHistory) {
+      previousActions.unshift({
+        context: buildCurrentActionContext(),
+        endTime: currentAction.startTime + userAction.duration,
+        startTime: currentAction.startTime,
+      })
+    }
     currentAction = undefined
   })
 
@@ -48,13 +77,46 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
     currentAction = undefined
   })
 
+  function buildCurrentViewContext() {
+    return { sessionId: currentSessionId, view: { id: currentView!.id, url: location.href } }
+  }
+
+  function buildCurrentActionContext() {
+    return { userAction: { id: currentAction!.id } }
+  }
+
+  function findContext<T>(
+    buildContext: () => T,
+    previousContexts: Array<PreviousContext<T>>,
+    currentContext?: CurrentContext,
+    startTime?: number
+  ) {
+    if (!startTime) {
+      return currentContext ? buildContext() : undefined
+    }
+    if (currentContext && startTime >= currentContext.startTime) {
+      return buildContext()
+    }
+    if (!withContextHistory) {
+      return undefined
+    }
+    for (const previousContext of previousContexts) {
+      if (startTime > previousContext.endTime) {
+        break
+      }
+      if (startTime >= previousContext.startTime) {
+        return previousContext.context
+      }
+    }
+    return undefined
+  }
+
   return {
     findAction: (startTime) => {
-      if (!currentAction || (startTime !== undefined && startTime < currentAction.startTime)) {
-        return undefined
-      }
-      return { userAction: { id: currentAction.id } }
+      return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
     },
-    findView: () => currentView && { sessionId: currentSessionId, view: { id: currentView.id, url: location.href } },
+    findView: (startTime) => {
+      return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
+    },
   }
 }
