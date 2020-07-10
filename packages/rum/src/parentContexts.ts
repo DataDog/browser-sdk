@@ -1,7 +1,11 @@
-import { Context } from '@datadog/browser-core'
+import { Context, monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
 import { AutoUserAction } from './userActionCollection'
+
+export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 
 export interface ViewContext extends Context {
   sessionId: string | undefined
@@ -17,11 +21,6 @@ export interface ActionContext extends Context {
   }
 }
 
-export interface ParentContexts {
-  findAction: (startTime?: number) => ActionContext | undefined
-  findView: (startTime?: number) => ViewContext | undefined
-}
-
 interface CurrentContext {
   id: string
   startTime: number
@@ -31,6 +30,12 @@ interface PreviousContext<T> {
   startTime: number
   endTime: number
   context: T
+}
+
+export interface ParentContexts {
+  findAction: (startTime?: number) => ActionContext | undefined
+  findView: (startTime?: number) => ViewContext | undefined
+  stop: () => void
 }
 
 export function startParentContexts(
@@ -43,8 +48,8 @@ export function startParentContexts(
   let currentAction: CurrentContext | undefined
   let currentSessionId: string | undefined
 
-  const previousViews: Array<PreviousContext<ViewContext>> = []
-  const previousActions: Array<PreviousContext<ActionContext>> = []
+  let previousViews: Array<PreviousContext<ViewContext>> = []
+  let previousActions: Array<PreviousContext<ActionContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     if (currentView && withContextHistory) {
@@ -76,6 +81,28 @@ export function startParentContexts(
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
     currentAction = undefined
   })
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    previousViews = []
+    previousActions = []
+    currentView = undefined
+    currentAction = undefined
+  })
+
+  const clearOldContextsInterval = window.setInterval(
+    monitor(() => {
+      clearOldContexts(previousViews, VIEW_CONTEXT_TIME_OUT_DELAY)
+      clearOldContexts(previousActions, ACTION_CONTEXT_TIME_OUT_DELAY)
+    }),
+    CLEAR_OLD_CONTEXTS_INTERVAL
+  )
+
+  function clearOldContexts(previousContexts: Array<PreviousContext<unknown>>, timeOutDelay: number) {
+    const oldTimeThreshold = performance.now() - timeOutDelay
+    while (previousContexts.length > 0 && previousContexts[previousContexts.length - 1].startTime < oldTimeThreshold) {
+      previousContexts.pop()
+    }
+  }
 
   function buildCurrentViewContext() {
     return { sessionId: currentSessionId, view: { id: currentView!.id, url: location.href } }
@@ -117,6 +144,9 @@ export function startParentContexts(
     },
     findView: (startTime) => {
       return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
+    },
+    stop: () => {
+      window.clearInterval(clearOldContextsInterval)
     },
   }
 }

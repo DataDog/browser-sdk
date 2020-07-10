@@ -1,4 +1,9 @@
 import { LifeCycleEventType } from '../src/lifeCycle'
+import {
+  ACTION_CONTEXT_TIME_OUT_DELAY,
+  CLEAR_OLD_CONTEXTS_INTERVAL,
+  VIEW_CONTEXT_TIME_OUT_DELAY,
+} from '../src/parentContexts'
 import { AutoUserAction } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -154,6 +159,10 @@ describe('parentContexts (with context history)', () => {
       .withParentContexts(true)
   })
 
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
   describe('findView', () => {
     it('should return undefined when there is no current view and no startTime', () => {
       const { parentContexts } = setupBuilder.build()
@@ -286,6 +295,54 @@ describe('parentContexts (with context history)', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
 
       expect(parentContexts.findAction()).toBeUndefined()
+    })
+  })
+
+  describe('history contexts', () => {
+    it('should be cleared on SESSION_RENEWED', () => {
+      const { lifeCycle, parentContexts } = setupBuilder.build()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 10, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 20, id: 'view 2' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
+
+      expect(parentContexts.findView(15)).toBeDefined()
+      expect(parentContexts.findAction(15)).toBeDefined()
+      expect(parentContexts.findView(25)).toBeDefined()
+      expect(parentContexts.findAction(25)).toBeDefined()
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(parentContexts.findView(15)).toBeUndefined()
+      expect(parentContexts.findAction(15)).toBeUndefined()
+      expect(parentContexts.findView(25)).toBeUndefined()
+      expect(parentContexts.findAction(25)).toBeUndefined()
+    })
+
+    it('should be cleared when too old', () => {
+      const { lifeCycle, parentContexts, clock } = setupBuilder.withFakeClock().build()
+
+      const originalTime = performance.now()
+      const targetTime = originalTime + 5
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: originalTime, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: originalTime, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: originalTime + 10, id: 'view 2' })
+
+      clock.tick(10)
+      expect(parentContexts.findView(targetTime)).toBeDefined()
+      expect(parentContexts.findAction(targetTime)).toBeDefined()
+
+      clock.tick(ACTION_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
+      expect(parentContexts.findView(targetTime)).toBeDefined()
+      expect(parentContexts.findAction(targetTime)).toBeUndefined()
+
+      clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
+      expect(parentContexts.findView(targetTime)).toBeUndefined()
+      expect(parentContexts.findAction(targetTime)).toBeUndefined()
     })
   })
 })

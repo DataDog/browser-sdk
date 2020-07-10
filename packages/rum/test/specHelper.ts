@@ -120,6 +120,9 @@ export function setup(): TestSetupBuilder {
     withParentContexts(withContextHistory: boolean) {
       buildTasks.push(() => {
         parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session, withContextHistory)
+        cleanupTasks.push(() => {
+          parentContexts.stop()
+        })
       })
       return setupBuilder
     },
