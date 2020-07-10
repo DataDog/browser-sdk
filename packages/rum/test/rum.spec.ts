@@ -10,7 +10,7 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
-import { CustomUserAction, UserActionType } from '../src/userActionCollection'
+import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -581,5 +581,55 @@ describe('rum context', () => {
     const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
     expect(subsequentRequests[0].evt.category).toEqual('view')
     expect(subsequentRequests[0].date).toEqual(initialViewDate)
+  })
+})
+
+describe('rum internal context', () => {
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    setupBuilder = setup().withRum()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should return current internal context', () => {
+    const { rumApi, lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
+
+    expect(rumApi.getInternalContext()).toEqual({
+      application_id: 'appId',
+      session_id: '1234',
+      user_action: {
+        id: 'fake',
+      },
+      view: {
+        id: jasmine.any(String),
+        url: window.location.href,
+      },
+    })
+  })
+
+  it('should return internal context corresponding to startTime', () => {
+    const { rumApi, lifeCycle } = setupBuilder.build()
+
+    const stubUserAction: Partial<AutoUserAction> = { duration: 10 }
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubUserAction as AutoUserAction)
+
+    expect(rumApi.getInternalContext(15)).toEqual({
+      application_id: 'appId',
+      session_id: '1234',
+      user_action: {
+        id: 'fake',
+      },
+      view: {
+        id: jasmine.any(String),
+        url: window.location.href,
+      },
+    })
   })
 })
