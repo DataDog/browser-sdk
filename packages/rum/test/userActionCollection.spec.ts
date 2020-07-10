@@ -59,9 +59,9 @@ describe('startUserActionCollection', () => {
       .withFakeClock()
       .withUserActionCollection()
       .beforeBuild((lifeCycle) => {
-        lifeCycle.subscribe(LifeCycleEventType.ACTION_CREATED, createSpy)
-        lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
-        lifeCycle.subscribe(LifeCycleEventType.ACTION_DISCARDED, discardSpy)
+        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
+        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+        lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
       })
   })
 
@@ -152,7 +152,7 @@ describe('newUserAction', () => {
 
   it('ignores any starting user action while another one is happening', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
+    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
     newClick('test-1')
     newClick('test-2')
@@ -168,7 +168,7 @@ describe('newUserAction', () => {
   it('counts errors occurring during the user action', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     const error = {}
-    lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, pushEvent)
+    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
     newClick('test-1')
 

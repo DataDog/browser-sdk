@@ -9,7 +9,7 @@ import {
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
-import { UserAction, UserActionType } from '../src/userActionCollection'
+import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -21,12 +21,16 @@ const FAKE_LONG_TASK = {
   entryType: 'longtask',
   startTime: 456,
 }
-const FAKE_USER_ACTION = {
+const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
   context: {
     bar: 123,
   },
   name: 'foo',
   type: UserActionType.CUSTOM,
+}
+const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {
+  name: 'foo',
+  type: UserActionType.CLICK,
 }
 const FAKE_PAINT_ENTRY = {
   entryType: 'paint',
@@ -384,11 +388,12 @@ describe('rum view measures', () => {
     expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, FAKE_USER_ACTION as UserAction)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoUserAction)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.userActionCount).toEqual(1)
+    expect(getViewEvent(1).measures.userActionCount).toEqual(2)
     expect(getViewEvent(2).measures.userActionCount).toEqual(0)
   })
 

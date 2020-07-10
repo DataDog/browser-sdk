@@ -1,7 +1,7 @@
 import { ErrorMessage, objectValues } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { EventCounts, trackEventCounts } from '../src/trackEventCounts'
-import { UserAction } from '../src/userActionCollection'
+import { AutoUserAction, CustomUserAction } from '../src/userActionCollection'
 
 describe('trackEventCounts', () => {
   let lifeCycle: LifeCycle
@@ -34,8 +34,9 @@ describe('trackEventCounts', () => {
   it('tracks user actions', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     const userAction = {}
-    lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, userAction as UserAction)
-    expect(eventCounts.userActionCount).toBe(1)
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, userAction as AutoUserAction)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, userAction as CustomUserAction)
+    expect(eventCounts.userActionCount).toBe(2)
   })
 
   it('tracks resources', () => {

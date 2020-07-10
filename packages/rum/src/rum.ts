@@ -209,7 +209,7 @@ export function startRum(
       globalContext[key] = value
     }),
     addUserAction: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.ACTION_COMPLETED, { context, name, type: UserActionType.CUSTOM })
+      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
     }),
     getInternalContext: monitor(
       (startTime?: number): InternalContext => {
@@ -381,42 +381,38 @@ function trackCustomUserAction(
   lifeCycle: LifeCycle,
   handler: (startTime: number, event: RumUserActionEvent, customerContext?: Context) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, (userAction) => {
-    if (userAction.type === UserActionType.CUSTOM) {
-      handler(
-        performance.now(),
-        {
-          evt: {
-            category: RumEventCategory.USER_ACTION,
-            name: userAction.name,
-          },
-          userAction: {
-            type: userAction.type,
-          },
-        },
-        userAction.context
-      )
-    }
-  })
-}
-
-function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.ACTION_COMPLETED, (userAction) => {
-    if (userAction.type !== UserActionType.CUSTOM) {
-      handler(userAction.startTime, {
-        date: getTimestamp(userAction.startTime),
-        duration: msToNs(userAction.duration),
+  lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, (userAction) => {
+    handler(
+      performance.now(),
+      {
         evt: {
           category: RumEventCategory.USER_ACTION,
           name: userAction.name,
         },
         userAction: {
-          id: userAction.id,
-          measures: userAction.measures,
           type: userAction.type,
         },
-      })
-    }
+      },
+      userAction.context
+    )
+  })
+}
+
+function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (userAction) => {
+    handler(userAction.startTime, {
+      date: getTimestamp(userAction.startTime),
+      duration: msToNs(userAction.duration),
+      evt: {
+        category: RumEventCategory.USER_ACTION,
+        name: userAction.name,
+      },
+      userAction: {
+        id: userAction.id,
+        measures: userAction.measures,
+        type: userAction.type,
+      },
+    })
   })
 }
 
