@@ -7,9 +7,9 @@ export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
 
   function createCustomEvent(lifeCycleEventType: string, content: any) {
-    const customEvent = new CustomEvent('custom-rum-event', {
+    const customEvent = new CustomEvent(CUSTOM_EVENT_NAME, {
       detail: {
-        content,
+        content: JSON.stringify(content),
         date: performance.now(),
         type: lifeCycleEventType,
       },
