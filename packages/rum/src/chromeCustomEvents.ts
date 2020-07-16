@@ -9,16 +9,10 @@ export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
   function createCustomEvent(lifeCycleEventType: string, content: any) {
     const customEvent = new CustomEvent(CUSTOM_EVENT_NAME, {
       detail: {
-        content,
+        content: JSON.stringify(content),
         date: performance.now(),
         type: lifeCycleEventType,
       },
-    })
-
-    console.log('createCustomEvent:', {
-      content,
-      date: performance.now(),
-      type: lifeCycleEventType,
     })
 
     if (ROOT_TAG && ROOT_TAG.length) {
