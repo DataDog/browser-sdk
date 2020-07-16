@@ -5,21 +5,21 @@ const CUSTOM_EVENT_NAME = 'custom-rum-event'
 
 console.log('Waiting RUM events on:', ROOT_TAG, 'CUSTOM_EVENT_NAME:', CUSTOM_EVENT_NAME)
 
-interface CustomeEventDetail {
+interface CustomEventDetail {
   content: string
   date: number
-  type: LifeCycleEventType
+  type: string
 }
 
 if (ROOT_TAG && ROOT_TAG.length) {
-  ROOT_TAG[0].addEventListener(CUSTOM_EVENT_NAME, (customEvent: CustomEvent<CustomeEventDetail>) => {
+  ROOT_TAG[0].addEventListener(CUSTOM_EVENT_NAME, (customEvent: CustomEvent<CustomEventDetail>) => {
     if (
       customEvent.detail &&
-      (String(customEvent.detail.type) === String(LifeCycleEventType.VIEW_CREATED) ||
-        String(customEvent.detail.type) === String(LifeCycleEventType.VIEW_UPDATED))
+      (customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_CREATED] ||
+        customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_UPDATED])
     ) {
       const view: View = JSON.parse(customEvent.detail.content) as View
-      console.log('Received View:', LifeCycleEventType[customEvent.detail.type], view)
+      console.log('Received View:', customEvent.detail.type, view)
     }
   })
 }
