@@ -10,22 +10,10 @@ interface CustomEventDetail {
   type: string
 }
 
-/**
- * Inject the checkSDK script into the page body
- */
-const injectScript = (file, node) => {
-    var th = document.getElementsByTagName(node)[0];
-    var s = document.createElement('script');
-    s.setAttribute('type', 'text/javascript');
-    s.setAttribute('src', file);
-    th.appendChild(s);
-}
-injectScript(chrome.extension.getURL('/assets/checkSDK.js'), 'body');
-
 if (ROOT_TAG && ROOT_TAG.length) {
   ROOT_TAG[0].addEventListener(RUM_SDK_ON, () => {
-    chrome.runtime.sendMessage({sdkEnabled: true});
-    
+    chrome.runtime.sendMessage({ sdkEnabled: true })
+
     console.log('Waiting RUM events on:', ROOT_TAG, 'CUSTOM_EVENT_NAME:', CUSTOM_EVENT_NAME)
     ROOT_TAG[0].addEventListener(CUSTOM_EVENT_NAME, (customEvent: CustomEvent<CustomEventDetail>) => {
       if (

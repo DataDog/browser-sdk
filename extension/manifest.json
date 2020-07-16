@@ -8,6 +8,10 @@
       "js": ["listenRumEvents.js"],
       "matches": ["<all_urls>"],
       "run_at": "document_start"
+    },
+    {
+      "js": ["detectRum.js"],
+      "matches": ["<all_urls>"]
     }
   ],
   "background": {

@@ -5,6 +5,7 @@ module.exports = {
   mode: 'production',
   devtool: 'inline-source-map',
   entry: {
+    detectRum: path.resolve(__dirname, 'src/contentscript/detectRum.ts'),
     listenRumEvents: path.resolve(__dirname, 'src/contentscript/listenRumEvents.ts'),
     background: path.resolve(__dirname, 'src/background/background.ts'),
   },
