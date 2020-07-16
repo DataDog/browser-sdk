@@ -16,7 +16,14 @@
   },
   "browser_action": {
     "default_popup": "popup/index.html",
-    "default_title": "Extension"
+    "default_title": "Extension",
+    "default_icon": "assets/images/bits_disabled.png"
+  },
+  "icons": {
+    "16": "assets/images/bits.png",
+    "32": "assets/images/bits.png",
+    "48": "assets/images/bits.png",
+    "128": "assets/images/bits.png"
   },
   "web_accessible_resources": ["assets/*"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
