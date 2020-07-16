@@ -7,6 +7,8 @@ import { View } from './lib/rumEventsType'
 function App() {
   const [count, setCount] = useState(0);
 
+  const [views, setViews] = useState<View[]>([]);
+
   const backgroundPageConnection = chrome.runtime.connect({
     name: 'name'
   });
@@ -16,11 +18,27 @@ function App() {
   });
 
   backgroundPageConnection.onMessage.addListener((request) => {
-    setCount(request.data)
+    if(request.data){
+      setCount(request.data)
+    }
+ 
   });
 
+  backgroundPageConnection.onMessage.addListener((request) => {
+    if(request.views){
+      setViews(request.views as View[])
+    }
 
-const currentViews : View[] = []
+  });
+
+  function refreshClick(){
+    console.log('refreshClick refreshClick')
+    backgroundPageConnection.postMessage({
+      type: 'refreshViews',
+    });
+  }
+
+
 
   return (
     <div className="App">
@@ -30,18 +48,15 @@ const currentViews : View[] = []
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
         <p>{count}</p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <p>
-        currentViews.length: {currentViews.length}
-        </p>
-        {currentViews.map((view: View) => (<p>View Id: {view.id}</p>))}
+        {views && (
+          <>
+            <p>
+              views.length: {views.length}
+            </p>
+            {views.map((view: View) => (<p>View Id: {view.id}</p>))}
+          </>
+        )}
+        <button type="button" onClick={refreshClick}>Refresh</button>
       </header>
     </div>
   );
