@@ -1,6 +1,7 @@
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
-const rootTag: HTMLElement | null = document.getElementById('body')
+const ROOT_TAG: HTMLCollection | null = document.getElementsByTagName('html')
+const CUSTOM_EVENT_NAME = 'custom-rum-event'
 
 export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
   const subscriptions: Subscription[] = []
@@ -14,8 +15,8 @@ export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
       },
     })
 
-    if (rootTag) {
-      rootTag.dispatchEvent(customEvent)
+    if (ROOT_TAG && ROOT_TAG.length) {
+      ROOT_TAG[0].dispatchEvent(customEvent)
     }
   }
 

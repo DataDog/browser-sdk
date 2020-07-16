@@ -5,8 +5,7 @@
     yarn
     yarn build // or yarn watch
 
-Load `extension/dist` as unpacked extension  
-
+Load `extension/dist` as unpacked extension
 
 ## Useful links
 
