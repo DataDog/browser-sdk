@@ -1,4 +1,4 @@
-import { LifeCycleEventType, View } from '../lib/rumEvents'
+import { addOrUpdateViews, LifeCycleEventType, View } from '../lib/rumEvents'
 
 const ROOT_TAG: HTMLCollection | null = document.getElementsByTagName('html')
 const CUSTOM_EVENT_NAME = 'custom-rum-event'
@@ -18,8 +18,8 @@ if (ROOT_TAG && ROOT_TAG.length) {
       (customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_CREATED] ||
         customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_UPDATED])
     ) {
-      const view: View = JSON.parse(customEvent.detail.content) as View
-      console.log('Received View:', customEvent.detail.type, view)
+      const oldViews: View[] = []
+      const newViews: View[] = addOrUpdateViews(JSON.parse(customEvent.detail.content) as View, oldViews)
     }
   })
 }

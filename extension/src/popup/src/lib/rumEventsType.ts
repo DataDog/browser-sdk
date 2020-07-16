@@ -15,6 +15,10 @@ export enum LifeCycleEventType {
   BEFORE_UNLOAD,
 }
 
+export enum RumEventLocalStorageKey {
+  Views = 'views',
+}
+
 export interface View {
   id: string
   location: Location
@@ -41,10 +45,4 @@ export interface ViewMeasures {
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
-}
-
-export function addOrUpdateViews(addOrUpdateView: View, oldViews: View[]) {
-  const newViews: View[] = oldViews.filter((view) => view.id !== addOrUpdateView.id)
-  newViews.push(addOrUpdateView)
-  return newViews
 }

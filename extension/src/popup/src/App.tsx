@@ -2,6 +2,10 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+import { View } from './lib/rumEventsType'
+
+const currentViews : View[] = []
+
 function App() {
   return (
     <div className="App">
@@ -18,6 +22,10 @@ function App() {
         >
           Learn React
         </a>
+        <p>
+        currentViews.length: {currentViews.length}
+        </p>
+        {currentViews.map((view: View) => (<p>View Id: {view.id}</p>))}
       </header>
     </div>
   );
