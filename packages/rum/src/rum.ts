@@ -203,10 +203,10 @@ export function startRum(
     () => globalContext
   )
 
+  startSendingChromeCustomEvents(lifeCycle)
+
   trackRumEvents(configuration, lifeCycle, session, handler, batch)
   startViewCollection(location, lifeCycle)
-
-  startSendingChromeCustomEvents(lifeCycle)
 
   return {
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {

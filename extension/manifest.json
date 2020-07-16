@@ -5,7 +5,12 @@
   "permissions": ["activeTab"],
   "content_scripts": [
     {
-      "js": ["contentscript.js"],
+      "js": ["listenRumEvents.js"],
+      "matches": ["<all_urls>"],
+      "run_at": "document_start"
+    },
+    {
+      "js": ["detectRum.js"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -16,6 +21,11 @@
   "browser_action": {
     "default_popup": "popup/index.html",
     "default_title": "Extension"
+  },
+  "icons": {
+    "16": "assets/images/bits16.png",
+    "48": "assets/images/bits48.png",
+    "128": "assets/images/bits128.png"
   },
   "web_accessible_resources": ["assets/*"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"

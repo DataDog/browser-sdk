@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
 import { View } from './lib/rumEventsType'
 
+function App() {
+  const [count, setCount] = useState(0);
+
+  const backgroundPageConnection = chrome.runtime.connect({
+    name: 'name'
+  });
+
+  backgroundPageConnection.postMessage({
+    type: 'hello',
+  });
+
+  backgroundPageConnection.onMessage.addListener((request) => {
+    setCount(request.data)
+  });
+
+
 const currentViews : View[] = []
 
-function App() {
   return (
     <div className="App">
       <header className="App-header">
@@ -14,6 +29,7 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
+        <p>{count}</p>
         <a
           className="App-link"
           href="https://reactjs.org"
