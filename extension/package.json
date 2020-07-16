@@ -6,6 +6,8 @@
   "dependencies": {
     "@types/chrome": "0.0.120",
     "@types/node": "14.0.23",
+    "cra-build-watch": "3.2.0",
+    "npm-run-all": "4.1.5",
     "ts-loader": "8.0.1",
     "tsconfig-paths-webpack-plugin": "3.2.0",
     "tslint": "6.1.2",
@@ -14,8 +16,13 @@
     "webpack-cli": "3.3.12"
   },
   "scripts": {
+    "postinstall": "cd src/popup && yarn",
     "clean": "rm -rf dist && mkdir dist && cp manifest.json dist && cp -r src/assets dist/",
-    "build": "yarn clean && webpack --config webpack.config.js",
-    "watch": "yarn clean && webpack --config webpack.config.js -w"
+    "build": "yarn clean && npm-run-all -p build:*",
+    "build:contentscript-background": "webpack --config webpack.config.js",
+    "build:popup": "cd src/popup && INLINE_RUNTIME_CHUNK=false yarn build && cd build && mkdir -p ../../../dist/popup && cp -r * ../../../dist/popup",
+    "watch": "yarn clean && npm-run-all -p watch:*",
+    "watch:contentscript-background": "webpack --config webpack.config.js -w",
+    "watch:popup": "cd src/popup && yarn watch:build"
   }
 }

@@ -13,6 +13,10 @@
     "scripts": ["background.js"],
     "persistent": false
   },
+  "browser_action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Extension"
+  },
   "web_accessible_resources": ["assets/*"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
