@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "extension",
   "version": "1.0.0",
-  "permissions": [],
+  "permissions": ["activeTab"],
   "content_scripts": [
     {
       "js": ["contentscript.js"],
