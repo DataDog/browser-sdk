@@ -36,6 +36,8 @@ import { RumSession } from './rumSession'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
+import { startSendingChromeCustomEvents } from './chromeCustomEvents'
+
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
   name: 'first-paint' | 'first-contentful-paint'
@@ -203,6 +205,8 @@ export function startRum(
 
   trackRumEvents(configuration, lifeCycle, session, handler, batch)
   startViewCollection(location, lifeCycle)
+
+  startSendingChromeCustomEvents(lifeCycle)
 
   return {
     addRumGlobalContext: monitor((key: string, value: ContextValue) => {
