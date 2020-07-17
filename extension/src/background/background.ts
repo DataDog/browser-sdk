@@ -94,7 +94,7 @@ chrome.runtime.onConnect.addListener((popupConnection) => {
             return
           }
 
-          popupConnection.postMessage({ type: 'viewDetails', payload: stub })
+          popupConnection.postMessage({ type: 'viewDetails', payload: tabsState[tabs[0].id].viewDetails })
         })
         break
       default:

@@ -3,7 +3,7 @@ import logo from './bits48.png';
 import './App.css';
 import Accordion from 'react-bootstrap/Accordion';
 import Card from 'react-bootstrap/Card';
-import Button from 'react-bootstrap/Button';
+import Table from 'react-bootstrap/Table';
 
 import {ViewDetail } from './lib/rumEventsType'
 
@@ -54,7 +54,7 @@ function ViewDetailsComponent(viewDetails: ViewDetail[]){
     return (viewDetails && (
       <Accordion className="App-view-accordion">
         {viewDetails.map((viewDetail: ViewDetail) => {
-        return (<ViewDetailComponent key={viewDetail.id} viewDetail={viewDetail}/>);
+        return (<ViewDetailCard key={viewDetail.id} viewDetail={viewDetail}/>);
       
       })}
       </Accordion>
@@ -65,21 +65,45 @@ function ViewDetailsComponent(viewDetails: ViewDetail[]){
   return <></>
 }
 
-interface ViewDetailComponentProps{
+interface ViewDetailCardProps{
   viewDetail: ViewDetail;
 }
 
-function ViewDetailComponent({viewDetail}: ViewDetailComponentProps){
+function ViewDetailCard({viewDetail}: ViewDetailCardProps){
   return (
     <Card className="App-view-card">
       <Accordion.Toggle as={Card.Header} eventKey={viewDetail.id} className="App-view-card-header">
-         {viewDetail.description}
+         {viewDetail.description} - {viewDetail.date}
         </Accordion.Toggle>
       <Accordion.Collapse eventKey={viewDetail.id}>
         <Card.Body className="App-view-card-body">
-          <>{viewDetail.description}</>
+          <ViewDetailExpanded viewDetail={viewDetail}/>
         </Card.Body>
       </Accordion.Collapse>
   </Card>
+  )
+}
+
+
+function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
+  return (
+  <Table striped bordered hover variant="dark">
+    <thead>
+      <tr>
+        <th>description</th>
+        <th>date</th>
+      </tr>
+    </thead>
+    <tbody>
+    {viewDetail && viewDetail.events && viewDetail.events.map((event: any) => {
+      return (
+        <tr>
+        <td>{event.description}</td>
+        <td>{event.date}</td>
+      </tr>
+    )
+    })}
+    </tbody>
+  </Table>
   )
 }
