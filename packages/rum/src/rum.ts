@@ -21,6 +21,8 @@ import {
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 
+import { startSendingChromeCustomEvents } from './chromeCustomEvents'
+
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { ActionContext, ParentContexts, startParentContexts, ViewContext } from './parentContexts'
@@ -35,8 +37,6 @@ import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
-
-import { startSendingChromeCustomEvents } from './chromeCustomEvents'
 
 export interface PerformancePaintTiming extends PerformanceEntry {
   entryType: 'paint'
@@ -200,7 +200,8 @@ export function startRum(
         referrer: document.referrer,
       },
     }),
-    () => globalContext
+    () => globalContext,
+    lifeCycle
   )
 
   startSendingChromeCustomEvents(lifeCycle)
@@ -293,7 +294,8 @@ function makeRumEventHandler(
   parentContexts: ParentContexts,
   session: RumSession,
   rumContextProvider: () => RumContext,
-  globalContextProvider: () => Context
+  globalContextProvider: () => Context,
+  lifeCycle: LifeCycle
 ): RumEventHandler {
   return function rumEventHandler<T extends RawRumEvent>(
     assemble: (event: T, { view, action, rum }: AssembleWithAction) => RumEvent,
@@ -309,6 +311,7 @@ function makeRumEventHandler(
           customerContext,
           withSnakeCaseKeys(rumEvent as Context)
         ) as Context
+        lifeCycle.notify(LifeCycleEventType.EVENT_HANDLED, { message, event: rumEvent })
         callback(message, rumEvent)
       }
     }
