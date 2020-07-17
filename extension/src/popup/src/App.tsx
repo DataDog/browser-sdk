@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import logo from './bits48.png';
 import './App.css';
 import Accordion from 'react-bootstrap/Accordion';
 import Card from 'react-bootstrap/Card';
 import Table from 'react-bootstrap/Table';
+import AccordionContext from 'react-bootstrap/AccordionContext';
+
+import angleDown from './angle-down.svg';
+import angleRight from './angle-right.svg';
 
 import {ViewDetail } from './lib/rumEventsType'
 
@@ -70,10 +74,12 @@ interface ViewDetailCardProps{
 }
 
 function ViewDetailCard({viewDetail}: ViewDetailCardProps){
+  const currentEventKey = useContext(AccordionContext);
+
   return (
     <Card className="App-view-card">
       <Accordion.Toggle as={Card.Header} eventKey={viewDetail.id} className="App-view-card-header">
-         {viewDetail.description} - {viewDetail.date}
+        <img src={!currentEventKey || currentEventKey !== viewDetail.id ? angleRight : angleDown} className="App-view-card-header-icon" alt="logo" /> {viewDetail.description} - {viewDetail.date}
         </Accordion.Toggle>
       <Accordion.Collapse eventKey={viewDetail.id}>
         <Card.Body className="App-view-card-body">
