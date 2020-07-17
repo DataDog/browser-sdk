@@ -48,3 +48,14 @@ export function addOrUpdateViews(addOrUpdateView: View, oldViews: View[]) {
   newViews.push(addOrUpdateView)
   return newViews
 }
+
+export interface ViewDetail {
+  id: string
+  description: string
+  events: RumEventDetail[]
+}
+
+export interface RumEventDetail {
+  description: string
+  event: any
+}

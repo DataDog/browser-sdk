@@ -46,3 +46,14 @@ export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
 }
+
+export interface ViewDetail {
+  id: string
+  description: string
+  events: RumEventDetail[]
+}
+
+export interface RumEventDetail {
+  description: string
+  event: any
+}
