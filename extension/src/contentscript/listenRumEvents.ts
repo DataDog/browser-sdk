@@ -20,7 +20,10 @@ if (ROOT_TAG && ROOT_TAG.length) {
         (customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_CREATED] ||
           customEvent.detail.type === LifeCycleEventType[LifeCycleEventType.VIEW_UPDATED])
       ) {
-        chrome.runtime.sendMessage({ type: 'addOrUpdateViews', payload: JSON.parse(customEvent.detail.content) as View })
+        chrome.runtime.sendMessage({
+          type: 'addOrUpdateViews',
+          payload: JSON.parse(customEvent.detail.content) as View,
+        })
       }
     })
   })
