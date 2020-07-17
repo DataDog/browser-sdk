@@ -1,62 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import logo from './logo.svg';
 import './App.css';
 
 import { View } from './lib/rumEventsType'
 
-function App() {
-  const [count, setCount] = useState(0);
+const backgroundPageConnection = chrome.runtime.connect({ name: 'name' });
 
+function App() {
   const [views, setViews] = useState<View[]>([]);
 
-  const backgroundPageConnection = chrome.runtime.connect({
-    name: 'name'
-  });
-
-  backgroundPageConnection.postMessage({
-    type: 'hello',
-  });
-
-  backgroundPageConnection.onMessage.addListener((request) => {
-    if(request.data){
-      setCount(request.data)
+  const listener = useCallback((request) => {
+    switch(request.type) {
+      case 'views': 
+        setViews(request.payload as View[])
+        break;
+      default:
+        break;
     }
- 
-  });
+  }, []);
 
-  backgroundPageConnection.onMessage.addListener((request) => {
-    if(request.views){
-      setViews(request.views as View[])
+
+  useEffect(() => {
+    backgroundPageConnection.onMessage.addListener(listener);    
+    backgroundPageConnection.postMessage({ type: 'init' });
+
+    const autoRefreshInterval = setInterval(() => {
+      backgroundPageConnection.postMessage({ type: 'refreshViews' });
+    }, 1000)
+
+    return () => {
+      clearInterval(autoRefreshInterval)
+      backgroundPageConnection.onMessage.removeListener(listener)
     }
-
-  });
-
-  function refreshClick(){
-    console.log('refreshClick refreshClick')
-    backgroundPageConnection.postMessage({
-      type: 'refreshViews',
-    });
-  }
-
-
+  }, [listener])
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <p>{count}</p>
+        <p>Refreshing every 1s</p>
         {views && (
           <>
             <p>
               views.length: {views.length}
             </p>
-            {views.map((view: View) => (<p>View Id: {view.id}</p>))}
+            {views.map((view: View) => (<p>View Id: {view.id} - version {view.documentVersion}</p>))}
           </>
         )}
-        <button type="button" onClick={refreshClick}>Refresh</button>
       </header>
     </div>
   );
