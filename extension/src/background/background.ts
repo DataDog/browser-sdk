@@ -44,9 +44,11 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   switch (request.type) {
     case 'enableExtension':
       chrome.browserAction.enable(sender.tab.id)
-      tabsState[sender.tab.id] = { views: [] }
       break
     case 'addOrUpdateViews':
+      if (!tabsState[sender.tab.id]) {
+        tabsState[sender.tab.id] = { views: [] }
+      }
       tabsState[sender.tab.id].views = addOrUpdateViews(request.payload as View, tabsState[sender.tab.id].views)
       break
     default:
