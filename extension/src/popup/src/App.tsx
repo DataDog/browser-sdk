@@ -14,7 +14,7 @@ export default function App() {
 
   const listener = useCallback((request) => {
     switch(request.type) {
-      case 'viewDetails': 
+      case 'viewDetails':
       setViewDetail(request.payload as ViewDetail[])
         break;
       default:
@@ -24,7 +24,7 @@ export default function App() {
 
 
   useEffect(() => {
-    backgroundPageConnection.onMessage.addListener(listener);    
+    backgroundPageConnection.onMessage.addListener(listener);
     backgroundPageConnection.postMessage({ type: 'init' });
 
     const autoRefreshInterval = setInterval(() => {
@@ -41,7 +41,7 @@ export default function App() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        
+
         {ViewDetailsComponent(viewDetails)}
         <p>Refreshing every 1s</p>
       </header>
@@ -55,7 +55,7 @@ function ViewDetailsComponent(viewDetails: ViewDetail[]){
       <Accordion className="App-view-accordion">
         {viewDetails.map((viewDetail: ViewDetail) => {
         return (<ViewDetailCard key={viewDetail.id} viewDetail={viewDetail}/>);
-      
+
       })}
       </Accordion>
       )
@@ -98,7 +98,7 @@ function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
     {viewDetail && viewDetail.events && viewDetail.events.map((event: any) => {
       return (
         <tr>
-        <td>{event.description}</td>
+        <td>{event.description.substring(0, 100)}</td>
         <td>{event.date}</td>
       </tr>
     )
