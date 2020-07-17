@@ -1,6 +1,3 @@
-// disable by default
-chrome.browserAction.disable()
-
 import { addOrUpdateViews, updateViewDetails } from '../lib/processEvents'
 import { View, ViewDetail } from '../lib/rumEvents'
 
@@ -50,7 +47,8 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const tabId = sender.tab.id
   switch (request.type) {
     case 'enableExtension':
-      chrome.browserAction.enable(tabId)
+      chrome.pageAction.show(tabId)
+      chrome.pageAction.setIcon({ tabId, path: chrome.extension.getURL('/assets/images/bits128.png') })
       break
     case 'addOrUpdateViews':
       // TODO remove me

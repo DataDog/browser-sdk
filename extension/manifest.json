@@ -18,9 +18,10 @@
     "scripts": ["background.js"],
     "persistent": false
   },
-  "browser_action": {
+  "page_action": {
     "default_popup": "popup/index.html",
-    "default_title": "Extension"
+    "default_title": "Extension",
+    "default_icon": "assets/images/bits128_gray.png"
   },
   "icons": {
     "16": "assets/images/bits16.png",
