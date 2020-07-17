@@ -2,14 +2,14 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 const ROOT_TAG: HTMLCollection | null = document.getElementsByTagName('html')
 const CUSTOM_EVENT_NAME = 'custom-rum-event'
+const RUM_EVENT_NAME = 'DD_RUM.EVENT'
 
 export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
-  function createCustomEvent(lifeCycleEventType: number, content: any) {
-    const customEvent = new CustomEvent(CUSTOM_EVENT_NAME, {
+  function createCustomEvent(name: string, type: string, content: any) {
+    const customEvent = new CustomEvent(name, {
       detail: {
+        type,
         content: JSON.stringify(content),
-        date: performance.now(),
-        type: LifeCycleEventType[lifeCycleEventType],
       },
     })
 
@@ -30,7 +30,11 @@ export function startSendingChromeCustomEvents(lifeCycle: LifeCycle) {
     )
   for (const lifeCycleEventTypeValue of LifeCycleEventTypes) {
     lifeCycle.subscribe(lifeCycleEventTypeValue as number, (data?: any) => {
-      createCustomEvent(lifeCycleEventTypeValue as number, data)
+      createCustomEvent(CUSTOM_EVENT_NAME, LifeCycleEventType[lifeCycleEventTypeValue as number], data)
     })
   }
+
+  lifeCycle.subscribe(LifeCycleEventType.EVENT_HANDLED, (data) => {
+    createCustomEvent(RUM_EVENT_NAME, data.event.evt.category, data)
+  })
 }

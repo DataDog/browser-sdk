@@ -1,4 +1,5 @@
-import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
+import { Context, ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
+import { RawRumEvent, RumEvent } from './rum'
 import { AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View } from './viewCollection'
 
@@ -17,6 +18,7 @@ export enum LifeCycleEventType {
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
   BEFORE_UNLOAD,
+  EVENT_HANDLED,
 }
 
 export interface Subscription {
@@ -26,6 +28,7 @@ export interface Subscription {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
+  notify(eventType: LifeCycleEventType.EVENT_HANDLED, { message, event }: { message: Context; event: RumEvent }): void
   notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
@@ -52,6 +55,10 @@ export class LifeCycle {
     }
   }
 
+  subscribe(
+    eventType: LifeCycleEventType.EVENT_HANDLED,
+    callback: ({ message, event }: { message: Context; event: RawRumEvent }) => void
+  ): Subscription
   subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,

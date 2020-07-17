@@ -49,11 +49,33 @@ export enum ViewLoadingType {
 
 export interface ViewDetail {
   id: string
+  date: number
   description: string
   events: RumEventDetail[]
 }
 
 export interface RumEventDetail {
   description: string
-  event: any
+  date: number
+  event: any // TODO switch to RumEvent
+}
+
+export interface RumEvent {
+  date: number
+  duration: number
+  message: string
+  userAction: {
+    type: string
+  }
+  evt: {
+    category: string
+    name: string
+  }
+  view: {
+    id: string
+    url: string
+  }
+  http: {
+    url: string
+  }
 }

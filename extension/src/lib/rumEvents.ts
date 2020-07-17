@@ -43,19 +43,35 @@ export enum ViewLoadingType {
   ROUTE_CHANGE = 'route_change',
 }
 
-export function addOrUpdateViews(addOrUpdateView: View, oldViews: View[]) {
-  const newViews: View[] = oldViews.filter((view) => view.id !== addOrUpdateView.id)
-  newViews.push(addOrUpdateView)
-  return newViews
-}
-
 export interface ViewDetail {
   id: string
+  date: number
   description: string
   events: RumEventDetail[]
 }
 
 export interface RumEventDetail {
   description: string
-  event: any
+  date: number
+  event: any // TODO switch to RumEvent
+}
+
+export interface RumEvent {
+  date: number
+  duration: number
+  message: string
+  userAction: {
+    type: string
+  }
+  evt: {
+    category: string
+    name: string
+  }
+  view: {
+    id: string
+    url: string
+  }
+  http: {
+    url: string
+  }
 }

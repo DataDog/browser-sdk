@@ -1,14 +1,17 @@
 // disable by default
 chrome.browserAction.disable()
 
-import { addOrUpdateViews, View, ViewDetail } from '../lib/rumEvents'
+import { addOrUpdateViews, updateViewDetails } from '../lib/processEvents'
+import { View, ViewDetail } from '../lib/rumEvents'
 
-const tabsState: { [tabId: number]: { views: View[] } } = {}
+const tabsState: { [tabId: number]: { views: View[]; viewDetails: ViewDetail[] } } = {}
 const stub: ViewDetail[] = [
   {
+    date: 0,
     description: 'plop',
     events: [
       {
+        date: 0,
         description: 'foo',
         event: {
           a: 'b',
@@ -18,15 +21,18 @@ const stub: ViewDetail[] = [
     id: '1234',
   },
   {
+    date: 1,
     description: 'pouet',
     events: [
       {
+        date: 0,
         description: 'bar',
         event: {
           b: 'c',
         },
       },
       {
+        date: 1,
         description: 'qux',
         event: {
           d: 'e',
@@ -41,13 +47,23 @@ const stub: ViewDetail[] = [
  * MESSAGES BETWEEN EXTENSION AND BACKGROUND PAGE
  */
 chrome.runtime.onMessage.addListener((request, sender) => {
+  const tabId = sender.tab.id
   switch (request.type) {
     case 'enableExtension':
-      chrome.browserAction.enable(sender.tab.id)
-      tabsState[sender.tab.id] = { views: [] }
+      chrome.browserAction.enable(tabId)
       break
     case 'addOrUpdateViews':
-      tabsState[sender.tab.id].views = addOrUpdateViews(request.payload as View, tabsState[sender.tab.id].views)
+      // TODO remove me
+      if (!tabsState[tabId]) {
+        tabsState[tabId] = { views: [], viewDetails: [] }
+      }
+      tabsState[tabId].views = addOrUpdateViews(request.payload as View, tabsState[tabId].views)
+      break
+    case 'eventReceived':
+      if (!tabsState[tabId]) {
+        tabsState[tabId] = { views: [], viewDetails: [] }
+      }
+      tabsState[tabId].viewDetails = updateViewDetails(request.event, tabsState[tabId].viewDetails)
       break
     default:
       break
