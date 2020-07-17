@@ -57,6 +57,7 @@ export interface ViewDetail {
 export interface RumEventDetail {
   description: string
   date: number
+  color: string
   event: any // TODO switch to RumEvent
 }
 
@@ -78,4 +79,12 @@ export interface RumEvent {
   http: {
     url: string
   }
+}
+
+export const RUM_EVENT_COLOR = {
+  error: 'rgb(246, 111, 120)',
+  resource: 'rgb(132, 193, 224)',
+  view: 'rgb(40, 122, 163)',
+  long_task: 'rgb(246, 111, 120)',
+  user_action: 'rgb(146, 110, 182)',
 }

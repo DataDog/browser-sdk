@@ -1,4 +1,4 @@
-import { RumEvent, View, ViewDetail } from './rumEvents'
+import { RumEvent, View, ViewDetail, RUM_EVENT_COLOR } from './rumEvents'
 
 // TODO remove me
 export function addOrUpdateViews(addOrUpdateView: View, oldViews: View[]) {
@@ -21,6 +21,7 @@ export function updateViewDetails({ event }: { event: RumEvent }, viewDetails: V
   if (event.evt.category !== 'view') {
     parentViewDetail.events.push({
       event,
+      color: RUM_EVENT_COLOR[event.evt.category] || RUM_EVENT_COLOR['default'],
       date: event.date,
       description: computeDescription(event.evt.category, event),
     })

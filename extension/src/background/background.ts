@@ -2,43 +2,6 @@ import { addOrUpdateViews, updateViewDetails } from '../lib/processEvents'
 import { View, ViewDetail } from '../lib/rumEvents'
 
 const tabsState: { [tabId: number]: { views: View[]; viewDetails: ViewDetail[] } } = {}
-const stub: ViewDetail[] = [
-  {
-    date: 0,
-    description: 'plop',
-    events: [
-      {
-        date: 0,
-        description: 'foo',
-        event: {
-          a: 'b',
-        },
-      },
-    ],
-    id: '1234',
-  },
-  {
-    date: 1,
-    description: 'pouet',
-    events: [
-      {
-        date: 0,
-        description: 'bar',
-        event: {
-          b: 'c',
-        },
-      },
-      {
-        date: 1,
-        description: 'qux',
-        event: {
-          d: 'e',
-        },
-      },
-    ],
-    id: '7890',
-  },
-]
 
 /**
  * MESSAGES BETWEEN EXTENSION AND BACKGROUND PAGE

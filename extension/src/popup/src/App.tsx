@@ -90,7 +90,7 @@ function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
   <Table striped bordered hover variant="dark">
     <thead>
       <tr>
-        <th>description</th>
+        <th>Child event</th>
         <th>date</th>
       </tr>
     </thead>
@@ -98,9 +98,9 @@ function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
     {viewDetail && viewDetail.events && viewDetail.events.map((event: any) => {
       return (
         <tr>
-        <td>{event.description.substring(0, 100)}</td>
-        <td>{event.date}</td>
-      </tr>
+          <td style={{color: event.color}}>{event.description.substring(0, 100)}</td>
+          <td>{event.date}</td>
+        </tr>
     )
     })}
     </tbody>
