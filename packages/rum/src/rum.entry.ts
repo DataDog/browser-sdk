@@ -51,7 +51,7 @@ const STUBBED_RUM = {
   addUserAction(name: string, context: Context) {
     makeStub('addUserAction')
   },
-  getInternalContext(): InternalContext | undefined {
+  getInternalContext(startTime?: number): InternalContext | undefined {
     makeStub('getInternalContext')
     return undefined
   },

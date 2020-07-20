@@ -22,6 +22,7 @@ export {
 } from './requestCollection'
 export {
   startSessionManagement,
+  SESSION_TIME_OUT_DELAY,
   // Exposed for tests
   SESSION_COOKIE_NAME,
   stopSessionManagement,
