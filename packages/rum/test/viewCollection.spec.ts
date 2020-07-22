@@ -148,19 +148,17 @@ describe('rum track url change', () => {
     expect(createSpy).not.toHaveBeenCalled()
   })
 
-  fit('should create a new view on hash change', () => {
+  it('should create a new view on hash change', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id, startTime }) => {
-      console.log('LifeCycleEventType.VIEW_CREATED received', id, startTime)
+    window.addEventListener('hashchange', () => {
+      expect(createSpy).toHaveBeenCalled()
+      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+      expect(viewContext.id).not.toEqual(initialViewId)
     })
 
     window.location.hash = '#bar'
-
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
-    expect(viewContext.id).not.toEqual(initialViewId)
   })
 
   it('should not create a new view when the hash has kept the same value', () => {
@@ -169,9 +167,11 @@ describe('rum track url change', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    window.location.hash = '#bar'
+    window.addEventListener('hashchange', () => {
+      expect(createSpy).not.toHaveBeenCalled()
+    })
 
-    expect(createSpy).not.toHaveBeenCalled()
+    window.location.hash = '#bar'
   })
 
   it('should not create new view on search change', () => {

@@ -58,7 +58,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   // Renew view on hash changes
   trackHash(() => {
     if (areDifferentViews(currentLocation, location)) {
-      console.log('trackHash areDifferentViews yes')
       onRouteChange()
     }
   })
@@ -110,8 +109,6 @@ function newView(
   let loadingTime: number | undefined
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
-
-  console.log('LifeCycleEventType.VIEW_CREATED notified', id, startTime)
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
