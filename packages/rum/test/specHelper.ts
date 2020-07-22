@@ -39,7 +39,7 @@ export interface TestSetupBuilder {
   withViewCollection: () => TestSetupBuilder
   withUserActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
-  withParentContexts: (withContextHistory: boolean) => TestSetupBuilder
+  withParentContexts: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
@@ -117,9 +117,9 @@ export function setup(): TestSetupBuilder {
       buildTasks.push(() => startPerformanceCollection(lifeCycle, session))
       return setupBuilder
     },
-    withParentContexts(withContextHistory: boolean) {
+    withParentContexts() {
       buildTasks.push(() => {
-        parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session, withContextHistory)
+        parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session)
         cleanupTasks.push(() => {
           parentContexts.stop()
         })

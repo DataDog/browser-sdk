@@ -170,12 +170,7 @@ export function startRum(
 ): Omit<RumGlobal, 'init'> {
   let globalContext: Context = {}
 
-  const parentContexts = startParentContexts(
-    window.location,
-    lifeCycle,
-    session,
-    configuration.isEnabled('context-history')
-  )
+  const parentContexts = startParentContexts(window.location, lifeCycle, session)
 
   internalMonitoring.setExternalContextProvider(() => {
     return deepMerge(
