@@ -70,6 +70,12 @@ function mockHistory(location: Partial<Location>) {
   })
 }
 
+function mockHash(location: Partial<Location>) {
+  window.addEventListener('hashchange', () => {
+    location.hash = window.location.hash
+  })
+}
+
 function spyOnViews() {
   const handler = jasmine.createSpy()
 
@@ -92,6 +98,7 @@ describe('rum track url change', () => {
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo' }
     mockHistory(fakeLocation)
+    mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
@@ -119,20 +126,59 @@ describe('rum track url change', () => {
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
+  it('should create a new view on pushState hash change', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
+  })
+
+  it('should not create a new view on pushState when the hash has kept the same value', () => {
+    history.pushState({}, '', '/foo#bar')
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).not.toHaveBeenCalled()
+  })
+
+  fit('should create a new view on hash change', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id, startTime }) => {
+      console.log('LifeCycleEventType.VIEW_CREATED received', id, startTime)
+    })
+
+    window.location.hash = '#bar'
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
+  })
+
+  it('should not create a new view when the hash has kept the same value', () => {
+    window.location.hash = '#bar'
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    window.location.hash = '#bar'
+
+    expect(createSpy).not.toHaveBeenCalled()
+  })
+
   it('should not create new view on search change', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/foo?bar=qux')
-
-    expect(createSpy).not.toHaveBeenCalled()
-  })
-
-  it('should not create a new view on hash change', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
-
-    history.pushState({}, '', '/foo#bar')
 
     expect(createSpy).not.toHaveBeenCalled()
   })

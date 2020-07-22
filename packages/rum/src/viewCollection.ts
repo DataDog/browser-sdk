@@ -41,13 +41,25 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   let currentView = newView(lifeCycle, currentLocation, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
+  function onRouteChange() {
+    currentLocation = { ...location }
+    currentView.triggerUpdate()
+    currentView.end()
+    currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+  }
+
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
-      currentLocation = { ...location }
-      currentView.triggerUpdate()
-      currentView.end()
-      currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+      onRouteChange()
+    }
+  })
+
+  // Renew view on hash changes
+  trackHash(() => {
+    if (areDifferentViews(currentLocation, location)) {
+      console.log('trackHash areDifferentViews yes')
+      onRouteChange()
     }
   })
 
@@ -98,6 +110,8 @@ function newView(
   let loadingTime: number | undefined
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
+
+  console.log('LifeCycleEventType.VIEW_CREATED notified', id, startTime)
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
@@ -165,8 +179,19 @@ function trackHistory(onHistoryChange: () => void) {
   window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
 }
 
-function areDifferentViews(previous: Location, current: Location) {
-  return previous.pathname !== current.pathname
+function trackHash(onHashChange: () => void) {
+  window.addEventListener('hashchange', monitor(onHashChange))
+}
+
+function areDifferentViews(previous: Location, current: Location): boolean {
+  return (
+    previous.pathname !== current.pathname ||
+    // hash can be empty or undefined
+    // switching from undefined to empty does not mean different views
+    (previous.hash && current.hash && previous.hash !== current.hash) ||
+    Boolean(previous.hash && !current.hash) ||
+    Boolean(!previous.hash && current.hash)
+  )
 }
 
 interface Timings {
