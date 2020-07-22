@@ -177,10 +177,11 @@ function trackHash(onHashChange: () => void) {
 function areDifferentViews(previous: Location, current: Location): boolean {
   return (
     previous.pathname !== current.pathname ||
-    // hash can be empty or undefined
-    // switching from undefined to empty does not mean different views
-    (previous.hash && current.hash && previous.hash !== current.hash) ||
-    Boolean(previous.hash && !current.hash) ||
+    // the views are different when:
+    //  switching from a defined hash to no hash ('')
+    //  switching from a defined hash to a different and defined hash
+    //  switching from no hash ('') to a defined hash
+    (previous.hash && previous.hash !== current.hash) ||
     Boolean(!previous.hash && current.hash)
   )
 }
