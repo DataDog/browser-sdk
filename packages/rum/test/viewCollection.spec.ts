@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch, isIE } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
@@ -98,6 +98,9 @@ describe('rum track url change', () => {
   let createSpy: jasmine.Spy
 
   async function asyncSetWindowLocationHash(hash: string) {
+    if (isIE()) {
+      pending('no Promise support')
+    }
     return new Promise((resolve) => {
       window.addEventListener('hashchange', () => {
         resolve()
