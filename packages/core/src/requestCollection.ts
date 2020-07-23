@@ -116,11 +116,3 @@ function getTraceId(): number | undefined {
         .toTraceId()
     : undefined
 }
-
-export function isRejected(request: RequestCompleteEvent) {
-  return request.status === 0 && request.responseType !== 'opaque'
-}
-
-export function isServerError(request: RequestCompleteEvent) {
-  return request.status >= 500
-}
