@@ -71,6 +71,8 @@ function mockHistory(location: Partial<Location>) {
 }
 
 function mockHash(location: Partial<Location>) {
+  // Reset previous tests value
+  window.location.hash = ''
   window.addEventListener('hashchange', () => {
     location.hash = window.location.hash
   })
@@ -100,6 +102,7 @@ describe('rum track url change', () => {
       window.addEventListener('hashchange', () => {
         resolve()
       })
+
       window.location.hash = hash
     })
   }
