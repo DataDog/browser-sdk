@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
-RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_81.0.4044.113-1_amd64.deb --output google-chrome.deb \
+RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_84.0.4147.89-1_amd64.deb --output google-chrome.deb \
     && dpkg -i google-chrome.deb \
     && rm google-chrome.deb
 
