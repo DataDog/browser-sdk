@@ -66,7 +66,7 @@ function mockHistory(location: Partial<Location>) {
     const url = `http://localhost${pathname}`
     location.pathname = getPathName(url)
     location.search = getSearch(url)
-    location.hash = getHash(url)
+    location.hash = getHash(url) || ''
   })
 }
 
@@ -95,8 +95,17 @@ describe('rum track url change', () => {
   let initialViewId: string
   let createSpy: jasmine.Spy
 
+  async function asyncSetWindowLocationHash(hash: string) {
+    return new Promise((resolve) => {
+      window.addEventListener('hashchange', () => {
+        resolve()
+      })
+      window.location.hash = hash
+    })
+  }
+
   beforeEach(() => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     mockHistory(fakeLocation)
     mockHash(fakeLocation)
     setupBuilder = setup()
@@ -148,30 +157,26 @@ describe('rum track url change', () => {
     expect(createSpy).not.toHaveBeenCalled()
   })
 
-  it('should create a new view on hash change', () => {
+  it('should create a new view on hash change', async () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    window.addEventListener('hashchange', () => {
-      expect(createSpy).toHaveBeenCalled()
-      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
-      expect(viewContext.id).not.toEqual(initialViewId)
-    })
+    await asyncSetWindowLocationHash('#bar')
 
-    window.location.hash = '#bar'
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
   })
 
-  it('should not create a new view when the hash has kept the same value', () => {
-    window.location.hash = '#bar'
+  it('should not create a new view when the hash has kept the same value', async () => {
+    history.pushState({}, '', '/foo#bar')
 
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    window.addEventListener('hashchange', () => {
-      expect(createSpy).not.toHaveBeenCalled()
-    })
+    await asyncSetWindowLocationHash('#bar')
 
-    window.location.hash = '#bar'
+    expect(createSpy).not.toHaveBeenCalled()
   })
 
   it('should not create new view on search change', () => {
