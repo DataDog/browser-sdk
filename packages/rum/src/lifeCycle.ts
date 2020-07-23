@@ -1,4 +1,5 @@
-import { ErrorMessage, RequestCompleteEvent, RequestStartEvent } from '@datadog/browser-core'
+import { ErrorMessage } from '@datadog/browser-core'
+import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View } from './viewCollection'
 

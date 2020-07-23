@@ -1,15 +1,21 @@
-import { FetchProxy } from '../src/fetchProxy'
-import { Observable } from '../src/observable'
+import {
+  FetchProxy,
+  FetchStub,
+  FetchStubManager,
+  isIE,
+  Observable,
+  RequestType,
+  stubFetch,
+  withXhr,
+  XhrProxy,
+} from '@datadog/browser-core'
 import {
   RequestCompleteEvent,
   RequestObservables,
   RequestStartEvent,
-  RequestType,
   trackFetch,
   trackXhr,
 } from '../src/requestCollection'
-import { FetchStub, FetchStubManager, isIE, stubFetch, withXhr } from '../src/specHelper'
-import { XhrProxy } from '../src/xhrProxy'
 
 describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'

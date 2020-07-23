@@ -10,7 +10,6 @@ import {
   makeGlobal,
   makeStub,
   monitor,
-  startRequestCollection,
   UserConfiguration,
 } from '@datadog/browser-core'
 
@@ -18,6 +17,7 @@ import { buildEnv } from './buildEnv'
 import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { startPerformanceCollection } from './performanceCollection'
+import { startRequestCollection } from './requestCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { startUserActionCollection } from './userActionCollection'

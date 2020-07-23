@@ -29,6 +29,11 @@ export enum ResourceKind {
   OTHER = 'other',
 }
 
+export enum RequestType {
+  FETCH = ResourceKind.FETCH,
+  XHR = ResourceKind.XHR,
+}
+
 // use lodash API
 export function throttle(
   fn: () => void,

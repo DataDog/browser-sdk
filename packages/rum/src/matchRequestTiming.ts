@@ -1,4 +1,4 @@
-import { RequestCompleteEvent } from '@datadog/browser-core'
+import { RequestCompleteEvent } from './requestCollection'
 
 interface Timing {
   startTime: number

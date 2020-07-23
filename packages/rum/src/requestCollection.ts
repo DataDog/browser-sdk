@@ -1,12 +1,4 @@
-import { startFetchProxy } from './fetchProxy'
-import { Observable } from './observable'
-import { ResourceKind } from './utils'
-import { startXhrProxy } from './xhrProxy'
-
-export enum RequestType {
-  FETCH = ResourceKind.FETCH,
-  XHR = ResourceKind.XHR,
-}
+import { Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
 
 export interface RequestStartEvent {
   requestId: number

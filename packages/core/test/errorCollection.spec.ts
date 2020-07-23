@@ -13,7 +13,7 @@ import {
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
 import { StackTrace } from '../src/tracekit'
-import { ONE_MINUTE } from '../src/utils'
+import { ONE_MINUTE, RequestType } from '../src/utils'
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy

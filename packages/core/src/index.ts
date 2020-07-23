@@ -14,13 +14,6 @@ export {
 export { InternalMonitoring, MonitoringMessage, monitored, monitor, addMonitoringMessage } from './internalMonitoring'
 export { Observable } from './observable'
 export {
-  RequestType,
-  RequestCompleteEvent,
-  RequestStartEvent,
-  startRequestCollection,
-  RequestObservables,
-} from './requestCollection'
-export {
   startSessionManagement,
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
@@ -31,5 +24,7 @@ export { HttpRequest, Batch } from './transport'
 export * from './urlPolyfill'
 export * from './utils'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
+export { startXhrProxy, XhrContext, XhrProxy } from './xhrProxy'
+export { startFetchProxy, FetchContext, FetchProxy } from './fetchProxy'
 
 export * from './specHelper'

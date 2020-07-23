@@ -15,7 +15,6 @@ import {
   monitor,
   msToNs,
   Omit,
-  RequestCompleteEvent,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
@@ -24,6 +23,7 @@ import {
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { ActionContext, ParentContexts, startParentContexts, ViewContext } from './parentContexts'
+import { RequestCompleteEvent } from './requestCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,

@@ -2,9 +2,8 @@ import { Configuration } from './configuration'
 import { FetchContext, startFetchProxy } from './fetchProxy'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import { RequestType } from './requestCollection'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
-import { jsonStringify, ONE_MINUTE } from './utils'
+import { jsonStringify, ONE_MINUTE, RequestType } from './utils'
 import { startXhrProxy, XhrContext } from './xhrProxy'
 
 export interface ErrorMessage {
