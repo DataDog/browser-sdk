@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch, isIE } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch, noop } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
@@ -73,9 +73,16 @@ function mockHistory(location: Partial<Location>) {
 function mockHash(location: Partial<Location>) {
   // Reset previous tests value
   window.location.hash = ''
-  window.addEventListener('hashchange', () => {
+
+  function hashchangeCallBack() {
     location.hash = window.location.hash
-  })
+  }
+
+  window.addEventListener('hashchange', hashchangeCallBack)
+
+  return () => {
+    window.removeEventListener('hashchange', hashchangeCallBack)
+  }
 }
 
 function spyOnViews() {
@@ -96,24 +103,12 @@ describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
   let createSpy: jasmine.Spy
-
-  async function asyncSetWindowLocationHash(hash: string) {
-    if (isIE()) {
-      pending('no Promise support')
-    }
-    return new Promise((resolve) => {
-      window.addEventListener('hashchange', () => {
-        resolve()
-      })
-
-      window.location.hash = hash
-    })
-  }
+  let cleanMockHash: () => void
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     mockHistory(fakeLocation)
-    mockHash(fakeLocation)
+    cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
@@ -128,6 +123,7 @@ describe('rum track url change', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
+    cleanMockHash()
   })
 
   it('should create new view on path change', () => {
@@ -163,26 +159,38 @@ describe('rum track url change', () => {
     expect(createSpy).not.toHaveBeenCalled()
   })
 
-  it('should create a new view on hash change', async () => {
+  it('should create a new view on hash change', (done) => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    await asyncSetWindowLocationHash('#bar')
+    function hashchangeCallBack() {
+      expect(createSpy).toHaveBeenCalled()
+      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+      expect(viewContext.id).not.toEqual(initialViewId)
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
 
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
-    expect(viewContext.id).not.toEqual(initialViewId)
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
   })
 
-  it('should not create a new view when the hash has kept the same value', async () => {
+  it('should not create a new view when the hash has kept the same value', (done) => {
     history.pushState({}, '', '/foo#bar')
 
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
-    await asyncSetWindowLocationHash('#bar')
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
 
-    expect(createSpy).not.toHaveBeenCalled()
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
   })
 
   it('should not create new view on search change', () => {
