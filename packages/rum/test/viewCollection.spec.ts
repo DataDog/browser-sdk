@@ -86,7 +86,6 @@ function mockHash(location: Partial<Location>) {
 }
 
 function mockHTMLElement() {
-  const HTMLElements = {}
   spyOn(document, 'getElementById').and.callFake((elementId: string) => {
     if (elementId === 'testHashValue') {
       const dummyElement = document.createElement('div')
@@ -98,6 +97,7 @@ function mockHTMLElement() {
       return dummyElement
     }
 
+    // tslint:disable-next-line: no-null-keyword
     return null
   })
 }
