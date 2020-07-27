@@ -171,14 +171,7 @@ function trackHistory(onHistoryChange: () => void) {
 }
 
 function trackHash(onHashChange: () => void) {
-  function noAnchorNavHashChange() {
-    const cleanedHash = window.location.hash.replace(/#/g, '')
-    if (!document.getElementById(cleanedHash)) {
-      onHashChange()
-    }
-  }
-
-  window.addEventListener('hashchange', monitor(noAnchorNavHashChange))
+  window.addEventListener('hashchange', monitor(onHashChange))
 }
 
 function areDifferentViews(previous: Location, current: Location): boolean {
