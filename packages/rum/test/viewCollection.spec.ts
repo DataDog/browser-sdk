@@ -85,6 +85,23 @@ function mockHash(location: Partial<Location>) {
   }
 }
 
+function mockHTMLElement() {
+  const HTMLElements = {}
+  spyOn(document, 'getElementById').and.callFake((elementId: string) => {
+    if (elementId === 'testHashValue') {
+      const dummyElement = document.createElement('div')
+      dummyElement.id = 'testHashValue'
+      const linkELement = document.createElement('a')
+      linkELement.href = '#testHashValue'
+      dummyElement.appendChild(linkELement)
+
+      return dummyElement
+    }
+
+    return null
+  })
+}
+
 function spyOnViews() {
   const handler = jasmine.createSpy()
 
@@ -108,6 +125,7 @@ describe('rum track url change', () => {
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     mockHistory(fakeLocation)
+    mockHTMLElement()
     cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
@@ -191,6 +209,21 @@ describe('rum track url change', () => {
     window.addEventListener('hashchange', hashchangeCallBack)
 
     window.location.hash = '#bar'
+  })
+
+  it('should not create a new view when it is an Anchor navigation', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#testHashValue'
   })
 
   it('should not create new view on search change', () => {
