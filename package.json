@@ -45,7 +45,7 @@
     "@wdio/sync": "6.1.0",
     "body-parser": "1.19.0",
     "browserstack-local": "1.4.5",
-    "codecov": "3.7.0",
+    "codecov": "3.7.1",
     "cors": "2.8.5",
     "emoji-name-map": "1.2.8",
     "express": "4.17.1",

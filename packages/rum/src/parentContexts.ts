@@ -38,12 +38,7 @@ export interface ParentContexts {
   stop: () => void
 }
 
-export function startParentContexts(
-  location: Location,
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  withContextHistory: boolean
-): ParentContexts {
+export function startParentContexts(location: Location, lifeCycle: LifeCycle, session: RumSession): ParentContexts {
   let currentView: CurrentContext | undefined
   let currentAction: CurrentContext | undefined
   let currentSessionId: string | undefined
@@ -52,7 +47,7 @@ export function startParentContexts(
   let previousActions: Array<PreviousContext<ActionContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
-    if (currentView && withContextHistory) {
+    if (currentView) {
       previousViews.unshift({
         context: buildCurrentViewContext(),
         endTime: currentContext.startTime,
@@ -68,7 +63,7 @@ export function startParentContexts(
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (userAction: AutoUserAction) => {
-    if (currentAction && withContextHistory) {
+    if (currentAction) {
       previousActions.unshift({
         context: buildCurrentActionContext(),
         endTime: currentAction.startTime + userAction.duration,
@@ -123,9 +118,6 @@ export function startParentContexts(
     }
     if (currentContext && startTime >= currentContext.startTime) {
       return buildContext()
-    }
-    if (!withContextHistory) {
-      return undefined
     }
     for (const previousContext of previousContexts) {
       if (startTime > previousContext.endTime) {

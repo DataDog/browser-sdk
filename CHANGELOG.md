@@ -14,6 +14,14 @@
 
 ---
 
+## v1.13.0
+
+- ✨ [RUMF-605] enable event association to parent context by start date ([#460](https://github.com/DataDog/browser-sdk/pull/460))
+
+## v1.12.10
+
+- ✨ [RUMF-605] associate event to parent context by start date (behind flag) ([#445](https://github.com/DataDog/browser-sdk/pull/445))
+
 ## v1.12.9
 
 - 🐛 fix current action context reset on custom action ([#444](https://github.com/DataDog/browser-sdk/pull/444))
