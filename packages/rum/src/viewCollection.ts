@@ -175,15 +175,7 @@ function trackHash(onHashChange: () => void) {
 }
 
 function areDifferentViews(previous: Location, current: Location): boolean {
-  return (
-    previous.pathname !== current.pathname ||
-    // the views are different when:
-    //  switching from a defined hash to no hash ('')
-    //  switching from a defined hash to a different and defined hash
-    //  switching from no hash ('') to a defined hash
-    (previous.hash && previous.hash !== current.hash) ||
-    Boolean(!previous.hash && current.hash)
-  )
+  return previous.pathname !== current.pathname || previous.hash !== current.hash
 }
 
 interface Timings {

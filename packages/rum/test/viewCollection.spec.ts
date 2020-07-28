@@ -71,9 +71,6 @@ function mockHistory(location: Partial<Location>) {
 }
 
 function mockHash(location: Partial<Location>) {
-  // Reset previous tests value
-  window.location.hash = ''
-
   function hashchangeCallBack() {
     location.hash = window.location.hash
   }
@@ -82,6 +79,7 @@ function mockHash(location: Partial<Location>) {
 
   return () => {
     window.removeEventListener('hashchange', hashchangeCallBack)
+    window.location.hash = ''
   }
 }
 
@@ -137,7 +135,7 @@ describe('rum track url change', () => {
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
-  it('should create a new view on pushState hash change', () => {
+  it('should create a new view on hash change from history', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
@@ -148,7 +146,7 @@ describe('rum track url change', () => {
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
-  it('should not create a new view on pushState when the hash has kept the same value', () => {
+  it('should not create a new view on hash change from history when the hash has kept the same value', () => {
     history.pushState({}, '', '/foo#bar')
 
     const { lifeCycle } = setupBuilder.build()
