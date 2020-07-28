@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch, noop } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
@@ -66,8 +66,21 @@ function mockHistory(location: Partial<Location>) {
     const url = `http://localhost${pathname}`
     location.pathname = getPathName(url)
     location.search = getSearch(url)
-    location.hash = getHash(url)
+    location.hash = getHash(url) || ''
   })
+}
+
+function mockHash(location: Partial<Location>) {
+  function hashchangeCallBack() {
+    location.hash = window.location.hash
+  }
+
+  window.addEventListener('hashchange', hashchangeCallBack)
+
+  return () => {
+    window.removeEventListener('hashchange', hashchangeCallBack)
+    window.location.hash = ''
+  }
 }
 
 function spyOnViews() {
@@ -88,10 +101,12 @@ describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
   let createSpy: jasmine.Spy
+  let cleanMockHash: () => void
 
   beforeEach(() => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
+    const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     mockHistory(fakeLocation)
+    cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
       .withViewCollection()
@@ -106,6 +121,7 @@ describe('rum track url change', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
+    cleanMockHash()
   })
 
   it('should create new view on path change', () => {
@@ -119,20 +135,67 @@ describe('rum track url change', () => {
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
+  it('should create a new view on hash change from history', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
+  })
+
+  it('should not create a new view on hash change from history when the hash has kept the same value', () => {
+    history.pushState({}, '', '/foo#bar')
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).not.toHaveBeenCalled()
+  })
+
+  it('should create a new view on hash change', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).toHaveBeenCalled()
+      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+      expect(viewContext.id).not.toEqual(initialViewId)
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
+  })
+
+  it('should not create a new view when the hash has kept the same value', (done) => {
+    history.pushState({}, '', '/foo#bar')
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
+  })
+
   it('should not create new view on search change', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/foo?bar=qux')
-
-    expect(createSpy).not.toHaveBeenCalled()
-  })
-
-  it('should not create a new view on hash change', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
-
-    history.pushState({}, '', '/foo#bar')
 
     expect(createSpy).not.toHaveBeenCalled()
   })
