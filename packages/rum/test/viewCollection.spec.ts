@@ -85,7 +85,7 @@ function mockHash(location: Partial<Location>) {
   }
 }
 
-function mockHTMLElement() {
+function mockGetElementById() {
   spyOn(document, 'getElementById').and.callFake((elementId: string) => {
     if (elementId === 'testHashValue') {
       const dummyElement = document.createElement('div')
@@ -125,7 +125,6 @@ describe('rum track url change', () => {
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     mockHistory(fakeLocation)
-    mockHTMLElement()
     cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation(fakeLocation)
@@ -213,6 +212,7 @@ describe('rum track url change', () => {
 
   it('should not create a new view when it is an Anchor navigation', (done) => {
     const { lifeCycle } = setupBuilder.build()
+    mockGetElementById()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     function hashchangeCallBack() {

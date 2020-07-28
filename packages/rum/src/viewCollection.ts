@@ -172,7 +172,7 @@ function trackHistory(onHistoryChange: () => void) {
 
 function trackHash(onHashChange: () => void) {
   function noAnchorNavHashChange() {
-    const cleanedHash = window.location.hash.replace(/#/g, '')
+    const cleanedHash = window.location.hash.substr(1)
     if (!document.getElementById(cleanedHash)) {
       onHashChange()
     }
