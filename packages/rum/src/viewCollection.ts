@@ -41,15 +41,20 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   let currentView = newView(lifeCycle, currentLocation, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
-  // Renew view on history changes
-  trackHistory(() => {
+  function renewViewOnChange() {
     if (areDifferentViews(currentLocation, location)) {
       currentLocation = { ...location }
       currentView.triggerUpdate()
       currentView.end()
       currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
     }
-  })
+  }
+
+  // Renew view on history changes
+  trackHistory(renewViewOnChange)
+
+  // Renew view on hash changes
+  trackHash(renewViewOnChange)
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -165,8 +170,12 @@ function trackHistory(onHistoryChange: () => void) {
   window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
 }
 
-function areDifferentViews(previous: Location, current: Location) {
-  return previous.pathname !== current.pathname
+function trackHash(onHashChange: () => void) {
+  window.addEventListener('hashchange', monitor(onHashChange))
+}
+
+function areDifferentViews(previous: Location, current: Location): boolean {
+  return previous.pathname !== current.pathname || previous.hash !== current.hash
 }
 
 interface Timings {
