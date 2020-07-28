@@ -85,18 +85,7 @@ function mockHash(location: Partial<Location>) {
 
 function mockGetElementById() {
   spyOn(document, 'getElementById').and.callFake((elementId: string) => {
-    if (elementId === 'testHashValue') {
-      const dummyElement = document.createElement('div')
-      dummyElement.id = 'testHashValue'
-      const linkELement = document.createElement('a')
-      linkELement.href = '#testHashValue'
-      dummyElement.appendChild(linkELement)
-
-      return dummyElement
-    }
-
-    // tslint:disable-next-line: no-null-keyword
-    return null
+    return (elementId === ('testHashValue' as unknown)) as any
   })
 }
 
