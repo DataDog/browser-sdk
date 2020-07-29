@@ -75,49 +75,57 @@ const STUBBED_LOGS = {
 
 export type LogsGlobal = typeof STUBBED_LOGS
 
-export const datadogLogs = makeGlobal(STUBBED_LOGS)
-let isAlreadyInitialized = false
-datadogLogs.init = monitor((userConfiguration: LogsUserConfiguration) => {
-  if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
-    return
-  }
-
-  if (userConfiguration.publicApiKey) {
-    userConfiguration.clientToken = userConfiguration.publicApiKey
-    console.warn('Public API Key is deprecated. Please use Client Token instead.')
-  }
-  const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
-  const logsUserConfiguration = {
-    ...userConfiguration,
-    isCollectingError,
-  }
-  const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
-  const session = startLoggerSession(configuration, areCookiesAuthorized())
-  const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
-  assign(datadogLogs, globalApi)
-  isAlreadyInitialized = true
-})
-
-function canInitLogs(userConfiguration: LogsUserConfiguration) {
-  if (isAlreadyInitialized) {
-    if (!userConfiguration.silentMultipleInit) {
-      console.error('DD_LOGS is already initialized.')
-    }
-    return false
-  }
-  if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
-    console.error('Client Token is not configured, we will not send any data.')
-    return false
-  }
-  if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
-    console.error('Sample Rate should be a number between 0 and 100')
-    return false
-  }
-  return true
-}
+export const datadogLogs = makeLogsGlobal(STUBBED_LOGS)
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
 }
 
 getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
+
+export function makeLogsGlobal(stub: LogsGlobal) {
+  const global = makeGlobal(stub)
+
+  let isAlreadyInitialized = false
+
+  global.init = monitor((userConfiguration: LogsUserConfiguration) => {
+    if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
+      return
+    }
+
+    if (userConfiguration.publicApiKey) {
+      userConfiguration.clientToken = userConfiguration.publicApiKey
+      console.warn('Public API Key is deprecated. Please use Client Token instead.')
+    }
+    const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
+    const logsUserConfiguration = {
+      ...userConfiguration,
+      isCollectingError,
+    }
+    const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
+    const session = startLoggerSession(configuration, areCookiesAuthorized())
+    const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
+    assign(global, globalApi)
+    isAlreadyInitialized = true
+  })
+
+  function canInitLogs(userConfiguration: LogsUserConfiguration) {
+    if (isAlreadyInitialized) {
+      if (!userConfiguration.silentMultipleInit) {
+        console.error('DD_LOGS is already initialized.')
+      }
+      return false
+    }
+    if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
+      console.error('Client Token is not configured, we will not send any data.')
+      return false
+    }
+    if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+      console.error('Sample Rate should be a number between 0 and 100')
+      return false
+    }
+    return true
+  }
+
+  return global
+}

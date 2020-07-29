@@ -1,6 +1,6 @@
 import { isIE, stopSessionManagement } from '@datadog/browser-core'
 
-import { RumGlobal, RumUserConfiguration } from '../src/rum.entry'
+import { makeRumGlobal, RumGlobal, RumUserConfiguration } from '../src/rum.entry'
 
 describe('rum entry', () => {
   let rumGlobal: RumGlobal
@@ -9,9 +9,7 @@ describe('rum entry', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    // tslint:disable-next-line: no-unsafe-any
-    rumGlobal = require('../src/rum.entry').datadogRum
-    delete (require.cache as any)[require.resolve('../src/rum.entry')]
+    rumGlobal = makeRumGlobal({} as any)
   })
 
   afterEach(() => {

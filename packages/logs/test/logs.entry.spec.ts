@@ -1,13 +1,12 @@
 import { monitor, stopSessionManagement } from '@datadog/browser-core'
 import { LogsGlobal } from '../src'
+import { makeLogsGlobal } from '../src/logs.entry'
 
 describe('logs entry', () => {
   let logsGlobal: LogsGlobal
 
   beforeEach(() => {
-    // tslint:disable-next-line: no-unsafe-any
-    logsGlobal = require('../src/logs.entry').datadogLogs
-    delete (require.cache as any)[require.resolve('../src/logs.entry')]
+    logsGlobal = makeLogsGlobal({} as any)
   })
 
   afterEach(() => {
