@@ -1,4 +1,5 @@
 import { monitor, stopSessionManagement } from '@datadog/browser-core'
+import { startXhrProxy } from '../../core/src/xhrProxy'
 import { LogsGlobal } from '../src'
 import { makeLogsGlobal } from '../src/logs.entry'
 
@@ -11,6 +12,7 @@ describe('logs entry', () => {
 
   afterEach(() => {
     stopSessionManagement()
+    startXhrProxy().reset()
   })
 
   it('should set global with init', () => {

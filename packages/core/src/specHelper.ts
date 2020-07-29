@@ -1,5 +1,4 @@
 import { Configuration } from './configuration'
-import { RequestCompleteEvent, RequestObservables } from './requestCollection'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -25,61 +24,6 @@ export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
     document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)
   })
-}
-
-// TODO remove me
-export class FetchStubBuilder {
-  private requests: RequestCompleteEvent[] = []
-  private whenAllCompleteFn: (requests: RequestCompleteEvent[]) => void = noop
-
-  constructor([requestStartObservable, requestCompleteObservable]: RequestObservables) {
-    let pendingFetch = 0
-    requestStartObservable.subscribe(() => {
-      pendingFetch += 1
-    })
-    requestCompleteObservable.subscribe((request: RequestCompleteEvent) => {
-      this.requests.push(request)
-      pendingFetch -= 1
-      if (pendingFetch === 0) {
-        // ensure that AssertionError are not swallowed by promise context
-        setTimeout(() => {
-          this.whenAllCompleteFn(this.requests)
-        })
-      }
-    })
-  }
-
-  whenAllComplete(onCompleteFn: (_: RequestCompleteEvent[]) => void) {
-    this.whenAllCompleteFn = onCompleteFn
-  }
-
-  getStub() {
-    return (() => {
-      let resolve: (response: ResponseStub) => unknown
-      let reject: (error: Error) => unknown
-      const promise: unknown = new Promise((res, rej) => {
-        resolve = res
-        reject = rej
-      })
-      ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) =>
-        resolve({
-          ...response,
-          clone: () => {
-            const cloned = {
-              text: async () => {
-                if (response.responseTextError) {
-                  throw response.responseTextError
-                }
-                return response.responseText
-              },
-            }
-            return cloned as Response
-          },
-        }) as Promise<ResponseStub>
-      ;(promise as FetchStubPromise).rejectWith = async (error: Error) => reject(error) as Promise<Error>
-      return promise
-    }) as FetchStub
-  }
 }
 
 export interface FetchStubManager {

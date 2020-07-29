@@ -1,9 +1,7 @@
-import { toStackTraceString } from './errorCollection'
-import { monitor } from './internalMonitoring'
+import { startFetchProxy } from './fetchProxy'
 import { Observable } from './observable'
-import { computeStackTrace } from './tracekit'
-import { normalizeUrl } from './urlPolyfill'
 import { ResourceKind } from './utils'
+import { startXhrProxy } from './xhrProxy'
 
 export enum RequestType {
   FETCH = ResourceKind.FETCH,
@@ -27,20 +25,67 @@ export interface RequestCompleteEvent {
   traceId?: number
 }
 
-interface BrowserWindow extends Window {
-  ddtrace?: any
-}
-
-interface BrowserXHR extends XMLHttpRequest {
-  _datadog_xhr: {
-    method: string
-    url: string
-  }
-}
-
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
 let nextRequestId = 1
+
+export function startRequestCollection() {
+  const requestObservables: RequestObservables = [new Observable(), new Observable()]
+  trackXhr(requestObservables)
+  trackFetch(requestObservables)
+  return requestObservables
+}
+
+export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+  const xhrProxy = startXhrProxy()
+  xhrProxy.beforeSend((context) => {
+    const requestId = getNextRequestId()
+    context.requestId = requestId
+    requestStartObservable.notify({
+      requestId,
+    })
+  })
+  xhrProxy.onRequestComplete((context) => {
+    requestCompleteObservable.notify({
+      duration: context.duration,
+      method: context.method,
+      requestId: context.requestId as number,
+      response: context.response,
+      startTime: context.startTime,
+      status: context.status,
+      traceId: getTraceId(),
+      type: RequestType.XHR,
+      url: context.url,
+    })
+  })
+  return xhrProxy
+}
+
+export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+  const fetchProxy = startFetchProxy()
+  fetchProxy.beforeSend((context) => {
+    const requestId = getNextRequestId()
+    context.requestId = requestId
+    requestStartObservable.notify({
+      requestId,
+    })
+  })
+  fetchProxy.onRequestComplete((context) => {
+    requestCompleteObservable.notify({
+      duration: context.duration,
+      method: context.method,
+      requestId: context.requestId as number,
+      response: context.response,
+      responseType: context.responseType,
+      startTime: context.startTime,
+      status: context.status,
+      traceId: getTraceId(),
+      type: RequestType.FETCH,
+      url: context.url,
+    })
+  })
+  return fetchProxy
+}
 
 function getNextRequestId() {
   const result = nextRequestId
@@ -48,137 +93,8 @@ function getNextRequestId() {
   return result
 }
 
-let requestObservablesSingleton: RequestObservables
-
-export function startRequestCollection() {
-  if (!requestObservablesSingleton) {
-    requestObservablesSingleton = [new Observable(), new Observable()]
-    trackXhr(requestObservablesSingleton)
-    trackFetch(requestObservablesSingleton)
-  }
-  return requestObservablesSingleton
-}
-
-export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
-  const originalOpen = XMLHttpRequest.prototype.open
-  XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
-    this._datadog_xhr = {
-      method,
-      url,
-    }
-    return originalOpen.apply(this, arguments as any)
-  })
-
-  const originalSend = XMLHttpRequest.prototype.send
-  XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
-    const startTime = performance.now()
-    const requestId = getNextRequestId()
-
-    requestStartObservable.notify({
-      requestId,
-    })
-
-    let hasBeenReported = false
-    const reportXhr = () => {
-      if (hasBeenReported) {
-        return
-      }
-      hasBeenReported = true
-      requestCompleteObservable.notify({
-        requestId,
-        startTime,
-        duration: performance.now() - startTime,
-        method: this._datadog_xhr.method,
-        response: this.response as string | undefined,
-        status: this.status,
-        traceId: getTraceId(),
-        type: RequestType.XHR,
-        url: normalizeUrl(this._datadog_xhr.url),
-      })
-    }
-
-    const originalOnreadystatechange = this.onreadystatechange
-
-    this.onreadystatechange = function() {
-      if (this.readyState === XMLHttpRequest.DONE) {
-        monitor(reportXhr)()
-      }
-
-      if (originalOnreadystatechange) {
-        originalOnreadystatechange.apply(this, arguments as any)
-      }
-    }
-
-    this.addEventListener('loadend', monitor(reportXhr))
-
-    return originalSend.apply(this, arguments as any)
-  }
-}
-
-export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
-  if (!window.fetch) {
-    return
-  }
-  const originalFetch = window.fetch
-  // tslint:disable promise-function-async
-  window.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
-    const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
-    const startTime = performance.now()
-    const requestId = getNextRequestId()
-
-    requestStartObservable.notify({
-      requestId,
-    })
-
-    const reportFetch = async (response: Response | Error) => {
-      const duration = performance.now() - startTime
-      const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-      if ('stack' in response || response instanceof Error) {
-        const stackTrace = computeStackTrace(response)
-        requestCompleteObservable.notify({
-          duration,
-          method,
-          requestId,
-          startTime,
-          url,
-          response: toStackTraceString(stackTrace),
-          status: 0,
-          traceId: getTraceId(),
-          type: RequestType.FETCH,
-        })
-      } else if ('status' in response) {
-        let text: string
-        try {
-          text = await response.clone().text()
-        } catch (e) {
-          text = `Unable to retrieve response: ${e}`
-        }
-        requestCompleteObservable.notify({
-          duration,
-          method,
-          requestId,
-          startTime,
-          url,
-          response: text,
-          responseType: response.type,
-          status: response.status,
-          traceId: getTraceId(),
-          type: RequestType.FETCH,
-        })
-      }
-    }
-    const responsePromise = originalFetch.call(this, input, init)
-    responsePromise.then(monitor(reportFetch), monitor(reportFetch))
-    return responsePromise
-  })
-}
-
-export function isRejected(request: RequestCompleteEvent) {
-  return request.status === 0 && request.responseType !== 'opaque'
-}
-
-export function isServerError(request: RequestCompleteEvent) {
-  return request.status >= 500
+interface BrowserWindow extends Window {
+  ddtrace?: any
 }
 
 /**
@@ -199,4 +115,12 @@ function getTraceId(): number | undefined {
         .context()
         .toTraceId()
     : undefined
+}
+
+export function isRejected(request: RequestCompleteEvent) {
+  return request.status === 0 && request.responseType !== 'opaque'
+}
+
+export function isServerError(request: RequestCompleteEvent) {
+  return request.status >= 500
 }
