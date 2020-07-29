@@ -197,6 +197,22 @@ export class PerformanceObserverStubBuilder {
   }
 }
 
+export function withXhr({
+  setup,
+  onComplete,
+}: {
+  setup: (xhr: XMLHttpRequest) => void
+  onComplete: (xhr: XMLHttpRequest) => void
+}) {
+  const xhr = new XMLHttpRequest()
+  xhr.addEventListener('loadend', () => {
+    setTimeout(() => {
+      onComplete(xhr)
+    })
+  })
+  setup(xhr)
+}
+
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
   Object.defineProperty(document, 'visibilityState', {
     get() {
