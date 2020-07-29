@@ -84,7 +84,7 @@ export function makeRumGlobal(stub: RumGlobal) {
 
     const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
     const session = startRumSession(configuration, lifeCycle)
-    const globalApi = startRum(
+    const { globalApi } = startRum(
       rumUserConfiguration.applicationId,
       location,
       lifeCycle,

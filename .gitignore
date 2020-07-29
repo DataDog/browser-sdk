@@ -7,3 +7,4 @@ tunnel.log
 local.log
 test-server.log
 /test-report/
+browserstack.err

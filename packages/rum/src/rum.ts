@@ -167,7 +167,7 @@ export function startRum(
   configuration: Configuration,
   session: RumSession,
   internalMonitoring: InternalMonitoring
-): Omit<RumGlobal, 'init'> {
+): { globalApi: Omit<RumGlobal, 'init'>; stop: () => void } {
   let globalContext: Context = {}
 
   const parentContexts = startParentContexts(window.location, lifeCycle, session)
@@ -205,29 +205,35 @@ export function startRum(
   startViewCollection(location, lifeCycle)
 
   return {
-    addRumGlobalContext: monitor((key: string, value: ContextValue) => {
-      globalContext[key] = value
-    }),
-    addUserAction: monitor((name: string, context?: Context) => {
-      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
-    }),
-    getInternalContext: monitor(
-      (startTime?: number): InternalContext => {
-        return (withSnakeCaseKeys(deepMerge(
-          { applicationId },
-          parentContexts.findView(startTime),
-          parentContexts.findAction(startTime)
-        ) as Context) as unknown) as InternalContext
-      }
-    ),
-    setRumGlobalContext: monitor((context: Context) => {
-      globalContext = context
-    }),
+    globalApi: {
+      addRumGlobalContext: monitor((key: string, value: ContextValue) => {
+        globalContext[key] = value
+      }),
+      addUserAction: monitor((name: string, context?: Context) => {
+        lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
+      }),
+      getInternalContext: monitor(
+        (startTime?: number): InternalContext => {
+          return (withSnakeCaseKeys(deepMerge(
+            { applicationId },
+            parentContexts.findView(startTime),
+            parentContexts.findAction(startTime)
+          ) as Context) as unknown) as InternalContext
+        }
+      ),
+      setRumGlobalContext: monitor((context: Context) => {
+        globalContext = context
+      }),
+    },
+    stop: () => {
+      batch.stop()
+    },
   }
 }
 
 interface RumBatch {
   add: (message: Context) => void
+  stop: () => void
   upsert: (message: Context, key: string) => void
 }
 
@@ -255,14 +261,24 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
     return deepMerge(message, { application_id: replica!.applicationId }) as Context
   }
 
+  let stopped = false
   return {
     add: (message: Context) => {
+      if (stopped) {
+        return
+      }
       primaryBatch.add(message)
       if (replicaBatch) {
         replicaBatch.add(withReplicaApplicationId(message))
       }
     },
+    stop: () => {
+      stopped = true
+    },
     upsert: (message: Context, key: string) => {
+      if (stopped) {
+        return
+      }
       primaryBatch.upsert(message, key)
       if (replicaBatch) {
         replicaBatch.upsert(withReplicaApplicationId(message), key)
