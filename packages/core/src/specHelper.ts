@@ -27,6 +27,7 @@ export function clearAllCookies() {
   })
 }
 
+// TODO remove me
 export class FetchStubBuilder {
   private requests: RequestCompleteEvent[] = []
   private whenAllCompleteFn: (requests: RequestCompleteEvent[]) => void = noop
@@ -78,6 +79,68 @@ export class FetchStubBuilder {
       ;(promise as FetchStubPromise).rejectWith = async (error: Error) => reject(error) as Promise<Error>
       return promise
     }) as FetchStub
+  }
+}
+
+export interface FetchStubManager {
+  reset: () => void
+  whenAllComplete: (callback: () => void) => void
+}
+
+export function stubFetch(): FetchStubManager {
+  const originalFetch = window.fetch
+  let allFetchCompleteCallback = noop
+  let pendingRequests = 0
+
+  function onRequestEnd() {
+    pendingRequests -= 1
+    if (pendingRequests === 0) {
+      setTimeout(() => allFetchCompleteCallback())
+    }
+  }
+
+  window.fetch = (() => {
+    pendingRequests += 1
+    let resolve: (response: ResponseStub) => unknown
+    let reject: (error: Error) => unknown
+    const promise: unknown = new Promise((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+    ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) => {
+      const resolved = resolve({
+        ...response,
+        clone: () => {
+          const cloned = {
+            text: async () => {
+              if (response.responseTextError) {
+                throw response.responseTextError
+              }
+              return response.responseText
+            },
+          }
+          return cloned as Response
+        },
+      }) as Promise<ResponseStub>
+      onRequestEnd()
+      return resolved
+    }
+    ;(promise as FetchStubPromise).rejectWith = async (error: Error) => {
+      const rejected = reject(error) as Promise<Error>
+      onRequestEnd()
+      return rejected
+    }
+    return promise
+  }) as typeof window.fetch
+
+  return {
+    whenAllComplete(callback: () => void) {
+      allFetchCompleteCallback = callback
+    },
+    reset() {
+      window.fetch = originalFetch
+      allFetchCompleteCallback = noop
+    },
   }
 }
 
