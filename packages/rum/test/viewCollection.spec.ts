@@ -213,7 +213,7 @@ describe('rum track url change', () => {
     window.location.hash = '#testHashValue'
   })
 
-  it('should acknoledge the view location hash change after an Anchor navigation', (done) => {
+  it('should acknowledge the view location hash change after an Anchor navigation', (done) => {
     const { lifeCycle } = setupBuilder.build()
     const spyObj = mockGetElementById()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
