@@ -49,7 +49,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
     } else {
       // Anchor navigations would modify the location without generating a new view.
-      // These changes need to be acknowledged so they don't interfer with the next change areDifferentViews call
+      // These changes need to be acknowledged so they don't interfer with the next areDifferentViews call
       currentLocation = { ...location }
     }
   }

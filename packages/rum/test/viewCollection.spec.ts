@@ -84,7 +84,7 @@ function mockHash(location: Partial<Location>) {
 }
 
 function mockGetElementById() {
-  spyOn(document, 'getElementById').and.callFake((elementId: string) => {
+  return spyOn(document, 'getElementById').and.callFake((elementId: string) => {
     return (elementId === ('testHashValue' as unknown)) as any
   })
 }
@@ -205,6 +205,29 @@ describe('rum track url change', () => {
     function hashchangeCallBack() {
       expect(createSpy).not.toHaveBeenCalled()
       window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#testHashValue'
+  })
+
+  it('should acknoledge the view location hash change after an Anchor navigation', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    const spyObj = mockGetElementById()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+
+      // clear mockGetElementById that fake Anchor nav
+      spyObj.and.callThrough()
+
+      // This is not an Anchor nav anymore but the hash and pathname have not been updated
+      history.pushState({}, '', '/foo#testHashValue')
+      expect(createSpy).not.toHaveBeenCalled()
       done()
     }
 
