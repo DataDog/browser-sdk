@@ -16,7 +16,7 @@ import {
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
-import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent } from './serverTypes'
+import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent, ServerRumViewLoadingType } from './serverTypes'
 
 beforeEach(startSpec)
 
@@ -268,5 +268,32 @@ describe('user action collection', () => {
 
     expect(resourceEvents.length).toBe(1)
     expect(resourceEvents[0].user_action!.id).toBe(userActionEvents[0].user_action.id!)
+  })
+})
+
+describe('anchor navigation', () => {
+  it('should not create a new view when it is an Anchor navigation', async () => {
+    await $('#test-anchor').click()
+
+    await flushEvents()
+    const rumEvents = await waitServerRumEvents()
+    const viewEvents = rumEvents.filter(isRumViewEvent)
+
+    expect(viewEvents.length).toBe(1)
+    expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
+  })
+
+  it('should create a new view on hash change', async () => {
+    await browserExecute(() => {
+      window.location.hash = '#bar'
+    })
+
+    await flushEvents()
+    const rumEvents = await waitServerRumEvents()
+    const viewEvents = rumEvents.filter(isRumViewEvent)
+
+    expect(viewEvents.length).toBe(2)
+    expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
+    expect(viewEvents[1].view.loading_type).toBe(ServerRumViewLoadingType.ROUTE_CHANGE)
   })
 })
