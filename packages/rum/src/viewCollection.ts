@@ -158,42 +158,31 @@ function newView(
   }
 }
 
-function isAnchorHashInPage() {
-  const cleanedHash = window.location.hash.substr(1)
-  return !!document.getElementById(cleanedHash)
-}
-
 function trackHistory(onHistoryChange: () => void) {
-  function filterOutAnchorNav() {
-    if (!isAnchorHashInPage()) {
-      onHistoryChange()
-    }
-  }
-
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    filterOutAnchorNav()
+    onHistoryChange()
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    filterOutAnchorNav()
+    onHistoryChange()
   })
-  window.addEventListener(DOM_EVENT.POP_STATE, monitor(filterOutAnchorNav))
+  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
 }
 
 function trackHash(onHashChange: () => void) {
-  function filterOutAnchorNav() {
-    if (!isAnchorHashInPage()) {
-      onHashChange()
-    }
-  }
-  window.addEventListener('hashchange', monitor(filterOutAnchorNav))
+  window.addEventListener('hashchange', monitor(onHashChange))
+}
+
+function isAnchorHashInPage(hash: string) {
+  const cleanedHash = hash.substr(1)
+  return !!document.getElementById(cleanedHash)
 }
 
 function areDifferentViews(previous: Location, current: Location): boolean {
-  return previous.pathname !== current.pathname || previous.hash !== current.hash
+  return previous.pathname !== current.pathname || (!isAnchorHashInPage(current.hash) && previous.hash !== current.hash)
 }
 
 interface Timings {
