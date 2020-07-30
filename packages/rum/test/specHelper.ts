@@ -1,4 +1,6 @@
 import {
+  assign,
+  buildUrl,
   Configuration,
   DEFAULT_CONFIGURATION,
   InternalMonitoring,
@@ -33,7 +35,7 @@ const configuration = {
 }
 
 export interface TestSetupBuilder {
-  withFakeLocation: (location: Partial<Location>) => TestSetupBuilder
+  withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
@@ -77,8 +79,11 @@ export function setup(): TestSetupBuilder {
   let parentContexts: ParentContexts
 
   const setupBuilder = {
-    withFakeLocation(location: Partial<Location>) {
-      fakeLocation = location
+    withFakeLocation(initialUrl: string) {
+      fakeLocation = buildLocation(initialUrl, location.href)
+      spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
+        assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
+      })
       return setupBuilder
     },
     withSession(sessionStub: RumSession) {
@@ -163,4 +168,14 @@ export function setup(): TestSetupBuilder {
     },
   }
   return setupBuilder
+}
+
+function buildLocation(url: string, base?: string) {
+  const urlObject = buildUrl(url, base)
+  return {
+    hash: urlObject.hash,
+    href: urlObject.href,
+    pathname: urlObject.pathname,
+    search: urlObject.search,
+  }
 }

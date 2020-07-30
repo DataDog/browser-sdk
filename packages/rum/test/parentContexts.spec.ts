@@ -16,20 +16,13 @@ describe('parentContexts', () => {
   const FAKE_ID = 'fake'
   const startTime = 10
 
-  let fakeUrl: string
   let sessionId: string
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    fakeUrl = 'fake-url'
     sessionId = 'fake-session'
-    const fakeLocation = {
-      get href() {
-        return fakeUrl
-      },
-    }
     setupBuilder = setup()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('http://fake-url.com')
       .withSession({
         getId: () => sessionId,
         isTracked: () => true,
@@ -93,11 +86,11 @@ describe('parentContexts', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
-      expect(parentContexts.findView()!.view.url).toBe('fake-url')
+      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
-      fakeUrl = 'other-url'
+      history.pushState({}, '', '/foo')
 
-      expect(parentContexts.findView()!.view.url).toBe('other-url')
+      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })
 
     it('should update session id only on VIEW_CREATED', () => {
