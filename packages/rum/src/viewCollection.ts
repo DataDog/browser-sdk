@@ -47,6 +47,8 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
       currentView.end()
       currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+    } else {
+      currentLocation = { ...location }
     }
   }
 
@@ -156,28 +158,38 @@ function newView(
   }
 }
 
+function isAnchorHashInPage() {
+  const cleanedHash = window.location.hash.substr(1)
+  return !!document.getElementById(cleanedHash)
+}
+
 function trackHistory(onHistoryChange: () => void) {
+  function filterOutAnchorNav() {
+    if (!isAnchorHashInPage()) {
+      onHistoryChange()
+    }
+  }
+
   const originalPushState = history.pushState
   history.pushState = monitor(function(this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
-    onHistoryChange()
+    filterOutAnchorNav()
   })
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function(this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
-    onHistoryChange()
+    filterOutAnchorNav()
   })
-  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
+  window.addEventListener(DOM_EVENT.POP_STATE, monitor(filterOutAnchorNav))
 }
 
 function trackHash(onHashChange: () => void) {
-  function noAnchorNavHashChange() {
-    const cleanedHash = window.location.hash.substr(1)
-    if (!document.getElementById(cleanedHash)) {
+  function filterOutAnchorNav() {
+    if (!isAnchorHashInPage()) {
       onHashChange()
     }
   }
-  window.addEventListener('hashchange', monitor(noAnchorNavHashChange))
+  window.addEventListener('hashchange', monitor(filterOutAnchorNav))
 }
 
 function areDifferentViews(previous: Location, current: Location): boolean {
