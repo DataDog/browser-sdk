@@ -18,6 +18,10 @@ export interface XhrContext {
   duration: number
   status: number
   response: string | undefined
+
+  /**
+   * allow clients to enhance the context
+   */
   [key: string]: unknown
 }
 

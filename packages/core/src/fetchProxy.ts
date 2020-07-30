@@ -17,6 +17,10 @@ export interface FetchContext {
   status: number
   response: string
   responseType?: string
+
+  /**
+   * allow clients to enhance the context
+   */
   [key: string]: unknown
 }
 
