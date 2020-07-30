@@ -48,6 +48,8 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView.end()
       currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
     } else {
+      // Anchor navigations would modify the location without generating a new view.
+      // These changes need to be acknowledged so they don't interfer with the next change areDifferentViews call
       currentLocation = { ...location }
     }
   }
@@ -176,13 +178,13 @@ function trackHash(onHashChange: () => void) {
   window.addEventListener('hashchange', monitor(onHashChange))
 }
 
-function isAnchorHashInPage(hash: string) {
-  const cleanedHash = hash.substr(1)
-  return !!document.getElementById(cleanedHash)
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
 }
 
 function areDifferentViews(previous: Location, current: Location): boolean {
-  return previous.pathname !== current.pathname || (!isAnchorHashInPage(current.hash) && previous.hash !== current.hash)
+  return previous.pathname !== current.pathname || (!isHashAnAnchor(current.hash) && previous.hash !== current.hash)
 }
 
 interface Timings {

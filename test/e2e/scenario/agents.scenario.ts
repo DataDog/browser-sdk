@@ -273,11 +273,7 @@ describe('user action collection', () => {
 
 describe('anchor navigation', () => {
   it('should not create a new view when it is an Anchor navigation', async () => {
-    await $('#test-anchor')
-
-    await browserExecute(() => {
-      window.location.hash = '#test-anchor'
-    })
+    await $('#test-anchor').click()
 
     await flushEvents()
     const rumEvents = await waitServerRumEvents()
@@ -288,8 +284,6 @@ describe('anchor navigation', () => {
   })
 
   it('should create a new view on hash change', async () => {
-    await $('#test-anchor')
-
     await browserExecute(() => {
       window.location.hash = '#bar'
     })
