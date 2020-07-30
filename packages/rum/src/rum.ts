@@ -226,6 +226,8 @@ export function startRum(
       }),
     },
     stop: () => {
+      // prevent batch from previous tests to keep running and send unwanted requests
+      // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
     },
   }
