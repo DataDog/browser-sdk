@@ -8,7 +8,6 @@ interface BrowserXHR extends XMLHttpRequest {
 export interface XhrProxy {
   beforeSend: (callback: (context: Partial<XhrContext>) => void) => void
   onRequestComplete: (callback: (context: XhrContext) => void) => void
-  reset: () => void
 }
 
 export interface XhrContext {
@@ -25,31 +24,34 @@ export interface XhrContext {
   [key: string]: unknown
 }
 
+let xhrProxySingleton: XhrProxy | undefined
 const beforeSendCallbacks: Array<(context: Partial<XhrContext>) => void> = []
 const onRequestCompleteCallbacks: Array<(context: XhrContext) => void> = []
-let hasBeenStarted = false
 let originalXhrOpen: typeof XMLHttpRequest.prototype.open
 let originalXhrSend: typeof XMLHttpRequest.prototype.send
 
 export function startXhrProxy(): XhrProxy {
-  if (!hasBeenStarted) {
-    hasBeenStarted = true
+  if (!xhrProxySingleton) {
     proxyXhr()
+    xhrProxySingleton = {
+      beforeSend(callback: (context: Partial<XhrContext>) => void) {
+        beforeSendCallbacks.push(callback)
+      },
+      onRequestComplete(callback: (context: XhrContext) => void) {
+        onRequestCompleteCallbacks.push(callback)
+      },
+    }
   }
-  return {
-    beforeSend(callback: (context: Partial<XhrContext>) => void) {
-      beforeSendCallbacks.push(callback)
-    },
-    onRequestComplete(callback: (context: XhrContext) => void) {
-      onRequestCompleteCallbacks.push(callback)
-    },
-    reset() {
-      hasBeenStarted = false
-      beforeSendCallbacks.splice(0, beforeSendCallbacks.length)
-      onRequestCompleteCallbacks.splice(0, onRequestCompleteCallbacks.length)
-      XMLHttpRequest.prototype.open = originalXhrOpen
-      XMLHttpRequest.prototype.send = originalXhrSend
-    },
+  return xhrProxySingleton
+}
+
+export function resetXhrProxy() {
+  if (xhrProxySingleton) {
+    xhrProxySingleton = undefined
+    beforeSendCallbacks.splice(0, beforeSendCallbacks.length)
+    onRequestCompleteCallbacks.splice(0, onRequestCompleteCallbacks.length)
+    XMLHttpRequest.prototype.open = originalXhrOpen
+    XMLHttpRequest.prototype.send = originalXhrSend
   }
 }
 

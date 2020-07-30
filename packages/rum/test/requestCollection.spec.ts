@@ -7,8 +7,9 @@ import {
   RequestType,
   stubFetch,
   withXhr,
-  XhrProxy,
 } from '@datadog/browser-core'
+import { resetFetchProxy } from '../../core/src/fetchProxy'
+import { resetXhrProxy } from '../../core/src/xhrProxy'
 import {
   RequestCompleteEvent,
   RequestObservables,
@@ -46,7 +47,7 @@ describe('collect fetch', () => {
 
   afterEach(() => {
     fetchStubManager.reset()
-    fetchProxy.reset()
+    resetFetchProxy()
     // tslint:disable-next-line:no-null-keyword
     window.onunhandledrejection = null
   })
@@ -89,7 +90,6 @@ describe('collect fetch', () => {
 })
 
 describe('collect xhr', () => {
-  let xhrProxy: XhrProxy
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
 
@@ -103,11 +103,11 @@ describe('collect xhr', () => {
     completeSpy = jasmine.createSpy('requestComplete')
     requestObservables[0].subscribe(startSpy)
     requestObservables[1].subscribe(completeSpy)
-    xhrProxy = trackXhr(requestObservables)
+    trackXhr(requestObservables)
   })
 
   afterEach(() => {
-    xhrProxy.reset()
+    resetXhrProxy()
   })
 
   it('should notify on request start', (done) => {

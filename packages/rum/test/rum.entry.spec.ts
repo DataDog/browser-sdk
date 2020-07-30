@@ -1,5 +1,5 @@
 import { isIE, stopSessionManagement } from '@datadog/browser-core'
-import { startXhrProxy } from '../../core/src/xhrProxy'
+import { resetXhrProxy } from '../../core/src/xhrProxy'
 
 import { makeRumGlobal, RumGlobal, RumUserConfiguration } from '../src/rum.entry'
 
@@ -14,8 +14,10 @@ describe('rum entry', () => {
   })
 
   afterEach(() => {
+    // some tests can successfully start the tracking
+    // stop behaviors that can pollute following tests
     stopSessionManagement()
-    startXhrProxy().reset()
+    resetXhrProxy()
   })
 
   it('init should log an error with no application id', () => {

@@ -1,4 +1,4 @@
-import { FetchContext, FetchProxy, startFetchProxy } from '../src/fetchProxy'
+import { FetchContext, FetchProxy, resetFetchProxy, startFetchProxy } from '../src/fetchProxy'
 import { FetchStub, FetchStubManager, FetchStubPromise, isIE, stubFetch } from '../src/specHelper'
 
 describe('fetch proxy', () => {
@@ -25,7 +25,7 @@ describe('fetch proxy', () => {
 
   afterEach(() => {
     fetchStubManager.reset()
-    fetchProxy.reset()
+    resetFetchProxy()
   })
 
   it('should track server error', (done) => {

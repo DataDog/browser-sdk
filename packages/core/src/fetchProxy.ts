@@ -6,7 +6,6 @@ import { normalizeUrl } from './urlPolyfill'
 export interface FetchProxy {
   beforeSend: (callback: (context: Partial<FetchContext>) => void) => void
   onRequestComplete: (callback: (context: FetchContext) => void) => void
-  reset: () => void
 }
 
 export interface FetchContext {
@@ -24,29 +23,32 @@ export interface FetchContext {
   [key: string]: unknown
 }
 
+let fetchProxySingleton: FetchProxy | undefined
 let originalFetch: typeof window.fetch
-let hasBeenStarted = false
 const beforeSendCallbacks: Array<(xhr: Partial<FetchContext>) => void> = []
 const onRequestCompleteCallbacks: Array<(xhr: FetchContext) => void> = []
 
 export function startFetchProxy(): FetchProxy {
-  if (!hasBeenStarted) {
-    hasBeenStarted = true
+  if (!fetchProxySingleton) {
     proxyFetch()
+    fetchProxySingleton = {
+      beforeSend(callback: (context: Partial<FetchContext>) => void) {
+        beforeSendCallbacks.push(callback)
+      },
+      onRequestComplete(callback: (context: FetchContext) => void) {
+        onRequestCompleteCallbacks.push(callback)
+      },
+    }
   }
-  return {
-    beforeSend(callback: (context: Partial<FetchContext>) => void) {
-      beforeSendCallbacks.push(callback)
-    },
-    onRequestComplete(callback: (context: FetchContext) => void) {
-      onRequestCompleteCallbacks.push(callback)
-    },
-    reset() {
-      hasBeenStarted = false
-      beforeSendCallbacks.splice(0, beforeSendCallbacks.length)
-      onRequestCompleteCallbacks.splice(0, onRequestCompleteCallbacks.length)
-      window.fetch = originalFetch
-    },
+  return fetchProxySingleton
+}
+
+export function resetFetchProxy() {
+  if (fetchProxySingleton) {
+    fetchProxySingleton = undefined
+    beforeSendCallbacks.splice(0, beforeSendCallbacks.length)
+    onRequestCompleteCallbacks.splice(0, onRequestCompleteCallbacks.length)
+    window.fetch = originalFetch
   }
 }
 

@@ -1,5 +1,5 @@
 import { withXhr } from '../src'
-import { startXhrProxy, XhrContext, XhrProxy } from '../src/xhrProxy'
+import { resetXhrProxy, startXhrProxy, XhrContext, XhrProxy } from '../src/xhrProxy'
 
 describe('xhr proxy', () => {
   let completeSpy: jasmine.Spy<(context: XhrContext) => void>
@@ -10,13 +10,13 @@ describe('xhr proxy', () => {
   }
 
   beforeEach(() => {
-    xhrProxy = startXhrProxy()
     completeSpy = jasmine.createSpy('complete')
+    xhrProxy = startXhrProxy()
     xhrProxy.onRequestComplete(completeSpy)
   })
 
   afterEach(() => {
-    xhrProxy.reset()
+    resetXhrProxy()
   })
 
   it('should track successful request', (done) => {
