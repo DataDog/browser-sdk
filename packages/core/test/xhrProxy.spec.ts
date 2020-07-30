@@ -2,11 +2,11 @@ import { withXhr } from '../src'
 import { startXhrProxy, XhrContext, XhrProxy } from '../src/xhrProxy'
 
 describe('xhr proxy', () => {
-  let completeSpy: jasmine.Spy
+  let completeSpy: jasmine.Spy<(context: XhrContext) => void>
   let xhrProxy: XhrProxy
 
-  function getRequest(index: number): XhrContext {
-    return completeSpy.calls.argsFor(index)[0] as XhrContext
+  function getRequest(index: number) {
+    return completeSpy.calls.argsFor(index)[0]
   }
 
   beforeEach(() => {

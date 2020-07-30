@@ -5,11 +5,11 @@ describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
   let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
   let fetchStubManager: FetchStubManager
-  let completeSpy: jasmine.Spy
+  let completeSpy: jasmine.Spy<(context: FetchContext) => void>
   let fetchProxy: FetchProxy
 
-  function getRequest(index: number): FetchContext {
-    return completeSpy.calls.argsFor(index)[0] as FetchContext
+  function getRequest(index: number) {
+    return completeSpy.calls.argsFor(index)[0]
   }
 
   beforeEach(() => {

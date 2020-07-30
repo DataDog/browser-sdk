@@ -22,8 +22,8 @@ describe('collect fetch', () => {
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let fetchProxy: FetchProxy
-  let startSpy: jasmine.Spy
-  let completeSpy: jasmine.Spy
+  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
 
   beforeEach(() => {
     if (isIE()) {
@@ -55,7 +55,7 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(startSpy).toHaveBeenCalledWith({ requestId: jasmine.any(Number) })
+      expect(startSpy).toHaveBeenCalledWith({ requestId: (jasmine.any(Number) as unknown) as number })
       done()
     })
   })
@@ -64,7 +64,7 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0] as RequestCompleteEvent
+      const request = completeSpy.calls.argsFor(0)[0]
 
       expect(request.type).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
@@ -79,8 +79,8 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      const startRequestId = (startSpy.calls.argsFor(0)[0] as RequestStartEvent).requestId
-      const completeRequestId = (completeSpy.calls.argsFor(0)[0] as RequestCompleteEvent).requestId
+      const startRequestId = startSpy.calls.argsFor(0)[0].requestId
+      const completeRequestId = completeSpy.calls.argsFor(0)[0].requestId
 
       expect(completeRequestId).toBe(startRequestId)
       done()
@@ -90,8 +90,8 @@ describe('collect fetch', () => {
 
 describe('collect xhr', () => {
   let xhrProxy: XhrProxy
-  let startSpy: jasmine.Spy
-  let completeSpy: jasmine.Spy
+  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
 
   beforeEach(() => {
     if (isIE()) {
@@ -117,7 +117,7 @@ describe('collect xhr', () => {
         xhr.send()
       },
       onComplete() {
-        expect(startSpy).toHaveBeenCalledWith({ requestId: jasmine.any(Number) })
+        expect(startSpy).toHaveBeenCalledWith({ requestId: (jasmine.any(Number) as unknown) as number })
         done()
       },
     })
@@ -130,7 +130,7 @@ describe('collect xhr', () => {
         xhr.send()
       },
       onComplete() {
-        const request = completeSpy.calls.argsFor(0)[0] as RequestCompleteEvent
+        const request = completeSpy.calls.argsFor(0)[0]
 
         expect(request.type).toEqual(RequestType.XHR)
         expect(request.method).toEqual('GET')
@@ -149,8 +149,8 @@ describe('collect xhr', () => {
         xhr.send()
       },
       onComplete() {
-        const startRequestId = (startSpy.calls.argsFor(0)[0] as RequestStartEvent).requestId
-        const completeRequestId = (completeSpy.calls.argsFor(0)[0] as RequestCompleteEvent).requestId
+        const startRequestId = startSpy.calls.argsFor(0)[0].requestId
+        const completeRequestId = completeSpy.calls.argsFor(0)[0].requestId
 
         expect(completeRequestId).toBe(startRequestId)
         done()
