@@ -21,10 +21,15 @@ export interface ActionContext extends Context {
   }
 }
 
-interface CurrentContext {
+interface CurrentViewContext {
   id: string
   startTime: number
-  location?: Location
+  location: Location
+}
+
+interface CurrentActionContext {
+  id: string
+  startTime: number
 }
 
 interface PreviousContext<T> {
@@ -39,9 +44,9 @@ export interface ParentContexts {
   stop: () => void
 }
 
-export function startParentContexts(location: Location, lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  let currentView: CurrentContext | undefined
-  let currentAction: CurrentContext | undefined
+export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
+  let currentView: CurrentViewContext | undefined
+  let currentAction: CurrentActionContext | undefined
   let currentSessionId: string | undefined
 
   let previousViews: Array<PreviousContext<ViewContext>> = []
@@ -109,7 +114,7 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
       sessionId: currentSessionId,
       view: {
         id: currentView!.id,
-        url: (currentView!.location || location).href,
+        url: currentView!.location.href,
       },
     }
   }
@@ -121,7 +126,7 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
-    currentContext?: CurrentContext,
+    currentContext?: { startTime: number },
     startTime?: number
   ) {
     if (!startTime) {

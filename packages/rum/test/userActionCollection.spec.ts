@@ -2,6 +2,7 @@ import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../src/trackPageActivities'
 import { AutoUserAction, UserActionType } from '../src/userActionCollection'
+import { View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 // Used to wait some time after the creation of a user action
@@ -76,7 +77,7 @@ describe('startUserActionCollection', () => {
     mockValidatedClickUserAction(lifeCycle, clock, button)
     expect(createSpy).toHaveBeenCalled()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id: 'fake', startTime: 0 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, id: 'fake', startTime: 0 })
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])

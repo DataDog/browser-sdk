@@ -58,6 +58,7 @@ export interface TestIO {
   rumApi: RumApi
   clock: jasmine.Clock
   parentContexts: ParentContexts
+  fakeLocation: Partial<Location>
 }
 
 export function setup(): TestSetupBuilder {
@@ -124,7 +125,7 @@ export function setup(): TestSetupBuilder {
     },
     withParentContexts() {
       buildTasks.push(() => {
-        parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session)
+        parentContexts = startParentContexts(lifeCycle, session)
         cleanupTasks.push(() => {
           parentContexts.stop()
         })
@@ -161,7 +162,7 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
-      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts }
+      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts, fakeLocation }
     },
     cleanup() {
       cleanupTasks.forEach((task) => task())

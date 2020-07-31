@@ -5,6 +5,7 @@ import {
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from '../src/parentContexts'
 import { AutoUserAction } from '../src/userActionCollection'
+import { View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 function stubActionWithDuration(duration: number): AutoUserAction {
@@ -45,7 +46,7 @@ describe('parentContexts', () => {
     it('should return the current view context when there is no start time', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime, id: FAKE_ID })
 
       expect(parentContexts.findView()).toBeDefined()
       expect(parentContexts.findView()!.view.id).toEqual(FAKE_ID)
@@ -54,9 +55,9 @@ describe('parentContexts', () => {
     it('should return the view context corresponding to startTime', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 10, id: 'view 1' })
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 20, id: 'view 2' })
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 30, id: 'view 3' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 10, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 20, id: 'view 2' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 30, id: 'view 3' })
 
       expect(parentContexts.findView(15)!.view.id).toEqual('view 1')
       expect(parentContexts.findView(20)!.view.id).toEqual('view 2')
@@ -66,8 +67,8 @@ describe('parentContexts', () => {
     it('should return undefined when no view context corresponding to startTime', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 10, id: 'view 1' })
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 20, id: 'view 2' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 10, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 20, id: 'view 2' })
 
       expect(parentContexts.findView(5)).not.toBeDefined()
     })
@@ -75,17 +76,17 @@ describe('parentContexts', () => {
     it('should replace the current view context on VIEW_CREATED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime, id: FAKE_ID })
       const newViewId = 'fake 2'
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: newViewId })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime, id: newViewId })
 
       expect(parentContexts.findView()!.view.id).toEqual(newViewId)
     })
 
     it('should return the current url with the current view', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle, parentContexts, fakeLocation } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID, location: fakeLocation as Location })
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
       history.pushState({}, '', '/foo')
@@ -96,13 +97,13 @@ describe('parentContexts', () => {
     it('should update session id only on VIEW_CREATED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: FAKE_ID })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime, id: FAKE_ID })
       expect(parentContexts.findView()!.sessionId).toBe('fake-session')
 
       sessionId = 'other-session'
       expect(parentContexts.findView()!.sessionId).toBe('fake-session')
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime, id: 'fake 2' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime, id: 'fake 2' })
       expect(parentContexts.findView()!.sessionId).toBe('other-session')
     })
   })
@@ -174,8 +175,8 @@ describe('parentContexts', () => {
     it('should be cleared on SESSION_RENEWED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 10, id: 'view 1' })
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: 20, id: 'view 2' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 10, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: 20, id: 'view 2' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
@@ -199,10 +200,10 @@ describe('parentContexts', () => {
       const originalTime = performance.now()
       const targetTime = originalTime + 5
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: originalTime, id: 'view 1' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: originalTime, id: 'view 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: originalTime, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { startTime: originalTime + 10, id: 'view 2' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, startTime: originalTime + 10, id: 'view 2' })
 
       clock.tick(10)
       expect(parentContexts.findView(targetTime)).toBeDefined()

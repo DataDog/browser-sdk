@@ -99,7 +99,7 @@ function newView(
   let loadingTime: number | undefined
   let location: Location = { ...initialLocation }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(

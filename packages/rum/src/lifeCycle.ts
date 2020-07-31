@@ -32,10 +32,8 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
   notify(eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED, data: CustomUserAction): void
-  notify(
-    eventType: LifeCycleEventType.AUTO_ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
-    { id, startTime }: { id: string; startTime: number }
-  ): void
+  notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: { id: string; startTime: number }): void
+  notify(eventType: LifeCycleEventType.VIEW_CREATED, data: { id: string; startTime: number; location: Location }): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
   notify(
     eventType:
@@ -64,12 +62,16 @@ export class LifeCycle {
   ): Subscription
   subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoUserAction) => void): Subscription
   subscribe(
-    eventType: LifeCycleEventType.AUTO_ACTION_CREATED | LifeCycleEventType.VIEW_CREATED,
-    callback: ({ id, startTime }: { id: string; startTime: number }) => void
+    eventType: LifeCycleEventType.AUTO_ACTION_CREATED,
+    callback: (data: { id: string; startTime: number }) => void
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
     callback: (data: CustomUserAction) => void
+  ): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.VIEW_CREATED,
+    callback: (data: { id: string; startTime: number; location: Location }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
   subscribe(
