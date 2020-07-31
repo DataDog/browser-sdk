@@ -24,6 +24,7 @@ export interface ActionContext extends Context {
 interface CurrentContext {
   id: string
   startTime: number
+  location?: Location
 }
 
 interface PreviousContext<T> {
@@ -56,6 +57,10 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
     }
     currentView = currentContext
     currentSessionId = session.getId()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (currentContext) => {
+    currentView = currentContext
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
@@ -100,7 +105,13 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
   }
 
   function buildCurrentViewContext() {
-    return { sessionId: currentSessionId, view: { id: currentView!.id, url: location.href } }
+    return {
+      sessionId: currentSessionId,
+      view: {
+        id: currentView!.id,
+        url: (currentView!.location || location).href,
+      },
+    }
   }
 
   function buildCurrentActionContext() {
