@@ -21,7 +21,13 @@ export interface ActionContext extends Context {
   }
 }
 
-interface CurrentContext {
+interface CurrentViewContext {
+  id: string
+  startTime: number
+  location: Location
+}
+
+interface CurrentActionContext {
   id: string
   startTime: number
 }
@@ -38,9 +44,9 @@ export interface ParentContexts {
   stop: () => void
 }
 
-export function startParentContexts(location: Location, lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  let currentView: CurrentContext | undefined
-  let currentAction: CurrentContext | undefined
+export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
+  let currentView: CurrentViewContext | undefined
+  let currentAction: CurrentActionContext | undefined
   let currentSessionId: string | undefined
 
   let previousViews: Array<PreviousContext<ViewContext>> = []
@@ -56,6 +62,10 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
     }
     currentView = currentContext
     currentSessionId = session.getId()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (currentContext) => {
+    currentView = currentContext
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
@@ -100,7 +110,13 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
   }
 
   function buildCurrentViewContext() {
-    return { sessionId: currentSessionId, view: { id: currentView!.id, url: location.href } }
+    return {
+      sessionId: currentSessionId,
+      view: {
+        id: currentView!.id,
+        url: currentView!.location.href,
+      },
+    }
   }
 
   function buildCurrentActionContext() {
@@ -110,7 +126,7 @@ export function startParentContexts(location: Location, lifeCycle: LifeCycle, se
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
-    currentContext?: CurrentContext,
+    currentContext?: { startTime: number },
     startTime?: number
   ) {
     if (!startTime) {

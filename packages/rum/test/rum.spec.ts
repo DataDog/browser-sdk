@@ -633,3 +633,42 @@ describe('rum internal context', () => {
     })
   })
 })
+
+describe('rum event assembly', () => {
+  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
+
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeServer()
+      .withRum()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should sets the view URL on long task events', () => {
+    const { server, lifeCycle } = setupBuilder.withFakeLocation('http://foo.com/').build()
+
+    server.requests = []
+
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+
+    expect(server.requests.length).toEqual(1)
+    expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
+  })
+
+  it('should keep the same URL when updating a view ended by a URL change', () => {
+    const { server } = setupBuilder.withFakeLocation('http://foo.com/').build()
+
+    server.requests = []
+
+    history.pushState({}, '', '/bar')
+
+    expect(server.requests.length).toEqual(2)
+    expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
+    expect(getRumMessage(server, 1).view.url).toEqual('http://foo.com/bar')
+  })
+})

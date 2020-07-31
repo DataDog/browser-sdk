@@ -1,4 +1,6 @@
 import {
+  assign,
+  buildUrl,
   Configuration,
   DEFAULT_CONFIGURATION,
   InternalMonitoring,
@@ -33,7 +35,7 @@ const configuration = {
 }
 
 export interface TestSetupBuilder {
-  withFakeLocation: (location: Partial<Location>) => TestSetupBuilder
+  withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
@@ -56,6 +58,7 @@ export interface TestIO {
   rumApi: RumApi
   clock: jasmine.Clock
   parentContexts: ParentContexts
+  fakeLocation: Partial<Location>
 }
 
 export function setup(): TestSetupBuilder {
@@ -77,8 +80,11 @@ export function setup(): TestSetupBuilder {
   let parentContexts: ParentContexts
 
   const setupBuilder = {
-    withFakeLocation(location: Partial<Location>) {
-      fakeLocation = location
+    withFakeLocation(initialUrl: string) {
+      fakeLocation = buildLocation(initialUrl, location.href)
+      spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
+        assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
+      })
       return setupBuilder
     },
     withSession(sessionStub: RumSession) {
@@ -119,7 +125,7 @@ export function setup(): TestSetupBuilder {
     },
     withParentContexts() {
       buildTasks.push(() => {
-        parentContexts = startParentContexts(fakeLocation as Location, lifeCycle, session)
+        parentContexts = startParentContexts(lifeCycle, session)
         cleanupTasks.push(() => {
           parentContexts.stop()
         })
@@ -156,11 +162,21 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
-      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts }
+      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts, fakeLocation }
     },
     cleanup() {
       cleanupTasks.forEach((task) => task())
     },
   }
   return setupBuilder
+}
+
+function buildLocation(url: string, base?: string) {
+  const urlObject = buildUrl(url, base)
+  return {
+    hash: urlObject.hash,
+    href: urlObject.href,
+    pathname: urlObject.pathname,
+    search: urlObject.search,
+  }
 }

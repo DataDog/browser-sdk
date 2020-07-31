@@ -1,4 +1,4 @@
-import { getHash, getPathName, getSearch, noop } from '@datadog/browser-core'
+import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
@@ -114,7 +114,7 @@ describe('rum track url change', () => {
     mockHistory(fakeLocation)
     cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
@@ -256,10 +256,8 @@ describe('rum track renew session', () => {
   beforeEach(() => {
     ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
 
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    mockHistory(fakeLocation)
     setupBuilder = setup()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
@@ -304,11 +302,9 @@ describe('rum track load duration', () => {
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
 
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    mockHistory(fakeLocation)
     setupBuilder = setup()
       .withFakeClock()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
@@ -342,11 +338,9 @@ describe('rum track loading time', () => {
   beforeEach(() => {
     ;({ handler, getHandledCount, getViewEvent } = spyOnViews())
 
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    mockHistory(fakeLocation)
     setupBuilder = setup()
       .withFakeClock()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
@@ -439,10 +433,8 @@ describe('rum view measures', () => {
   beforeEach(() => {
     ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
 
-    const fakeLocation: Partial<Location> = { pathname: '/foo' }
-    mockHistory(fakeLocation)
     setupBuilder = setup()
-      .withFakeLocation(fakeLocation)
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
