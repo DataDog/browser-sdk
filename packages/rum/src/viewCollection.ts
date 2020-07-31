@@ -39,35 +39,38 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  let currentView = newView(lifeCycle, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  currentView.triggerUpdate(currentLocation)
 
   // Renew view on history changes
   trackHistory(() => {
     if (areDifferentViews(currentLocation, location)) {
-      currentLocation = { ...location }
-      currentView.triggerUpdate()
+      currentView.triggerUpdate(currentLocation)
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, ViewLoadingType.ROUTE_CHANGE)
     }
+    currentLocation = { ...location }
+    currentView.triggerUpdate(currentLocation)
   })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, ViewLoadingType.ROUTE_CHANGE)
+    currentView.triggerUpdate(currentLocation)
   })
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    currentView.triggerUpdate()
+    currentView.triggerUpdate(currentLocation)
     currentView.end()
   })
 
   // Session keep alive
   const keepAliveInterval = window.setInterval(
     monitor(() => {
-      currentView.triggerUpdate()
+      currentView.triggerUpdate(currentLocation)
     }),
     SESSION_KEEP_ALIVE_INTERVAL
   )
@@ -80,12 +83,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   }
 }
 
-function newView(
-  lifeCycle: LifeCycle,
-  location: Location,
-  loadingType: ViewLoadingType,
-  startTime: number = performance.now()
-) {
+function newView(lifeCycle: LifeCycle, loadingType: ViewLoadingType, startTime: number = performance.now()) {
   // Setup initial values
   const id = generateUUID()
   let measures: ViewMeasures = {
@@ -96,6 +94,7 @@ function newView(
   }
   let documentVersion = 0
   let loadingTime: number | undefined
+  let location: Location
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
 
@@ -120,9 +119,6 @@ function newView(
   }
   const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
 
-  // Initial view update
-  updateView()
-
   function updateView() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
@@ -145,7 +141,8 @@ function newView(
       // prevent pending view updates execution
       stopScheduleViewUpdate()
     },
-    triggerUpdate() {
+    triggerUpdate(newLocation: Location) {
+      location = newLocation
       updateView()
     },
   }
