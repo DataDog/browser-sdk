@@ -111,7 +111,6 @@ export interface RumViewEvent {
     loadingTime?: number
     loadingType: ViewLoadingType
     measures: ViewMeasures
-    url: string
   }
 }
 
@@ -360,7 +359,6 @@ function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: Rum
         loadingTime: view.loadingTime ? msToNs(view.loadingTime) : undefined,
         loadingType: view.loadingType,
         measures: view.measures,
-        url: view.location.href,
       },
     })
   })
