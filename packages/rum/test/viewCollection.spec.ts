@@ -77,11 +77,10 @@ describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
   let createSpy: jasmine.Spy
-  let updateSpy: jasmine.Spy<(view: View) => void>
 
   beforeEach(() => {
     setupBuilder = setup()
-      .withFakeLocation('http://foo.com/foo')
+      .withFakeLocation('/foo')
       .withViewCollection()
       .beforeBuild((lifeCycle) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
@@ -90,7 +89,6 @@ describe('rum track url change', () => {
         })
       })
     createSpy = jasmine.createSpy('create')
-    updateSpy = jasmine.createSpy('update')
   })
 
   afterEach(() => {
@@ -124,28 +122,6 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/foo#bar')
 
     expect(createSpy).not.toHaveBeenCalled()
-  })
-
-  it('should update current view on search change', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, updateSpy)
-
-    history.pushState({}, '', '/foo?bar=qux')
-
-    expect(updateSpy).toHaveBeenCalled()
-    const view = updateSpy.calls.argsFor(0)[0]
-    expect(view.location.href).toBe('http://foo.com/foo?bar=qux')
-  })
-
-  it('should update current view on hash change', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, updateSpy)
-
-    history.pushState({}, '', '/foo#bar')
-
-    expect(updateSpy).toHaveBeenCalled()
-    const view = updateSpy.calls.argsFor(0)[0]
-    expect(view.location.href).toBe('http://foo.com/foo#bar')
   })
 })
 
