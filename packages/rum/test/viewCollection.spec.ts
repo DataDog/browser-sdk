@@ -61,28 +61,6 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING = {
   loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2,
 }
 
-function mockHistory(location: Partial<Location>) {
-  spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-    const url = `http://localhost${pathname}`
-    location.pathname = getPathName(url)
-    location.search = getSearch(url)
-    location.hash = getHash(url) || ''
-  })
-}
-
-function mockHash(location: Partial<Location>) {
-  function hashchangeCallBack() {
-    location.hash = window.location.hash
-  }
-
-  window.addEventListener('hashchange', hashchangeCallBack)
-
-  return () => {
-    window.removeEventListener('hashchange', hashchangeCallBack)
-    window.location.hash = ''
-  }
-}
-
 function mockGetElementById() {
   return spyOn(document, 'getElementById').and.callFake((elementId: string) => {
     return (elementId === ('testHashValue' as unknown)) as any
@@ -107,12 +85,9 @@ describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
   let createSpy: jasmine.Spy
-  let cleanMockHash: () => void
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
-    mockHistory(fakeLocation)
-    cleanMockHash = mockHash(fakeLocation)
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
@@ -127,7 +102,6 @@ describe('rum track url change', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-    cleanMockHash()
   })
 
   it('should create new view on path change', () => {
