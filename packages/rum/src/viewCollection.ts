@@ -40,8 +40,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   let currentView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
-  // Renew view on history changes
-  trackHistory(() => {
+  function renewViewOnChange() {
     if (currentView.isDifferentView(location)) {
       currentView.triggerUpdate()
       currentView.end()
@@ -50,7 +49,13 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView.updateLocation(location)
       currentView.triggerUpdate()
     }
-  })
+  }
+
+  // Renew view on history changes
+  trackHistory(renewViewOnChange)
+
+  // Renew view on hash changes
+  trackHash(renewViewOnChange)
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -148,7 +153,10 @@ function newView(
       stopScheduleViewUpdate()
     },
     isDifferentView(otherLocation: Location) {
-      return location.pathname !== otherLocation.pathname
+      return (
+        location.pathname !== otherLocation.pathname ||
+        (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== location.hash)
+      )
     },
     triggerUpdate() {
       updateView()
@@ -157,6 +165,11 @@ function newView(
       location = { ...newLocation }
     },
   }
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
 }
 
 function trackHistory(onHistoryChange: () => void) {
@@ -171,6 +184,10 @@ function trackHistory(onHistoryChange: () => void) {
     onHistoryChange()
   })
   window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
+}
+
+function trackHash(onHashChange: () => void) {
+  window.addEventListener('hashchange', monitor(onHashChange))
 }
 
 interface Timings {

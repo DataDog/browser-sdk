@@ -1,3 +1,5 @@
+import { getHash, getPathName, getSearch } from '@datadog/browser-core'
+
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
 import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
@@ -59,6 +61,12 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING = {
   loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2,
 }
 
+function mockGetElementById() {
+  return spyOn(document, 'getElementById').and.callFake((elementId: string) => {
+    return (elementId === ('testHashValue' as unknown)) as any
+  })
+}
+
 function spyOnViews() {
   const handler = jasmine.createSpy()
 
@@ -79,6 +87,7 @@ describe('rum track url change', () => {
   let createSpy: jasmine.Spy
 
   beforeEach(() => {
+    const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
@@ -106,20 +115,106 @@ describe('rum track url change', () => {
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
+  it('should create a new view on hash change from history', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    expect(viewContext.id).not.toEqual(initialViewId)
+  })
+
+  it('should not create a new view on hash change from history when the hash has kept the same value', () => {
+    history.pushState({}, '', '/foo#bar')
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).not.toHaveBeenCalled()
+  })
+
+  it('should create a new view on hash change', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).toHaveBeenCalled()
+      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+      expect(viewContext.id).not.toEqual(initialViewId)
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
+  })
+
+  it('should not create a new view when the hash has kept the same value', (done) => {
+    history.pushState({}, '', '/foo#bar')
+
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#bar'
+  })
+
+  it('should not create a new view when it is an Anchor navigation', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    mockGetElementById()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#testHashValue'
+  })
+
+  it('should acknowledge the view location hash change after an Anchor navigation', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+    const spyObj = mockGetElementById()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    function hashchangeCallBack() {
+      expect(createSpy).not.toHaveBeenCalled()
+      window.removeEventListener('hashchange', hashchangeCallBack)
+
+      // clear mockGetElementById that fake Anchor nav
+      spyObj.and.callThrough()
+
+      // This is not an Anchor nav anymore but the hash and pathname have not been updated
+      history.pushState({}, '', '/foo#testHashValue')
+      expect(createSpy).not.toHaveBeenCalled()
+      done()
+    }
+
+    window.addEventListener('hashchange', hashchangeCallBack)
+
+    window.location.hash = '#testHashValue'
+  })
+
   it('should not create new view on search change', () => {
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     history.pushState({}, '', '/foo?bar=qux')
-
-    expect(createSpy).not.toHaveBeenCalled()
-  })
-
-  it('should not create a new view on hash change', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
-
-    history.pushState({}, '', '/foo#bar')
 
     expect(createSpy).not.toHaveBeenCalled()
   })

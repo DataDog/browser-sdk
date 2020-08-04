@@ -85,6 +85,18 @@ export function setup(): TestSetupBuilder {
       spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
         assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
       })
+
+      function hashchangeCallBack() {
+        fakeLocation.hash = window.location.hash
+      }
+
+      window.addEventListener('hashchange', hashchangeCallBack)
+
+      cleanupTasks.push(() => {
+        window.removeEventListener('hashchange', hashchangeCallBack)
+        window.location.hash = ''
+      })
+
       return setupBuilder
     },
     withSession(sessionStub: RumSession) {

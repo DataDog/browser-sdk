@@ -80,6 +80,11 @@ export function isRumUserActionEvent(event: ServerRumEvent): event is ServerRumU
   return event.evt.category === 'user_action'
 }
 
+export enum ServerRumViewLoadingType {
+  INITIAL_LOAD = 'initial_load',
+  ROUTE_CHANGE = 'route_change',
+}
+
 export interface ServerRumViewEvent extends ServerRumEvent {
   evt: {
     category: 'view'
@@ -90,6 +95,7 @@ export interface ServerRumViewEvent extends ServerRumEvent {
   session_id: string
   view: {
     id: string
+    loading_type: ServerRumViewLoadingType
     measures: {
       dom_complete: number
       dom_content_loaded: number
