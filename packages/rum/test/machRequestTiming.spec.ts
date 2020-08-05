@@ -1,6 +1,7 @@
-import { isIE, RequestCompleteEvent } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 
 import { matchRequestTiming } from '../src/matchRequestTiming'
+import { RequestCompleteEvent } from '../src/requestCollection'
 
 describe('matchRequestTiming', () => {
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100, duration: 500 }

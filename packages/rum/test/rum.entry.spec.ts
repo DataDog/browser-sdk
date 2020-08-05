@@ -1,6 +1,7 @@
 import { isIE, stopSessionManagement } from '@datadog/browser-core'
+import { resetXhrProxy } from '../../core/src/xhrProxy'
 
-import { RumGlobal, RumUserConfiguration } from '../src/rum.entry'
+import { makeRumGlobal, RumGlobal, RumUserConfiguration } from '../src/rum.entry'
 
 describe('rum entry', () => {
   let rumGlobal: RumGlobal
@@ -9,13 +10,14 @@ describe('rum entry', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    // tslint:disable-next-line: no-unsafe-any
-    rumGlobal = require('../src/rum.entry').datadogRum
-    delete (require.cache as any)[require.resolve('../src/rum.entry')]
+    rumGlobal = makeRumGlobal({} as any)
   })
 
   afterEach(() => {
+    // some tests can successfully start the tracking
+    // stop behaviors that can pollute following tests
     stopSessionManagement()
+    resetXhrProxy()
   })
 
   it('init should log an error with no application id', () => {

@@ -1,5 +1,4 @@
 import { Configuration } from './configuration'
-import { RequestCompleteEvent, RequestObservables } from './requestCollection'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -27,57 +26,65 @@ export function clearAllCookies() {
   })
 }
 
-export class FetchStubBuilder {
-  private requests: RequestCompleteEvent[] = []
-  private whenAllCompleteFn: (requests: RequestCompleteEvent[]) => void = noop
+export interface FetchStubManager {
+  reset: () => void
+  whenAllComplete: (callback: () => void) => void
+}
 
-  constructor([requestStartObservable, requestCompleteObservable]: RequestObservables) {
-    let pendingFetch = 0
-    requestStartObservable.subscribe(() => {
-      pendingFetch += 1
-    })
-    requestCompleteObservable.subscribe((request: RequestCompleteEvent) => {
-      this.requests.push(request)
-      pendingFetch -= 1
-      if (pendingFetch === 0) {
-        // ensure that AssertionError are not swallowed by promise context
-        setTimeout(() => {
-          this.whenAllCompleteFn(this.requests)
-        })
-      }
-    })
+export function stubFetch(): FetchStubManager {
+  const originalFetch = window.fetch
+  let allFetchCompleteCallback = noop
+  let pendingRequests = 0
+
+  function onRequestEnd() {
+    pendingRequests -= 1
+    if (pendingRequests === 0) {
+      setTimeout(() => allFetchCompleteCallback())
+    }
   }
 
-  whenAllComplete(onCompleteFn: (_: RequestCompleteEvent[]) => void) {
-    this.whenAllCompleteFn = onCompleteFn
-  }
+  window.fetch = (() => {
+    pendingRequests += 1
+    let resolve: (response: ResponseStub) => unknown
+    let reject: (error: Error) => unknown
+    const promise: unknown = new Promise((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+    ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) => {
+      const resolved = resolve({
+        ...response,
+        clone: () => {
+          const cloned = {
+            text: async () => {
+              if (response.responseTextError) {
+                throw response.responseTextError
+              }
+              return response.responseText
+            },
+          }
+          return cloned as Response
+        },
+      }) as Promise<ResponseStub>
+      onRequestEnd()
+      return resolved
+    }
+    ;(promise as FetchStubPromise).rejectWith = async (error: Error) => {
+      const rejected = reject(error) as Promise<Error>
+      onRequestEnd()
+      return rejected
+    }
+    return promise
+  }) as typeof window.fetch
 
-  getStub() {
-    return (() => {
-      let resolve: (response: ResponseStub) => unknown
-      let reject: (error: Error) => unknown
-      const promise: unknown = new Promise((res, rej) => {
-        resolve = res
-        reject = rej
-      })
-      ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) =>
-        resolve({
-          ...response,
-          clone: () => {
-            const cloned = {
-              text: async () => {
-                if (response.responseTextError) {
-                  throw response.responseTextError
-                }
-                return response.responseText
-              },
-            }
-            return cloned as Response
-          },
-        }) as Promise<ResponseStub>
-      ;(promise as FetchStubPromise).rejectWith = async (error: Error) => reject(error) as Promise<Error>
-      return promise
-    }) as FetchStub
+  return {
+    whenAllComplete(callback: () => void) {
+      allFetchCompleteCallback = callback
+    },
+    reset() {
+      window.fetch = originalFetch
+      allFetchCompleteCallback = noop
+    },
   }
 }
 
@@ -132,6 +139,22 @@ export class PerformanceObserverStubBuilder {
       }
     } as unknown) as PerformanceObserver
   }
+}
+
+export function withXhr({
+  setup,
+  onComplete,
+}: {
+  setup: (xhr: XMLHttpRequest) => void
+  onComplete: (xhr: XMLHttpRequest) => void
+}) {
+  const xhr = new XMLHttpRequest()
+  xhr.addEventListener('loadend', () => {
+    setTimeout(() => {
+      onComplete(xhr)
+    })
+  })
+  setup(xhr)
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {

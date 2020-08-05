@@ -1,15 +1,10 @@
 import { Configuration } from './configuration'
+import { FetchContext, resetFetchProxy, startFetchProxy } from './fetchProxy'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
-import {
-  isRejected,
-  isServerError,
-  RequestCompleteEvent,
-  RequestType,
-  startRequestCollection,
-} from './requestCollection'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
-import { jsonStringify, ONE_MINUTE } from './utils'
+import { jsonStringify, ONE_MINUTE, RequestType } from './utils'
+import { resetXhrProxy, startXhrProxy, XhrContext } from './xhrProxy'
 
 export interface ErrorMessage {
   startTime: number
@@ -47,8 +42,7 @@ export function startErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<ErrorMessage>()
     if (configuration.isCollectingError) {
-      const [, requestCompleteObservable] = startRequestCollection()
-      trackNetworkError(configuration, errorObservable, requestCompleteObservable)
+      trackNetworkError(configuration, errorObservable)
       startConsoleTracking(errorObservable)
       startRuntimeErrorTracking(errorObservable)
     }
@@ -161,12 +155,11 @@ export function toStackTraceString(stack: StackTrace) {
   return result
 }
 
-export function trackNetworkError(
-  configuration: Configuration,
-  errorObservable: ErrorObservable,
-  requestObservable: Observable<RequestCompleteEvent>
-) {
-  requestObservable.subscribe((request: RequestCompleteEvent) => {
+export function trackNetworkError(configuration: Configuration, errorObservable: ErrorObservable) {
+  startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
+  startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
+
+  function handleCompleteRequest(type: RequestType, request: XhrContext | FetchContext) {
     if (isRejected(request) || isServerError(request)) {
       errorObservable.notify({
         context: {
@@ -180,11 +173,26 @@ export function trackNetworkError(
             url: request.url,
           },
         },
-        message: `${format(request.type)} error ${request.method} ${request.url}`,
+        message: `${format(type)} error ${request.method} ${request.url}`,
         startTime: request.startTime,
       })
     }
-  })
+  }
+
+  return {
+    stop() {
+      resetXhrProxy()
+      resetFetchProxy()
+    },
+  }
+}
+
+export function isRejected(request: { status: number; responseType?: string }) {
+  return request.status === 0 && request.responseType !== 'opaque'
+}
+
+export function isServerError(request: { status: number }) {
+  return request.status >= 500
 }
 
 function truncateResponse(response: string | undefined, configuration: Configuration) {

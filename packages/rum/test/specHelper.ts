@@ -104,17 +104,18 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withRum() {
-      buildTasks.push(
-        () =>
-          (rumApi = startRum(
-            'appId',
-            fakeLocation as Location,
-            lifeCycle,
-            configuration as Configuration,
-            session,
-            internalMonitoringStub
-          ))
-      )
+      buildTasks.push(() => {
+        let stopRum
+        ;({ globalApi: rumApi, stop: stopRum } = startRum(
+          'appId',
+          fakeLocation as Location,
+          lifeCycle,
+          configuration as Configuration,
+          session,
+          internalMonitoringStub
+        ))
+        cleanupTasks.push(stopRum)
+      })
       return setupBuilder
     },
     withViewCollection() {

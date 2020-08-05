@@ -1,5 +1,6 @@
-import { noop, Observable, RequestCompleteEvent } from '@datadog/browser-core'
+import { noop, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RequestCompleteEvent } from '../src/requestCollection'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,

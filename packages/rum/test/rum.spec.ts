@@ -1,14 +1,8 @@
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  ErrorMessage,
-  isIE,
-  RequestCompleteEvent,
-  SPEC_ENDPOINTS,
-} from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, isIE, SPEC_ENDPOINTS } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RequestCompleteEvent } from '../src/requestCollection'
 import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'

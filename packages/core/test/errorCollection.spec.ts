@@ -1,3 +1,4 @@
+import { FetchStub, FetchStubManager, isIE, stubFetch } from '../src'
 import { Configuration } from '../src/configuration'
 import {
   ErrorMessage,
@@ -11,9 +12,8 @@ import {
   trackNetworkError,
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
-import { RequestCompleteEvent, RequestType } from '../src/requestCollection'
 import { StackTrace } from '../src/tracekit'
-import { ONE_MINUTE } from '../src/utils'
+import { ONE_MINUTE, RequestType } from '../src/utils'
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
@@ -189,66 +189,99 @@ describe('runtime error formatter', () => {
 
 describe('network error tracker', () => {
   let errorObservableSpy: jasmine.Spy
-  let requestObservable: Observable<RequestCompleteEvent>
+  let fetchStub: FetchStub
+  let fetchStubManager: FetchStubManager
+  let stopNetworkErrorTracking: () => void
+  const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
     duration: 10,
     method: 'GET',
-    requestId: 123,
-    response: 'Server error',
+    responseText: 'Server error',
     startTime: 0,
     status: 503,
-    type: RequestType.XHR,
-    url: 'http://fake.com',
+    url: FAKE_URL,
   }
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('no fetch support')
+    }
     const errorObservable = new Observable<ErrorMessage>()
-    requestObservable = new Observable<RequestCompleteEvent>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
     const configuration = { requestErrorResponseLengthLimit: 32 }
-    trackNetworkError(configuration as Configuration, errorObservable, requestObservable)
+
+    fetchStubManager = stubFetch()
+    ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration as Configuration, errorObservable))
+    fetchStub = window.fetch as FetchStub
   })
 
-  it('should track server error', () => {
-    requestObservable.notify(DEFAULT_REQUEST)
+  afterEach(() => {
+    fetchStubManager.reset()
+    stopNetworkErrorTracking()
+  })
 
-    expect(errorObservableSpy).toHaveBeenCalledWith({
-      context: {
-        error: { origin: 'network', stack: 'Server error' },
-        http: { method: 'GET', status_code: 503, url: 'http://fake.com' },
-      },
-      message: 'XHR error GET http://fake.com',
-      startTime: jasmine.any(Number),
+  it('should track server error', (done) => {
+    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).toHaveBeenCalledWith({
+        context: {
+          error: { origin: 'network', stack: 'Server error' },
+          http: { method: 'GET', status_code: 503, url: 'http://fake.com/' },
+        },
+        message: 'Fetch error GET http://fake.com/',
+        startTime: jasmine.any(Number),
+      })
+      done()
     })
   })
 
-  it('should track refused request', () => {
-    requestObservable.notify({ ...DEFAULT_REQUEST, status: 0 })
-    expect(errorObservableSpy).toHaveBeenCalled()
+  it('should track refused request', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).toHaveBeenCalled()
+      done()
+    })
   })
 
-  it('should not track client error', () => {
-    requestObservable.notify({ ...DEFAULT_REQUEST, status: 400 })
-    expect(errorObservableSpy).not.toHaveBeenCalled()
+  it('should not track client error', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).not.toHaveBeenCalled()
+      done()
+    })
   })
 
-  it('should not track successful request', () => {
-    requestObservable.notify({ ...DEFAULT_REQUEST, status: 200 })
-    expect(errorObservableSpy).not.toHaveBeenCalled()
+  it('should not track successful request', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).not.toHaveBeenCalled()
+      done()
+    })
   })
 
-  it('should add a default error response', () => {
-    requestObservable.notify({ ...DEFAULT_REQUEST, response: undefined })
+  it('should add a default error response', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
 
-    const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
-    expect(stack).toEqual('Failed to load')
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).toHaveBeenCalled()
+      const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+      expect(stack).toEqual('Failed to load')
+      done()
+    })
   })
 
-  it('should truncate error response', () => {
-    requestObservable.notify({ ...DEFAULT_REQUEST, response: 'Lorem ipsum dolor sit amet orci aliquam.' })
+  it('should truncate error response', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
-    const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
-    expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
+    fetchStubManager.whenAllComplete(() => {
+      const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+      expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
+      done()
+    })
   })
 })
 
