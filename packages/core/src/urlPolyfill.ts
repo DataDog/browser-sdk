@@ -33,7 +33,7 @@ export function getHash(url: string) {
   return buildUrl(url).hash
 }
 
-function buildUrl(url: string, base?: string) {
+export function buildUrl(url: string, base?: string) {
   if (checkURLSupported()) {
     return base !== undefined ? new URL(url, base) : new URL(url)
   }

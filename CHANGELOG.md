@@ -14,6 +14,14 @@
 
 ---
 
+## v1.14.0
+
+- ✨ [RUMF-592] support for hash navigation ([#467](https://github.com/DataDog/browser-sdk/pull/467))
+
+## v1.13.1
+
+- 🐛 [RUMF-625] make sure view url doesn't change ([#469](https://github.com/DataDog/browser-sdk/pull/469))
+
 ## v1.13.0
 
 - ✨ [RUMF-605] enable event association to parent context by start date ([#460](https://github.com/DataDog/browser-sdk/pull/460))

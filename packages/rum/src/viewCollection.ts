@@ -37,25 +37,31 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
-  let currentLocation = { ...location }
   const startOrigin = 0
-  let currentView = newView(lifeCycle, currentLocation, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  let currentView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
-  // Renew view on history changes
-  trackHistory(() => {
-    if (areDifferentViews(currentLocation, location)) {
-      currentLocation = { ...location }
+  function renewViewOnChange() {
+    if (currentView.isDifferentView(location)) {
       currentView.triggerUpdate()
       currentView.end()
-      currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
+    } else {
+      currentView.updateLocation(location)
+      currentView.triggerUpdate()
     }
-  })
+  }
+
+  // Renew view on history changes
+  trackHistory(renewViewOnChange)
+
+  // Renew view on hash changes
+  trackHash(renewViewOnChange)
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, currentLocation, ViewLoadingType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
   })
 
   // End the current view on page unload
@@ -82,7 +88,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
 
 function newView(
   lifeCycle: LifeCycle,
-  location: Location,
+  initialLocation: Location,
   loadingType: ViewLoadingType,
   startTime: number = performance.now()
 ) {
@@ -96,8 +102,9 @@ function newView(
   }
   let documentVersion = 0
   let loadingTime: number | undefined
+  let location: Location = { ...initialLocation }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
@@ -145,10 +152,24 @@ function newView(
       // prevent pending view updates execution
       stopScheduleViewUpdate()
     },
+    isDifferentView(otherLocation: Location) {
+      return (
+        location.pathname !== otherLocation.pathname ||
+        (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== location.hash)
+      )
+    },
     triggerUpdate() {
       updateView()
     },
+    updateLocation(newLocation: Location) {
+      location = { ...newLocation }
+    },
   }
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
 }
 
 function trackHistory(onHistoryChange: () => void) {
@@ -165,8 +186,8 @@ function trackHistory(onHistoryChange: () => void) {
   window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
 }
 
-function areDifferentViews(previous: Location, current: Location) {
-  return previous.pathname !== current.pathname
+function trackHash(onHashChange: () => void) {
+  window.addEventListener('hashchange', monitor(onHashChange))
 }
 
 interface Timings {
