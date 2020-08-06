@@ -11,6 +11,7 @@ export interface FetchProxy {
 export interface FetchContext {
   method: string
   startTime: number
+  init?: RequestInit
   duration: number
   url: string
   status: number
@@ -62,16 +63,18 @@ function proxyFetch() {
   // tslint:disable promise-function-async
   window.fetch = monitor(function(this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
+    const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
     const startTime = performance.now()
 
     const context: Partial<FetchContext> = {
+      init,
       method,
       startTime,
+      url,
     }
 
     const reportFetch = async (response: Response | Error) => {
       context.duration = performance.now() - context.startTime!
-      context.url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
 
       if ('stack' in response || response instanceof Error) {
         context.status = 0
@@ -94,7 +97,7 @@ function proxyFetch() {
     }
     beforeSendCallbacks.forEach((callback) => callback(context))
 
-    const responsePromise = originalFetch.call(this, input, init)
+    const responsePromise = originalFetch.call(this, input, context.init)
     responsePromise.then(monitor(reportFetch), monitor(reportFetch))
     return responsePromise
   })

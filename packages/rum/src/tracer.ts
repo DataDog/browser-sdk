@@ -1,6 +1,7 @@
-import { Configuration, XhrContext } from '@datadog/browser-core'
+import { assign, Configuration, FetchContext, XhrContext } from '@datadog/browser-core'
 
 export interface Tracer {
+  traceFetch: (context: Partial<FetchContext>) => TraceIdentifier | undefined
   traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TraceIdentifier | undefined
 }
 
@@ -10,6 +11,19 @@ interface TracingHeaders {
 
 export function startTracer(configuration: Configuration): Tracer {
   return {
+    traceFetch: (context) =>
+      onTracingAllowed(context.url!, (tracingHeaders: TracingHeaders) => {
+        context.init = context.init || {}
+        context.init.headers = context.init.headers || {}
+
+        if (typeof (context.init.headers as Headers).set === 'function') {
+          Object.keys(tracingHeaders).forEach((name) => {
+            ;(context.init!.headers as Headers).set(name, tracingHeaders[name])
+          })
+        } else {
+          assign(context.init.headers, tracingHeaders)
+        }
+      }),
     traceXhr: (context, xhr) =>
       onTracingAllowed(context.url!, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {

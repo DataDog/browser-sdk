@@ -1,12 +1,12 @@
-import { Configuration, DEFAULT_CONFIGURATION, XhrContext } from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
 import { startTracer, toDecimalString, TraceIdentifier } from '../src/tracer'
 
 describe('tracer', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
   }
-  const SAME_DOMAIN_CONTEXT: Partial<XhrContext> = { url: window.location.origin }
-  const FOO_DOMAIN_CONTEXT: Partial<XhrContext> = { url: 'http://foo.com' }
+  const SAME_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: window.location.origin }
+  const FOO_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://foo.com' }
 
   describe('traceXhr', () => {
     interface XhrStub {
@@ -39,6 +39,56 @@ describe('tracer', () => {
 
       expect(traceId).toBeUndefined()
       expect(xhrStub.headers).toEqual({})
+    })
+  })
+
+  describe('traceFetch', () => {
+    beforeEach(() => {
+      if (isIE()) {
+        pending('no fetch support')
+      }
+    })
+
+    it('should return traceId and add tracing headers', () => {
+      const context: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
+
+      const tracer = startTracer(configuration as Configuration)
+      const traceId = tracer.traceFetch(context)
+
+      expect(traceId).toBeDefined()
+      expect(context.init!.headers).toEqual(tracingHeadersFor(traceId!))
+    })
+
+    it('should preserve original request init and headers', () => {
+      const headers = new Headers()
+      headers.set('foo', 'bar')
+
+      const context: Partial<FetchContext> = {
+        ...SAME_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const traceId = tracer.traceFetch(context)
+
+      expect(context.init!.method).toBe('POST')
+      expect(context.init!.headers).toBe(headers)
+
+      const headersPlainObject: { [key: string]: string } = {}
+      headers.forEach((value, key) => {
+        headersPlainObject[key] = value
+      })
+      expect(headersPlainObject).toEqual({ ...tracingHeadersFor(traceId!), foo: 'bar' })
+    })
+
+    it('should not trace request on disallowed domain', () => {
+      const context: Partial<FetchContext> = { ...FOO_DOMAIN_CONTEXT }
+
+      const tracer = startTracer(configuration as Configuration)
+      const traceId = tracer.traceFetch(context)
+
+      expect(traceId).toBeUndefined()
+      expect(context.init).toBeUndefined()
     })
   })
 })
