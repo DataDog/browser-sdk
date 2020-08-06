@@ -1,4 +1,5 @@
 import { Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
+import { TraceIdentifier } from './tracer'
 
 export interface RequestStartEvent {
   requestId: number
@@ -14,7 +15,7 @@ export interface RequestCompleteEvent {
   responseType?: string
   startTime: number
   duration: number
-  traceId?: number
+  traceId?: TraceIdentifier
 }
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
@@ -45,7 +46,7 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
       response: context.response,
       startTime: context.startTime,
       status: context.status,
-      traceId: getTraceId(),
+      // traceId: getTraceId(),
       type: RequestType.XHR,
       url: context.url,
     })
@@ -71,7 +72,7 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
       responseType: context.responseType,
       startTime: context.startTime,
       status: context.status,
-      traceId: getTraceId(),
+      // traceId: getTraceId(),
       type: RequestType.FETCH,
       url: context.url,
     })
