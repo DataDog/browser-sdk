@@ -43,6 +43,14 @@ describe('trace collection', () => {
     expect(trace.spans[0].trace_id).toEqual(toHexString(requestWithTraceId.traceId!))
   })
 
+  it('should not collect trace when dd trace js is active', () => {
+    const { server } = setupBuilder.withFakeDDTraceJs().build()
+
+    requestCompleteObservable.notify(requestWithTraceId as RequestCompleteEvent)
+
+    expect(server.requests.length).toBe(0)
+  })
+
   it('should flag span as error when browser fail to send the request', () => {
     const { server } = setupBuilder.build()
     const failedRequest = { ...requestWithTraceId, status: 0 }

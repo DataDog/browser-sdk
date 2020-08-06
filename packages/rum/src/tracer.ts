@@ -1,5 +1,9 @@
 import { assign, Configuration, FetchContext, XhrContext } from '@datadog/browser-core'
 
+interface BrowserWindow extends Window {
+  ddtrace?: any
+}
+
 export interface Tracer {
   traceFetch: (context: Partial<FetchContext>) => TraceIdentifier | undefined
   traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TraceIdentifier | undefined
@@ -37,6 +41,11 @@ function onTracingAllowed(url: string, inject: (tracingHeaders: TracingHeaders) 
   if (!isTracingSupported() || !isAllowedUrl(url)) {
     return undefined
   }
+
+  if (isDdTraceJsActive()) {
+    return getTraceIdFromDdTraceJs()
+  }
+
   const traceId = new TraceIdentifier()
   inject(makeTracingHeaders(traceId))
   return traceId
@@ -62,6 +71,19 @@ function makeTracingHeaders(traceId: TraceIdentifier): TracingHeaders {
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': toDecimalString(traceId),
   }
+}
+
+export function isDdTraceJsActive() {
+  // tslint:disable-next-line: no-unsafe-any
+  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+}
+
+function getTraceIdFromDdTraceJs(): TraceIdentifier | undefined {
+  // tslint:disable-next-line: no-unsafe-any
+  return (window as BrowserWindow).ddtrace.tracer
+    .scope()
+    .active()
+    .context()._traceId // internal trace identifier
 }
 
 /* tslint:disable:no-bitwise */

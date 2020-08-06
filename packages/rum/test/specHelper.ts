@@ -43,6 +43,7 @@ const configuration = {
 
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
+  withFakeDDTraceJs: (traceId?: TraceIdentifier) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
@@ -105,6 +106,21 @@ export function setup(): TestSetupBuilder {
         window.location.hash = ''
       })
 
+      return setupBuilder
+    },
+    withFakeDDTraceJs(traceId?: TraceIdentifier) {
+      ;(window as any).ddtrace = {
+        tracer: {
+          scope: () => ({
+            active: () => ({
+              context: () => ({ _traceId: traceId }),
+            }),
+          }),
+        },
+      }
+      cleanupTasks.push(() => {
+        delete (window as any).ddtrace
+      })
       return setupBuilder
     },
     withSession(sessionStub: RumSession) {

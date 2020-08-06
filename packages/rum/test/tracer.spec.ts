@@ -1,5 +1,6 @@
 import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
 import { startTracer, toDecimalString, TraceIdentifier } from '../src/tracer'
+import { setup, TestSetupBuilder } from './specHelper'
 
 describe('tracer', () => {
   const configuration: Partial<Configuration> = {
@@ -7,6 +8,15 @@ describe('tracer', () => {
   }
   const SAME_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: window.location.origin }
   const FOO_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://foo.com' }
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    setupBuilder = setup()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
 
   describe('traceXhr', () => {
     interface XhrStub {
@@ -38,6 +48,17 @@ describe('tracer', () => {
       const traceId = tracer.traceXhr(FOO_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
 
       expect(traceId).toBeUndefined()
+      expect(xhrStub.headers).toEqual({})
+    })
+
+    it('should delegate tracing when dd trace js is active', () => {
+      const traceIdFromDdTraceJs = new TraceIdentifier()
+      setupBuilder.withFakeDDTraceJs(traceIdFromDdTraceJs)
+
+      const tracer = startTracer(configuration as Configuration)
+      const traceId = tracer.traceXhr(SAME_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
+
+      expect(traceId).toBe(traceIdFromDdTraceJs)
       expect(xhrStub.headers).toEqual({})
     })
   })
@@ -88,6 +109,18 @@ describe('tracer', () => {
       const traceId = tracer.traceFetch(context)
 
       expect(traceId).toBeUndefined()
+      expect(context.init).toBeUndefined()
+    })
+
+    it('should delegate tracing when dd trace js is active', () => {
+      const context: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
+      const traceIdFromDdTraceJs = new TraceIdentifier()
+      setupBuilder.withFakeDDTraceJs(traceIdFromDdTraceJs)
+
+      const tracer = startTracer(configuration as Configuration)
+      const traceId = tracer.traceFetch(context)
+
+      expect(traceId).toBe(traceIdFromDdTraceJs)
       expect(context.init).toBeUndefined()
     })
   })
