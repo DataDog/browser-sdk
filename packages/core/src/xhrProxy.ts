@@ -6,7 +6,7 @@ interface BrowserXHR extends XMLHttpRequest {
 }
 
 export interface XhrProxy {
-  beforeSend: (callback: (context: Partial<XhrContext>) => void) => void
+  beforeSend: (callback: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => void) => void
   onRequestComplete: (callback: (context: XhrContext) => void) => void
 }
 
@@ -25,7 +25,7 @@ export interface XhrContext {
 }
 
 let xhrProxySingleton: XhrProxy | undefined
-const beforeSendCallbacks: Array<(context: Partial<XhrContext>) => void> = []
+const beforeSendCallbacks: Array<(context: Partial<XhrContext>, xhr: XMLHttpRequest) => void> = []
 const onRequestCompleteCallbacks: Array<(context: XhrContext) => void> = []
 let originalXhrOpen: typeof XMLHttpRequest.prototype.open
 let originalXhrSend: typeof XMLHttpRequest.prototype.send
@@ -34,7 +34,7 @@ export function startXhrProxy(): XhrProxy {
   if (!xhrProxySingleton) {
     proxyXhr()
     xhrProxySingleton = {
-      beforeSend(callback: (context: Partial<XhrContext>) => void) {
+      beforeSend(callback: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => void) {
         beforeSendCallbacks.push(callback)
       },
       onRequestComplete(callback: (context: XhrContext) => void) {
@@ -98,7 +98,7 @@ function proxyXhr() {
 
     this.addEventListener('loadend', monitor(reportXhr))
 
-    beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr))
+    beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
 
     return originalXhrSend.apply(this, arguments as any)
   }
