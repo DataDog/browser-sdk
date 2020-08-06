@@ -14,6 +14,10 @@
 
 ---
 
+## v1.14.1
+
+- [RUMF-617] Extract XHR and Fetch proxies ([#468](https://github.com/DataDog/browser-sdk/pull/468))
+
 ## v1.14.0
 
 - ✨ [RUMF-592] support for hash navigation ([#467](https://github.com/DataDog/browser-sdk/pull/467))
