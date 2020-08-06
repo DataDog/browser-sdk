@@ -16,6 +16,11 @@ export interface FetchContext {
   url: string
   status: number
   response: string
+  error?: {
+    name?: string
+    message: string
+    stack: string
+  }
   responseType?: string
 
   /**
@@ -77,8 +82,15 @@ function proxyFetch() {
       context.duration = performance.now() - context.startTime!
 
       if ('stack' in response || response instanceof Error) {
+        const stackTrace = computeStackTrace(response)
+        const stackTraceString = toStackTraceString(stackTrace)
         context.status = 0
-        context.response = toStackTraceString(computeStackTrace(response))
+        context.error = {
+          message: stackTrace.message,
+          name: stackTrace.name,
+          stack: stackTraceString,
+        }
+        context.response = stackTraceString
 
         onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchContext))
       } else if ('status' in response) {

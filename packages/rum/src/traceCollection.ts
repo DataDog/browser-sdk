@@ -98,6 +98,12 @@ export function startTraceCollection(
       'span.kind': 'client',
     }
 
+    if (request.error) {
+      meta['error.type'] = request.error.name
+      meta['error.msg'] = request.error.message
+      meta['error.stack'] = request.error.stack
+    }
+
     const metrics = {
       '_dd.agent_psr': 1,
       _sample_rate: 1,
@@ -110,7 +116,7 @@ export function startTraceCollection(
       meta,
       metrics,
       duration: msToNs(request.duration),
-      error: 0,
+      error: request.status === 0 || request.error ? 1 : 0,
       name: 'browser.request',
       parent_id: '0000000000000000',
       resource: request.method,

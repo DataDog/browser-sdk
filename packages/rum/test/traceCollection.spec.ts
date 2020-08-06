@@ -42,4 +42,29 @@ describe('trace collection', () => {
     expect(traceRequest.url).toBe('https://trace-intake.com/abcde?foo=bar')
     expect(trace.spans[0].trace_id).toEqual(toHexString(requestWithTraceId.traceId!))
   })
+
+  it('should flag span as error when browser fail to send the request', () => {
+    const { server } = setupBuilder.build()
+    const failedRequest = { ...requestWithTraceId, status: 0 }
+
+    requestCompleteObservable.notify(failedRequest as RequestCompleteEvent)
+
+    expect(server.requests.length).toBe(1)
+    const trace = (JSON.parse(server.requests[0].requestBody) as unknown) as Trace
+    expect(trace.spans[0].error).toBe(1)
+  })
+
+  it('should flag span and attach error context when request error is available', () => {
+    const { server } = setupBuilder.build()
+    const failedRequest = { ...requestWithTraceId, error: { name: 'foo', message: 'bar', stack: 'qux' } }
+
+    requestCompleteObservable.notify(failedRequest as RequestCompleteEvent)
+
+    expect(server.requests.length).toBe(1)
+    const trace = (JSON.parse(server.requests[0].requestBody) as unknown) as Trace
+    expect(trace.spans[0].error).toBe(1)
+    expect(trace.spans[0].meta['error.type']).toBe('foo')
+    expect(trace.spans[0].meta['error.msg']).toBe('bar')
+    expect(trace.spans[0].meta['error.stack']).toBe('qux')
+  })
 })
