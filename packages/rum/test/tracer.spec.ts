@@ -5,9 +5,11 @@ import { setup, TestSetupBuilder } from './specHelper'
 describe('tracer', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
+    enableTracing: true,
   }
   const SAME_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: window.location.origin }
   const FOO_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://foo.com' }
+  const BAR_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://bar.com' }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -43,12 +45,33 @@ describe('tracer', () => {
       expect(xhrStub.headers).toEqual(tracingHeadersFor(traceId!))
     })
 
+    it('should not trace when tracing is disabled', () => {
+      const disabledConfiguration = { ...configuration, enableTracing: false }
+
+      const tracer = startTracer(disabledConfiguration as Configuration)
+      const traceId = tracer.traceXhr(SAME_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
+
+      expect(traceId).toBeUndefined()
+      expect(xhrStub.headers).toEqual({})
+    })
+
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracer(configuration as Configuration)
       const traceId = tracer.traceXhr(FOO_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
 
       expect(traceId).toBeUndefined()
       expect(xhrStub.headers).toEqual({})
+    })
+
+    it('should trace requests on configured urls', () => {
+      const configurationWithTracingUrls = { ...configuration, tracingAllowedUrls: [/^https?:\/\/foo\.com.*/] }
+      const stub = (xhrStub as unknown) as XMLHttpRequest
+
+      const tracer = startTracer(configurationWithTracingUrls as Configuration)
+
+      expect(tracer.traceXhr(SAME_DOMAIN_CONTEXT, stub)).toBeDefined()
+      expect(tracer.traceXhr(FOO_DOMAIN_CONTEXT, stub)).toBeDefined()
+      expect(tracer.traceXhr(BAR_DOMAIN_CONTEXT, stub)).toBeUndefined()
     })
 
     it('should delegate tracing when dd trace js is active', () => {
@@ -102,6 +125,17 @@ describe('tracer', () => {
       expect(headersPlainObject).toEqual({ ...tracingHeadersFor(traceId!), foo: 'bar' })
     })
 
+    it('should not trace when tracing is disabled', () => {
+      const disabledConfiguration = { ...configuration, enableTracing: false }
+      const context: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
+
+      const tracer = startTracer(disabledConfiguration as Configuration)
+      const traceId = tracer.traceFetch(context)
+
+      expect(traceId).toBeUndefined()
+      expect(context.init).toBeUndefined()
+    })
+
     it('should not trace request on disallowed domain', () => {
       const context: Partial<FetchContext> = { ...FOO_DOMAIN_CONTEXT }
 
@@ -110,6 +144,19 @@ describe('tracer', () => {
 
       expect(traceId).toBeUndefined()
       expect(context.init).toBeUndefined()
+    })
+
+    it('should trace requests on configured urls', () => {
+      const configurationWithTracingUrls = { ...configuration, tracingAllowedUrls: [/^https?:\/\/foo\.com.*/] }
+      const sameDomainContext: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
+      const fooDomainContext: Partial<FetchContext> = { ...FOO_DOMAIN_CONTEXT }
+      const barDomainContext: Partial<FetchContext> = { ...BAR_DOMAIN_CONTEXT }
+
+      const tracer = startTracer(configurationWithTracingUrls as Configuration)
+
+      expect(tracer.traceFetch(sameDomainContext)).toBeDefined()
+      expect(tracer.traceFetch(fooDomainContext)).toBeDefined()
+      expect(tracer.traceFetch(barDomainContext)).toBeUndefined()
     })
 
     it('should delegate tracing when dd trace js is active', () => {

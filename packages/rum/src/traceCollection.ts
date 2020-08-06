@@ -40,7 +40,7 @@ export function startTraceCollection(
   requestCompleteObservable: Observable<RequestCompleteEvent>,
   getRumInternalContext: (startTime?: number) => InternalContext | undefined
 ) {
-  if (!isTracingSupported()) {
+  if (!isTracingSupported() || !configuration.enableTracing) {
     return
   }
   const batch = startTraceBatch()

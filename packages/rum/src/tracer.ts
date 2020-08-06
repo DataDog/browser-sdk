@@ -16,7 +16,7 @@ interface TracingHeaders {
 export function startTracer(configuration: Configuration): Tracer {
   return {
     traceFetch: (context) =>
-      onTracingAllowed(context.url!, (tracingHeaders: TracingHeaders) => {
+      onTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
         context.init = context.init || {}
         context.init.headers = context.init.headers || {}
 
@@ -29,7 +29,7 @@ export function startTracer(configuration: Configuration): Tracer {
         }
       }),
     traceXhr: (context, xhr) =>
-      onTracingAllowed(context.url!, (tracingHeaders: TracingHeaders) => {
+      onTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
@@ -37,8 +37,12 @@ export function startTracer(configuration: Configuration): Tracer {
   }
 }
 
-function onTracingAllowed(url: string, inject: (tracingHeaders: TracingHeaders) => void): TraceIdentifier | undefined {
-  if (!isTracingSupported() || !isAllowedUrl(url)) {
+function onTracingAllowed(
+  configuration: Configuration,
+  url: string,
+  inject: (tracingHeaders: TracingHeaders) => void
+): TraceIdentifier | undefined {
+  if (!isTracingSupported() || !configuration.enableTracing || !isAllowedUrl(configuration, url)) {
     return undefined
   }
 
@@ -51,8 +55,16 @@ function onTracingAllowed(url: string, inject: (tracingHeaders: TracingHeaders) 
   return traceId
 }
 
-function isAllowedUrl(url: string) {
-  return url.indexOf(window.location.origin) === 0
+function isAllowedUrl(configuration: Configuration, url: string) {
+  if (url.indexOf(window.location.origin) === 0) {
+    return true
+  }
+  for (const allowedUrl of configuration.tracingAllowedUrls) {
+    if (allowedUrl.test(url)) {
+      return true
+    }
+  }
+  return false
 }
 
 export function isTracingSupported() {

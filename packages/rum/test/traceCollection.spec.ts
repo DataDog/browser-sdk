@@ -22,8 +22,16 @@ describe('trace collection', () => {
     setupBuilder.cleanup()
   })
 
+  it('should not collect trace when tracing is disabled', () => {
+    const { server } = setupBuilder.withConfiguration({ enableTracing: false }).build()
+
+    requestCompleteObservable.notify(requestWithTraceId as RequestCompleteEvent)
+
+    expect(server.requests.length).toBe(0)
+  })
+
   it('should not collect trace when request do not have trace id', () => {
-    const { server } = setupBuilder.build()
+    const { server } = setupBuilder.withConfiguration({ enableTracing: true }).build()
 
     requestCompleteObservable.notify(requestWithoutTraceId as RequestCompleteEvent)
 
@@ -31,7 +39,7 @@ describe('trace collection', () => {
   })
 
   it('should collect trace when request have trace id', () => {
-    const { server } = setupBuilder.build()
+    const { server } = setupBuilder.withConfiguration({ enableTracing: true }).build()
 
     requestCompleteObservable.notify(requestWithTraceId as RequestCompleteEvent)
 
@@ -44,7 +52,10 @@ describe('trace collection', () => {
   })
 
   it('should not collect trace when dd trace js is active', () => {
-    const { server } = setupBuilder.withFakeDDTraceJs().build()
+    const { server } = setupBuilder
+      .withConfiguration({ enableTracing: true })
+      .withFakeDDTraceJs()
+      .build()
 
     requestCompleteObservable.notify(requestWithTraceId as RequestCompleteEvent)
 
@@ -52,7 +63,7 @@ describe('trace collection', () => {
   })
 
   it('should flag span as error when browser fail to send the request', () => {
-    const { server } = setupBuilder.build()
+    const { server } = setupBuilder.withConfiguration({ enableTracing: true }).build()
     const failedRequest = { ...requestWithTraceId, status: 0 }
 
     requestCompleteObservable.notify(failedRequest as RequestCompleteEvent)
@@ -63,7 +74,7 @@ describe('trace collection', () => {
   })
 
   it('should flag span and attach error context when request error is available', () => {
-    const { server } = setupBuilder.build()
+    const { server } = setupBuilder.withConfiguration({ enableTracing: true }).build()
     const failedRequest = { ...requestWithTraceId, error: { name: 'foo', message: 'bar', stack: 'qux' } }
 
     requestCompleteObservable.notify(failedRequest as RequestCompleteEvent)

@@ -20,6 +20,7 @@ datadogRum.init({
   applicationId: 'rum',
   clientToken: 'key',
   enableExperimentalFeatures: [],
+  enableTracing: true,
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,

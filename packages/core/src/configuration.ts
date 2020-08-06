@@ -2,12 +2,14 @@ import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
+  enableTracing: false,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   resourceSampleRate: 100,
   sampleRate: 100,
   silentMultipleInit: false,
+  tracingAllowedUrls: [] as RegExp[],
   trackInteractions: false,
 
   /**
@@ -40,6 +42,8 @@ export interface UserConfiguration {
   applicationId?: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
+  enableTracing?: boolean
+  tracingAllowedUrls?: RegExp[]
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter
@@ -141,6 +145,14 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
+  }
+
+  if ('enableTracing' in userConfiguration) {
+    configuration.enableTracing = !!userConfiguration.enableTracing
+  }
+
+  if ('tracingAllowedUrls' in userConfiguration) {
+    configuration.tracingAllowedUrls = userConfiguration.tracingAllowedUrls!
   }
 
   if ('isCollectingError' in userConfiguration) {

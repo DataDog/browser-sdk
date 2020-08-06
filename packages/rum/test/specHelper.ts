@@ -31,20 +31,11 @@ const internalMonitoringStub: InternalMonitoring = {
   setExternalContextProvider: () => undefined,
 }
 
-const configuration = {
-  ...DEFAULT_CONFIGURATION,
-  ...SPEC_ENDPOINTS,
-  env: 'env',
-  isEnabled: () => true,
-  maxBatchSize: 1,
-  service: 'service',
-  version: 'version',
-}
-
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withFakeDDTraceJs: (traceId?: TraceIdentifier) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
+  withConfiguration: (configuration: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
   withUserActionCollection: () => TestSetupBuilder
@@ -87,6 +78,15 @@ export function setup(): TestSetupBuilder {
   let rumApi: RumApi
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
+  let configuration: Partial<Configuration> = {
+    ...DEFAULT_CONFIGURATION,
+    ...SPEC_ENDPOINTS,
+    env: 'env',
+    isEnabled: () => true,
+    maxBatchSize: 1,
+    service: 'service',
+    version: 'version',
+  }
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
@@ -125,6 +125,13 @@ export function setup(): TestSetupBuilder {
     },
     withSession(sessionStub: RumSession) {
       session = sessionStub
+      return setupBuilder
+    },
+    withConfiguration(entry: Partial<Configuration>) {
+      configuration = {
+        ...configuration,
+        ...entry,
+      }
       return setupBuilder
     },
     withRum() {
