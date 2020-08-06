@@ -169,6 +169,9 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     if (userConfiguration.rumEndpoint !== undefined) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
     }
+    if (userConfiguration.traceEndpoint !== undefined) {
+      configuration.traceEndpoint = userConfiguration.traceEndpoint
+    }
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {

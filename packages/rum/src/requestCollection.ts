@@ -1,5 +1,5 @@
-import { Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
-import { TraceIdentifier } from './tracer'
+import { Configuration, Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
+import { startTracer, TraceIdentifier, Tracer } from './tracer'
 
 export interface RequestStartEvent {
   requestId: number
@@ -22,23 +22,27 @@ export type RequestObservables = [Observable<RequestStartEvent>, Observable<Requ
 
 let nextRequestId = 1
 
-export function startRequestCollection() {
+export function startRequestCollection(configuration: Configuration) {
   const requestObservables: RequestObservables = [new Observable(), new Observable()]
-  trackXhr(requestObservables)
-  trackFetch(requestObservables)
+  const tracer = startTracer(configuration)
+  trackXhr(requestObservables, tracer)
+  trackFetch(requestObservables, tracer)
   return requestObservables
 }
 
-export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
   const xhrProxy = startXhrProxy()
-  xhrProxy.beforeSend((context) => {
-    const requestId = getNextRequestId()
-    context.requestId = requestId
+  xhrProxy.beforeSend((context, xhr) => {
+    context.traceId = tracer.traceXhr(context, xhr)
+    context.requestId = getNextRequestId()
+
     requestStartObservable.notify({
-      requestId,
+      requestId: context.requestId as number,
     })
   })
   xhrProxy.onRequestComplete((context) => {
+    const traceId = context.traceId as TraceIdentifier | undefined
+
     requestCompleteObservable.notify({
       duration: context.duration,
       method: context.method,
@@ -46,7 +50,7 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
       response: context.response,
       startTime: context.startTime,
       status: context.status,
-      // traceId: getTraceId(),
+      traceId: traceId as TraceIdentifier | undefined,
       type: RequestType.XHR,
       url: context.url,
     })
@@ -54,13 +58,14 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
   return xhrProxy
 }
 
-export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
   const fetchProxy = startFetchProxy()
   fetchProxy.beforeSend((context) => {
-    const requestId = getNextRequestId()
-    context.requestId = requestId
+    context.traceId = tracer.traceFetch(context)
+    context.requestId = getNextRequestId()
+
     requestStartObservable.notify({
-      requestId,
+      requestId: context.requestId as number,
     })
   })
   fetchProxy.onRequestComplete((context) => {
@@ -72,7 +77,7 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
       responseType: context.responseType,
       startTime: context.startTime,
       status: context.status,
-      // traceId: getTraceId(),
+      traceId: context.traceId as TraceIdentifier | undefined,
       type: RequestType.FETCH,
       url: context.url,
     })
@@ -84,28 +89,4 @@ function getNextRequestId() {
   const result = nextRequestId
   nextRequestId += 1
   return result
-}
-
-interface BrowserWindow extends Window {
-  ddtrace?: any
-}
-
-/**
- * Get the current traceId generated from dd-trace-js (if any).
- *
- * Note: in order to work, the browser-sdk should be initialized *before* dd-trace-js because both
- * libraries are wrapping fetch() and XHR.  Wrappers are called in reverse order, and the
- * dd-trace-js wrapper needs to be called first so it can generate the new trace.  The browser-sdk
- * wrapper will then pick up the new trace id via this function.
- */
-function getTraceId(): number | undefined {
-  // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
-    ? // tslint:disable-next-line: no-unsafe-any
-      (window as BrowserWindow).ddtrace.tracer
-        .scope()
-        .active()
-        .context()
-        .toTraceId()
-    : undefined
 }

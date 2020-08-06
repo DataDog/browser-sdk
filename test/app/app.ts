@@ -13,6 +13,7 @@ datadogLogs.init({
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
 })
 
 datadogRum.init({
@@ -22,5 +23,6 @@ datadogRum.init({
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
   trackInteractions: true,
 })
