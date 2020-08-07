@@ -44,6 +44,9 @@ const STUBBED_LOGGER = {
   addContext(key: string, value: ContextValue) {
     makeStub('logs.logger.addContext')
   },
+  removeContext(key: string) {
+    makeStub('logs.logger.removeContext')
+  },
   setHandler(handler: HandlerType) {
     makeStub('logs.logger.setHandler')
   },
