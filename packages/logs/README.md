@@ -21,7 +21,7 @@ datadogLogs.init({
 ### Bundle
 
 ```
-<script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
+<script src = 'https://www.datadoghq-browser-agent.com/datadog-logs.js'>
 <script>
   window.DD_LOGS.init({
     clientToken: 'XXX',
@@ -95,7 +95,7 @@ Types are compatible with TypeScript >= 3.0.
 For earlier version, you can import js sources and use global variable to avoid any compilation issue:
 
 ```
-import '@datadog/browser-logs/bundle/datadog-logs-us';
+import '@datadog/browser-logs/bundle/datadog-logs';
 
 window.DD_LOGS.init({
   clientToken: 'XXX',

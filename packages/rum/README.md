@@ -20,7 +20,7 @@ datadogRum.init({
 ### Bundle
 
 ```
-<script src = 'https://www.datadoghq-browser-agent.com/datadog-rum-us.js'>
+<script src = 'https://www.datadoghq-browser-agent.com/datadog-rum.js'>
 <script>
   window.DD_RUM.init({
     applicationId: 'XXX',
@@ -99,7 +99,7 @@ Types are compatible with TypeScript >= 3.0.
 For earlier version, you can import js sources and use global variable to avoid any compilation issue:
 
 ```
-import '@datadog/browser-rum/bundle/datadog-rum-us';
+import '@datadog/browser-rum/bundle/datadog-rum';
 
 window.DD_RUM.init({
   applicationId: 'XXX',
