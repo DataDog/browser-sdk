@@ -25,11 +25,21 @@ export function makeGlobal<T>(stub: T): T {
 export enum Datacenter {
   US = 'us',
   EU = 'eu',
+  GOV = 'gov',
 }
+
 export enum SdkEnv {
   PRODUCTION = 'production',
   STAGING = 'staging',
 }
+
+export const INTAKE_DOMAINS = {
+  [Datacenter.EU]: 'datadoghq.eu',
+  [Datacenter.US]: 'datadoghq.com',
+  [Datacenter.GOV]: 'ddog-gov.com',
+  [SdkEnv.STAGING]: 'datad0g.com',
+}
+
 export enum BuildMode {
   RELEASE = 'release',
   STAGING = 'staging',

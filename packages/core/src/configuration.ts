@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_DOMAINS, SdkEnv } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -187,8 +187,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
-  const tld = conf.datacenter === Datacenter.US ? 'com' : 'eu'
-  const domain = conf.sdkEnv === SdkEnv.PRODUCTION ? `datadoghq.${tld}` : `datad0g.${tld}`
+  const domain = conf.sdkEnv === SdkEnv.STAGING ? INTAKE_DOMAINS[SdkEnv.STAGING] : INTAKE_DOMAINS[conf.datacenter]
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
