@@ -22,4 +22,5 @@ module.exports = {
   TARGET_ENV: process.env.TARGET_ENV || 'staging',
   BUILD_MODE: process.env.BUILD_MODE,
   SDK_VERSION: sdkVersion,
+  WITH_SUFFIX: process.env.WITH_SUFFIX || false,
 }
