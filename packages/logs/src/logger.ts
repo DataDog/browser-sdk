@@ -207,7 +207,7 @@ export class Logger {
   }
 
   removeContext(key: string) {
-    delete this.loggerContext[key];
+    delete this.loggerContext[key]
   }
 
   setHandler(handler: HandlerType) {

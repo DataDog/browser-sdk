@@ -152,10 +152,10 @@ describe('logger module', () => {
     })
 
     it('should be able to be able to add and remove from context', () => {
-      LOGS.logger.setContext({});
-      LOGS.logger.addContext('foo', { bar: 'qux' });
+      LOGS.logger.setContext({})
+      LOGS.logger.addContext('foo', { bar: 'qux' })
       LOGS.logger.log('first')
-      LOGS.logger.removeContext('foo');
+      LOGS.logger.removeContext('foo')
       LOGS.logger.log('second')
       expect(getLoggedMessage(server, 0).foo).toEqual({
         bar: 'qux',
