@@ -16,7 +16,7 @@ interface TracingHeaders {
 export function startTracer(configuration: Configuration): Tracer {
   return {
     traceFetch: (context) =>
-      onTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
         context.init = context.init || {}
         context.init.headers = context.init.headers || {}
 
@@ -29,7 +29,7 @@ export function startTracer(configuration: Configuration): Tracer {
         }
       }),
     traceXhr: (context, xhr) =>
-      onTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
@@ -37,7 +37,7 @@ export function startTracer(configuration: Configuration): Tracer {
   }
 }
 
-function onTracingAllowed(
+function injectHeadersIfTracingAllowed(
   configuration: Configuration,
   url: string,
   inject: (tracingHeaders: TracingHeaders) => void
