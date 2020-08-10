@@ -38,7 +38,13 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
-  let currentView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  let currentView = initialView
+
+  const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
+    initialView.updateMeasures(timings)
+    initialView.scheduleUpdate()
+  })
 
   trackHistory(onLocationChange)
   trackHash(onLocationChange)
@@ -78,6 +84,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
 
   return {
     stop() {
+      stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
     },
@@ -100,6 +107,7 @@ function newView(
   }
   let documentVersion = 0
   let loadingTime: number | undefined
+  let endTime: number | undefined
   let location: Location = { ...initialLocation }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
@@ -112,18 +120,16 @@ function newView(
       leading: false,
     }
   )
-  function updateMeasures(newMeasures: Partial<ViewMeasures>) {
-    measures = { ...measures, ...newMeasures }
-    scheduleViewUpdate()
-  }
-  const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
-  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadingTime(loadingTimeValue: number) {
+  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, (newMeasures) => {
+    updateMeasures(newMeasures)
+    scheduleViewUpdate()
+  })
+
+  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, (loadingTimeValue) => {
     loadingTime = loadingTimeValue
     scheduleViewUpdate()
-  }
-  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
+  })
 
   // Initial view update
   triggerViewUpdate()
@@ -138,13 +144,19 @@ function newView(
       location,
       measures,
       startTime,
-      duration: performance.now() - startTime,
+      duration: (endTime === undefined ? performance.now() : endTime) - startTime,
     })
   }
 
+  function updateMeasures(newMeasures: Partial<ViewMeasures>) {
+    measures = { ...measures, ...newMeasures }
+  }
+
   return {
+    updateMeasures,
+    scheduleUpdate: scheduleViewUpdate,
     end() {
-      stopTimingsTracking()
+      endTime = performance.now()
       stopEventCountsTracking()
       stopLoadingTimeTracking()
     },

@@ -606,4 +606,73 @@ describe('rum view measures', () => {
 
     expect(getHandledCount()).toEqual(3)
   })
+
+  describe('load event happening after initial view end', () => {
+    let initialView: { init: View; end: View; last: View }
+    let secondView: { init: View; last: View }
+
+    beforeEach(() => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).measures).toEqual({
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 0,
+        userActionCount: 0,
+      })
+
+      clock.tick(100)
+
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
+      lifeCycle.notify(
+        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+        FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+      )
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(4)
+
+      initialView = {
+        end: getViewEvent(1),
+        init: getViewEvent(0),
+        last: getViewEvent(3),
+      }
+      secondView = {
+        init: getViewEvent(2),
+        last: getViewEvent(2),
+      }
+    })
+
+    it('should not set load measures to the second view', () => {
+      expect(secondView.last.measures).toEqual({
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 0,
+        userActionCount: 0,
+      })
+    })
+
+    it('should set measures only on the initial view', () => {
+      expect(initialView.last.measures).toEqual({
+        domComplete: 456e6,
+        domContentLoaded: 345e6,
+        domInteractive: 234e6,
+        errorCount: 0,
+        firstContentfulPaint: 123e6,
+        loadEventEnd: 567e6,
+        longTaskCount: 0,
+        resourceCount: 0,
+        userActionCount: 0,
+      })
+    })
+
+    it('should not update the initial view duration when updating it with new measures', () => {
+      expect(initialView.last.duration).toBe(initialView.end.duration)
+    })
+  })
 })
