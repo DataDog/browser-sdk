@@ -40,8 +40,12 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   let currentView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
 
-  function renewViewOnChange() {
+  trackHistory(onLocationChange)
+  trackHash(onLocationChange)
+
+  function onLocationChange() {
     if (currentView.isDifferentView(location)) {
+      // Renew view on location changes
       currentView.triggerUpdate()
       currentView.end()
       currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
@@ -50,12 +54,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
     }
   }
-
-  // Renew view on history changes
-  trackHistory(renewViewOnChange)
-
-  // Renew view on hash changes
-  trackHash(renewViewOnChange)
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
