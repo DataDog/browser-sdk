@@ -9,7 +9,6 @@ export const DEFAULT_CONFIGURATION = {
   resourceSampleRate: 100,
   sampleRate: 100,
   silentMultipleInit: false,
-  tracingAllowedUrls: [] as RegExp[],
   trackInteractions: false,
 
   /**
@@ -43,7 +42,7 @@ export interface UserConfiguration {
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
   enableTracing?: boolean
-  tracingAllowedUrls?: RegExp[]
+  shouldTraceUrl?: (url: string) => boolean
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter
@@ -76,6 +75,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   rumEndpoint: string
   traceEndpoint: string
   internalMonitoringEndpoint?: string
+  shouldTraceUrl?: (url: string) => boolean
 
   service?: string
   env?: string
@@ -151,8 +151,8 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.enableTracing = !!userConfiguration.enableTracing
   }
 
-  if ('tracingAllowedUrls' in userConfiguration) {
-    configuration.tracingAllowedUrls = userConfiguration.tracingAllowedUrls!
+  if ('shouldTraceUrl' in userConfiguration) {
+    configuration.shouldTraceUrl = userConfiguration.shouldTraceUrl!
   }
 
   if ('isCollectingError' in userConfiguration) {

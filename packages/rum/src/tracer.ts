@@ -56,15 +56,10 @@ function injectHeadersIfTracingAllowed(
 }
 
 function isAllowedUrl(configuration: Configuration, url: string) {
-  if (url.indexOf(window.location.origin) === 0) {
-    return true
+  if (configuration.shouldTraceUrl) {
+    return configuration.shouldTraceUrl(url)
   }
-  for (const allowedUrl of configuration.tracingAllowedUrls) {
-    if (allowedUrl.test(url)) {
-      return true
-    }
-  }
-  return false
+  return url.indexOf(window.location.origin) === 0
 }
 
 export function isTracingSupported() {

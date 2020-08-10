@@ -64,12 +64,15 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured urls', () => {
-      const configurationWithTracingUrls = { ...configuration, tracingAllowedUrls: [/^https?:\/\/foo\.com.*/] }
+      const configurationWithTracingUrls: Partial<Configuration> = {
+        ...configuration,
+        shouldTraceUrl: (url) => /^https?:\/\/foo\.com.*/.test(url),
+      }
       const stub = (xhrStub as unknown) as XMLHttpRequest
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceXhr(SAME_DOMAIN_CONTEXT, stub)).toBeDefined()
+      expect(tracer.traceXhr(SAME_DOMAIN_CONTEXT, stub)).toBeUndefined()
       expect(tracer.traceXhr(FOO_DOMAIN_CONTEXT, stub)).toBeDefined()
       expect(tracer.traceXhr(BAR_DOMAIN_CONTEXT, stub)).toBeUndefined()
     })
@@ -147,14 +150,17 @@ describe('tracer', () => {
     })
 
     it('should trace requests on configured urls', () => {
-      const configurationWithTracingUrls = { ...configuration, tracingAllowedUrls: [/^https?:\/\/foo\.com.*/] }
+      const configurationWithTracingUrls: Partial<Configuration> = {
+        ...configuration,
+        shouldTraceUrl: (url) => /^https?:\/\/foo\.com.*/.test(url),
+      }
       const sameDomainContext: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
       const fooDomainContext: Partial<FetchContext> = { ...FOO_DOMAIN_CONTEXT }
       const barDomainContext: Partial<FetchContext> = { ...BAR_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceFetch(sameDomainContext)).toBeDefined()
+      expect(tracer.traceFetch(sameDomainContext)).toBeUndefined()
       expect(tracer.traceFetch(fooDomainContext)).toBeDefined()
       expect(tracer.traceFetch(barDomainContext)).toBeUndefined()
     })
