@@ -1,5 +1,5 @@
 import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
-import { startTracer, toDecimalString, TraceIdentifier } from '../src/tracer'
+import { startTracer, toDecimalString, toHexString, TraceIdentifier } from '../src/tracer'
 import { setup, TestSetupBuilder } from './specHelper'
 
 describe('tracer', () => {
@@ -176,6 +176,15 @@ describe('tracer', () => {
       expect(traceId).toBe(traceIdFromDdTraceJs)
       expect(context.init).toBeUndefined()
     })
+  })
+})
+
+describe('TraceIdentifier', () => {
+  it('should generate id', () => {
+    const traceIdentifier = new TraceIdentifier()
+
+    expect(toDecimalString(traceIdentifier)).toMatch(/^\d+$/)
+    expect(toHexString(traceIdentifier)).toMatch(/^[0-9A-F]+$/i)
   })
 })
 
