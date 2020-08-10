@@ -42,12 +42,12 @@ function injectHeadersIfTracingAllowed(
   url: string,
   inject: (tracingHeaders: TracingHeaders) => void
 ): TraceIdentifier | undefined {
-  if (!isTracingSupported() || !configuration.enableTracing || !isAllowedUrl(configuration, url)) {
-    return undefined
+  if (isDdTraceJsInstalled()) {
+    return getTraceIdFromDdTraceJs()
   }
 
-  if (isDdTraceJsActive()) {
-    return getTraceIdFromDdTraceJs()
+  if (!isTracingSupported() || !configuration.enableTracing || !isAllowedUrl(configuration, url)) {
+    return undefined
   }
 
   const traceId = new TraceIdentifier()
@@ -80,17 +80,15 @@ function makeTracingHeaders(traceId: TraceIdentifier): TracingHeaders {
   }
 }
 
-export function isDdTraceJsActive() {
-  // tslint:disable-next-line: no-unsafe-any
-  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+export function isDdTraceJsInstalled() {
+  return 'ddtrace' in window
 }
 
 function getTraceIdFromDdTraceJs(): TraceIdentifier | undefined {
   // tslint:disable-next-line: no-unsafe-any
-  return (window as BrowserWindow).ddtrace.tracer
-    .scope()
-    .active()
-    .context()._traceId // internal trace identifier
+  const activeScope = (window as BrowserWindow).ddtrace.tracer.scope().active()
+  // tslint:disable-next-line: no-unsafe-any
+  return !activeScope ? undefined : activeScope.context()._traceId // internal trace identifier
 }
 
 /* tslint:disable:no-bitwise */

@@ -1,7 +1,7 @@
 import { Batch, Configuration, Context, getTimestamp, HttpRequest, msToNs, Observable } from '@datadog/browser-core'
 import { RequestCompleteEvent } from './requestCollection'
 import { InternalContext } from './rum.entry'
-import { isDdTraceJsActive, isTracingSupported, toHexString } from './tracer'
+import { isDdTraceJsInstalled, isTracingSupported, toHexString } from './tracer'
 
 export interface SpanMetadata {
   [key: string]: string | undefined
@@ -45,7 +45,7 @@ export function startTraceCollection(
   }
   const batch = startTraceBatch()
   requestCompleteObservable.subscribe((request: RequestCompleteEvent) => {
-    if (request.traceId && !isDdTraceJsActive()) {
+    if (request.traceId && !isDdTraceJsInstalled()) {
       batch.add(buildTrace(request))
     }
   })
