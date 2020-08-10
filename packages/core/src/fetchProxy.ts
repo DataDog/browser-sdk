@@ -3,9 +3,9 @@ import { monitor } from './internalMonitoring'
 import { computeStackTrace } from './tracekit'
 import { normalizeUrl } from './urlPolyfill'
 
-export interface FetchProxy {
-  beforeSend: (callback: (context: Partial<FetchContext>) => void) => void
-  onRequestComplete: (callback: (context: FetchContext) => void) => void
+export interface FetchProxy<T extends FetchContext = FetchContext> {
+  beforeSend: (callback: (context: Partial<T>) => void) => void
+  onRequestComplete: (callback: (context: T) => void) => void
 }
 
 export interface FetchContext {
@@ -31,10 +31,10 @@ export interface FetchContext {
 
 let fetchProxySingleton: FetchProxy | undefined
 let originalFetch: typeof window.fetch
-const beforeSendCallbacks: Array<(xhr: Partial<FetchContext>) => void> = []
-const onRequestCompleteCallbacks: Array<(xhr: FetchContext) => void> = []
+const beforeSendCallbacks: Array<(fetch: Partial<FetchContext>) => void> = []
+const onRequestCompleteCallbacks: Array<(fetch: FetchContext) => void> = []
 
-export function startFetchProxy(): FetchProxy {
+export function startFetchProxy<T extends FetchContext = FetchContext>(): FetchProxy<T> {
   if (!fetchProxySingleton) {
     proxyFetch()
     fetchProxySingleton = {
@@ -46,7 +46,7 @@ export function startFetchProxy(): FetchProxy {
       },
     }
   }
-  return fetchProxySingleton
+  return fetchProxySingleton as FetchProxy<T>
 }
 
 export function resetFetchProxy() {

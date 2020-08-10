@@ -1,4 +1,12 @@
-import { Configuration, Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
+import {
+  Configuration,
+  FetchContext,
+  Observable,
+  RequestType,
+  startFetchProxy,
+  startXhrProxy,
+  XhrContext,
+} from '@datadog/browser-core'
 import { startTracer, TraceIdentifier, Tracer } from './tracer'
 
 export interface RequestStartEvent {
@@ -35,27 +43,30 @@ export function startRequestCollection(configuration: Configuration) {
   return requestObservables
 }
 
+interface CustomXhrContext extends XhrContext {
+  traceId: TraceIdentifier | undefined
+  requestId: number
+}
+
 export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const xhrProxy = startXhrProxy()
+  const xhrProxy = startXhrProxy<CustomXhrContext>()
   xhrProxy.beforeSend((context, xhr) => {
     context.traceId = tracer.traceXhr(context, xhr)
     context.requestId = getNextRequestId()
 
     requestStartObservable.notify({
-      requestId: context.requestId as number,
+      requestId: context.requestId,
     })
   })
   xhrProxy.onRequestComplete((context) => {
-    const traceId = context.traceId as TraceIdentifier | undefined
-
     requestCompleteObservable.notify({
       duration: context.duration,
       method: context.method,
-      requestId: context.requestId as number,
+      requestId: context.requestId,
       response: context.response,
       startTime: context.startTime,
       status: context.status,
-      traceId: traceId as TraceIdentifier | undefined,
+      traceId: context.traceId,
       type: RequestType.XHR,
       url: context.url,
     })
@@ -63,14 +74,19 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
   return xhrProxy
 }
 
+interface CustomFetchContext extends FetchContext {
+  traceId: TraceIdentifier | undefined
+  requestId: number
+}
+
 export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const fetchProxy = startFetchProxy()
+  const fetchProxy = startFetchProxy<CustomFetchContext>()
   fetchProxy.beforeSend((context) => {
     context.traceId = tracer.traceFetch(context)
     context.requestId = getNextRequestId()
 
     requestStartObservable.notify({
-      requestId: context.requestId as number,
+      requestId: context.requestId,
     })
   })
   fetchProxy.onRequestComplete((context) => {
@@ -78,12 +94,12 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
       duration: context.duration,
       error: context.error,
       method: context.method,
-      requestId: context.requestId as number,
+      requestId: context.requestId,
       response: context.response,
       responseType: context.responseType,
       startTime: context.startTime,
       status: context.status,
-      traceId: context.traceId as TraceIdentifier | undefined,
+      traceId: context.traceId,
       type: RequestType.FETCH,
       url: context.url,
     })
