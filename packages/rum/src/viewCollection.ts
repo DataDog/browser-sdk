@@ -106,7 +106,7 @@ function newView(
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
-    monitor(updateView),
+    monitor(triggerViewUpdate),
     THROTTLE_VIEW_UPDATE_PERIOD,
     {
       leading: false,
@@ -126,9 +126,9 @@ function newView(
   const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
 
   // Initial view update
-  updateView()
+  triggerViewUpdate()
 
-  function updateView() {
+  function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       documentVersion,
@@ -157,7 +157,7 @@ function newView(
     triggerUpdate() {
       // cancel any pending view updates execution
       cancelScheduleViewUpdate()
-      updateView()
+      triggerViewUpdate()
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
