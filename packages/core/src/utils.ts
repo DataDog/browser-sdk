@@ -153,6 +153,10 @@ export function msToNs(duration: number) {
   return round(duration * 1e6, 0)
 }
 
+export function nsToMs(duration: number) {
+  return round(duration / 1e6, 0)
+}
+
 export interface Context {
   [x: string]: ContextValue
 }

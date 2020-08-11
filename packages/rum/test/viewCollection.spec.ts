@@ -674,5 +674,9 @@ describe('rum view measures', () => {
     it('should not update the initial view duration when updating it with new measures', () => {
       expect(initialView.last.duration).toBe(initialView.end.duration)
     })
+
+    it('should update the initial view loadingTime following the loadEventEnd value', () => {
+      expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    })
   })
 })
