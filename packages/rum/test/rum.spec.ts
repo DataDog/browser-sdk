@@ -637,6 +637,7 @@ describe('rum event assembly', () => {
     entryType: 'navigation',
     loadEventEnd: 567,
   }
+  const VIEW_DURATION = 1000
 
   let setupBuilder: TestSetupBuilder
 
@@ -678,6 +679,8 @@ describe('rum event assembly', () => {
       .withFakeClock()
       .withFakeLocation('http://foo.com/')
       .build()
+
+    clock.tick(VIEW_DURATION)
 
     history.pushState({}, '', '/bar')
 

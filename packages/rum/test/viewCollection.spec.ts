@@ -610,14 +610,17 @@ describe('rum view measures', () => {
   describe('load event happening after initial view end', () => {
     let initialView: { init: View; end: View; last: View }
     let secondView: { init: View; last: View }
+    const VIEW_DURATION = 100
 
     beforeEach(() => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
 
-      clock.tick(100)
+      clock.tick(VIEW_DURATION)
 
       history.pushState({}, '', '/bar')
+
+      clock.tick(VIEW_DURATION)
 
       expect(getHandledCount()).toEqual(3)
 
@@ -663,7 +666,8 @@ describe('rum view measures', () => {
     })
 
     it('should not update the initial view duration when updating it with new measures', () => {
-      expect(initialView.last.duration).toBe(initialView.end.duration)
+      expect(initialView.end.duration).toBe(VIEW_DURATION)
+      expect(initialView.last.duration).toBe(VIEW_DURATION)
     })
 
     it('should update the initial view loadingTime following the loadEventEnd value', () => {
