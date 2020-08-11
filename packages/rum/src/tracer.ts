@@ -42,10 +42,6 @@ function injectHeadersIfTracingAllowed(
   url: string,
   inject: (tracingHeaders: TracingHeaders) => void
 ): TraceIdentifier | undefined {
-  if (isDdTraceJsInstalled()) {
-    return getTraceIdFromDdTraceJs()
-  }
-
   if (!isTracingSupported() || !configuration.enableTracing || !isAllowedUrl(configuration, url)) {
     return undefined
   }
@@ -78,17 +74,6 @@ function makeTracingHeaders(traceId: TraceIdentifier): TracingHeaders {
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': toDecimalString(traceId),
   }
-}
-
-export function isDdTraceJsInstalled() {
-  return 'ddtrace' in window
-}
-
-function getTraceIdFromDdTraceJs(): TraceIdentifier | undefined {
-  // tslint:disable-next-line: no-unsafe-any
-  const activeScope = (window as BrowserWindow).ddtrace.tracer.scope().active()
-  // tslint:disable-next-line: no-unsafe-any
-  return !activeScope ? undefined : activeScope.context()._traceId // internal trace identifier
 }
 
 /* tslint:disable:no-bitwise */

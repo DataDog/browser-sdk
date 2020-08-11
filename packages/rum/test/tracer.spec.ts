@@ -76,17 +76,6 @@ describe('tracer', () => {
       expect(tracer.traceXhr(FOO_DOMAIN_CONTEXT, stub)).toBeDefined()
       expect(tracer.traceXhr(BAR_DOMAIN_CONTEXT, stub)).toBeUndefined()
     })
-
-    it('should delegate tracing when dd trace js is active', () => {
-      const traceIdFromDdTraceJs = new TraceIdentifier()
-      setupBuilder.withFakeDDTraceJs(traceIdFromDdTraceJs)
-
-      const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceXhr(SAME_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
-
-      expect(traceId).toBe(traceIdFromDdTraceJs)
-      expect(xhrStub.headers).toEqual({})
-    })
   })
 
   describe('traceFetch', () => {
@@ -163,18 +152,6 @@ describe('tracer', () => {
       expect(tracer.traceFetch(sameDomainContext)).toBeUndefined()
       expect(tracer.traceFetch(fooDomainContext)).toBeDefined()
       expect(tracer.traceFetch(barDomainContext)).toBeUndefined()
-    })
-
-    it('should delegate tracing when dd trace js is active', () => {
-      const context: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
-      const traceIdFromDdTraceJs = new TraceIdentifier()
-      setupBuilder.withFakeDDTraceJs(traceIdFromDdTraceJs)
-
-      const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceFetch(context)
-
-      expect(traceId).toBe(traceIdFromDdTraceJs)
-      expect(context.init).toBeUndefined()
     })
   })
 })
