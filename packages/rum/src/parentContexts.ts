@@ -133,7 +133,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     currentContext?: { startTime: number },
     startTime?: number
   ) {
-    if (!startTime) {
+    if (startTime === undefined) {
       return currentContext ? buildContext() : undefined
     }
     if (currentContext && startTime >= currentContext.startTime) {
