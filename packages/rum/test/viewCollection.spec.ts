@@ -614,12 +614,6 @@ describe('rum view measures', () => {
     beforeEach(() => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).measures).toEqual({
-        errorCount: 0,
-        longTaskCount: 0,
-        resourceCount: 0,
-        userActionCount: 0,
-      })
 
       clock.tick(100)
 
@@ -649,25 +643,22 @@ describe('rum view measures', () => {
     })
 
     it('should not set load measures to the second view', () => {
-      expect(secondView.last.measures).toEqual({
-        errorCount: 0,
-        longTaskCount: 0,
-        resourceCount: 0,
-        userActionCount: 0,
+      expect(getLoadMeasures(secondView.last)).toEqual({
+        domComplete: undefined,
+        domContentLoaded: undefined,
+        domInteractive: undefined,
+        firstContentfulPaint: undefined,
+        loadEventEnd: undefined,
       })
     })
 
     it('should set measures only on the initial view', () => {
-      expect(initialView.last.measures).toEqual({
+      expect(getLoadMeasures(initialView.last)).toEqual({
         domComplete: 456e6,
         domContentLoaded: 345e6,
         domInteractive: 234e6,
-        errorCount: 0,
         firstContentfulPaint: 123e6,
         loadEventEnd: 567e6,
-        longTaskCount: 0,
-        resourceCount: 0,
-        userActionCount: 0,
       })
     })
 
@@ -678,5 +669,11 @@ describe('rum view measures', () => {
     it('should update the initial view loadingTime following the loadEventEnd value', () => {
       expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
     })
+
+    function getLoadMeasures({
+      measures: { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd },
+    }: View) {
+      return { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd }
+    }
   })
 })
