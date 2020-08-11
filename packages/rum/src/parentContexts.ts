@@ -65,7 +65,11 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (currentContext) => {
-    currentView = currentContext
+    // A view can be updated after its end.  We have to ensure that the view being updated is the
+    // most recently created.
+    if (currentView!.id === currentContext.id) {
+      currentView = currentContext
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
