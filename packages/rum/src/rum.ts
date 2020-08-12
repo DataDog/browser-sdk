@@ -527,6 +527,7 @@ export function handleResourceEntry(
     resource: {
       kind: resourceKind,
     },
+    traceId: entry.traceId,
   })
   lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }

@@ -25,6 +25,7 @@ export interface RumPerformanceResourceTiming {
   redirectStart: number
   redirectEnd: number
   decodedBodySize: number
+  traceId?: string
 }
 
 export interface RumPerformanceLongTaskTiming {

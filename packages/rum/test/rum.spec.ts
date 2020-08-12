@@ -232,6 +232,24 @@ describe('rum handle performance entry', () => {
       expect(resourceEvent.http.performance).toBe(undefined)
     })
   })
+
+  it('should pass the traceId to the generated RumEvent', () => {
+    const entry: Partial<RumPerformanceResourceTiming> = {
+      entryType: 'resource',
+      name: 'http://localhost/test',
+      traceId: '123',
+    }
+
+    handleResourceEntry(
+      configuration as Configuration,
+      new LifeCycle(),
+      createMockSession(),
+      handler,
+      entry as RumPerformanceResourceTiming
+    )
+    const resourceEvent = getEntry(handler, 0) as RumResourceEvent
+    expect(resourceEvent.traceId).toBe('123')
+  })
 })
 
 describe('rum view', () => {
