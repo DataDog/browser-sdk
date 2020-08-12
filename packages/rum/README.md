@@ -38,7 +38,7 @@ datadogRum.init({
 
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
-  - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu' | 'gov')
+  - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
   - `silentMultipleInit`: prevent logging errors while having multiple Init
   - `trackInteractions`: collect actions initiated by user interactions
   - `service`: name of the corresponding service
