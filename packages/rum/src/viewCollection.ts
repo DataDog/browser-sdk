@@ -125,12 +125,12 @@ function newView(
     scheduleViewUpdate()
   })
 
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, (newLoadingTime) => {
-    if (newLoadingTime !== undefined) {
-      updateLoadingTime(newLoadingTime)
-      scheduleViewUpdate()
-    }
+  const { setActivityLoadingTime, setLoadEventEnd } = trackLoadingTime(loadingType, (newLoadingTime) => {
+    loadingTime = newLoadingTime
+    scheduleViewUpdate()
   })
+
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
 
   // Initial view update
   triggerViewUpdate()
@@ -147,12 +147,6 @@ function newView(
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
       measures: { ...timings, ...eventCounts },
     })
-  }
-
-  function updateLoadingTime(newLoadingTime: number) {
-    if (loadingTime === undefined || newLoadingTime > loadingTime) {
-      loadingTime = newLoadingTime
-    }
   }
 
   return {
@@ -176,7 +170,7 @@ function newView(
     updateTimings(newTimings: Timings) {
       timings = newTimings
       if (newTimings.loadEventEnd !== undefined) {
-        updateLoadingTime(nsToMs(newTimings.loadEventEnd))
+        setLoadEventEnd(nsToMs(newTimings.loadEventEnd))
       }
     },
     updateLocation(newLocation: Location) {
@@ -234,6 +228,37 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
     }
   )
   return { stop: stopPerformanceTracking }
+}
+
+function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
+  let isWaitingForLoadEventEnd = loadType === ViewLoadingType.INITIAL_LOAD
+  let isWaitingForActivityLoadingTime = true
+  const loadingTimeCandidates: number[] = []
+
+  function maybeInvokeCallback() {
+    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEventEnd && loadingTimeCandidates.length > 0) {
+      callback(Math.max(...loadingTimeCandidates))
+    }
+  }
+
+  return {
+    setLoadEventEnd(loadEventEnd: number) {
+      if (isWaitingForLoadEventEnd) {
+        isWaitingForLoadEventEnd = false
+        loadingTimeCandidates.push(loadEventEnd)
+        maybeInvokeCallback()
+      }
+    },
+    setActivityLoadingTime(activityLoadingTime: number | undefined) {
+      if (isWaitingForActivityLoadingTime) {
+        isWaitingForActivityLoadingTime = false
+        if (activityLoadingTime !== undefined) {
+          loadingTimeCandidates.push(activityLoadingTime)
+        }
+        maybeInvokeCallback()
+      }
+    },
+  }
 }
 
 function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
