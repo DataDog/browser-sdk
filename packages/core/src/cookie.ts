@@ -1,3 +1,5 @@
+import { findCommaSeparatedValue } from './utils'
+
 export const COOKIE_ACCESS_DELAY = 1000
 
 export interface CookieCache {
@@ -43,8 +45,7 @@ export function setCookie(name: string, value: string, expireDelay: number) {
 }
 
 export function getCookie(name: string) {
-  const matches = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`)
-  return matches ? matches.pop() : undefined
+  return findCommaSeparatedValue(document.cookie, name)
 }
 
 export function areCookiesAuthorized(): boolean {
