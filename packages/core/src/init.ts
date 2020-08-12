@@ -26,10 +26,12 @@ export enum Datacenter {
   US = 'us',
   EU = 'eu',
 }
-export enum SdkEnv {
-  PRODUCTION = 'production',
-  STAGING = 'staging',
+
+export const INTAKE_SITE = {
+  [Datacenter.EU]: 'datadoghq.eu',
+  [Datacenter.US]: 'datadoghq.com',
 }
+
 export enum BuildMode {
   RELEASE = 'release',
   STAGING = 'staging',
@@ -38,7 +40,6 @@ export enum BuildMode {
 
 export interface BuildEnv {
   datacenter: Datacenter
-  sdkEnv: SdkEnv
   buildMode: BuildMode
   sdkVersion: string
 }

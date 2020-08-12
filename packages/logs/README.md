@@ -9,10 +9,10 @@ Datadog browser logs library.
 ### NPM
 
 ```
-import { Datacenter, datadogLogs } from '@datadog/browser-logs'
+import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.init({
   clientToken: 'XXX',
-  datacenter: Datacenter.US,
+  site: 'datadoghq.com',
   forwardErrorsToLogs: true,
   sampleRate: 100
 })
@@ -21,11 +21,11 @@ datadogLogs.init({
 ### Bundle
 
 ```
-<script src = 'https://www.datadoghq-browser-agent.com/datadog-logs-us.js'>
+<script src = 'https://www.datadoghq-browser-agent.com/datadog-logs.js'>
 <script>
   window.DD_LOGS.init({
     clientToken: 'XXX',
-    datacenter: 'us',
+    site: 'datadoghq.com',
     forwardErrorsToLogs: true,
     sampleRate: 100
   });
@@ -40,7 +40,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
-  - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
+  - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
   - `silentMultipleInit`: prevent logging errors while having multiple Init
   - `service`: name of the corresponding service
   - `env`: environment of the service
@@ -49,7 +49,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   ```
   init(configuration: {
       clientToken: string,
-      datacenter?: string,
+      site?: string,
       isCollectingError?: boolean,
       sampleRate?: number,
       silentMultipleInit?: boolean,
@@ -96,11 +96,11 @@ Types are compatible with TypeScript >= 3.0.
 For earlier version, you can import js sources and use global variable to avoid any compilation issue:
 
 ```
-import '@datadog/browser-logs/bundle/datadog-logs-us';
+import '@datadog/browser-logs/bundle/datadog-logs';
 
 window.DD_LOGS.init({
   clientToken: 'XXX',
-  datacenter: 'us',
+  site: 'datadoghq.com',
   forwardErrorsToLogs: true,
   sampleRate: 100
 });
