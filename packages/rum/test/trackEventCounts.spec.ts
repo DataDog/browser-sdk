@@ -1,5 +1,6 @@
 import { ErrorMessage, objectValues } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RumPerformanceLongTaskTiming, RumPerformanceNavigationTiming } from '../src/performanceCollection'
 import { EventCounts, trackEventCounts } from '../src/trackEventCounts'
 import { AutoUserAction, CustomUserAction } from '../src/userActionCollection'
 
@@ -19,15 +20,18 @@ describe('trackEventCounts', () => {
 
   it('tracks long tasks', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
-    const performanceEntry = { entryType: 'longtask' }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
+    const performanceTiming = { entryType: 'longtask' }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceTiming as RumPerformanceLongTaskTiming)
     expect(eventCounts.longTaskCount).toBe(1)
   })
 
   it("doesn't track navigation entries", () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
-    const performanceEntry = { entryType: 'navigation' }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
+    const performanceTiming = { entryType: 'navigation' }
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      performanceTiming as RumPerformanceNavigationTiming
+    )
     expect(objectValues(eventCounts).every((value) => value === 0)).toBe(true)
   })
 

@@ -9,6 +9,7 @@ import {
   ResourceKind,
 } from '@datadog/browser-core'
 
+import { RumPerformanceResourceTiming } from './performanceCollection'
 import { PerformanceResourceDetails } from './rum'
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
@@ -33,7 +34,7 @@ const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string)
   ],
 ]
 
-export function computeResourceKind(timing: PerformanceResourceTiming) {
+export function computeResourceKind(timing: RumPerformanceResourceTiming) {
   const url = timing.name
   if (!isValidUrl(url)) {
     addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
@@ -57,7 +58,9 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
-export function computePerformanceResourceDuration(entry: PerformanceResourceTiming): number {
+export function computePerformanceResourceDuration(
+  entry: RumPerformanceResourceTiming | PerformanceResourceTiming
+): number {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
@@ -69,7 +72,7 @@ export function computePerformanceResourceDuration(entry: PerformanceResourceTim
 }
 
 export function computePerformanceResourceDetails(
-  entry: PerformanceResourceTiming
+  entry: RumPerformanceResourceTiming | PerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   const {
     startTime,
@@ -158,7 +161,7 @@ function formatTiming(origin: number, start: number, end: number) {
   }
 }
 
-export function computeSize(entry: PerformanceResourceTiming) {
+export function computeSize(entry: RumPerformanceResourceTiming | PerformanceResourceTiming) {
   // Make sure a request actually occured
   if (entry.startTime < entry.responseStart) {
     return entry.decodedBodySize

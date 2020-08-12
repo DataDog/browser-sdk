@@ -1,12 +1,13 @@
 import { Configuration, DEFAULT_CONFIGURATION, SPEC_ENDPOINTS } from '@datadog/browser-core'
+import { RumPerformanceResourceTiming } from '../src/performanceCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   isValidResource,
 } from '../src/resourceUtils'
 
-function generateResourceWith(overrides: Partial<PerformanceResourceTiming>) {
-  const completeTiming: Partial<PerformanceResourceTiming> = {
+function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
+  const completeTiming: Partial<RumPerformanceResourceTiming> = {
     connectEnd: 17,
     connectStart: 15,
     domainLookupEnd: 14,
@@ -24,7 +25,7 @@ function generateResourceWith(overrides: Partial<PerformanceResourceTiming>) {
     startTime: 10,
     ...overrides,
   }
-  return completeTiming as PerformanceResourceTiming
+  return completeTiming as RumPerformanceResourceTiming
 }
 
 describe('computePerformanceResourceDetails', () => {

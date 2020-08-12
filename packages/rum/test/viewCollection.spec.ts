@@ -2,7 +2,11 @@ import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { ViewContext } from '../src/parentContexts'
-import { PerformanceLongTaskTiming, PerformancePaintTiming } from '../src/rum'
+import {
+  RumPerformanceLongTaskTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+} from '../src/performanceCollection'
 
 import {
   PAGE_ACTIVITY_END_DELAY,
@@ -17,7 +21,8 @@ const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
-const FAKE_LONG_TASK = {
+const FAKE_LONG_TASK: RumPerformanceLongTaskTiming = {
+  duration: 123,
   entryType: 'longtask',
   startTime: 456,
 }
@@ -32,12 +37,12 @@ const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {
   name: 'foo',
   type: UserActionType.CLICK,
 }
-const FAKE_PAINT_ENTRY = {
+const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
   name: 'first-contentful-paint',
   startTime: 123,
 }
-const FAKE_NAVIGATION_ENTRY = {
+const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domComplete: 456,
   domContentLoadedEventEnd: 345,
   domInteractive: 234,
@@ -45,7 +50,7 @@ const FAKE_NAVIGATION_ENTRY = {
   loadEventEnd: 567,
 }
 
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING = {
+const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
   domComplete: 2,
   domContentLoadedEventEnd: 1,
   domInteractive: 1,
@@ -53,7 +58,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING = {
   loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8,
 }
 
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING = {
+const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
   domComplete: 2,
   domContentLoadedEventEnd: 1,
   domInteractive: 1,
@@ -350,10 +355,7 @@ describe('rum track loading time', () => {
     const { lifeCycle, clock } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
 
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getHandledCount()).toEqual(2)
@@ -368,7 +370,7 @@ describe('rum track loading time', () => {
 
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING as PerformanceNavigationTiming
+      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING
     )
 
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
@@ -387,7 +389,7 @@ describe('rum track loading time', () => {
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(
       LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING as PerformanceNavigationTiming
+      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING
     )
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
@@ -436,7 +438,7 @@ describe('rum view measures', () => {
     expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.longTaskCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK as PerformanceLongTaskTiming)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
@@ -502,10 +504,7 @@ describe('rum view measures', () => {
       userActionCount: 0,
     })
 
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
     expect(getHandledCount()).toEqual(1)
 
@@ -559,11 +558,8 @@ describe('rum view measures', () => {
       userActionCount: 0,
     })
 
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
     expect(getHandledCount()).toEqual(1)
 
     history.pushState({}, '', '/bar')
@@ -624,11 +620,8 @@ describe('rum view measures', () => {
 
       expect(getHandledCount()).toEqual(3)
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
-      lifeCycle.notify(
-        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-        FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-      )
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

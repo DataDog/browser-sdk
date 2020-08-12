@@ -23,6 +23,7 @@ import {
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { ActionContext, ParentContexts, startParentContexts, ViewContext } from './parentContexts'
+import { RumPerformanceLongTaskTiming, RumPerformanceResourceTiming } from './performanceCollection'
 import { RequestCompleteEvent } from './requestCollection'
 import {
   computePerformanceResourceDetails,
@@ -36,15 +37,6 @@ import { RumSession } from './rumSession'
 import { toDecimalString } from './tracer'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
-
-export interface PerformancePaintTiming extends PerformanceEntry {
-  entryType: 'paint'
-  name: 'first-paint' | 'first-contentful-paint'
-  startTime: number
-  duration: 0
-}
-
-export type PerformanceLongTaskTiming = PerformanceEntry
 
 export enum RumEventCategory {
   USER_ACTION = 'user_action',
@@ -491,10 +483,10 @@ function trackPerformanceTiming(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     switch (entry.entryType) {
       case 'resource':
-        handleResourceEntry(configuration, lifeCycle, session, handler, entry as PerformanceResourceTiming)
+        handleResourceEntry(configuration, lifeCycle, session, handler, entry)
         break
       case 'longtask':
-        handleLongTaskEntry(handler, entry as PerformanceLongTaskTiming)
+        handleLongTaskEntry(handler, entry)
         break
       default:
         break
@@ -507,7 +499,7 @@ export function handleResourceEntry(
   lifeCycle: LifeCycle,
   session: RumSession,
   handler: (startTime: number, event: RumResourceEvent) => void,
-  entry: PerformanceResourceTiming
+  entry: RumPerformanceResourceTiming
 ) {
   if (!session.isTrackedWithResource()) {
     return
@@ -541,7 +533,7 @@ export function handleResourceEntry(
 
 function handleLongTaskEntry(
   handler: (startTime: number, event: RumLongTaskEvent) => void,
-  entry: PerformanceLongTaskTiming
+  entry: RumPerformanceLongTaskTiming
 ) {
   handler(entry.startTime, {
     date: getTimestamp(entry.startTime),

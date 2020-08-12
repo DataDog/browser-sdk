@@ -2,6 +2,7 @@ import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, isIE, SPEC_ENDPOINT
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
 import { RequestCompleteEvent } from '../src/requestCollection'
 import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, RumViewEvent, trackView } from '../src/rum'
 import { RumSession } from '../src/rumSession'
@@ -59,27 +60,27 @@ describe('rum handle performance entry', () => {
   ;[
     {
       description: 'type resource + logs endpoint',
-      entry: { entryType: 'resource', name: configuration.logsEndpoint },
+      entry: { entryType: 'resource' as const, name: configuration.logsEndpoint },
       expectEntryToBeAdded: false,
     },
     {
       description: 'type resource + internal monitoring endpoint',
-      entry: { entryType: 'resource', name: configuration.internalMonitoringEndpoint },
+      entry: { entryType: 'resource' as const, name: configuration.internalMonitoringEndpoint },
       expectEntryToBeAdded: false,
     },
     {
       description: 'type resource + rum endpoint',
-      entry: { entryType: 'resource', name: configuration.rumEndpoint },
+      entry: { entryType: 'resource' as const, name: configuration.rumEndpoint },
       expectEntryToBeAdded: false,
     },
     {
       description: 'type resource + trace endpoint',
-      entry: { entryType: 'resource', name: configuration.traceEndpoint },
+      entry: { entryType: 'resource' as const, name: configuration.traceEndpoint },
       expectEntryToBeAdded: false,
     },
     {
       description: 'type resource + valid request',
-      entry: { entryType: 'resource', name: 'https://resource.com/valid' },
+      entry: { entryType: 'resource' as const, name: 'https://resource.com/valid' },
       expectEntryToBeAdded: true,
     },
   ].forEach(
@@ -89,7 +90,7 @@ describe('rum handle performance entry', () => {
       expectEntryToBeAdded,
     }: {
       description: string
-      entry: Partial<PerformanceResourceTiming>
+      entry: Partial<RumPerformanceResourceTiming>
       expectEntryToBeAdded: boolean
     }) => {
       it(description, () => {
@@ -98,7 +99,7 @@ describe('rum handle performance entry', () => {
           new LifeCycle(),
           createMockSession(),
           handler,
-          entry as PerformanceResourceTiming
+          entry as RumPerformanceResourceTiming
         )
         const entryAdded = (handler as jasmine.Spy).calls.all().length !== 0
         expect(entryAdded).toEqual(expectEntryToBeAdded)
@@ -140,14 +141,14 @@ describe('rum handle performance entry', () => {
       expected: string
     }) => {
       it(`should compute resource kind: ${description}`, () => {
-        const entry: Partial<PerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
+        const entry: Partial<RumPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
         handleResourceEntry(
           configuration as Configuration,
           new LifeCycle(),
           createMockSession(),
           handler,
-          entry as PerformanceResourceTiming
+          entry as RumPerformanceResourceTiming
         )
         const resourceEvent = getEntry(handler, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
@@ -156,7 +157,7 @@ describe('rum handle performance entry', () => {
   )
 
   it('should compute timing durations', () => {
-    const entry: Partial<PerformanceResourceTiming> = {
+    const entry: Partial<RumPerformanceResourceTiming> = {
       connectEnd: 10,
       connectStart: 3,
       domainLookupEnd: 3,
@@ -176,7 +177,7 @@ describe('rum handle performance entry', () => {
       new LifeCycle(),
       createMockSession(),
       handler,
-      entry as PerformanceResourceTiming
+      entry as RumPerformanceResourceTiming
     )
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
@@ -185,7 +186,7 @@ describe('rum handle performance entry', () => {
 
   describe('ignore invalid performance entry', () => {
     it('when it has a negative timing start', () => {
-      const entry: Partial<PerformanceResourceTiming> = {
+      const entry: Partial<RumPerformanceResourceTiming> = {
         connectEnd: 10,
         connectStart: -3,
         domainLookupEnd: 10,
@@ -206,14 +207,14 @@ describe('rum handle performance entry', () => {
         new LifeCycle(),
         createMockSession(),
         handler,
-        entry as PerformanceResourceTiming
+        entry as RumPerformanceResourceTiming
       )
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
 
     it('when it has timing start after its end', () => {
-      const entry: Partial<PerformanceResourceTiming> = {
+      const entry: Partial<RumPerformanceResourceTiming> = {
         entryType: 'resource',
         name: 'http://localhost/test',
         responseEnd: 25,
@@ -225,7 +226,7 @@ describe('rum handle performance entry', () => {
         new LifeCycle(),
         createMockSession(),
         handler,
-        entry as PerformanceResourceTiming
+        entry as RumPerformanceResourceTiming
       )
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
@@ -257,7 +258,7 @@ describe('rum view', () => {
 
 describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  const FAKE_RESOURCE: Partial<PerformanceEntry> = { name: 'http://foo.com', entryType: 'resource' }
+  const FAKE_RESOURCE: Partial<RumPerformanceResourceTiming> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
   const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     context: { foo: 'bar' },
@@ -680,7 +681,7 @@ describe('rum internal context', () => {
 
 describe('rum event assembly', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  const FAKE_NAVIGATION_ENTRY = {
+  const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
     domComplete: 456,
     domContentLoadedEventEnd: 345,
     domInteractive: 234,
@@ -736,10 +737,7 @@ describe('rum event assembly', () => {
 
     server.requests = []
 
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
-    )
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(server.requests.length).toEqual(1)
