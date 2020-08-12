@@ -2,7 +2,6 @@ import { DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
-import { RumSession } from './rumSession'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -20,16 +19,16 @@ function supportPerformanceNavigationTimingEvent() {
   )
 }
 
-export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSession) {
+export function startPerformanceCollection(lifeCycle: LifeCycle) {
   retrieveInitialDocumentResourceTiming((timing) => {
-    handlePerformanceEntries(session, lifeCycle, [timing])
+    handlePerformanceEntries(lifeCycle, [timing])
   })
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(session, lifeCycle, performance.getEntries())
+    handlePerformanceEntries(lifeCycle, performance.getEntries())
   }
   if ((window as BrowserWindow).PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(session, lifeCycle, entries.getEntries()))
+      monitor((entries) => handlePerformanceEntries(lifeCycle, entries.getEntries()))
     )
     const entryTypes = ['resource', 'navigation', 'longtask']
 
@@ -48,7 +47,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, session: RumSes
   }
   if (!supportPerformanceNavigationTimingEvent()) {
     retrieveNavigationTimingWhenLoaded((timing) => {
-      handlePerformanceEntries(session, lifeCycle, [timing])
+      handlePerformanceEntries(lifeCycle, [timing])
     })
   }
 }
@@ -130,14 +129,12 @@ function computeRelativePerformanceTiming() {
   return result as PerformanceTiming
 }
 
-function handlePerformanceEntries(session: RumSession, lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
+function handlePerformanceEntries(lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
   function notify(entry: PerformanceEntry) {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry)
   }
 
-  if (session.isTrackedWithResource()) {
-    entries.filter((entry) => entry.entryType === 'resource').forEach(notify)
-  }
+  entries.filter((entry) => entry.entryType === 'resource').forEach(notify)
 
   entries
     .filter((entry) => entry.entryType === 'navigation')

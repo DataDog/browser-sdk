@@ -4,6 +4,7 @@ import sinon from 'sinon'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RequestCompleteEvent } from '../src/requestCollection'
 import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, RumViewEvent, trackView } from '../src/rum'
+import { RumSession } from '../src/rumSession'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
@@ -26,6 +27,13 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as RumEvent
 }
 
+function createMockSession(): RumSession {
+  return {
+    getId: () => 'foo',
+    isTracked: () => true,
+    isTrackedWithResource: () => true,
+  }
+}
 interface ExpectedRequestBody {
   application_id: string
   date: number
@@ -87,9 +95,10 @@ describe('rum handle performance entry', () => {
       it(description, () => {
         handleResourceEntry(
           configuration as Configuration,
-          entry as PerformanceResourceTiming,
+          new LifeCycle(),
+          createMockSession(),
           handler,
-          new LifeCycle()
+          entry as PerformanceResourceTiming
         )
         const entryAdded = (handler as jasmine.Spy).calls.all().length !== 0
         expect(entryAdded).toEqual(expectEntryToBeAdded)
@@ -135,9 +144,10 @@ describe('rum handle performance entry', () => {
 
         handleResourceEntry(
           configuration as Configuration,
-          entry as PerformanceResourceTiming,
+          new LifeCycle(),
+          createMockSession(),
           handler,
-          new LifeCycle()
+          entry as PerformanceResourceTiming
         )
         const resourceEvent = getEntry(handler, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
@@ -161,7 +171,13 @@ describe('rum handle performance entry', () => {
       secureConnectionStart: 0,
     }
 
-    handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+    handleResourceEntry(
+      configuration as Configuration,
+      new LifeCycle(),
+      createMockSession(),
+      handler,
+      entry as PerformanceResourceTiming
+    )
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
@@ -185,7 +201,13 @@ describe('rum handle performance entry', () => {
         secureConnectionStart: 0,
       }
 
-      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      handleResourceEntry(
+        configuration as Configuration,
+        new LifeCycle(),
+        createMockSession(),
+        handler,
+        entry as PerformanceResourceTiming
+      )
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
@@ -198,7 +220,13 @@ describe('rum handle performance entry', () => {
         responseStart: 100,
       }
 
-      handleResourceEntry(configuration as Configuration, entry as PerformanceResourceTiming, handler, new LifeCycle())
+      handleResourceEntry(
+        configuration as Configuration,
+        new LifeCycle(),
+        createMockSession(),
+        handler,
+        entry as PerformanceResourceTiming
+      )
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })

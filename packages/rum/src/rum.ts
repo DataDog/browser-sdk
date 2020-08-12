@@ -358,7 +358,7 @@ function trackRumEvents(
   )
   trackErrors(lifeCycle, handler(assembleWithAction, batch.add))
   trackRequests(configuration, lifeCycle, session, handler(assembleWithAction, batch.add))
-  trackPerformanceTiming(configuration, lifeCycle, handler(assembleWithAction, batch.add))
+  trackPerformanceTiming(configuration, lifeCycle, session, handler(assembleWithAction, batch.add))
   trackCustomUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
   trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
 }
@@ -485,15 +485,16 @@ function trackRequests(
 function trackPerformanceTiming(
   configuration: Configuration,
   lifeCycle: LifeCycle,
+  session: RumSession,
   handler: (startTime: number, event: RumResourceEvent | RumLongTaskEvent) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     switch (entry.entryType) {
       case 'resource':
-        handleResourceEntry(configuration, entry as PerformanceResourceTiming, handler, lifeCycle)
+        handleResourceEntry(configuration, lifeCycle, session, handler, entry as PerformanceResourceTiming)
         break
       case 'longtask':
-        handleLongTaskEntry(entry as PerformanceLongTaskTiming, handler)
+        handleLongTaskEntry(handler, entry as PerformanceLongTaskTiming)
         break
       default:
         break
@@ -503,10 +504,14 @@ function trackPerformanceTiming(
 
 export function handleResourceEntry(
   configuration: Configuration,
-  entry: PerformanceResourceTiming,
+  lifeCycle: LifeCycle,
+  session: RumSession,
   handler: (startTime: number, event: RumResourceEvent) => void,
-  lifeCycle: LifeCycle
+  entry: PerformanceResourceTiming
 ) {
+  if (!session.isTrackedWithResource()) {
+    return
+  }
   if (!isValidResource(entry.name, configuration)) {
     return
   }
@@ -535,8 +540,8 @@ export function handleResourceEntry(
 }
 
 function handleLongTaskEntry(
-  entry: PerformanceLongTaskTiming,
-  handler: (startTime: number, event: RumLongTaskEvent) => void
+  handler: (startTime: number, event: RumLongTaskEvent) => void,
+  entry: PerformanceLongTaskTiming
 ) {
   handler(entry.startTime, {
     date: getTimestamp(entry.startTime),
