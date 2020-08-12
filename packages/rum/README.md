@@ -7,11 +7,11 @@ Datadog browser rum library.
 ### NPM
 
 ```
-import { Datacenter, datadogRum } from '@datadog/browser-rum'
+import { datadogRum } from '@datadog/browser-rum'
 datadogRum.init({
   applicationId: 'XXX',
   clientToken: 'XXX',
-  datacenter: Datacenter.US,
+  site: 'datadoghq.com',
   resourceSampleRate: 100,
   sampleRate: 100
 })
@@ -25,7 +25,7 @@ datadogRum.init({
   window.DD_RUM.init({
     applicationId: 'XXX',
     clientToken: 'XXX',
-    datacenter: 'us',
+    site: 'datadoghq.com',
     resourceSampleRate: 100,
     sampleRate: 100
   });
@@ -38,7 +38,7 @@ datadogRum.init({
 
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
-  - `datacenter`: defined to which datacenter we'll send collected data ('us' | 'eu')
+  - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
   - `silentMultipleInit`: prevent logging errors while having multiple Init
   - `trackInteractions`: collect actions initiated by user interactions
   - `service`: name of the corresponding service
@@ -49,7 +49,7 @@ datadogRum.init({
   init(configuration: {
       applicationId: string,
       clientToken: string,
-      datacenter?: string,
+      site?: string,
       resourceSampleRate?: number
       sampleRate?: number,
       silentMultipleInit?: boolean,
@@ -104,7 +104,7 @@ import '@datadog/browser-rum/bundle/datadog-rum';
 window.DD_RUM.init({
   applicationId: 'XXX',
   clientToken: 'XXX',
-  datacenter: 'us',
+  site: 'datadoghq.com',
   resourceSampleRate: 100,
   sampleRate: 100
 });

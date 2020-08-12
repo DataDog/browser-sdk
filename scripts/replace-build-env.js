@@ -4,7 +4,7 @@ const buildEnv = require('./build-env')
 /**
  * Replace BuildEnv in build files
  * Usage:
- * TARGET_DATACENTER=xxx TARGET_ENV=yyy BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
+ * TARGET_DATACENTER=xxx BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
  */
 
 const buildDirectory = process.argv[2]
@@ -40,5 +40,7 @@ function makeDeprecatedSuffixComment(filePath) {
   const suffixRegExp = /-(us|eu)/
   const env = fileName.match(suffixRegExp)[1]
   const newFileName = fileName.replace(suffixRegExp, '')
-  return `/**\n * ${fileName} IS DEPRECATED, USE ${newFileName} WITH { datacenter: '${env}' } INIT CONFIGURATION INSTEAD\n */`
+  return `/**\n * ${fileName} IS DEPRECATED, USE ${newFileName} WITH { site: 'datadoghq.${
+    env === 'eu' ? 'eu' : 'com'
+  }' } INIT CONFIGURATION INSTEAD\n */`
 }

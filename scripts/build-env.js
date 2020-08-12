@@ -19,7 +19,6 @@ switch (process.env.BUILD_MODE) {
 
 module.exports = {
   TARGET_DATACENTER: process.env.TARGET_DATACENTER || 'us',
-  TARGET_ENV: process.env.TARGET_ENV || 'staging',
   BUILD_MODE: process.env.BUILD_MODE,
   SDK_VERSION: sdkVersion,
   WITH_SUFFIX: process.env.WITH_SUFFIX || false,
