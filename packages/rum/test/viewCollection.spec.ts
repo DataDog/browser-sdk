@@ -513,11 +513,11 @@ describe('rum view measures', () => {
 
     expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456e6,
-      domContentLoaded: 345e6,
-      domInteractive: 234e6,
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
       errorCount: 0,
-      loadEventEnd: 567e6,
+      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
@@ -570,12 +570,12 @@ describe('rum view measures', () => {
 
     expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456e6,
-      domContentLoaded: 345e6,
-      domInteractive: 234e6,
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
       errorCount: 0,
-      firstContentfulPaint: 123e6,
-      loadEventEnd: 567e6,
+      firstContentfulPaint: 123,
+      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
@@ -657,11 +657,11 @@ describe('rum view measures', () => {
 
     it('should set measures only on the initial view', () => {
       expect(getLoadMeasures(initialView.last)).toEqual({
-        domComplete: 456e6,
-        domContentLoaded: 345e6,
-        domInteractive: 234e6,
-        firstContentfulPaint: 123e6,
-        loadEventEnd: 567e6,
+        domComplete: 456,
+        domContentLoaded: 345,
+        domInteractive: 234,
+        firstContentfulPaint: 123,
+        loadEventEnd: 567,
       })
     })
 

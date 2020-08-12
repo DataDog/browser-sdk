@@ -1,4 +1,4 @@
-import { DOM_EVENT, generateUUID, monitor, msToNs, nsToMs, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
@@ -170,7 +170,7 @@ function newView(
     updateTimings(newTimings: Timings) {
       timings = newTimings
       if (newTimings.loadEventEnd !== undefined) {
-        setLoadEventEnd(nsToMs(newTimings.loadEventEnd))
+        setLoadEventEnd(newTimings.loadEventEnd)
       }
     },
     updateLocation(newLocation: Location) {
@@ -211,17 +211,17 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
         const navigationEntry = entry as PerformanceNavigationTiming
         timings = {
           ...timings,
-          domComplete: msToNs(navigationEntry.domComplete),
-          domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
-          domInteractive: msToNs(navigationEntry.domInteractive),
-          loadEventEnd: msToNs(navigationEntry.loadEventEnd),
+          domComplete: navigationEntry.domComplete,
+          domContentLoaded: navigationEntry.domContentLoadedEventEnd,
+          domInteractive: navigationEntry.domInteractive,
+          loadEventEnd: navigationEntry.loadEventEnd,
         }
         callback(timings)
       } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
         const paintEntry = entry as PerformancePaintTiming
         timings = {
           ...timings,
-          firstContentfulPaint: msToNs(paintEntry.startTime),
+          firstContentfulPaint: paintEntry.startTime,
         }
         callback(timings)
       }

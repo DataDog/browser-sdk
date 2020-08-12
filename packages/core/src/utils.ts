@@ -149,12 +149,11 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export function msToNs(duration: number) {
+export function msToNs<T>(duration: number | T): number | T {
+  if (typeof duration !== 'number') {
+    return duration
+  }
   return round(duration * 1e6, 0)
-}
-
-export function nsToMs(duration: number) {
-  return round(duration / 1e6, 0)
 }
 
 export interface Context {
