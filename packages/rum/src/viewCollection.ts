@@ -235,7 +235,7 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: num
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: number[] = []
 
-  function maybeInvokeCallback() {
+  function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEventEnd && loadingTimeCandidates.length > 0) {
       callback(Math.max(...loadingTimeCandidates))
     }
@@ -246,7 +246,7 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: num
       if (isWaitingForLoadEventEnd) {
         isWaitingForLoadEventEnd = false
         loadingTimeCandidates.push(loadEventEnd)
-        maybeInvokeCallback()
+        invokeCallbackIfAllCandidatesAreReceived()
       }
     },
     setActivityLoadingTime(activityLoadingTime: number | undefined) {
@@ -255,7 +255,7 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: num
         if (activityLoadingTime !== undefined) {
           loadingTimeCandidates.push(activityLoadingTime)
         }
-        maybeInvokeCallback()
+        invokeCallbackIfAllCandidatesAreReceived()
       }
     },
   }
