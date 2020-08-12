@@ -1,8 +1,7 @@
-import { BuildEnv } from '@datadog/browser-core'
+import { BuildEnv, BuildMode, Datacenter } from '@datadog/browser-core'
 
 export const buildEnv: BuildEnv = {
-  buildMode: '<<< BUILD_MODE >>>' as BuildEnv['buildMode'],
-  datacenter: '<<< TARGET_DATACENTER >>>' as BuildEnv['datacenter'],
-  sdkEnv: '<<< TARGET_ENV >>>' as BuildEnv['sdkEnv'],
+  buildMode: '<<< BUILD_MODE >>>' as BuildMode,
+  datacenter: '<<< TARGET_DATACENTER >>>' as Datacenter,
   sdkVersion: '<<< SDK_VERSION >>>',
 }
