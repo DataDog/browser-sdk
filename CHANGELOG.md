@@ -14,6 +14,15 @@
 
 ---
 
+## v1.15.1
+
+- 🐛[RUMF-639] xhr proxy: do not instrument xhr already opened ([#484](https://github.com/DataDog/browser-sdk/pull/484))
+
+## v1.15.0
+
+- ✨ [RUMF-626] use site configuration and deprecate suffixed bundle ([#476](https://github.com/DataDog/browser-sdk/pull/476))
+- ✨ Update context api to include removeContext method ([#478](https://github.com/DataDog/browser-sdk/pull/478))
+
 ## v1.14.1
 
 - [RUMF-617] Extract XHR and Fetch proxies ([#468](https://github.com/DataDog/browser-sdk/pull/468))
