@@ -39,19 +39,15 @@ export function throttle(
   fn: () => void,
   wait: number,
   options?: { leading?: boolean; trailing?: boolean }
-): { throttled: () => void; stop: () => void } {
+): { throttled: () => void; cancel: () => void } {
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
   let hasPendingExecution = false
   let pendingTimeoutId: number
-  let isStopped = false
 
   return {
     throttled(this: any) {
-      if (isStopped) {
-        return
-      }
       if (inWaitPeriod) {
         hasPendingExecution = true
         return
@@ -70,9 +66,10 @@ export function throttle(
         hasPendingExecution = false
       }, wait)
     },
-    stop() {
+    cancel() {
       window.clearTimeout(pendingTimeoutId)
-      isStopped = true
+      inWaitPeriod = false
+      hasPendingExecution = false
     },
   }
 }
@@ -152,7 +149,10 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export function msToNs(duration: number) {
+export function msToNs<T>(duration: number | T): number | T {
+  if (typeof duration !== 'number') {
+    return duration
+  }
   return round(duration * 1e6, 0)
 }
 

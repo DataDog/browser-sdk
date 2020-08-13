@@ -22,7 +22,7 @@ describe('utils', () => {
   describe('throttle', () => {
     let spy: jasmine.Spy
     let throttled: () => void
-    let stop: () => void
+    let cancel: () => void
 
     beforeEach(() => {
       jasmine.clock().install()
@@ -210,10 +210,10 @@ describe('utils', () => {
       })
     })
 
-    describe('stop', () => {
+    describe('cancel', () => {
       beforeEach(() => {
         const result = throttle(spy, 2)
-        stop = result.stop
+        cancel = result.cancel
         throttled = result.throttled
       })
 
@@ -222,17 +222,18 @@ describe('utils', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        stop()
+        cancel()
 
         jasmine.clock().tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
 
-      it('should dismiss future calls', () => {
-        stop()
+      it('should allow future calls', () => {
+        cancel()
         throttled()
+        expect(spy).toHaveBeenCalledTimes(1)
         jasmine.clock().tick(2)
-        expect(spy).toHaveBeenCalledTimes(0)
+        expect(spy).toHaveBeenCalledTimes(1)
       })
     })
   })

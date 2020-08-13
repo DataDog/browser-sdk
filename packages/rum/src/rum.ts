@@ -374,9 +374,16 @@ function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: Rum
         documentVersion: view.documentVersion,
       },
       view: {
-        loadingTime: view.loadingTime ? msToNs(view.loadingTime) : undefined,
+        loadingTime: msToNs(view.loadingTime),
         loadingType: view.loadingType,
-        measures: view.measures,
+        measures: {
+          domComplete: msToNs(view.measures.domComplete),
+          domContentLoaded: msToNs(view.measures.domContentLoaded),
+          domInteractive: msToNs(view.measures.domInteractive),
+          firstContentfulPaint: msToNs(view.measures.firstContentfulPaint),
+          loadEventEnd: msToNs(view.measures.loadEventEnd),
+          ...view.measures,
+        },
       },
     })
   })

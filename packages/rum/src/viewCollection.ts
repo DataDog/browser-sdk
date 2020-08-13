@@ -1,8 +1,8 @@
-import { DOM_EVENT, generateUUID, monitor, msToNs, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { PerformancePaintTiming } from './rum'
-import { trackEventCounts } from './trackEventCounts'
+import { EventCounts, trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
 export interface View {
@@ -16,17 +16,15 @@ export interface View {
   loadingType: ViewLoadingType
 }
 
-export interface ViewMeasures {
+interface Timings {
   firstContentfulPaint?: number
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
-  errorCount: number
-  resourceCount: number
-  longTaskCount: number
-  userActionCount: number
 }
+
+export type ViewMeasures = Timings & EventCounts
 
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
@@ -38,10 +36,20 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
-  let currentView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  let currentView = initialView
 
-  function renewViewOnChange() {
+  const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
+    initialView.updateTimings(timings)
+    initialView.scheduleUpdate()
+  })
+
+  trackHistory(onLocationChange)
+  trackHash(onLocationChange)
+
+  function onLocationChange() {
     if (currentView.isDifferentView(location)) {
+      // Renew view on location changes
       currentView.triggerUpdate()
       currentView.end()
       currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
@@ -50,12 +58,6 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
     }
   }
-
-  // Renew view on history changes
-  trackHistory(renewViewOnChange)
-
-  // Renew view on hash changes
-  trackHash(renewViewOnChange)
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -80,6 +82,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
 
   return {
     stop() {
+      stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
     },
@@ -94,43 +97,45 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
-  let measures: ViewMeasures = {
+  let eventCounts: EventCounts = {
     errorCount: 0,
     longTaskCount: 0,
     resourceCount: 0,
     userActionCount: 0,
   }
+  let timings: Timings | undefined
   let documentVersion = 0
   let loadingTime: number | undefined
+  let endTime: number | undefined
   let location: Location = { ...initialLocation }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
 
   // Update the view every time the measures are changing
-  const { throttled: scheduleViewUpdate, stop: stopScheduleViewUpdate } = throttle(
-    monitor(updateView),
+  const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
+    monitor(triggerViewUpdate),
     THROTTLE_VIEW_UPDATE_PERIOD,
     {
       leading: false,
     }
   )
-  function updateMeasures(newMeasures: Partial<ViewMeasures>) {
-    measures = { ...measures, ...newMeasures }
-    scheduleViewUpdate()
-  }
-  const { stop: stopTimingsTracking } = trackTimings(lifeCycle, updateMeasures)
-  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, updateMeasures)
 
-  function updateLoadingTime(loadingTimeValue: number) {
-    loadingTime = loadingTimeValue
+  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, (newEventCounts) => {
+    eventCounts = newEventCounts
     scheduleViewUpdate()
-  }
-  const { stop: stopLoadingTimeTracking } = trackLoadingTime(lifeCycle, loadingType, updateLoadingTime)
+  })
+
+  const { setActivityLoadingTime, setLoadEventEnd } = trackLoadingTime(loadingType, (newLoadingTime) => {
+    loadingTime = newLoadingTime
+    scheduleViewUpdate()
+  })
+
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
 
   // Initial view update
-  updateView()
+  triggerViewUpdate()
 
-  function updateView() {
+  function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       documentVersion,
@@ -138,19 +143,18 @@ function newView(
       loadingTime,
       loadingType,
       location,
-      measures,
       startTime,
-      duration: performance.now() - startTime,
+      duration: (endTime === undefined ? performance.now() : endTime) - startTime,
+      measures: { ...timings, ...eventCounts },
     })
   }
 
   return {
+    scheduleUpdate: scheduleViewUpdate,
     end() {
-      stopTimingsTracking()
+      endTime = performance.now()
       stopEventCountsTracking()
-      stopLoadingTimeTracking()
-      // prevent pending view updates execution
-      stopScheduleViewUpdate()
+      stopActivityLoadingTimeTracking()
     },
     isDifferentView(otherLocation: Location) {
       return (
@@ -159,7 +163,15 @@ function newView(
       )
     },
     triggerUpdate() {
-      updateView()
+      // cancel any pending view updates execution
+      cancelScheduleViewUpdate()
+      triggerViewUpdate()
+    },
+    updateTimings(newTimings: Timings) {
+      timings = newTimings
+      if (newTimings.loadEventEnd !== undefined) {
+        setLoadEventEnd(newTimings.loadEventEnd)
+      }
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
@@ -190,16 +202,8 @@ function trackHash(onHashChange: () => void) {
   window.addEventListener('hashchange', monitor(onHashChange))
 }
 
-interface Timings {
-  domComplete?: number
-  domContentLoaded?: number
-  domInteractive?: number
-  loadEventEnd?: number
-  firstContentfulPaint?: number
-}
-
 function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
-  let timings: Timings = {}
+  let timings: Timings | undefined
   const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
@@ -207,17 +211,17 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
         const navigationEntry = entry as PerformanceNavigationTiming
         timings = {
           ...timings,
-          domComplete: msToNs(navigationEntry.domComplete),
-          domContentLoaded: msToNs(navigationEntry.domContentLoadedEventEnd),
-          domInteractive: msToNs(navigationEntry.domInteractive),
-          loadEventEnd: msToNs(navigationEntry.loadEventEnd),
+          domComplete: navigationEntry.domComplete,
+          domContentLoaded: navigationEntry.domContentLoadedEventEnd,
+          domInteractive: navigationEntry.domInteractive,
+          loadEventEnd: navigationEntry.loadEventEnd,
         }
         callback(timings)
       } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
         const paintEntry = entry as PerformancePaintTiming
         timings = {
           ...timings,
-          firstContentfulPaint: msToNs(paintEntry.startTime),
+          firstContentfulPaint: paintEntry.startTime,
         }
         callback(timings)
       }
@@ -226,53 +230,35 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
   return { stop: stopPerformanceTracking }
 }
 
-function trackLoadingTime(
-  lifeCycle: LifeCycle,
-  loadingType: ViewLoadingType,
-  callback: (loadingTimeValue: number) => void
-) {
-  let expectedTiming = 1
-  const receivedTimings: number[] = []
+function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
+  let isWaitingForLoadEventEnd = loadType === ViewLoadingType.INITIAL_LOAD
+  let isWaitingForActivityLoadingTime = true
+  const loadingTimeCandidates: number[] = []
 
-  let stopLoadEventLoadingTime = noop
-  if (loadingType === ViewLoadingType.INITIAL_LOAD) {
-    expectedTiming += 1
-    ;({ stop: stopLoadEventLoadingTime } = trackLoadEventLoadingTime(lifeCycle, onTimingValue))
-  }
-
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, onTimingValue)
-
-  function onTimingValue(timingValue: number | undefined) {
-    expectedTiming -= 1
-    if (timingValue) {
-      receivedTimings.push(timingValue)
-    }
-
-    if (expectedTiming === 0 && receivedTimings.length) {
-      callback(Math.max(...receivedTimings))
+  function invokeCallbackIfAllCandidatesAreReceived() {
+    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEventEnd && loadingTimeCandidates.length > 0) {
+      callback(Math.max(...loadingTimeCandidates))
     }
   }
 
   return {
-    stop() {
-      stopActivityLoadingTimeTracking()
-      stopLoadEventLoadingTime()
+    setLoadEventEnd(loadEventEnd: number) {
+      if (isWaitingForLoadEventEnd) {
+        isWaitingForLoadEventEnd = false
+        loadingTimeCandidates.push(loadEventEnd)
+        invokeCallbackIfAllCandidatesAreReceived()
+      }
+    },
+    setActivityLoadingTime(activityLoadingTime: number | undefined) {
+      if (isWaitingForActivityLoadingTime) {
+        isWaitingForActivityLoadingTime = false
+        if (activityLoadingTime !== undefined) {
+          loadingTimeCandidates.push(activityLoadingTime)
+        }
+        invokeCallbackIfAllCandidatesAreReceived()
+      }
     },
   }
-}
-
-function trackLoadEventLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number) => void) {
-  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
-    LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-    (entry) => {
-      if (entry.entryType === 'navigation') {
-        const navigationEntry = entry as PerformanceNavigationTiming
-        callback(navigationEntry.loadEventEnd)
-      }
-    }
-  )
-
-  return { stop: stopPerformanceTracking }
 }
 
 function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
