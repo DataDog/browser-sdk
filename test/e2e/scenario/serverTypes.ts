@@ -28,6 +28,20 @@ export interface ServerRumEvent {
   }
 }
 
+export interface ServerTrace {
+  spans: ServerSpan[]
+}
+
+interface ServerSpan {
+  meta: {
+    'http.method': string
+    'http.url': string
+  }
+  metrics: {
+    'http.status': number
+  }
+}
+
 interface PerformanceTiming {
   start: number
   duration: number
@@ -50,6 +64,7 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
     kind: 'fetch' | 'xhr' | 'document'
   }
   duration: number
+  trace_id?: string
   user_action?: {
     id: string
   }
