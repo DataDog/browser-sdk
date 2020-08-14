@@ -14,9 +14,17 @@
 
 ---
 
+## v1.15.3
+
+- 🐛 [RUM] fix loading measures conversion to nanoseconds ([#490](https://github.com/DataDog/browser-sdk/pull/490))
+
+## v1.15.2
+
+- 🐛 [RUMF-622] attach loading measures to initial view ([#479](https://github.com/DataDog/browser-sdk/pull/479))
+
 ## v1.15.1
 
-- 🐛[RUMF-639] xhr proxy: do not instrument xhr already opened ([#484](https://github.com/DataDog/browser-sdk/pull/484))
+- 🐛 [RUMF-639] xhr proxy: do not instrument xhr already opened ([#484](https://github.com/DataDog/browser-sdk/pull/484))
 
 ## v1.15.0
 

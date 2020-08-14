@@ -3,9 +3,9 @@ import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RequestCompleteEvent } from '../src/requestCollection'
-import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent } from '../src/rum'
+import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, RumViewEvent, trackView } from '../src/rum'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
-import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../src/viewCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 function getEntry(handler: (startTime: number, event: RumEvent) => void, index: number) {
@@ -202,6 +202,28 @@ describe('rum handle performance entry', () => {
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
+  })
+})
+
+describe('rum view', () => {
+  it('should convert timings to nanosecond', () => {
+    const FAKE_VIEW = {
+      id: 'foo',
+      loadingTime: 17,
+      measures: {
+        loadEventEnd: 15,
+      },
+    }
+
+    const spy = jasmine.createSpy<(startTime: number, event: RumViewEvent) => void>()
+    const lifeCycle = new LifeCycle()
+
+    trackView(lifeCycle, spy)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, FAKE_VIEW as View)
+
+    const formattedView = spy.calls.mostRecent().args[1]
+    expect(formattedView.view.measures.loadEventEnd).toEqual(15 * 1e6)
+    expect(formattedView.view.loadingTime).toEqual(17 * 1e6)
   })
 })
 
