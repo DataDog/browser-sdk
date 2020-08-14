@@ -20,7 +20,7 @@
     "sinon": "7.3.2"
   },
   "peerDependencies": {
-    "tslib": "1.10.0"
+    "tslib": "^1.10.0"
   },
   "repository": {
     "type": "git",
