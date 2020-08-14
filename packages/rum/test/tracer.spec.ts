@@ -9,7 +9,6 @@ describe('tracer', () => {
   }
   const SAME_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: window.location.origin }
   const FOO_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://foo.com' }
-  const BAR_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://bar.com' }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -66,15 +65,16 @@ describe('tracer', () => {
     it('should trace requests on configured urls', () => {
       const configurationWithTracingUrls: Partial<Configuration> = {
         ...configuration,
-        shouldTraceUrl: (url) => /^https?:\/\/foo\.com.*/.test(url),
+        allowedTracingOrigins: [/^https?:\/\/foo\.com.*/, 'http://bar.com'],
       }
       const stub = (xhrStub as unknown) as XMLHttpRequest
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceXhr(SAME_DOMAIN_CONTEXT, stub)).toBeUndefined()
+      expect(tracer.traceXhr(SAME_DOMAIN_CONTEXT, stub)).toBeDefined()
       expect(tracer.traceXhr(FOO_DOMAIN_CONTEXT, stub)).toBeDefined()
-      expect(tracer.traceXhr(BAR_DOMAIN_CONTEXT, stub)).toBeUndefined()
+      expect(tracer.traceXhr({ url: 'http://bar.com' }, stub)).toBeDefined()
+      expect(tracer.traceXhr({ url: 'http://qux.com' }, stub)).toBeUndefined()
     })
   })
 
@@ -141,17 +141,19 @@ describe('tracer', () => {
     it('should trace requests on configured urls', () => {
       const configurationWithTracingUrls: Partial<Configuration> = {
         ...configuration,
-        shouldTraceUrl: (url) => /^https?:\/\/foo\.com.*/.test(url),
+        allowedTracingOrigins: [/^https?:\/\/foo\.com.*/, 'http://bar.com'],
       }
       const sameDomainContext: Partial<FetchContext> = { ...SAME_DOMAIN_CONTEXT }
       const fooDomainContext: Partial<FetchContext> = { ...FOO_DOMAIN_CONTEXT }
-      const barDomainContext: Partial<FetchContext> = { ...BAR_DOMAIN_CONTEXT }
+      const barDomainContext: Partial<FetchContext> = { url: 'http://bar.com' }
+      const quxDomainContext: Partial<FetchContext> = { url: 'http://qux.com' }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceFetch(sameDomainContext)).toBeUndefined()
+      expect(tracer.traceFetch(sameDomainContext)).toBeDefined()
       expect(tracer.traceFetch(fooDomainContext)).toBeDefined()
-      expect(tracer.traceFetch(barDomainContext)).toBeUndefined()
+      expect(tracer.traceFetch(barDomainContext)).toBeDefined()
+      expect(tracer.traceFetch(quxDomainContext)).toBeUndefined()
     })
   })
 })

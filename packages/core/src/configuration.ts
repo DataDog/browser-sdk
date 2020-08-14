@@ -2,6 +2,7 @@ import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
+  allowedTracingOrigins: [] as Array<string | RegExp>,
   enableTracing: false,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
@@ -42,7 +43,7 @@ export interface UserConfiguration {
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
   enableTracing?: boolean
-  shouldTraceUrl?: (url: string) => boolean
+  allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter
@@ -75,7 +76,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   rumEndpoint: string
   traceEndpoint: string
   internalMonitoringEndpoint?: string
-  shouldTraceUrl?: (url: string) => boolean
 
   service?: string
   env?: string
@@ -151,8 +151,8 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.enableTracing = !!userConfiguration.enableTracing
   }
 
-  if ('shouldTraceUrl' in userConfiguration) {
-    configuration.shouldTraceUrl = userConfiguration.shouldTraceUrl!
+  if ('allowedTracingOrigins' in userConfiguration) {
+    configuration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins!
   }
 
   if ('isCollectingError' in userConfiguration) {

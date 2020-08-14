@@ -1,4 +1,4 @@
-import { assign, Configuration, FetchContext, XhrContext } from '@datadog/browser-core'
+import { assign, Configuration, FetchContext, getOrigin, XhrContext } from '@datadog/browser-core'
 
 interface BrowserWindow extends Window {
   ddtrace?: any
@@ -51,11 +51,17 @@ function injectHeadersIfTracingAllowed(
   return traceId
 }
 
-function isAllowedUrl(configuration: Configuration, url: string) {
-  if (configuration.shouldTraceUrl) {
-    return configuration.shouldTraceUrl(url)
+function isAllowedUrl(configuration: Configuration, requestUrl: string) {
+  const requestOrigin = getOrigin(requestUrl)
+  if (requestOrigin === window.location.origin) {
+    return true
   }
-  return url.indexOf(window.location.origin) === 0
+  for (const allowedOrigin of configuration.allowedTracingOrigins) {
+    if (requestOrigin === allowedOrigin || (allowedOrigin instanceof RegExp && allowedOrigin.test(requestOrigin))) {
+      return true
+    }
+  }
+  return false
 }
 
 export function isTracingSupported() {
