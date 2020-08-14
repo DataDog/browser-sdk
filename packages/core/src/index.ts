@@ -4,7 +4,6 @@ export {
   BuildEnv,
   BuildMode,
   Datacenter,
-  SdkEnv,
   makeStub,
   makeGlobal,
   commonInit,

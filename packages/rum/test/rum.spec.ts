@@ -630,6 +630,14 @@ describe('rum internal context', () => {
 
 describe('rum event assembly', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
+  const FAKE_NAVIGATION_ENTRY = {
+    domComplete: 456,
+    domContentLoadedEventEnd: 345,
+    domInteractive: 234,
+    entryType: 'navigation',
+    loadEventEnd: 567,
+  }
+  const VIEW_DURATION = 1000
 
   let setupBuilder: TestSetupBuilder
 
@@ -664,5 +672,27 @@ describe('rum event assembly', () => {
     expect(server.requests.length).toEqual(2)
     expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
     expect(getRumMessage(server, 1).view.url).toEqual('http://foo.com/bar')
+  })
+
+  it('should keep the same URL when updating an ended view', () => {
+    const { server, lifeCycle, clock } = setupBuilder
+      .withFakeClock()
+      .withFakeLocation('http://foo.com/')
+      .build()
+
+    clock.tick(VIEW_DURATION)
+
+    history.pushState({}, '', '/bar')
+
+    server.requests = []
+
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+    )
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(server.requests.length).toEqual(1)
+    expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
   })
 })

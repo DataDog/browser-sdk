@@ -17,7 +17,7 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod eu|us"
+    echo "Usage: ./deploy.sh staging|prod [eu|us]"
     exit 1
     ;;
 esac
@@ -31,8 +31,12 @@ case "${datacenter}" in
     LOGS_FILE_NAME="datadog-logs-us.js"
     RUM_FILE_NAME="datadog-rum-us.js"
     ;;
+"")
+    LOGS_FILE_NAME="datadog-logs.js"
+    RUM_FILE_NAME="datadog-rum.js"
+    ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod eu|us"
+    echo "Usage: ./deploy.sh staging|prod [eu|us]"
     exit 1
     ;;
 esac

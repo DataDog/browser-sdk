@@ -174,4 +174,19 @@ describe('xhr proxy', () => {
       },
     })
   })
+
+  it('should should not break xhr opened before the instrumentation', (done) => {
+    resetXhrProxy()
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', '/ok')
+        startXhrProxy()
+        xhr.send()
+      },
+      onComplete() {
+        expect(completeSpy.calls.count()).toBe(0)
+        done()
+      },
+    })
+  })
 })

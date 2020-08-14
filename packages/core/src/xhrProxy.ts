@@ -67,39 +67,41 @@ function proxyXhr() {
     return originalXhrOpen.apply(this, arguments as any)
   })
 
-  XMLHttpRequest.prototype.send = function(this: BrowserXHR, body: unknown) {
-    this._datadog_xhr.startTime = performance.now()
+  XMLHttpRequest.prototype.send = monitor(function(this: BrowserXHR, body: unknown) {
+    if (this._datadog_xhr) {
+      this._datadog_xhr.startTime = performance.now()
 
-    const originalOnreadystatechange = this.onreadystatechange
+      const originalOnreadystatechange = this.onreadystatechange
 
-    this.onreadystatechange = function() {
-      if (this.readyState === XMLHttpRequest.DONE) {
-        monitor(reportXhr)()
+      this.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE) {
+          monitor(reportXhr)()
+        }
+
+        if (originalOnreadystatechange) {
+          originalOnreadystatechange.apply(this, arguments as any)
+        }
       }
 
-      if (originalOnreadystatechange) {
-        originalOnreadystatechange.apply(this, arguments as any)
+      let hasBeenReported = false
+      const reportXhr = () => {
+        if (hasBeenReported) {
+          return
+        }
+        hasBeenReported = true
+
+        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime!
+        this._datadog_xhr.response = this.response as string | undefined
+        this._datadog_xhr.status = this.status
+
+        onRequestCompleteCallbacks.forEach((callback) => callback(this._datadog_xhr as XhrContext))
       }
+
+      this.addEventListener('loadend', monitor(reportXhr))
+
+      beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
     }
-
-    let hasBeenReported = false
-    const reportXhr = () => {
-      if (hasBeenReported) {
-        return
-      }
-      hasBeenReported = true
-
-      this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime!
-      this._datadog_xhr.response = this.response as string | undefined
-      this._datadog_xhr.status = this.status
-
-      onRequestCompleteCallbacks.forEach((callback) => callback(this._datadog_xhr as XhrContext))
-    }
-
-    this.addEventListener('loadend', monitor(reportXhr))
-
-    beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
 
     return originalXhrSend.apply(this, arguments as any)
-  }
+  })
 }

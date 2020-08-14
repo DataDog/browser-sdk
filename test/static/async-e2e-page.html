@@ -17,7 +17,7 @@
         const intakeOrigin = `http://${window.location.hostname}:4000`
         const specIdParam = /spec-id=\d+/.exec(window.location.search) && /spec-id=\d+/.exec(window.location.search)[0]
         const logs = document.createElement('script')
-        logs.src = './datadog-logs-us.js'
+        logs.src = './datadog-logs.js'
         logs.onload = () => {
           window.DD_LOGS &&
             window.DD_LOGS.init({
@@ -32,7 +32,7 @@
         document.getElementsByTagName('head')[0].appendChild(logs)
 
         const rum = document.createElement('script')
-        rum.src = './datadog-rum-us.js'
+        rum.src = './datadog-rum.js'
         rum.onload = () => {
           window.DD_RUM &&
             window.DD_RUM.init({

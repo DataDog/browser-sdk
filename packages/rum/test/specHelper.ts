@@ -168,7 +168,8 @@ export function setup(): TestSetupBuilder {
     withFakeClock() {
       jasmine.clock().install()
       jasmine.clock().mockDate()
-      spyOn(performance, 'now').and.callFake(() => Date.now())
+      const start = Date.now()
+      spyOn(performance, 'now').and.callFake(() => Date.now() - start)
       clock = jasmine.clock()
       cleanupTasks.push(() => {
         jasmine.clock().uninstall()

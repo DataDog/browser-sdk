@@ -513,11 +513,11 @@ describe('rum view measures', () => {
 
     expect(getHandledCount()).toEqual(2)
     expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456e6,
-      domContentLoaded: 345e6,
-      domInteractive: 234e6,
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
       errorCount: 0,
-      loadEventEnd: 567e6,
+      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
@@ -570,12 +570,12 @@ describe('rum view measures', () => {
 
     expect(getHandledCount()).toEqual(3)
     expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456e6,
-      domContentLoaded: 345e6,
-      domInteractive: 234e6,
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
       errorCount: 0,
-      firstContentfulPaint: 123e6,
-      loadEventEnd: 567e6,
+      firstContentfulPaint: 123,
+      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
@@ -605,5 +605,79 @@ describe('rum view measures', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getHandledCount()).toEqual(3)
+  })
+
+  describe('load event happening after initial view end', () => {
+    let initialView: { init: View; end: View; last: View }
+    let secondView: { init: View; last: View }
+    const VIEW_DURATION = 100
+
+    beforeEach(() => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      expect(getHandledCount()).toEqual(1)
+
+      clock.tick(VIEW_DURATION)
+
+      history.pushState({}, '', '/bar')
+
+      clock.tick(VIEW_DURATION)
+
+      expect(getHandledCount()).toEqual(3)
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY as PerformancePaintTiming)
+      lifeCycle.notify(
+        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+        FAKE_NAVIGATION_ENTRY as PerformanceNavigationTiming
+      )
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(4)
+
+      initialView = {
+        end: getViewEvent(1),
+        init: getViewEvent(0),
+        last: getViewEvent(3),
+      }
+      secondView = {
+        init: getViewEvent(2),
+        last: getViewEvent(2),
+      }
+    })
+
+    it('should not set load measures to the second view', () => {
+      expect(getLoadMeasures(secondView.last)).toEqual({
+        domComplete: undefined,
+        domContentLoaded: undefined,
+        domInteractive: undefined,
+        firstContentfulPaint: undefined,
+        loadEventEnd: undefined,
+      })
+    })
+
+    it('should set measures only on the initial view', () => {
+      expect(getLoadMeasures(initialView.last)).toEqual({
+        domComplete: 456,
+        domContentLoaded: 345,
+        domInteractive: 234,
+        firstContentfulPaint: 123,
+        loadEventEnd: 567,
+      })
+    })
+
+    it('should not update the initial view duration when updating it with new measures', () => {
+      expect(initialView.end.duration).toBe(VIEW_DURATION)
+      expect(initialView.last.duration).toBe(VIEW_DURATION)
+    })
+
+    it('should update the initial view loadingTime following the loadEventEnd value', () => {
+      expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+    })
+
+    function getLoadMeasures({
+      measures: { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd },
+    }: View) {
+      return { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd }
+    }
   })
 })

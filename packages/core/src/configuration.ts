@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, SdkEnv } from './init'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -46,7 +46,8 @@ export interface UserConfiguration {
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
-  datacenter?: Datacenter
+  datacenter?: Datacenter // deprecated
+  site?: string
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
   trackInteractions?: boolean
@@ -97,8 +98,7 @@ interface ReplicaConfiguration {
 
 interface TransportConfiguration {
   clientToken: string
-  datacenter: Datacenter
-  sdkEnv: SdkEnv
+  site: string
   buildMode: BuildMode
   sdkVersion: string
   applicationId?: string
@@ -114,12 +114,11 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     applicationId: userConfiguration.applicationId,
     buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
-    datacenter: userConfiguration.datacenter || buildEnv.datacenter,
     env: userConfiguration.env,
     proxyHost: userConfiguration.proxyHost,
-    sdkEnv: buildEnv.sdkEnv,
     sdkVersion: buildEnv.sdkVersion,
     service: userConfiguration.service,
+    site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
     version: userConfiguration.version,
   }
 
@@ -188,11 +187,11 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {
     if (userConfiguration.replica !== undefined) {
-      const replicaTransportConfiguration = {
+      const replicaTransportConfiguration: TransportConfiguration = {
         ...transportConfiguration,
         applicationId: userConfiguration.replica.applicationId,
         clientToken: userConfiguration.replica.clientToken,
-        sdkEnv: SdkEnv.PRODUCTION,
+        site: INTAKE_SITE[Datacenter.US],
       }
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
@@ -212,14 +211,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
-  const tld = conf.datacenter === Datacenter.US ? 'com' : 'eu'
-  const domain = conf.sdkEnv === SdkEnv.PRODUCTION ? `datadoghq.${tld}` : `datad0g.${tld}`
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = `${type}-http-intake.logs.${domain}`
+  const datadogHost = `${type}-http-intake.logs.${conf.site}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
