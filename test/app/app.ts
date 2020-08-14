@@ -17,10 +17,10 @@ datadogLogs.init({
 })
 
 datadogRum.init({
+  allowedTracingOrigins: [new RegExp(hostname)],
   applicationId: 'rum',
   clientToken: 'key',
   enableExperimentalFeatures: [],
-  enableTracing: true,
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,

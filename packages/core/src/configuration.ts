@@ -3,7 +3,6 @@ import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
-  enableTracing: false,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -42,7 +41,6 @@ export interface UserConfiguration {
   applicationId?: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
-  enableTracing?: boolean
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
@@ -144,10 +142,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
-  }
-
-  if ('enableTracing' in userConfiguration) {
-    configuration.enableTracing = !!userConfiguration.enableTracing
   }
 
   if ('allowedTracingOrigins' in userConfiguration) {

@@ -1,9 +1,5 @@
 import { assign, Configuration, FetchContext, getOrigin, XhrContext } from '@datadog/browser-core'
 
-interface BrowserWindow extends Window {
-  ddtrace?: any
-}
-
 export interface Tracer {
   traceFetch: (context: Partial<FetchContext>) => TraceIdentifier | undefined
   traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TraceIdentifier | undefined
@@ -42,7 +38,7 @@ function injectHeadersIfTracingAllowed(
   url: string,
   inject: (tracingHeaders: TracingHeaders) => void
 ): TraceIdentifier | undefined {
-  if (!isTracingSupported() || !configuration.enableTracing || !isAllowedUrl(configuration, url)) {
+  if (!isTracingSupported() || !isAllowedUrl(configuration, url)) {
     return undefined
   }
 
@@ -53,9 +49,6 @@ function injectHeadersIfTracingAllowed(
 
 function isAllowedUrl(configuration: Configuration, requestUrl: string) {
   const requestOrigin = getOrigin(requestUrl)
-  if (requestOrigin === window.location.origin) {
-    return true
-  }
   for (const allowedOrigin of configuration.allowedTracingOrigins) {
     if (requestOrigin === allowedOrigin || (allowedOrigin instanceof RegExp && allowedOrigin.test(requestOrigin))) {
       return true

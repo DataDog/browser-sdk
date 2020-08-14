@@ -44,8 +44,7 @@ datadogRum.init({
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
-  - `enableTracing`: enable tracing of xhr and fetch requests
-  - `allowedTracingOrigins`: list of string or regexp to allow other origins to be traced (default: same domain only)
+  - `allowedTracingOrigins`: list of string or regexp of request origins in which to inject tracing headers
 
   ```
   init(configuration: {
@@ -59,7 +58,6 @@ datadogRum.init({
       service?: string,
       env?: string,
       version?: string,
-      enableTracing?: boolean,
       allowedTracingOrigins?: Array<String|Regexp>,
   })
   ```

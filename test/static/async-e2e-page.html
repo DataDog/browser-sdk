@@ -36,6 +36,7 @@
         rum.onload = () => {
           window.DD_RUM &&
             window.DD_RUM.init({
+              allowedTracingOrigins: [window.location.origin],
               applicationId: 'rum',
               clientToken: 'key',
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
@@ -43,7 +44,6 @@
               rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
               traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
               enableExperimentalFeatures: [],
-              enableTracing: true,
               trackInteractions: true,
             })
         }
