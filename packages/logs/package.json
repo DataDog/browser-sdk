@@ -13,12 +13,14 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "1.15.3",
-    "tslib": "1.10.0"
+    "@datadog/browser-core": "1.15.3"
   },
   "devDependencies": {
     "@types/sinon": "7.0.13",
     "sinon": "7.3.2"
+  },
+  "peerDependencies": {
+    "tslib": "1.10.0"
   },
   "repository": {
     "type": "git",
