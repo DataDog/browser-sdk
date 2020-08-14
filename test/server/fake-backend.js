@@ -14,6 +14,12 @@ module.exports = (app) => {
   })
   app.get('/rum', (req, res) => send(res, req.specContext.rum))
 
+  app.post('/trace', (req, res) => {
+    req.body.split('\n').forEach((trace) => req.specContext.trace.push(JSON.parse(trace)))
+    res.send('ok')
+  })
+  app.get('/trace', (req, res) => send(res, req.specContext.trace))
+
   app.post('/monitoring', (req, res) => {
     req.specContext.monitoring.push(JSON.parse(req.body))
     res.send('ok')
@@ -38,6 +44,10 @@ module.exports = (app) => {
       timeoutDuration = Number(req.query['duration'])
     }
     setTimeout(() => res.send('ok'), timeoutDuration)
+  })
+
+  app.get('/headers', (req, res) => {
+    res.send(JSON.stringify(req.headers))
   })
 
   app.get('/redirect', (req, res) => {

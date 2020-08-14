@@ -33,6 +33,7 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
+import { toDecimalString } from './tracer'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
@@ -85,7 +86,7 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  traceId?: number
+  traceId?: string
 }
 
 export interface RumErrorEvent {
@@ -475,7 +476,7 @@ function trackRequests(
       resource: {
         kind,
       },
-      traceId: request.traceId,
+      traceId: request.traceId && toDecimalString(request.traceId),
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })
