@@ -362,7 +362,7 @@ function trackRumEvents(
   trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
 }
 
-function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {
+export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     handler(view.startTime, {
       date: getTimestamp(view.startTime),
@@ -377,12 +377,12 @@ function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: Rum
         loadingTime: msToNs(view.loadingTime),
         loadingType: view.loadingType,
         measures: {
+          ...view.measures,
           domComplete: msToNs(view.measures.domComplete),
           domContentLoaded: msToNs(view.measures.domContentLoaded),
           domInteractive: msToNs(view.measures.domInteractive),
           firstContentfulPaint: msToNs(view.measures.firstContentfulPaint),
           loadEventEnd: msToNs(view.measures.loadEventEnd),
-          ...view.measures,
         },
       },
     })
