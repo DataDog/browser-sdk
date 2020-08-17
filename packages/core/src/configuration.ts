@@ -120,9 +120,9 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    service: userConfiguration.service,
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     rumEndpoint: getEndpoint('rum', transportConfiguration),
+    service: userConfiguration.service,
     traceEndpoint: getEndpoint('public-trace', transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
