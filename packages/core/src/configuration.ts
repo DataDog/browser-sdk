@@ -82,8 +82,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
 
   isEnabled: (feature: string) => boolean
 
-  service?: string
-
   // only on staging build mode
   replica?: ReplicaConfiguration
 }
