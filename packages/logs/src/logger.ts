@@ -118,6 +118,7 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
     return deepMerge(
       {
         date: new Date().getTime(),
+        service: configuration.service,
         session_id: session.getId(),
         view: {
           referrer: document.referrer,
