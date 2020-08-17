@@ -33,6 +33,7 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
+import { toDecimalString } from './tracer'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
@@ -85,7 +86,7 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  traceId?: number
+  traceId?: string
 }
 
 export interface RumErrorEvent {
@@ -363,7 +364,7 @@ function trackRumEvents(
   trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
 }
 
-function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {
+export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     handler(view.startTime, {
       date: getTimestamp(view.startTime),
@@ -378,12 +379,12 @@ function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: Rum
         loadingTime: msToNs(view.loadingTime),
         loadingType: view.loadingType,
         measures: {
+          ...view.measures,
           domComplete: msToNs(view.measures.domComplete),
           domContentLoaded: msToNs(view.measures.domContentLoaded),
           domInteractive: msToNs(view.measures.domInteractive),
           firstContentfulPaint: msToNs(view.measures.firstContentfulPaint),
           loadEventEnd: msToNs(view.measures.loadEventEnd),
-          ...view.measures,
         },
       },
     })
@@ -476,7 +477,7 @@ function trackRequests(
       resource: {
         kind,
       },
-      traceId: request.traceId,
+      traceId: request.traceId && toDecimalString(request.traceId),
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })

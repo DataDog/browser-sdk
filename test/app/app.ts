@@ -13,14 +13,17 @@ datadogLogs.init({
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
 })
 
 datadogRum.init({
+  allowedTracingOrigins: [new RegExp(hostname)],
   applicationId: 'rum',
   clientToken: 'key',
   enableExperimentalFeatures: [],
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
   trackInteractions: true,
 })

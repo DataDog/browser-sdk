@@ -8,15 +8,24 @@ import {
   flushEvents,
   makeXHRAndCollectEvent,
   renewSession,
+  sendFetch,
+  sendXhr,
   serverUrl,
   sortByMessage,
   startSpec,
   tearDown,
   waitServerLogs,
   waitServerRumEvents,
+  waitServerTraces,
   withBrowserLogs,
 } from './helpers'
-import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent, ServerRumViewLoadingType } from './serverTypes'
+import {
+  isRumResourceEvent,
+  isRumUserActionEvent,
+  isRumViewEvent,
+  ServerRumResourceEvent,
+  ServerRumViewLoadingType,
+} from './serverTypes'
 
 beforeEach(startSpec)
 
@@ -296,4 +305,51 @@ describe('anchor navigation', () => {
     expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
     expect(viewEvents[1].view.loading_type).toBe(ServerRumViewLoadingType.ROUTE_CHANGE)
   })
+})
+
+describe('tracing', () => {
+  it('should trace xhr', async () => {
+    const rawHeaders = await sendXhr(`${serverUrl.sameOrigin}/headers`)
+    checkRequestHeaders(rawHeaders)
+    await flushEvents()
+    await checkTraceCollected()
+    await checkTraceAssociatedToRumEvent()
+  })
+
+  it('should trace fetch', async () => {
+    const rawHeaders = await sendFetch(`${serverUrl.sameOrigin}/headers`)
+    checkRequestHeaders(rawHeaders)
+    await flushEvents()
+    await checkTraceCollected()
+    await checkTraceAssociatedToRumEvent()
+  })
+
+  function checkRequestHeaders(rawHeaders: string) {
+    const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
+    expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
+    expect(headers['x-datadog-origin']).toBe('rum')
+  }
+
+  async function checkTraceCollected() {
+    const serverTraces = await waitServerTraces()
+
+    expect(serverTraces.length).toBe(1)
+    const browserSpan = serverTraces[0].spans[0]
+    expect(browserSpan).toBeDefined()
+    expect(browserSpan.meta['http.method']).toBe('GET')
+    expect(browserSpan.meta['http.url']).toContain('/headers')
+    expect(browserSpan.metrics['http.status']).toBe(200)
+  }
+
+  async function checkTraceAssociatedToRumEvent() {
+    const requests = (await waitServerRumEvents()).filter(
+      (rumEvent) =>
+        rumEvent.evt.category === 'resource' &&
+        ((rumEvent as ServerRumResourceEvent).resource.kind === 'xhr' ||
+          (rumEvent as ServerRumResourceEvent).resource.kind === 'fetch')
+    ) as ServerRumResourceEvent[]
+
+    expect(requests.length).toBe(1)
+    expect(requests[0].trace_id).toMatch(/\d+/)
+  }
 })

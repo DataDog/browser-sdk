@@ -25,6 +25,7 @@
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
               logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
               rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+              traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
               forwardErrorsToLogs: true,
             })
         }
@@ -35,11 +36,13 @@
         rum.onload = () => {
           window.DD_RUM &&
             window.DD_RUM.init({
+              allowedTracingOrigins: [window.location.origin],
               applicationId: 'rum',
               clientToken: 'key',
               internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
               logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
               rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+              traceEndpoint: `${intakeOrigin}/trace?${specIdParam}`,
               enableExperimentalFeatures: [],
               trackInteractions: true,
             })
