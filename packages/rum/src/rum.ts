@@ -190,6 +190,7 @@ export function startRum(
     () => ({
       applicationId,
       date: new Date().getTime(),
+      service: configuration.service,
       session: {
         // must be computed on each event because synthetics instrumentation can be done after sdk execution
         // cf https://github.com/puppeteer/puppeteer/issues/3667
