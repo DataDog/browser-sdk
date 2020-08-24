@@ -13,6 +13,7 @@ export interface ViewContext extends Context {
   view: {
     id: string
     url: string
+    referrer: string
   }
 }
 
@@ -108,6 +109,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       sessionId: currentSessionId,
       view: {
         id: currentView!.id,
+        referrer: currentView!.referrer,
         url: currentView!.location.href,
       },
     }
