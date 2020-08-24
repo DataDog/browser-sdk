@@ -1,35 +1,43 @@
-import { findCommaSeparatedValue } from '@datadog/browser-core'
+import { findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
 
-interface APMDocumentData {
+interface DocumentTraceData {
   traceId: string
   traceTime: number
 }
 
-export function getAPMDocumentData(document: Document): APMDocumentData | undefined {
-  return getAPMDocumentDataFromMeta(document) || getAPMDocumentDataFromComment(document)
+export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
+
+export function getDocumentTraceId(document: Document): string | undefined {
+  const data = getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document)
+
+  if (!data || data.traceTime <= Date.now() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
+    return undefined
+  }
+
+  return data.traceId
 }
 
-export function getAPMDocumentDataFromMeta(document: Document): APMDocumentData | undefined {
+export function getDocumentTraceDataFromMeta(document: Document): DocumentTraceData | undefined {
   const traceIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-id]')
   const traceTimeMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-time]')
-  return createAPMDocumentData(traceIdMeta && traceIdMeta.content, traceTimeMeta && traceTimeMeta.content)
+  return createDocumentTraceData(traceIdMeta && traceIdMeta.content, traceTimeMeta && traceTimeMeta.content)
 }
 
-export function getAPMDocumentDataFromComment(document: Document): APMDocumentData | undefined {
-  const comment = findAPMComment(document)
+export function getDocumentTraceDataFromComment(document: Document): DocumentTraceData | undefined {
+  const comment = findTraceComment(document)
   if (!comment) {
     return undefined
   }
-  return createAPMDocumentData(
+  return createDocumentTraceData(
     findCommaSeparatedValue(comment, 'trace-id'),
     findCommaSeparatedValue(comment, 'trace-time')
   )
 }
 
-export function createAPMDocumentData(
+export function createDocumentTraceData(
   traceId: string | undefined | null,
   rawTraceTime: string | undefined | null
-): APMDocumentData | undefined {
+): DocumentTraceData | undefined {
   const traceTime = rawTraceTime && Number(rawTraceTime)
   if (!traceId || !traceTime) {
     return undefined
@@ -41,13 +49,13 @@ export function createAPMDocumentData(
   }
 }
 
-export function findAPMComment(document: Document): string | undefined {
+export function findTraceComment(document: Document): string | undefined {
   // 1. Try to find the comment as a direct child of the document
   // Note: TSLint advises to use a 'for of', but TS doesn't allow to use 'for of' if the iterated
   // value is not an array or string (here, a NodeList).
   // tslint:disable-next-line: prefer-for-of
   for (let i = 0; i < document.childNodes.length; i += 1) {
-    const comment = getAPMCommentFromNode(document.childNodes[i])
+    const comment = getTraceCommentFromNode(document.childNodes[i])
     if (comment) {
       return comment
     }
@@ -60,7 +68,7 @@ export function findAPMComment(document: Document): string | undefined {
   if (document.body) {
     for (let i = document.body.childNodes.length - 1; i >= 0; i -= 1) {
       const node = document.body.childNodes[i]
-      const comment = getAPMCommentFromNode(node)
+      const comment = getTraceCommentFromNode(node)
       if (comment) {
         return comment
       }
@@ -71,7 +79,7 @@ export function findAPMComment(document: Document): string | undefined {
   }
 }
 
-function getAPMCommentFromNode(node: Node | null) {
+function getTraceCommentFromNode(node: Node | null) {
   if (node && isCommentNode(node)) {
     const match = node.data.match(/^\s*DATADOG;(.*?)\s*$/)
     if (match) {

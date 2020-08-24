@@ -1,6 +1,6 @@
-import { DOM_EVENT, getRelativeTime, isNumber, monitor, ONE_MINUTE } from '@datadog/browser-core'
+import { DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 
-import { getAPMDocumentData } from './getAPMDocumentData'
+import { getDocumentTraceId } from './getDocumentTraceId'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 
@@ -99,22 +99,13 @@ export function startPerformanceCollection(lifeCycle: LifeCycle) {
   }
 }
 
-export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
-
 export function retrieveInitialDocumentResourceTiming() {
   let timing: RumPerformanceResourceTiming
 
-  let traceId
-  const apmDocumentData = getAPMDocumentData(document)
-  const now = Date.now()
-  if (apmDocumentData && apmDocumentData.traceTime > now - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
-    traceId = apmDocumentData.traceId
-  }
-
   const forcedAttributes = {
-    traceId,
     entryType: 'resource' as const,
     initiatorType: FAKE_INITIAL_DOCUMENT,
+    traceId: getDocumentTraceId(document),
   }
   if (supportPerformanceNavigationTimingEvent() && performance.getEntriesByType('navigation').length > 0) {
     const navigationEntry = performance.getEntriesByType('navigation')[0]
