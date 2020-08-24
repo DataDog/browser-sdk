@@ -43,7 +43,7 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
-  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -59,7 +59,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       // Renew view on location changes
       currentView.triggerUpdate()
       currentView.end()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
     } else {
       currentView.updateLocation(location)
       currentView.triggerUpdate()
@@ -70,7 +70,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
   })
 
   // End the current view on page unload
@@ -100,6 +100,7 @@ function newView(
   lifeCycle: LifeCycle,
   initialLocation: Location,
   loadingType: ViewLoadingType,
+  referrer: string,
   startTime: number = performance.now()
 ) {
   // Setup initial values
@@ -115,7 +116,6 @@ function newView(
   let loadingTime: number | undefined
   let endTime: number | undefined
   let location: Location = { ...initialLocation }
-  const referrer = document.referrer
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
@@ -184,7 +184,9 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
+      this.url = location.href
     },
+    url: location.href,
   }
 }
 
