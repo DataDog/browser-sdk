@@ -5,7 +5,6 @@ import {
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from '../src/parentContexts'
 import { AutoUserAction } from '../src/userActionCollection'
-import { View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 function stubActionWithDuration(duration: number): AutoUserAction {

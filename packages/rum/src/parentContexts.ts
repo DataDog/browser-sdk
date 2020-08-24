@@ -1,7 +1,8 @@
 import { Context, monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
-import { AutoUserAction } from './userActionCollection'
+import { AutoActionCreatedEvent, AutoUserAction } from './userActionCollection'
+import { ViewCreatedEvent } from './viewCollection'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
@@ -21,17 +22,6 @@ export interface ActionContext extends Context {
   }
 }
 
-interface CurrentViewContext {
-  id: string
-  startTime: number
-  location: Location
-}
-
-interface CurrentActionContext {
-  id: string
-  startTime: number
-}
-
 interface PreviousContext<T> {
   startTime: number
   endTime: number
@@ -45,8 +35,8 @@ export interface ParentContexts {
 }
 
 export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  let currentView: CurrentViewContext | undefined
-  let currentAction: CurrentActionContext | undefined
+  let currentView: ViewCreatedEvent | undefined
+  let currentAction: AutoActionCreatedEvent | undefined
   let currentSessionId: string | undefined
 
   let previousViews: Array<PreviousContext<ViewContext>> = []

@@ -15,6 +15,12 @@ export interface View {
   loadingType: ViewLoadingType
 }
 
+export interface ViewCreatedEvent {
+  id: string
+  location: Location
+  startTime: number
+}
+
 interface Timings {
   firstContentfulPaint?: number
   domInteractive?: number
