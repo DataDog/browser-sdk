@@ -1,13 +1,4 @@
-import {
-  Configuration,
-  FetchContext,
-  Observable,
-  RequestType,
-  startFetchProxy,
-  startXhrProxy,
-  XhrContext,
-} from '@datadog/browser-core'
-import { startTracer, TraceIdentifier, Tracer } from './tracer'
+import { Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
 
 export interface RequestStartEvent {
   requestId: number
@@ -23,50 +14,38 @@ export interface RequestCompleteEvent {
   responseType?: string
   startTime: number
   duration: number
-  error?: {
-    name?: string
-    message: string
-    stack: string
-  }
-  traceId?: TraceIdentifier
+  traceId?: number
 }
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
 let nextRequestId = 1
 
-export function startRequestCollection(configuration: Configuration) {
+export function startRequestCollection() {
   const requestObservables: RequestObservables = [new Observable(), new Observable()]
-  const tracer = startTracer(configuration)
-  trackXhr(requestObservables, tracer)
-  trackFetch(requestObservables, tracer)
+  trackXhr(requestObservables)
+  trackFetch(requestObservables)
   return requestObservables
 }
 
-interface CustomXhrContext extends XhrContext {
-  traceId: TraceIdentifier | undefined
-  requestId: number
-}
-
-export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const xhrProxy = startXhrProxy<CustomXhrContext>()
-  xhrProxy.beforeSend((context, xhr) => {
-    context.traceId = tracer.traceXhr(context, xhr)
-    context.requestId = getNextRequestId()
-
+export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+  const xhrProxy = startXhrProxy()
+  xhrProxy.beforeSend((context) => {
+    const requestId = getNextRequestId()
+    context.requestId = requestId
     requestStartObservable.notify({
-      requestId: context.requestId,
+      requestId,
     })
   })
   xhrProxy.onRequestComplete((context) => {
     requestCompleteObservable.notify({
       duration: context.duration,
       method: context.method,
-      requestId: context.requestId,
+      requestId: context.requestId as number,
       response: context.response,
       startTime: context.startTime,
       status: context.status,
-      traceId: context.traceId,
+      traceId: getTraceId(),
       type: RequestType.XHR,
       url: context.url,
     })
@@ -74,32 +53,25 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
   return xhrProxy
 }
 
-interface CustomFetchContext extends FetchContext {
-  traceId: TraceIdentifier | undefined
-  requestId: number
-}
-
-export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<CustomFetchContext>()
+export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables) {
+  const fetchProxy = startFetchProxy()
   fetchProxy.beforeSend((context) => {
-    context.traceId = tracer.traceFetch(context)
-    context.requestId = getNextRequestId()
-
+    const requestId = getNextRequestId()
+    context.requestId = requestId
     requestStartObservable.notify({
-      requestId: context.requestId,
+      requestId,
     })
   })
   fetchProxy.onRequestComplete((context) => {
     requestCompleteObservable.notify({
       duration: context.duration,
-      error: context.error,
       method: context.method,
-      requestId: context.requestId,
+      requestId: context.requestId as number,
       response: context.response,
       responseType: context.responseType,
       startTime: context.startTime,
       status: context.status,
-      traceId: context.traceId,
+      traceId: getTraceId(),
       type: RequestType.FETCH,
       url: context.url,
     })
@@ -111,4 +83,28 @@ function getNextRequestId() {
   const result = nextRequestId
   nextRequestId += 1
   return result
+}
+
+interface BrowserWindow extends Window {
+  ddtrace?: any
+}
+
+/**
+ * Get the current traceId generated from dd-trace-js (if any).
+ *
+ * Note: in order to work, the browser-sdk should be initialized *before* dd-trace-js because both
+ * libraries are wrapping fetch() and XHR.  Wrappers are called in reverse order, and the
+ * dd-trace-js wrapper needs to be called first so it can generate the new trace.  The browser-sdk
+ * wrapper will then pick up the new trace id via this function.
+ */
+function getTraceId(): number | undefined {
+  // tslint:disable-next-line: no-unsafe-any
+  return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
+    ? // tslint:disable-next-line: no-unsafe-any
+      (window as BrowserWindow).ddtrace.tracer
+        .scope()
+        .active()
+        .context()
+        .toTraceId()
+    : undefined
 }

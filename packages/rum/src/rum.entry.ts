@@ -20,7 +20,6 @@ import { startPerformanceCollection } from './performanceCollection'
 import { startRequestCollection } from './requestCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
-import { startTraceCollection } from './traceCollection'
 import { startUserActionCollection } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -94,8 +93,7 @@ export function makeRumGlobal(stub: RumGlobal) {
       internalMonitoring
     )
 
-    const [requestStartObservable, requestCompleteObservable] = startRequestCollection(configuration)
-    startTraceCollection(configuration, requestCompleteObservable, globalApi.getInternalContext)
+    const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
     startPerformanceCollection(lifeCycle, session)
     startDOMMutationCollection(lifeCycle)
     if (configuration.trackInteractions) {
