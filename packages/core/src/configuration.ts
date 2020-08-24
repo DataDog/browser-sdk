@@ -73,6 +73,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   traceEndpoint: string
   internalMonitoringEndpoint?: string
 
+  service?: string
+
   isEnabled: (feature: string) => boolean
 
   // only on staging build mode
