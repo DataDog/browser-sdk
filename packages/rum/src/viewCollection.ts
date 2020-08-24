@@ -7,6 +7,7 @@ import { waitIdlePageActivity } from './trackPageActivities'
 export interface View {
   id: string
   location: Location
+  referrer: string
   measures: ViewMeasures
   documentVersion: number
   startTime: number
@@ -18,6 +19,7 @@ export interface View {
 export interface ViewCreatedEvent {
   id: string
   location: Location
+  referrer: string
   startTime: number
 }
 
@@ -113,8 +115,9 @@ function newView(
   let loadingTime: number | undefined
   let endTime: number | undefined
   let location: Location = { ...initialLocation }
+  const referrer = document.referrer
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -148,6 +151,7 @@ function newView(
       loadingTime,
       loadingType,
       location,
+      referrer,
       startTime,
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
       measures: { ...timings, ...eventCounts },
