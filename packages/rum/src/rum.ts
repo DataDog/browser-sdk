@@ -34,7 +34,6 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { toDecimalString } from './tracer'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
@@ -78,7 +77,7 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  traceId?: string
+  traceId?: number
 }
 
 export interface RumErrorEvent {
@@ -182,6 +181,7 @@ export function startRum(
     () => ({
       applicationId,
       date: new Date().getTime(),
+      service: configuration.service,
       session: {
         // must be computed on each event because synthetics instrumentation can be done after sdk execution
         // cf https://github.com/puppeteer/puppeteer/issues/3667
@@ -205,15 +205,16 @@ export function startRum(
       addUserAction: monitor((name: string, context?: Context) => {
         lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
       }),
-      getInternalContext: monitor(
-        (startTime?: number): InternalContext => {
+      getInternalContext: monitor((startTime?: number): InternalContext | undefined => {
+        const view = parentContexts.findView(startTime)
+        if (session.isTracked() && view && view.sessionId) {
           return (withSnakeCaseKeys(deepMerge(
             { applicationId },
-            parentContexts.findView(startTime),
+            view,
             parentContexts.findAction(startTime)
           ) as Context) as unknown) as InternalContext
         }
-      ),
+      }),
       setRumGlobalContext: monitor((context: Context) => {
         globalContext = context
       }),
@@ -465,7 +466,7 @@ function trackRequests(
       resource: {
         kind,
       },
-      traceId: request.traceId && toDecimalString(request.traceId),
+      traceId: request.traceId,
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })

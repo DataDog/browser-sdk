@@ -30,7 +30,9 @@
   "resolutions": {
     "acorn": "6.4.1",
     "kind-of": "6.0.3",
-    "minimist": "1.2.3"
+    "minimist": "1.2.3",
+    "dot-prop": "5.2.0",
+    "serialize-javascript": "3.1.0"
   },
   "devDependencies": {
     "@types/jasmine": "3.5.10",

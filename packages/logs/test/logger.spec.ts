@@ -31,6 +31,7 @@ describe('logger module', () => {
     ...DEFAULT_CONFIGURATION,
     logsEndpoint: 'https://localhost/log',
     maxBatchSize: 1,
+    service: 'Service',
   }
   let LOGS: LogsApi
   let server: sinon.SinonFakeServer
@@ -57,6 +58,7 @@ describe('logger module', () => {
         date: FAKE_DATE,
         foo: 'bar',
         message: 'message',
+        service: 'Service',
         status: StatusType.warn,
         view: {
           referrer: document.referrer,

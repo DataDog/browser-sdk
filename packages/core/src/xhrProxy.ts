@@ -5,9 +5,9 @@ interface BrowserXHR extends XMLHttpRequest {
   _datadog_xhr: Partial<XhrContext>
 }
 
-export interface XhrProxy<T extends XhrContext = XhrContext> {
-  beforeSend: (callback: (context: Partial<T>, xhr: XMLHttpRequest) => void) => void
-  onRequestComplete: (callback: (context: T) => void) => void
+export interface XhrProxy {
+  beforeSend: (callback: (context: Partial<XhrContext>) => void) => void
+  onRequestComplete: (callback: (context: XhrContext) => void) => void
 }
 
 export interface XhrContext {
@@ -25,16 +25,16 @@ export interface XhrContext {
 }
 
 let xhrProxySingleton: XhrProxy | undefined
-const beforeSendCallbacks: Array<(context: Partial<XhrContext>, xhr: XMLHttpRequest) => void> = []
+const beforeSendCallbacks: Array<(context: Partial<XhrContext>) => void> = []
 const onRequestCompleteCallbacks: Array<(context: XhrContext) => void> = []
 let originalXhrOpen: typeof XMLHttpRequest.prototype.open
 let originalXhrSend: typeof XMLHttpRequest.prototype.send
 
-export function startXhrProxy<T extends XhrContext = XhrContext>(): XhrProxy<T> {
+export function startXhrProxy(): XhrProxy {
   if (!xhrProxySingleton) {
     proxyXhr()
     xhrProxySingleton = {
-      beforeSend(callback: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => void) {
+      beforeSend(callback: (context: Partial<XhrContext>) => void) {
         beforeSendCallbacks.push(callback)
       },
       onRequestComplete(callback: (context: XhrContext) => void) {
@@ -42,7 +42,7 @@ export function startXhrProxy<T extends XhrContext = XhrContext>(): XhrProxy<T> 
       },
     }
   }
-  return xhrProxySingleton as XhrProxy<T>
+  return xhrProxySingleton
 }
 
 export function resetXhrProxy() {
@@ -99,7 +99,7 @@ function proxyXhr() {
 
       this.addEventListener('loadend', monitor(reportXhr))
 
-      beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
+      beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr))
     }
 
     return originalXhrSend.apply(this, arguments as any)

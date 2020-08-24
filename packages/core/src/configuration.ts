@@ -2,7 +2,6 @@ import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
-  allowedTracingOrigins: [] as Array<string | RegExp>,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -41,7 +40,6 @@ export interface UserConfiguration {
   applicationId?: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
-  allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter // deprecated
@@ -62,7 +60,6 @@ export interface UserConfiguration {
   internalMonitoringEndpoint?: string
   logsEndpoint?: string
   rumEndpoint?: string
-  traceEndpoint?: string
 }
 
 interface ReplicaUserConfiguration {
@@ -77,8 +74,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
 
   service?: string
-  env?: string
-  version?: string
 
   isEnabled: (feature: string) => boolean
 
@@ -90,7 +85,6 @@ interface ReplicaConfiguration {
   applicationId?: string
   logsEndpoint: string
   rumEndpoint: string
-  traceEndpoint: string
   internalMonitoringEndpoint: string
 }
 
@@ -102,7 +96,6 @@ interface TransportConfiguration {
   applicationId?: string
   proxyHost?: string
 
-  service?: string
   env?: string
   version?: string
 }
@@ -115,7 +108,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     env: userConfiguration.env,
     proxyHost: userConfiguration.proxyHost,
     sdkVersion: buildEnv.sdkVersion,
-    service: userConfiguration.service,
     site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
     version: userConfiguration.version,
   }
@@ -125,15 +117,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
-    env: userConfiguration.env,
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     rumEndpoint: getEndpoint('rum', transportConfiguration),
-    service: userConfiguration.service,
     traceEndpoint: getEndpoint('public-trace', transportConfiguration),
-    version: userConfiguration.version,
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
@@ -142,10 +131,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
-  }
-
-  if ('allowedTracingOrigins' in userConfiguration) {
-    configuration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins!
   }
 
   if ('isCollectingError' in userConfiguration) {
@@ -174,9 +159,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     if (userConfiguration.rumEndpoint !== undefined) {
       configuration.rumEndpoint = userConfiguration.rumEndpoint
     }
-    if (userConfiguration.traceEndpoint !== undefined) {
-      configuration.traceEndpoint = userConfiguration.traceEndpoint
-    }
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {
@@ -196,7 +178,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
         ),
         logsEndpoint: getEndpoint('browser', replicaTransportConfiguration),
         rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
-        traceEndpoint: getEndpoint('public-trace', replicaTransportConfiguration),
       }
     }
   }
@@ -208,7 +189,6 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
-    `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
   const datadogHost = `${type}-http-intake.logs.${conf.site}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
