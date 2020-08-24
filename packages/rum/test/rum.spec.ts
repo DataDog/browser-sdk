@@ -629,6 +629,20 @@ describe('rum internal context', () => {
     })
   })
 
+  it("should return undefined if the session isn't tracked", () => {
+    const { rumApi, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => '1234',
+        isTracked: () => false,
+        isTrackedWithResource: () => false,
+      })
+      .build()
+
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
+
+    expect(rumApi.getInternalContext()).toEqual(undefined)
+  })
+
   it('should return internal context corresponding to startTime', () => {
     const { rumApi, lifeCycle } = setupBuilder.build()
 

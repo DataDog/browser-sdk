@@ -213,15 +213,16 @@ export function startRum(
       addUserAction: monitor((name: string, context?: Context) => {
         lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
       }),
-      getInternalContext: monitor(
-        (startTime?: number): InternalContext => {
+      getInternalContext: monitor((startTime?: number): InternalContext | undefined => {
+        const view = parentContexts.findView(startTime)
+        if (session.isTracked() && view && view.sessionId) {
           return (withSnakeCaseKeys(deepMerge(
             { applicationId },
-            parentContexts.findView(startTime),
+            view,
             parentContexts.findAction(startTime)
           ) as Context) as unknown) as InternalContext
         }
-      ),
+      }),
       setRumGlobalContext: monitor((context: Context) => {
         globalContext = context
       }),
