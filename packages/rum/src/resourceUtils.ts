@@ -11,6 +11,7 @@ import {
 
 import { RumPerformanceResourceTiming } from './performanceCollection'
 import { PerformanceResourceDetails } from './rum'
+import { RumSession } from './rumSession'
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
@@ -169,8 +170,8 @@ export function computeSize(entry: RumPerformanceResourceTiming | PerformanceRes
   return undefined
 }
 
-export function isValidResource(url: string, configuration: Configuration) {
-  return url && !isBrowserAgentRequest(url, configuration)
+export function shouldTrackResource(url: string, configuration: Configuration, session: RumSession) {
+  return session.isTrackedWithResource() && url && !isBrowserAgentRequest(url, configuration)
 }
 
 function isBrowserAgentRequest(url: string, configuration: Configuration) {

@@ -3,8 +3,9 @@ import { RumPerformanceResourceTiming } from '../src/performanceCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
-  isValidResource,
+  shouldTrackResource,
 } from '../src/resourceUtils'
+import { RumSession } from '../src/rumSession'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
   const completeTiming: Partial<RumPerformanceResourceTiming> = {
@@ -236,21 +237,57 @@ describe('computePerformanceResourceDuration', () => {
   })
 })
 
-describe('isValidRequest', () => {
+describe('shouldTrackResource', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
   }
 
+  function createSession({ isTrackedWithResource }: { isTrackedWithResource: boolean }): RumSession {
+    return {
+      getId: () => '123',
+      isTracked: () => true,
+      isTrackedWithResource: () => isTrackedWithResource,
+    }
+  }
+
   it('should exclude requests on intakes endpoints', () => {
-    expect(isValidResource('https://rum-intake.com/abcde?foo=bar', configuration as Configuration)).toBe(false)
+    expect(
+      shouldTrackResource(
+        'https://rum-intake.com/abcde?foo=bar',
+        configuration as Configuration,
+        createSession({ isTrackedWithResource: true })
+      )
+    ).toBe(false)
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isValidResource('https://rum-intake.com/wxyz?foo=qux', configuration as Configuration)).toBe(false)
+    expect(
+      shouldTrackResource(
+        'https://rum-intake.com/wxyz?foo=qux',
+        configuration as Configuration,
+        createSession({ isTrackedWithResource: true })
+      )
+    ).toBe(false)
   })
 
   it('should allow requests on non intake domains', () => {
-    expect(isValidResource('https://my-domain.com/hello?a=b', configuration as Configuration)).toBe(true)
+    expect(
+      shouldTrackResource(
+        'https://my-domain.com/hello?a=b',
+        configuration as Configuration,
+        createSession({ isTrackedWithResource: true })
+      )
+    ).toBe(true)
+  })
+
+  it('should exclude requests if session does not track requests', () => {
+    expect(
+      shouldTrackResource(
+        'https://my-domain.com/hello?a=b',
+        configuration as Configuration,
+        createSession({ isTrackedWithResource: false })
+      )
+    ).toBe(false)
   })
 })
