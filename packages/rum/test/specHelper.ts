@@ -4,7 +4,6 @@ import {
   Configuration,
   DEFAULT_CONFIGURATION,
   InternalMonitoring,
-  Observable,
   PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
@@ -13,10 +12,8 @@ import { RumGlobal } from '../src'
 import { LifeCycle } from '../src/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { RequestCompleteEvent } from '../src/requestCollection'
 import { startRum } from '../src/rum'
 import { RumSession } from '../src/rumSession'
-import { startTraceCollection } from '../src/traceCollection'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
 
@@ -30,15 +27,20 @@ const internalMonitoringStub: InternalMonitoring = {
   setExternalContextProvider: () => undefined,
 }
 
+const configuration = {
+  ...DEFAULT_CONFIGURATION,
+  ...SPEC_ENDPOINTS,
+  isEnabled: () => true,
+  maxBatchSize: 1,
+}
+
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
-  withConfiguration: (configuration: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
   withUserActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
-  withTraceCollection: (requestCompleteObservable: Observable<RequestCompleteEvent>) => TestSetupBuilder
   withParentContexts: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
@@ -76,15 +78,6 @@ export function setup(): TestSetupBuilder {
   let rumApi: RumApi
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
-  let configuration: Partial<Configuration> = {
-    ...DEFAULT_CONFIGURATION,
-    ...SPEC_ENDPOINTS,
-    env: 'env',
-    isEnabled: () => true,
-    maxBatchSize: 1,
-    service: 'service',
-    version: 'version',
-  }
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
@@ -108,13 +101,6 @@ export function setup(): TestSetupBuilder {
     },
     withSession(sessionStub: RumSession) {
       session = sessionStub
-      return setupBuilder
-    },
-    withConfiguration(entry: Partial<Configuration>) {
-      configuration = {
-        ...configuration,
-        ...entry,
-      }
       return setupBuilder
     },
     withRum() {
@@ -148,12 +134,6 @@ export function setup(): TestSetupBuilder {
     },
     withPerformanceCollection() {
       buildTasks.push(() => startPerformanceCollection(lifeCycle, session))
-      return setupBuilder
-    },
-    withTraceCollection(requestCompleteObservable: Observable<RequestCompleteEvent>) {
-      buildTasks.push(() =>
-        startTraceCollection(configuration as Configuration, requestCompleteObservable, () => undefined)
-      )
       return setupBuilder
     },
     withParentContexts() {

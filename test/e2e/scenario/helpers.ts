@@ -1,13 +1,7 @@
 import { MonitoringMessage } from '@datadog/browser-core'
 import * as request from 'request'
 import { getCurrentSpec } from '../currentSpecReporter'
-import {
-  isRumResourceEvent,
-  ServerLogsMessage,
-  ServerRumEvent,
-  ServerRumResourceEvent,
-  ServerTrace,
-} from './serverTypes'
+import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
 
 const { hostname } = new URL(browser.config.baseUrl!)
 
@@ -91,10 +85,6 @@ export async function waitServerRumEvents(): Promise<ServerRumEvent[]> {
   return fetchWhile('/rum', (events: ServerRumEvent[]) => events.length === 0)
 }
 
-export async function waitServerTraces(): Promise<ServerTrace[]> {
-  return fetchWhile('/trace', (traces: ServerTrace[]) => traces.length === 0)
-}
-
 export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
 }
@@ -174,16 +164,8 @@ async function findSessionCookie() {
 }
 
 export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumResourceEvent | undefined> {
-  await sendXhr(url)
-
-  await flushEvents()
-
-  return (await waitServerRumEvents()).filter(isRumResourceEvent).find((event) => event.http.url === url)
-}
-
-export async function sendXhr(url: string): Promise<string> {
   // tslint:disable-next-line: no-shadowed-variable
-  return browserExecuteAsync((url, done) => {
+  await browserExecuteAsync((url, done) => {
     let loaded = false
     const xhr = new XMLHttpRequest()
     xhr.addEventListener('load', () => (loaded = true))
@@ -193,20 +175,14 @@ export async function sendXhr(url: string): Promise<string> {
     const interval = setInterval(() => {
       if (loaded) {
         clearInterval(interval)
-        done(xhr.response as string)
+        done(undefined)
       }
     }, 500)
   }, url)
-}
 
-export async function sendFetch(url: string): Promise<string> {
-  // tslint:disable-next-line: no-shadowed-variable
-  return browserExecuteAsync((url, done) => {
-    window
-      .fetch(url)
-      .then((response) => response.text())
-      .then(done)
-  }, url)
+  await flushEvents()
+
+  return (await waitServerRumEvents()).filter(isRumResourceEvent).find((event) => event.http.url === url)
 }
 
 export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {

@@ -17,7 +17,6 @@ import {
   trackFetch,
   trackXhr,
 } from '../src/requestCollection'
-import { Tracer } from '../src/tracer'
 
 describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -38,10 +37,7 @@ describe('collect fetch', () => {
     completeSpy = jasmine.createSpy('requestComplete')
     requestObservables[0].subscribe(startSpy)
     requestObservables[1].subscribe(completeSpy)
-    const tracerStub: Partial<Tracer> = {
-      traceFetch: () => undefined,
-    }
-    fetchProxy = trackFetch(requestObservables, tracerStub as Tracer)
+    fetchProxy = trackFetch(requestObservables)
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -107,10 +103,7 @@ describe('collect xhr', () => {
     completeSpy = jasmine.createSpy('requestComplete')
     requestObservables[0].subscribe(startSpy)
     requestObservables[1].subscribe(completeSpy)
-    const tracerStub: Partial<Tracer> = {
-      traceXhr: () => undefined,
-    }
-    trackXhr(requestObservables, tracerStub as Tracer)
+    trackXhr(requestObservables)
   })
 
   afterEach(() => {
