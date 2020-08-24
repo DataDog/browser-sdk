@@ -1,4 +1,5 @@
 import { ErrorMessage } from '@datadog/browser-core'
+import { RumPerformanceEntry } from './performanceCollection'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View } from './viewCollection'
@@ -28,7 +29,7 @@ export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
   notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
-  notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: PerformanceEntry): void
+  notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
@@ -54,7 +55,7 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-    callback: (data: PerformanceEntry) => void
+    callback: (data: RumPerformanceEntry) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.REQUEST_STARTED, callback: (data: RequestStartEvent) => void): Subscription
   subscribe(

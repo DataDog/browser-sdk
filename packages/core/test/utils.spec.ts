@@ -1,4 +1,13 @@
-import { deepMerge, jsonStringify, performDraw, round, throttle, toSnakeCase, withSnakeCaseKeys } from '../src/utils'
+import {
+  deepMerge,
+  findCommaSeparatedValue,
+  jsonStringify,
+  performDraw,
+  round,
+  throttle,
+  toSnakeCase,
+  withSnakeCaseKeys,
+} from '../src/utils'
 
 describe('utils', () => {
   describe('deepMerge', () => {
@@ -319,5 +328,16 @@ describe('utils', () => {
     expect(round(10.12591, 1)).toEqual(10.1)
     expect(round(10.12591, 2)).toEqual(10.13)
     expect(round(10.12591, 3)).toEqual(10.126)
+  })
+})
+
+describe('findCommaSeparatedValue', () => {
+  it('returns the value from a comma separated hash', () => {
+    expect(findCommaSeparatedValue('foo=a;bar=b', 'foo')).toBe('a')
+    expect(findCommaSeparatedValue('foo=a;bar=b', 'bar')).toBe('b')
+  })
+
+  it('returns undefined if the value is not found', () => {
+    expect(findCommaSeparatedValue('foo=a;bar=b', 'baz')).toBe(undefined)
   })
 })

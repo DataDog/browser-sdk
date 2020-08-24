@@ -1,7 +1,6 @@
 import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { PerformancePaintTiming } from './rum'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
@@ -208,20 +207,18 @@ function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
       if (entry.entryType === 'navigation') {
-        const navigationEntry = entry as PerformanceNavigationTiming
         timings = {
           ...timings,
-          domComplete: navigationEntry.domComplete,
-          domContentLoaded: navigationEntry.domContentLoadedEventEnd,
-          domInteractive: navigationEntry.domInteractive,
-          loadEventEnd: navigationEntry.loadEventEnd,
+          domComplete: entry.domComplete,
+          domContentLoaded: entry.domContentLoadedEventEnd,
+          domInteractive: entry.domInteractive,
+          loadEventEnd: entry.loadEventEnd,
         }
         callback(timings)
       } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-        const paintEntry = entry as PerformancePaintTiming
         timings = {
           ...timings,
-          firstContentfulPaint: paintEntry.startTime,
+          firstContentfulPaint: entry.startTime,
         }
         callback(timings)
       }

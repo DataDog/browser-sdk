@@ -9,7 +9,9 @@ import {
   ResourceKind,
 } from '@datadog/browser-core'
 
+import { RumPerformanceResourceTiming } from './performanceCollection'
 import { PerformanceResourceDetails } from './rum'
+import { RumSession } from './rumSession'
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
@@ -33,7 +35,7 @@ const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string)
   ],
 ]
 
-export function computeResourceKind(timing: PerformanceResourceTiming) {
+export function computeResourceKind(timing: RumPerformanceResourceTiming) {
   const url = timing.name
   if (!isValidUrl(url)) {
     addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
@@ -57,7 +59,7 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
-export function computePerformanceResourceDuration(entry: PerformanceResourceTiming): number {
+export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
@@ -69,7 +71,7 @@ export function computePerformanceResourceDuration(entry: PerformanceResourceTim
 }
 
 export function computePerformanceResourceDetails(
-  entry: PerformanceResourceTiming
+  entry: RumPerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   const {
     startTime,
@@ -86,7 +88,7 @@ export function computePerformanceResourceDetails(
   let { redirectStart, redirectEnd } = entry
 
   // Ensure timings are in the right order.  On top of filtering out potential invalid
-  // PerformanceResourceTiming, it will ignore entries from requests where timings cannot be
+  // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
   // it.
   if (
@@ -158,7 +160,7 @@ function formatTiming(origin: number, start: number, end: number) {
   }
 }
 
-export function computeSize(entry: PerformanceResourceTiming) {
+export function computeSize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occured
   if (entry.startTime < entry.responseStart) {
     return entry.decodedBodySize
@@ -166,8 +168,8 @@ export function computeSize(entry: PerformanceResourceTiming) {
   return undefined
 }
 
-export function isValidResource(url: string, configuration: Configuration) {
-  return url && !isBrowserAgentRequest(url, configuration)
+export function shouldTrackResource(url: string, configuration: Configuration, session: RumSession) {
+  return session.isTrackedWithResource() && url && !isBrowserAgentRequest(url, configuration)
 }
 
 function isBrowserAgentRequest(url: string, configuration: Configuration) {

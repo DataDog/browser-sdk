@@ -1,5 +1,6 @@
 import { noop, Observable } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
+import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
 import { RequestCompleteEvent } from '../src/requestCollection'
 import {
   PAGE_ACTIVITY_END_DELAY,
@@ -64,20 +65,23 @@ describe('trackPagePageActivities', () => {
   it('emits an activity event on resource collected', () => {
     const lifeCycle = new LifeCycle()
     trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    const performanceEntry = {
+    const performanceTiming = {
       entryType: 'resource',
     }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceTiming as RumPerformanceResourceTiming)
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
     const lifeCycle = new LifeCycle()
     trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
-    const performanceEntry = {
+    const performanceTiming = {
       entryType: 'navigation',
     }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry as PerformanceEntry)
+    lifeCycle.notify(
+      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
+      performanceTiming as RumPerformanceNavigationTiming
+    )
     expect(events).toEqual([])
   })
 

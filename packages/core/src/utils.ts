@@ -364,3 +364,8 @@ export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL
   const sanitizedHost = element.host.replace(/(:80|:443)$/, '')
   return `${element.protocol}//${sanitizedHost}`
 }
+
+export function findCommaSeparatedValue(rawString: string, name: string) {
+  const matches = rawString.match(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
+  return matches ? matches[1] : undefined
+}

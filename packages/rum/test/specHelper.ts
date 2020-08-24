@@ -133,7 +133,7 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withPerformanceCollection() {
-      buildTasks.push(() => startPerformanceCollection(lifeCycle, session))
+      buildTasks.push(() => startPerformanceCollection(lifeCycle))
       return setupBuilder
     },
     withParentContexts() {
