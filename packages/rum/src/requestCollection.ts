@@ -14,7 +14,7 @@ export interface RequestCompleteEvent {
   responseType?: string
   startTime: number
   duration: number
-  traceId?: number
+  traceId?: string
 }
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
@@ -97,7 +97,7 @@ interface BrowserWindow extends Window {
  * dd-trace-js wrapper needs to be called first so it can generate the new trace.  The browser-sdk
  * wrapper will then pick up the new trace id via this function.
  */
-function getTraceId(): number | undefined {
+function getTraceId(): string | undefined {
   // tslint:disable-next-line: no-unsafe-any
   return 'ddtrace' in window && (window as BrowserWindow).ddtrace.tracer.scope().active()
     ? // tslint:disable-next-line: no-unsafe-any

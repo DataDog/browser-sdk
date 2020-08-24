@@ -77,7 +77,7 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  traceId?: number
+  traceId?: string
 }
 
 export interface RumErrorEvent {
