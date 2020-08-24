@@ -1,3 +1,4 @@
+import { RumPerformanceResourceTiming } from './performanceCollection'
 import { RequestCompleteEvent } from './requestCollection'
 
 interface Timing {
@@ -21,9 +22,11 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
-  const candidates = performance
+  const candidates = (performance
     .getEntriesByName(request.url, 'resource')
-    .filter((entry) => isBetween(entry, request.startTime, endTime(request))) as PerformanceResourceTiming[]
+    .filter((entry) =>
+      isBetween(entry, request.startTime, endTime(request))
+    ) as unknown) as RumPerformanceResourceTiming[]
 
   if (candidates.length === 1) {
     return candidates[0]
@@ -36,7 +39,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   return
 }
 
-function firstCanBeOptionRequest(correspondingEntries: PerformanceResourceTiming[]) {
+function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTiming[]) {
   return endTime(correspondingEntries[0]) <= correspondingEntries[1].startTime
 }
 

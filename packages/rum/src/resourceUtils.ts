@@ -59,9 +59,7 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
-export function computePerformanceResourceDuration(
-  entry: RumPerformanceResourceTiming | PerformanceResourceTiming
-): number {
+export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
@@ -73,7 +71,7 @@ export function computePerformanceResourceDuration(
 }
 
 export function computePerformanceResourceDetails(
-  entry: RumPerformanceResourceTiming | PerformanceResourceTiming
+  entry: RumPerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
   const {
     startTime,
@@ -90,7 +88,7 @@ export function computePerformanceResourceDetails(
   let { redirectStart, redirectEnd } = entry
 
   // Ensure timings are in the right order.  On top of filtering out potential invalid
-  // PerformanceResourceTiming, it will ignore entries from requests where timings cannot be
+  // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
   // it.
   if (
@@ -162,7 +160,7 @@ function formatTiming(origin: number, start: number, end: number) {
   }
 }
 
-export function computeSize(entry: RumPerformanceResourceTiming | PerformanceResourceTiming) {
+export function computeSize(entry: RumPerformanceResourceTiming) {
   // Make sure a request actually occured
   if (entry.startTime < entry.responseStart) {
     return entry.decodedBodySize
