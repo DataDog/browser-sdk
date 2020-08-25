@@ -73,6 +73,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   rumEndpoint: string
   traceEndpoint: string
   internalMonitoringEndpoint?: string
+  proxyHost?: string
 
   service?: string
 
@@ -124,6 +125,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       return includes(enableExperimentalFeatures, feature)
     },
     logsEndpoint: getEndpoint('browser', transportConfiguration),
+    proxyHost: userConfiguration.proxyHost,
     rumEndpoint: getEndpoint('rum', transportConfiguration),
     traceEndpoint: getEndpoint('public-trace', transportConfiguration),
     ...DEFAULT_CONFIGURATION,
@@ -208,6 +210,11 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
     haveSameOrigin(url, configuration.logsEndpoint) ||
     haveSameOrigin(url, configuration.rumEndpoint) ||
     haveSameOrigin(url, configuration.traceEndpoint) ||
-    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint))
+    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
+    (configuration.proxyHost && haveSameOrigin(url, configuration.proxyHost)) ||
+    (configuration.replica &&
+      (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
+        haveSameOrigin(url, configuration.replica.rumEndpoint) ||
+        haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint)))
   )
 }
