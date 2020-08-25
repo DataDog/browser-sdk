@@ -100,8 +100,12 @@ describe('configuration', () => {
 
     it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = buildConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' }, usEnv)
-      expect(configuration.rumEndpoint).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,version:baz`)
-      expect(configuration.logsEndpoint).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,version:baz`)
+      expect(configuration.rumEndpoint).toContain(
+        `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
+      )
+      expect(configuration.logsEndpoint).toContain(
+        `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
+      )
     })
   })
 })
