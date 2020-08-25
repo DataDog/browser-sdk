@@ -21,5 +21,5 @@ module.exports = {
   TARGET_DATACENTER: process.env.TARGET_DATACENTER || 'us',
   BUILD_MODE: process.env.BUILD_MODE,
   SDK_VERSION: sdkVersion,
-  WITH_SUFFIX: process.env.WITH_SUFFIX || false,
+  WITH_SUFFIX: process.env.WITH_SUFFIX || '',
 }
