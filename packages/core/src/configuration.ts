@@ -96,6 +96,7 @@ interface TransportConfiguration {
   applicationId?: string
   proxyHost?: string
 
+  service?: string
   env?: string
   version?: string
 }
@@ -108,6 +109,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     env: userConfiguration.env,
     proxyHost: userConfiguration.proxyHost,
     sdkVersion: buildEnv.sdkVersion,
+    service: userConfiguration.service,
     site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
     version: userConfiguration.version,
   }
@@ -189,6 +191,7 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
+    `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
   const datadogHost = `${type}-http-intake.logs.${conf.site}`
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
