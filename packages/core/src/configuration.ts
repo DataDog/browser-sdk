@@ -1,4 +1,5 @@
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
+import { haveSameOrigin } from './urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -200,4 +201,13 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
+}
+
+export function isIntakeRequest(url: string, configuration: Configuration) {
+  return (
+    haveSameOrigin(url, configuration.logsEndpoint) ||
+    haveSameOrigin(url, configuration.rumEndpoint) ||
+    haveSameOrigin(url, configuration.traceEndpoint) ||
+    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint))
+  )
 }

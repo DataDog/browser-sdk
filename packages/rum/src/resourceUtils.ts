@@ -2,8 +2,8 @@ import {
   addMonitoringMessage,
   Configuration,
   getPathName,
-  haveSameOrigin,
   includes,
+  isIntakeRequest,
   isValidUrl,
   msToNs,
   ResourceKind,
@@ -169,14 +169,5 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
 }
 
 export function shouldTrackResource(url: string, configuration: Configuration, session: RumSession) {
-  return session.isTrackedWithResource() && url && !isBrowserAgentRequest(url, configuration)
-}
-
-function isBrowserAgentRequest(url: string, configuration: Configuration) {
-  return (
-    haveSameOrigin(url, configuration.logsEndpoint) ||
-    haveSameOrigin(url, configuration.rumEndpoint) ||
-    haveSameOrigin(url, configuration.traceEndpoint) ||
-    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint))
-  )
+  return session.isTrackedWithResource() && url && !isIntakeRequest(url, configuration)
 }
