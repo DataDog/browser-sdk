@@ -14,6 +14,11 @@
 
 ---
 
+## v1.16.0
+
+- ✨ [RUMF-636] initial document trace id ([#492](https://github.com/DataDog/browser-sdk/pull/492))
+- 🐛 [RUM] do not return internal context if the session is untracked ([#498](https://github.com/DataDog/browser-sdk/pull/498))
+
 ## v1.15.3
 
 - 🐛 [RUM] fix loading measures conversion to nanoseconds ([#490](https://github.com/DataDog/browser-sdk/pull/490))
