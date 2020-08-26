@@ -32,6 +32,7 @@ export interface InternalContext {
   view?: {
     id: string
     url: string
+    referrer: string
   }
   user_action?: {
     id: string

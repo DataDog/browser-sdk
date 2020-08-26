@@ -202,14 +202,8 @@ export function startRum(
         const viewContext = parentContexts.findView(startTime)
         if (session.isTracked() && viewContext && viewContext.sessionId) {
           return (withSnakeCaseKeys(deepMerge(
-            {
-              applicationId,
-              sessionId: viewContext.sessionId,
-              view: {
-                id: viewContext.view.id,
-                url: viewContext.view.url,
-              },
-            },
+            { applicationId },
+            viewContext,
             parentContexts.findAction(startTime)
           ) as Context) as unknown) as InternalContext
         }
