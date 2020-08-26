@@ -7,12 +7,20 @@ import { waitIdlePageActivity } from './trackPageActivities'
 export interface View {
   id: string
   location: Location
+  referrer: string
   measures: ViewMeasures
   documentVersion: number
   startTime: number
   duration: number
   loadingTime?: number | undefined
   loadingType: ViewLoadingType
+}
+
+export interface ViewCreatedEvent {
+  id: string
+  location: Location
+  referrer: string
+  startTime: number
 }
 
 interface Timings {
@@ -35,7 +43,7 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
-  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, startOrigin)
+  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -51,7 +59,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
       // Renew view on location changes
       currentView.triggerUpdate()
       currentView.end()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
     } else {
       currentView.updateLocation(location)
       currentView.triggerUpdate()
@@ -62,7 +70,7 @@ export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE)
+    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
   })
 
   // End the current view on page unload
@@ -92,6 +100,7 @@ function newView(
   lifeCycle: LifeCycle,
   initialLocation: Location,
   loadingType: ViewLoadingType,
+  referrer: string,
   startTime: number = performance.now()
 ) {
   // Setup initial values
@@ -108,7 +117,7 @@ function newView(
   let endTime: number | undefined
   let location: Location = { ...initialLocation }
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -142,6 +151,7 @@ function newView(
       loadingTime,
       loadingType,
       location,
+      referrer,
       startTime,
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
       measures: { ...timings, ...eventCounts },
@@ -174,6 +184,9 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
+    },
+    get url() {
+      return location.href
     },
   }
 }

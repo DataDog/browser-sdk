@@ -1,7 +1,6 @@
 import { getHash, getPathName, getSearch } from '@datadog/browser-core'
 
 import { LifeCycleEventType } from '../src/lifeCycle'
-import { ViewContext } from '../src/parentContexts'
 import {
   RumPerformanceLongTaskTiming,
   RumPerformanceNavigationTiming,
@@ -14,7 +13,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewLoadingType } from '../src/viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -89,7 +88,7 @@ function spyOnViews() {
 describe('rum track url change', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewId: string
-  let createSpy: jasmine.Spy
+  let createSpy: jasmine.Spy<(event: ViewCreatedEvent) => void>
 
   beforeEach(() => {
     const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
@@ -116,7 +115,7 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/bar')
 
     expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    const viewContext = createSpy.calls.argsFor(0)[0]
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
@@ -127,7 +126,7 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/foo#bar')
 
     expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    const viewContext = createSpy.calls.argsFor(0)[0]
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 
@@ -148,7 +147,7 @@ describe('rum track url change', () => {
 
     function hashchangeCallBack() {
       expect(createSpy).toHaveBeenCalled()
-      const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+      const viewContext = createSpy.calls.argsFor(0)[0]
       expect(viewContext.id).not.toEqual(initialViewId)
       window.removeEventListener('hashchange', hashchangeCallBack)
       done()
@@ -225,6 +224,68 @@ describe('rum track url change', () => {
   })
 })
 
+describe('rum view referrer', () => {
+  let setupBuilder: TestSetupBuilder
+  let initialViewCreatedEvent: ViewCreatedEvent
+  let createSpy: jasmine.Spy<(event: ViewCreatedEvent) => void>
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .withViewCollection()
+      .beforeBuild((lifeCycle) => {
+        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
+          initialViewCreatedEvent = event
+          subscription.unsubscribe()
+        })
+      })
+    createSpy = jasmine.createSpy('create')
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should set the document referrer as referrer for the initial view', () => {
+    setupBuilder.build()
+    expect(initialViewCreatedEvent.referrer).toEqual(document.referrer)
+  })
+
+  it('should set the previous view URL as referrer when a route change occurs', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0]
+    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
+  })
+
+  it('should set the previous view URL as referrer when a the session is renewed', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0]
+    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
+  })
+
+  it('should use the most up-to-date URL of the previous view as a referrer', () => {
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo?a=b')
+    history.pushState({}, '', '/bar')
+
+    expect(createSpy).toHaveBeenCalled()
+    const viewContext = createSpy.calls.argsFor(0)[0]
+    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo\?a=b$/))
+  })
+})
+
 describe('rum track renew session', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
@@ -253,13 +314,13 @@ describe('rum track renew session', () => {
 
   it('should create new view on renew session', () => {
     const { lifeCycle } = setupBuilder.build()
-    const createSpy = jasmine.createSpy('create')
+    const createSpy = jasmine.createSpy<(event: ViewCreatedEvent) => void>('create')
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0] as ViewContext
+    const viewContext = createSpy.calls.argsFor(0)[0]
     expect(viewContext.id).not.toEqual(initialViewId)
   })
 

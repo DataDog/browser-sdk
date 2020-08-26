@@ -671,6 +671,7 @@ describe('rum internal context', () => {
       },
       view: {
         id: jasmine.any(String),
+        referrer: document.referrer,
         url: window.location.href,
       },
     })
@@ -705,6 +706,7 @@ describe('rum internal context', () => {
       },
       view: {
         id: jasmine.any(String),
+        referrer: document.referrer,
         url: window.location.href,
       },
     })
