@@ -2,8 +2,8 @@ import {
   addMonitoringMessage,
   Configuration,
   getPathName,
-  haveSameOrigin,
   includes,
+  isIntakeRequest,
   isValidUrl,
   msToNs,
   ResourceKind,
@@ -107,10 +107,10 @@ export function computePerformanceResourceDetails(
     return undefined
   }
 
-  // The only time fetchStart is different than startTime is if a redirection occured.
-  const hasRedirectionOccured = fetchStart !== startTime
+  // The only time fetchStart is different than startTime is if a redirection occurred.
+  const hasRedirectionOccurred = fetchStart !== startTime
 
-  if (hasRedirectionOccured) {
+  if (hasRedirectionOccurred) {
     // Firefox doesn't provide redirect timings on cross origin requests.  Provide a default for
     // those.
     if (redirectStart < startTime) {
@@ -131,22 +131,22 @@ export function computePerformanceResourceDetails(
     firstByte: formatTiming(startTime, requestStart, responseStart),
   }
 
-  // Make sure a connection occured
+  // Make sure a connection occurred
   if (connectEnd !== fetchStart) {
     details.connect = formatTiming(startTime, connectStart, connectEnd)
 
-    // Make sure a secure connection occured
+    // Make sure a secure connection occurred
     if (areInOrder(connectStart, secureConnectionStart, connectEnd)) {
       details.ssl = formatTiming(startTime, secureConnectionStart, connectEnd)
     }
   }
 
-  // Make sure a domain lookup occured
+  // Make sure a domain lookup occurred
   if (domainLookupEnd !== fetchStart) {
     details.dns = formatTiming(startTime, domainLookupStart, domainLookupEnd)
   }
 
-  if (hasRedirectionOccured) {
+  if (hasRedirectionOccurred) {
     details.redirect = formatTiming(startTime, redirectStart, redirectEnd)
   }
 
@@ -161,7 +161,7 @@ function formatTiming(origin: number, start: number, end: number) {
 }
 
 export function computeSize(entry: RumPerformanceResourceTiming) {
-  // Make sure a request actually occured
+  // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
     return entry.decodedBodySize
   }
@@ -169,14 +169,5 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
 }
 
 export function shouldTrackResource(url: string, configuration: Configuration, session: RumSession) {
-  return session.isTrackedWithResource() && url && !isBrowserAgentRequest(url, configuration)
-}
-
-function isBrowserAgentRequest(url: string, configuration: Configuration) {
-  return (
-    haveSameOrigin(url, configuration.logsEndpoint) ||
-    haveSameOrigin(url, configuration.rumEndpoint) ||
-    haveSameOrigin(url, configuration.traceEndpoint) ||
-    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint))
-  )
+  return session.isTrackedWithResource() && url && !isIntakeRequest(url, configuration)
 }

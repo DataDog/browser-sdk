@@ -1,4 +1,4 @@
-import { FetchStub, FetchStubManager, isIE, stubFetch } from '../src'
+import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../src'
 import { Configuration } from '../src/configuration'
 import {
   ErrorMessage,
@@ -13,7 +13,7 @@ import {
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
 import { StackTrace } from '../src/tracekit'
-import { ONE_MINUTE, RequestType } from '../src/utils'
+import { ONE_MINUTE } from '../src/utils'
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
@@ -208,7 +208,7 @@ describe('network error tracker', () => {
     }
     const errorObservable = new Observable<ErrorMessage>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
-    const configuration = { requestErrorResponseLengthLimit: 32 }
+    const configuration = { requestErrorResponseLengthLimit: 32, ...SPEC_ENDPOINTS }
 
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration as Configuration, errorObservable))
@@ -232,6 +232,15 @@ describe('network error tracker', () => {
         message: 'Fetch error GET http://fake.com/',
         startTime: jasmine.any(Number),
       })
+      done()
+    })
+  })
+
+  it('should not track intake error', (done) => {
+    fetchStub('https://logs-intake.com/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).not.toHaveBeenCalled()
       done()
     })
   })

@@ -1,4 +1,4 @@
-import { Configuration } from './configuration'
+import { Configuration, isIntakeRequest } from './configuration'
 import { FetchContext, resetFetchProxy, startFetchProxy } from './fetchProxy'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
@@ -160,7 +160,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrContext | FetchContext) {
-    if (isRejected(request) || isServerError(request)) {
+    if (!isIntakeRequest(request.url, configuration) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         context: {
           error: {
