@@ -77,7 +77,12 @@ describe('startUserActionCollection', () => {
     mockValidatedClickUserAction(lifeCycle, clock, button)
     expect(createSpy).toHaveBeenCalled()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { location, id: 'fake', startTime: 0 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      location,
+      id: 'fake',
+      referrer: 'http://foo.com',
+      startTime: 0,
+    })
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])

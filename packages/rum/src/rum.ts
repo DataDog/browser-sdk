@@ -134,9 +134,6 @@ interface RumContext {
   session: {
     type: string
   }
-  view: {
-    referrer: string
-  }
 }
 
 export type RawRumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserActionEvent
@@ -186,9 +183,6 @@ export function startRum(
         // cf https://github.com/puppeteer/puppeteer/issues/3667
         type: getSessionType(),
       },
-      view: {
-        referrer: document.referrer,
-      },
     }),
     () => globalContext
   )
@@ -205,11 +199,11 @@ export function startRum(
         lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
       }),
       getInternalContext: monitor((startTime?: number): InternalContext | undefined => {
-        const view = parentContexts.findView(startTime)
-        if (session.isTracked() && view && view.sessionId) {
+        const viewContext = parentContexts.findView(startTime)
+        if (session.isTracked() && viewContext && viewContext.sessionId) {
           return (withSnakeCaseKeys(deepMerge(
             { applicationId },
-            view,
+            viewContext,
             parentContexts.findAction(startTime)
           ) as Context) as unknown) as InternalContext
         }

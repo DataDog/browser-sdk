@@ -32,6 +32,11 @@ export interface AutoUserAction {
   measures: UserActionMeasures
 }
 
+export interface AutoActionCreatedEvent {
+  id: string
+  startTime: number
+}
+
 export function startUserActionCollection(lifeCycle: LifeCycle) {
   const userAction = startUserActionManagement(lifeCycle)
 
