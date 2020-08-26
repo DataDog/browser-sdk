@@ -184,9 +184,10 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
-      this.url = location.href
     },
-    url: location.href,
+    get url() {
+      return location.href
+    },
   }
 }
 
