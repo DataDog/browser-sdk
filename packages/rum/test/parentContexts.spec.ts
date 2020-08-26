@@ -17,7 +17,7 @@ describe('parentContexts', () => {
   const FAKE_ID = 'fake'
   const startTime = 10
 
-  function createViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
+  function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return { location, startTime, id: FAKE_ID, referrer: 'http://foo.com', ...partialViewCreatedEvent }
   }
 
@@ -50,7 +50,7 @@ describe('parentContexts', () => {
     it('should return the current view context when there is no start time', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent())
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
 
       expect(parentContexts.findView()).toBeDefined()
       expect(parentContexts.findView()!.view.id).toEqual(FAKE_ID)
@@ -59,9 +59,9 @@ describe('parentContexts', () => {
     it('should return the view context corresponding to startTime', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ startTime: 10, id: 'view 1' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ startTime: 20, id: 'view 2' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ startTime: 30, id: 'view 3' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 30, id: 'view 3' }))
 
       expect(parentContexts.findView(15)!.view.id).toEqual('view 1')
       expect(parentContexts.findView(20)!.view.id).toEqual('view 2')
@@ -71,8 +71,8 @@ describe('parentContexts', () => {
     it('should return undefined when no view context corresponding to startTime', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ startTime: 10, id: 'view 1' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ startTime: 20, id: 'view 2' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
 
       expect(parentContexts.findView(5)).not.toBeDefined()
     })
@@ -80,9 +80,9 @@ describe('parentContexts', () => {
     it('should replace the current view context on VIEW_CREATED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent())
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
       const newViewId = 'fake 2'
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ id: newViewId }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
       expect(parentContexts.findView()!.view.id).toEqual(newViewId)
     })
@@ -90,7 +90,7 @@ describe('parentContexts', () => {
     it('should return the current url with the current view', () => {
       const { lifeCycle, parentContexts, fakeLocation } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ location: fakeLocation as Location }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
       history.pushState({}, '', '/foo')
@@ -101,13 +101,13 @@ describe('parentContexts', () => {
     it('should update session id only on VIEW_CREATED', () => {
       const { lifeCycle, parentContexts } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent())
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
       expect(parentContexts.findView()!.sessionId).toBe('fake-session')
 
       sessionId = 'other-session'
       expect(parentContexts.findView()!.sessionId).toBe('fake-session')
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, createViewCreatedEvent({ id: 'fake 2' }))
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))
       expect(parentContexts.findView()!.sessionId).toBe('other-session')
     })
   })
@@ -181,14 +181,14 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
-        createViewCreatedEvent({
+        buildViewCreatedEvent({
           id: 'view 1',
           startTime: 10,
         })
       )
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
-        createViewCreatedEvent({
+        buildViewCreatedEvent({
           id: 'view 2',
           startTime: 20,
         })
@@ -218,7 +218,7 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
-        createViewCreatedEvent({
+        buildViewCreatedEvent({
           id: 'view 1',
           startTime: originalTime,
         })
@@ -227,7 +227,7 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
-        createViewCreatedEvent({ startTime: originalTime + 10, id: 'view 2' })
+        buildViewCreatedEvent({ startTime: originalTime + 10, id: 'view 2' })
       )
 
       clock.tick(10)
