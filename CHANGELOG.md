@@ -14,6 +14,11 @@
 
 ---
 
+## v1.17.0
+
+- 🐛 [RUMF-645] do not track intake request errors ([#506](https://github.com/DataDog/browser-sdk/pull/506))
+- ✨ [RUMF-621] set view referrer to the previous view URL ([#507](https://github.com/DataDog/browser-sdk/pull/507))
+
 ## v1.16.0
 
 - ✨ [RUMF-636] initial document trace id ([#492](https://github.com/DataDog/browser-sdk/pull/492))
