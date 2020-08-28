@@ -38,7 +38,7 @@ datadogRum.init({
 
   - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
   - `resourceSampleRate`: percentage of tracked sessions with resources collection.
-  - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
+  - `site`: The site of the Datadog intake to send SDK data to ('datadoghq.com' to send data to the US site; 'datadoghq.eu' to send data to the EU site)
   - `silentMultipleInit`: prevent logging errors while having multiple Init
   - `trackInteractions`: collect actions initiated by user interactions
   - `service`: name of the corresponding service
