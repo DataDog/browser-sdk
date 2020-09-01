@@ -91,10 +91,6 @@ export async function waitServerRumEvents(): Promise<ServerRumEvent[]> {
   return fetchWhile('/rum', (events: ServerRumEvent[]) => events.length === 0)
 }
 
-export async function waitServerTraces(): Promise<ServerTrace[]> {
-  return fetchWhile('/trace', (traces: ServerTrace[]) => traces.length === 0)
-}
-
 export async function retrieveMonitoringErrors() {
   return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
 }

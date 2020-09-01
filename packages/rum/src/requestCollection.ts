@@ -23,11 +23,6 @@ export interface RequestCompleteEvent {
   responseType?: string
   startTime: number
   duration: number
-  error?: {
-    name?: string
-    message: string
-    stack: string
-  }
   traceId?: TraceIdentifier
 }
 
@@ -92,7 +87,6 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
   fetchProxy.onRequestComplete((context) => {
     requestCompleteObservable.notify({
       duration: context.duration,
-      error: context.error,
       method: context.method,
       requestId: context.requestId,
       response: context.response,

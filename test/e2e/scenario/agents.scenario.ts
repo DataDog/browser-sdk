@@ -16,7 +16,6 @@ import {
   tearDown,
   waitServerLogs,
   waitServerRumEvents,
-  waitServerTraces,
   withBrowserLogs,
 } from './helpers'
 import {
@@ -312,7 +311,6 @@ describe('tracing', () => {
     const rawHeaders = await sendXhr(`${serverUrl.sameOrigin}/headers`)
     checkRequestHeaders(rawHeaders)
     await flushEvents()
-    await checkTraceCollected()
     await checkTraceAssociatedToRumEvent()
   })
 
@@ -320,7 +318,6 @@ describe('tracing', () => {
     const rawHeaders = await sendFetch(`${serverUrl.sameOrigin}/headers`)
     checkRequestHeaders(rawHeaders)
     await flushEvents()
-    await checkTraceCollected()
     await checkTraceAssociatedToRumEvent()
   })
 
@@ -328,17 +325,6 @@ describe('tracing', () => {
     const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
-  }
-
-  async function checkTraceCollected() {
-    const serverTraces = await waitServerTraces()
-
-    expect(serverTraces.length).toBe(1)
-    const browserSpan = serverTraces[0].spans[0]
-    expect(browserSpan).toBeDefined()
-    expect(browserSpan.meta['http.method']).toBe('GET')
-    expect(browserSpan.meta['http.url']).toContain('/headers')
-    expect(browserSpan.metrics['http.status']).toBe(200)
   }
 
   async function checkTraceAssociatedToRumEvent() {

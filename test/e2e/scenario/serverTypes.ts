@@ -1,12 +1,3 @@
-export interface ServerErrorMessage {
-  message: string
-  application_id: string
-  session_id: string
-  view: {
-    id: string
-  }
-}
-
 export interface ServerLogsMessage {
   message: string
   application_id: string
@@ -25,20 +16,6 @@ export interface ServerRumEvent {
   date: number
   evt: {
     category: 'resource' | 'long_task' | 'user_action' | 'error' | 'view'
-  }
-}
-
-export interface ServerTrace {
-  spans: ServerSpan[]
-}
-
-interface ServerSpan {
-  meta: {
-    'http.method': string
-    'http.url': string
-  }
-  metrics: {
-    'http.status': number
   }
 }
 
