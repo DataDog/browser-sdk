@@ -1,13 +1,7 @@
 import { MonitoringMessage } from '@datadog/browser-core'
 import * as request from 'request'
 import { getCurrentSpec } from '../currentSpecReporter'
-import {
-  isRumResourceEvent,
-  ServerLogsMessage,
-  ServerRumEvent,
-  ServerRumResourceEvent,
-  ServerTrace,
-} from './serverTypes'
+import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
 
 const { hostname } = new URL(browser.config.baseUrl!)
 

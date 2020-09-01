@@ -41,7 +41,9 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
     kind: 'fetch' | 'xhr' | 'document'
   }
   duration: number
-  trace_id?: string
+  _dd?: {
+    trace_id: string
+  }
   user_action?: {
     id: string
   }

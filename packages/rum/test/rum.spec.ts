@@ -248,7 +248,7 @@ describe('rum handle performance entry', () => {
       entry as RumPerformanceResourceTiming
     )
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-    expect(resourceEvent.traceId).toBe('123')
+    expect(resourceEvent._dd!.traceId).toBe('123')
   })
 })
 
