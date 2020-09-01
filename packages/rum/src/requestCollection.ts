@@ -24,6 +24,7 @@ export interface RequestCompleteEvent {
   startTime: number
   duration: number
   traceId?: TraceIdentifier
+  spanId?: TraceIdentifier
 }
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
@@ -40,13 +41,18 @@ export function startRequestCollection(configuration: Configuration) {
 
 interface CustomXhrContext extends XhrContext {
   traceId: TraceIdentifier | undefined
+  spanId: TraceIdentifier | undefined
   requestId: number
 }
 
 export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
   const xhrProxy = startXhrProxy<CustomXhrContext>()
   xhrProxy.beforeSend((context, xhr) => {
-    context.traceId = tracer.traceXhr(context, xhr)
+    const tracingResult = tracer.traceXhr(context, xhr)
+    if (tracingResult) {
+      context.traceId = tracingResult.traceId
+      context.spanId = tracingResult.spanId
+    }
     context.requestId = getNextRequestId()
 
     requestStartObservable.notify({
@@ -59,6 +65,7 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
       method: context.method,
       requestId: context.requestId,
       response: context.response,
+      spanId: context.spanId,
       startTime: context.startTime,
       status: context.status,
       traceId: context.traceId,
@@ -71,13 +78,18 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
 
 interface CustomFetchContext extends FetchContext {
   traceId: TraceIdentifier | undefined
+  spanId: TraceIdentifier | undefined
   requestId: number
 }
 
 export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
   const fetchProxy = startFetchProxy<CustomFetchContext>()
   fetchProxy.beforeSend((context) => {
-    context.traceId = tracer.traceFetch(context)
+    const tracingResult = tracer.traceFetch(context)
+    if (tracingResult) {
+      context.traceId = tracingResult.traceId
+      context.spanId = tracingResult.spanId
+    }
     context.requestId = getNextRequestId()
 
     requestStartObservable.notify({
@@ -91,6 +103,7 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
       requestId: context.requestId,
       response: context.response,
       responseType: context.responseType,
+      spanId: context.spanId,
       startTime: context.startTime,
       status: context.status,
       traceId: context.traceId,

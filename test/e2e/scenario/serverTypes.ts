@@ -43,6 +43,7 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
   duration: number
   _dd?: {
     trace_id: string
+    span_id?: string
   }
   user_action?: {
     id: string

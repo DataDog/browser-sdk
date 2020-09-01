@@ -38,17 +38,17 @@ describe('tracer', () => {
 
     it('should return traceId and add tracing headers', () => {
       const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceXhr(ALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
+      const tracingResult = tracer.traceXhr(ALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)!
 
-      expect(traceId).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(traceId!))
+      expect(tracingResult).toBeDefined()
+      expect(xhrStub.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
     })
 
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceXhr(DISALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
+      const tracingResult = tracer.traceXhr(DISALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
 
-      expect(traceId).toBeUndefined()
+      expect(tracingResult).toBeUndefined()
       expect(xhrStub.headers).toEqual({})
     })
 
@@ -77,10 +77,10 @@ describe('tracer', () => {
       const context: Partial<FetchContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceFetch(context)
+      const tracingResult = tracer.traceFetch(context)!
 
-      expect(traceId).toBeDefined()
-      expect(context.init!.headers).toEqual(tracingHeadersFor(traceId!))
+      expect(tracingResult).toBeDefined()
+      expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
     })
 
     it('should preserve original request init and headers', () => {
@@ -93,7 +93,7 @@ describe('tracer', () => {
       }
 
       const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceFetch(context)
+      const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.method).toBe('POST')
       expect(context.init!.headers).toBe(headers)
@@ -102,16 +102,19 @@ describe('tracer', () => {
       headers.forEach((value, key) => {
         headersPlainObject[key] = value
       })
-      expect(headersPlainObject).toEqual({ ...tracingHeadersFor(traceId!), foo: 'bar' })
+      expect(headersPlainObject).toEqual({
+        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
+        foo: 'bar',
+      })
     })
 
     it('should not trace request on disallowed domain', () => {
       const context: Partial<FetchContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
-      const traceId = tracer.traceFetch(context)
+      const tracingResult = tracer.traceFetch(context)
 
-      expect(traceId).toBeUndefined()
+      expect(tracingResult).toBeUndefined()
       expect(context.init).toBeUndefined()
     })
 
@@ -140,10 +143,10 @@ describe('TraceIdentifier', () => {
   })
 })
 
-function tracingHeadersFor(traceId: TraceIdentifier) {
+function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': toDecimalString(traceId),
+    'x-datadog-parent-id': toDecimalString(spanId),
     'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': toDecimalString(traceId),

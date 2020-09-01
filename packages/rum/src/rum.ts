@@ -80,6 +80,7 @@ export interface RumResourceEvent {
   }
   _dd?: {
     traceId: string
+    spanId?: string // not available for initial document tracing
   }
 }
 
@@ -445,11 +446,13 @@ function trackRequests(
     const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     const startTime = timing ? timing.startTime : request.startTime
     handler(startTime, {
-      _dd: request.traceId
-        ? {
-            traceId: toDecimalString(request.traceId),
-          }
-        : undefined,
+      _dd:
+        request.traceId && request.spanId
+          ? {
+              spanId: toDecimalString(request.spanId),
+              traceId: toDecimalString(request.traceId),
+            }
+          : undefined,
       date: getTimestamp(startTime),
       duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
       evt: {

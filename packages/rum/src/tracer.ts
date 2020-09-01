@@ -1,8 +1,13 @@
 import { assign, Configuration, FetchContext, getOrigin, XhrContext } from '@datadog/browser-core'
 
+export interface TracingResult {
+  spanId: TraceIdentifier
+  traceId: TraceIdentifier
+}
+
 export interface Tracer {
-  traceFetch: (context: Partial<FetchContext>) => TraceIdentifier | undefined
-  traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TraceIdentifier | undefined
+  traceFetch: (context: Partial<FetchContext>) => TracingResult | undefined
+  traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TracingResult | undefined
 }
 
 interface TracingHeaders {
@@ -37,14 +42,15 @@ function injectHeadersIfTracingAllowed(
   configuration: Configuration,
   url: string,
   inject: (tracingHeaders: TracingHeaders) => void
-): TraceIdentifier | undefined {
+): TracingResult | undefined {
   if (!isTracingSupported() || !isAllowedUrl(configuration, url)) {
     return undefined
   }
 
   const traceId = new TraceIdentifier()
-  inject(makeTracingHeaders(traceId))
-  return traceId
+  const spanId = new TraceIdentifier()
+  inject(makeTracingHeaders(traceId, spanId))
+  return { traceId, spanId }
 }
 
 function isAllowedUrl(configuration: Configuration, requestUrl: string) {
@@ -65,10 +71,10 @@ function getCrypto() {
   return window.crypto || (window as any).msCrypto
 }
 
-function makeTracingHeaders(traceId: TraceIdentifier): TracingHeaders {
+function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier): TracingHeaders {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': toDecimalString(traceId),
+    'x-datadog-parent-id': toDecimalString(spanId),
     'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': toDecimalString(traceId),
