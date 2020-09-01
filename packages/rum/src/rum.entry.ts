@@ -132,6 +132,15 @@ export function makeRumGlobal(stub: RumGlobal) {
       console.error('Resource Sample Rate should be a number between 0 and 100')
       return false
     }
+    if (
+      userConfiguration.allowedTracingOrigins !== undefined &&
+      Array.isArray(userConfiguration.allowedTracingOrigins) &&
+      userConfiguration.allowedTracingOrigins.length !== 0 &&
+      userConfiguration.service === undefined
+    ) {
+      console.error('Service need to be configured when tracing is enabled')
+      return false
+    }
     return true
   }
 

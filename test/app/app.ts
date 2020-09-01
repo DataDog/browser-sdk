@@ -23,5 +23,6 @@ datadogRum.init({
   internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
   logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
   rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  service: 'e2e',
   trackInteractions: true,
 })
