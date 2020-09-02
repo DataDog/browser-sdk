@@ -330,9 +330,7 @@ describe('tracing', () => {
   async function checkTraceAssociatedToRumEvent() {
     const requests = (await waitServerRumEvents()).filter(
       (rumEvent) =>
-        rumEvent.evt.category === 'resource' &&
-        ((rumEvent as ServerRumResourceEvent).resource.kind === 'xhr' ||
-          (rumEvent as ServerRumResourceEvent).resource.kind === 'fetch')
+        isRumResourceEvent(rumEvent) && (rumEvent.resource.kind === 'xhr' || rumEvent.resource.kind === 'fetch')
     ) as ServerRumResourceEvent[]
 
     expect(requests.length).toBe(1)
