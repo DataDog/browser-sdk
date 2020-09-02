@@ -1,5 +1,5 @@
 import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
-import { startTracer, toDecimalString, toHexString, TraceIdentifier } from '../src/tracer'
+import { startTracer, TraceIdentifier } from '../src/tracer'
 import { setup, TestSetupBuilder } from './specHelper'
 
 describe('tracer', () => {
@@ -144,17 +144,17 @@ describe('TraceIdentifier', () => {
   it('should generate id', () => {
     const traceIdentifier = new TraceIdentifier()
 
-    expect(toDecimalString(traceIdentifier)).toMatch(/^\d+$/)
-    expect(toHexString(traceIdentifier)).toMatch(/^[0-9A-F]+$/i)
+    expect(traceIdentifier.toDecimalString()).toMatch(/^\d+$/)
+    expect(traceIdentifier.toHexString()).toMatch(/^[0-9A-F]+$/i)
   })
 })
 
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': toDecimalString(spanId),
+    'x-datadog-parent-id': spanId.toDecimalString(),
     'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
-    'x-datadog-trace-id': toDecimalString(traceId),
+    'x-datadog-trace-id': traceId.toDecimalString(),
   }
 }

@@ -34,7 +34,6 @@ import {
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
-import { toDecimalString } from './tracer'
 import { UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
@@ -449,8 +448,8 @@ function trackRequests(
       _dd:
         request.traceId && request.spanId
           ? {
-              spanId: toDecimalString(request.spanId),
-              traceId: toDecimalString(request.traceId),
+              spanId: request.spanId.toDecimalString(),
+              traceId: request.traceId.toDecimalString(),
             }
           : undefined,
       date: getTimestamp(startTime),

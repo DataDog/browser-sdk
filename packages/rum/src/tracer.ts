@@ -74,10 +74,10 @@ function getCrypto() {
 function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier): TracingHeaders {
   return {
     'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': toDecimalString(spanId),
+    'x-datadog-parent-id': spanId.toDecimalString(),
     'x-datadog-sampled': '1',
     'x-datadog-sampling-priority': '1',
-    'x-datadog-trace-id': toDecimalString(traceId),
+    'x-datadog-trace-id': traceId.toDecimalString(),
   }
 }
 
@@ -110,6 +110,20 @@ export class TraceIdentifier {
     return str
   }
 
+  /**
+   * Format used by trace intake
+   */
+  toHexString() {
+    return this.toString(16)
+  }
+
+  /**
+   * Format used elsewhere
+   */
+  toDecimalString() {
+    return this.toString(10)
+  }
+
   private readInt32(offset: number) {
     return (
       this.buffer[offset] * 16777216 +
@@ -120,17 +134,3 @@ export class TraceIdentifier {
   }
 }
 /* tslint:enable:no-bitwise */
-
-/**
- * Format used by trace intake
- */
-export function toHexString(traceId: TraceIdentifier) {
-  return traceId.toString(16)
-}
-
-/**
- * Format used elsewhere
- */
-export function toDecimalString(traceId: TraceIdentifier) {
-  return traceId.toString(10)
-}
