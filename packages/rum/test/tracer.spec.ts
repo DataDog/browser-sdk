@@ -87,23 +87,29 @@ describe('tracer', () => {
       const headers = new Headers()
       headers.set('foo', 'bar')
 
+      const init = { headers, method: 'POST' }
       const context: Partial<FetchContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
-        init: { headers, method: 'POST' },
+        init,
       }
 
       const tracer = startTracer(configuration as Configuration)
       const tracingResult = tracer.traceFetch(context)!
 
+      expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
-      expect(context.init!.headers).toBe(headers)
 
-      const headersPlainObject: { [key: string]: string } = {}
-      headers.forEach((value, key) => {
-        headersPlainObject[key] = value
-      })
-      expect(headersPlainObject).toEqual({
+      expect(context.init!.headers).not.toBe(headers)
+      expect(context.init!.headers).toEqual({
         ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
+        foo: 'bar',
+      })
+
+      const originalHeadersPlainObject: { [key: string]: string } = {}
+      headers.forEach((value, key) => {
+        originalHeadersPlainObject[key] = value
+      })
+      expect(originalHeadersPlainObject).toEqual({
         foo: 'bar',
       })
     })
