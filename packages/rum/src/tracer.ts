@@ -111,14 +111,7 @@ export class TraceIdentifier {
   }
 
   /**
-   * Format used by trace intake
-   */
-  toHexString() {
-    return this.toString(16)
-  }
-
-  /**
-   * Format used elsewhere
+   * Format used everywhere except the trace intake
    */
   toDecimalString() {
     return this.toString(10)

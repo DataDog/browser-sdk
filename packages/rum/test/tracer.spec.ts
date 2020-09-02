@@ -145,7 +145,6 @@ describe('TraceIdentifier', () => {
     const traceIdentifier = new TraceIdentifier()
 
     expect(traceIdentifier.toDecimalString()).toMatch(/^\d+$/)
-    expect(traceIdentifier.toHexString()).toMatch(/^[0-9A-F]+$/i)
   })
 })
 
