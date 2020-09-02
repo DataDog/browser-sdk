@@ -133,7 +133,6 @@ export function makeRumGlobal(stub: RumGlobal) {
       return false
     }
     if (
-      userConfiguration.allowedTracingOrigins !== undefined &&
       Array.isArray(userConfiguration.allowedTracingOrigins) &&
       userConfiguration.allowedTracingOrigins.length !== 0 &&
       userConfiguration.service === undefined
