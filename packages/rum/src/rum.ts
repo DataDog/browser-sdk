@@ -7,6 +7,7 @@ import {
   deepMerge,
   ErrorContext,
   ErrorMessage,
+  generateUUID,
   getTimestamp,
   HttpContext,
   HttpRequest,
@@ -76,6 +77,7 @@ export interface RumResourceEvent {
   }
   resource: {
     kind: ResourceKind
+    id?: string // only for traced requests
   }
   _dd?: {
     traceId: string
@@ -444,14 +446,14 @@ function trackRequests(
     const timing = matchRequestTiming(request)
     const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     const startTime = timing ? timing.startTime : request.startTime
+    const hasBeenTraced = request.traceId && request.spanId
     handler(startTime, {
-      _dd:
-        request.traceId && request.spanId
-          ? {
-              spanId: request.spanId.toDecimalString(),
-              traceId: request.traceId.toDecimalString(),
-            }
-          : undefined,
+      _dd: hasBeenTraced
+        ? {
+            spanId: request.spanId!.toDecimalString(),
+            traceId: request.traceId!.toDecimalString(),
+          }
+        : undefined,
       date: getTimestamp(startTime),
       duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
       evt: {
@@ -468,6 +470,7 @@ function trackRequests(
       },
       resource: {
         kind,
+        id: hasBeenTraced ? generateUUID() : undefined,
       },
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
