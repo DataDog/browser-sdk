@@ -14,6 +14,10 @@
 
 ---
 
+## v1.18.0
+
+- ✨ [RUMF-617] integrate tracing from rum ([#511](https://github.com/DataDog/browser-sdk/pull/511))
+
 ## v1.17.0
 
 - 🐛 [RUMF-645] do not track intake request errors ([#506](https://github.com/DataDog/browser-sdk/pull/506))
