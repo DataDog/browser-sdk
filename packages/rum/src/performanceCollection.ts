@@ -68,7 +68,9 @@ function supportPerformanceNavigationTimingEvent() {
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle) {
-  handleRumPerformanceEntry(lifeCycle, retrieveInitialDocumentResourceTiming())
+  retrieveInitialDocumentResourceTiming((timing) => {
+    handleRumPerformanceEntry(lifeCycle, timing)
+  })
 
   if (supportPerformanceObject()) {
     handlePerformanceEntries(lifeCycle, performance.getEntries())
@@ -99,49 +101,58 @@ export function startPerformanceCollection(lifeCycle: LifeCycle) {
   }
 }
 
-export function retrieveInitialDocumentResourceTiming() {
-  let timing: RumPerformanceResourceTiming
+export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {
+  runOnReadyState('interactive', () => {
+    let timing: RumPerformanceResourceTiming
 
-  const forcedAttributes = {
-    entryType: 'resource' as const,
-    initiatorType: FAKE_INITIAL_DOCUMENT,
-    traceId: getDocumentTraceId(document),
-  }
-  if (supportPerformanceNavigationTimingEvent() && performance.getEntriesByType('navigation').length > 0) {
-    const navigationEntry = performance.getEntriesByType('navigation')[0]
-    timing = { ...navigationEntry.toJSON(), ...forcedAttributes }
-  } else {
-    const relativePerformanceTiming = computeRelativePerformanceTiming()
-    timing = {
-      ...relativePerformanceTiming,
-      decodedBodySize: 0,
-      duration: relativePerformanceTiming.responseEnd,
-      name: window.location.href,
-      startTime: 0,
-      ...forcedAttributes,
+    const forcedAttributes = {
+      entryType: 'resource' as const,
+      initiatorType: FAKE_INITIAL_DOCUMENT,
+      traceId: getDocumentTraceId(document),
     }
-  }
-  return timing
+    if (supportPerformanceNavigationTimingEvent() && performance.getEntriesByType('navigation').length > 0) {
+      const navigationEntry = performance.getEntriesByType('navigation')[0]
+      timing = { ...navigationEntry.toJSON(), ...forcedAttributes }
+    } else {
+      const relativePerformanceTiming = computeRelativePerformanceTiming()
+      timing = {
+        ...relativePerformanceTiming,
+        decodedBodySize: 0,
+        duration: relativePerformanceTiming.responseEnd,
+        name: window.location.href,
+        startTime: 0,
+        ...forcedAttributes,
+      }
+    }
+    callback(timing)
+  })
 }
 
 function retrieveNavigationTimingWhenLoaded(callback: (timing: RumPerformanceNavigationTiming) => void) {
-  function sendFakeTiming() {
-    callback({
-      ...computeRelativePerformanceTiming(),
-      entryType: 'navigation',
-    })
-  }
+  runOnReadyState('complete', () => {
+    // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
+    setTimeout(
+      monitor(() => {
+        callback({
+          ...computeRelativePerformanceTiming(),
+          entryType: 'navigation',
+        })
+      })
+    )
+  })
+}
 
-  if (document.readyState === 'complete') {
-    sendFakeTiming()
+function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
+  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
+    callback()
   } else {
+    const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
     const listener = monitor(() => {
-      window.removeEventListener(DOM_EVENT.LOAD, listener)
-      // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-      setTimeout(monitor(sendFakeTiming))
+      window.removeEventListener(eventName, listener)
+      callback()
     })
 
-    window.addEventListener(DOM_EVENT.LOAD, listener)
+    window.addEventListener(eventName, listener)
   }
 }
 
