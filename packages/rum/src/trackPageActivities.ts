@@ -59,7 +59,7 @@ export function waitIdlePageActivity(
 export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
-  let firstRequestId: undefined | number
+  let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
   subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyPageActivity()))
@@ -76,8 +76,8 @@ export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observa
 
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, (startEvent) => {
-      if (firstRequestId === undefined) {
-        firstRequestId = startEvent.requestId
+      if (firstRequestIndex === undefined) {
+        firstRequestIndex = startEvent.requestIndex
       }
 
       pendingRequestsCount += 1
@@ -88,7 +88,7 @@ export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observa
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
       // If the request started before the tracking start, ignore it
-      if (firstRequestId === undefined || request.requestId < firstRequestId) {
+      if (firstRequestIndex === undefined || request.requestIndex < firstRequestIndex) {
         return
       }
       pendingRequestsCount -= 1

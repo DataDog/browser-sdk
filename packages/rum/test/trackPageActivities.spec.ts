@@ -102,14 +102,14 @@ describe('trackPagePageActivities', () => {
   })
 
   describe('requests', () => {
-    function makeFakeRequestCompleteEvent(requestId: number): RequestCompleteEvent {
-      return { requestId } as any
+    function makeFakeRequestCompleteEvent(requestIndex: number): RequestCompleteEvent {
+      return { requestIndex } as any
     }
     it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
+        requestIndex: 10,
       })
       expect(events).toEqual([{ isBusy: true }])
     })
@@ -118,7 +118,7 @@ describe('trackPagePageActivities', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
+        requestIndex: 10,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([{ isBusy: true }, { isBusy: false }])
@@ -135,10 +135,10 @@ describe('trackPagePageActivities', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 10,
+        requestIndex: 10,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-        requestId: 11,
+        requestIndex: 11,
       })
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(9))
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(11))
