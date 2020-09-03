@@ -1,12 +1,3 @@
-export interface ServerErrorMessage {
-  message: string
-  application_id: string
-  session_id: string
-  view: {
-    id: string
-  }
-}
-
 export interface ServerLogsMessage {
   message: string
   application_id: string
@@ -50,6 +41,10 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
     kind: 'fetch' | 'xhr' | 'document'
   }
   duration: number
+  _dd?: {
+    trace_id: string
+    span_id?: string
+  }
   user_action?: {
     id: string
   }

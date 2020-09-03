@@ -3,6 +3,7 @@ import { haveSameOrigin } from './urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
+  allowedTracingOrigins: [] as Array<string | RegExp>,
   isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
@@ -41,6 +42,7 @@ export interface UserConfiguration {
   applicationId?: string
   internalMonitoringApiKey?: string
   isCollectingError?: boolean
+  allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
   datacenter?: Datacenter // deprecated
@@ -74,8 +76,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   traceEndpoint: string
   internalMonitoringEndpoint?: string
   proxyHost?: string
-
-  service?: string
 
   isEnabled: (feature: string) => boolean
 
@@ -136,6 +136,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
+  }
+
+  if ('allowedTracingOrigins' in userConfiguration) {
+    configuration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins!
   }
 
   if ('isCollectingError' in userConfiguration) {

@@ -94,7 +94,7 @@ export function makeRumGlobal(stub: RumGlobal) {
       internalMonitoring
     )
 
-    const [requestStartObservable, requestCompleteObservable] = startRequestCollection()
+    const [requestStartObservable, requestCompleteObservable] = startRequestCollection(configuration)
     startPerformanceCollection(lifeCycle)
     startDOMMutationCollection(lifeCycle)
     if (configuration.trackInteractions) {
@@ -130,6 +130,14 @@ export function makeRumGlobal(stub: RumGlobal) {
     }
     if (userConfiguration.resourceSampleRate !== undefined && !isPercentage(userConfiguration.resourceSampleRate)) {
       console.error('Resource Sample Rate should be a number between 0 and 100')
+      return false
+    }
+    if (
+      Array.isArray(userConfiguration.allowedTracingOrigins) &&
+      userConfiguration.allowedTracingOrigins.length !== 0 &&
+      userConfiguration.service === undefined
+    ) {
+      console.error('Service need to be configured when tracing is enabled')
       return false
     }
     return true

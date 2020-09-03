@@ -8,6 +8,8 @@ import {
   flushEvents,
   makeXHRAndCollectEvent,
   renewSession,
+  sendFetch,
+  sendXhr,
   serverUrl,
   sortByMessage,
   startSpec,
@@ -16,7 +18,13 @@ import {
   waitServerRumEvents,
   withBrowserLogs,
 } from './helpers'
-import { isRumResourceEvent, isRumUserActionEvent, isRumViewEvent, ServerRumViewLoadingType } from './serverTypes'
+import {
+  isRumResourceEvent,
+  isRumUserActionEvent,
+  isRumViewEvent,
+  ServerRumResourceEvent,
+  ServerRumViewLoadingType,
+} from './serverTypes'
 
 beforeEach(startSpec)
 
@@ -296,4 +304,37 @@ describe('anchor navigation', () => {
     expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
     expect(viewEvents[1].view.loading_type).toBe(ServerRumViewLoadingType.ROUTE_CHANGE)
   })
+})
+
+describe('tracing', () => {
+  it('should trace xhr', async () => {
+    const rawHeaders = await sendXhr(`${serverUrl.sameOrigin}/headers`)
+    checkRequestHeaders(rawHeaders)
+    await flushEvents()
+    await checkTraceAssociatedToRumEvent()
+  })
+
+  it('should trace fetch', async () => {
+    const rawHeaders = await sendFetch(`${serverUrl.sameOrigin}/headers`)
+    checkRequestHeaders(rawHeaders)
+    await flushEvents()
+    await checkTraceAssociatedToRumEvent()
+  })
+
+  function checkRequestHeaders(rawHeaders: string) {
+    const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
+    expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
+    expect(headers['x-datadog-origin']).toBe('rum')
+  }
+
+  async function checkTraceAssociatedToRumEvent() {
+    const requests = (await waitServerRumEvents()).filter(
+      (rumEvent) =>
+        isRumResourceEvent(rumEvent) && (rumEvent.resource.kind === 'xhr' || rumEvent.resource.kind === 'fetch')
+    ) as ServerRumResourceEvent[]
+
+    expect(requests.length).toBe(1)
+    expect(requests[0]._dd!.trace_id).toMatch(/\d+/)
+    expect(requests[0]._dd!.span_id).toMatch(/\d+/)
+  }
 })

@@ -27,13 +27,6 @@ const internalMonitoringStub: InternalMonitoring = {
   setExternalContextProvider: () => undefined,
 }
 
-const configuration = {
-  ...DEFAULT_CONFIGURATION,
-  ...SPEC_ENDPOINTS,
-  isEnabled: () => true,
-  maxBatchSize: 1,
-}
-
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
@@ -78,6 +71,12 @@ export function setup(): TestSetupBuilder {
   let rumApi: RumApi
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
+  const configuration: Partial<Configuration> = {
+    ...DEFAULT_CONFIGURATION,
+    ...SPEC_ENDPOINTS,
+    isEnabled: () => true,
+    maxBatchSize: 1,
+  }
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {

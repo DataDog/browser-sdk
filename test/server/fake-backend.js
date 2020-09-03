@@ -40,6 +40,10 @@ module.exports = (app) => {
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
+  app.get('/headers', (req, res) => {
+    res.send(JSON.stringify(req.headers))
+  })
+
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
     res.redirect(`ok${redirectUri.search}`)

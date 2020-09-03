@@ -24,12 +24,14 @@
     <script type="text/javascript">
       window.DD_RUM &&
         window.DD_RUM.init({
+          allowedTracingOrigins: [window.location.origin],
           applicationId: 'rum',
           clientToken: 'key',
+          enableExperimentalFeatures: [],
           internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
           logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
           rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
-          enableExperimentalFeatures: [],
+          service: 'e2e',
           trackInteractions: true,
         })
     </script>

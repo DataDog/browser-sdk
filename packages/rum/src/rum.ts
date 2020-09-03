@@ -77,7 +77,10 @@ export interface RumResourceEvent {
   resource: {
     kind: ResourceKind
   }
-  traceId?: string
+  _dd?: {
+    traceId: string
+    spanId?: string // not available for initial document tracing
+  }
 }
 
 export interface RumErrorEvent {
@@ -442,6 +445,13 @@ function trackRequests(
     const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
     const startTime = timing ? timing.startTime : request.startTime
     handler(startTime, {
+      _dd:
+        request.traceId && request.spanId
+          ? {
+              spanId: request.spanId.toDecimalString(),
+              traceId: request.traceId.toDecimalString(),
+            }
+          : undefined,
       date: getTimestamp(startTime),
       duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
       evt: {
@@ -459,7 +469,6 @@ function trackRequests(
       resource: {
         kind,
       },
-      traceId: request.traceId,
     })
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
   })
@@ -500,6 +509,11 @@ export function handleResourceEntry(
     return
   }
   handler(entry.startTime, {
+    _dd: entry.traceId
+      ? {
+          traceId: entry.traceId,
+        }
+      : undefined,
     date: getTimestamp(entry.startTime),
     duration: computePerformanceResourceDuration(entry),
     evt: {
@@ -515,7 +529,6 @@ export function handleResourceEntry(
     resource: {
       kind: resourceKind,
     },
-    traceId: entry.traceId,
   })
   lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }
