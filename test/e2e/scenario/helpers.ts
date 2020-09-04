@@ -171,32 +171,41 @@ export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumReso
   return (await waitServerRumEvents()).filter(isRumResourceEvent).find((event) => event.http.url === url)
 }
 
-export async function sendXhr(url: string): Promise<string> {
-  // tslint:disable-next-line: no-shadowed-variable
-  return browserExecuteAsync((url, done) => {
-    let loaded = false
-    const xhr = new XMLHttpRequest()
-    xhr.addEventListener('load', () => (loaded = true))
-    xhr.open('GET', url)
-    xhr.send()
+export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
+  return browserExecuteAsync(
+    // tslint:disable-next-line: no-shadowed-variable
+    (url, headers, done) => {
+      let loaded = false
+      const xhr = new XMLHttpRequest()
+      xhr.addEventListener('load', () => (loaded = true))
+      xhr.open('GET', url)
+      headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
+      xhr.send()
 
-    const interval = setInterval(() => {
-      if (loaded) {
-        clearInterval(interval)
-        done(xhr.response as string)
-      }
-    }, 500)
-  }, url)
+      const interval = setInterval(() => {
+        if (loaded) {
+          clearInterval(interval)
+          done(xhr.response as string)
+        }
+      }, 500)
+    },
+    url,
+    headers
+  )
 }
 
-export async function sendFetch(url: string): Promise<string> {
-  // tslint:disable-next-line: no-shadowed-variable
-  return browserExecuteAsync((url, done) => {
-    window
-      .fetch(url)
-      .then((response) => response.text())
-      .then(done)
-  }, url)
+export async function sendFetch(url: string, headers: string[][] = []): Promise<string> {
+  return browserExecuteAsync(
+    // tslint:disable-next-line: no-shadowed-variable
+    (url, headers, done) => {
+      window
+        .fetch(url, { headers })
+        .then((response) => response.text())
+        .then(done)
+    },
+    url,
+    headers
+  )
 }
 
 export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {

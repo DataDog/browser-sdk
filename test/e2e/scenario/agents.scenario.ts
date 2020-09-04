@@ -308,14 +308,14 @@ describe('anchor navigation', () => {
 
 describe('tracing', () => {
   it('should trace xhr', async () => {
-    const rawHeaders = await sendXhr(`${serverUrl.sameOrigin}/headers`)
+    const rawHeaders = await sendXhr(`${serverUrl.sameOrigin}/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
     checkRequestHeaders(rawHeaders)
     await flushEvents()
     await checkTraceAssociatedToRumEvent()
   })
 
   it('should trace fetch', async () => {
-    const rawHeaders = await sendFetch(`${serverUrl.sameOrigin}/headers`)
+    const rawHeaders = await sendFetch(`${serverUrl.sameOrigin}/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
     checkRequestHeaders(rawHeaders)
     await flushEvents()
     await checkTraceAssociatedToRumEvent()
@@ -325,6 +325,7 @@ describe('tracing', () => {
     const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
+    expect(headers['x-foo']).toBe('bar, baz')
   }
 
   async function checkTraceAssociatedToRumEvent() {
