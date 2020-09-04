@@ -83,11 +83,8 @@ describe('tracer', () => {
       expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
     })
 
-    it('should preserve original request init and headers', () => {
-      const headers = new Headers()
-      headers.set('foo', 'bar')
-
-      const init = { headers, method: 'POST' }
+    it('should preserve original request init', () => {
+      const init = { method: 'POST' }
       const context: Partial<FetchContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
@@ -98,6 +95,20 @@ describe('tracer', () => {
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
+      expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
+    })
+
+    it('should preserve original headers object', () => {
+      const headers = new Headers()
+      headers.set('foo', 'bar')
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual({
@@ -112,6 +123,48 @@ describe('tracer', () => {
       expect(originalHeadersPlainObject).toEqual({
         foo: 'bar',
       })
+    })
+
+    it('should preserve original headers plain object', () => {
+      const headers = { foo: 'bar' }
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
+
+      expect(context.init!.headers).not.toBe(headers)
+      expect(context.init!.headers).toEqual({
+        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
+        foo: 'bar',
+      })
+
+      expect(headers).toEqual({
+        foo: 'bar',
+      })
+    })
+
+    it('should preserve original headers array', () => {
+      const headers = [['foo', 'bar']]
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
+
+      expect(context.init!.headers).not.toBe(headers)
+      expect(context.init!.headers).toEqual({
+        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
+        foo: 'bar',
+      })
+
+      expect(headers).toEqual([['foo', 'bar']])
     })
 
     it('should not trace request on disallowed domain', () => {
