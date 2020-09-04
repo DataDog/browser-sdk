@@ -60,7 +60,7 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      expect(startSpy).toHaveBeenCalledWith({ requestId: (jasmine.any(Number) as unknown) as number })
+      expect(startSpy).toHaveBeenCalledWith({ requestIndex: (jasmine.any(Number) as unknown) as number })
       done()
     })
   })
@@ -84,10 +84,10 @@ describe('collect fetch', () => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
-      const startRequestId = startSpy.calls.argsFor(0)[0].requestId
-      const completeRequestId = completeSpy.calls.argsFor(0)[0].requestId
+      const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
+      const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
 
-      expect(completeRequestId).toBe(startRequestId)
+      expect(completeRequestIndex).toBe(startRequestIndex)
       done()
     })
   })
@@ -124,7 +124,7 @@ describe('collect xhr', () => {
         xhr.send()
       },
       onComplete() {
-        expect(startSpy).toHaveBeenCalledWith({ requestId: (jasmine.any(Number) as unknown) as number })
+        expect(startSpy).toHaveBeenCalledWith({ requestIndex: (jasmine.any(Number) as unknown) as number })
         done()
       },
     })
@@ -156,10 +156,10 @@ describe('collect xhr', () => {
         xhr.send()
       },
       onComplete() {
-        const startRequestId = startSpy.calls.argsFor(0)[0].requestId
-        const completeRequestId = completeSpy.calls.argsFor(0)[0].requestId
+        const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
+        const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
 
-        expect(completeRequestId).toBe(startRequestId)
+        expect(completeRequestIndex).toBe(startRequestIndex)
         done()
       },
     })

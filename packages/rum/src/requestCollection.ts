@@ -10,11 +10,11 @@ import {
 import { startTracer, TraceIdentifier, Tracer } from './tracer'
 
 export interface RequestStartEvent {
-  requestId: number
+  requestIndex: number
 }
 
 export interface RequestCompleteEvent {
-  requestId: number
+  requestIndex: number
   type: RequestType
   method: string
   url: string
@@ -29,7 +29,7 @@ export interface RequestCompleteEvent {
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
-let nextRequestId = 1
+let nextRequestIndex = 1
 
 export function startRequestCollection(configuration: Configuration) {
   const requestObservables: RequestObservables = [new Observable(), new Observable()]
@@ -42,7 +42,7 @@ export function startRequestCollection(configuration: Configuration) {
 interface CustomXhrContext extends XhrContext {
   traceId: TraceIdentifier | undefined
   spanId: TraceIdentifier | undefined
-  requestId: number
+  requestIndex: number
 }
 
 export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
@@ -53,17 +53,17 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
       context.traceId = tracingResult.traceId
       context.spanId = tracingResult.spanId
     }
-    context.requestId = getNextRequestId()
+    context.requestIndex = getNextRequestIndex()
 
     requestStartObservable.notify({
-      requestId: context.requestId,
+      requestIndex: context.requestIndex,
     })
   })
   xhrProxy.onRequestComplete((context) => {
     requestCompleteObservable.notify({
       duration: context.duration,
       method: context.method,
-      requestId: context.requestId,
+      requestIndex: context.requestIndex,
       response: context.response,
       spanId: context.spanId,
       startTime: context.startTime,
@@ -79,7 +79,7 @@ export function trackXhr([requestStartObservable, requestCompleteObservable]: Re
 interface CustomFetchContext extends FetchContext {
   traceId: TraceIdentifier | undefined
   spanId: TraceIdentifier | undefined
-  requestId: number
+  requestIndex: number
 }
 
 export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
@@ -90,17 +90,17 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
       context.traceId = tracingResult.traceId
       context.spanId = tracingResult.spanId
     }
-    context.requestId = getNextRequestId()
+    context.requestIndex = getNextRequestIndex()
 
     requestStartObservable.notify({
-      requestId: context.requestId,
+      requestIndex: context.requestIndex,
     })
   })
   fetchProxy.onRequestComplete((context) => {
     requestCompleteObservable.notify({
       duration: context.duration,
       method: context.method,
-      requestId: context.requestId,
+      requestIndex: context.requestIndex,
       response: context.response,
       responseType: context.responseType,
       spanId: context.spanId,
@@ -114,8 +114,8 @@ export function trackFetch([requestStartObservable, requestCompleteObservable]: 
   return fetchProxy
 }
 
-function getNextRequestId() {
-  const result = nextRequestId
-  nextRequestId += 1
+function getNextRequestIndex() {
+  const result = nextRequestIndex
+  nextRequestIndex += 1
   return result
 }
