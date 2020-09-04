@@ -1,4 +1,11 @@
-import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
+import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
+  FetchContext,
+  isIE,
+  objectEntries,
+  XhrContext,
+} from '@datadog/browser-core'
 import { startTracer, TraceIdentifier } from '../src/tracer'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -80,14 +87,11 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(tracingResult).toBeDefined()
-      expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
     })
 
-    it('should preserve original request init and headers', () => {
-      const headers = new Headers()
-      headers.set('foo', 'bar')
-
-      const init = { headers, method: 'POST' }
+    it('should preserve original request init', () => {
+      const init = { method: 'POST' }
       const context: Partial<FetchContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
@@ -98,20 +102,72 @@ describe('tracer', () => {
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
+    })
+
+    it('should preserve original headers object', () => {
+      const headers = new Headers()
+      headers.set('foo', 'bar')
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(context.init!.headers).toEqual({
-        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
+      expect(toPlainObject(headers)).toEqual({
         foo: 'bar',
       })
+    })
 
-      const originalHeadersPlainObject: { [key: string]: string } = {}
-      headers.forEach((value, key) => {
-        originalHeadersPlainObject[key] = value
-      })
-      expect(originalHeadersPlainObject).toEqual({
+    it('should preserve original headers plain object', () => {
+      const headers = { foo: 'bar' }
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
+
+      expect(context.init!.headers).not.toBe(headers)
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
+
+      expect(headers).toEqual({
         foo: 'bar',
       })
+    })
+
+    it('should preserve original headers array', () => {
+      const headers = [['foo', 'bar'], ['foo', 'baz']]
+
+      const context: Partial<FetchContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers, method: 'POST' },
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      const tracingResult = tracer.traceFetch(context)!
+
+      expect(context.init!.headers).not.toBe(headers)
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ['foo', 'baz'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
+
+      expect(headers).toEqual([['foo', 'bar'], ['foo', 'baz']])
     })
 
     it('should not trace request on disallowed domain', () => {
@@ -148,6 +204,14 @@ describe('TraceIdentifier', () => {
   })
 })
 
+function toPlainObject(headers: Headers) {
+  const result: { [key: string]: string } = {}
+  headers.forEach((value, key) => {
+    result[key] = value
+  })
+  return result
+}
+
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return {
     'x-datadog-origin': 'rum',
@@ -156,4 +220,8 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
+}
+
+function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
+  return objectEntries(tracingHeadersFor(traceId, spanId)) as string[][]
 }
