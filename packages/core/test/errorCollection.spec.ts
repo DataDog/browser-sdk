@@ -1,5 +1,5 @@
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../src'
-import { Configuration } from '../src/configuration'
+import { Configuration, DEFAULT_CONFIGURATION } from '../src/configuration'
 import {
   ErrorMessage,
   ErrorOrigin,
@@ -10,10 +10,27 @@ import {
   stopConsoleTracking,
   stopRuntimeErrorTracking,
   trackNetworkError,
+  startErrorCollection,
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
 import { StackTrace } from '../src/tracekit'
 import { ONE_MINUTE } from '../src/utils'
+
+describe('error collection', () => {
+  const baseConfig = {
+    ...DEFAULT_CONFIGURATION,
+    logsEndpoint: 'string',
+    rumEndpoint: 'string',
+    traceEndpoint: 'string',
+    isEnabled: () => false,
+  };
+
+  it('returns a new observer for each time it is run', () => {
+    expect(
+      startErrorCollection(baseConfig) === startErrorCollection(baseConfig)
+    ).toBe(false)
+  });
+})
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
@@ -51,6 +68,36 @@ describe('console tracker', () => {
       startTime: jasmine.any(Number),
     })
   })
+
+  it('should notify all observers if ran with multiple observers', () => {
+    const notifyError2 = jasmine.createSpy()
+    const errorObservable2 = new Observable<ErrorMessage>()
+    errorObservable2.subscribe(notifyError2)
+    startConsoleTracking(errorObservable2)
+    const params = {
+      ...CONSOLE_CONTEXT,
+      message: 'console error: foo bar',
+      startTime: jasmine.any(Number),
+    }
+
+    console.error('foo', 'bar')
+
+    expect(notifyError).toHaveBeenCalledWith(params)
+    expect(notifyError2).toHaveBeenCalledWith(params)
+  })
+
+  it('should notify observers only once if ran with multiple observers', () => {
+    const notifyError2 = jasmine.createSpy()
+    const errorObservable2 = new Observable<ErrorMessage>()
+    errorObservable2.subscribe(notifyError2)
+    startConsoleTracking(errorObservable2)
+
+    console.error('foo', 'bar')
+
+    expect(notifyError.calls.count()).toEqual(1)
+    expect(notifyError2.calls.count()).toEqual(1)
+  })
+
 
   it('should stringify object parameters', () => {
     console.error('Hello', { foo: 'bar' })

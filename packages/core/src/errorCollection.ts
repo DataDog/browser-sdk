@@ -36,19 +36,15 @@ export enum ErrorOrigin {
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
-let filteredErrorsObservable: ErrorObservable
 
 export function startErrorCollection(configuration: Configuration) {
-  if (!filteredErrorsObservable) {
-    const errorObservable = new Observable<ErrorMessage>()
-    if (configuration.isCollectingError) {
-      trackNetworkError(configuration, errorObservable)
-      startConsoleTracking(errorObservable)
-      startRuntimeErrorTracking(errorObservable)
-    }
-    filteredErrorsObservable = filterErrors(configuration, errorObservable)
+  const errorObservable = new Observable<ErrorMessage>()
+  if (configuration.isCollectingError) {
+    trackNetworkError(configuration, errorObservable)
+    startConsoleTracking(errorObservable)
+    startRuntimeErrorTracking(errorObservable)
   }
-  return filteredErrorsObservable
+  return filterErrors(configuration, errorObservable)
 }
 
 export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {
@@ -78,9 +74,10 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
 let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
 
 export function startConsoleTracking(errorObservable: ErrorObservable) {
-  originalConsoleError = console.error
+  let currentConsoleError = console.error
+  originalConsoleError = originalConsoleError || currentConsoleError
   console.error = monitor((message?: any, ...optionalParams: any[]) => {
-    originalConsoleError.apply(console, [message, ...optionalParams])
+    currentConsoleError.apply(console, [message, ...optionalParams])
     errorObservable.notify({
       context: {
         error: {
@@ -92,7 +89,6 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     })
   })
 }
-
 export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
