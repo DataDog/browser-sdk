@@ -20,22 +20,11 @@ export function startTracer(configuration: Configuration): Tracer {
       injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
         context.init = { ...context.init }
 
-        const headers: { [key: string]: string } = {}
-        if (context.init.headers instanceof Headers) {
-          context.init.headers.forEach((value, key) => {
-            headers[key] = value
-          })
-        } else if (Array.isArray(context.init.headers)) {
-          context.init.headers.forEach(([key, value]) => {
-            headers[key] = value
-          })
-        } else if (context.init.headers) {
-          Object.keys(context.init.headers).forEach((key) => {
-            headers[key] = (context.init!.headers as Record<string, string>)[key]
-          })
-        }
-
-        context.init.headers = { ...headers, ...tracingHeaders }
+        const headers = new Headers(context.init.headers)
+        Object.keys(tracingHeaders).forEach((name) => {
+          headers.set(name, tracingHeaders[name])
+        })
+        context.init.headers = headers
       }),
     traceXhr: (context, xhr) =>
       injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {

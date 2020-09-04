@@ -80,7 +80,9 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(tracingResult).toBeDefined()
-      expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
+      expect(toPlainObject(context.init!.headers as Headers)).toEqual(
+        tracingHeadersFor(tracingResult.traceId, tracingResult.spanId)
+      )
     })
 
     it('should preserve original request init', () => {
@@ -95,7 +97,9 @@ describe('tracer', () => {
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
-      expect(context.init!.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
+      expect(toPlainObject(context.init!.headers as Headers)).toEqual(
+        tracingHeadersFor(tracingResult.traceId, tracingResult.spanId)
+      )
     })
 
     it('should preserve original headers object', () => {
@@ -111,16 +115,11 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(context.init!.headers).toEqual({
+      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
         ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
         foo: 'bar',
       })
-
-      const originalHeadersPlainObject: { [key: string]: string } = {}
-      headers.forEach((value, key) => {
-        originalHeadersPlainObject[key] = value
-      })
-      expect(originalHeadersPlainObject).toEqual({
+      expect(toPlainObject(headers)).toEqual({
         foo: 'bar',
       })
     })
@@ -137,7 +136,7 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(context.init!.headers).toEqual({
+      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
         ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
         foo: 'bar',
       })
@@ -148,7 +147,7 @@ describe('tracer', () => {
     })
 
     it('should preserve original headers array', () => {
-      const headers = [['foo', 'bar']]
+      const headers = [['foo', 'bar'], ['foo', 'baz']]
 
       const context: Partial<FetchContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
@@ -159,12 +158,12 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(context.init!.headers).toEqual({
+      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
         ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
-        foo: 'bar',
+        foo: 'bar, baz',
       })
 
-      expect(headers).toEqual([['foo', 'bar']])
+      expect(headers).toEqual([['foo', 'bar'], ['foo', 'baz']])
     })
 
     it('should not trace request on disallowed domain', () => {
@@ -200,6 +199,14 @@ describe('TraceIdentifier', () => {
     expect(traceIdentifier.toDecimalString()).toMatch(/^\d+$/)
   })
 })
+
+function toPlainObject(headers: Headers) {
+  const result: { [key: string]: string } = {}
+  headers.forEach((value, key) => {
+    result[key] = value
+  })
+  return result
+}
 
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return {
