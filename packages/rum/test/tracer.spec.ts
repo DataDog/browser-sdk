@@ -1,4 +1,11 @@
-import { Configuration, DEFAULT_CONFIGURATION, FetchContext, isIE, XhrContext } from '@datadog/browser-core'
+import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
+  FetchContext,
+  isIE,
+  objectEntries,
+  XhrContext,
+} from '@datadog/browser-core'
 import { startTracer, TraceIdentifier } from '../src/tracer'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -80,9 +87,7 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(tracingResult).toBeDefined()
-      expect(toPlainObject(context.init!.headers as Headers)).toEqual(
-        tracingHeadersFor(tracingResult.traceId, tracingResult.spanId)
-      )
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
     })
 
     it('should preserve original request init', () => {
@@ -97,9 +102,7 @@ describe('tracer', () => {
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
-      expect(toPlainObject(context.init!.headers as Headers)).toEqual(
-        tracingHeadersFor(tracingResult.traceId, tracingResult.spanId)
-      )
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
     })
 
     it('should preserve original headers object', () => {
@@ -115,10 +118,10 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
-        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
-        foo: 'bar',
-      })
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
       expect(toPlainObject(headers)).toEqual({
         foo: 'bar',
       })
@@ -136,10 +139,10 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
-        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
-        foo: 'bar',
-      })
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
 
       expect(headers).toEqual({
         foo: 'bar',
@@ -158,10 +161,11 @@ describe('tracer', () => {
       const tracingResult = tracer.traceFetch(context)!
 
       expect(context.init!.headers).not.toBe(headers)
-      expect(toPlainObject(context.init!.headers as Headers)).toEqual({
-        ...tracingHeadersFor(tracingResult.traceId, tracingResult.spanId),
-        foo: 'bar, baz',
-      })
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ['foo', 'baz'],
+        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+      ])
 
       expect(headers).toEqual([['foo', 'bar'], ['foo', 'baz']])
     })
@@ -216,4 +220,8 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
     'x-datadog-sampling-priority': '1',
     'x-datadog-trace-id': traceId.toDecimalString(),
   }
+}
+
+function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
+  return objectEntries(tracingHeadersFor(traceId, spanId)) as string[][]
 }
