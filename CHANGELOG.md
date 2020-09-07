@@ -14,6 +14,11 @@
 
 ---
 
+## v1.18.1
+
+- ✨ [RUMF-634] add resource id for traced request ([#515](https://github.com/DataDog/browser-sdk/pull/515))
+- 🐛 [RUMF-617] fix missing headers on traced requests ([#517](https://github.com/DataDog/browser-sdk/pull/517))
+
 ## v1.18.0
 
 - ✨ [RUMF-617] integrate tracing from rum ([#511](https://github.com/DataDog/browser-sdk/pull/511))
