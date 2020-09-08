@@ -45,6 +45,9 @@ datadogRum.init({
   - `env`: environment of the service
   - `version`: version of the service
   - `allowedTracingOrigins`: list of string or regexp of request origins in which to inject tracing headers
+  - `trackSessionAcrossSubdomains`: preserve session across subdomains of the same site
+  - `enforceSecureContextExecution`: use a secure session cookie
+  - `allowThirdPartyContextExecution`: use a secure cross-site session cookie
 
   ```
   init(configuration: {
@@ -59,6 +62,9 @@ datadogRum.init({
       env?: string,
       version?: string,
       allowedTracingOrigins?: Array<String|Regexp>,
+      trackSessionAcrossSubdomains?: boolean,
+      enforceSecureContextExecution?: boolean,
+      allowThirdPartyContextExecution?: boolean,
   })
   ```
 

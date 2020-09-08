@@ -1,3 +1,4 @@
+import { CookieOptions, getCurrentSite } from './cookie'
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
 import { haveSameOrigin } from './urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
@@ -36,6 +37,8 @@ export const DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
+const DEFAULT_COOKIE_OPTIONS: CookieOptions = { secure: false, thirdPartyContext: false }
+
 export interface UserConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
@@ -56,6 +59,10 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
+  allowThirdPartyContextExecution?: boolean
+  enforceSecureContextExecution?: boolean
+  trackSessionAcrossSubdomains?: boolean
+
   // only on staging build mode
   replica?: ReplicaUserConfiguration
 
@@ -71,6 +78,7 @@ interface ReplicaUserConfiguration {
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
+  cookieOptions: CookieOptions
   logsEndpoint: string
   rumEndpoint: string
   traceEndpoint: string
@@ -121,6 +129,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
+    cookieOptions: { ...DEFAULT_COOKIE_OPTIONS },
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
@@ -156,6 +165,18 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('trackInteractions' in userConfiguration) {
     configuration.trackInteractions = !!userConfiguration.trackInteractions
+  }
+
+  if ('allowThirdPartyContextExecution' in userConfiguration) {
+    configuration.cookieOptions.thirdPartyContext = !!userConfiguration.allowThirdPartyContextExecution
+  }
+
+  if ('enforceSecureContextExecution' in userConfiguration) {
+    configuration.cookieOptions.secure = !!userConfiguration.enforceSecureContextExecution
+  }
+
+  if ('trackSessionAcrossSubdomains' in userConfiguration && !!userConfiguration.trackSessionAcrossSubdomains) {
+    configuration.cookieOptions.domain = getCurrentSite()
   }
 
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {

@@ -45,6 +45,9 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   - `service`: name of the corresponding service
   - `env`: environment of the service
   - `version`: version of the service
+  - `trackSessionAcrossSubdomains`: preserve session across subdomains of the same site
+  - `enforceSecureContextExecution`: use a secure session cookie
+  - `allowThirdPartyContextExecution`: use a secure cross-site session cookie
 
   ```
   init(configuration: {
@@ -56,6 +59,9 @@ What we call `Context` is a map `{key: value}` that will be added to the message
       service?: string,
       env?: string,
       version?: string,
+      trackSessionAcrossSubdomains?: boolean,
+      enforceSecureContextExecution?: boolean,
+      allowThirdPartyContextExecution?: boolean,
   })
   ```
 

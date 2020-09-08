@@ -1,4 +1,4 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache } from './cookie'
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from './cookie'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
@@ -26,10 +26,11 @@ export interface SessionState {
  * Limit access to cookie to avoid performance issues
  */
 export function startSessionManagement<TrackingType extends string>(
+  options: CookieOptions,
   productKey: string,
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): Session<TrackingType> {
-  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME)
+  const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   tryOldCookiesMigration(sessionCookie)
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveActiveSession(sessionCookie).id

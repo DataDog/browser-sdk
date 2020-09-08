@@ -95,4 +95,43 @@ describe('rum entry', () => {
     rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
     expect(errorSpy).toHaveBeenCalledTimes(0)
   })
+
+  describe('cookie configuration', () => {
+    let cookieSetSpy: jasmine.Spy
+    beforeEach(() => {
+      // ensure to pass cookie authorized test
+      document.cookie = 'dd_cookie_test=test'
+      cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    })
+
+    it('should set cookie on same-site strict by default', () => {
+      rumGlobal.init({ clientToken: 'yes', applicationId: 'yes' })
+
+      expect(getSessionCookieCall(cookieSetSpy)).toMatch(/^_dd_s=[^;]*;expires=[^;]+;path=\/;samesite=strict$/)
+    })
+
+    it('should allow to enforce secure context execution', () => {
+      rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', enforceSecureContextExecution: true })
+
+      expect(getSessionCookieCall(cookieSetSpy)).toMatch(/^_dd_s=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/)
+    })
+
+    it('should allow to third party context execution', () => {
+      rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', allowThirdPartyContextExecution: true })
+
+      expect(getSessionCookieCall(cookieSetSpy)).toMatch(/^_dd_s=[^;]*;expires=[^;]+;path=\/;samesite=none;secure$/)
+    })
+
+    it('should allow to track session across subdomains', () => {
+      rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', trackSessionAcrossSubdomains: true })
+
+      expect(getSessionCookieCall(cookieSetSpy)).toMatch(
+        /^_dd_s=[^;]*;expires=[^;]+;path=\/;samesite=strict;domain=.*$/
+      )
+    })
+  })
 })
+
+function getSessionCookieCall(cookieSetSpy: jasmine.Spy) {
+  return cookieSetSpy.calls.argsFor(cookieSetSpy.calls.count() - 1)[0] as string
+}
