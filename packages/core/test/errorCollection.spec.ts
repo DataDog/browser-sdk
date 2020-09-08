@@ -1,3 +1,4 @@
+import { isLogsMessage, isRumErrorEvent, ServerEvent } from '../../../test/e2e/scenario/serverTypes'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../src'
 import { Configuration } from '../src/configuration'
 import {
@@ -13,7 +14,76 @@ import {
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
 import { StackTrace } from '../src/tracekit'
-import { ONE_MINUTE } from '../src/utils'
+import { noop, ONE_MINUTE } from '../src/utils'
+
+declare const __webpack_public_path__: string
+
+describe('error collection', () => {
+  fdescribe('logs and RUM SDKs are collecting errors independently', () => {
+    it('RUM SDK is collecting errors even if Logs SDK is not', (done) => {
+      withPage({
+        html: `
+         <html>
+           <head>
+             <script src="${__webpack_public_path__}logs-and-rum.js"></script>
+             <script>
+             DD_LOGS.init({
+               clientToken: 'xxx',
+               forwardErrorsToLogs: false
+             })
+             DD_RUM.init({
+               clientToken: 'xxx',
+               applicationId: 'xxx',
+             })
+             </script>
+           </head>
+           <body></body>
+         </html>
+      `,
+        onLoad(window) {
+          window.console.error('Foo')
+        },
+        onUnload(_, events) {
+          const errorEvents = events.filter(isRumErrorEvent)
+          expect(errorEvents.length).toBe(1)
+          expect(errorEvents[0].message).toBe('console error: Foo')
+          done()
+        },
+      })
+    })
+
+    it('Logs SDK is not collecting errors even if RUM SDK is initialized before', (done) => {
+      withPage({
+        html: `
+         <html>
+           <head>
+             <script src="${__webpack_public_path__}logs-and-rum.js"></script>
+             <script>
+             DD_RUM.init({
+               clientToken: 'xxx',
+               applicationId: 'xxx',
+             })
+             DD_LOGS.init({
+               clientToken: 'xxx',
+               forwardErrorsToLogs: false
+             })
+             </script>
+           </head>
+           <body></body>
+         </html>
+      `,
+        onLoad(window) {
+          window.console.error('Foo')
+        },
+        onUnload(_, events) {
+          const messages = events.filter(isLogsMessage)
+          expect(messages.length).toBe(0)
+          done()
+        },
+      })
+    })
+  })
+})
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
@@ -367,3 +437,47 @@ describe('error limitation', () => {
     expect(filteredSubscriber).toHaveBeenCalledTimes(7)
   })
 })
+
+function withPage({
+  html,
+  onLoad = noop,
+  onUnload = noop,
+}: {
+  html: string
+  onLoad?(window: Window, events: ServerEvent[]): void
+  onUnload?(window: Window, events: ServerEvent[]): void
+}) {
+  const iframe = document.createElement('iframe')
+  document.body.appendChild(iframe)
+
+  const events: ServerEvent[] = []
+
+  const iframeWindow = iframe.contentWindow!
+  const iframeDocument = iframeWindow.document
+  iframeDocument.open()
+
+  iframeWindow.addEventListener('transport-message', (event: unknown) => {
+    const message = (event as { detail: { message: ServerEvent } }).detail.message
+    events.push(message)
+  })
+
+  iframeWindow.addEventListener('load', () => {
+    // Run assertions asynchronously so events sent on 'load' are taken into account
+    setTimeout(() => {
+      onLoad(iframeWindow, events)
+      // Reload the page to trigger events sent at page unload
+      iframe.src = iframe.src
+    })
+  })
+
+  iframeWindow.addEventListener('unload', () => {
+    // Run assertions asynchronously so events sent on 'unload' are taken into account
+    setTimeout(() => {
+      onUnload(iframeWindow, events)
+      document.body.removeChild(iframe)
+    })
+  })
+
+  iframeDocument.write(html)
+  iframeDocument.close()
+}

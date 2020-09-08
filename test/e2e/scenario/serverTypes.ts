@@ -1,3 +1,5 @@
+export type ServerEvent = ServerRumEvent | ServerLogsMessage
+
 export interface ServerLogsMessage {
   message: string
   application_id: string
@@ -10,6 +12,10 @@ export interface ServerLogsMessage {
   http?: {
     status_code?: number
   }
+}
+
+export function isLogsMessage(event: ServerEvent): event is ServerLogsMessage {
+  return !('evt' in event)
 }
 
 export interface ServerRumEvent {
@@ -103,4 +109,18 @@ export interface ServerRumViewEvent extends ServerRumEvent {
 
 export function isRumViewEvent(event: ServerRumEvent): event is ServerRumViewEvent {
   return event.evt.category === 'view'
+}
+
+export interface ServerRumErrorEvent extends ServerRumEvent {
+  evt: {
+    category: 'error'
+  }
+  message: string
+  error: {
+    origin: string
+  }
+}
+
+export function isRumErrorEvent(event: ServerEvent): event is ServerRumErrorEvent {
+  return 'evt' in event && event.evt.category === 'error'
 }

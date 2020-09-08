@@ -13,7 +13,7 @@ const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
  * to be parsed correctly without content type header
  */
 export class HttpRequest {
-  constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
+  constructor(readonly endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
   send(data: string, size: number) {
     const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
@@ -85,6 +85,18 @@ export class Batch {
 
   private addOrUpdate(message: Context, key?: string) {
     const { processedMessage, messageBytesSize } = this.process(message)
+
+    if (process.env.NODE_ENV !== 'production') {
+      const customEvent = new CustomEvent('transport-message', {
+        detail: {
+          key,
+          message,
+          endpoint: this.request.endpointUrl,
+        },
+      })
+      window.dispatchEvent(customEvent)
+    }
+
     if (messageBytesSize >= this.maxMessageSize) {
       console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
       return

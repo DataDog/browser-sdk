@@ -1,7 +1,9 @@
 const webpackConfig = require('../../webpack.base')('development')
 const getTestReportDirectory = require('../getTestReportDirectory')
+const path = require('path')
 
 const reporters = ['spec']
+const ROOT_DIR = path.resolve(__dirname, '../..')
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -32,6 +34,14 @@ module.exports = {
   },
   singleRun: true,
   webpack: {
+    entry: {
+      rum: path.resolve(ROOT_DIR, 'packages/rum/src/rum.entry.ts'),
+      logs: path.resolve(ROOT_DIR, 'packages/logs/src/logs.entry.ts'),
+      'logs-and-rum': [
+        path.resolve(ROOT_DIR, 'packages/logs/src/logs.entry.ts'),
+        path.resolve(ROOT_DIR, 'packages/rum/src/rum.entry.ts'),
+      ],
+    },
     mode: webpackConfig.mode,
     stats: 'minimal',
     module: webpackConfig.module,
