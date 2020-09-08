@@ -1,4 +1,5 @@
-import { isLogsMessage, isRumErrorEvent, ServerEvent } from '../../../test/e2e/scenario/serverTypes'
+import { isLogsMessage, isRumErrorEvent } from '../../../test/e2e/scenario/serverTypes'
+import { withPage } from '../../../test/helpers/withPage'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../src'
 import { Configuration } from '../src/configuration'
 import {
@@ -14,12 +15,12 @@ import {
 } from '../src/errorCollection'
 import { Observable } from '../src/observable'
 import { StackTrace } from '../src/tracekit'
-import { noop, ONE_MINUTE } from '../src/utils'
+import { ONE_MINUTE } from '../src/utils'
 
 declare const __webpack_public_path__: string
 
 describe('error collection', () => {
-  fdescribe('logs and RUM SDKs are collecting errors independently', () => {
+  describe('logs and RUM SDKs are collecting errors independently', () => {
     it('RUM SDK is collecting errors even if Logs SDK is not', (done) => {
       withPage({
         html: `
@@ -437,47 +438,3 @@ describe('error limitation', () => {
     expect(filteredSubscriber).toHaveBeenCalledTimes(7)
   })
 })
-
-function withPage({
-  html,
-  onLoad = noop,
-  onUnload = noop,
-}: {
-  html: string
-  onLoad?(window: Window, events: ServerEvent[]): void
-  onUnload?(window: Window, events: ServerEvent[]): void
-}) {
-  const iframe = document.createElement('iframe')
-  document.body.appendChild(iframe)
-
-  const events: ServerEvent[] = []
-
-  const iframeWindow = iframe.contentWindow!
-  const iframeDocument = iframeWindow.document
-  iframeDocument.open()
-
-  iframeWindow.addEventListener('transport-message', (event: unknown) => {
-    const message = (event as { detail: { message: ServerEvent } }).detail.message
-    events.push(message)
-  })
-
-  iframeWindow.addEventListener('load', () => {
-    // Run assertions asynchronously so events sent on 'load' are taken into account
-    setTimeout(() => {
-      onLoad(iframeWindow, events)
-      // Reload the page to trigger events sent at page unload
-      iframe.src = iframe.src
-    })
-  })
-
-  iframeWindow.addEventListener('unload', () => {
-    // Run assertions asynchronously so events sent on 'unload' are taken into account
-    setTimeout(() => {
-      onUnload(iframeWindow, events)
-      document.body.removeChild(iframe)
-    })
-  })
-
-  iframeDocument.write(html)
-  iframeDocument.close()
-}

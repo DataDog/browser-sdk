@@ -57,8 +57,8 @@ export interface ServerRumResourceEvent extends ServerRumEvent {
   }
 }
 
-export function isRumResourceEvent(event: ServerRumEvent): event is ServerRumResourceEvent {
-  return event.evt.category === 'resource'
+export function isRumResourceEvent(event: ServerEvent): event is ServerRumResourceEvent {
+  return 'evt' in event && event.evt.category === 'resource'
 }
 
 export interface ServerRumUserActionEvent extends ServerRumEvent {
