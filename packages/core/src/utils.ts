@@ -14,6 +14,7 @@ export enum DOM_EVENT {
   SCROLL = 'scroll',
   TOUCH_START = 'touchstart',
   VISIBILITY_CHANGE = 'visibilitychange',
+  DOM_CONTENT_LOADED = 'DOMContentLoaded',
 }
 
 export enum ResourceKind {
