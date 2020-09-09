@@ -37,8 +37,6 @@ export const DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
-const DEFAULT_COOKIE_OPTIONS: CookieOptions = { secure: false, thirdPartyContext: false }
-
 export interface UserConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
@@ -59,8 +57,8 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
-  allowThirdPartyContextExecution?: boolean
-  enforceSecureContextExecution?: boolean
+  useCrossSiteSessionCookie?: boolean
+  useSecureSessionCookie?: boolean
   trackSessionAcrossSubdomains?: boolean
 
   // only on staging build mode
@@ -129,7 +127,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
-    cookieOptions: { ...DEFAULT_COOKIE_OPTIONS },
+    cookieOptions: {},
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
@@ -167,15 +165,11 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  if ('allowThirdPartyContextExecution' in userConfiguration) {
-    configuration.cookieOptions.thirdPartyContext = !!userConfiguration.allowThirdPartyContextExecution
-  }
+  configuration.cookieOptions.secure =
+    !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
+  configuration.cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
 
-  if ('enforceSecureContextExecution' in userConfiguration) {
-    configuration.cookieOptions.secure = !!userConfiguration.enforceSecureContextExecution
-  }
-
-  if ('trackSessionAcrossSubdomains' in userConfiguration && !!userConfiguration.trackSessionAcrossSubdomains) {
+  if (!!userConfiguration.trackSessionAcrossSubdomains) {
     configuration.cookieOptions.domain = getCurrentSite()
   }
 
