@@ -165,8 +165,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  configuration.cookieOptions.secure =
-    !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
+  configuration.cookieOptions.secure = mustUseSecureCookie(userConfiguration)
   configuration.cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
 
   if (!!userConfiguration.trackSessionAcrossSubdomains) {
@@ -236,4 +235,8 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
         haveSameOrigin(url, configuration.replica.rumEndpoint) ||
         haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint)))
   )
+}
+
+export function mustUseSecureCookie(userConfiguration: UserConfiguration) {
+  return !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
 }

@@ -10,6 +10,7 @@ import {
   makeGlobal,
   makeStub,
   monitor,
+  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
@@ -106,7 +107,7 @@ export function makeLogsGlobal(stub: LogsGlobal) {
       isCollectingError,
     }
     const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
-    const session = startLoggerSession(configuration, areCookiesAuthorized())
+    const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
     const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
     assign(global, globalApi)
     isAlreadyInitialized = true
