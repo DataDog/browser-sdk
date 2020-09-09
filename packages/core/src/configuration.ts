@@ -1,3 +1,4 @@
+import { CookieOptions, getCurrentSite } from './cookie'
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
 import { haveSameOrigin } from './urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
@@ -56,6 +57,10 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
+  useCrossSiteSessionCookie?: boolean
+  useSecureSessionCookie?: boolean
+  trackSessionAcrossSubdomains?: boolean
+
   // only on staging build mode
   replica?: ReplicaUserConfiguration
 
@@ -71,6 +76,7 @@ interface ReplicaUserConfiguration {
 }
 
 export type Configuration = typeof DEFAULT_CONFIGURATION & {
+  cookieOptions: CookieOptions
   logsEndpoint: string
   rumEndpoint: string
   traceEndpoint: string
@@ -121,6 +127,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
+    cookieOptions: {},
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
@@ -156,6 +163,13 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('trackInteractions' in userConfiguration) {
     configuration.trackInteractions = !!userConfiguration.trackInteractions
+  }
+
+  configuration.cookieOptions.secure = mustUseSecureCookie(userConfiguration)
+  configuration.cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
+
+  if (!!userConfiguration.trackSessionAcrossSubdomains) {
+    configuration.cookieOptions.domain = getCurrentSite()
   }
 
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
@@ -221,4 +235,8 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
         haveSameOrigin(url, configuration.replica.rumEndpoint) ||
         haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint)))
   )
+}
+
+export function mustUseSecureCookie(userConfiguration: UserConfiguration) {
+  return !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
 }

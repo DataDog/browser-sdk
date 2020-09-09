@@ -34,17 +34,25 @@ datadogRum.init({
 
 ## Public API
 
-- Init must be called to start the tracking. Configurable options:
+- Init must be called to start the tracking
 
-  - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
-  - `resourceSampleRate`: percentage of tracked sessions with resources collection.
-  - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
-  - `silentMultipleInit`: prevent logging errors while having multiple Init
-  - `trackInteractions`: collect actions initiated by user interactions
-  - `service`: name of the corresponding service
-  - `env`: environment of the service
-  - `version`: version of the service
-  - `allowedTracingOrigins`: list of string or regexp of request origins in which to inject tracing headers
+  - Configurable options:
+
+    - `sampleRate`: percentage of sessions to track. Only tracked sessions send rum events.
+    - `resourceSampleRate`: percentage of tracked sessions with resources collection.
+    - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
+    - `silentMultipleInit`: prevent logging errors while having multiple Init
+    - `trackInteractions`: collect actions initiated by user interactions
+    - `service`: name of the corresponding service
+    - `env`: environment of the service
+    - `version`: version of the service
+    - `allowedTracingOrigins`: list of string or regexp of request origins in which to inject tracing headers
+
+  - Options that must have matching configuration when also using `logs` SDK:
+
+    - `trackSessionAcrossSubdomains`: preserve session across subdomains of the same site (default: `false`)
+    - `useSecureSessionCookie`: use a secure session cookie. This will disable rum events sending on insecure (non-HTTPS) connections. (default: `false`)
+    - `allowThirdPartyContextExecution`: use a secure cross-site session cookie. This will allow the Logs SDK to run when the site is loaded from another one (ex: via an iframe). Implies `useSecureSessionCookie`. (default: `false`)
 
   ```
   init(configuration: {
@@ -59,6 +67,9 @@ datadogRum.init({
       env?: string,
       version?: string,
       allowedTracingOrigins?: Array<String|Regexp>,
+      trackSessionAcrossSubdomains?: boolean,
+      useSecureSessionCookie?: boolean,
+      useCrossSiteSessionCookie?: boolean,
   })
   ```
 

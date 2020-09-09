@@ -10,6 +10,7 @@ import {
   makeGlobal,
   makeStub,
   monitor,
+  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
 
@@ -74,7 +75,11 @@ export function makeRumGlobal(stub: RumGlobal) {
   let isAlreadyInitialized = false
 
   global.init = monitor((userConfiguration: RumUserConfiguration) => {
-    if (!checkCookiesAuthorized() || !checkIsNotLocalFile() || !canInitRum(userConfiguration)) {
+    if (
+      !checkCookiesAuthorized(mustUseSecureCookie(userConfiguration)) ||
+      !checkIsNotLocalFile() ||
+      !canInitRum(userConfiguration)
+    ) {
       return
     }
     if (userConfiguration.publicApiKey) {

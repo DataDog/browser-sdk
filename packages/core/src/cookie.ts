@@ -1,13 +1,19 @@
-import { findCommaSeparatedValue } from './utils'
+import { findCommaSeparatedValue, ONE_SECOND } from './utils'
 
-export const COOKIE_ACCESS_DELAY = 1000
+export const COOKIE_ACCESS_DELAY = ONE_SECOND
+
+export interface CookieOptions {
+  secure?: boolean
+  crossSite?: boolean
+  domain?: string
+}
 
 export interface CookieCache {
   get: () => string | undefined
   set: (value: string, expireDelay: number) => void
 }
 
-export function cacheCookieAccess(name: string): CookieCache {
+export function cacheCookieAccess(name: string, options: CookieOptions): CookieCache {
   let timeout: number
   let cache: string | undefined
   let hasCache = false
@@ -30,35 +36,56 @@ export function cacheCookieAccess(name: string): CookieCache {
       return cache
     },
     set: (value: string, expireDelay: number) => {
-      setCookie(name, value, expireDelay)
+      setCookie(name, value, expireDelay, options)
       cache = value
       cacheAccess()
     },
   }
 }
 
-export function setCookie(name: string, value: string, expireDelay: number) {
+export function setCookie(name: string, value: string, expireDelay: number, options?: CookieOptions) {
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
-  document.cookie = `${name}=${value};${expires};path=/;samesite=strict`
+  const sameSite = options && options.crossSite ? 'none' : 'strict'
+  const domain = options && options.domain ? `;domain=${options.domain}` : ''
+  const secure = options && options.secure ? `;secure` : ''
+  document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}`
 }
 
 export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
 }
 
-export function areCookiesAuthorized(): boolean {
+export function areCookiesAuthorized(useSecureCookie: boolean): boolean {
   if (document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {
-    const testCookieName = 'dd_rum_test'
+    const testCookieName = 'dd_cookie_test'
     const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, 1000)
+    setCookie(testCookieName, testCookieValue, ONE_SECOND, { secure: useSecureCookie })
     return getCookie(testCookieName) === testCookieValue
   } catch (error) {
     console.error(error)
     return false
   }
+}
+
+/**
+ * No API to retrieve it, number of levels for subdomain and suffix are unknown
+ * strategy: find the minimal domain on which cookies are allowed to be set
+ * https://web.dev/same-site-same-origin/#site
+ */
+export function getCurrentSite() {
+  const testCookieName = 'dd_site_test'
+  const testCookieValue = 'test'
+
+  const domainLevels = window.location.hostname.split('.')
+  let candidateDomain = domainLevels.pop()
+  while (domainLevels.length && !getCookie(testCookieName)) {
+    candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
+    setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+  }
+  return candidateDomain
 }

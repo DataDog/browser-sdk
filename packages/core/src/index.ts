@@ -1,4 +1,10 @@
-export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration, isIntakeRequest } from './configuration'
+export {
+  DEFAULT_CONFIGURATION,
+  Configuration,
+  UserConfiguration,
+  isIntakeRequest,
+  mustUseSecureCookie,
+} from './configuration'
 export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
 export {
   BuildEnv,

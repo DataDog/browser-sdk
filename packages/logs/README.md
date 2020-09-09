@@ -36,15 +36,23 @@ datadogLogs.init({
 
 What we call `Context` is a map `{key: value}` that will be added to the message context.
 
-- Init must be called before other methods. Configurable options:
+- Init must be called before other methods.
 
-  - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
-  - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
-  - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
-  - `silentMultipleInit`: prevent logging errors while having multiple Init
-  - `service`: name of the corresponding service
-  - `env`: environment of the service
-  - `version`: version of the service
+  - Configurable options:
+
+    - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+    - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
+    - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
+    - `silentMultipleInit`: prevent logging errors while having multiple Init
+    - `service`: name of the corresponding service
+    - `env`: environment of the service
+    - `version`: version of the service
+
+  - Options that must have matching configuration when using `rum` SDK:
+
+    - `trackSessionAcrossSubdomains`: preserve session across subdomains of the same site (default: `false`)
+    - `useSecureSessionCookie`: use a secure session cookie. This will disable session tracking on insecure (non-HTTPS) connections. (default: `false`)
+    - `useCrossSiteSessionCookie`: use a secure cross-site session cookie. This will allow the Logs SDK to run when the site is loaded from another one (ex: via an iframe). Implies `useSecureSessionCookie`. (default: `false`)
 
   ```
   init(configuration: {
@@ -56,6 +64,9 @@ What we call `Context` is a map `{key: value}` that will be added to the message
       service?: string,
       env?: string,
       version?: string,
+      trackSessionAcrossSubdomains?: boolean,
+      useSecureSessionCookie?: boolean,
+      useCrossSiteSessionCookie?: boolean,
   })
   ```
 
