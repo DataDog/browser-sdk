@@ -14,6 +14,12 @@
 
 ---
 
+## v1.19.0
+
+- 🐛 [RUMF-670] wait for the DOM to be ready before getting the trace id ([#525](https://github.com/DataDog/browser-sdk/pull/525))
+- ✨ [RUMF-648] add cookie configuration options ([#523](https://github.com/DataDog/browser-sdk/pull/523))
+- 🐛 [RUMF-684] fix error collection when Logs and RUM configuration diverge ([#522](https://github.com/DataDog/browser-sdk/pull/522))
+
 ## v1.18.1
 
 - ✨ [RUMF-634] add resource id for traced request ([#515](https://github.com/DataDog/browser-sdk/pull/515))
