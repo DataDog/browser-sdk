@@ -129,16 +129,16 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
 }
 
 function retrieveNavigationTimingWhenLoaded(callback: (timing: RumPerformanceNavigationTiming) => void) {
+  function sendFakeTiming() {
+    callback({
+      ...computeRelativePerformanceTiming(),
+      entryType: 'navigation',
+    })
+  }
+
   runOnReadyState('complete', () => {
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
-    setTimeout(
-      monitor(() => {
-        callback({
-          ...computeRelativePerformanceTiming(),
-          entryType: 'navigation',
-        })
-      })
-    )
+    setTimeout(monitor(sendFakeTiming))
   })
 }
 
