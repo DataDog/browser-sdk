@@ -16,7 +16,7 @@ export enum RumTrackingType {
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
-  const session = startSessionManagement(RUM_SESSION_KEY, (rawTrackingType) =>
+  const session = startSessionManagement(configuration.cookieOptions, RUM_SESSION_KEY, (rawTrackingType) =>
     computeSessionState(configuration, rawTrackingType)
   )
 
