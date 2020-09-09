@@ -1,7 +1,8 @@
 import { buildConfiguration, UserConfiguration } from './configuration'
 import { areCookiesAuthorized } from './cookie'
-import { startErrorCollection } from './errorCollection'
+import { ErrorMessage, startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
+import { Observable } from './observable'
 
 export function makeStub(methodName: string) {
   console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
@@ -47,7 +48,9 @@ export interface BuildEnv {
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
-  const errorObservable = startErrorCollection(configuration)
+  const errorObservable = configuration.isCollectingError
+    ? startErrorCollection(configuration)
+    : new Observable<ErrorMessage>()
 
   return {
     configuration,
