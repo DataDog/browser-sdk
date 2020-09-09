@@ -68,7 +68,7 @@ function supportPerformanceNavigationTimingEvent() {
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle) {
-  retrieveInitialDocumentResourceTiming((timing) => {
+  retrieveInitialDocumentResourceTimingWhenDomReady((timing) => {
     handleRumPerformanceEntry(lifeCycle, timing)
   })
 
@@ -101,7 +101,9 @@ export function startPerformanceCollection(lifeCycle: LifeCycle) {
   }
 }
 
-export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {
+export function retrieveInitialDocumentResourceTimingWhenDomReady(
+  callback: (timing: RumPerformanceResourceTiming) => void
+) {
   runOnReadyState('interactive', () => {
     let timing: RumPerformanceResourceTiming
 
