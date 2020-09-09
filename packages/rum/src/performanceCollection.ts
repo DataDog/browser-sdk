@@ -68,7 +68,7 @@ function supportPerformanceNavigationTimingEvent() {
 }
 
 export function startPerformanceCollection(lifeCycle: LifeCycle) {
-  retrieveInitialDocumentResourceTimingWhenDomReady((timing) => {
+  retrieveInitialDocumentResourceTiming((timing) => {
     handleRumPerformanceEntry(lifeCycle, timing)
   })
 
@@ -95,15 +95,13 @@ export function startPerformanceCollection(lifeCycle: LifeCycle) {
     }
   }
   if (!supportPerformanceNavigationTimingEvent()) {
-    retrieveNavigationTimingWhenLoaded((timing) => {
+    retrieveNavigationTiming((timing) => {
       handleRumPerformanceEntry(lifeCycle, timing)
     })
   }
 }
 
-export function retrieveInitialDocumentResourceTimingWhenDomReady(
-  callback: (timing: RumPerformanceResourceTiming) => void
-) {
+export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerformanceResourceTiming) => void) {
   runOnReadyState('interactive', () => {
     let timing: RumPerformanceResourceTiming
 
@@ -130,7 +128,7 @@ export function retrieveInitialDocumentResourceTimingWhenDomReady(
   })
 }
 
-function retrieveNavigationTimingWhenLoaded(callback: (timing: RumPerformanceNavigationTiming) => void) {
+function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTiming) => void) {
   function sendFakeTiming() {
     callback({
       ...computeRelativePerformanceTiming(),

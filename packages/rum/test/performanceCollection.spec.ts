@@ -1,7 +1,7 @@
 import { isIE } from '@datadog/browser-core'
 
 import { restorePageVisibility, setPageVisibility } from '../../core/src/specHelper'
-import { retrieveInitialDocumentResourceTimingWhenDomReady } from '../../rum/src/performanceCollection'
+import { retrieveInitialDocumentResourceTiming } from '../../rum/src/performanceCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 describe('rum first_contentful_paint', () => {
@@ -47,7 +47,7 @@ describe('rum initial document resource', () => {
   })
 
   it('creates a resource timing for the initial document', (done) => {
-    retrieveInitialDocumentResourceTimingWhenDomReady((timing) => {
+    retrieveInitialDocumentResourceTiming((timing) => {
       expect(timing.entryType).toBe('resource')
       expect(timing.duration).toBeGreaterThan(0)
       done()
