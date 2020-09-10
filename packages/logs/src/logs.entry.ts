@@ -64,6 +64,9 @@ const STUBBED_LOGS = {
   addLoggerGlobalContext(key: string, value: ContextValue) {
     makeStub('addLoggerGlobalContext')
   },
+  removeLoggerGlobalContext(key: string) {
+    makeStub('removeLoggerGlobalContext')
+  },
   setLoggerGlobalContext(context: Context) {
     makeStub('setLoggerGlobalContext')
   },

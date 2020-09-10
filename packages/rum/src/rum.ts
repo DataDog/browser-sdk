@@ -200,6 +200,9 @@ export function startRum(
       addRumGlobalContext: monitor((key: string, value: ContextValue) => {
         globalContext[key] = value
       }),
+      removeRumGlobalContext: monitor((key: string) => {
+        delete globalContext[key]
+      }),
       addUserAction: monitor((name: string, context?: Context) => {
         lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
       }),
