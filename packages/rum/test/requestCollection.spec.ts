@@ -1,10 +1,13 @@
 import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
   FetchProxy,
   FetchStub,
   FetchStubManager,
   isIE,
   Observable,
   RequestType,
+  SPEC_ENDPOINTS,
   stubFetch,
   withXhr,
 } from '@datadog/browser-core'
@@ -18,6 +21,12 @@ import {
   trackXhr,
 } from '../src/requestCollection'
 import { Tracer } from '../src/tracer'
+
+const configuration = {
+  ...DEFAULT_CONFIGURATION,
+  ...SPEC_ENDPOINTS,
+  maxBatchSize: 1,
+}
 
 describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -41,7 +50,7 @@ describe('collect fetch', () => {
     const tracerStub: Partial<Tracer> = {
       traceFetch: () => undefined,
     }
-    fetchProxy = trackFetch(requestObservables, tracerStub as Tracer)
+    fetchProxy = trackFetch(configuration as Configuration, requestObservables, tracerStub as Tracer)
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -91,6 +100,16 @@ describe('collect fetch', () => {
       done()
     })
   })
+
+  it('should ignore intake requests', (done) => {
+    fetchStub(SPEC_ENDPOINTS.rumEndpoint!).resolveWith({ status: 200, responseText: 'foo' })
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(startSpy).not.toHaveBeenCalled()
+      expect(completeSpy).not.toHaveBeenCalled()
+      done()
+    })
+  })
 })
 
 describe('collect xhr', () => {
@@ -110,7 +129,7 @@ describe('collect xhr', () => {
     const tracerStub: Partial<Tracer> = {
       traceXhr: () => undefined,
     }
-    trackXhr(requestObservables, tracerStub as Tracer)
+    trackXhr(configuration as Configuration, requestObservables, tracerStub as Tracer)
   })
 
   afterEach(() => {
@@ -160,6 +179,20 @@ describe('collect xhr', () => {
         const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
 
         expect(completeRequestIndex).toBe(startRequestIndex)
+        done()
+      },
+    })
+  })
+
+  it('should ignore intake requests', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', SPEC_ENDPOINTS.rumEndpoint!)
+        xhr.send()
+      },
+      onComplete() {
+        expect(startSpy).not.toHaveBeenCalled()
+        expect(completeSpy).not.toHaveBeenCalled()
         done()
       },
     })
