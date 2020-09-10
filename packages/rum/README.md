@@ -77,6 +77,7 @@ datadogRum.init({
 
   ```
   addRumGlobalContext (key: string, value: any)  # add one key-value to the default context
+  removeRumGlobalContext (key: string)  # remove one key of the default context
   setRumGlobalContext (context: Context)  # entirely replace the default context
   ```
 
