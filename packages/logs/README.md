@@ -98,6 +98,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 - Modify the global context for all loggers
   ```
   addLoggerGlobalContext (key: string, value: any)  # add one key-value to the default context
+  removeLoggerGlobalContext (key: string)  # remove one key of the default context
   setLoggerGlobalContext (context: Context)  # entirely replace the default context
   ```
 

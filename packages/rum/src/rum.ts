@@ -213,6 +213,9 @@ export function startRum(
           ) as Context) as unknown) as InternalContext
         }
       }),
+      removeRumGlobalContext: monitor((key: string) => {
+        delete globalContext[key]
+      }),
       setRumGlobalContext: monitor((context: Context) => {
         globalContext = context
       }),

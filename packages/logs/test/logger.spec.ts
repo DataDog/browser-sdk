@@ -101,6 +101,16 @@ describe('logger module', () => {
       expect(getLoggedMessage(server, 1).bar).toBeUndefined()
     })
 
+    it('should be removable', () => {
+      LOGS.addLoggerGlobalContext('bar', 'foo')
+      LOGS.logger.log('first')
+      LOGS.removeLoggerGlobalContext('bar')
+      LOGS.logger.log('second')
+
+      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
+      expect(getLoggedMessage(server, 1).bar).toBeUndefined()
+    })
+
     it('should be used by all loggers', () => {
       LOGS.setLoggerGlobalContext({ foo: 'bar' })
       const logger1 = LOGS.createLogger('1')
