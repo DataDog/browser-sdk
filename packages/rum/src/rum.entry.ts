@@ -103,7 +103,7 @@ export function makeRumGlobal(stub: RumGlobal) {
     )
 
     const [requestStartObservable, requestCompleteObservable] = startRequestCollection(configuration)
-    startPerformanceCollection(lifeCycle)
+    startPerformanceCollection(lifeCycle, configuration)
     startDOMMutationCollection(lifeCycle)
     if (configuration.trackInteractions) {
       startUserActionCollection(lifeCycle)

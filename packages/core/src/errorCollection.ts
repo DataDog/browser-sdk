@@ -1,10 +1,10 @@
 import { Configuration, isIntakeRequest } from './configuration'
-import { FetchContext, resetFetchProxy, startFetchProxy } from './fetchProxy'
+import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from './fetchProxy'
 import { monitor } from './internalMonitoring'
 import { Observable } from './observable'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
 import { jsonStringify, ONE_MINUTE, RequestType } from './utils'
-import { resetXhrProxy, startXhrProxy, XhrContext } from './xhrProxy'
+import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from './xhrProxy'
 
 export interface ErrorMessage {
   startTime: number
@@ -157,7 +157,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
-  function handleCompleteRequest(type: RequestType, request: XhrContext | FetchContext) {
+  function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
     if (!isIntakeRequest(request.url, configuration) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         context: {

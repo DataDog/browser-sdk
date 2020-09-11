@@ -1,4 +1,10 @@
-import { Configuration, FetchContext, getOrigin, objectEntries, XhrContext } from '@datadog/browser-core'
+import {
+  Configuration,
+  FetchCompleteContext,
+  getOrigin,
+  objectEntries,
+  XhrCompleteContext,
+} from '@datadog/browser-core'
 
 export interface TracingResult {
   spanId: TraceIdentifier
@@ -6,8 +12,8 @@ export interface TracingResult {
 }
 
 export interface Tracer {
-  traceFetch: (context: Partial<FetchContext>) => TracingResult | undefined
-  traceXhr: (context: Partial<XhrContext>, xhr: XMLHttpRequest) => TracingResult | undefined
+  traceFetch: (context: Partial<FetchCompleteContext>) => TracingResult | undefined
+  traceXhr: (context: Partial<XhrCompleteContext>, xhr: XMLHttpRequest) => TracingResult | undefined
 }
 
 interface TracingHeaders {

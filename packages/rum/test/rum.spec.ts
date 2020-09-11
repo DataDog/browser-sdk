@@ -57,55 +57,37 @@ describe('rum handle performance entry', () => {
     }
     handler = jasmine.createSpy()
   })
-  ;[
-    {
-      description: 'type resource + logs endpoint',
-      entry: { entryType: 'resource' as const, name: configuration.logsEndpoint },
-      expectEntryToBeAdded: false,
-    },
-    {
-      description: 'type resource + internal monitoring endpoint',
-      entry: { entryType: 'resource' as const, name: configuration.internalMonitoringEndpoint },
-      expectEntryToBeAdded: false,
-    },
-    {
-      description: 'type resource + rum endpoint',
-      entry: { entryType: 'resource' as const, name: configuration.rumEndpoint },
-      expectEntryToBeAdded: false,
-    },
-    {
-      description: 'type resource + trace endpoint',
-      entry: { entryType: 'resource' as const, name: configuration.traceEndpoint },
-      expectEntryToBeAdded: false,
-    },
-    {
-      description: 'type resource + valid request',
-      entry: { entryType: 'resource' as const, name: 'https://resource.com/valid' },
-      expectEntryToBeAdded: true,
-    },
-  ].forEach(
-    ({
-      description,
-      entry,
-      expectEntryToBeAdded,
-    }: {
-      description: string
-      entry: Partial<RumPerformanceResourceTiming>
-      expectEntryToBeAdded: boolean
-    }) => {
-      it(description, () => {
-        handleResourceEntry(
-          configuration as Configuration,
-          new LifeCycle(),
-          createMockSession(),
-          handler,
-          entry as RumPerformanceResourceTiming
-        )
-        const entryAdded = (handler as jasmine.Spy).calls.all().length !== 0
-        expect(entryAdded).toEqual(expectEntryToBeAdded)
-      })
-    }
-  )
+
+  it('should handle resource when session track resource', () => {
+    const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
+    const session = createMockSession()
+
+    handleResourceEntry(
+      configuration as Configuration,
+      new LifeCycle(),
+      session,
+      handler,
+      entry as RumPerformanceResourceTiming
+    )
+
+    expect(handler).toHaveBeenCalled()
+  })
+
+  it('should not handle resource when session does not track resource', () => {
+    const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
+    const session = createMockSession()
+    session.isTrackedWithResource = () => false
+
+    handleResourceEntry(
+      configuration as Configuration,
+      new LifeCycle(),
+      session,
+      handler,
+      entry as RumPerformanceResourceTiming
+    )
+
+    expect(handler).not.toHaveBeenCalled()
+  })
   ;[
     {
       description: 'file extension with query params',

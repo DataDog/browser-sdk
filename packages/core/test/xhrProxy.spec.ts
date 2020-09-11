@@ -1,8 +1,8 @@
 import { withXhr } from '../src'
-import { resetXhrProxy, startXhrProxy, XhrContext, XhrProxy } from '../src/xhrProxy'
+import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrProxy } from '../src/xhrProxy'
 
 describe('xhr proxy', () => {
-  let completeSpy: jasmine.Spy<(context: XhrContext) => void>
+  let completeSpy: jasmine.Spy<(context: XhrCompleteContext) => void>
   let xhrProxy: XhrProxy
 
   function getRequest(index: number) {
