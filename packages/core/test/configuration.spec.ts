@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter } from '../src'
+import { BuildEnv, BuildMode, Datacenter, isIntakeRequest } from '../src'
 import { buildConfiguration } from '../src/configuration'
 
 describe('configuration', () => {
@@ -128,6 +128,38 @@ describe('configuration', () => {
     it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
       const configuration = buildConfiguration({ clientToken, trackSessionAcrossSubdomains: true }, usEnv)
       expect(configuration.cookieOptions).toEqual({ secure: false, crossSite: false, domain: jasmine.any(String) })
+    })
+  })
+
+  describe('isIntakeRequest', () => {
+    it('should not detect non intake request', () => {
+      const configuration = buildConfiguration({ clientToken }, usEnv)
+      expect(isIntakeRequest('https://www.foo.com', configuration)).toBe(false)
+    })
+
+    it('should detect intake request', () => {
+      const configuration = buildConfiguration({ clientToken }, usEnv)
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+    })
+
+    it('should detect proxy intake request', () => {
+      const configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
+      expect(isIntakeRequest('https://www.proxy.com', configuration)).toBe(true)
+    })
+
+    it('should detect replica intake request', () => {
+      const configuration = buildConfiguration(
+        { clientToken, site: 'foo.com', replica: { clientToken } },
+        { ...usEnv, buildMode: BuildMode.STAGING }
+      )
+      expect(isIntakeRequest('https://rum-http-intake.logs.foo.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.foo.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com', configuration)).toBe(true)
+
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com', configuration)).toBe(true)
     })
   })
 })
