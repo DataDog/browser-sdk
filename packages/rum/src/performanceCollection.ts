@@ -1,8 +1,8 @@
-import { DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
+import { Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 
 import { getDocumentTraceId } from './getDocumentTraceId'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
+import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from './resourceUtils'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -67,17 +67,17 @@ function supportPerformanceNavigationTimingEvent() {
   )
 }
 
-export function startPerformanceCollection(lifeCycle: LifeCycle) {
+export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   retrieveInitialDocumentResourceTiming((timing) => {
-    handleRumPerformanceEntry(lifeCycle, timing)
+    handleRumPerformanceEntry(lifeCycle, configuration, timing)
   })
 
   if (supportPerformanceObject()) {
-    handlePerformanceEntries(lifeCycle, performance.getEntries())
+    handlePerformanceEntries(lifeCycle, configuration, performance.getEntries())
   }
   if ((window as BrowserWindow).PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(lifeCycle, entries.getEntries()))
+      monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
     const entryTypes = ['resource', 'navigation', 'longtask']
 
@@ -96,7 +96,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle) {
   }
   if (!supportPerformanceNavigationTimingEvent()) {
     retrieveNavigationTiming((timing) => {
-      handleRumPerformanceEntry(lifeCycle, timing)
+      handleRumPerformanceEntry(lifeCycle, configuration, timing)
     })
   }
 }
@@ -171,7 +171,7 @@ function computeRelativePerformanceTiming() {
   return result as PerformanceTiming
 }
 
-function handlePerformanceEntries(lifeCycle: LifeCycle, entries: PerformanceEntry[]) {
+function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configuration, entries: PerformanceEntry[]) {
   entries.forEach((entry) => {
     if (
       entry.entryType === 'resource' ||
@@ -179,16 +179,23 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, entries: PerformanceEntr
       entry.entryType === 'paint' ||
       entry.entryType === 'longtask'
     ) {
-      handleRumPerformanceEntry(lifeCycle, entry as RumPerformanceEntry)
+      handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
     }
   })
 }
 
-function handleRumPerformanceEntry(lifeCycle: LifeCycle, entry: RumPerformanceEntry) {
-  // Exclude incomplete navigation entries by filtering out those who have a loadEventEnd at 0
-  if (entry.entryType === 'navigation' && entry.loadEventEnd <= 0) {
+function handleRumPerformanceEntry(lifeCycle: LifeCycle, configuration: Configuration, entry: RumPerformanceEntry) {
+  if (isIncompleteNavigation(entry) || isForbiddenResource(configuration, entry)) {
     return
   }
 
   lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, entry)
+}
+
+function isIncompleteNavigation(entry: RumPerformanceEntry) {
+  return entry.entryType === 'navigation' && entry.loadEventEnd <= 0
+}
+
+function isForbiddenResource(configuration: Configuration, entry: RumPerformanceEntry) {
+  return entry.entryType === 'resource' && !isAllowedRequestUrl(configuration, entry.name)
 }

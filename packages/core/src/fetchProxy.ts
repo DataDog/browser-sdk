@@ -3,20 +3,19 @@ import { monitor } from './internalMonitoring'
 import { computeStackTrace } from './tracekit'
 import { normalizeUrl } from './urlPolyfill'
 
-export interface FetchProxy<T extends FetchContext = FetchContext> {
-  beforeSend: (callback: (context: Partial<T>) => void) => void
-  onRequestComplete: (callback: (context: T) => void) => void
+export interface FetchProxy<
+  StartContext extends FetchStartContext = FetchStartContext,
+  CompleteContext extends FetchCompleteContext = FetchCompleteContext
+> {
+  beforeSend: (callback: (context: StartContext) => void) => void
+  onRequestComplete: (callback: (context: CompleteContext) => void) => void
 }
 
-export interface FetchContext {
+export interface FetchStartContext {
   method: string
   startTime: number
   init?: RequestInit
-  duration: number
   url: string
-  status: number
-  response: string
-  responseType?: string
 
   /**
    * allow clients to enhance the context
@@ -24,24 +23,34 @@ export interface FetchContext {
   [key: string]: unknown
 }
 
+export interface FetchCompleteContext extends FetchStartContext {
+  duration: number
+  status: number
+  response: string
+  responseType?: string
+}
+
 let fetchProxySingleton: FetchProxy | undefined
 let originalFetch: typeof window.fetch
-const beforeSendCallbacks: Array<(fetch: Partial<FetchContext>) => void> = []
-const onRequestCompleteCallbacks: Array<(fetch: FetchContext) => void> = []
+const beforeSendCallbacks: Array<(fetch: FetchStartContext) => void> = []
+const onRequestCompleteCallbacks: Array<(fetch: FetchCompleteContext) => void> = []
 
-export function startFetchProxy<T extends FetchContext = FetchContext>(): FetchProxy<T> {
+export function startFetchProxy<
+  StartContext extends FetchStartContext = FetchStartContext,
+  CompleteContext extends FetchCompleteContext = FetchCompleteContext
+>(): FetchProxy<StartContext, CompleteContext> {
   if (!fetchProxySingleton) {
     proxyFetch()
     fetchProxySingleton = {
-      beforeSend(callback: (context: Partial<FetchContext>) => void) {
+      beforeSend(callback: (context: FetchStartContext) => void) {
         beforeSendCallbacks.push(callback)
       },
-      onRequestComplete(callback: (context: FetchContext) => void) {
+      onRequestComplete(callback: (context: FetchCompleteContext) => void) {
         onRequestCompleteCallbacks.push(callback)
       },
     }
   }
-  return fetchProxySingleton as FetchProxy<T>
+  return fetchProxySingleton as FetchProxy<StartContext, CompleteContext>
 }
 
 export function resetFetchProxy() {
@@ -66,7 +75,7 @@ function proxyFetch() {
     const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
     const startTime = performance.now()
 
-    const context: Partial<FetchContext> = {
+    const context: FetchStartContext = {
       init,
       method,
       startTime,
@@ -80,7 +89,7 @@ function proxyFetch() {
         context.status = 0
         context.response = toStackTraceString(computeStackTrace(response))
 
-        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchContext))
+        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
       } else if ('status' in response) {
         let text: string
         try {
@@ -92,7 +101,7 @@ function proxyFetch() {
         context.responseType = response.type
         context.status = response.status
 
-        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchContext))
+        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
       }
     }
     beforeSendCallbacks.forEach((callback) => callback(context))

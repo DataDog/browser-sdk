@@ -31,7 +31,6 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
-  shouldTrackResource,
 } from './resourceUtils'
 import { InternalContext, RumGlobal } from './rum.entry'
 import { RumSession } from './rumSession'
@@ -443,7 +442,7 @@ function trackRequests(
   handler: (startTime: number, event: RumResourceEvent) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    if (!shouldTrackResource(request.url, configuration, session)) {
+    if (!session.isTrackedWithResource()) {
       return
     }
     const timing = matchRequestTiming(request)
@@ -507,7 +506,7 @@ export function handleResourceEntry(
   handler: (startTime: number, event: RumResourceEvent) => void,
   entry: RumPerformanceResourceTiming
 ) {
-  if (!shouldTrackResource(entry.name, configuration, session)) {
+  if (!session.isTrackedWithResource()) {
     return
   }
   const resourceKind = computeResourceKind(entry)

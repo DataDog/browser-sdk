@@ -1,12 +1,15 @@
 import {
   Configuration,
-  FetchContext,
+  FetchCompleteContext,
+  FetchStartContext,
   Observable,
   RequestType,
   startFetchProxy,
   startXhrProxy,
-  XhrContext,
+  XhrCompleteContext,
+  XhrStartContext,
 } from '@datadog/browser-core'
+import { isAllowedRequestUrl } from './resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracer'
 
 export interface RequestStartEvent {
@@ -27,6 +30,12 @@ export interface RequestCompleteEvent {
   spanId?: TraceIdentifier
 }
 
+interface CustomContext {
+  traceId: TraceIdentifier | undefined
+  spanId: TraceIdentifier | undefined
+  requestIndex: number
+}
+
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
 let nextRequestIndex = 1
@@ -34,82 +43,86 @@ let nextRequestIndex = 1
 export function startRequestCollection(configuration: Configuration) {
   const requestObservables: RequestObservables = [new Observable(), new Observable()]
   const tracer = startTracer(configuration)
-  trackXhr(requestObservables, tracer)
-  trackFetch(requestObservables, tracer)
+  trackXhr(configuration, requestObservables, tracer)
+  trackFetch(configuration, requestObservables, tracer)
   return requestObservables
 }
 
-interface CustomXhrContext extends XhrContext {
-  traceId: TraceIdentifier | undefined
-  spanId: TraceIdentifier | undefined
-  requestIndex: number
-}
-
-export function trackXhr([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const xhrProxy = startXhrProxy<CustomXhrContext>()
+export function trackXhr(
+  configuration: Configuration,
+  [requestStartObservable, requestCompleteObservable]: RequestObservables,
+  tracer: Tracer
+) {
+  const xhrProxy = startXhrProxy<CustomContext & XhrStartContext, CustomContext & XhrCompleteContext>()
   xhrProxy.beforeSend((context, xhr) => {
-    const tracingResult = tracer.traceXhr(context, xhr)
-    if (tracingResult) {
-      context.traceId = tracingResult.traceId
-      context.spanId = tracingResult.spanId
-    }
-    context.requestIndex = getNextRequestIndex()
+    if (isAllowedRequestUrl(configuration, context.url)) {
+      const tracingResult = tracer.traceXhr(context, xhr)
+      if (tracingResult) {
+        context.traceId = tracingResult.traceId
+        context.spanId = tracingResult.spanId
+      }
+      context.requestIndex = getNextRequestIndex()
 
-    requestStartObservable.notify({
-      requestIndex: context.requestIndex,
-    })
+      requestStartObservable.notify({
+        requestIndex: context.requestIndex,
+      })
+    }
   })
   xhrProxy.onRequestComplete((context) => {
-    requestCompleteObservable.notify({
-      duration: context.duration,
-      method: context.method,
-      requestIndex: context.requestIndex,
-      response: context.response,
-      spanId: context.spanId,
-      startTime: context.startTime,
-      status: context.status,
-      traceId: context.traceId,
-      type: RequestType.XHR,
-      url: context.url,
-    })
+    if (isAllowedRequestUrl(configuration, context.url)) {
+      requestCompleteObservable.notify({
+        duration: context.duration,
+        method: context.method,
+        requestIndex: context.requestIndex,
+        response: context.response,
+        spanId: context.spanId,
+        startTime: context.startTime,
+        status: context.status,
+        traceId: context.traceId,
+        type: RequestType.XHR,
+        url: context.url,
+      })
+    }
   })
   return xhrProxy
 }
 
-interface CustomFetchContext extends FetchContext {
-  traceId: TraceIdentifier | undefined
-  spanId: TraceIdentifier | undefined
-  requestIndex: number
-}
-
-export function trackFetch([requestStartObservable, requestCompleteObservable]: RequestObservables, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<CustomFetchContext>()
+export function trackFetch(
+  configuration: Configuration,
+  [requestStartObservable, requestCompleteObservable]: RequestObservables,
+  tracer: Tracer
+) {
+  const fetchProxy = startFetchProxy<CustomContext & FetchStartContext, CustomContext & FetchCompleteContext>()
   fetchProxy.beforeSend((context) => {
-    const tracingResult = tracer.traceFetch(context)
-    if (tracingResult) {
-      context.traceId = tracingResult.traceId
-      context.spanId = tracingResult.spanId
-    }
-    context.requestIndex = getNextRequestIndex()
+    if (isAllowedRequestUrl(configuration, context.url)) {
+      const tracingResult = tracer.traceFetch(context)
+      if (tracingResult) {
+        context.traceId = tracingResult.traceId
+        context.spanId = tracingResult.spanId
+      }
+      context.requestIndex = getNextRequestIndex()
 
-    requestStartObservable.notify({
-      requestIndex: context.requestIndex,
-    })
+      requestStartObservable.notify({
+        requestIndex: context.requestIndex,
+      })
+    }
   })
   fetchProxy.onRequestComplete((context) => {
-    requestCompleteObservable.notify({
-      duration: context.duration,
-      method: context.method,
-      requestIndex: context.requestIndex,
-      response: context.response,
-      responseType: context.responseType,
-      spanId: context.spanId,
-      startTime: context.startTime,
-      status: context.status,
-      traceId: context.traceId,
-      type: RequestType.FETCH,
-      url: context.url,
-    })
+    if (isAllowedRequestUrl(configuration, context.url)) {
+      requestCompleteObservable.notify({
+        duration: context.duration,
+        method: context.method,
+        requestIndex: context.requestIndex,
+        response: context.response,
+        responseType: context.responseType,
+        spanId: context.spanId,
+        startTime: context.startTime,
+        status: context.status,
+        traceId: context.traceId,
+        type: RequestType.FETCH,
+        url: context.url,
+      })
+    }
   })
   return fetchProxy
 }

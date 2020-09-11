@@ -168,6 +168,6 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
   return undefined
 }
 
-export function shouldTrackResource(url: string, configuration: Configuration, session: RumSession) {
-  return session.isTrackedWithResource() && url && !isIntakeRequest(url, configuration)
+export function isAllowedRequestUrl(configuration: Configuration, url: string) {
+  return url && !isIntakeRequest(url, configuration)
 }
