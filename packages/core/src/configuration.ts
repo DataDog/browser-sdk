@@ -228,9 +228,8 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
     haveSameOrigin(url, configuration.logsEndpoint) ||
     haveSameOrigin(url, configuration.rumEndpoint) ||
     haveSameOrigin(url, configuration.traceEndpoint) ||
-    (configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
-    (configuration.proxyHost && haveSameOrigin(url, configuration.proxyHost)) ||
-    (configuration.replica &&
+    (!!configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
+    (!!configuration.replica &&
       (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
         haveSameOrigin(url, configuration.replica.rumEndpoint) ||
         haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint)))
