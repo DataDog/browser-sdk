@@ -47,6 +47,9 @@ const STUBBED_RUM = {
   addRumGlobalContext(key: string, value: ContextValue) {
     makeStub('addRumGlobalContext')
   },
+  removeRumGlobalContext(key: string) {
+    makeStub('removeRumGlobalContext')
+  },
   setRumGlobalContext(context: Context) {
     makeStub('setRumGlobalContext')
   },

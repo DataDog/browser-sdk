@@ -546,6 +546,19 @@ describe('rum global context', () => {
     expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
   })
 
+  it('should be removable', () => {
+    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    server.requests = []
+
+    rumApi.addRumGlobalContext('bar', 'foo')
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+    rumApi.removeRumGlobalContext('bar')
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
+
+    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
+    expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
+  })
+
   it('should not be automatically snake cased', () => {
     const { server, lifeCycle, rumApi } = setupBuilder.build()
     server.requests = []

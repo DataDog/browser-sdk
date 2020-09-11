@@ -90,6 +90,9 @@ export function startLogger(
   globalApi.addLoggerGlobalContext = (key: string, value: ContextValue) => {
     globalContext[key] = value
   }
+  globalApi.removeLoggerGlobalContext = (key: string) => {
+    delete globalContext[key]
+  }
   globalApi.createLogger = makeCreateLogger(session, handlers)
   globalApi.getLogger = getLogger
   globalApi.logger = logger
