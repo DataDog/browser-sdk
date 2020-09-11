@@ -1,10 +1,10 @@
 import {
   Configuration,
   DEFAULT_CONFIGURATION,
-  FetchContext,
+  FetchCompleteContext,
   isIE,
   objectEntries,
-  XhrContext,
+  XhrCompleteContext,
 } from '@datadog/browser-core'
 import { startTracer, TraceIdentifier } from '../src/tracer'
 import { setup, TestSetupBuilder } from './specHelper'
@@ -14,8 +14,8 @@ describe('tracer', () => {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
-  const ALLOWED_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: window.location.origin }
-  const DISALLOWED_DOMAIN_CONTEXT: Partial<XhrContext | FetchContext> = { url: 'http://foo.com' }
+  const ALLOWED_DOMAIN_CONTEXT: Partial<XhrCompleteContext | FetchCompleteContext> = { url: window.location.origin }
+  const DISALLOWED_DOMAIN_CONTEXT: Partial<XhrCompleteContext | FetchCompleteContext> = { url: 'http://foo.com' }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -81,7 +81,7 @@ describe('tracer', () => {
     })
 
     it('should return traceId and add tracing headers', () => {
-      const context: Partial<FetchContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<FetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
       const tracingResult = tracer.traceFetch(context)!
@@ -92,7 +92,7 @@ describe('tracer', () => {
 
     it('should preserve original request init', () => {
       const init = { method: 'POST' }
-      const context: Partial<FetchContext> = {
+      const context: Partial<FetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
       }
@@ -109,7 +109,7 @@ describe('tracer', () => {
       const headers = new Headers()
       headers.set('foo', 'bar')
 
-      const context: Partial<FetchContext> = {
+      const context: Partial<FetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -130,7 +130,7 @@ describe('tracer', () => {
     it('should preserve original headers plain object', () => {
       const headers = { foo: 'bar' }
 
-      const context: Partial<FetchContext> = {
+      const context: Partial<FetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -152,7 +152,7 @@ describe('tracer', () => {
     it('should preserve original headers array', () => {
       const headers = [['foo', 'bar'], ['foo', 'baz']]
 
-      const context: Partial<FetchContext> = {
+      const context: Partial<FetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -171,7 +171,7 @@ describe('tracer', () => {
     })
 
     it('should not trace request on disallowed domain', () => {
-      const context: Partial<FetchContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<FetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
       const tracingResult = tracer.traceFetch(context)
@@ -185,8 +185,8 @@ describe('tracer', () => {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
       }
-      const quxDomainContext: Partial<FetchContext> = { url: 'http://qux.com' }
-      const barDomainContext: Partial<FetchContext> = { url: 'http://bar.com' }
+      const quxDomainContext: Partial<FetchCompleteContext> = { url: 'http://qux.com' }
+      const barDomainContext: Partial<FetchCompleteContext> = { url: 'http://bar.com' }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 

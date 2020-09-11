@@ -1,11 +1,11 @@
-import { FetchContext, FetchProxy, resetFetchProxy, startFetchProxy } from '../src/fetchProxy'
+import { FetchCompleteContext, FetchProxy, resetFetchProxy, startFetchProxy } from '../src/fetchProxy'
 import { FetchStub, FetchStubManager, FetchStubPromise, isIE, stubFetch } from '../src/specHelper'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
   let fetchStub: (input: RequestInfo, init?: RequestInit) => FetchStubPromise
   let fetchStubManager: FetchStubManager
-  let completeSpy: jasmine.Spy<(context: FetchContext) => void>
+  let completeSpy: jasmine.Spy<(context: FetchCompleteContext) => void>
   let fetchProxy: FetchProxy
 
   function getRequest(index: number) {
