@@ -28,7 +28,7 @@ import { datadogRum } from '@datadog/browser-rum';
 datadogRum.init({
     applicationId: '<DATADOG_APPLICATION_ID>',
     clientToken: '<DATADOG_CLIENT_TOKEN>',
-    site: 'datadoghq.com',
+    site: '<DATADOG_SITE>',
 //  service: 'my-web-application',
 //  env: 'production',
 //  version: '1.0.0',
@@ -53,7 +53,7 @@ Add the generated code snippet to the head tag (in front of any other script tag
         window.DD_RUM.init({
             clientToken: '<CLIENT_TOKEN>',
             applicationId: '<APPLICATION_ID>',
-            site: 'datadoghq.com',
+            site: '<DATADOG_SITE>',
         //  service: 'my-web-application',
         //  env: 'production',
         //  version: '1.0.0',
@@ -63,11 +63,32 @@ Add the generated code snippet to the head tag (in front of any other script tag
 </script>
 ```
 
-**Note**: The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+**Notes**:
 
-**Note**: The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM SDK.
+- The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+- The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM SDK.
 
-## Initialization parameters
+### TypeScript
+
+Types are compatible with TypeScript >= 3.0. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
+
+```javascript
+import '@datadog/browser-rum/bundle/datadog-rum';
+
+window.DD_RUM.init({
+  applicationId: 'XXX',
+  clientToken: 'XXX',
+  site: 'datadoghq.com',
+  resourceSampleRate: 100,
+  sampleRate: 100
+});
+```
+
+## Configuration
+
+### Initialization parameters
+
+The following parameters are available:
 
 | Parameter            | Type    | Required | Default         | Description                                                                                                     |
 |----------------------|---------|----------|-----------------|-----------------------------------------------------------------------------------------------------------------|
@@ -158,22 +179,7 @@ parents) that will be used to name the action. Examples:
 </div>
 ```
 
-## TypeScript support
 
-Types are compatible with TypeScript >= 3.0.
-For earlier version, you can import js sources and use global variable to avoid any compilation issue:
-
-```
-import '@datadog/browser-rum/bundle/datadog-rum';
-
-window.DD_RUM.init({
-  applicationId: 'XXX',
-  clientToken: 'XXX',
-  site: 'datadoghq.com',
-  resourceSampleRate: 100,
-  sampleRate: 100
-});
-```
 
 [1]: https://app.datadoghq.com/rum/list
 [2]: /real_user_monitoring/data_collected/
