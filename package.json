@@ -62,7 +62,6 @@
     "karma-jasmine": "3.1.1",
     "karma-junit-reporter": "2.0.1",
     "karma-spec-reporter": "0.0.32",
-    "karma-typescript-preprocessor2": "1.2.1",
     "karma-webpack": "4.0.2",
     "lerna": "3.20.2",
     "morgan": "1.10.0",
