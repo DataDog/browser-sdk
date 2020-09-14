@@ -28,8 +28,7 @@
     "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'"
   },
   "resolutions": {
-    "acorn": "6.4.1",
-    "kind-of": "6.0.3"
+    "acorn": "6.4.1"
   },
   "devDependencies": {
     "@types/jasmine": "3.5.10",
