@@ -14,6 +14,12 @@
 
 ---
 
+## v1.20.0
+
+- 🐛 fix issue when using proxy ([#530](https://github.com/DataDog/browser-sdk/pull/530))
+- 🐛 [RUMF-650] exclude intake request from performance/request collection ([#528](https://github.com/DataDog/browser-sdk/pull/528))
+- ✨ [RUM] add new functionality to remove global context to SDK ([#527](https://github.com/DataDog/browser-sdk/pull/527))
+
 ## v1.19.0
 
 - 🐛 [RUMF-670] wait for the DOM to be ready before getting the trace id ([#525](https://github.com/DataDog/browser-sdk/pull/525))
