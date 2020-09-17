@@ -2,10 +2,10 @@ import { Configuration } from './configuration'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
-  internalMonitoringEndpoint: 'https://monitoring-intake.com/abcde?foo=bar',
-  logsEndpoint: 'https://logs-intake.com/abcde?foo=bar',
-  rumEndpoint: 'https://rum-intake.com/abcde?foo=bar',
-  traceEndpoint: 'https://trace-intake.com/abcde?foo=bar',
+  internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
+  logsEndpoint: 'https://logs-intake.com/v1/input/abcde?foo=bar',
+  rumEndpoint: 'https://rum-intake.com/v1/input/abcde?foo=bar',
+  traceEndpoint: 'https://trace-intake.com/v1/input/abcde?foo=bar',
 }
 
 export function isSafari() {

@@ -237,7 +237,7 @@ describe('network error tracker', () => {
   })
 
   it('should not track intake error', (done) => {
-    fetchStub('https://logs-intake.com/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+    fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).not.toHaveBeenCalled()

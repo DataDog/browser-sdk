@@ -29,7 +29,7 @@ describe('logger module', () => {
   const FAKE_DATE = 123456
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
-    logsEndpoint: 'https://localhost/log',
+    logsEndpoint: 'https://localhost/v1/input/log',
     maxBatchSize: 1,
   }
   let LOGS: LogsApi

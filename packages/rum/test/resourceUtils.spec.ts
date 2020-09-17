@@ -243,11 +243,15 @@ describe('shouldTrackResource', () => {
   }
 
   it('should exclude requests on intakes endpoints', () => {
-    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/abcde?foo=bar')).toBe(false)
+    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/v1/input/abcde?foo=bar')).toBe(
+      false
+    )
   })
 
   it('should exclude requests on intakes endpoints with different client parameters', () => {
-    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/wxyz?foo=qux')).toBe(false)
+    expect(isAllowedRequestUrl(configuration as Configuration, 'https://rum-intake.com/v1/input/wxyz?foo=qux')).toBe(
+      false
+    )
   })
 
   it('should allow requests on non intake domains', () => {
