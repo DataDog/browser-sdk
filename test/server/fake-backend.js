@@ -2,19 +2,19 @@ const url = require('url')
 const { clean } = require('./spec-contexts')
 
 module.exports = (app) => {
-  app.post('/logs', (req, res) => {
+  app.post('/v1/input/logs', (req, res) => {
     req.body.split('\n').forEach((log) => req.specContext.logs.push(JSON.parse(log)))
     res.send('ok')
   })
   app.get('/logs', (req, res) => send(res, req.specContext.logs))
 
-  app.post('/rum', (req, res) => {
+  app.post('/v1/input/rum', (req, res) => {
     req.body.split('\n').forEach((rumEvent) => req.specContext.rum.push(JSON.parse(rumEvent)))
     res.send('ok')
   })
   app.get('/rum', (req, res) => send(res, req.specContext.rum))
 
-  app.post('/monitoring', (req, res) => {
+  app.post('/v1/input/monitoring', (req, res) => {
     req.specContext.monitoring.push(JSON.parse(req.body))
     res.send('ok')
   })

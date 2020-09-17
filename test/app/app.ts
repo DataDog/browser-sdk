@@ -12,9 +12,9 @@ const specIdParam = /spec-id=\d+/.exec(search)![0]
 datadogLogs.init({
   clientToken: 'key',
   forwardErrorsToLogs: true,
-  internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
-  logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
-  rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
+  logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
+  rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
 })
 
 datadogRum.init({
@@ -22,9 +22,9 @@ datadogRum.init({
   applicationId: 'rum',
   clientToken: 'key',
   enableExperimentalFeatures: [],
-  internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
-  logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
-  rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+  internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
+  logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
+  rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
   service: 'e2e',
   trackInteractions: true,
 })

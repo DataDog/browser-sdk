@@ -13,9 +13,9 @@
       window.DD_LOGS &&
         window.DD_LOGS.init({
           clientToken: 'key',
-          internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
-          logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
-          rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+          internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
+          logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
+          rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
           forwardErrorsToLogs: true,
           enableExperimentalFeatures: [],
         })
@@ -28,9 +28,9 @@
           applicationId: 'rum',
           clientToken: 'key',
           enableExperimentalFeatures: [],
-          internalMonitoringEndpoint: `${intakeOrigin}/monitoring?${specIdParam}`,
-          logsEndpoint: `${intakeOrigin}/logs?${specIdParam}`,
-          rumEndpoint: `${intakeOrigin}/rum?${specIdParam}`,
+          internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
+          logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
+          rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
           service: 'e2e',
           trackInteractions: true,
         })

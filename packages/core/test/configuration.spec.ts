@@ -139,14 +139,21 @@ describe('configuration', () => {
 
     it('should detect intake request', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com', configuration)).toBe(true)
-      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(
+        true
+      )
     })
 
     it('should detect proxy intake request', () => {
       const configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
-      expect(isIntakeRequest('https://www.proxy.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://www.proxy.com/v1/input/xxx', configuration)).toBe(true)
+    })
+
+    it('should not detect request done on the same host as the proxy', () => {
+      const configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
+      expect(isIntakeRequest('https://www.proxy.com/foo', configuration)).toBe(false)
     })
 
     it('should detect replica intake request', () => {
@@ -154,12 +161,12 @@ describe('configuration', () => {
         { clientToken, site: 'foo.com', replica: { clientToken } },
         { ...usEnv, buildMode: BuildMode.STAGING }
       )
-      expect(isIntakeRequest('https://rum-http-intake.logs.foo.com', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.foo.com', configuration)).toBe(true)
-      expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://rum-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
 
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com', configuration)).toBe(true)
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
     })
   })
 })
