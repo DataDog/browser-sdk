@@ -1,6 +1,6 @@
 import { CookieOptions, getCurrentSite } from './cookie'
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
-import { haveSameOrigin } from './urlPolyfill'
+import { getPathName, haveSameOrigin } from './urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -225,14 +225,15 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
   return (
-    haveSameOrigin(url, configuration.logsEndpoint) ||
-    haveSameOrigin(url, configuration.rumEndpoint) ||
-    haveSameOrigin(url, configuration.traceEndpoint) ||
-    (!!configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
-    (!!configuration.replica &&
-      (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
-        haveSameOrigin(url, configuration.replica.rumEndpoint) ||
-        haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint)))
+    getPathName(url).indexOf('/v1/input/') === 0 &&
+    (haveSameOrigin(url, configuration.logsEndpoint) ||
+      haveSameOrigin(url, configuration.rumEndpoint) ||
+      haveSameOrigin(url, configuration.traceEndpoint) ||
+      (!!configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
+      (!!configuration.replica &&
+        (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
+          haveSameOrigin(url, configuration.replica.rumEndpoint) ||
+          haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint))))
   )
 }
 
