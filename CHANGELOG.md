@@ -14,6 +14,11 @@
 
 ---
 
+## v1.20.1
+
+- 🐛 [RUMF-699] allow collecting requests with the same origin as the proxy ([#537](https://github.com/DataDog/browser-sdk/pull/537))
+- 🐛 include sources in NPM backage ([#535](https://github.com/DataDog/browser-sdk/pull/535))
+
 ## v1.20.0
 
 - 🐛 fix issue when using proxy ([#530](https://github.com/DataDog/browser-sdk/pull/530))
