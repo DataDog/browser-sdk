@@ -150,9 +150,9 @@ The RUM library uses various strategies to automatically name click actions. If 
 ```
 
 [1]: https://app.datadoghq.com/rum/list
-[2]: /real_user_monitoring/data_collected/
-[3]: /real_user_monitoring/dashboards/
+[2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
+[3]: https://docs.datadoghq.com/real_user_monitoring/dashboards/
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
-[5]: /account_management/api-app-keys/#client-tokens
-[6]: /real_user_monitoring/data_collected/user_action/#automatic-collection-of-user-actions
-[7]: /real_user_monitoring/faq/proxy_rum_data/
+[5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
+[6]: https://docs.datadoghq.com/real_user_monitoring/data_collected/user_action/#automatic-collection-of-user-actions
+[7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
