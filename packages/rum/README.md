@@ -23,18 +23,18 @@ To set up Datadog RUM browser monitoring:
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
 
 ```javascript
-import { datadogRum } from '@datadog/browser-rum';
+import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-    applicationId: '<DATADOG_APPLICATION_ID>',
-    clientToken: '<DATADOG_CLIENT_TOKEN>',
-    site: '<DATADOG_SITE>',
-//  service: 'my-web-application',
-//  env: 'production',
-//  version: '1.0.0',
-    sampleRate: 100,
-    trackInteractions:true,
-});
+  applicationId: '<DATADOG_APPLICATION_ID>',
+  clientToken: '<DATADOG_CLIENT_TOKEN>',
+  site: '<DATADOG_SITE>',
+  //  service: 'my-web-application',
+  //  env: 'production',
+  //  version: '1.0.0',
+  sampleRate: 100,
+  trackInteractions: true,
+})
 ```
 
 **Note**: The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
@@ -44,22 +44,19 @@ datadogRum.init({
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
 ```html
-<script
-    src="https://www.datadoghq-browser-agent.com/datadog-rum.js"
-    type="text/javascript"
-></script>
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum.js" type="text/javascript"></script>
 <script>
-    window.DD_RUM &&
-        window.DD_RUM.init({
-            clientToken: '<CLIENT_TOKEN>',
-            applicationId: '<APPLICATION_ID>',
-            site: '<DATADOG_SITE>',
-        //  service: 'my-web-application',
-        //  env: 'production',
-        //  version: '1.0.0',
-            sampleRate: 100,
-            trackInteractions:true,
-        });
+  window.DD_RUM &&
+    window.DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      trackInteractions: true,
+    })
 </script>
 ```
 
@@ -73,15 +70,15 @@ Add the generated code snippet to the head tag (in front of any other script tag
 Types are compatible with TypeScript >= 3.0. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
 
 ```javascript
-import '@datadog/browser-rum/bundle/datadog-rum';
+import '@datadog/browser-rum/bundle/datadog-rum'
 
 window.DD_RUM.init({
   applicationId: 'XXX',
   clientToken: 'XXX',
   site: 'datadoghq.com',
   resourceSampleRate: 100,
-  sampleRate: 100
-});
+  sampleRate: 100,
+})
 ```
 
 ## Configuration
@@ -91,7 +88,7 @@ window.DD_RUM.init({
 The following parameters are available:
 
 | Parameter               | Type    | Required | Default         | Description                                                                                              |
-|-------------------------|---------|----------|-----------------|----------------------------------------------------------------------------------------------------------|
+| ----------------------- | ------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
 | `applicationId`         | String  | Yes      |                 | The RUM application ID.                                                                                  |
 | `clientToken`           | String  | Yes      |                 | A [Datadog client token][5].                                                                             |
 | `site`                  | String  | Yes      | `datadoghq.com` | The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`                           |
@@ -108,11 +105,10 @@ The following parameters are available:
 Options that must have matching configuration when also using `logs` SDK:
 
 | Parameter                         | Type    | Required | Default | Description                                                                                                                                                  |
-|-----------------------------------|---------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------------- | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trackSessionAcrossSubdomains`    | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
 | `useSecureSessionCookie`          | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                              |
 | `allowThirdPartyContextExecution` | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
-    
 
 #### Example
 
@@ -152,8 +148,6 @@ The RUM library uses various strategies to automatically name click actions. If 
   Enter a valid email address
 </div>
 ```
-
-
 
 [1]: https://app.datadoghq.com/rum/list
 [2]: /real_user_monitoring/data_collected/
