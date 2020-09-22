@@ -114,7 +114,7 @@ Options that must have matching configuration when also using `logs` SDK:
 | `allowThirdPartyContextExecution` | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
     
 
-#### Examples
+#### Example
 
 Init must be called to start the tracking:
 
@@ -135,20 +135,6 @@ init(configuration: {
     useSecureSessionCookie?: boolean,
     useCrossSiteSessionCookie?: boolean,
 })
-```
-
-Modify the global context:
-
-```
-addRumGlobalContext (key: string, value: any)  # add one key-value to the default context
-removeRumGlobalContext (key: string)  # remove one key of the default context
-setRumGlobalContext (context: Context)  # entirely replace the default context
-```
-
-Add a user action:
-
-```
-addUserAction (name: string, context: Context)
 ```
 
 ### Name click actions
