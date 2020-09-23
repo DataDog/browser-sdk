@@ -115,6 +115,20 @@ Error: foo
       window.onerror = jasmine.createSpy()
     })
 
+    describe('onunhandledrejection handler', () => {
+      it('should call the previously installed handler', (done) => {
+        window.onunhandledrejection = function(e: PromiseRejectionEvent) {
+          report.unsubscribe(subscriptionHandler!)
+          done()
+        };
+  
+        subscriptionHandler = (stack) => {}
+        report.subscribe(subscriptionHandler)
+        const error = new Error('I am unhandled');
+        Promise.reject(error);
+      })
+    })
+    
     describe('with undefined arguments', () => {
       it('should pass undefined:undefined', (done) => {
         // this is probably not good behavior;  just writing this test to verify

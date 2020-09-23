@@ -278,6 +278,9 @@ export const report = (function reportModuleWrapper() {
     const reason = e.reason || 'Empty reason'
     const stack = computeStackTrace(reason)
     notifyHandlers(stack, true, reason)
+    if (oldOnunhandledrejectionHandler) {
+      return oldOnunhandledrejectionHandler.apply(arguments as any)
+    }
   }
 
   /**
