@@ -83,6 +83,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
   proxyHost?: string
 
+  service?: string
+
   isEnabled: (feature: string) => boolean
 
   // only on staging build mode
@@ -134,6 +136,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     logsEndpoint: getEndpoint('browser', transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
     rumEndpoint: getEndpoint('rum', transportConfiguration),
+    service: userConfiguration.service,
     traceEndpoint: getEndpoint('public-trace', transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
