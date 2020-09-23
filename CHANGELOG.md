@@ -14,6 +14,10 @@
 
 ---
 
+## v1.21.0
+
+- [RUMF-620]: Dual-ship "service" as tag and attribute ([#543](https://github.com/DataDog/browser-sdk/pull/543))
+
 ## v1.20.1
 
 - 🐛 [RUMF-699] allow collecting requests with the same origin as the proxy ([#537](https://github.com/DataDog/browser-sdk/pull/537))
