@@ -31,5 +31,6 @@ export * from './utils'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy } from './xhrProxy'
 export { startFetchProxy, FetchCompleteContext, FetchStartContext, FetchProxy } from './fetchProxy'
+export { createBufferedFunction } from './bufferedFunction'
 
 export * from './specHelper'

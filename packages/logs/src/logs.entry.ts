@@ -6,6 +6,7 @@ import {
   Configuration,
   Context,
   ContextValue,
+  createBufferedFunction,
   deepMerge,
   ErrorMessage,
   ErrorObservable,
@@ -16,7 +17,6 @@ import {
   isPercentage,
   makeGlobal,
   monitor,
-  noop,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
@@ -72,13 +72,23 @@ export function makeLogsGlobal(
   let globalContext: Context = {}
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  function sendLog(message: LogsMessage) {
-    if (!batch || !session) {
-      throw new Error('unimplemented')
-    }
+  const sendLogBuffered = createBufferedFunction((message: LogsMessage, currentContext: Context) => {
     if (session.isTracked()) {
-      batch.add(message)
+      batch.add(message, currentContext)
     }
+  })
+
+  function sendLog(message: LogsMessage) {
+    sendLogBuffered(message, deepMerge(
+      {
+        date: Date.now(),
+        view: {
+          referrer: document.referrer,
+          url: window.location.href,
+        },
+      },
+      globalContext
+    ) as Context)
   }
 
   const logger = new Logger(sendLog)
@@ -108,7 +118,7 @@ export function makeLogsGlobal(
         () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
       )
 
-      batch = startLoggerBatch(configuration, session, () => globalContext)
+      batch = startLoggerBatch(configuration, session)
 
       initResult.errorObservable.subscribe((e: ErrorMessage) =>
         logger.error(
@@ -119,6 +129,8 @@ export function makeLogsGlobal(
           )
         )
       )
+
+      sendLogBuffered.enable()
 
       isAlreadyInitialized = true
     }),
@@ -167,7 +179,7 @@ export function makeLogsGlobal(
   }
 }
 
-function startLoggerBatch(configuration: Configuration, session: LoggerSession, globalContextProvider: () => Context) {
+function startLoggerBatch(configuration: Configuration, session: LoggerSession) {
   const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
 
   let replicaBatch: Batch | undefined
@@ -185,26 +197,21 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
     )
   }
 
-  function withContext(message: LogsMessage) {
+  function withInternalContext(message: LogsMessage, currentContext: Context) {
     return deepMerge(
       {
-        date: new Date().getTime(),
         service: configuration.service,
         session_id: session.getId(),
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
       },
-      globalContextProvider(),
+      currentContext,
       getRUMInternalContext() as Context,
       message
     ) as Context
   }
 
   return {
-    add(message: LogsMessage) {
-      const contextualizedMessage = withContext(message)
+    add(message: LogsMessage, currentContext: Context) {
+      const contextualizedMessage = withInternalContext(message, currentContext)
       primaryBatch.add(contextualizedMessage)
       if (replicaBatch) {
         replicaBatch.add(contextualizedMessage)

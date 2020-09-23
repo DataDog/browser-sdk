@@ -1,4 +1,11 @@
-import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, monitor, Observable } from '@datadog/browser-core'
+import {
+  Configuration,
+  DEFAULT_CONFIGURATION,
+  ErrorMessage,
+  monitor,
+  Observable,
+  ONE_SECOND,
+} from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { HandlerType, LogsMessage, StatusType } from '../src/logger'
@@ -7,6 +14,10 @@ import { LogsGlobal, makeLogsGlobal } from '../src/logs.entry'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
+  view: {
+    referrer: string
+    url: string
+  }
 }
 
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
@@ -130,6 +141,88 @@ describe('logs entry', () => {
       const errorSpy = spyOn(console, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
       expect(errorSpy).toHaveBeenCalledTimes(0)
+    })
+  })
+
+  describe('pre-init API usages', () => {
+    let server: sinon.SinonFakeServer
+    let LOGS: LogsGlobal
+
+    beforeEach(() => {
+      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      server = sinon.fakeServer.create()
+      jasmine.clock().install()
+      jasmine.clock().mockDate(new Date(FAKE_DATE))
+    })
+
+    afterEach(() => {
+      server.restore()
+      jasmine.clock().uninstall()
+    })
+
+    it('allows sending logs', () => {
+      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+      LOGS.logger.log('message')
+
+      expect(server.requests.length).toEqual(0)
+      LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+      expect(server.requests.length).toEqual(1)
+      expect(getLoggedMessage(server, 0).message).toBe('message')
+    })
+
+    it('allows creating logger', () => {
+      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+      const logger = LOGS.createLogger('1')
+      logger.error('message')
+
+      LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+      expect(getLoggedMessage(server, 0).logger!.name).toEqual('1')
+      expect(getLoggedMessage(server, 0).message).toEqual('message')
+    })
+
+    describe('save context when submiting a log', () => {
+      it('saves the date', () => {
+        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS.logger.log('message')
+        jasmine.clock().tick(ONE_SECOND)
+        LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+        expect(getLoggedMessage(server, 0).date).toEqual(Date.now() - ONE_SECOND)
+      })
+
+      it('saves the URL', () => {
+        const initialLocation = window.location.href
+        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS.logger.log('message')
+        location.href = `#tata${Math.random()}`
+        LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+        expect(getLoggedMessage(server, 0).view!.url).toEqual(initialLocation)
+      })
+
+      it('saves the global context', () => {
+        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS.addLoggerGlobalContext('foo', 'bar')
+        LOGS.logger.log('message')
+        LOGS.addLoggerGlobalContext('foo', 'baz')
+
+        LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+        expect(getLoggedMessage(server, 0).foo).toEqual('bar')
+      })
+    })
+
+    it('should not send logs if the session is not tracked', () => {
+      LOGS = makeLogsGlobalWithDefaults({ session: NOT_TRACKED_SESSION })
+      LOGS.logger.log('message')
+
+      expect(server.requests.length).toEqual(0)
+      LOGS.init({ clientToken: 'xxx', site: 'test' })
+
+      expect(server.requests.length).toEqual(0)
     })
   })
 
