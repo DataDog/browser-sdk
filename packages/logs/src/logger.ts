@@ -1,7 +1,5 @@
 import { Context, ContextValue, deepMerge, ErrorOrigin, monitored } from '@datadog/browser-core'
 
-import { LoggerSession } from './loggerSession'
-
 export enum StatusType {
   debug = 'debug',
   info = 'info',
@@ -31,22 +29,30 @@ export enum HandlerType {
 }
 
 export class Logger {
-  private handler: (message: LogsMessage) => void
-
   constructor(
-    private session: LoggerSession,
-    private handlers: { [key in HandlerType]: (message: LogsMessage) => void },
-    handler = HandlerType.http,
+    private sendLog: (message: LogsMessage) => void,
+    private handlerType = HandlerType.http,
     private level = StatusType.debug,
     private loggerContext: Context = {}
-  ) {
-    this.handler = this.handlers[handler]
-  }
+  ) {}
 
   @monitored
   log(message: string, messageContext = {}, status = StatusType.info) {
-    if (this.session.isTracked() && STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      this.handler({ message, status, ...(deepMerge({}, this.loggerContext, messageContext) as Context) })
+    if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
+      switch (this.handlerType) {
+        case HandlerType.http:
+          this.sendLog({
+            message,
+            status,
+            ...(deepMerge({}, this.loggerContext, messageContext) as Context),
+          })
+          break
+        case HandlerType.console:
+          console.log(`${status}: ${message}`)
+          break
+        case HandlerType.silent:
+          break
+      }
     }
   }
 
@@ -84,7 +90,7 @@ export class Logger {
   }
 
   setHandler(handler: HandlerType) {
-    this.handler = this.handlers[handler]
+    this.handlerType = handler
   }
 
   setLevel(level: StatusType) {

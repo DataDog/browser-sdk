@@ -66,13 +66,24 @@ export function makeLogsGlobal(
   let isAlreadyInitialized = false
 
   let session: LoggerSession
+  let batch: ReturnType<typeof startLoggerBatch>
+  let configuration: Configuration
 
-  let logger = new Logger(session!, {} as any)
   let globalContext: Context = {}
-  let handlers: { [key in HandlerType]: (message: LogsMessage) => void }
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  const logsGlobal = makeGlobal({
+  function sendLog(message: LogsMessage) {
+    if (!batch || !session) {
+      throw new Error('unimplemented')
+    }
+    if (session.isTracked()) {
+      batch.add(message)
+    }
+  }
+
+  const logger = new Logger(sendLog)
+
+  return makeGlobal({
     logger,
 
     init: monitor((userConfiguration: LogsUserConfiguration) => {
@@ -91,19 +102,14 @@ export function makeLogsGlobal(
       }
       const initResult = baseInit(logsUserConfiguration)
       session = initResult.session
-      const configuration = initResult.configuration
+      configuration = initResult.configuration
 
       initResult.internalMonitoring.setExternalContextProvider(
         () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
       )
 
-      const batch = startLoggerBatch(configuration, session, () => globalContext)
-      handlers = {
-        [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
-        [HandlerType.http]: (message: LogsMessage) => batch.add(message),
-        [HandlerType.silent]: noop,
-      }
-      logsGlobal.logger = logger = new Logger(session, handlers)
+      batch = startLoggerBatch(configuration, session, () => globalContext)
+
       initResult.errorObservable.subscribe((e: ErrorMessage) =>
         logger.error(
           e.message,
@@ -130,7 +136,7 @@ export function makeLogsGlobal(
     },
 
     createLogger: (name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(session, handlers, conf.handler, conf.level, {
+      customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
         ...conf.context,
         logger: { name },
       })
@@ -141,8 +147,6 @@ export function makeLogsGlobal(
       return customLoggers[name]
     },
   })
-
-  return logsGlobal
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
     if (isAlreadyInitialized) {
