@@ -57,7 +57,7 @@ export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
 }
 
-export function areCookiesAuthorized(useSecureCookie: boolean): boolean {
+export function areCookiesAuthorized(useSecureCookie?: boolean): boolean {
   if (document.cookie === undefined || document.cookie === null) {
     return false
   }

@@ -1,15 +1,9 @@
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  ErrorMessage,
-  InternalMonitoring,
-  Observable,
-  Omit,
-} from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, Observable } from '@datadog/browser-core'
 import sinon from 'sinon'
 
-import { HandlerType, LogsMessage, startLogger, STATUSES, StatusType } from '../src/logger'
-import { LogsGlobal } from '../src/logs.entry'
+import { HandlerType, LogsMessage, STATUSES, StatusType } from '../src/logger'
+import { LoggerSession } from '../src/loggerSession'
+import { LogsGlobal, makeLogsGlobal } from '../src/logs.entry'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -18,11 +12,7 @@ interface SentMessage extends LogsMessage {
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as SentMessage
 }
-const errorObservable = new Observable<ErrorMessage>()
-type LogsApi = Omit<LogsGlobal, 'init'>
-const internalMonitoring: InternalMonitoring = {
-  setExternalContextProvider: () => undefined,
-}
+const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
 describe('logger module', () => {
   const TRACKED_SESSION = { getId: () => undefined, isTracked: () => true }
@@ -33,11 +23,27 @@ describe('logger module', () => {
     maxBatchSize: 1,
     service: 'Service',
   }
-  let LOGS: LogsApi
+  let LOGS: LogsGlobal
   let server: sinon.SinonFakeServer
 
+  function makeLogsGlobalWithDefaults({
+    session: overrideSession,
+    configuration: overrideConfiguration,
+  }: {
+    session?: LoggerSession
+    configuration?: Partial<Configuration>
+  }) {
+    return makeLogsGlobal(() => ({
+      configuration: { ...(configuration as Configuration), ...overrideConfiguration },
+      errorObservable: new Observable<ErrorMessage>(),
+      internalMonitoring: { setExternalContextProvider: () => undefined },
+      session: overrideSession || TRACKED_SESSION,
+    }))
+  }
+
   beforeEach(() => {
-    LOGS = startLogger(errorObservable, configuration as Configuration, TRACKED_SESSION, internalMonitoring) as LogsApi
+    LOGS = makeLogsGlobalWithDefaults({})
+    LOGS.init(DEFAULT_INIT_CONFIGURATION)
     server = sinon.fakeServer.create()
     jasmine.clock().install()
     jasmine.clock().mockDate(new Date(FAKE_DATE))
@@ -50,7 +56,7 @@ describe('logger module', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      LOGS.logger.log('message', { foo: 'bar' }, 'warn')
+      LOGS.logger.log('message', { foo: 'bar' }, StatusType.warn)
 
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toEqual(configuration.logsEndpoint!)
@@ -275,8 +281,8 @@ describe('logger module', () => {
     })
 
     it('should all use the same batch', () => {
-      const customConf = { ...configuration, maxBatchSize: 3 }
-      LOGS = startLogger(errorObservable, customConf as Configuration, TRACKED_SESSION, internalMonitoring) as LogsApi
+      LOGS = makeLogsGlobalWithDefaults({ configuration: { maxBatchSize: 3 } })
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
       const logger1 = LOGS.createLogger('1')
       const logger2 = LOGS.createLogger('2')
@@ -291,12 +297,8 @@ describe('logger module', () => {
 
   describe('logger session', () => {
     it('when tracked should enable disable logging', () => {
-      LOGS = startLogger(
-        errorObservable,
-        configuration as Configuration,
-        TRACKED_SESSION,
-        internalMonitoring
-      ) as LogsApi
+      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
       LOGS.logger.log('message')
       expect(server.requests.length).toEqual(1)
@@ -307,12 +309,8 @@ describe('logger module', () => {
         getId: () => undefined,
         isTracked: () => false,
       }
-      LOGS = startLogger(
-        errorObservable,
-        configuration as Configuration,
-        notTrackedSession,
-        internalMonitoring
-      ) as LogsApi
+      LOGS = makeLogsGlobalWithDefaults({ session: notTrackedSession })
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
       LOGS.logger.log('message')
       expect(server.requests.length).toEqual(0)
@@ -324,7 +322,8 @@ describe('logger module', () => {
         getId: () => undefined,
         isTracked: () => isTracked,
       }
-      LOGS = startLogger(errorObservable, configuration as Configuration, session, internalMonitoring) as LogsApi
+      LOGS = makeLogsGlobalWithDefaults({ session })
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
       const testLogger = LOGS.createLogger('test')
 
       LOGS.logger.log('message')

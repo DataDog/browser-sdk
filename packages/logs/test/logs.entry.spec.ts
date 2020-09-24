@@ -1,4 +1,4 @@
-import { monitor, stopSessionManagement } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, ErrorMessage, monitor, Observable, stopSessionManagement } from '@datadog/browser-core'
 import { resetXhrProxy } from '../../core/src/xhrProxy'
 import { LogsGlobal } from '../src'
 import { makeLogsGlobal } from '../src/logs.entry'
@@ -7,14 +7,15 @@ describe('logs entry', () => {
   let logsGlobal: LogsGlobal
 
   beforeEach(() => {
-    logsGlobal = makeLogsGlobal({} as any)
-  })
-
-  afterEach(() => {
-    // some tests can successfully start the tracking
-    // stop behaviors that can pollute following tests
-    stopSessionManagement()
-    resetXhrProxy()
+    logsGlobal = makeLogsGlobal(() => ({
+      configuration: { ...DEFAULT_CONFIGURATION } as any,
+      errorObservable: new Observable<ErrorMessage>(),
+      internalMonitoring: { setExternalContextProvider: () => undefined },
+      session: {
+        getId: () => undefined,
+        isTracked: () => false,
+      },
+    }))
   })
 
   it('should set global with init', () => {

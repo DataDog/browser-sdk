@@ -1,88 +1,51 @@
 import {
   areCookiesAuthorized,
-  assign,
+  Batch,
   checkIsNotLocalFile,
   commonInit,
+  Configuration,
   Context,
   ContextValue,
+  deepMerge,
+  ErrorMessage,
+  ErrorObservable,
   getGlobalObject,
+  getTimestamp,
+  HttpRequest,
+  InternalMonitoring,
   isPercentage,
   makeGlobal,
-  makeStub,
   monitor,
-  mustUseSecureCookie,
+  noop,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
-import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
-import { startLoggerSession } from './loggerSession'
+import { HandlerType, Logger, LogsMessage, StatusType } from './logger'
+import { LoggerSession, startLoggerSession } from './loggerSession'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
 }
 
+export interface LoggerConfiguration {
+  level?: StatusType
+  handler?: HandlerType
+  context?: Context
+}
+
 export type Status = keyof typeof StatusType
 
-const STUBBED_LOGGER = {
-  debug(message: string, context?: Context) {
-    makeStub('logs.logger.debug')
-  },
-  error(message: string, context?: Context) {
-    makeStub('logs.logger.error')
-  },
-  info(message: string, context?: Context) {
-    makeStub('logs.logger.info')
-  },
-  log(message: string, context?: Context, status?: Status) {
-    makeStub('logs.logger.log')
-  },
-  warn(message: string, context?: Context) {
-    makeStub('logs.logger.warn')
-  },
-  setContext(context: Context) {
-    makeStub('logs.logger.setContext')
-  },
-  addContext(key: string, value: ContextValue) {
-    makeStub('logs.logger.addContext')
-  },
-  removeContext(key: string) {
-    makeStub('logs.logger.removeContext')
-  },
-  setHandler(handler: HandlerType) {
-    makeStub('logs.logger.setHandler')
-  },
-  setLevel(level: StatusType) {
-    makeStub('logs.logger.setLevel')
-  },
-}
+export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
-const STUBBED_LOGS = {
-  logger: STUBBED_LOGGER,
-  init(userConfiguration: LogsUserConfiguration) {
-    makeStub('core.init')
-  },
-  addLoggerGlobalContext(key: string, value: ContextValue) {
-    makeStub('addLoggerGlobalContext')
-  },
-  removeLoggerGlobalContext(key: string) {
-    makeStub('removeLoggerGlobalContext')
-  },
-  setLoggerGlobalContext(context: Context) {
-    makeStub('setLoggerGlobalContext')
-  },
-  createLogger(name: string, conf?: LoggerConfiguration): Logger {
-    makeStub('createLogger')
-    return STUBBED_LOGGER as Logger
-  },
-  getLogger(name: string): Logger | undefined {
-    makeStub('getLogger')
-    return undefined
-  },
-}
-
-export type LogsGlobal = typeof STUBBED_LOGS
-
-export const datadogLogs = makeLogsGlobal(STUBBED_LOGS)
+export const datadogLogs = makeLogsGlobal((userConfiguration) => {
+  const { configuration, errorObservable, internalMonitoring } = commonInit(userConfiguration, buildEnv)
+  return {
+    configuration,
+    errorObservable,
+    internalMonitoring,
+    session: startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions.secure)),
+  }
+})
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
@@ -90,31 +53,96 @@ interface BrowserWindow extends Window {
 
 getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
 
-export function makeLogsGlobal(stub: LogsGlobal) {
-  const global = makeGlobal(stub)
-
+export function makeLogsGlobal(
+  baseInit: (
+    configuration: LogsUserConfiguration
+  ) => {
+    session: LoggerSession
+    configuration: Configuration
+    errorObservable: ErrorObservable
+    internalMonitoring: InternalMonitoring
+  }
+) {
   let isAlreadyInitialized = false
 
-  global.init = monitor((userConfiguration: LogsUserConfiguration) => {
-    if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
-      return
-    }
+  let session: LoggerSession
 
-    if (userConfiguration.publicApiKey) {
-      userConfiguration.clientToken = userConfiguration.publicApiKey
-      console.warn('Public API Key is deprecated. Please use Client Token instead.')
-    }
-    const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
-    const logsUserConfiguration = {
-      ...userConfiguration,
-      isCollectingError,
-    }
-    const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
-    const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
-    const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
-    assign(global, globalApi)
-    isAlreadyInitialized = true
+  let logger = new Logger(session!, {} as any)
+  let globalContext: Context = {}
+  let handlers: { [key in HandlerType]: (message: LogsMessage) => void }
+  const customLoggers: { [name: string]: Logger | undefined } = {}
+
+  const logsGlobal = makeGlobal({
+    logger,
+
+    init: monitor((userConfiguration: LogsUserConfiguration) => {
+      if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
+        return
+      }
+
+      if (userConfiguration.publicApiKey) {
+        userConfiguration.clientToken = userConfiguration.publicApiKey
+        console.warn('Public API Key is deprecated. Please use Client Token instead.')
+      }
+      const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
+      const logsUserConfiguration = {
+        ...userConfiguration,
+        isCollectingError,
+      }
+      const initResult = baseInit(logsUserConfiguration)
+      session = initResult.session
+      const configuration = initResult.configuration
+
+      initResult.internalMonitoring.setExternalContextProvider(
+        () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
+      )
+
+      const batch = startLoggerBatch(configuration, session, () => globalContext)
+      handlers = {
+        [HandlerType.console]: (message: LogsMessage) => console.log(`${message.status}: ${message.message}`),
+        [HandlerType.http]: (message: LogsMessage) => batch.add(message),
+        [HandlerType.silent]: noop,
+      }
+      logsGlobal.logger = logger = new Logger(session, handlers)
+      initResult.errorObservable.subscribe((e: ErrorMessage) =>
+        logger.error(
+          e.message,
+          deepMerge(
+            ({ date: getTimestamp(e.startTime), ...e.context } as unknown) as Context,
+            getRUMInternalContext(e.startTime)
+          )
+        )
+      )
+
+      isAlreadyInitialized = true
+    }),
+
+    setLoggerGlobalContext: (context: Context) => {
+      globalContext = context
+    },
+
+    addLoggerGlobalContext: (key: string, value: ContextValue) => {
+      globalContext[key] = value
+    },
+
+    removeLoggerGlobalContext: (key: string) => {
+      delete globalContext[key]
+    },
+
+    createLogger: (name: string, conf: LoggerConfiguration = {}) => {
+      customLoggers[name] = new Logger(session, handlers, conf.handler, conf.level, {
+        ...conf.context,
+        logger: { name },
+      })
+      return customLoggers[name]!
+    },
+
+    getLogger: (name: string) => {
+      return customLoggers[name]
+    },
   })
+
+  return logsGlobal
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
     if (isAlreadyInitialized) {
@@ -133,6 +161,59 @@ export function makeLogsGlobal(stub: LogsGlobal) {
     }
     return true
   }
+}
 
-  return global
+function startLoggerBatch(configuration: Configuration, session: LoggerSession, globalContextProvider: () => Context) {
+  const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
+
+  let replicaBatch: Batch | undefined
+  if (configuration.replica !== undefined) {
+    replicaBatch = createLoggerBatch(configuration.replica.logsEndpoint)
+  }
+
+  function createLoggerBatch(endpointUrl: string) {
+    return new Batch(
+      new HttpRequest(endpointUrl, configuration.batchBytesLimit),
+      configuration.maxBatchSize,
+      configuration.batchBytesLimit,
+      configuration.maxMessageSize,
+      configuration.flushTimeout
+    )
+  }
+
+  function withContext(message: LogsMessage) {
+    return deepMerge(
+      {
+        date: new Date().getTime(),
+        service: configuration.service,
+        session_id: session.getId(),
+        view: {
+          referrer: document.referrer,
+          url: window.location.href,
+        },
+      },
+      globalContextProvider(),
+      getRUMInternalContext() as Context,
+      message
+    ) as Context
+  }
+
+  return {
+    add(message: LogsMessage) {
+      const contextualizedMessage = withContext(message)
+      primaryBatch.add(contextualizedMessage)
+      if (replicaBatch) {
+        replicaBatch.add(contextualizedMessage)
+      }
+    },
+  }
+}
+
+interface Rum {
+  getInternalContext: (startTime?: number) => Context
+}
+
+function getRUMInternalContext(startTime?: number): Context | undefined {
+  const rum = (window as any).DD_RUM as Rum
+  return rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
 }
