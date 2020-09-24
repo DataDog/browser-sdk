@@ -107,6 +107,7 @@ export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[])
   }, destination)
 }
 
+export function combine<A, B>(a: A, b: B): A & B
 export function combine<A, B, C>(a: A, b: B, c: C): A & B & C
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): A & B & C & D
 export function combine(a: Context, ...b: Context[]): Context {

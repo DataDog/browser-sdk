@@ -67,7 +67,7 @@ function startMonitoringBatch(configuration: Configuration) {
   }
 
   function withContext(message: MonitoringMessage) {
-    return utils.deepMerge(
+    return utils.combine(
       {
         date: new Date().getTime(),
         view: {
@@ -77,7 +77,7 @@ function startMonitoringBatch(configuration: Configuration) {
       },
       externalContextProvider !== undefined ? externalContextProvider() : {},
       message
-    ) as utils.Context
+    )
   }
 
   return {
