@@ -76,7 +76,8 @@ export function throttle(
 }
 
 const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
-const isContext = (value: ContextValue): value is Context => !Array.isArray(value) && typeof value === 'object'
+const isContext = (value: ContextValue): value is Context =>
+  !Array.isArray(value) && typeof value === 'object' && value !== null
 
 /**
  * Performs a deep merge of objects and arrays
@@ -162,7 +163,7 @@ export interface Context {
   [x: string]: ContextValue
 }
 
-export type ContextValue = string | number | boolean | Context | ContextArray | undefined
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null
 
 export interface ContextArray extends Array<ContextValue> {}
 
@@ -178,7 +179,7 @@ export function deepSnakeCase(candidate: ContextValue): ContextValue {
   if (Array.isArray(candidate)) {
     return candidate.map((value: ContextValue) => deepSnakeCase(value))
   }
-  if (typeof candidate === 'object') {
+  if (typeof candidate === 'object' && candidate !== null) {
     return withSnakeCaseKeys(candidate)
   }
   return candidate

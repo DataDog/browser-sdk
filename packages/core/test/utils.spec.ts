@@ -21,6 +21,11 @@ describe('utils', () => {
       expect(deepMerge({ a: 1 }, { a: undefined })).toEqual({ a: 1 })
     })
 
+    it('should support null values', () => {
+      // tslint:disable-next-line: no-null-keyword
+      expect(deepMerge({ a: {} }, { a: null })).toEqual({ a: null })
+    })
+
     it('should merge arrays', () => {
       const target = [{ a: 'target' }, 'extraString']
       const source = [{ b: 'source' }]
@@ -259,10 +264,14 @@ describe('utils', () => {
         withSnakeCaseKeys({
           camelCase: 1,
           nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
+          // tslint:disable-next-line: no-null-keyword
+          nullValue: null,
         })
       ).toEqual({
         camel_case: 1,
         nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
+        // tslint:disable-next-line: no-null-keyword
+        null_value: null,
       })
     })
   })
