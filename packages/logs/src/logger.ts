@@ -175,25 +175,25 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext = {}, status = StatusType.info) {
+  log(message: string, messageContext?: Context, status = StatusType.info) {
     if (this.session.isTracked() && STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       this.handler({ message, status, ...(deepMerge({}, this.loggerContext, messageContext) as Context) })
     }
   }
 
-  debug(message: string, messageContext = {}) {
+  debug(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.debug)
   }
 
-  info(message: string, messageContext = {}) {
+  info(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.info)
   }
 
-  warn(message: string, messageContext = {}) {
+  warn(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.warn)
   }
 
-  error(message: string, messageContext = {}) {
+  error(message: string, messageContext?: Context) {
     const errorOrigin = {
       error: {
         origin: ErrorOrigin.LOGGER,
