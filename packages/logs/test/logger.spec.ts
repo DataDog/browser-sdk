@@ -54,26 +54,6 @@ describe('logger module', () => {
     jasmine.clock().uninstall()
   })
 
-  describe('request', () => {
-    it('should send the needed data', () => {
-      LOGS.logger.log('message', { foo: 'bar' }, StatusType.warn)
-
-      expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toEqual(configuration.logsEndpoint!)
-      expect(getLoggedMessage(server, 0)).toEqual({
-        date: FAKE_DATE,
-        foo: 'bar',
-        message: 'message',
-        service: 'Service',
-        status: StatusType.warn,
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
-      })
-    })
-  })
-
   describe('log method', () => {
     it("'logger.log' should have info status by default", () => {
       LOGS.logger.log('message')
@@ -87,48 +67,6 @@ describe('logger module', () => {
 
         expect(getLoggedMessage(server, 0).status).toEqual(status)
       })
-    })
-  })
-
-  describe('global context', () => {
-    it('should be added to the request', () => {
-      LOGS.setLoggerGlobalContext({ bar: 'foo' })
-      LOGS.logger.log('message')
-
-      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
-    })
-
-    it('should be updatable', () => {
-      LOGS.setLoggerGlobalContext({ bar: 'foo' })
-      LOGS.logger.log('first')
-      LOGS.setLoggerGlobalContext({ foo: 'bar' })
-      LOGS.logger.log('second')
-
-      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
-      expect(getLoggedMessage(server, 1).foo).toEqual('bar')
-      expect(getLoggedMessage(server, 1).bar).toBeUndefined()
-    })
-
-    it('should be removable', () => {
-      LOGS.addLoggerGlobalContext('bar', 'foo')
-      LOGS.logger.log('first')
-      LOGS.removeLoggerGlobalContext('bar')
-      LOGS.logger.log('second')
-
-      expect(getLoggedMessage(server, 0).bar).toEqual('foo')
-      expect(getLoggedMessage(server, 1).bar).toBeUndefined()
-    })
-
-    it('should be used by all loggers', () => {
-      LOGS.setLoggerGlobalContext({ foo: 'bar' })
-      const logger1 = LOGS.createLogger('1')
-      const logger2 = LOGS.createLogger('2')
-
-      logger1.debug('message')
-      logger2.debug('message')
-
-      expect(getLoggedMessage(server, 0).foo).toEqual('bar')
-      expect(getLoggedMessage(server, 1).foo).toEqual('bar')
     })
   })
 
@@ -226,119 +164,6 @@ describe('logger module', () => {
 
       expect(server.requests.length).toEqual(0)
       expect(console.log).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('custom loggers', () => {
-    beforeEach(() => {
-      spyOn(console, 'log')
-    })
-
-    it('should have a default configuration', () => {
-      const logger = LOGS.createLogger('foo')
-
-      logger.debug('message')
-
-      expect(server.requests.length).toEqual(1)
-      expect(console.log).not.toHaveBeenCalled()
-    })
-
-    it('should be configurable', () => {
-      const logger = LOGS.createLogger('foo', {
-        handler: HandlerType.console,
-        level: StatusType.info,
-      })
-
-      logger.debug('ignored')
-      logger.error('message')
-
-      expect(server.requests.length).toEqual(0)
-      expect(console.log).toHaveBeenCalledWith('error: message')
-    })
-
-    it('should have their name in their context', () => {
-      const logger = LOGS.createLogger('foo')
-
-      logger.debug('message')
-
-      expect(getLoggedMessage(server, 0).logger!.name).toEqual('foo')
-    })
-
-    it('could be initialized with a dedicated context', () => {
-      const logger = LOGS.createLogger('context', {
-        context: { foo: 'bar' },
-      })
-
-      logger.debug('message')
-
-      expect(getLoggedMessage(server, 0).foo).toEqual('bar')
-    })
-
-    it('should be retrievable', () => {
-      const logger = LOGS.createLogger('foo')
-      expect(LOGS.getLogger('foo')).toEqual(logger)
-      expect(LOGS.getLogger('bar')).toBeUndefined()
-    })
-
-    it('should all use the same batch', () => {
-      LOGS = makeLogsGlobalWithDefaults({ configuration: { maxBatchSize: 3 } })
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-      const logger1 = LOGS.createLogger('1')
-      const logger2 = LOGS.createLogger('2')
-
-      LOGS.logger.debug('message from default')
-      logger1.debug('message from logger1')
-      logger2.debug('message from logger2')
-
-      expect(server.requests.length).toEqual(1)
-    })
-  })
-
-  describe('logger session', () => {
-    it('when tracked should enable disable logging', () => {
-      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-      LOGS.logger.log('message')
-      expect(server.requests.length).toEqual(1)
-    })
-
-    it('when not tracked should disable logging', () => {
-      const notTrackedSession = {
-        getId: () => undefined,
-        isTracked: () => false,
-      }
-      LOGS = makeLogsGlobalWithDefaults({ session: notTrackedSession })
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-      LOGS.logger.log('message')
-      expect(server.requests.length).toEqual(0)
-    })
-
-    it('when type change should enable/disable existing loggers', () => {
-      let isTracked = true
-      const session = {
-        getId: () => undefined,
-        isTracked: () => isTracked,
-      }
-      LOGS = makeLogsGlobalWithDefaults({ session })
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-      const testLogger = LOGS.createLogger('test')
-
-      LOGS.logger.log('message')
-      testLogger.log('message')
-      expect(server.requests.length).toEqual(2)
-
-      isTracked = false
-      LOGS.logger.log('message')
-      testLogger.log('message')
-      expect(server.requests.length).toEqual(2)
-
-      isTracked = true
-      LOGS.logger.log('message')
-      testLogger.log('message')
-      expect(server.requests.length).toEqual(4)
     })
   })
 })
