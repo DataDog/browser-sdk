@@ -111,8 +111,8 @@ function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): Conte
 export function combine<A, B>(a: A, b: B): A & B
 export function combine<A, B, C>(a: A, b: B, c: C): A & B & C
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): A & B & C & D
-export function combine(a: Context, ...b: Context[]): Context {
-  return deepMerge(a, ...b) as Context
+export function combine(destination: Context, ...toMerge: Array<Context | null>): Context {
+  return deepMerge(destination, ...toMerge.filter((object) => object !== null)) as Context
 }
 
 interface Assignable {

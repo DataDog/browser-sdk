@@ -21,9 +21,14 @@ describe('utils', () => {
       expect(combine({ a: 1 }, { a: undefined as number | undefined })).toEqual({ a: 1 })
     })
 
-    it('should support null values', () => {
+    it('should replace a sub-value with null', () => {
       // tslint:disable-next-line: no-null-keyword
       expect(combine({ a: {} }, { a: null as any })).toEqual({ a: null })
+    })
+
+    it('should ignore null arguments', () => {
+      // tslint:disable-next-line: no-null-keyword
+      expect(combine({ a: 1 }, null)).toEqual({ a: 1 })
     })
 
     it('should merge arrays', () => {
