@@ -88,7 +88,7 @@ const isContext = (value: ContextValue): value is Context =>
  * ⚠️ this method does not prevent infinite loops while merging circular references ⚠️
  *
  */
-export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
+function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
   return toMerge.reduce((value1: ContextValue, value2: ContextValue): ContextValue => {
     if (isContextArray(value1) && isContextArray(value2)) {
       return [...Array(Math.max(value1.length, value2.length))].map((_, index) =>
