@@ -2,12 +2,12 @@ import {
   areCookiesAuthorized,
   Batch,
   checkIsNotLocalFile,
+  combine,
   commonInit,
   Configuration,
   Context,
   ContextValue,
   createBufferedFunction,
-  deepMerge,
   ErrorMessage,
   ErrorObservable,
   getGlobalObject,
@@ -79,16 +79,19 @@ export function makeLogsGlobal(
   })
 
   function sendLog(message: LogsMessage) {
-    sendLogBuffered(message, deepMerge(
-      {
-        date: Date.now(),
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
+    sendLogBuffered(
+      message,
+      combine(
+        {
+          date: Date.now(),
+          view: {
+            referrer: document.referrer,
+            url: window.location.href,
+          },
         },
-      },
-      globalContext
-    ) as Context)
+        globalContext
+      )
+    )
   }
 
   const logger = new Logger(sendLog)
@@ -114,8 +117,8 @@ export function makeLogsGlobal(
       session = initResult.session
       configuration = initResult.configuration
 
-      initResult.internalMonitoring.setExternalContextProvider(
-        () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
+      initResult.internalMonitoring.setExternalContextProvider(() =>
+        combine({ session_id: session.getId() }, globalContext, getRUMInternalContext())
       )
 
       batch = startLoggerBatch(configuration, session)
@@ -123,10 +126,7 @@ export function makeLogsGlobal(
       initResult.errorObservable.subscribe((e: ErrorMessage) =>
         logger.error(
           e.message,
-          deepMerge(
-            ({ date: getTimestamp(e.startTime), ...e.context } as unknown) as Context,
-            getRUMInternalContext(e.startTime)
-          )
+          combine({ date: getTimestamp(e.startTime), ...e.context }, getRUMInternalContext(e.startTime))
         )
       )
 
@@ -198,15 +198,15 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession) 
   }
 
   function withInternalContext(message: LogsMessage, currentContext: Context) {
-    return deepMerge(
+    return combine(
       {
         service: configuration.service,
         session_id: session.getId(),
       },
       currentContext,
-      getRUMInternalContext() as Context,
+      getRUMInternalContext(),
       message
-    ) as Context
+    )
   }
 
   return {
