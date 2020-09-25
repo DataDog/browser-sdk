@@ -1,4 +1,4 @@
-import { Context, ContextValue, deepMerge, ErrorOrigin, monitored } from '@datadog/browser-core'
+import { combine, Context, ContextValue, ErrorOrigin, monitored } from '@datadog/browser-core'
 
 export enum StatusType {
   debug = 'debug',
@@ -37,14 +37,14 @@ export class Logger {
   ) {}
 
   @monitored
-  log(message: string, messageContext = {}, status = StatusType.info) {
+  log(message: string, messageContext?: Context, status = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
           this.sendLog({
             message,
             status,
-            ...(deepMerge({}, this.loggerContext, messageContext) as Context),
+            ...combine({}, this.loggerContext, messageContext),
           })
           break
         case HandlerType.console:
@@ -56,25 +56,25 @@ export class Logger {
     }
   }
 
-  debug(message: string, messageContext = {}) {
+  debug(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.debug)
   }
 
-  info(message: string, messageContext = {}) {
+  info(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.info)
   }
 
-  warn(message: string, messageContext = {}) {
+  warn(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.warn)
   }
 
-  error(message: string, messageContext = {}) {
+  error(message: string, messageContext?: Context) {
     const errorOrigin = {
       error: {
         origin: ErrorOrigin.LOGGER,
       },
     }
-    this.log(message, deepMerge({}, errorOrigin, messageContext), StatusType.error)
+    this.log(message, combine({}, errorOrigin, messageContext), StatusType.error)
   }
 
   setContext(context: Context) {

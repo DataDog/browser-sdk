@@ -1,5 +1,5 @@
 import {
-  deepMerge,
+  combine,
   findCommaSeparatedValue,
   jsonStringify,
   performDraw,
@@ -10,21 +10,31 @@ import {
 } from '../src/utils'
 
 describe('utils', () => {
-  describe('deepMerge', () => {
+  describe('combine', () => {
     it('should deeply add and replace keys', () => {
       const target = { a: { b: 'toBeReplaced', c: 'target' } }
       const source = { a: { b: 'replaced', d: 'source' } }
-      expect(deepMerge(target, source)).toEqual({ a: { b: 'replaced', c: 'target', d: 'source' } })
+      expect(combine(target, source)).toEqual({ a: { b: 'replaced', c: 'target', d: 'source' } })
     })
 
     it('should not replace with undefined', () => {
-      expect(deepMerge({ a: 1 }, { a: undefined })).toEqual({ a: 1 })
+      expect(combine({ a: 1 }, { a: undefined as number | undefined })).toEqual({ a: 1 })
+    })
+
+    it('should replace a sub-value with null', () => {
+      // tslint:disable-next-line: no-null-keyword
+      expect(combine({ a: {} }, { a: null as any })).toEqual({ a: null })
+    })
+
+    it('should ignore null arguments', () => {
+      // tslint:disable-next-line: no-null-keyword
+      expect(combine({ a: 1 }, null)).toEqual({ a: 1 })
     })
 
     it('should merge arrays', () => {
-      const target = [{ a: 'target' }, 'extraString']
-      const source = [{ b: 'source' }]
-      expect(deepMerge(target, source)).toEqual([{ a: 'target', b: 'source' }, 'extraString'])
+      const target = [{ a: 'target' }, 'extraString'] as any
+      const source = [{ b: 'source' }] as any
+      expect(combine(target, source)).toEqual([{ a: 'target', b: 'source' }, 'extraString'])
     })
   })
 
@@ -259,10 +269,14 @@ describe('utils', () => {
         withSnakeCaseKeys({
           camelCase: 1,
           nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
+          // tslint:disable-next-line: no-null-keyword
+          nullValue: null,
         })
       ).toEqual({
         camel_case: 1,
         nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
+        // tslint:disable-next-line: no-null-keyword
+        null_value: null,
       })
     })
   })
