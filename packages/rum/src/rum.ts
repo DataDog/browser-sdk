@@ -4,7 +4,6 @@ import {
   Configuration,
   Context,
   ContextValue,
-  deepMerge,
   ErrorContext,
   ErrorMessage,
   generateUUID,
@@ -166,13 +165,13 @@ export function startRum(
   const parentContexts = startParentContexts(lifeCycle, session)
 
   internalMonitoring.setExternalContextProvider(() => {
-    return deepMerge(
+    return combine(
       {
         application_id: applicationId,
       },
       parentContexts.findView(),
       globalContext
-    ) as Context
+    )
   })
 
   const batch = makeRumBatch(configuration, lifeCycle)
@@ -206,11 +205,9 @@ export function startRum(
       getInternalContext: monitor((startTime?: number): InternalContext | undefined => {
         const viewContext = parentContexts.findView(startTime)
         if (session.isTracked() && viewContext && viewContext.sessionId) {
-          return (withSnakeCaseKeys(deepMerge(
-            { applicationId },
-            viewContext,
-            parentContexts.findAction(startTime)
-          ) as Context) as unknown) as InternalContext
+          return (withSnakeCaseKeys(
+            combine({ applicationId }, viewContext, parentContexts.findAction(startTime))
+          ) as unknown) as InternalContext
         }
       }),
       removeRumGlobalContext: monitor((key: string) => {
@@ -255,7 +252,7 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
   }
 
   function withReplicaApplicationId(message: Context) {
-    return deepMerge(message, { application_id: replica!.applicationId }) as Context
+    return combine(message, { application_id: replica!.applicationId })
   }
 
   let stopped = false
@@ -313,11 +310,7 @@ function makeRumEventHandler(
       if (session.isTracked() && view && view.sessionId) {
         const action = parentContexts.findAction(startTime)
         const rumEvent = assemble(event, { action, view, rum: rumContextProvider() })
-        const message = deepMerge(
-          globalContextProvider(),
-          customerContext,
-          withSnakeCaseKeys(rumEvent as Context)
-        ) as Context
+        const message = combine(globalContextProvider(), customerContext, withSnakeCaseKeys(rumEvent))
         callback(message, rumEvent)
       }
     }

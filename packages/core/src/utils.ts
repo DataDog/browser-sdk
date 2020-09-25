@@ -76,7 +76,8 @@ export function throttle(
 }
 
 const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
-const isContext = (value: ContextValue): value is Context => !Array.isArray(value) && typeof value === 'object'
+const isContext = (value: ContextValue): value is Context =>
+  !Array.isArray(value) && typeof value === 'object' && value !== null
 
 /**
  * Performs a deep merge of objects and arrays
@@ -87,7 +88,7 @@ const isContext = (value: ContextValue): value is Context => !Array.isArray(valu
  * ⚠️ this method does not prevent infinite loops while merging circular references ⚠️
  *
  */
-export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
+function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
   return toMerge.reduce((value1: ContextValue, value2: ContextValue): ContextValue => {
     if (isContextArray(value1) && isContextArray(value2)) {
       return [...Array(Math.max(value1.length, value2.length))].map((_, index) =>
@@ -107,10 +108,11 @@ export function deepMerge(destination: ContextValue, ...toMerge: ContextValue[])
   }, destination)
 }
 
+export function combine<A, B>(a: A, b: B): A & B
 export function combine<A, B, C>(a: A, b: B, c: C): A & B & C
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): A & B & C & D
-export function combine(a: Context, ...b: Context[]): Context {
-  return deepMerge(a, ...b) as Context
+export function combine(destination: Context, ...toMerge: Array<Context | null>): Context {
+  return deepMerge(destination, ...toMerge.filter((object) => object !== null)) as Context
 }
 
 interface Assignable {
@@ -161,7 +163,7 @@ export interface Context {
   [x: string]: ContextValue
 }
 
-export type ContextValue = string | number | boolean | Context | ContextArray | undefined
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null
 
 export interface ContextArray extends Array<ContextValue> {}
 
@@ -177,7 +179,7 @@ export function deepSnakeCase(candidate: ContextValue): ContextValue {
   if (Array.isArray(candidate)) {
     return candidate.map((value: ContextValue) => deepSnakeCase(value))
   }
-  if (typeof candidate === 'object') {
+  if (typeof candidate === 'object' && candidate !== null) {
     return withSnakeCaseKeys(candidate)
   }
   return candidate

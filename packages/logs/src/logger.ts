@@ -1,9 +1,9 @@
 import {
   Batch,
+  combine,
   Configuration,
   Context,
   ContextValue,
-  deepMerge,
   ErrorMessage,
   ErrorObservable,
   ErrorOrigin,
@@ -61,8 +61,8 @@ export function startLogger(
 ) {
   let globalContext: Context = {}
 
-  internalMonitoring.setExternalContextProvider(
-    () => deepMerge({ session_id: session.getId() }, globalContext, getRUMInternalContext() as Context) as Context
+  internalMonitoring.setExternalContextProvider(() =>
+    combine({ session_id: session.getId() }, globalContext, getRUMInternalContext())
   )
 
   const batch = startLoggerBatch(configuration, session, () => globalContext)
@@ -76,10 +76,7 @@ export function startLogger(
   errorObservable.subscribe((e: ErrorMessage) =>
     logger.error(
       e.message,
-      deepMerge(
-        ({ date: getTimestamp(e.startTime), ...e.context } as unknown) as Context,
-        getRUMInternalContext(e.startTime)
-      )
+      combine({ date: getTimestamp(e.startTime), ...e.context }, getRUMInternalContext(e.startTime))
     )
   )
 
@@ -118,7 +115,7 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
   }
 
   function withContext(message: LogsMessage) {
-    return deepMerge(
+    return combine(
       {
         date: new Date().getTime(),
         service: configuration.service,
@@ -129,9 +126,9 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession, 
         },
       },
       globalContextProvider(),
-      getRUMInternalContext() as Context,
+      getRUMInternalContext(),
       message
-    ) as Context
+    )
   }
 
   return {
@@ -175,31 +172,31 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext = {}, status = StatusType.info) {
+  log(message: string, messageContext?: Context, status = StatusType.info) {
     if (this.session.isTracked() && STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      this.handler({ message, status, ...(deepMerge({}, this.loggerContext, messageContext) as Context) })
+      this.handler({ message, status, ...combine({}, this.loggerContext, messageContext) })
     }
   }
 
-  debug(message: string, messageContext = {}) {
+  debug(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.debug)
   }
 
-  info(message: string, messageContext = {}) {
+  info(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.info)
   }
 
-  warn(message: string, messageContext = {}) {
+  warn(message: string, messageContext?: Context) {
     this.log(message, messageContext, StatusType.warn)
   }
 
-  error(message: string, messageContext = {}) {
+  error(message: string, messageContext?: Context) {
     const errorOrigin = {
       error: {
         origin: ErrorOrigin.LOGGER,
       },
     }
-    this.log(message, deepMerge({}, errorOrigin, messageContext), StatusType.error)
+    this.log(message, combine({}, errorOrigin, messageContext), StatusType.error)
   }
 
   setContext(context: Context) {
