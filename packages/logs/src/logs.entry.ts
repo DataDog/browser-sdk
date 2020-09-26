@@ -44,7 +44,6 @@ export const datadogLogs = makeLogsGlobal((userConfiguration) => {
     configuration,
     errorObservable,
     internalMonitoring,
-    session: startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration))),
   }
 })
 
@@ -58,7 +57,6 @@ export function makeLogsGlobal(
   baseInit: (
     configuration: LogsUserConfiguration
   ) => {
-    session: LoggerSession
     configuration: Configuration
     errorObservable: ErrorObservable
     internalMonitoring: InternalMonitoring
@@ -115,7 +113,7 @@ export function makeLogsGlobal(
         isCollectingError,
       }
       const initResult = baseInit(logsUserConfiguration)
-      session = initResult.session
+      session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
       configuration = initResult.configuration
 
       initResult.internalMonitoring.setExternalContextProvider(() =>

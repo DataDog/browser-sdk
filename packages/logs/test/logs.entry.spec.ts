@@ -1,3 +1,5 @@
+import { mockModule, unmockModules } from '../../../test/unit/mockModule'
+
 import {
   Configuration,
   DEFAULT_CONFIGURATION,
@@ -9,7 +11,6 @@ import {
 import sinon from 'sinon'
 
 import { HandlerType, LogsMessage, StatusType } from '../src/logger'
-import { LoggerSession } from '../src/loggerSession'
 import { LogsGlobal, makeLogsGlobal } from '../src/logs.entry'
 
 interface SentMessage extends LogsMessage {
@@ -24,8 +25,6 @@ function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as SentMessage
 }
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
-const TRACKED_SESSION = { getId: () => undefined, isTracked: () => true }
-const NOT_TRACKED_SESSION = { getId: () => undefined, isTracked: () => false }
 const FAKE_DATE = 123456
 const configuration: Partial<Configuration> = {
   ...DEFAULT_CONFIGURATION,
@@ -35,23 +34,39 @@ const configuration: Partial<Configuration> = {
 }
 
 function makeLogsGlobalWithDefaults({
-  session: overrideSession,
   configuration: overrideConfiguration,
 }: {
-  session?: LoggerSession
   configuration?: Partial<Configuration>
 }) {
   return makeLogsGlobal(() => ({
     configuration: { ...(configuration as Configuration), ...overrideConfiguration },
     errorObservable: new Observable<ErrorMessage>(),
     internalMonitoring: { setExternalContextProvider: () => undefined },
-    session: overrideSession || TRACKED_SESSION,
   }))
 }
 
 describe('logs entry', () => {
+  let sessionIsTracked: boolean
+
+  beforeEach(() => {
+    sessionIsTracked = true
+    mockModule('./packages/logs/src/loggerSession.ts', () => ({
+      startLoggerSession() {
+        return {
+          getId: () => undefined,
+          isTracked: () => sessionIsTracked,
+        }
+      },
+    }))
+  })
+
+  afterEach(() => {
+    unmockModules()
+  })
+
   it('should set global with init', () => {
-    const LOGS = makeLogsGlobalWithDefaults({ session: NOT_TRACKED_SESSION })
+    sessionIsTracked = false
+    const LOGS = makeLogsGlobalWithDefaults({})
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
@@ -60,7 +75,8 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobalWithDefaults({ session: NOT_TRACKED_SESSION })
+      sessionIsTracked = false
+      LOGS = makeLogsGlobalWithDefaults({})
     })
 
     it('init should log an error with no public api key', () => {
@@ -162,7 +178,7 @@ describe('logs entry', () => {
     })
 
     it('allows sending logs', () => {
-      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+      LOGS = makeLogsGlobalWithDefaults({})
       LOGS.logger.log('message')
 
       expect(server.requests.length).toEqual(0)
@@ -173,7 +189,7 @@ describe('logs entry', () => {
     })
 
     it('allows creating logger', () => {
-      LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+      LOGS = makeLogsGlobalWithDefaults({})
       const logger = LOGS.createLogger('1')
       logger.error('message')
 
@@ -185,7 +201,7 @@ describe('logs entry', () => {
 
     describe('save context when submiting a log', () => {
       it('saves the date', () => {
-        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.logger.log('message')
         jasmine.clock().tick(ONE_SECOND)
         LOGS.init({ clientToken: 'xxx', site: 'test' })
@@ -195,7 +211,7 @@ describe('logs entry', () => {
 
       it('saves the URL', () => {
         const initialLocation = window.location.href
-        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.logger.log('message')
         location.href = `#tata${Math.random()}`
         LOGS.init({ clientToken: 'xxx', site: 'test' })
@@ -204,7 +220,7 @@ describe('logs entry', () => {
       })
 
       it('saves the global context', () => {
-        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.addLoggerGlobalContext('foo', 'bar')
         LOGS.logger.log('message')
         LOGS.addLoggerGlobalContext('foo', 'baz')
@@ -216,7 +232,8 @@ describe('logs entry', () => {
     })
 
     it('should not send logs if the session is not tracked', () => {
-      LOGS = makeLogsGlobalWithDefaults({ session: NOT_TRACKED_SESSION })
+      sessionIsTracked = false
+      LOGS = makeLogsGlobalWithDefaults({})
       LOGS.logger.log('message')
 
       expect(server.requests.length).toEqual(0)
@@ -373,7 +390,7 @@ describe('logs entry', () => {
 
     describe('logger session', () => {
       it('when tracked should enable disable logging', () => {
-        LOGS = makeLogsGlobalWithDefaults({ session: TRACKED_SESSION })
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         LOGS.logger.log('message')
@@ -381,7 +398,8 @@ describe('logs entry', () => {
       })
 
       it('when not tracked should disable logging', () => {
-        LOGS = makeLogsGlobalWithDefaults({ session: NOT_TRACKED_SESSION })
+        sessionIsTracked = false
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         LOGS.logger.log('message')
@@ -389,12 +407,7 @@ describe('logs entry', () => {
       })
 
       it('when type change should enable/disable existing loggers', () => {
-        let isTracked = true
-        const session = {
-          getId: () => undefined,
-          isTracked: () => isTracked,
-        }
-        LOGS = makeLogsGlobalWithDefaults({ session })
+        LOGS = makeLogsGlobalWithDefaults({})
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
         const testLogger = LOGS.createLogger('test')
 
@@ -402,12 +415,12 @@ describe('logs entry', () => {
         testLogger.log('message')
         expect(server.requests.length).toEqual(2)
 
-        isTracked = false
+        sessionIsTracked = false
         LOGS.logger.log('message')
         testLogger.log('message')
         expect(server.requests.length).toEqual(2)
 
-        isTracked = true
+        sessionIsTracked = true
         LOGS.logger.log('message')
         testLogger.log('message')
         expect(server.requests.length).toEqual(4)
