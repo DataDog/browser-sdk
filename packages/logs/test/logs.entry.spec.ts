@@ -33,20 +33,9 @@ const configuration: Partial<Configuration> = {
   service: 'Service',
 }
 
-function makeLogsGlobalWithDefaults({
-  configuration: overrideConfiguration,
-}: {
-  configuration?: Partial<Configuration>
-}) {
-  return makeLogsGlobal(() => ({
-    configuration: { ...(configuration as Configuration), ...overrideConfiguration },
-    errorObservable: new Observable<ErrorMessage>(),
-    internalMonitoring: { setExternalContextProvider: () => undefined },
-  }))
-}
-
 describe('logs entry', () => {
   let sessionIsTracked: boolean
+  let configurationOverrides: Partial<Configuration>
 
   beforeEach(() => {
     sessionIsTracked = true
@@ -58,6 +47,17 @@ describe('logs entry', () => {
         }
       },
     }))
+
+    configurationOverrides = {}
+    mockModule('./packages/core/src/init.ts', () => ({
+      commonInit() {
+        return {
+          configuration: { ...(configuration as Configuration), ...configurationOverrides },
+          errorObservable: new Observable<ErrorMessage>(),
+          internalMonitoring: { setExternalContextProvider: () => undefined },
+        }
+      },
+    }))
   })
 
   afterEach(() => {
@@ -66,7 +66,7 @@ describe('logs entry', () => {
 
   it('should set global with init', () => {
     sessionIsTracked = false
-    const LOGS = makeLogsGlobalWithDefaults({})
+    const LOGS = makeLogsGlobal()
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
@@ -76,7 +76,7 @@ describe('logs entry', () => {
 
     beforeEach(() => {
       sessionIsTracked = false
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
     })
 
     it('init should log an error with no public api key', () => {
@@ -165,7 +165,7 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
       server = sinon.fakeServer.create()
       jasmine.clock().install()
@@ -178,7 +178,7 @@ describe('logs entry', () => {
     })
 
     it('allows sending logs', () => {
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
       LOGS.logger.log('message')
 
       expect(server.requests.length).toEqual(0)
@@ -189,7 +189,7 @@ describe('logs entry', () => {
     })
 
     it('allows creating logger', () => {
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
       const logger = LOGS.createLogger('1')
       logger.error('message')
 
@@ -201,7 +201,7 @@ describe('logs entry', () => {
 
     describe('save context when submiting a log', () => {
       it('saves the date', () => {
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.logger.log('message')
         jasmine.clock().tick(ONE_SECOND)
         LOGS.init({ clientToken: 'xxx', site: 'test' })
@@ -211,7 +211,7 @@ describe('logs entry', () => {
 
       it('saves the URL', () => {
         const initialLocation = window.location.href
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.logger.log('message')
         location.href = `#tata${Math.random()}`
         LOGS.init({ clientToken: 'xxx', site: 'test' })
@@ -220,7 +220,7 @@ describe('logs entry', () => {
       })
 
       it('saves the global context', () => {
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.addLoggerGlobalContext('foo', 'bar')
         LOGS.logger.log('message')
         LOGS.addLoggerGlobalContext('foo', 'baz')
@@ -233,7 +233,7 @@ describe('logs entry', () => {
 
     it('should not send logs if the session is not tracked', () => {
       sessionIsTracked = false
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
       LOGS.logger.log('message')
 
       expect(server.requests.length).toEqual(0)
@@ -248,7 +248,7 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobalWithDefaults({})
+      LOGS = makeLogsGlobal()
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
       server = sinon.fakeServer.create()
       jasmine.clock().install()
@@ -374,7 +374,8 @@ describe('logs entry', () => {
       })
 
       it('should all use the same batch', () => {
-        LOGS = makeLogsGlobalWithDefaults({ configuration: { maxBatchSize: 3 } })
+        configurationOverrides = { maxBatchSize: 3 }
+        LOGS = makeLogsGlobal()
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         const logger1 = LOGS.createLogger('1')
@@ -390,7 +391,7 @@ describe('logs entry', () => {
 
     describe('logger session', () => {
       it('when tracked should enable disable logging', () => {
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         LOGS.logger.log('message')
@@ -399,7 +400,7 @@ describe('logs entry', () => {
 
       it('when not tracked should disable logging', () => {
         sessionIsTracked = false
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         LOGS.logger.log('message')
@@ -407,7 +408,7 @@ describe('logs entry', () => {
       })
 
       it('when type change should enable/disable existing loggers', () => {
-        LOGS = makeLogsGlobalWithDefaults({})
+        LOGS = makeLogsGlobal()
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
         const testLogger = LOGS.createLogger('test')
 

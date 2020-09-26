@@ -9,11 +9,9 @@ import {
   ContextValue,
   createBufferedFunction,
   ErrorMessage,
-  ErrorObservable,
   getGlobalObject,
   getTimestamp,
   HttpRequest,
-  InternalMonitoring,
   isPercentage,
   makeGlobal,
   monitor,
@@ -38,14 +36,7 @@ export type Status = keyof typeof StatusType
 
 export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
-export const datadogLogs = makeLogsGlobal((userConfiguration) => {
-  const { configuration, errorObservable, internalMonitoring } = commonInit(userConfiguration, buildEnv)
-  return {
-    configuration,
-    errorObservable,
-    internalMonitoring,
-  }
-})
+export const datadogLogs = makeLogsGlobal()
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
@@ -53,15 +44,7 @@ interface BrowserWindow extends Window {
 
 getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
 
-export function makeLogsGlobal(
-  baseInit: (
-    configuration: LogsUserConfiguration
-  ) => {
-    configuration: Configuration
-    errorObservable: ErrorObservable
-    internalMonitoring: InternalMonitoring
-  }
-) {
+export function makeLogsGlobal() {
   let isAlreadyInitialized = false
 
   let session: LoggerSession
@@ -112,7 +95,7 @@ export function makeLogsGlobal(
         ...userConfiguration,
         isCollectingError,
       }
-      const initResult = baseInit(logsUserConfiguration)
+      const initResult = commonInit(logsUserConfiguration, buildEnv)
       session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
       configuration = initResult.configuration
 
