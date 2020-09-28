@@ -191,7 +191,7 @@ export function startRum(
     () => globalContext
   )
 
-  trackRumEvents(configuration, lifeCycle, session, handler, batch)
+  trackRumEvents(lifeCycle, session, handler, batch)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -325,13 +325,7 @@ function getSessionType() {
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }
 
-function trackRumEvents(
-  configuration: Configuration,
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: RumEventHandler,
-  batch: RumBatch
-) {
+function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler, batch: RumBatch) {
   const assembleWithoutAction = (event: RumViewEvent | RumUserActionEvent, { view, rum }: AssembleWithoutAction) =>
     combine(rum, view, event)
   const assembleWithAction = (
@@ -344,8 +338,8 @@ function trackRumEvents(
     handler(assembleWithoutAction, (message, event: RumEvent) => batch.upsert(message, event.view.id))
   )
   trackErrors(lifeCycle, handler(assembleWithAction, batch.add))
-  trackRequests(configuration, lifeCycle, session, handler(assembleWithAction, batch.add))
-  trackPerformanceTiming(configuration, lifeCycle, session, handler(assembleWithAction, batch.add))
+  trackRequests(lifeCycle, session, handler(assembleWithAction, batch.add))
+  trackPerformanceTiming(lifeCycle, session, handler(assembleWithAction, batch.add))
   trackCustomUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
   trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
 }
@@ -430,7 +424,6 @@ function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, 
 }
 
 function trackRequests(
-  configuration: Configuration,
   lifeCycle: LifeCycle,
   session: RumSession,
   handler: (startTime: number, event: RumResourceEvent) => void
@@ -474,7 +467,6 @@ function trackRequests(
 }
 
 function trackPerformanceTiming(
-  configuration: Configuration,
   lifeCycle: LifeCycle,
   session: RumSession,
   handler: (startTime: number, event: RumResourceEvent | RumLongTaskEvent) => void
@@ -482,7 +474,7 @@ function trackPerformanceTiming(
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     switch (entry.entryType) {
       case 'resource':
-        handleResourceEntry(configuration, lifeCycle, session, handler, entry)
+        handleResourceEntry(lifeCycle, session, handler, entry)
         break
       case 'longtask':
         handleLongTaskEntry(handler, entry)
@@ -494,7 +486,6 @@ function trackPerformanceTiming(
 }
 
 export function handleResourceEntry(
-  configuration: Configuration,
   lifeCycle: LifeCycle,
   session: RumSession,
   handler: (startTime: number, event: RumResourceEvent) => void,

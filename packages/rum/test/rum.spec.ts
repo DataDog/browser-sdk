@@ -1,4 +1,4 @@
-import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, isIE, SPEC_ENDPOINTS } from '@datadog/browser-core'
+import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
@@ -16,12 +16,6 @@ function getEntry(handler: (startTime: number, event: RumEvent) => void, index: 
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
-}
-
-const configuration = {
-  ...DEFAULT_CONFIGURATION,
-  ...SPEC_ENDPOINTS,
-  maxBatchSize: 1,
 }
 
 function getRumMessage(server: sinon.SinonFakeServer, index: number) {
@@ -62,13 +56,7 @@ describe('rum handle performance entry', () => {
     const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
     const session = createMockSession()
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      session,
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
 
     expect(handler).toHaveBeenCalled()
   })
@@ -78,13 +66,7 @@ describe('rum handle performance entry', () => {
     const session = createMockSession()
     session.isTrackedWithResource = () => false
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      session,
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
 
     expect(handler).not.toHaveBeenCalled()
   })
@@ -125,13 +107,7 @@ describe('rum handle performance entry', () => {
       it(`should compute resource kind: ${description}`, () => {
         const entry: Partial<RumPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
-        handleResourceEntry(
-          configuration as Configuration,
-          new LifeCycle(),
-          createMockSession(),
-          handler,
-          entry as RumPerformanceResourceTiming
-        )
+        handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
         const resourceEvent = getEntry(handler, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
       })
@@ -154,13 +130,7 @@ describe('rum handle performance entry', () => {
       secureConnectionStart: 0,
     }
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      createMockSession(),
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
@@ -184,13 +154,7 @@ describe('rum handle performance entry', () => {
         secureConnectionStart: 0,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        new LifeCycle(),
-        createMockSession(),
-        handler,
-        entry as RumPerformanceResourceTiming
-      )
+      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
@@ -203,13 +167,7 @@ describe('rum handle performance entry', () => {
         responseStart: 100,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        new LifeCycle(),
-        createMockSession(),
-        handler,
-        entry as RumPerformanceResourceTiming
-      )
+      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
@@ -222,13 +180,7 @@ describe('rum handle performance entry', () => {
       traceId: '123',
     }
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      createMockSession(),
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent._dd!.traceId).toBe('123')
   })
