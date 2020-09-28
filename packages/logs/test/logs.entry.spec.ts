@@ -14,6 +14,7 @@ describe('logs entry', () => {
       currentContext: Context & { view: { referrer: string; url: string } }
     ) => void
   >
+  let startLogsGlobalContext: (() => Context) | undefined
 
   function getLoggedMessage(index: number) {
     const [message, context] = sendLogsSpy.calls.argsFor(index)
@@ -22,8 +23,10 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     sendLogsSpy = jasmine.createSpy()
+    startLogsGlobalContext = undefined
     mockModule('./packages/logs/src/logs.ts', () => ({
-      startLogs() {
+      startLogs(configuration: unknown, logger: unknown, getGlobalContext: () => Context) {
+        startLogsGlobalContext = getGlobalContext
         return sendLogsSpy
       },
     }))
@@ -198,6 +201,24 @@ describe('logs entry', () => {
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
+    it('logs a message', () => {
+      LOGS.logger.log('message')
+
+      expect(getLoggedMessage(0)).toEqual({
+        context: {
+          date: jasmine.any(Number),
+          view: {
+            referrer: document.referrer,
+            url: location.href,
+          },
+        },
+        message: {
+          message: 'message',
+          status: StatusType.info,
+        },
+      })
+    })
+
     describe('global context', () => {
       it('should be added to the request', () => {
         LOGS.setLoggerGlobalContext({ bar: 'foo' })
@@ -237,6 +258,11 @@ describe('logs entry', () => {
 
         expect(getLoggedMessage(0).context.foo).toEqual('bar')
         expect(getLoggedMessage(1).context.foo).toEqual('bar')
+      })
+
+      it('should expose global context to startLogs', () => {
+        LOGS.setLoggerGlobalContext({ foo: 'bar' })
+        expect(startLogsGlobalContext!()).toEqual({ foo: 'bar' })
       })
     })
 
