@@ -49,7 +49,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let globalContext: Context = {}
 
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
-    throw new Error('TODO')
+    return undefined
   }
   let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = () => {
     throw new Error('TODO')
