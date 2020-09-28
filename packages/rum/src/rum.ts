@@ -1,9 +1,9 @@
 import {
   Batch,
   combine,
+  commonInit,
   Configuration,
   Context,
-  ContextValue,
   ErrorContext,
   ErrorMessage,
   generateUUID,
@@ -11,29 +11,32 @@ import {
   HttpContext,
   HttpRequest,
   includes,
-  InternalMonitoring,
-  monitor,
   msToNs,
-  Omit,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 
+import { buildEnv } from './buildEnv'
+import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
 import { ActionContext, ParentContexts, startParentContexts, ViewContext } from './parentContexts'
-import { RumPerformanceLongTaskTiming, RumPerformanceResourceTiming } from './performanceCollection'
-import { RequestCompleteEvent } from './requestCollection'
+import {
+  RumPerformanceLongTaskTiming,
+  RumPerformanceResourceTiming,
+  startPerformanceCollection,
+} from './performanceCollection'
+import { RequestCompleteEvent, startRequestCollection } from './requestCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
 } from './resourceUtils'
-import { InternalContext, RumGlobal } from './rum.entry'
-import { RumSession } from './rumSession'
-import { UserActionMeasures, UserActionType } from './userActionCollection'
+import { InternalContext, RumUserConfiguration } from './rum.entry'
+import { RumSession, startRumSession } from './rumSession'
+import { CustomUserAction, startUserActionCollection, UserActionMeasures, UserActionType } from './userActionCollection'
 import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
 
 export enum RumEventCategory {
@@ -152,28 +155,81 @@ enum SessionType {
   USER = 'user',
 }
 
-export function startRum(
+export function startRum(userConfiguration: RumUserConfiguration, getGlobalContext: () => Context) {
+  const lifeCycle = new LifeCycle()
+
+  const isCollectingError = true
+  const { errorObservable, configuration, internalMonitoring } = commonInit(
+    userConfiguration,
+    buildEnv,
+    isCollectingError
+  )
+  const session = startRumSession(configuration, lifeCycle)
+
+  internalMonitoring.setExternalContextProvider(() => {
+    return combine(
+      {
+        application_id: userConfiguration.applicationId,
+      },
+      parentContexts.findView(),
+      getGlobalContext()
+    )
+  })
+
+  const { parentContexts } = startRumEventCollection(
+    userConfiguration.applicationId,
+    location,
+    lifeCycle,
+    configuration,
+    session,
+    getGlobalContext
+  )
+
+  const [requestStartObservable, requestCompleteObservable] = startRequestCollection(configuration)
+  startPerformanceCollection(lifeCycle, configuration)
+  startDOMMutationCollection(lifeCycle)
+  if (configuration.trackInteractions) {
+    startUserActionCollection(lifeCycle)
+  }
+
+  errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
+  requestStartObservable.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
+  requestCompleteObservable.subscribe((request) => lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, request))
+
+  return {
+    getInternalContext(startTime?: number) {
+      return doGetInternalContext(parentContexts, userConfiguration.applicationId, session, startTime)
+    },
+
+    addUserAction(userAction: CustomUserAction) {
+      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, userAction)
+    },
+  }
+}
+
+export function doGetInternalContext(
+  parentContexts: ParentContexts,
+  applicationId: string,
+  session: RumSession,
+  startTime?: number
+) {
+  const viewContext = parentContexts.findView(startTime)
+  if (session.isTracked() && viewContext && viewContext.sessionId) {
+    return (withSnakeCaseKeys(
+      combine({ applicationId }, viewContext, parentContexts.findAction(startTime))
+    ) as unknown) as InternalContext
+  }
+}
+
+export function startRumEventCollection(
   applicationId: string,
   location: Location,
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  internalMonitoring: InternalMonitoring
-): { globalApi: Omit<RumGlobal, 'init'>; stop: () => void } {
-  let globalContext: Context = {}
-
+  getGlobalContext: () => Context
+) {
   const parentContexts = startParentContexts(lifeCycle, session)
-
-  internalMonitoring.setExternalContextProvider(() => {
-    return combine(
-      {
-        application_id: applicationId,
-      },
-      parentContexts.findView(),
-      globalContext
-    )
-  })
-
   const batch = makeRumBatch(configuration, lifeCycle)
   const handler = makeRumEventHandler(
     parentContexts,
@@ -188,36 +244,16 @@ export function startRum(
         type: getSessionType(),
       },
     }),
-    () => globalContext
+    getGlobalContext
   )
 
   trackRumEvents(lifeCycle, session, handler, batch)
   startViewCollection(location, lifeCycle)
 
   return {
-    globalApi: {
-      addRumGlobalContext: monitor((key: string, value: ContextValue) => {
-        globalContext[key] = value
-      }),
-      addUserAction: monitor((name: string, context?: Context) => {
-        lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { context, name, type: UserActionType.CUSTOM })
-      }),
-      getInternalContext: monitor((startTime?: number): InternalContext | undefined => {
-        const viewContext = parentContexts.findView(startTime)
-        if (session.isTracked() && viewContext && viewContext.sessionId) {
-          return (withSnakeCaseKeys(
-            combine({ applicationId }, viewContext, parentContexts.findAction(startTime))
-          ) as unknown) as InternalContext
-        }
-      }),
-      removeRumGlobalContext: monitor((key: string) => {
-        delete globalContext[key]
-      }),
-      setRumGlobalContext: monitor((context: Context) => {
-        globalContext = context
-      }),
-    },
-    stop: () => {
+    parentContexts,
+
+    stop() {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
@@ -325,7 +361,7 @@ function getSessionType() {
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }
 
-function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler, batch: RumBatch) {
+export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler, batch: RumBatch) {
   const assembleWithoutAction = (event: RumViewEvent | RumUserActionEvent, { view, rum }: AssembleWithoutAction) =>
     combine(rum, view, event)
   const assembleWithAction = (

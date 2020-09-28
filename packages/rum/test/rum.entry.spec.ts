@@ -1,25 +1,17 @@
-import { isIE, stopSessionManagement } from '@datadog/browser-core'
-import { resetXhrProxy } from '../../core/src/xhrProxy'
-
 import { makeRumGlobal, RumGlobal, RumUserConfiguration } from '../src/rum.entry'
+
+const noopStartRum = () => ({
+  addUserAction: () => undefined,
+  getInternalContext: () => undefined,
+})
 
 describe('rum entry', () => {
   let rumGlobal: RumGlobal
   let errorSpy: jasmine.Spy
 
   beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
     errorSpy = spyOn(console, 'error')
-    rumGlobal = makeRumGlobal({} as any)
-  })
-
-  afterEach(() => {
-    // some tests can successfully start the tracking
-    // stop behaviors that can pollute following tests
-    stopSessionManagement()
-    resetXhrProxy()
+    rumGlobal = makeRumGlobal(noopStartRum)
   })
 
   it('init should log an error with no application id', () => {
@@ -59,7 +51,7 @@ describe('rum entry', () => {
     rumGlobal.init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: [] })
     expect(errorSpy).toHaveBeenCalledTimes(0)
 
-    makeRumGlobal({} as any).init({
+    makeRumGlobal(noopStartRum).init({
       allowedTracingOrigins: ['foo.bar'],
       applicationId: 'yes',
       clientToken: 'yes',
@@ -67,7 +59,11 @@ describe('rum entry', () => {
     })
     expect(errorSpy).toHaveBeenCalledTimes(0)
 
-    makeRumGlobal({} as any).init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: ['foo.bar'] })
+    makeRumGlobal(noopStartRum).init({
+      allowedTracingOrigins: ['foo.bar'],
+      applicationId: 'yes',
+      clientToken: 'yes',
+    })
     expect(errorSpy).toHaveBeenCalledTimes(1)
   })
 

@@ -10,7 +10,6 @@ export {
   BuildEnv,
   BuildMode,
   Datacenter,
-  makeStub,
   makeGlobal,
   commonInit,
   checkCookiesAuthorized,

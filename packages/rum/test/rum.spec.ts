@@ -4,7 +4,15 @@ import sinon from 'sinon'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
 import { RequestCompleteEvent } from '../src/requestCollection'
-import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, RumViewEvent, trackView } from '../src/rum'
+import {
+  doGetInternalContext,
+  handleResourceEntry,
+  RawRumEvent,
+  RumEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  trackView,
+} from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
@@ -475,22 +483,22 @@ describe('rum global context', () => {
   })
 
   it('should be added to the request', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ bar: 'foo' })
+    setGlobalContext({ bar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
   it('should be updatable', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ bar: 'foo' })
+    setGlobalContext({ bar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    rumApi.setRumGlobalContext({ foo: 'bar' })
+    setGlobalContext({ foo: 'bar' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
@@ -499,12 +507,13 @@ describe('rum global context', () => {
   })
 
   it('should be removable', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.addRumGlobalContext('bar', 'foo')
+    const globalContext = { bar: 'foo' }
+    setGlobalContext(globalContext)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    rumApi.removeRumGlobalContext('bar')
+    delete globalContext.bar
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
@@ -512,10 +521,10 @@ describe('rum global context', () => {
   })
 
   it('should not be automatically snake cased', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ fooBar: 'foo' })
+    setGlobalContext({ fooBar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
@@ -606,11 +615,11 @@ describe('rum internal context', () => {
   })
 
   it('should return current internal context', () => {
-    const { rumApi, lifeCycle } = setupBuilder.build()
+    const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
 
-    expect(rumApi.getInternalContext()).toEqual({
+    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual({
       application_id: 'appId',
       session_id: '1234',
       user_action: {
@@ -625,7 +634,7 @@ describe('rum internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const { rumApi, lifeCycle } = setupBuilder
+    const { lifeCycle, parentContexts, session } = setupBuilder
       .withSession({
         getId: () => '1234',
         isTracked: () => false,
@@ -635,17 +644,17 @@ describe('rum internal context', () => {
 
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
 
-    expect(rumApi.getInternalContext()).toEqual(undefined)
+    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual(undefined)
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const { rumApi, lifeCycle } = setupBuilder.build()
+    const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
     const stubUserAction: Partial<AutoUserAction> = { duration: 10 }
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubUserAction as AutoUserAction)
 
-    expect(rumApi.getInternalContext(15)).toEqual({
+    expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
       application_id: 'appId',
       session_id: '1234',
       user_action: {
