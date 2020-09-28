@@ -1,61 +1,30 @@
 import { mockModule, unmockModules } from '../../../test/unit/mockModule'
 
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  ErrorMessage,
-  monitor,
-  Observable,
-  ONE_SECOND,
-} from '@datadog/browser-core'
-import sinon from 'sinon'
+import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
 
 import { HandlerType, LogsMessage, StatusType } from '../src/logger'
 import { LogsGlobal, makeLogsGlobal } from '../src/logs.entry'
 
-interface SentMessage extends LogsMessage {
-  logger?: { name: string }
-  view: {
-    referrer: string
-    url: string
-  }
-}
-
-function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
-  return JSON.parse(server.requests[index].requestBody) as SentMessage
-}
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
-const FAKE_DATE = 123456
-const configuration: Partial<Configuration> = {
-  ...DEFAULT_CONFIGURATION,
-  logsEndpoint: 'https://localhost/v1/input/log',
-  maxBatchSize: 1,
-  service: 'Service',
-}
 
 describe('logs entry', () => {
-  let sessionIsTracked: boolean
-  let configurationOverrides: Partial<Configuration>
+  let sendLogsSpy: jasmine.Spy<
+    (
+      message: LogsMessage & { logger?: { name: string } },
+      currentContext: Context & { view: { referrer: string; url: string } }
+    ) => void
+  >
+
+  function getLoggedMessage(index: number) {
+    const [message, context] = sendLogsSpy.calls.argsFor(index)
+    return { message, context }
+  }
 
   beforeEach(() => {
-    sessionIsTracked = true
-    mockModule('./packages/logs/src/loggerSession.ts', () => ({
-      startLoggerSession() {
-        return {
-          getId: () => undefined,
-          isTracked: () => sessionIsTracked,
-        }
-      },
-    }))
-
-    configurationOverrides = {}
-    mockModule('./packages/core/src/init.ts', () => ({
-      commonInit() {
-        return {
-          configuration: { ...(configuration as Configuration), ...configurationOverrides },
-          errorObservable: new Observable<ErrorMessage>(),
-          internalMonitoring: { setExternalContextProvider: () => undefined },
-        }
+    sendLogsSpy = jasmine.createSpy()
+    mockModule('./packages/logs/src/logs.ts', () => ({
+      startLogs() {
+        return sendLogsSpy
       },
     }))
   })
@@ -65,7 +34,6 @@ describe('logs entry', () => {
   })
 
   it('should set global with init', () => {
-    sessionIsTracked = false
     const LOGS = makeLogsGlobal()
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
@@ -75,7 +43,6 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      sessionIsTracked = false
       LOGS = makeLogsGlobal()
     })
 
@@ -161,123 +128,74 @@ describe('logs entry', () => {
   })
 
   describe('pre-init API usages', () => {
-    let server: sinon.SinonFakeServer
     let LOGS: LogsGlobal
 
     beforeEach(() => {
       LOGS = makeLogsGlobal()
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-      server = sinon.fakeServer.create()
       jasmine.clock().install()
-      jasmine.clock().mockDate(new Date(FAKE_DATE))
+      jasmine.clock().mockDate()
     })
 
     afterEach(() => {
-      server.restore()
       jasmine.clock().uninstall()
     })
 
     it('allows sending logs', () => {
-      LOGS = makeLogsGlobal()
       LOGS.logger.log('message')
 
-      expect(server.requests.length).toEqual(0)
-      LOGS.init({ clientToken: 'xxx', site: 'test' })
+      expect(sendLogsSpy).not.toHaveBeenCalled()
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(server.requests.length).toEqual(1)
-      expect(getLoggedMessage(server, 0).message).toBe('message')
+      expect(sendLogsSpy.calls.all().length).toBe(1)
+      expect(getLoggedMessage(0).message.message).toBe('message')
     })
 
     it('allows creating logger', () => {
-      LOGS = makeLogsGlobal()
       const logger = LOGS.createLogger('1')
       logger.error('message')
 
-      LOGS.init({ clientToken: 'xxx', site: 'test' })
+      LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(getLoggedMessage(server, 0).logger!.name).toEqual('1')
-      expect(getLoggedMessage(server, 0).message).toEqual('message')
+      expect(getLoggedMessage(0).message.logger!.name).toEqual('1')
+      expect(getLoggedMessage(0).message.message).toEqual('message')
     })
 
     describe('save context when submiting a log', () => {
       it('saves the date', () => {
-        LOGS = makeLogsGlobal()
         LOGS.logger.log('message')
         jasmine.clock().tick(ONE_SECOND)
-        LOGS.init({ clientToken: 'xxx', site: 'test' })
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(getLoggedMessage(server, 0).date).toEqual(Date.now() - ONE_SECOND)
+        expect(getLoggedMessage(0).context.date).toEqual(Date.now() - ONE_SECOND)
       })
 
       it('saves the URL', () => {
         const initialLocation = window.location.href
-        LOGS = makeLogsGlobal()
         LOGS.logger.log('message')
         location.href = `#tata${Math.random()}`
-        LOGS.init({ clientToken: 'xxx', site: 'test' })
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(getLoggedMessage(server, 0).view!.url).toEqual(initialLocation)
+        expect(getLoggedMessage(0).context.view!.url).toEqual(initialLocation)
       })
 
       it('saves the global context', () => {
-        LOGS = makeLogsGlobal()
         LOGS.addLoggerGlobalContext('foo', 'bar')
         LOGS.logger.log('message')
         LOGS.addLoggerGlobalContext('foo', 'baz')
 
-        LOGS.init({ clientToken: 'xxx', site: 'test' })
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(getLoggedMessage(server, 0).foo).toEqual('bar')
+        expect(getLoggedMessage(0).context.foo).toEqual('bar')
       })
-    })
-
-    it('should not send logs if the session is not tracked', () => {
-      sessionIsTracked = false
-      LOGS = makeLogsGlobal()
-      LOGS.logger.log('message')
-
-      expect(server.requests.length).toEqual(0)
-      LOGS.init({ clientToken: 'xxx', site: 'test' })
-
-      expect(server.requests.length).toEqual(0)
     })
   })
 
   describe('post-init API usages', () => {
-    let server: sinon.SinonFakeServer
     let LOGS: LogsGlobal
 
     beforeEach(() => {
       LOGS = makeLogsGlobal()
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
-      server = sinon.fakeServer.create()
-      jasmine.clock().install()
-      jasmine.clock().mockDate(new Date(FAKE_DATE))
-    })
-
-    afterEach(() => {
-      server.restore()
-      jasmine.clock().uninstall()
-    })
-
-    describe('request', () => {
-      it('should send the needed data', () => {
-        LOGS.logger.log('message', { foo: 'bar' }, StatusType.warn)
-
-        expect(server.requests.length).toEqual(1)
-        expect(server.requests[0].url).toEqual(configuration.logsEndpoint!)
-        expect(getLoggedMessage(server, 0)).toEqual({
-          date: FAKE_DATE,
-          foo: 'bar',
-          message: 'message',
-          service: 'Service',
-          status: StatusType.warn,
-          view: {
-            referrer: document.referrer,
-            url: window.location.href,
-          },
-        })
-      })
     })
 
     describe('global context', () => {
@@ -285,7 +203,7 @@ describe('logs entry', () => {
         LOGS.setLoggerGlobalContext({ bar: 'foo' })
         LOGS.logger.log('message')
 
-        expect(getLoggedMessage(server, 0).bar).toEqual('foo')
+        expect(getLoggedMessage(0).context.bar).toEqual('foo')
       })
 
       it('should be updatable', () => {
@@ -294,9 +212,9 @@ describe('logs entry', () => {
         LOGS.setLoggerGlobalContext({ foo: 'bar' })
         LOGS.logger.log('second')
 
-        expect(getLoggedMessage(server, 0).bar).toEqual('foo')
-        expect(getLoggedMessage(server, 1).foo).toEqual('bar')
-        expect(getLoggedMessage(server, 1).bar).toBeUndefined()
+        expect(getLoggedMessage(0).context.bar).toEqual('foo')
+        expect(getLoggedMessage(1).context.foo).toEqual('bar')
+        expect(getLoggedMessage(1).context.bar).toBeUndefined()
       })
 
       it('should be removable', () => {
@@ -305,8 +223,8 @@ describe('logs entry', () => {
         LOGS.removeLoggerGlobalContext('bar')
         LOGS.logger.log('second')
 
-        expect(getLoggedMessage(server, 0).bar).toEqual('foo')
-        expect(getLoggedMessage(server, 1).bar).toBeUndefined()
+        expect(getLoggedMessage(0).context.bar).toEqual('foo')
+        expect(getLoggedMessage(1).context.bar).toBeUndefined()
       })
 
       it('should be used by all loggers', () => {
@@ -317,8 +235,8 @@ describe('logs entry', () => {
         logger1.debug('message')
         logger2.debug('message')
 
-        expect(getLoggedMessage(server, 0).foo).toEqual('bar')
-        expect(getLoggedMessage(server, 1).foo).toEqual('bar')
+        expect(getLoggedMessage(0).context.foo).toEqual('bar')
+        expect(getLoggedMessage(1).context.foo).toEqual('bar')
       })
     })
 
@@ -332,7 +250,7 @@ describe('logs entry', () => {
 
         logger.debug('message')
 
-        expect(server.requests.length).toEqual(1)
+        expect(sendLogsSpy.calls.count()).toEqual(1)
         expect(console.log).not.toHaveBeenCalled()
       })
 
@@ -345,7 +263,7 @@ describe('logs entry', () => {
         logger.debug('ignored')
         logger.error('message')
 
-        expect(server.requests.length).toEqual(0)
+        expect(sendLogsSpy).not.toHaveBeenCalled()
         expect(console.log).toHaveBeenCalledWith('error: message')
       })
 
@@ -354,7 +272,7 @@ describe('logs entry', () => {
 
         logger.debug('message')
 
-        expect(getLoggedMessage(server, 0).logger!.name).toEqual('foo')
+        expect(getLoggedMessage(0).message.logger!.name).toEqual('foo')
       })
 
       it('could be initialized with a dedicated context', () => {
@@ -364,67 +282,13 @@ describe('logs entry', () => {
 
         logger.debug('message')
 
-        expect(getLoggedMessage(server, 0).foo).toEqual('bar')
+        expect(getLoggedMessage(0).message.foo).toEqual('bar')
       })
 
       it('should be retrievable', () => {
         const logger = LOGS.createLogger('foo')
         expect(LOGS.getLogger('foo')).toEqual(logger)
         expect(LOGS.getLogger('bar')).toBeUndefined()
-      })
-
-      it('should all use the same batch', () => {
-        configurationOverrides = { maxBatchSize: 3 }
-        LOGS = makeLogsGlobal()
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-        const logger1 = LOGS.createLogger('1')
-        const logger2 = LOGS.createLogger('2')
-
-        LOGS.logger.debug('message from default')
-        logger1.debug('message from logger1')
-        logger2.debug('message from logger2')
-
-        expect(server.requests.length).toEqual(1)
-      })
-    })
-
-    describe('logger session', () => {
-      it('when tracked should enable disable logging', () => {
-        LOGS = makeLogsGlobal()
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-        LOGS.logger.log('message')
-        expect(server.requests.length).toEqual(1)
-      })
-
-      it('when not tracked should disable logging', () => {
-        sessionIsTracked = false
-        LOGS = makeLogsGlobal()
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-
-        LOGS.logger.log('message')
-        expect(server.requests.length).toEqual(0)
-      })
-
-      it('when type change should enable/disable existing loggers', () => {
-        LOGS = makeLogsGlobal()
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-        const testLogger = LOGS.createLogger('test')
-
-        LOGS.logger.log('message')
-        testLogger.log('message')
-        expect(server.requests.length).toEqual(2)
-
-        sessionIsTracked = false
-        LOGS.logger.log('message')
-        testLogger.log('message')
-        expect(server.requests.length).toEqual(2)
-
-        sessionIsTracked = true
-        LOGS.logger.log('message')
-        testLogger.log('message')
-        expect(server.requests.length).toEqual(4)
       })
     })
   })
