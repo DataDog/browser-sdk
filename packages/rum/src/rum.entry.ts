@@ -1,6 +1,8 @@
 import {
+  BoundedBuffer,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
+  combine,
   Context,
   ContextValue,
   getGlobalObject,
@@ -12,7 +14,7 @@ import {
 } from '@datadog/browser-core'
 
 import { startRum } from './rum'
-import { UserActionType } from './userActionCollection'
+import { CustomUserAction, UserActionType } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -51,8 +53,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
-  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = () => {
-    throw new Error('TODO')
+  const beforeInitAddUserAction = new BoundedBuffer<CustomUserAction>()
+  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (userAction) => {
+    beforeInitAddUserAction.add(userAction)
   }
 
   return makeGlobal({
@@ -72,6 +75,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration,
         () => globalContext
       ))
+      beforeInitAddUserAction.drain(addUserActionStrategy)
 
       isAlreadyInitialized = true
     }),
@@ -93,7 +97,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     }),
 
     addUserAction: monitor((name: string, context?: Context) => {
-      addUserActionStrategy({ name, context, type: UserActionType.CUSTOM })
+      addUserActionStrategy({
+        name,
+        context: combine({}, globalContext, context),
+        startTime: performance.now(),
+        type: UserActionType.CUSTOM,
+      })
     }),
   })
 

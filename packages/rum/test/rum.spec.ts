@@ -223,6 +223,7 @@ describe('rum session', () => {
   const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     context: { foo: 'bar' },
     name: 'action',
+    startTime: 123,
     type: UserActionType.CUSTOM,
   }
   let setupBuilder: TestSetupBuilder
@@ -551,6 +552,7 @@ describe('rum user action', () => {
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
       context: { fooBar: 'foo' },
       name: 'hello',
+      startTime: 123,
       type: UserActionType.CUSTOM,
     })
 

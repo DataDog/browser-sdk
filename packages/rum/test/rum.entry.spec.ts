@@ -1,4 +1,7 @@
+import { ONE_SECOND } from '@datadog/browser-core'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from '../src/rum.entry'
+import { UserActionType } from '../src/userActionCollection'
+import { setup, TestSetupBuilder } from './specHelper'
 
 const noopStartRum = () => ({
   addUserAction: () => undefined,
@@ -128,6 +131,81 @@ describe('rum entry', () => {
       const startTime = 234832890
       expect(rumGlobal.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalledWith(startTime)
+    })
+  })
+
+  describe('addUserAction', () => {
+    let addUserActionSpy: jasmine.Spy<ReturnType<StartRum>['addUserAction']>
+    let rumGlobal: RumGlobal
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addUserActionSpy = jasmine.createSpy()
+      rumGlobal = makeRumGlobal(() => ({
+        ...noopStartRum(),
+        addUserAction: addUserActionSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('allows sending user actions before init', () => {
+      rumGlobal.addUserAction('foo', { bar: 'baz' })
+
+      expect(addUserActionSpy).not.toHaveBeenCalled()
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addUserActionSpy).toHaveBeenCalledTimes(1)
+      expect(addUserActionSpy.calls.argsFor(0)).toEqual([
+        {
+          context: { bar: 'baz' },
+          name: 'foo',
+          startTime: jasmine.any(Number),
+          type: UserActionType.CUSTOM,
+        },
+      ])
+    })
+
+    it('combines the global context and user action context', () => {
+      rumGlobal.addRumGlobalContext('foo', 'from-global-context')
+      rumGlobal.addRumGlobalContext('bar', 'from-global-context')
+      rumGlobal.addUserAction('message', { bar: 'from-action-context' })
+
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addUserActionSpy.calls.argsFor(0)[0].context).toEqual({
+        bar: 'from-action-context',
+        foo: 'from-global-context',
+      })
+    })
+
+    describe('save context when sending a user action', () => {
+      it('saves the date', () => {
+        const { clock } = setupBuilder.withFakeClock().build()
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.addUserAction('foo')
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addUserActionSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
+      })
+
+      it('saves the global context', () => {
+        rumGlobal.addRumGlobalContext('foo', 'bar')
+        rumGlobal.addUserAction('message')
+        rumGlobal.addRumGlobalContext('foo', 'baz')
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addUserActionSpy.calls.argsFor(0)[0].context).toEqual({
+          foo: 'bar',
+        })
+      })
     })
   })
 })

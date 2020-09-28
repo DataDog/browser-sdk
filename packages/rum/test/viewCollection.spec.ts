@@ -30,6 +30,7 @@ const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     bar: 123,
   },
   name: 'foo',
+  startTime: 123,
   type: UserActionType.CUSTOM,
 }
 const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {

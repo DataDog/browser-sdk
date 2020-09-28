@@ -346,7 +346,7 @@ function makeRumEventHandler(
       if (session.isTracked() && view && view.sessionId) {
         const action = parentContexts.findAction(startTime)
         const rumEvent = assemble(event, { action, view, rum: rumContextProvider() })
-        const message = combine(globalContextProvider(), customerContext, withSnakeCaseKeys(rumEvent))
+        const message = combine(customerContext || globalContextProvider(), withSnakeCaseKeys(rumEvent))
         callback(message, rumEvent)
       }
     }
@@ -424,19 +424,20 @@ function trackCustomUserAction(
   lifeCycle: LifeCycle,
   handler: (startTime: number, event: RumUserActionEvent, customerContext?: Context) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, (userAction) => {
+  lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, ({ name, type, context, startTime }) => {
     handler(
-      performance.now(),
+      startTime,
       {
+        date: getTimestamp(startTime),
         evt: {
+          name,
           category: RumEventCategory.USER_ACTION,
-          name: userAction.name,
         },
         userAction: {
-          type: userAction.type,
+          type,
         },
       },
-      userAction.context
+      context
     )
   })
 }

@@ -20,6 +20,7 @@ export interface UserActionMeasures {
 export interface CustomUserAction {
   type: UserActionType.CUSTOM
   name: string
+  startTime: number
   context?: Context
 }
 
