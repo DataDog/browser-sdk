@@ -17,6 +17,7 @@ import {
   isPercentage,
   makeGlobal,
   monitor,
+  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
@@ -43,7 +44,7 @@ export const datadogLogs = makeLogsGlobal((userConfiguration) => {
     configuration,
     errorObservable,
     internalMonitoring,
-    session: startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions.secure)),
+    session: startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration))),
   }
 })
 
