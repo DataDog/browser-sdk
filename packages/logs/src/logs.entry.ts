@@ -67,29 +67,29 @@ export function makeLogsGlobal() {
       isAlreadyInitialized = true
     }),
 
-    setLoggerGlobalContext: (context: Context) => {
+    setLoggerGlobalContext: monitor((context: Context) => {
       globalContext = context
-    },
+    }),
 
-    addLoggerGlobalContext: (key: string, value: ContextValue) => {
+    addLoggerGlobalContext: monitor((key: string, value: ContextValue) => {
       globalContext[key] = value
-    },
+    }),
 
-    removeLoggerGlobalContext: (key: string) => {
+    removeLoggerGlobalContext: monitor((key: string) => {
       delete globalContext[key]
-    },
+    }),
 
-    createLogger: (name: string, conf: LoggerConfiguration = {}) => {
+    createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
         ...conf.context,
         logger: { name },
       })
       return customLoggers[name]!
-    },
+    }),
 
-    getLogger: (name: string) => {
+    getLogger: monitor((name: string) => {
       return customLoggers[name]
-    },
+    }),
   })
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
