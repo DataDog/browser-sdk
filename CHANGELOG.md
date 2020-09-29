@@ -14,9 +14,13 @@
 
 ---
 
+## v1.21.1
+
+- ✨ [RUMF-709][core] support 'null' as a context value ([#546](https://github.com/DataDog/browser-sdk/pull/546))
+
 ## v1.21.0
 
-- [RUMF-620]: Dual-ship "service" as tag and attribute ([#543](https://github.com/DataDog/browser-sdk/pull/543))
+- 🐛 [RUMF-620]: Dual-ship "service" as tag and attribute ([#543](https://github.com/DataDog/browser-sdk/pull/543))
 
 ## v1.20.1
 
