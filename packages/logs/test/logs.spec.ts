@@ -44,6 +44,8 @@ declare global {
   }
 }
 
+const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
+
 describe('logs', () => {
   let sessionIsTracked: boolean
   let configurationOverrides: Partial<Configuration>
@@ -107,7 +109,7 @@ describe('logs', () => {
         },
       }
       const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
 
       expect(getLoggedMessage(server, 0).view).toEqual({
         id: 'view-id',
@@ -118,9 +120,9 @@ describe('logs', () => {
     it('should all use the same batch', () => {
       configurationOverrides = { maxBatchSize: 3 }
       const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
-      sendLog({ message: 'message', status: StatusType.info }, {})
-      sendLog({ message: 'message', status: StatusType.info }, {})
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
+      sendLog(DEFAULT_MESSAGE, {})
+      sendLog(DEFAULT_MESSAGE, {})
 
       expect(server.requests.length).toEqual(1)
     })
@@ -133,14 +135,14 @@ describe('logs', () => {
           { session_id: SESSION_ID, service: 'Service' },
           { foo: 'from-current-context' },
           { view: { url: 'http://from-rum-context.com', id: 'view-id' } },
-          { status: StatusType.info, message: 'message' }
+          DEFAULT_MESSAGE
         )
       ).toEqual({
         foo: 'from-current-context',
-        message: 'message',
+        message: DEFAULT_MESSAGE.message,
         service: 'Service',
         session_id: SESSION_ID,
-        status: StatusType.info,
+        status: DEFAULT_MESSAGE.status,
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
       })
     })
@@ -151,7 +153,7 @@ describe('logs', () => {
           {},
           { session_id: 'from-rum-context' },
           {},
-          { message: 'message', status: StatusType.info, session_id: 'from-message-context' }
+          { ...DEFAULT_MESSAGE, session_id: 'from-message-context' }
         ).session_id
       ).toBe('from-message-context')
     })
@@ -162,17 +164,19 @@ describe('logs', () => {
           {},
           { session_id: 'from-current-context' },
           { session_id: 'from-rum-context' },
-          { message: 'message', status: StatusType.info }
+          DEFAULT_MESSAGE
         ).session_id
       ).toBe('from-rum-context')
     })
 
     it('current context should take precedence over default context', () => {
       expect(
-        assembleMessageContexts({ service: 'from-default-context' }, { service: 'from-current-context' }, undefined, {
-          message: 'message',
-          status: StatusType.info,
-        }).service
+        assembleMessageContexts(
+          { service: 'from-default-context' },
+          { service: 'from-current-context' },
+          undefined,
+          DEFAULT_MESSAGE
+        ).service
       ).toBe('from-current-context')
     })
   })
@@ -185,26 +189,26 @@ describe('logs', () => {
     })
 
     it('when tracked should enable disable logging', () => {
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(1)
     })
 
     it('when not tracked should disable logging', () => {
       sessionIsTracked = false
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(0)
     })
 
     it('when type change should enable/disable existing loggers', () => {
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(1)
 
       sessionIsTracked = false
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(1)
 
       sessionIsTracked = true
-      sendLog({ message: 'message', status: StatusType.info }, {})
+      sendLog(DEFAULT_MESSAGE, {})
       expect(server.requests.length).toEqual(2)
     })
   })
