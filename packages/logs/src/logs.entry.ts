@@ -27,7 +27,7 @@ export type Status = keyof typeof StatusType
 
 export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
-export const datadogLogs = makeLogsGlobal()
+export const datadogLogs = makeLogsGlobal(startLogs)
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
@@ -35,7 +35,9 @@ interface BrowserWindow extends Window {
 
 getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
 
-export function makeLogsGlobal() {
+export type StartLogs = typeof startLogs
+
+export function makeLogsGlobal(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   let globalContext: Context = {}
@@ -61,7 +63,7 @@ export function makeLogsGlobal() {
         console.warn('Public API Key is deprecated. Please use Client Token instead.')
       }
 
-      sendLogStrategy = startLogs(userConfiguration, logger, () => globalContext)
+      sendLogStrategy = startLogsImpl(userConfiguration, logger, () => globalContext)
       beforeInitSendLog.drain(([message, context]) => sendLogStrategy(message, context))
 
       isAlreadyInitialized = true

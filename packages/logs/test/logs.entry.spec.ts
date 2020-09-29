@@ -1,9 +1,7 @@
-import { mockModule, unmockModules } from '../../../test/unit/mockModule'
-
 import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
 
 import { HandlerType, LogsMessage, StatusType } from '../src/logger'
-import { LogsGlobal, makeLogsGlobal } from '../src/logs.entry'
+import { LogsGlobal, makeLogsGlobal, StartLogs } from '../src/logs.entry'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -14,7 +12,11 @@ describe('logs entry', () => {
       currentContext: Context & { view: { referrer: string; url: string } }
     ) => void
   >
-  let startLogsGlobalContext: (() => Context) | undefined
+  let startLogsGetGlobalContext: (() => Context) | undefined
+  const startLogs: StartLogs = (configuration, logger, getGlobalContext) => {
+    startLogsGetGlobalContext = getGlobalContext
+    return sendLogsSpy as any
+  }
 
   function getLoggedMessage(index: number) {
     const [message, context] = sendLogsSpy.calls.argsFor(index)
@@ -23,21 +25,11 @@ describe('logs entry', () => {
 
   beforeEach(() => {
     sendLogsSpy = jasmine.createSpy()
-    startLogsGlobalContext = undefined
-    mockModule('./packages/logs/src/logs.ts', () => ({
-      startLogs(configuration: unknown, logger: unknown, getGlobalContext: () => Context) {
-        startLogsGlobalContext = getGlobalContext
-        return sendLogsSpy
-      },
-    }))
-  })
-
-  afterEach(() => {
-    unmockModules()
+    startLogsGetGlobalContext = undefined
   })
 
   it('should set global with init', () => {
-    const LOGS = makeLogsGlobal()
+    const LOGS = makeLogsGlobal(startLogs)
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
@@ -46,7 +38,7 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal()
+      LOGS = makeLogsGlobal(startLogs)
     })
 
     it('init should log an error with no public api key', () => {
@@ -134,7 +126,7 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal()
+      LOGS = makeLogsGlobal(startLogs)
       jasmine.clock().install()
       jasmine.clock().mockDate()
     })
@@ -197,7 +189,7 @@ describe('logs entry', () => {
     let LOGS: LogsGlobal
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal()
+      LOGS = makeLogsGlobal(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 
@@ -262,7 +254,7 @@ describe('logs entry', () => {
 
       it('should expose global context to startLogs', () => {
         LOGS.setLoggerGlobalContext({ foo: 'bar' })
-        expect(startLogsGlobalContext!()).toEqual({ foo: 'bar' })
+        expect(startLogsGetGlobalContext!()).toEqual({ foo: 'bar' })
       })
     })
 
