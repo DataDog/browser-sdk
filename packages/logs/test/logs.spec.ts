@@ -1,5 +1,3 @@
-import { mockModule, unmockModules } from '../../../test/unit/mockModule'
-
 import {
   Configuration,
   Context,
@@ -13,7 +11,7 @@ import {
 import sinon from 'sinon'
 
 import { Logger, LogsMessage, StatusType } from '../src/logger'
-import { startLogs } from '../src/logs'
+import { makeStartLogs } from '../src/logs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -51,36 +49,27 @@ describe('logs', () => {
   let configurationOverrides: Partial<Configuration>
   let server: sinon.SinonFakeServer
   let errorObservable: ErrorObservable
+  const startLogs = makeStartLogs(() => {
+    return {
+      errorObservable,
+      configuration: { ...(configuration as Configuration), ...configurationOverrides },
+      internalMonitoring: { setExternalContextProvider: () => undefined },
+      session: {
+        getId: () => (sessionIsTracked ? SESSION_ID : undefined),
+        isTracked: () => sessionIsTracked,
+      },
+    }
+  })
 
   beforeEach(() => {
     sessionIsTracked = true
-    mockModule('./packages/logs/src/loggerSession.ts', () => ({
-      startLoggerSession() {
-        return {
-          getId: () => (sessionIsTracked ? SESSION_ID : undefined),
-          isTracked: () => sessionIsTracked,
-        }
-      },
-    }))
-
     configurationOverrides = {}
     errorObservable = new Observable<ErrorMessage>()
-    mockModule('./packages/core/src/init.ts', () => ({
-      commonInit() {
-        return {
-          errorObservable,
-          configuration: { ...(configuration as Configuration), ...configurationOverrides },
-          internalMonitoring: { setExternalContextProvider: () => undefined },
-        }
-      },
-    }))
-
     server = sinon.fakeServer.create()
   })
 
   afterEach(() => {
     server.restore()
-    unmockModules()
     delete window.DD_RUM
   })
 

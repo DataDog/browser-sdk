@@ -6,8 +6,10 @@ import {
   Configuration,
   Context,
   ErrorMessage,
+  ErrorObservable,
   getTimestamp,
   HttpRequest,
+  InternalMonitoring,
   mustUseSecureCookie,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
@@ -15,11 +17,7 @@ import { Logger, LogsMessage } from './logger'
 import { LoggerSession, startLoggerSession } from './loggerSession'
 import { LogsUserConfiguration } from './logs.entry'
 
-export function startLogs(
-  userConfiguration: LogsUserConfiguration,
-  errorLogger: Logger,
-  getGlobalContext: () => Context
-) {
+export const startLogs = makeStartLogs((userConfiguration) => {
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
   const { configuration, internalMonitoring, errorObservable } = commonInit(
     userConfiguration,
@@ -27,23 +25,44 @@ export function startLogs(
     isCollectingError
   )
   const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
+  return {
+    configuration,
+    errorObservable,
+    internalMonitoring,
+    session,
+  }
+})
 
-  internalMonitoring.setExternalContextProvider(() =>
-    combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
-  )
+export function makeStartLogs(
+  baseInit: (
+    userConfiguration: LogsUserConfiguration
+  ) => {
+    configuration: Configuration
+    errorObservable: ErrorObservable
+    internalMonitoring: InternalMonitoring
+    session: LoggerSession
+  }
+) {
+  return (userConfiguration: LogsUserConfiguration, errorLogger: Logger, getGlobalContext: () => Context) => {
+    const { configuration, errorObservable, internalMonitoring, session } = baseInit(userConfiguration)
 
-  const batch = startLoggerBatch(configuration, session)
-
-  errorObservable.subscribe((e: ErrorMessage) =>
-    errorLogger.error(
-      e.message,
-      combine({ date: getTimestamp(e.startTime), ...e.context }, getRUMInternalContext(e.startTime))
+    internalMonitoring.setExternalContextProvider(() =>
+      combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
     )
-  )
 
-  return (message: LogsMessage, currentContext: Context) => {
-    if (session.isTracked()) {
-      batch.add(message, currentContext)
+    const batch = startLoggerBatch(configuration, session)
+
+    errorObservable.subscribe((e: ErrorMessage) =>
+      errorLogger.error(
+        e.message,
+        combine({ date: getTimestamp(e.startTime), ...e.context }, getRUMInternalContext(e.startTime))
+      )
+    )
+
+    return (message: LogsMessage, currentContext: Context) => {
+      if (session.isTracked()) {
+        batch.add(message, currentContext)
+      }
     }
   }
 }
