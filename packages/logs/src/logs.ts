@@ -85,27 +85,29 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession) 
     )
   }
 
-  function withInternalContext(message: LogsMessage, currentContext: Context) {
-    return combine(
-      {
-        service: configuration.service,
-        session_id: session.getId(),
-      },
-      currentContext,
-      getRUMInternalContext(),
-      message
-    )
-  }
-
   return {
     add(message: LogsMessage, currentContext: Context) {
-      const contextualizedMessage = withInternalContext(message, currentContext)
+      const contextualizedMessage = assembleMessageContexts(
+        { service: configuration.service, session_id: session.getId() },
+        currentContext,
+        getRUMInternalContext(),
+        message
+      )
       primaryBatch.add(contextualizedMessage)
       if (replicaBatch) {
         replicaBatch.add(contextualizedMessage)
       }
     },
   }
+}
+
+export function assembleMessageContexts(
+  defaultContext: { service?: string; session_id?: string },
+  currentContext: Context,
+  rumInternalContext: Context | undefined,
+  message: LogsMessage
+) {
+  return combine(defaultContext, currentContext, rumInternalContext, message)
 }
 
 interface Rum {

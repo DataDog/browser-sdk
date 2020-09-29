@@ -11,7 +11,7 @@ import {
 import sinon from 'sinon'
 
 import { Logger, LogsMessage, StatusType } from '../src/logger'
-import { makeStartLogs } from '../src/logs'
+import { assembleMessageContexts, makeStartLogs } from '../src/logs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -100,16 +100,6 @@ describe('logs', () => {
       })
     })
 
-    it('message context should take precedence over current context', () => {
-      const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
-      sendLog(
-        { message: 'message', status: StatusType.info, view: { url: 'http://from-message.com' } },
-        { view: { url: 'http://from-current-context.com' } }
-      )
-
-      expect(getLoggedMessage(server, 0).view.url).toEqual('http://from-message.com')
-    })
-
     it('should include RUM context', () => {
       window.DD_RUM = {
         getInternalContext() {
@@ -117,11 +107,11 @@ describe('logs', () => {
         },
       }
       const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
-      sendLog({ message: 'message', status: StatusType.info, view: { url: 'http://from-message.com' } }, {})
+      sendLog({ message: 'message', status: StatusType.info }, {})
 
       expect(getLoggedMessage(server, 0).view).toEqual({
         id: 'view-id',
-        url: 'http://from-message.com',
+        url: 'http://from-rum-context.com',
       })
     })
 
@@ -133,6 +123,57 @@ describe('logs', () => {
       sendLog({ message: 'message', status: StatusType.info }, {})
 
       expect(server.requests.length).toEqual(1)
+    })
+  })
+
+  describe('assembleMessageContexts', () => {
+    it('assembles various contexts', () => {
+      expect(
+        assembleMessageContexts(
+          { session_id: SESSION_ID, service: 'Service' },
+          { foo: 'from-current-context' },
+          { view: { url: 'http://from-rum-context.com', id: 'view-id' } },
+          { status: StatusType.info, message: 'message' }
+        )
+      ).toEqual({
+        foo: 'from-current-context',
+        message: 'message',
+        service: 'Service',
+        session_id: SESSION_ID,
+        status: StatusType.info,
+        view: { url: 'http://from-rum-context.com', id: 'view-id' },
+      })
+    })
+
+    it('message context should take precedence over RUM context', () => {
+      expect(
+        assembleMessageContexts(
+          {},
+          { session_id: 'from-rum-context' },
+          {},
+          { message: 'message', status: StatusType.info, session_id: 'from-message-context' }
+        ).session_id
+      ).toBe('from-message-context')
+    })
+
+    it('RUM context should take precedence over current context', () => {
+      expect(
+        assembleMessageContexts(
+          {},
+          { session_id: 'from-current-context' },
+          { session_id: 'from-rum-context' },
+          { message: 'message', status: StatusType.info }
+        ).session_id
+      ).toBe('from-rum-context')
+    })
+
+    it('current context should take precedence over default context', () => {
+      expect(
+        assembleMessageContexts({ service: 'from-default-context' }, { service: 'from-current-context' }, undefined, {
+          message: 'message',
+          status: StatusType.info,
+        }).service
+      ).toBe('from-current-context')
     })
   })
 
