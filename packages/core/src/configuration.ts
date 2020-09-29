@@ -5,7 +5,6 @@ import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
-  isCollectingError: true,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   resourceSampleRate: 100,
@@ -42,7 +41,6 @@ export interface UserConfiguration {
   clientToken: string
   applicationId?: string
   internalMonitoringApiKey?: string
-  isCollectingError?: boolean
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
@@ -150,10 +148,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('allowedTracingOrigins' in userConfiguration) {
     configuration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins!
-  }
-
-  if ('isCollectingError' in userConfiguration) {
-    configuration.isCollectingError = !!userConfiguration.isCollectingError
   }
 
   if ('sampleRate' in userConfiguration) {

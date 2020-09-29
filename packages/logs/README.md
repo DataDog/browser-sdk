@@ -40,7 +40,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
 
   - Configurable options:
 
-    - `isCollectingError`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
+    - `forwardErrorsToLogs`: when truthy, we'll automatically forward `console.error` logs, uncaught exceptions and network errors.
     - `sampleRate`: percentage of sessions to track. Only tracked sessions send logs.
     - `site`: The site of the Datadog intake to send SDK data to (default: 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site)
     - `silentMultipleInit`: prevent logging errors while having multiple Init
@@ -58,7 +58,7 @@ What we call `Context` is a map `{key: value}` that will be added to the message
   init(configuration: {
       clientToken: string,
       site?: string,
-      isCollectingError?: boolean,
+      forwardErrorsToLogs?: boolean,
       sampleRate?: number,
       silentMultipleInit?: boolean,
       service?: string,

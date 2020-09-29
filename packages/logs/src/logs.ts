@@ -21,11 +21,11 @@ export function startLogs(
   getGlobalContext: () => Context
 ) {
   const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
-  const logsUserConfiguration = {
-    ...userConfiguration,
-    isCollectingError,
-  }
-  const { configuration, internalMonitoring, errorObservable } = commonInit(logsUserConfiguration, buildEnv)
+  const { configuration, internalMonitoring, errorObservable } = commonInit(
+    userConfiguration,
+    buildEnv,
+    isCollectingError
+  )
   const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
 
   internalMonitoring.setExternalContextProvider(() =>

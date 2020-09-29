@@ -45,12 +45,10 @@ export interface BuildEnv {
   sdkVersion: string
 }
 
-export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
+export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv, isCollectingError: boolean) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
-  const errorObservable = configuration.isCollectingError
-    ? startErrorCollection(configuration)
-    : new Observable<ErrorMessage>()
+  const errorObservable = isCollectingError ? startErrorCollection(configuration) : new Observable<ErrorMessage>()
 
   return {
     configuration,
