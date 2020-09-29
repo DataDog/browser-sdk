@@ -6,10 +6,9 @@ export class BoundedBuffer<T> {
   constructor(private limit: number = DEFAULT_LIMIT) {}
 
   add(item: T) {
-    this.buffer.push(item)
-    const overlimitCount = this.buffer.length - this.limit
-    if (overlimitCount > 0) {
-      this.buffer.splice(0, overlimitCount)
+    const length = this.buffer.push(item)
+    if (length > this.limit) {
+      this.buffer.splice(0, 1)
     }
   }
 
