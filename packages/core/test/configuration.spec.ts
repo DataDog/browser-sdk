@@ -48,18 +48,6 @@ describe('configuration', () => {
     })
   })
 
-  describe('isCollectingError', () => {
-    it('should be enabled by default', () => {
-      const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(configuration.isCollectingError).toEqual(true)
-    })
-
-    it('should be disabled when defined to false', () => {
-      const configuration = buildConfiguration({ clientToken, isCollectingError: false }, usEnv)
-      expect(configuration.isCollectingError).toEqual(false)
-    })
-  })
-
   describe('site', () => {
     it('should use buildEnv value by default', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)

@@ -1,88 +1,33 @@
 import {
-  areCookiesAuthorized,
-  assign,
+  BoundedBuffer,
   checkIsNotLocalFile,
-  commonInit,
+  combine,
   Context,
   ContextValue,
   getGlobalObject,
   isPercentage,
   makeGlobal,
-  makeStub,
   monitor,
-  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { buildEnv } from './buildEnv'
-import { HandlerType, Logger, LoggerConfiguration, startLogger, StatusType } from './logger'
-import { startLoggerSession } from './loggerSession'
+import { HandlerType, Logger, LogsMessage, StatusType } from './logger'
+import { startLogs } from './logs'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
 }
 
+export interface LoggerConfiguration {
+  level?: StatusType
+  handler?: HandlerType
+  context?: Context
+}
+
 export type Status = keyof typeof StatusType
 
-const STUBBED_LOGGER = {
-  debug(message: string, context?: Context) {
-    makeStub('logs.logger.debug')
-  },
-  error(message: string, context?: Context) {
-    makeStub('logs.logger.error')
-  },
-  info(message: string, context?: Context) {
-    makeStub('logs.logger.info')
-  },
-  log(message: string, context?: Context, status?: Status) {
-    makeStub('logs.logger.log')
-  },
-  warn(message: string, context?: Context) {
-    makeStub('logs.logger.warn')
-  },
-  setContext(context: Context) {
-    makeStub('logs.logger.setContext')
-  },
-  addContext(key: string, value: ContextValue) {
-    makeStub('logs.logger.addContext')
-  },
-  removeContext(key: string) {
-    makeStub('logs.logger.removeContext')
-  },
-  setHandler(handler: HandlerType) {
-    makeStub('logs.logger.setHandler')
-  },
-  setLevel(level: StatusType) {
-    makeStub('logs.logger.setLevel')
-  },
-}
+export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
-const STUBBED_LOGS = {
-  logger: STUBBED_LOGGER,
-  init(userConfiguration: LogsUserConfiguration) {
-    makeStub('core.init')
-  },
-  addLoggerGlobalContext(key: string, value: ContextValue) {
-    makeStub('addLoggerGlobalContext')
-  },
-  removeLoggerGlobalContext(key: string) {
-    makeStub('removeLoggerGlobalContext')
-  },
-  setLoggerGlobalContext(context: Context) {
-    makeStub('setLoggerGlobalContext')
-  },
-  createLogger(name: string, conf?: LoggerConfiguration): Logger {
-    makeStub('createLogger')
-    return STUBBED_LOGGER as Logger
-  },
-  getLogger(name: string): Logger | undefined {
-    makeStub('getLogger')
-    return undefined
-  },
-}
-
-export type LogsGlobal = typeof STUBBED_LOGS
-
-export const datadogLogs = makeLogsGlobal(STUBBED_LOGS)
+export const datadogLogs = makeLogsGlobal(startLogs)
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
@@ -90,30 +35,63 @@ interface BrowserWindow extends Window {
 
 getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
 
-export function makeLogsGlobal(stub: LogsGlobal) {
-  const global = makeGlobal(stub)
+export type StartLogs = typeof startLogs
 
+export function makeLogsGlobal(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  global.init = monitor((userConfiguration: LogsUserConfiguration) => {
-    if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
-      return
-    }
+  let globalContext: Context = {}
+  const customLoggers: { [name: string]: Logger | undefined } = {}
 
-    if (userConfiguration.publicApiKey) {
-      userConfiguration.clientToken = userConfiguration.publicApiKey
-      console.warn('Public API Key is deprecated. Please use Client Token instead.')
-    }
-    const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
-    const logsUserConfiguration = {
-      ...userConfiguration,
-      isCollectingError,
-    }
-    const { errorObservable, configuration, internalMonitoring } = commonInit(logsUserConfiguration, buildEnv)
-    const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
-    const globalApi = startLogger(errorObservable, configuration, session, internalMonitoring)
-    assign(global, globalApi)
-    isAlreadyInitialized = true
+  const beforeInitSendLog = new BoundedBuffer<[LogsMessage, Context]>()
+  let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
+    beforeInitSendLog.add([message, currentContext])
+  }
+
+  const logger = new Logger(sendLog)
+
+  return makeGlobal({
+    logger,
+
+    init: monitor((userConfiguration: LogsUserConfiguration) => {
+      if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
+        return
+      }
+
+      if (userConfiguration.publicApiKey) {
+        userConfiguration.clientToken = userConfiguration.publicApiKey
+        console.warn('Public API Key is deprecated. Please use Client Token instead.')
+      }
+
+      sendLogStrategy = startLogsImpl(userConfiguration, logger, () => globalContext)
+      beforeInitSendLog.drain(([message, context]) => sendLogStrategy(message, context))
+
+      isAlreadyInitialized = true
+    }),
+
+    setLoggerGlobalContext: monitor((context: Context) => {
+      globalContext = context
+    }),
+
+    addLoggerGlobalContext: monitor((key: string, value: ContextValue) => {
+      globalContext[key] = value
+    }),
+
+    removeLoggerGlobalContext: monitor((key: string) => {
+      delete globalContext[key]
+    }),
+
+    createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
+      customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
+        ...conf.context,
+        logger: { name },
+      })
+      return customLoggers[name]!
+    }),
+
+    getLogger: monitor((name: string) => {
+      return customLoggers[name]
+    }),
   })
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
@@ -134,5 +112,19 @@ export function makeLogsGlobal(stub: LogsGlobal) {
     return true
   }
 
-  return global
+  function sendLog(message: LogsMessage) {
+    sendLogStrategy(
+      message,
+      combine(
+        {
+          date: Date.now(),
+          view: {
+            referrer: document.referrer,
+            url: window.location.href,
+          },
+        },
+        globalContext
+      )
+    )
+  }
 }

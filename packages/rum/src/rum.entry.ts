@@ -88,13 +88,17 @@ export function makeRumGlobal(stub: RumGlobal) {
     if (userConfiguration.publicApiKey) {
       userConfiguration.clientToken = userConfiguration.publicApiKey
     }
-    const rumUserConfiguration = { ...userConfiguration, isCollectingError: true }
     const lifeCycle = new LifeCycle()
 
-    const { errorObservable, configuration, internalMonitoring } = commonInit(rumUserConfiguration, buildEnv)
+    const isCollectingError = true
+    const { errorObservable, configuration, internalMonitoring } = commonInit(
+      userConfiguration,
+      buildEnv,
+      isCollectingError
+    )
     const session = startRumSession(configuration, lifeCycle)
     const { globalApi } = startRum(
-      rumUserConfiguration.applicationId,
+      userConfiguration.applicationId,
       location,
       lifeCycle,
       configuration,

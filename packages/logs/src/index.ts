@@ -1,3 +1,3 @@
 export { Datacenter } from '@datadog/browser-core'
-export { StatusType, HandlerType, LoggerConfiguration, Logger, LogsMessage } from './logger'
-export { LogsUserConfiguration, Status, LogsGlobal, datadogLogs } from './logs.entry'
+export { StatusType, HandlerType, Logger, LogsMessage } from './logger'
+export { LogsUserConfiguration, Status, LoggerConfiguration, LogsGlobal, datadogLogs } from './logs.entry'
