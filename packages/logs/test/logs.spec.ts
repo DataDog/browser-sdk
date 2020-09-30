@@ -11,7 +11,7 @@ import {
 import sinon from 'sinon'
 
 import { Logger, LogsMessage, StatusType } from '../src/logger'
-import { assembleMessageContexts, makeStartLogs } from '../src/logs'
+import { assembleMessageContexts, doStartLogs } from '../src/logs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -25,15 +25,16 @@ interface SentMessage extends LogsMessage {
 function getLoggedMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as SentMessage
 }
-const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const FAKE_DATE = 123456
 const SESSION_ID = 'session-id'
-const configuration: Partial<Configuration> = {
+const baseConfiguration: Partial<Configuration> = {
   ...DEFAULT_CONFIGURATION,
   logsEndpoint: 'https://localhost/v1/input/log',
   maxBatchSize: 1,
   service: 'Service',
 }
+const internalMonitoring = { setExternalContextProvider: () => undefined }
+const getGlobalContext = () => ({})
 
 interface Rum {
   getInternalContext(startTime?: number): any | undefined
@@ -48,24 +49,22 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 
 describe('logs', () => {
   let sessionIsTracked: boolean
-  let configurationOverrides: Partial<Configuration>
   let server: sinon.SinonFakeServer
   let errorObservable: ErrorObservable
-  const startLogs = makeStartLogs(() => {
-    return {
-      errorObservable,
-      configuration: { ...(configuration as Configuration), ...configurationOverrides },
-      internalMonitoring: { setExternalContextProvider: () => undefined },
-      session: {
-        getId: () => (sessionIsTracked ? SESSION_ID : undefined),
-        isTracked: () => sessionIsTracked,
-      },
-    }
-  })
+  const session = {
+    getId: () => (sessionIsTracked ? SESSION_ID : undefined),
+    isTracked: () => sessionIsTracked,
+  }
+  const startLogs = ({
+    errorLogger = new Logger(noop),
+    configuration: configurationOverrides,
+  }: { errorLogger?: Logger; configuration?: Partial<Configuration> } = {}) => {
+    const configuration = { ...(baseConfiguration as Configuration), ...configurationOverrides }
+    return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
+  }
 
   beforeEach(() => {
     sessionIsTracked = true
-    configurationOverrides = {}
     errorObservable = new Observable<ErrorMessage>()
     server = sinon.fakeServer.create()
   })
@@ -77,7 +76,7 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', () => {
-      const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
+      const sendLog = startLogs()
       sendLog(
         { message: 'message', foo: 'bar', status: StatusType.warn },
         {
@@ -87,7 +86,7 @@ describe('logs', () => {
       )
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toEqual(configuration.logsEndpoint!)
+      expect(server.requests[0].url).toEqual(baseConfiguration.logsEndpoint!)
       expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE,
         foo: 'bar',
@@ -108,7 +107,7 @@ describe('logs', () => {
           return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
         },
       }
-      const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
+      const sendLog = startLogs()
       sendLog(DEFAULT_MESSAGE, {})
 
       expect(getLoggedMessage(server, 0).view).toEqual({
@@ -118,8 +117,7 @@ describe('logs', () => {
     })
 
     it('should all use the same batch', () => {
-      configurationOverrides = { maxBatchSize: 3 }
-      const sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
+      const sendLog = startLogs({ configuration: { maxBatchSize: 3 } })
       sendLog(DEFAULT_MESSAGE, {})
       sendLog(DEFAULT_MESSAGE, {})
       sendLog(DEFAULT_MESSAGE, {})
@@ -185,7 +183,7 @@ describe('logs', () => {
     let sendLog: (message: LogsMessage, context: Context) => void
 
     beforeEach(() => {
-      sendLog = startLogs(DEFAULT_INIT_CONFIGURATION, new Logger(noop), () => ({}))
+      sendLog = startLogs()
     })
 
     it('when tracked should enable disable logging', () => {
@@ -216,8 +214,7 @@ describe('logs', () => {
   describe('error collection', () => {
     it('should send log errors', () => {
       const sendLogSpy = jasmine.createSpy()
-      const errorLogger = new Logger(sendLogSpy)
-      startLogs(DEFAULT_INIT_CONFIGURATION, errorLogger, () => ({}))
+      startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
         context: { error: { origin: ErrorOrigin.SOURCE, kind: 'Error' } },
@@ -245,8 +242,7 @@ describe('logs', () => {
         },
       }
       const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const errorLogger = new Logger(sendLogSpy)
-      startLogs(DEFAULT_INIT_CONFIGURATION, errorLogger, () => ({}))
+      startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
         context: { error: { origin: ErrorOrigin.SOURCE, kind: 'Error' } },
