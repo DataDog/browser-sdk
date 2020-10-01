@@ -14,6 +14,10 @@
 
 ---
 
+## v1.22.0
+
+- ✨ [RUMF-530][logs] allow using logs API before init ([#545](https://github.com/DataDog/browser-sdk/pull/545))
+
 ## v1.21.1
 
 - ✨ [RUMF-709][core] support 'null' as a context value ([#546](https://github.com/DataDog/browser-sdk/pull/546))
