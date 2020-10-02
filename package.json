@@ -25,7 +25,8 @@
     "test:e2e:async": "BUILD_MODE=e2e-test yarn build && E2E_MODE=async wdio test/e2e/wdio.local.conf.js",
     "test:e2e:bs": "BUILD_MODE=e2e-test yarn build && node ./scripts/bs-wrapper.js wdio test/e2e/wdio.bs.conf.js",
     "test:compat:tsc": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:tsc) || yarn fail 'typescript 3.0 compatibility broken'",
-    "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'"
+    "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'",
+    "test:events-format": "git submodule update --init && node test/schema/dummy-validation.js"
   },
   "devDependencies": {
     "@types/jasmine": "3.5.10",
@@ -38,6 +39,7 @@
     "@wdio/selenium-standalone-service": "6.0.16",
     "@wdio/spec-reporter": "6.0.16",
     "@wdio/sync": "6.1.0",
+    "ajv": "6.12.5",
     "body-parser": "1.19.0",
     "browserstack-local": "1.4.5",
     "codecov": "3.7.1",

@@ -126,6 +126,14 @@ check-licenses:
   script:
     - node --no-warnings scripts/check-licenses.js
 
+events-format:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn test:events-format
+
 unit-bs:
   except:
     refs:
