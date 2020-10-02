@@ -99,7 +99,7 @@ The following parameters are available:
 | `resourceSampleRate`    | Number  | No       | `100`           | The percentage of tracked sessions with resources collection: `100` for all, `0` for none.               |
 | `sampleRate`            | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. |
 | `silentMultipleInit`    | Boolean | No       | `false`         | Initialization fails silently if Datadog's RUM is already initialized on the page.                       |
-| `proxyHost`             | String  | No       |                 | Optional proxy URL, see the full [proxy setup guide][7] for more information.                            |
+| `proxyHost`             | String  | No       |                 | Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.       |
 | `allowedTracingOrigins` | List    | No       |                 | A list of request origins used to inject tracing headers.                                                |
 
 Options that must have matching configuration when also using `logs` SDK:

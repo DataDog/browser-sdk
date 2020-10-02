@@ -222,7 +222,7 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
   return (
-    getPathName(url).indexOf('/v1/input/') === 0 &&
+    getPathName(url).indexOf('/v1/input/') !== -1 &&
     (haveSameOrigin(url, configuration.logsEndpoint) ||
       haveSameOrigin(url, configuration.rumEndpoint) ||
       haveSameOrigin(url, configuration.traceEndpoint) ||
