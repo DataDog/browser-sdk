@@ -1,4 +1,4 @@
-import './globalTypes'
+import '../lib/globalTypes'
 import {
   browserExecute,
   browserExecuteAsync,
@@ -17,14 +17,14 @@ import {
   waitServerLogs,
   waitServerRumEvents,
   withBrowserLogs,
-} from './helpers'
+} from '../lib/helpers'
 import {
   isRumResourceEvent,
   isRumUserActionEvent,
   isRumViewEvent,
   ServerRumResourceEvent,
   ServerRumViewLoadingType,
-} from './serverTypes'
+} from '../lib/serverTypes'
 
 beforeEach(startSpec)
 

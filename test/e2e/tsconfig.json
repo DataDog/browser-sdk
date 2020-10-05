@@ -12,10 +12,10 @@
     ],
     "types": ["node", "webdriverio", "jasmine"],
     "paths": {
-      "@datadog/browser-logs": ["../../../packages/logs/src"],
-      "@datadog/browser-rum": ["../../../packages/rum/src"],
-      "@datadog/browser-core": ["../../../packages/core/src"]
+      "@datadog/browser-logs": ["../../packages/logs/src"],
+      "@datadog/browser-rum": ["../../packages/rum/src"],
+      "@datadog/browser-core": ["../../packages/core/src"]
     }
   },
-  "include": ["./**/*.ts", "../*.d.ts"]
+  "include": ["./scenario/**/*.ts", "./lib/**/*.ts", "./*.d.ts"]
 }
