@@ -135,8 +135,10 @@ describe('configuration', () => {
     })
 
     it('should detect proxy intake request', () => {
-      const configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
+      let configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
       expect(isIntakeRequest('https://www.proxy.com/v1/input/xxx', configuration)).toBe(true)
+      configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com/custom/path' }, usEnv)
+      expect(isIntakeRequest('https://www.proxy.com/custom/path/v1/input/xxx', configuration)).toBe(true)
     })
 
     it('should not detect request done on the same host as the proxy', () => {
