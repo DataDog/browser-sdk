@@ -281,7 +281,7 @@ describe('user action collection', () => {
 
 describe('anchor navigation', () => {
   it('should not create a new view when it is an Anchor navigation', async () => {
-    await $('#test-anchor').click()
+    await (await $('#test-anchor')).click()
 
     await flushEvents()
     const rumEvents = await waitServerRumEvents()

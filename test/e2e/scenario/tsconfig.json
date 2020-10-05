@@ -10,7 +10,7 @@
         "name": "typescript-tslint-plugin"
       }
     ],
-    "types": ["node", "@wdio/sync", "jasmine"],
+    "types": ["node", "webdriverio", "jasmine"],
     "paths": {
       "@datadog/browser-logs": ["../../../packages/logs/src"],
       "@datadog/browser-rum": ["../../../packages/rum/src"],
