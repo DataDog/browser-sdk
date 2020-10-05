@@ -1,8 +1,9 @@
 Component,Origin,License,Copyright
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
+dev,@types/cors,MIT,Copyright Microsoft Corporation
+dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
-dev,@types/request,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
@@ -34,7 +35,6 @@ dev,morgan,MIT,Copyright 2014 Jonathan Ong 2014-2017 Douglas Christopher Wilson
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,prettier,MIT,Copyright James Long and contributors
 dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
-dev,request,Apache-2.0,
 dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
 dev,string-replace-loader,MIT,Copyright 2015 Valentyn Barmashyn
 dev,ts-loader,MIT,Copyright 2015 TypeStrong

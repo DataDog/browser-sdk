@@ -1,28 +1,4 @@
-import { MonitoringMessage } from '@datadog/browser-core'
-import * as request from 'request'
-import { getCurrentSpec } from '../currentSpecReporter'
-import { isRumResourceEvent, ServerLogsMessage, ServerRumEvent, ServerRumResourceEvent } from './serverTypes'
-
-const { hostname } = new URL(browser.config.baseUrl!)
-
-export const serverUrl = {
-  crossOrigin: `http://${hostname}:3002`,
-  sameOrigin: browser.config.baseUrl!,
-}
-
-const intakeRequest = request.defaults({ baseUrl: 'http://localhost:4000' })
-let specId: string
-
-export async function startSpec() {
-  await generateSpecId()
-  await logCurrentSpec()
-  await browser.url(`/${browser.config.e2eMode}-e2e-page.html?cb=${Date.now()}&spec-id=${specId}`)
-  await waitForSDKLoaded()
-}
-
-export async function generateSpecId() {
-  specId = String(Math.random()).substring(2)
-}
+import { resolve as resolveUrl } from 'url'
 
 export async function flushEvents() {
   // wait to process user actions + event loop before switching page
@@ -31,7 +7,8 @@ export async function flushEvents() {
       done(undefined)
     }, 200)
   )
-  return browser.url(`/empty.html?spec-id=${specId}`)
+  const currentUrl = await browser.getUrl()
+  return browser.url(resolveUrl(currentUrl, `/empty`))
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
@@ -66,75 +43,10 @@ export async function flushBrowserLogs() {
   })
 }
 
-export async function tearDown() {
-  await flushEvents()
-  expect(await retrieveMonitoringErrors()).toEqual([])
-  await withBrowserLogs((logs) => {
-    logs.forEach(console.log)
-    expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
-  })
-  await deleteAllCookies()
-  await resetServerState()
-}
-
-export async function waitServerLogs(): Promise<ServerLogsMessage[]> {
-  return fetchWhile('/logs', (logs: ServerLogsMessage[]) => logs.length === 0)
-}
-
-export async function waitServerRumEvents(): Promise<ServerRumEvent[]> {
-  return fetchWhile('/rum', (events: ServerRumEvent[]) => events.length === 0)
-}
-
-export async function retrieveMonitoringErrors() {
-  return fetch('/monitoring').then((monitoringErrors: string) => JSON.parse(monitoringErrors) as MonitoringMessage[])
-}
-
-export async function resetServerState() {
-  return fetch('/reset')
-}
-
-async function fetch(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    intakeRequest.get(`${url}?spec-id=${specId}`, (err: any, response: any, body: string) => {
-      if (err) {
-        reject(err)
-      }
-      resolve(body)
-    })
-  })
-}
-
-export async function fetchWhile(url: string, conditionFn: (body: any) => boolean, timeout = 10000) {
-  const threshold = Date.now() + timeout
-  let body: string = await fetch(url)
-  while (conditionFn(JSON.parse(body))) {
-    if (Date.now() > threshold) {
-      throw new Error(`fetchWhile promise rejected because of timeout (${timeout / 1000}s)
-            Body: ${body}
-            conditionFn: ${conditionFn.toString()}
-            `)
-    } else {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-    }
-    body = await fetch(url)
-  }
-  return JSON.parse(body)
-}
-
-export function sortByMessage(a: { message: string }, b: { message: string }) {
-  if (a.message < b.message) {
-    return -1
-  }
-  if (a.message > b.message) {
-    return 1
-  }
-  return 0
-}
-
 export async function renewSession() {
   await expireSession()
-  const button = await $('button')
-  await button.click()
+  const documentElement = await $('html')
+  await documentElement.click()
   expect(await findSessionCookie()).toBeDefined()
 }
 
@@ -146,7 +58,7 @@ export async function expireSession() {
 }
 
 // wdio method does not work for some browsers
-async function deleteAllCookies() {
+export async function deleteAllCookies() {
   return browserExecute(() => {
     const cookies = document.cookie.split(';')
     for (const cookie of cookies) {
@@ -163,35 +75,27 @@ async function findSessionCookie() {
   return cookies.find((cookie: any) => cookie.name === '_dd_s')
 }
 
-export async function makeXHRAndCollectEvent(url: string): Promise<ServerRumResourceEvent | undefined> {
-  await sendXhr(url)
-
-  await flushEvents()
-
-  return (await waitServerRumEvents()).filter(isRumResourceEvent).find((event) => event.http.url === url)
-}
-
 export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
-  return browserExecuteAsync(
+  type State = { state: 'success'; response: string } | { state: 'error' }
+
+  const result: State = await browserExecuteAsync(
     // tslint:disable-next-line: no-shadowed-variable
     (url, headers, done) => {
-      let loaded = false
       const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => (loaded = true))
+      xhr.addEventListener('load', () => done({ state: 'success', response: xhr.response as string }))
+      xhr.addEventListener('error', () => done({ state: 'error' }))
       xhr.open('GET', url)
       headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
       xhr.send()
-
-      const interval = setInterval(() => {
-        if (loaded) {
-          clearInterval(interval)
-          done(xhr.response as string)
-        }
-      }, 500)
     },
     url,
     headers
   )
+
+  if (result.state === 'error') {
+    throw new Error(`sendXhr: request to ${url} failed`)
+  }
+  return result.response
 }
 
 export async function sendFetch(url: string, headers: string[][] = []): Promise<string> {
@@ -206,45 +110,4 @@ export async function sendFetch(url: string, headers: string[][] = []): Promise<
     url,
     headers
   )
-}
-
-export function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
-  expect(resourceEvent.date).toBeGreaterThan(0)
-  expect(resourceEvent.duration).toBeGreaterThan(0)
-  const performance = resourceEvent.http.performance
-  // timing could have been discarded by the SDK if there was not in the correct order
-  if (performance) {
-    expect(performance.download.start).toBeGreaterThan(0)
-  }
-}
-
-export async function waitForSDKLoaded() {
-  await browserExecuteAsync((done) => {
-    const interval = setInterval(() => {
-      if (window.DD_RUM && window.DD_LOGS) {
-        clearInterval(interval)
-        done(undefined)
-      }
-    }, 500)
-  })
-}
-
-export async function logCurrentSpec() {
-  const message = `[${specId}] ${browser.capabilities.browserName} - ${getCurrentSpec()}`
-  return new Promise((resolve, reject) => {
-    intakeRequest.post(
-      `/server-log?spec-id=${specId}`,
-      {
-        body: message,
-        headers: { 'Content-Type': 'text/plain' },
-      },
-      (error: unknown) => {
-        if (error) {
-          reject(error)
-        } else {
-          resolve()
-        }
-      }
-    )
-  })
 }
