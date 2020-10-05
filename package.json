@@ -11,7 +11,7 @@
     "format": "prettier --check \"**/*.{ts,js,json,md,yml,html}\"",
     "lint": "scripts/cli lint . && scripts/cli lint test/e2e/scenario",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck test/e2e/scenario",
-    "dev": "ENV=development node test/server/server.js",
+    "dev": "node scripts/dev-server.js",
     "release": "lerna version --exact",
     "version": "node ./scripts/generate-changelog.js",
     "publish:npm": "TARGET_DATACENTER=us BUILD_MODE=release yarn build && lerna publish from-package",
