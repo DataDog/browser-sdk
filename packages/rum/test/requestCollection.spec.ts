@@ -13,6 +13,7 @@ import {
 } from '@datadog/browser-core'
 import { resetFetchProxy } from '../../core/src/fetchProxy'
 import { resetXhrProxy } from '../../core/src/xhrProxy'
+import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import {
   RequestCompleteEvent,
   RequestObservables,
@@ -42,15 +43,15 @@ describe('collect fetch', () => {
     }
     fetchStubManager = stubFetch()
 
-    const requestObservables: RequestObservables = [new Observable(), new Observable()]
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
-    requestObservables[0].subscribe(startSpy)
-    requestObservables[1].subscribe(completeSpy)
+    const lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
       traceFetch: () => undefined,
     }
-    fetchProxy = trackFetch(configuration as Configuration, requestObservables, tracerStub as Tracer)
+    fetchProxy = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
@@ -121,15 +122,15 @@ describe('collect xhr', () => {
       pending('no fetch support')
     }
 
-    const requestObservables: RequestObservables = [new Observable(), new Observable()]
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
-    requestObservables[0].subscribe(startSpy)
-    requestObservables[1].subscribe(completeSpy)
+    const lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
       traceXhr: () => undefined,
     }
-    trackXhr(configuration as Configuration, requestObservables, tracerStub as Tracer)
+    trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer)
   })
 
   afterEach(() => {

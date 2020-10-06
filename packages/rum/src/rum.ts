@@ -185,7 +185,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
     getGlobalContext
   )
 
-  const [requestStartObservable, requestCompleteObservable] = startRequestCollection(configuration)
+  startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
   if (configuration.trackInteractions) {
@@ -193,8 +193,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
-  requestStartObservable.subscribe((startEvent) => lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, startEvent))
-  requestCompleteObservable.subscribe((request) => lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, request))
 
   return {
     getInternalContext(startTime?: number) {
