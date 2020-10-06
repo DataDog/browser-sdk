@@ -558,6 +558,23 @@ describe('rum user action', () => {
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })
+
+  it('should ignore the global context', () => {
+    const { setGlobalContext, server, lifeCycle } = setupBuilder.build()
+    server.requests = []
+
+    setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
+
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
+      context: { replacedContext: 'a' },
+      name: 'hello',
+      startTime: 123,
+      type: UserActionType.CUSTOM,
+    })
+
+    expect((getRumMessage(server, 0) as any).replacedContext).toEqual('a')
+    expect((getRumMessage(server, 0) as any).addedContext).toEqual(undefined)
+  })
 })
 
 describe('rum context', () => {
