@@ -36,7 +36,6 @@
     "@wdio/selenium-standalone-service": "6.0.16",
     "@wdio/spec-reporter": "6.0.16",
     "@wdio/sync": "6.1.0",
-    "body-parser": "1.19.0",
     "browserstack-local": "1.4.5",
     "codecov": "3.7.1",
     "cors": "2.8.5",
