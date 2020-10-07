@@ -118,7 +118,7 @@ describe('rum entry', () => {
       expect(getInternalContextSpy).not.toHaveBeenCalled()
     })
 
-    it('returns the global context after init', () => {
+    it('returns the internal context after init', () => {
       rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(rumGlobal.getInternalContext()).toEqual({ application_id: '123', session_id: '123' })

@@ -5,6 +5,7 @@ import {
   combine,
   Context,
   ContextValue,
+  createContextManager,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -48,7 +49,7 @@ export type StartRum = typeof startRum
 export function makeRumGlobal(startRumImpl: StartRum) {
   let isAlreadyInitialized = false
 
-  let globalContext: Context = {}
+  const globalContextManager = createContextManager()
 
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
@@ -73,24 +74,18 @@ export function makeRumGlobal(startRumImpl: StartRum) {
 
       ;({ getInternalContext: getInternalContextStrategy, addUserAction: addUserActionStrategy } = startRumImpl(
         userConfiguration,
-        () => globalContext
+        globalContextManager.get
       ))
       beforeInitAddUserAction.drain(addUserActionStrategy)
 
       isAlreadyInitialized = true
     }),
 
-    addRumGlobalContext: monitor((key: string, value: ContextValue) => {
-      globalContext[key] = value
-    }),
+    addRumGlobalContext: monitor(globalContextManager.add),
 
-    removeRumGlobalContext: monitor((key: string) => {
-      delete globalContext[key]
-    }),
+    removeRumGlobalContext: monitor(globalContextManager.remove),
 
-    setRumGlobalContext: monitor((context: Context) => {
-      globalContext = context
-    }),
+    setRumGlobalContext: monitor(globalContextManager.set),
 
     getInternalContext: monitor((startTime?: number) => {
       return getInternalContextStrategy(startTime)
@@ -100,7 +95,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       addUserActionStrategy({
         name,
         context: combine({}, context),
-        globalContext: combine({}, globalContext),
+        globalContext: combine({}, globalContextManager.get()),
         startTime: performance.now(),
         type: UserActionType.CUSTOM,
       })

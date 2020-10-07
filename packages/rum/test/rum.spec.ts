@@ -494,20 +494,6 @@ describe('rum global context', () => {
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
-  it('should be updatable', () => {
-    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
-    server.requests = []
-
-    setGlobalContext({ bar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    setGlobalContext({ foo: 'bar' })
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
-    expect((getRumMessage(server, 1) as any).foo).toEqual('bar')
-    expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
-  })
-
   it('should ignore subsequent context mutation', () => {
     const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
