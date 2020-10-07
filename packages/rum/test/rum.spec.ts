@@ -508,7 +508,7 @@ describe('rum global context', () => {
     expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
   })
 
-  it('should be removable', () => {
+  it('should ignore subsequent context mutation', () => {
     const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
