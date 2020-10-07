@@ -339,12 +339,16 @@ function makeRumEventHandler(
     assemble: (event: T, { view, action, rum }: AssembleWithAction) => RumEvent,
     callback: (message: Context, event: RumEvent) => void
   ) {
-    return (startTime: number, event: T, customerContext?: Context) => {
+    return (startTime: number, event: T, savedGlobalContext?: Context, customerContext?: Context) => {
       const view = parentContexts.findView(startTime)
       if (session.isTracked() && view && view.sessionId) {
         const action = parentContexts.findAction(startTime)
         const rumEvent = assemble(event, { action, view, rum: rumContextProvider() })
-        const message = combine(customerContext || globalContextProvider(), withSnakeCaseKeys(rumEvent))
+        const message = combine(
+          savedGlobalContext || globalContextProvider(),
+          customerContext,
+          withSnakeCaseKeys(rumEvent)
+        )
         callback(message, rumEvent)
       }
     }
@@ -420,24 +424,33 @@ function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: R
 
 function trackCustomUserAction(
   lifeCycle: LifeCycle,
-  handler: (startTime: number, event: RumUserActionEvent, customerContext?: Context) => void
+  handler: (
+    startTime: number,
+    event: RumUserActionEvent,
+    savedGlobalContext?: Context,
+    customerContext?: Context
+  ) => void
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, ({ name, type, context, startTime }) => {
-    handler(
-      startTime,
-      {
-        date: getTimestamp(startTime),
-        evt: {
-          name,
-          category: RumEventCategory.USER_ACTION,
+  lifeCycle.subscribe(
+    LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
+    ({ name, type, context, globalContext, startTime }) => {
+      handler(
+        startTime,
+        {
+          date: getTimestamp(startTime),
+          evt: {
+            name,
+            category: RumEventCategory.USER_ACTION,
+          },
+          userAction: {
+            type,
+          },
         },
-        userAction: {
-          type,
-        },
-      },
-      context
-    )
-  })
+        globalContext,
+        context
+      )
+    }
+  )
 }
 
 function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {

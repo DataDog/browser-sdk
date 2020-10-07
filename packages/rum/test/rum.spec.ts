@@ -222,6 +222,7 @@ describe('rum session', () => {
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
   const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     context: { foo: 'bar' },
+    globalContext: {},
     name: 'action',
     startTime: 123,
     type: UserActionType.CUSTOM,
@@ -551,6 +552,7 @@ describe('rum user action', () => {
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
       context: { fooBar: 'foo' },
+      globalContext: {},
       name: 'hello',
       startTime: 123,
       type: UserActionType.CUSTOM,
@@ -559,14 +561,15 @@ describe('rum user action', () => {
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })
 
-  it('should ignore the global context', () => {
+  it('should ignore the current global context', () => {
     const { setGlobalContext, server, lifeCycle } = setupBuilder.build()
     server.requests = []
 
     setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      context: { replacedContext: 'a' },
+      context: {},
+      globalContext: { replacedContext: 'a' },
       name: 'hello',
       startTime: 123,
       type: UserActionType.CUSTOM,

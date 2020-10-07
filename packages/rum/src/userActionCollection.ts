@@ -21,7 +21,8 @@ export interface CustomUserAction {
   type: UserActionType.CUSTOM
   name: string
   startTime: number
-  context?: Context
+  context: Context
+  globalContext: Context
 }
 
 export interface AutoUserAction {

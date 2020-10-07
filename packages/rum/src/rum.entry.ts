@@ -99,7 +99,8 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     addUserAction: monitor((name: string, context?: Context) => {
       addUserActionStrategy({
         name,
-        context: combine({}, globalContext, context),
+        context: combine({}, context),
+        globalContext: combine({}, globalContext),
         startTime: performance.now(),
         type: UserActionType.CUSTOM,
       })

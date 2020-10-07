@@ -162,24 +162,12 @@ describe('rum entry', () => {
       expect(addUserActionSpy.calls.argsFor(0)).toEqual([
         {
           context: { bar: 'baz' },
+          globalContext: {},
           name: 'foo',
           startTime: jasmine.any(Number),
           type: UserActionType.CUSTOM,
         },
       ])
-    })
-
-    it('combines the global context and user action context', () => {
-      rumGlobal.addRumGlobalContext('foo', 'from-global-context')
-      rumGlobal.addRumGlobalContext('bar', 'from-global-context')
-      rumGlobal.addUserAction('message', { bar: 'from-action-context' })
-
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(addUserActionSpy.calls.argsFor(0)[0].context).toEqual({
-        bar: 'from-action-context',
-        foo: 'from-global-context',
-      })
     })
 
     describe('save context when sending a user action', () => {
@@ -195,10 +183,22 @@ describe('rum entry', () => {
         expect(addUserActionSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
       })
 
-      it('saves the global context', () => {
+      it('stores a deep copy of the global context', () => {
         rumGlobal.addRumGlobalContext('foo', 'bar')
         rumGlobal.addUserAction('message')
         rumGlobal.addRumGlobalContext('foo', 'baz')
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addUserActionSpy.calls.argsFor(0)[0].globalContext).toEqual({
+          foo: 'bar',
+        })
+      })
+
+      it('stores a deep copy of the action context', () => {
+        const context = { foo: 'bar' }
+        rumGlobal.addUserAction('message', context)
+        context.foo = 'baz'
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 

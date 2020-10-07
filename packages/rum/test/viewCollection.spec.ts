@@ -29,6 +29,7 @@ const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
   context: {
     bar: 123,
   },
+  globalContext: {},
   name: 'foo',
   startTime: 123,
   type: UserActionType.CUSTOM,
