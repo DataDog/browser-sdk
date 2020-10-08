@@ -1,5 +1,5 @@
 import { createTest } from '../../lib/createTest'
-import { flushEvents } from '../../lib/helpers'
+import { flushEvents, waitForIdle } from '../../lib/helpers'
 import { allSetups, html } from '../../lib/setups'
 
 describe('user action collection', () => {
@@ -52,7 +52,7 @@ describe('user action collection', () => {
       `,
       rum: { trackInteractions: true },
     }),
-    async ({ events, waitForIdle }) => {
+    async ({ events }) => {
       const button = await $('button')
       await button.click()
       await waitForIdle()

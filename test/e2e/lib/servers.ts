@@ -1,5 +1,5 @@
 import * as http from 'http'
-import { AddressInfo, Socket } from 'net'
+import { AddressInfo } from 'net'
 import { getIp } from '../../utils'
 
 const MAX_SERVER_CREATION_RETRY = 5
@@ -9,13 +9,33 @@ const PORT_MIN = 9200
 const PORT_MAX = 9400
 
 type App = (req: http.IncomingMessage, res: http.ServerResponse) => void
+
 export interface Server {
   url: string
   bindApp(app: App): void
   waitForIdle(): Promise<void>
 }
 
-export async function createServer(): Promise<Server> {
+export interface Servers {
+  base: Server
+  intake: Server
+  crossOrigin: Server
+}
+
+let memoizedServers: undefined | Servers
+
+export async function getTestServers() {
+  if (!memoizedServers) {
+    memoizedServers = {
+      base: await createServer(),
+      crossOrigin: await createServer(),
+      intake: await createServer(),
+    }
+  }
+  return memoizedServers
+}
+
+async function createServer(): Promise<Server> {
   const server = await instantiateServer()
   const { address, port } = server.address() as AddressInfo
   let app: App | undefined

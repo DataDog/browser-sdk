@@ -1,4 +1,5 @@
 import { resolve as resolveUrl } from 'url'
+import { getTestServers } from './servers'
 
 export async function flushEvents() {
   // wait to process user actions + event loop before switching page
@@ -9,6 +10,11 @@ export async function flushEvents() {
   )
   const currentUrl = await browser.getUrl()
   return browser.url(resolveUrl(currentUrl, `/empty`))
+}
+
+export async function waitForIdle() {
+  const servers = await getTestServers()
+  return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
 }
 
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796

@@ -3,22 +3,15 @@ import express from 'express'
 import * as url from 'url'
 import { buildApp, buildLogs, buildRum, Endpoints } from './builds'
 import { EventRegistry } from './eventsRegistry'
-import { deleteAllCookies, flushEvents, withBrowserLogs } from './helpers'
-import { createServer, Server } from './server'
+import { deleteAllCookies, flushEvents, waitForIdle, withBrowserLogs } from './helpers'
+import { getTestServers, Servers } from './servers'
 
-interface TestContext {
+export interface TestContext {
   baseUrl: string
   crossOriginUrl: string
   events: EventRegistry
   endpoints: Endpoints
-  waitForIdle: () => Promise<unknown>
 }
-interface Servers {
-  base: Server
-  intake: Server
-  crossOrigin: Server
-}
-
 type Setups = { [name: string]: string } | string
 export function createTest(title: string, setups: Setups, run: (testContext: TestContext) => Promise<void>) {
   if (typeof setups === 'object') {
@@ -34,7 +27,7 @@ export function createTest(title: string, setups: Setups, run: (testContext: Tes
 
 function createTestForSetup(title: string, setup: string, run: (testContext: TestContext) => Promise<void>) {
   it(title, async () => {
-    const servers = await getServers()
+    const servers = await getTestServers()
 
     const testContext = createTestContext(servers)
 
@@ -52,19 +45,6 @@ function createTestForSetup(title: string, setup: string, run: (testContext: Tes
   })
 }
 
-let memoizedServers: undefined | Servers
-
-async function getServers() {
-  if (!memoizedServers) {
-    memoizedServers = {
-      base: await createServer(),
-      crossOrigin: await createServer(),
-      intake: await createServer(),
-    }
-  }
-  return memoizedServers
-}
-
 function createTestContext(servers: Servers): TestContext {
   return {
     baseUrl: servers.base.url,
@@ -75,9 +55,6 @@ function createTestContext(servers: Servers): TestContext {
       rum: `${servers.intake.url}/v1/input/rum`,
     },
     events: new EventRegistry(),
-    async waitForIdle() {
-      return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
-    },
   }
 }
 
@@ -160,7 +137,7 @@ function createIntakeApp(events: EventRegistry) {
   return app
 }
 
-async function setUpTest({ baseUrl, waitForIdle }: TestContext) {
+async function setUpTest({ baseUrl }: TestContext) {
   await browser.url(baseUrl)
   await waitForIdle()
 }
