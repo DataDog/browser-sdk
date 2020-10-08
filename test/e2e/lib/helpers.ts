@@ -1,4 +1,3 @@
-import { resolve as resolveUrl } from 'url'
 import { getTestServers } from './servers'
 
 export async function flushEvents() {
@@ -8,8 +7,10 @@ export async function flushEvents() {
       done(undefined)
     }, 200)
   )
-  const currentUrl = await browser.getUrl()
-  return browser.url(resolveUrl(currentUrl, `/empty`))
+  await waitForIdle()
+  const servers = await getTestServers()
+  await browser.url(`${servers.base.url}/empty`)
+  await waitForIdle()
 }
 
 export async function waitForIdle() {
