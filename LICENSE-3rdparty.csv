@@ -30,7 +30,6 @@ dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
-dev,morgan,MIT,Copyright 2014 Jonathan Ong 2014-2017 Douglas Christopher Wilson
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,prettier,MIT,Copyright James Long and contributors
 dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis

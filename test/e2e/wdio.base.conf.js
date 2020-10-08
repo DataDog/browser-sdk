@@ -1,9 +1,9 @@
 const path = require('path')
 const getTestReportDirectory = require('../getTestReportDirectory')
-const { unlinkSync } = require('fs')
-const { CurrentSpecReporter } = require('./currentSpecReporter')
+const { unlinkSync, mkdirSync } = require('fs')
 
 const reporters = ['spec']
+let logsPath
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -16,6 +16,7 @@ if (testReportDirectory) {
       },
     },
   ])
+  logsPath = path.join(testReportDirectory, 'specs.log')
 }
 
 module.exports = {
@@ -33,13 +34,24 @@ module.exports = {
     requires: [path.resolve(__dirname, './ts-node')],
   },
   onPrepare: function() {
-    try {
-      unlinkSync('test/server/test-server.log')
-    } catch (e) {
-      console.log(e.message)
+    if (testReportDirectory) {
+      try {
+        mkdirSync(testReportDirectory, { recursive: true })
+      } catch (e) {
+        console.log(`Failed to create the test report directory: ${e.message}`)
+      }
+    }
+
+    if (logsPath) {
+      try {
+        unlinkSync(logsPath)
+      } catch (e) {
+        if (e.code !== 'ENOENT') {
+          console.log(`Failed to remove previous logs: ${e.message}`)
+        }
+      }
     }
   },
-  before: function() {
-    jasmine.getEnv().addReporter(new CurrentSpecReporter())
-  },
+
+  logsPath,
 }

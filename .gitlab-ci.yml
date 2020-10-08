@@ -82,10 +82,9 @@ e2e:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
-    # TODO
-    # paths:
-    #   - test/server/test-server.log
     when: always
+    paths:
+      - test-report/e2e/specs.log
     reports:
       junit: test-report/e2e/*.xml
   script:
@@ -123,12 +122,11 @@ e2e-bs:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    when: always
     reports:
       junit: test-report/e2e-bs/*.xml
-    # TODO
-    # paths:
-    #   - test/server/test-server.log
-    when: always
+    paths:
+      - test-report/e2e-bs/specs.log
   script:
     - yarn
     - ./scripts/ci-bs.sh test:e2e

@@ -4,6 +4,7 @@ import * as url from 'url'
 import { buildApp, buildLogs, buildRum, Endpoints } from './builds'
 import { EventRegistry } from './eventsRegistry'
 import { deleteAllCookies, flushEvents, waitForIdle, withBrowserLogs } from './helpers'
+import { log } from './logger'
 import { getTestServers, Servers } from './servers'
 
 export interface TestContext {
@@ -25,8 +26,14 @@ export function createTest(title: string, setups: Setups, run: (testContext: Tes
   }
 }
 
+interface ItResult {
+  getFullName(): string
+}
+declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
+
 function createTestForSetup(title: string, setup: string, run: (testContext: TestContext) => Promise<void>) {
-  it(title, async () => {
+  const spec = it(title, async () => {
+    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)
@@ -41,8 +48,14 @@ function createTestForSetup(title: string, setup: string, run: (testContext: Tes
       await run(testContext)
     } finally {
       await tearDownTest(testContext)
+      log(`End '${spec.getFullName()}'`)
     }
   })
+}
+
+function getBrowserName() {
+  const capabilities = browser.options.capabilities
+  return capabilities && (capabilities.browserName || (capabilities as any).browser)
 }
 
 function createTestContext(servers: Servers): TestContext {
@@ -146,7 +159,9 @@ async function tearDownTest({ events }: TestContext) {
   await flushEvents()
   expect(events.internalMonitoring).toEqual([])
   await withBrowserLogs((logs) => {
-    logs.forEach(console.log)
+    logs.forEach((browserLog) => {
+      log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)
+    })
     expect(logs.filter((l) => (l as any).level === 'SEVERE')).toEqual([])
   })
   await deleteAllCookies()

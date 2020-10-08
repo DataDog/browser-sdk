@@ -34,12 +34,19 @@ export async function browserExecuteAsync<A extends any[]>(fn: (...args: A) => a
   return browser.executeAsync(fn as any, ...args)
 }
 
-export async function withBrowserLogs(fn: (logs: object[]) => void) {
+interface BrowserLog {
+  level: string
+  message: string
+  source: string
+  timestamp: number
+}
+
+export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
   // browser.getLogs is not defined when using a remote webdriver service. We should find an
   // alternative at some point.
   // https://github.com/webdriverio/webdriverio/issues/4275
   if (browser.getLogs) {
-    const logs = await browser.getLogs('browser')
+    const logs = (await browser.getLogs('browser')) as BrowserLog[]
     await fn(logs)
   }
 }

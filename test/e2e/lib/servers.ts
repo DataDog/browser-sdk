@@ -1,6 +1,7 @@
 import * as http from 'http'
 import { AddressInfo } from 'net'
 import { getIp } from '../../utils'
+import { log } from './logger'
 
 const MAX_SERVER_CREATION_RETRY = 5
 // Not all port are available with BrowserStack, see https://www.browserstack.com/question/664
@@ -49,7 +50,7 @@ async function createServer(): Promise<Server> {
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
     res.on('close', () => {
       const requestUrl = `${req.headers.host}${req.url}`
-      console.log(`${new Date().toISOString()}: ${req.method} ${requestUrl} ${res.statusCode}`)
+      log(`${req.method} ${requestUrl} ${res.statusCode}`)
     })
   })
 
