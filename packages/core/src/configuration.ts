@@ -162,12 +162,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  configuration.cookieOptions.secure = mustUseSecureCookie(userConfiguration)
-  configuration.cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
-
-  if (!!userConfiguration.trackSessionAcrossSubdomains) {
-    configuration.cookieOptions.domain = getCurrentSite()
-  }
+  configuration.cookieOptions = buildCookieOptions(userConfiguration)
 
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
     if (userConfiguration.internalMonitoringEndpoint !== undefined) {
@@ -203,6 +198,19 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   }
 
   return configuration
+}
+
+export function buildCookieOptions(userConfiguration: UserConfiguration) {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure = mustUseSecureCookie(userConfiguration)
+  cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
+
+  if (!!userConfiguration.trackSessionAcrossSubdomains) {
+    cookieOptions.domain = getCurrentSite()
+  }
+
+  return cookieOptions
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {

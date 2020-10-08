@@ -10,7 +10,6 @@ import {
   makeGlobal,
   makeStub,
   monitor,
-  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
 
@@ -22,6 +21,7 @@ import { startRequestCollection } from './requestCollection'
 import { startRum } from './rum'
 import { startRumSession } from './rumSession'
 import { startUserActionCollection } from './userActionCollection'
+import { buildCookieOptions } from '../../core/src/configuration'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -79,7 +79,7 @@ export function makeRumGlobal(stub: RumGlobal) {
 
   global.init = monitor((userConfiguration: RumUserConfiguration) => {
     if (
-      !checkCookiesAuthorized(mustUseSecureCookie(userConfiguration)) ||
+      !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
       !checkIsNotLocalFile() ||
       !canInitRum(userConfiguration)
     ) {
