@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import * as url from 'url'
-import { buildApp, buildLogs, buildRum, Endpoints } from './builds'
+import { buildLogs, buildNpm, buildRum, Endpoints } from './builds'
 import { EventRegistry } from './eventsRegistry'
 import { deleteAllCookies, flushEvents, waitForIdle, withBrowserLogs } from './helpers'
 import { log } from './logger'
@@ -38,9 +38,9 @@ function createTestForSetup(title: string, setup: string, run: (testContext: Tes
 
     const testContext = createTestContext(servers)
 
-    servers.base.bindApp(createMockApp(testContext.endpoints, setup))
-    servers.crossOrigin.bindApp(createMockApp(testContext.endpoints, setup))
-    servers.intake.bindApp(createIntakeApp(testContext.events))
+    servers.base.bindServerApp(createMockServerApp(testContext.endpoints, setup))
+    servers.crossOrigin.bindServerApp(createMockServerApp(testContext.endpoints, setup))
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.events))
 
     await setUpTest(testContext)
 
@@ -71,7 +71,7 @@ function createTestContext(servers: Servers): TestContext {
   }
 }
 
-function createMockApp(endpoints: Endpoints, setup: string) {
+function createMockServerApp(endpoints: Endpoints, setup: string) {
   const app = express()
 
   app.use(cors())
@@ -128,13 +128,13 @@ function createMockApp(endpoints: Endpoints, setup: string) {
   })
 
   app.get('/app.js', async (req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildApp(endpoints))
+    res.header('content-type', 'application/javascript').send(await buildNpm(endpoints))
   })
 
   return app
 }
 
-function createIntakeApp(events: EventRegistry) {
+function createIntakeServerApp(events: EventRegistry) {
   const app = express()
 
   app.use(express.text())

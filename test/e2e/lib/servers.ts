@@ -9,11 +9,11 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-type App = (req: http.IncomingMessage, res: http.ServerResponse) => void
+type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => void
 
 export interface Server {
   url: string
-  bindApp(app: App): void
+  bindServerApp(serverApp: ServerApp): void
   waitForIdle(): Promise<void>
 }
 
@@ -39,11 +39,11 @@ export async function getTestServers() {
 async function createServer(): Promise<Server> {
   const server = await instantiateServer()
   const { address, port } = server.address() as AddressInfo
-  let app: App | undefined
+  let serverApp: ServerApp | undefined
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
-    if (app) {
-      app(req, res)
+    if (serverApp) {
+      serverApp(req, res)
     }
   })
 
@@ -55,8 +55,8 @@ async function createServer(): Promise<Server> {
   })
 
   return {
-    bindApp(newApp: App) {
-      app = newApp
+    bindServerApp(newServerApp: ServerApp) {
+      serverApp = newServerApp
     },
     url: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
