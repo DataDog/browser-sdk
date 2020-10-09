@@ -1,5 +1,4 @@
 import {
-  AnyServerEvent,
   isRumErrorEvent,
   isRumResourceEvent,
   isRumUserActionEvent,
@@ -11,36 +10,18 @@ import {
 
 type IntakeType = 'logs' | 'rum' | 'internalMonitoring'
 
-interface Entry {
-  type: IntakeType
-  event: AnyServerEvent
-}
-
 export class EventRegistry {
-  private db: Entry[] = []
+  readonly rum: ServerRumEvent[] = []
+  readonly logs: ServerLogsMessage[] = []
+  readonly internalMonitoring: ServerInternalMonitoringMessage[] = []
 
-  push(type: IntakeType, event: AnyServerEvent) {
-    this.db.push({ type, event })
+  push(type: IntakeType, event: any) {
+    // tslint:disable-next-line: no-unsafe-any
+    this[type].push(event)
   }
 
   get count() {
-    return this.db.length
-  }
-
-  get all() {
-    return this.db.map((entry) => entry.event)
-  }
-
-  get logs() {
-    return this.getEvents('logs')
-  }
-
-  get rum() {
-    return this.getEvents('rum')
-  }
-
-  get internalMonitoring() {
-    return this.getEvents('internalMonitoring')
+    return this.logs.length + this.rum.length + this.internalMonitoring.length
   }
 
   get rumActions() {
@@ -60,13 +41,8 @@ export class EventRegistry {
   }
 
   empty() {
-    this.db.length = 0
-  }
-
-  private getEvents(type: 'rum'): ServerRumEvent[]
-  private getEvents(type: 'logs'): ServerLogsMessage[]
-  private getEvents(type: 'internalMonitoring'): ServerInternalMonitoringMessage[]
-  private getEvents(type: IntakeType) {
-    return this.db.filter((entry) => entry.type === type).map((entry) => entry.event)
+    this.rum.length = 0
+    this.internalMonitoring.length = 0
+    this.logs.length = 0
   }
 }
