@@ -55,8 +55,8 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     return undefined
   }
   const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
-  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action, context) => {
-    beforeInitAddUserAction.add([action, context])
+  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
+    beforeInitAddUserAction.add([action, combine({}, globalContextManager.get())])
   }
 
   return makeGlobal({
@@ -92,15 +92,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     }),
 
     addUserAction: monitor((name: string, context?: Context) => {
-      addUserActionStrategy(
-        {
-          name,
-          context: combine({}, context),
-          startTime: performance.now(),
-          type: UserActionType.CUSTOM,
-        },
-        combine({}, globalContextManager.get())
-      )
+      addUserActionStrategy({
+        name,
+        context: combine({}, context),
+        startTime: performance.now(),
+        type: UserActionType.CUSTOM,
+      })
     }),
   })
 

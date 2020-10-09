@@ -199,7 +199,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
       return doGetInternalContext(parentContexts, userConfiguration.applicationId, session, startTime)
     },
 
-    addUserAction(action: CustomUserAction, context: Context) {
+    addUserAction(action: CustomUserAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
   }

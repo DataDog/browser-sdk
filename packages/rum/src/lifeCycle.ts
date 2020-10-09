@@ -35,7 +35,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
   notify(
     eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    data: { action: CustomUserAction; context: Context }
+    data: { action: CustomUserAction; context?: Context }
   ): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
@@ -72,7 +72,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    callback: (data: { action: CustomUserAction; context: Context }) => void
+    callback: (data: { action: CustomUserAction; context?: Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
