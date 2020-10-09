@@ -32,7 +32,7 @@ describe('rum views', () => {
     await expireSession()
     events.empty()
     await sendXhr(`/ok`)
-    expect(events.all.length).toBe(0)
+    expect(events.count).toBe(0)
   })
 
   describe('anchor navigation', () => {

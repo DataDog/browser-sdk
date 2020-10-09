@@ -23,6 +23,10 @@ export class EventRegistry {
     this.db.push({ type, event })
   }
 
+  get count() {
+    return this.db.length
+  }
+
   get all() {
     return this.db.map((entry) => entry.event)
   }
