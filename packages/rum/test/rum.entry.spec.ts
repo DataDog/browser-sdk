@@ -162,11 +162,11 @@ describe('rum entry', () => {
       expect(addUserActionSpy.calls.argsFor(0)).toEqual([
         {
           context: { bar: 'baz' },
-          globalContext: {},
           name: 'foo',
           startTime: jasmine.any(Number),
           type: UserActionType.CUSTOM,
         },
+        {},
       ])
     })
 
@@ -190,7 +190,7 @@ describe('rum entry', () => {
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addUserActionSpy.calls.argsFor(0)[0].globalContext).toEqual({
+        expect(addUserActionSpy.calls.argsFor(0)[1]).toEqual({
           foo: 'bar',
         })
       })

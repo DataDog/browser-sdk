@@ -199,8 +199,8 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
       return doGetInternalContext(parentContexts, userConfiguration.applicationId, session, startTime)
     },
 
-    addUserAction(userAction: CustomUserAction) {
-      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, userAction)
+    addUserAction(action: CustomUserAction, context: Context) {
+      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
   }
 }
@@ -433,7 +433,7 @@ function trackCustomUserAction(
 ) {
   lifeCycle.subscribe(
     LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    ({ name, type, context, globalContext, startTime }) => {
+    ({ action: { name, type, context: customerContext, startTime }, context: savedGlobalContext }) => {
       handler(
         startTime,
         {
@@ -446,8 +446,8 @@ function trackCustomUserAction(
             type,
           },
         },
-        globalContext,
-        context
+        savedGlobalContext,
+        customerContext
       )
     }
   )

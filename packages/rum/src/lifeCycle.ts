@@ -1,4 +1,4 @@
-import { ErrorMessage } from '@datadog/browser-core'
+import { Context, ErrorMessage } from '@datadog/browser-core'
 import { RumPerformanceEntry } from './performanceCollection'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './userActionCollection'
@@ -33,7 +33,10 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
-  notify(eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED, data: CustomUserAction): void
+  notify(
+    eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
+    data: { action: CustomUserAction; context: Context }
+  ): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
@@ -69,7 +72,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    callback: (data: CustomUserAction) => void
+    callback: (data: { action: CustomUserAction; context: Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription

@@ -220,12 +220,14 @@ describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<RumPerformanceResourceTiming> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
-  const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
-    context: { foo: 'bar' },
-    globalContext: {},
-    name: 'action',
-    startTime: 123,
-    type: UserActionType.CUSTOM,
+  const FAKE_CUSTOM_USER_ACTION_EVENT = {
+    action: {
+      context: { foo: 'bar' },
+      name: 'action',
+      startTime: 123,
+      type: UserActionType.CUSTOM as const,
+    },
+    context: {},
   }
   let setupBuilder: TestSetupBuilder
 
@@ -254,7 +256,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
 
     expect(server.requests.length).toEqual(4)
   })
@@ -296,7 +298,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -537,11 +539,13 @@ describe('rum user action', () => {
     server.requests = []
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      context: { fooBar: 'foo' },
-      globalContext: {},
-      name: 'hello',
-      startTime: 123,
-      type: UserActionType.CUSTOM,
+      action: {
+        context: { fooBar: 'foo' },
+        name: 'hello',
+        startTime: 123,
+        type: UserActionType.CUSTOM,
+      },
+      context: {},
     })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
@@ -554,11 +558,13 @@ describe('rum user action', () => {
     setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      context: {},
-      globalContext: { replacedContext: 'a' },
-      name: 'hello',
-      startTime: 123,
-      type: UserActionType.CUSTOM,
+      action: {
+        context: {},
+        name: 'hello',
+        startTime: 123,
+        type: UserActionType.CUSTOM,
+      },
+      context: { replacedContext: 'a' },
     })
 
     expect((getRumMessage(server, 0) as any).replacedContext).toEqual('a')

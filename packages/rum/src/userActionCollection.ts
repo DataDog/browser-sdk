@@ -22,7 +22,6 @@ export interface CustomUserAction {
   name: string
   startTime: number
   context: Context
-  globalContext: Context
 }
 
 export interface AutoUserAction {

@@ -54,9 +54,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
-  const beforeInitAddUserAction = new BoundedBuffer<CustomUserAction>()
-  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (userAction) => {
-    beforeInitAddUserAction.add(userAction)
+  const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
+  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action, context) => {
+    beforeInitAddUserAction.add([action, context])
   }
 
   return makeGlobal({
@@ -76,7 +76,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration,
         globalContextManager.get
       ))
-      beforeInitAddUserAction.drain(addUserActionStrategy)
+      beforeInitAddUserAction.drain(([action, context]) => addUserActionStrategy(action, context))
 
       isAlreadyInitialized = true
     }),
@@ -92,13 +92,15 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     }),
 
     addUserAction: monitor((name: string, context?: Context) => {
-      addUserActionStrategy({
-        name,
-        context: combine({}, context),
-        globalContext: combine({}, globalContextManager.get()),
-        startTime: performance.now(),
-        type: UserActionType.CUSTOM,
-      })
+      addUserActionStrategy(
+        {
+          name,
+          context: combine({}, context),
+          startTime: performance.now(),
+          type: UserActionType.CUSTOM,
+        },
+        combine({}, globalContextManager.get())
+      )
     }),
   })
 
