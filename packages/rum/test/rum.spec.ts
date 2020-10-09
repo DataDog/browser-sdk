@@ -551,7 +551,7 @@ describe('rum user action', () => {
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
   })
 
-  it('should ignore the current global context', () => {
+  it('should ignore the current global context when a saved global context is provided', () => {
     const { setGlobalContext, server, lifeCycle } = setupBuilder.build()
     server.requests = []
 
