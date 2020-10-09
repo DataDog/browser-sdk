@@ -35,16 +35,18 @@ function replaceEndpoints(content: Buffer, endpoints: Endpoints) {
   })
 }
 
-function bufferReplace(buffer: Buffer, replacements: { [needle: string]: string }): Buffer {
-  const replacementsArray = Object.entries(replacements).map(([needle, replacement]) => [
-    Buffer.from(needle),
+function bufferReplace(buffer: Buffer, replacements: { [placeholder: string]: string }): Buffer {
+  const replacementsArray = Object.entries(replacements).map(([placeholder, replacement]) => [
+    Buffer.from(placeholder),
     Buffer.from(replacement),
   ])
 
   const parts = []
   let lastIndex = 0
   for (let index = 0; index < buffer.length; index += 1) {
-    const found = replacementsArray.find(([needle, _]) => buffer.slice(index, index + needle.length).equals(needle))
+    const found = replacementsArray.find(([placeholder, _]) =>
+      buffer.slice(index, index + placeholder.length).equals(placeholder)
+    )
     if (found) {
       parts.push(buffer.slice(lastIndex, index), found[1])
       index += found[0].length
