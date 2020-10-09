@@ -1,7 +1,6 @@
-import { createTest } from '../lib/createTest'
-import { EventRegistry } from '../lib/eventsRegistry'
-import { flushEvents, sendFetch, sendXhr } from '../lib/helpers'
-import { allSetups } from '../lib/setups'
+import { sendFetch, sendXhr } from '../lib/browserHelpers'
+import { flushEvents } from '../lib/sdkHelpers'
+import { allSetups, createTest, EventRegistry } from '../lib/testSetup'
 
 describe('tracing', () => {
   createTest(

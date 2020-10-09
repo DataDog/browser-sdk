@@ -1,6 +1,6 @@
-import { createTest } from '../../lib/createTest'
-import { browserExecute, flushEvents, withBrowserLogs } from '../../lib/helpers'
-import { allSetups } from '../../lib/setups'
+import { browserExecute, withBrowserLogs } from '../../lib/browserHelpers'
+import { flushEvents } from '../../lib/sdkHelpers'
+import { allSetups, createTest } from '../../lib/testSetup'
 
 describe('rum errors', () => {
   createTest('send errors', allSetups({ rum: {} }), async ({ events }) => {

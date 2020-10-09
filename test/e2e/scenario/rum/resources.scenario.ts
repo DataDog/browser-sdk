@@ -1,7 +1,7 @@
-import { createTest } from '../../lib/createTest'
-import { flushEvents, sendXhr } from '../../lib/helpers'
+import { sendXhr } from '../../lib/browserHelpers'
+import { flushEvents } from '../../lib/sdkHelpers'
 import { ServerRumResourceEvent } from '../../lib/serverTypes'
-import { allSetups } from '../../lib/setups'
+import { allSetups, createTest } from '../../lib/testSetup'
 
 const REQUEST_DURATION = 200
 

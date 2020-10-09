@@ -36,6 +36,11 @@ export async function getTestServers() {
   return memoizedServers
 }
 
+export async function waitForServersIdle() {
+  const servers = await getTestServers()
+  return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
+}
+
 async function createServer(): Promise<Server> {
   const server = await instantiateServer()
   const { address, port } = server.address() as AddressInfo

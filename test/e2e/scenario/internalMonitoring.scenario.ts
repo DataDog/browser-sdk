@@ -1,6 +1,6 @@
-import { createTest } from '../lib/createTest'
-import { browserExecute, flushEvents } from '../lib/helpers'
-import { bundleSetup } from '../lib/setups'
+import { browserExecute } from '../lib/browserHelpers'
+import { flushEvents } from '../lib/sdkHelpers'
+import { bundleSetup, createTest } from '../lib/testSetup'
 
 describe('internal monitoring', () => {
   createTest(

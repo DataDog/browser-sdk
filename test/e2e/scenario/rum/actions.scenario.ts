@@ -1,6 +1,6 @@
-import { createTest } from '../../lib/createTest'
-import { flushEvents, waitForServersIdle } from '../../lib/helpers'
-import { allSetups, html } from '../../lib/setups'
+import { flushEvents } from '../../lib/sdkHelpers'
+import { waitForServersIdle } from '../../lib/servers'
+import { allSetups, createTest, html } from '../../lib/testSetup'
 
 describe('user action collection', () => {
   createTest(

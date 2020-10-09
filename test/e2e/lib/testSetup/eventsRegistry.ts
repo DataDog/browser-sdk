@@ -6,7 +6,7 @@ import {
   ServerInternalMonitoringMessage,
   ServerLogsMessage,
   ServerRumEvent,
-} from './serverTypes'
+} from '../serverTypes'
 
 type IntakeType = 'logs' | 'rum' | 'internalMonitoring'
 

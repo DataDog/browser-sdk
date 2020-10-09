@@ -1,11 +1,11 @@
-import cors from 'cors'
-import express from 'express'
-import * as url from 'url'
-import { buildLogs, buildNpm, buildRum, Endpoints } from './builds'
+import { deleteAllCookies, withBrowserLogs } from '../browserHelpers'
+import { log } from '../logger'
+import { flushEvents } from '../sdkHelpers'
+import { getTestServers, Servers, waitForServersIdle } from '../servers'
+import { Endpoints } from './sdkBuilds'
 import { EventRegistry } from './eventsRegistry'
-import { deleteAllCookies, flushEvents, waitForServersIdle, withBrowserLogs } from './helpers'
-import { log } from './logger'
-import { getTestServers, Servers } from './servers'
+import { createIntakeServerApp } from './intakeServerApp'
+import { createMockServerApp } from './mockServerApp'
 
 export interface TestContext {
   baseUrl: string
@@ -69,85 +69,6 @@ function createTestContext(servers: Servers): TestContext {
     },
     events: new EventRegistry(),
   }
-}
-
-function createMockServerApp(endpoints: Endpoints, setup: string) {
-  const app = express()
-
-  app.use(cors())
-  app.disable('etag') // disable automatic resource caching
-
-  app.get('/empty', (req, res) => {
-    res.end()
-  })
-
-  app.get('/favicon.ico', (req, res) => {
-    res.end()
-  })
-
-  app.get('/throw', (req, res) => {
-    res.status(500).send('Server error')
-  })
-
-  app.get('/unknown', (req, res) => {
-    res.status(404).send('Not found')
-  })
-
-  app.get('/empty.css', (req, res) => {
-    res.header('content-type', 'text/css').end()
-  })
-
-  app.get('/ok', (req, res) => {
-    if (req.query['timing-allow-origin'] === 'true') {
-      res.set('Timing-Allow-Origin', '*')
-    }
-    const timeoutDuration = req.query.duration ? Number(req.query.duration) : 0
-    setTimeout(() => res.send('ok'), timeoutDuration)
-  })
-
-  app.get('/redirect', (req, res) => {
-    const redirectUri = url.parse(req.originalUrl)
-    res.redirect(`ok${redirectUri.search}`)
-  })
-
-  app.get('/headers', (req, res) => {
-    res.send(JSON.stringify(req.headers))
-  })
-
-  app.get('/', (req, res) => {
-    res.send(setup)
-    res.end()
-  })
-
-  app.get('/datadog-logs.js', async (req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildLogs(endpoints))
-  })
-
-  app.get('/datadog-rum.js', async (req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildRum(endpoints))
-  })
-
-  app.get('/app.js', async (req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildNpm(endpoints))
-  })
-
-  return app
-}
-
-function createIntakeServerApp(events: EventRegistry) {
-  const app = express()
-
-  app.use(express.text())
-
-  app.post('/v1/input/:endpoint', (req, res) => {
-    const endpoint = req.params.endpoint
-    if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'internalMonitoring') {
-      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent) as any))
-    }
-    res.end()
-  })
-
-  return app
 }
 
 async function setUpTest({ baseUrl }: TestContext) {
