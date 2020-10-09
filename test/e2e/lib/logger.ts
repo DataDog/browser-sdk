@@ -1,5 +1,4 @@
 import * as fs from 'fs'
-import * as path from 'path'
 import { inspect } from 'util'
 
 const logsPath = (browser.config as WebdriverIO.Config & { logsPath: string }).logsPath
