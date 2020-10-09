@@ -3,7 +3,7 @@ import express from 'express'
 import * as url from 'url'
 import { buildLogs, buildNpm, buildRum, Endpoints } from './builds'
 import { EventRegistry } from './eventsRegistry'
-import { deleteAllCookies, flushEvents, waitForIdle, withBrowserLogs } from './helpers'
+import { deleteAllCookies, flushEvents, waitForServersIdle, withBrowserLogs } from './helpers'
 import { log } from './logger'
 import { getTestServers, Servers } from './servers'
 
@@ -152,7 +152,7 @@ function createIntakeServerApp(events: EventRegistry) {
 
 async function setUpTest({ baseUrl }: TestContext) {
   await browser.url(baseUrl)
-  await waitForIdle()
+  await waitForServersIdle()
 }
 
 async function tearDownTest({ events }: TestContext) {

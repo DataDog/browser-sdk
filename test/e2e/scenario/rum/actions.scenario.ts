@@ -1,5 +1,5 @@
 import { createTest } from '../../lib/createTest'
-import { flushEvents, waitForIdle } from '../../lib/helpers'
+import { flushEvents, waitForServersIdle } from '../../lib/helpers'
 import { allSetups, html } from '../../lib/setups'
 
 describe('user action collection', () => {
@@ -55,7 +55,7 @@ describe('user action collection', () => {
     async ({ events }) => {
       const button = await $('button')
       await button.click()
-      await waitForIdle()
+      await waitForServersIdle()
       await flushEvents()
       const userActionEvents = events.rumActions
       const resourceEvents = events.rumResources.filter((event) => event.resource.kind === 'fetch')

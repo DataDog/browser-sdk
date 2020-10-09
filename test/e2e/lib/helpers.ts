@@ -7,13 +7,13 @@ export async function flushEvents() {
       done(undefined)
     }, 200)
   )
-  await waitForIdle()
+  await waitForServersIdle()
   const servers = await getTestServers()
   await browser.url(`${servers.base.url}/empty`)
-  await waitForIdle()
+  await waitForServersIdle()
 }
 
-export async function waitForIdle() {
+export async function waitForServersIdle() {
   const servers = await getTestServers()
   return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
 }
