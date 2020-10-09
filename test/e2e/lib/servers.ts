@@ -23,17 +23,17 @@ export interface Servers {
   crossOrigin: Server
 }
 
-let memoizedServers: undefined | Servers
+let serversSingleton: undefined | Servers
 
 export async function getTestServers() {
-  if (!memoizedServers) {
-    memoizedServers = {
+  if (!serversSingleton) {
+    serversSingleton = {
       base: await createServer(),
       crossOrigin: await createServer(),
       intake: await createServer(),
     }
   }
-  return memoizedServers
+  return serversSingleton
 }
 
 export async function waitForServersIdle() {
