@@ -17,6 +17,8 @@ if (testReportDirectory) {
     },
   ])
   logsPath = path.join(testReportDirectory, 'specs.log')
+} else if (!process.env.LOGS_STDOUT) {
+  logsPath = 'specs.log'
 }
 
 module.exports = {
