@@ -1,12 +1,12 @@
 import { flushEvents } from '../../lib/sdkHelpers'
 import { waitForServersIdle } from '../../lib/servers'
-import { allSetups, createTest, html } from '../../lib/testSetup'
+import { createTest, html } from '../../lib/testSetup'
 
 describe('user action collection', () => {
-  createTest(
-    'track a click user action',
-    allSetups({
-      body: html`
+  createTest('track a click user action')
+    .withRum({ trackInteractions: true })
+    .withBody(
+      html`
         <button>click me</button>
         <script>
           const btn = document.querySelector('button')
@@ -14,10 +14,9 @@ describe('user action collection', () => {
             btn.setAttribute('data-clicked', 'true')
           })
         </script>
-      `,
-      rum: { trackInteractions: true },
-    }),
-    async ({ events }) => {
+      `
+    )
+    .run(async ({ events }) => {
       const button = await $('button')
       await button.click()
       await flushEvents()
@@ -35,13 +34,12 @@ describe('user action collection', () => {
       })
       expect(userActionEvents[0].evt.name).toBe('click me')
       expect(userActionEvents[0].duration).toBeGreaterThanOrEqual(0)
-    }
-  )
+    })
 
-  createTest(
-    'associate a request to its user action',
-    allSetups({
-      body: html`
+  createTest('associate a request to its user action')
+    .withRum({ trackInteractions: true })
+    .withBody(
+      html`
         <button>click me</button>
         <script>
           const btn = document.querySelector('button')
@@ -49,10 +47,9 @@ describe('user action collection', () => {
             fetch('/ok')
           })
         </script>
-      `,
-      rum: { trackInteractions: true },
-    }),
-    async ({ events }) => {
+      `
+    )
+    .run(async ({ events }) => {
       const button = await $('button')
       await button.click()
       await waitForServersIdle()
@@ -75,6 +72,5 @@ describe('user action collection', () => {
 
       expect(resourceEvents.length).toBe(1)
       expect(resourceEvents[0].user_action!.id).toBe(userActionEvents[0].user_action.id!)
-    }
-  )
+    })
 })

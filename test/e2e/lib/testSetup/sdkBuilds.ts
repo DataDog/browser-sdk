@@ -4,7 +4,7 @@ import { promisify } from 'util'
 
 const readFile = promisify(fs.readFile)
 
-const ROOT = path.join(__dirname, '../../..')
+const ROOT = path.join(__dirname, '../../../..')
 const RUM_BUNDLE = path.join(ROOT, 'packages/rum/bundle/datadog-rum.js')
 const LOGS_BUNDLE = path.join(ROOT, 'packages/logs/bundle/datadog-logs.js')
 const NPM_BUNDLE = path.join(ROOT, 'test/app/dist/app.js')

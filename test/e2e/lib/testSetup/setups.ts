@@ -1,32 +1,32 @@
-const DEFAULT_RUM_OPTIONS = {
-  applicationId: 'appId',
-  clientToken: 'token',
+export interface RumSetupOptions {
+  clientToken?: string
+  applicationId?: string
+  internalMonitoringApiKey?: string
+  allowedTracingOrigins?: string[]
+  service?: string
+  trackInteractions?: boolean
 }
 
-const DEFAULT_LOGS_OPTIONS = {
-  applicationId: 'appId',
-  clientToken: 'token',
+export interface LogsSetupOptions {
+  clientToken?: string
+  internalMonitoringApiKey?: string
+  forwardErrorsToLogs?: boolean
 }
 
-interface SetupOptions {
-  rum?: {
-    internalMonitoringApiKey?: string
-    allowedTracingOrigins?: string[]
-    service?: string
-    trackInteractions?: boolean
-  }
-  logs?: { internalMonitoringApiKey?: string; forwardErrorsToLogs?: boolean }
-  headerStart?: string
+export interface SetupOptions {
+  rum?: RumSetupOptions
+  logs?: LogsSetupOptions
+  head?: string
   body?: string
 }
 
-export function allSetups(options: SetupOptions) {
-  return {
-    async: asyncSetup(options),
-    bundle: bundleSetup(options),
-    npm: npmSetup(options),
-  }
-}
+export type SetupFactory = (options: SetupOptions) => string
+
+export const DEFAULT_SETUPS = [
+  { name: 'async', factory: asyncSetup },
+  { name: 'npm', factory: npmSetup },
+  { name: 'bundle', factory: bundleSetup },
+]
 
 export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''
@@ -63,12 +63,12 @@ export function asyncSetup(options: SetupOptions) {
 
   return basePage({
     body,
-    header: options.headerStart,
+    header: options.head,
   })
 }
 
 export function bundleSetup(options: SetupOptions) {
-  let header = options.headerStart || ''
+  let header = options.head || ''
 
   if (options.logs) {
     header += html`
@@ -94,7 +94,7 @@ export function bundleSetup(options: SetupOptions) {
 }
 
 export function npmSetup(options: SetupOptions) {
-  let header = options.headerStart || ''
+  let header = options.head || ''
 
   if (options.logs) {
     header += html`
@@ -140,9 +140,9 @@ export function html(parts: ReadonlyArray<string>, ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function formatLogsOptions(options: SetupOptions['logs']) {
-  return JSON.stringify({ ...DEFAULT_LOGS_OPTIONS, ...options })
+function formatLogsOptions(options: LogsSetupOptions) {
+  return JSON.stringify(options)
 }
-function formatRumOptions(options: SetupOptions['rum']) {
-  return JSON.stringify({ ...DEFAULT_RUM_OPTIONS, ...options }).replace('"LOCATION_ORIGIN"', 'location.origin')
+function formatRumOptions(options: RumSetupOptions) {
+  return JSON.stringify(options).replace('"LOCATION_ORIGIN"', 'location.origin')
 }

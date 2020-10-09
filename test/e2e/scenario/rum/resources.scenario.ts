@@ -1,37 +1,40 @@
 import { sendXhr } from '../../lib/browserHelpers'
 import { flushEvents } from '../../lib/sdkHelpers'
 import { ServerRumResourceEvent } from '../../lib/serverTypes'
-import { allSetups, createTest } from '../../lib/testSetup'
+import { createTest, html } from '../../lib/testSetup'
 
 const REQUEST_DURATION = 200
 
 describe('rum resources', () => {
-  createTest('track xhr timings', allSetups({ rum: {} }), async ({ events }) => {
-    await sendXhr(`/ok?duration=${REQUEST_DURATION}`)
-    await flushEvents()
-    const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
-    expect(resourceEvent).toBeDefined()
-    expect(resourceEvent.http.method).toBe('GET')
-    expect(resourceEvent.http.status_code).toBe(200)
-    expectToHaveValidTimings(resourceEvent)
-  })
+  createTest('track xhr timings')
+    .withRum()
+    .run(async ({ events }) => {
+      await sendXhr(`/ok?duration=${REQUEST_DURATION}`)
+      await flushEvents()
+      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.http.method).toBe('GET')
+      expect(resourceEvent.http.status_code).toBe(200)
+      expectToHaveValidTimings(resourceEvent)
+    })
 
-  createTest('track redirect xhr timings', allSetups({ rum: {} }), async ({ events }) => {
-    await sendXhr(`/redirect?duration=${REQUEST_DURATION}`)
-    await flushEvents()
-    const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/redirect'))!
-    expect(resourceEvent).not.toBeUndefined()
-    expect(resourceEvent.http.method).toEqual('GET')
-    expect(resourceEvent.http.status_code).toEqual(200)
-    expectToHaveValidTimings(resourceEvent)
-    expect(resourceEvent.http.performance!.redirect).not.toBeUndefined()
-    expect(resourceEvent.http.performance!.redirect!.duration).toBeGreaterThan(0)
-  })
+  createTest('track redirect xhr timings')
+    .withRum()
+    .run(async ({ events }) => {
+      await sendXhr(`/redirect?duration=${REQUEST_DURATION}`)
+      await flushEvents()
+      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/redirect'))!
+      expect(resourceEvent).not.toBeUndefined()
+      expect(resourceEvent.http.method).toEqual('GET')
+      expect(resourceEvent.http.status_code).toEqual(200)
+      expectToHaveValidTimings(resourceEvent)
+      expect(resourceEvent.http.performance!.redirect).not.toBeUndefined()
+      expect(resourceEvent.http.performance!.redirect!.duration).toBeGreaterThan(0)
+    })
 
-  createTest(
-    "don't track disallowed cross origin xhr timings",
-    allSetups({ rum: {} }),
-    async ({ crossOriginUrl, events }) => {
+  createTest("don't track disallowed cross origin xhr timings")
+    .withRum()
+    .run(async ({ crossOriginUrl, events }) => {
       if (browser.capabilities.browserName === 'MicrosoftEdge') {
         pending('Edge 18 seems to track cross origin xhr timings anyway')
       }
@@ -43,37 +46,43 @@ describe('rum resources', () => {
       expect(resourceEvent.http.status_code).toEqual(200)
       expect(resourceEvent.duration).toBeGreaterThan(0)
       expect(resourceEvent.http.performance).toBeUndefined()
-    }
-  )
+    })
 
-  createTest('track allowed cross origin xhr timings', allSetups({ rum: {} }), async ({ crossOriginUrl, events }) => {
-    await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
-    await flushEvents()
-    const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
-    expect(resourceEvent).not.toBeUndefined()
-    expect(resourceEvent.http.method).toEqual('GET')
-    expect(resourceEvent.http.status_code).toEqual(200)
-    expectToHaveValidTimings(resourceEvent)
-  })
+  createTest('track allowed cross origin xhr timings')
+    .withRum()
+    .run(async ({ crossOriginUrl, events }) => {
+      await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
+      await flushEvents()
+      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
+      expect(resourceEvent).not.toBeUndefined()
+      expect(resourceEvent.http.method).toEqual('GET')
+      expect(resourceEvent.http.status_code).toEqual(200)
+      expectToHaveValidTimings(resourceEvent)
+    })
 
-  createTest(
-    'retrieve early requests timings',
-    allSetups({ rum: {}, headerStart: `<link rel="stylesheet" href="/empty.css" />` }),
-    async ({ events }) => {
+  createTest('retrieve early requests timings')
+    .withRum()
+    .withHead(
+      html`
+        <link rel="stylesheet" href="/empty.css" />
+      `
+    )
+    .run(async ({ events }) => {
       await flushEvents()
       const resourceEvent = events.rumResources.find((event) => event.http.url.includes('empty.css'))
       expect(resourceEvent).toBeDefined()
       expectToHaveValidTimings(resourceEvent!)
-    }
-  )
+    })
 
-  createTest('retrieve initial document timings', allSetups({ rum: {} }), async ({ baseUrl, events }) => {
-    await flushEvents()
-    const resourceEvent = events.rumResources.find((event) => event.resource.kind === 'document')
-    expect(resourceEvent).toBeDefined()
-    expect(resourceEvent!.http.url).toBe(`${baseUrl}/`)
-    expectToHaveValidTimings(resourceEvent!)
-  })
+  createTest('retrieve initial document timings')
+    .withRum()
+    .run(async ({ baseUrl, events }) => {
+      await flushEvents()
+      const resourceEvent = events.rumResources.find((event) => event.resource.kind === 'document')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.http.url).toBe(`${baseUrl}/`)
+      expectToHaveValidTimings(resourceEvent!)
+    })
 })
 
 function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {

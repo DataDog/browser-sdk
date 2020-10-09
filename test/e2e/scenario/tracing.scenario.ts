@@ -1,29 +1,25 @@
 import { sendFetch, sendXhr } from '../lib/browserHelpers'
 import { flushEvents } from '../lib/sdkHelpers'
-import { allSetups, createTest, EventRegistry } from '../lib/testSetup'
+import { createTest, EventRegistry } from '../lib/testSetup'
 
 describe('tracing', () => {
-  createTest(
-    'trace xhr',
-    allSetups({ rum: { service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] } }),
-    async ({ events }) => {
+  createTest('trace xhr')
+    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .run(async ({ events }) => {
       const rawHeaders = await sendXhr(`/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       await checkTraceAssociatedToRumEvent(events)
-    }
-  )
+    })
 
-  createTest(
-    'trace fetch',
-    allSetups({ rum: { service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] } }),
-    async ({ events }) => {
+  createTest('trace fetch')
+    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .run(async ({ events }) => {
       const rawHeaders = await sendFetch(`/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       await checkTraceAssociatedToRumEvent(events)
-    }
-  )
+    })
 
   function checkRequestHeaders(rawHeaders: string) {
     const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any

@@ -3,14 +3,12 @@ import { flushEvents } from '../lib/sdkHelpers'
 import { bundleSetup, createTest } from '../lib/testSetup'
 
 describe('internal monitoring', () => {
-  createTest(
-    'send errors',
-    bundleSetup({
-      logs: {
-        internalMonitoringApiKey: 'xxx',
-      },
-    }),
-    async ({ events }) => {
+  createTest('send errors')
+    .withSetup(bundleSetup)
+    .withLogs({
+      internalMonitoringApiKey: 'xxx',
+    })
+    .run(async ({ events }) => {
       await browserExecute(() => {
         const context = {
           get foo() {
@@ -26,6 +24,5 @@ describe('internal monitoring', () => {
       expect(event.error.kind).toBe('Error')
       expect(event.status).toBe('error')
       events.empty()
-    }
-  )
+    })
 })

@@ -1,74 +1,83 @@
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/browserHelpers'
 import { flushEvents } from '../lib/sdkHelpers'
-import { allSetups, createTest } from '../lib/testSetup'
+import { createTest } from '../lib/testSetup'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
 describe('logs', () => {
-  createTest('send logs', allSetups({ logs: {} }), async ({ events }) => {
-    await browserExecute(() => {
-      window.DD_LOGS!.logger.log('hello')
+  createTest('send logs')
+    .withLogs()
+    .run(async ({ events }) => {
+      await browserExecute(() => {
+        window.DD_LOGS!.logger.log('hello')
+      })
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].message).toBe('hello')
     })
-    await flushEvents()
-    expect(events.logs.length).toBe(1)
-    expect(events.logs[0].message).toBe('hello')
-  })
 
-  createTest('send errors', allSetups({ logs: { forwardErrorsToLogs: true } }), async ({ events }) => {
-    await browserExecute(() => {
-      console.error('oh snap')
+  createTest('send errors')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ events }) => {
+      await browserExecute(() => {
+        console.error('oh snap')
+      })
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].message).toBe('console error: oh snap')
+      // TODO: when RUM is not initialized, we've got a "'getInternalContext' not yet available, ..."
+      // warning.  This will be fixed by PR https://github.com/DataDog/browser-sdk/pull/551
+      // await withBrowserLogs((browserLogs) => {
+      //   expect(browserLogs.length).toEqual(1)
+      // })
+      await flushBrowserLogs()
     })
-    await flushEvents()
-    expect(events.logs.length).toBe(1)
-    expect(events.logs[0].message).toBe('console error: oh snap')
-    // TODO: when RUM is not initialized, we've got a "'getInternalContext' not yet available, ..."
-    // warning.  This will be fixed by PR https://github.com/DataDog/browser-sdk/pull/551
-    // await withBrowserLogs((browserLogs) => {
-    //   expect(browserLogs.length).toEqual(1)
-    // })
-    await flushBrowserLogs()
-  })
 
-  createTest('add RUM internal context to logs', allSetups({ logs: {}, rum: {} }), async ({ events }) => {
-    await browserExecute(() => {
-      window.DD_LOGS!.logger.log('hello')
+  createTest('add RUM internal context to logs')
+    .withRum()
+    .withLogs()
+    .run(async ({ events }) => {
+      await browserExecute(() => {
+        window.DD_LOGS!.logger.log('hello')
+      })
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].view.id).toBeDefined()
+      expect(events.logs[0].application_id).toBe('appId')
     })
-    await flushEvents()
-    expect(events.logs.length).toBe(1)
-    expect(events.logs[0].view.id).toBeDefined()
-    expect(events.logs[0].application_id).toBe('appId')
-  })
 
-  createTest('track fetch error', allSetups({ logs: { forwardErrorsToLogs: true } }), async ({ events, baseUrl }) => {
-    await browserExecuteAsync((unreachableUrl, done) => {
-      let count = 0
-      fetch(`/throw`).then(() => (count += 1))
-      fetch(`/unknown`).then(() => (count += 1))
-      fetch(unreachableUrl).catch(() => (count += 1))
-      fetch(`/ok`).then(() => (count += 1))
+  createTest('track fetch error')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ events, baseUrl }) => {
+      await browserExecuteAsync((unreachableUrl, done) => {
+        let count = 0
+        fetch(`/throw`).then(() => (count += 1))
+        fetch(`/unknown`).then(() => (count += 1))
+        fetch(unreachableUrl).catch(() => (count += 1))
+        fetch(`/ok`).then(() => (count += 1))
 
-      const interval = setInterval(() => {
-        if (count === 4) {
-          clearInterval(interval)
-          done(undefined)
-        }
-      }, 500)
-    }, UNREACHABLE_URL)
+        const interval = setInterval(() => {
+          if (count === 4) {
+            clearInterval(interval)
+            done(undefined)
+          }
+        }, 500)
+      }, UNREACHABLE_URL)
 
-    await flushBrowserLogs()
-    await flushEvents()
+      await flushBrowserLogs()
+      await flushEvents()
 
-    expect(events.logs.length).toEqual(2)
+      expect(events.logs.length).toEqual(2)
 
-    const unreachableRequest = events.logs.find((log) => log.http!.url.includes('/unreachable'))!
-    const throwRequest = events.logs.find((log) => log.http!.url.includes('/throw'))!
+      const unreachableRequest = events.logs.find((log) => log.http!.url.includes('/unreachable'))!
+      const throwRequest = events.logs.find((log) => log.http!.url.includes('/throw'))!
 
-    expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
-    expect(throwRequest.http!.status_code).toEqual(500)
-    expect(throwRequest.error!.stack).toMatch(/Server error/)
+      expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
+      expect(throwRequest.http!.status_code).toEqual(500)
+      expect(throwRequest.error!.stack).toMatch(/Server error/)
 
-    expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
-    expect(unreachableRequest.http!.status_code).toEqual(0)
-    expect(unreachableRequest.error!.stack).toContain('TypeError')
-  })
+      expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
+      expect(unreachableRequest.http!.status_code).toEqual(0)
+      expect(unreachableRequest.error!.stack).toContain('TypeError')
+    })
 })
