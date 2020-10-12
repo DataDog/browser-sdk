@@ -1,5 +1,6 @@
 import {
   combine,
+  deepClone,
   findCommaSeparatedValue,
   jsonStringify,
   performDraw,
@@ -54,6 +55,34 @@ describe('utils', () => {
       const result = combine({}, source)
       source.a[0] = 2
       expect(result.a[0]).toBe(1)
+    })
+  })
+
+  describe('deepClone', () => {
+    it('should return a similar value', () => {
+      const clonedValue = deepClone({ a: 1 })
+      expect(clonedValue).toEqual({ a: 1 })
+    })
+
+    it('should clone the value', () => {
+      const value = { a: 1 }
+      const clonedValue = deepClone(value)
+      value.a = 2
+      expect(clonedValue).toEqual({ a: 1 })
+    })
+
+    it('should clone objects sub values', () => {
+      const value = { a: { b: 1 } }
+      const clonedValue = deepClone(value)
+      value.a.b = 2
+      expect(clonedValue).toEqual({ a: { b: 1 } })
+    })
+
+    it('should clone arrays items', () => {
+      const value = { a: [1] }
+      const clonedValue = deepClone(value)
+      value.a[0] = 2
+      expect(clonedValue).toEqual({ a: [1] })
     })
   })
 

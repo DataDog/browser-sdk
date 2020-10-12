@@ -6,6 +6,7 @@ import {
   Context,
   ContextValue,
   createContextManager,
+  deepClone,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -56,7 +57,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   }
   const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
   let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
-    beforeInitAddUserAction.add([action, combine({}, globalContextManager.get())])
+    beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
   }
 
   return makeGlobal({
@@ -94,7 +95,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     addUserAction: monitor((name: string, context?: Context) => {
       addUserActionStrategy({
         name,
-        context: combine({}, context),
+        context: deepClone(context),
         startTime: performance.now(),
         type: UserActionType.CUSTOM,
       })

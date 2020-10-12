@@ -142,6 +142,10 @@ export function combine(destination: Context, ...toMerge: Array<Context | null>)
   return deepMerge(destination, ...toMerge.filter((object) => object !== null)) as Context
 }
 
+export function deepClone<T extends ContextValue>(context: T): T {
+  return deepMerge(context) as T
+}
+
 interface Assignable {
   [key: string]: any
 }
