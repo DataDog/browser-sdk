@@ -14,6 +14,11 @@
 
 ---
 
+## v1.22.1
+
+- 🐛[RUMF-716] fix invalid action name ([#557](https://github.com/DataDog/browser-sdk/pull/557))
+- 🐛 consider proxy host with custom path request as intake request ([#550](https://github.com/DataDog/browser-sdk/pull/550))
+
 ## v1.22.0
 
 - ✨ [RUMF-530][logs] allow using logs API before init ([#545](https://github.com/DataDog/browser-sdk/pull/545))
