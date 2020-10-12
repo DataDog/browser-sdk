@@ -323,9 +323,9 @@ describe('utils', () => {
 
   describe('safeTruncate', () => {
     it('should truncate a string', () => {
-      const truncated = safeTruncate('1234567890', 4)
-      expect(truncated.length).toBe(4)
-      expect(truncated).toBe('1234')
+      const truncated = safeTruncate('1234😎7890', 6)
+      expect(truncated.length).toBe(6)
+      expect(truncated).toBe('1234😎')
     })
 
     it('should not break a surrogate characters pair', () => {

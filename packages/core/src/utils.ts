@@ -374,14 +374,10 @@ export function findCommaSeparatedValue(rawString: string, name: string) {
 }
 
 export function safeTruncate(candidate: string, length: number) {
-  const slice = candidate.slice(0, length)
-  try {
-    // throw if attempt to encode a surrogate
-    // which is not part of a high-low pair
-    encodeURIComponent(slice)
-    return slice
-  } catch {
-    // add the missing part
-    return slice + candidate.charAt(length)
+  const lastChar = candidate.charCodeAt(length - 1)
+  // check if it is the high part of a surrogate pair
+  if (lastChar >= 0xd800 && lastChar <= 0xdbff) {
+    return candidate.slice(0, length + 1)
   }
+  return candidate.slice(0, length)
 }
