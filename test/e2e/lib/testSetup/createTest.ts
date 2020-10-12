@@ -5,8 +5,8 @@ import { getTestServers, Servers, waitForServersIdle } from '../servers'
 import { EventRegistry } from './eventsRegistry'
 import { createIntakeServerApp } from './intakeServerApp'
 import { createMockServerApp } from './mockServerApp'
+import { DEFAULT_SETUPS, LogsSetupOptions, RumSetupOptions, SetupFactory, SetupOptions } from './pageSetups'
 import { Endpoints } from './sdkBuilds'
-import { DEFAULT_SETUPS, LogsSetupOptions, RumSetupOptions, SetupFactory, SetupOptions } from './setups'
 
 const DEFAULT_RUM_OPTIONS = {
   applicationId: 'appId',
