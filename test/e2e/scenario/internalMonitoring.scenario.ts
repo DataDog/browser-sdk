@@ -1,6 +1,6 @@
 import { browserExecute } from '../lib/browserHelpers'
+import { bundleSetup, createTest } from '../lib/framework'
 import { flushEvents } from '../lib/sdkHelpers'
-import { bundleSetup, createTest } from '../lib/testSetup'
 
 describe('internal monitoring', () => {
   createTest('send errors')

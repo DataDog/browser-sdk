@@ -1,7 +1,7 @@
 import { sendXhr } from '../../lib/browserHelpers'
+import { createTest, html } from '../../lib/framework'
 import { flushEvents } from '../../lib/sdkHelpers'
 import { ServerRumResourceEvent } from '../../lib/serverTypes'
-import { createTest, html } from '../../lib/testSetup'
 
 const REQUEST_DURATION = 200
 

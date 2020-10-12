@@ -1,6 +1,6 @@
+import { createTest, html } from '../../lib/framework'
 import { flushEvents } from '../../lib/sdkHelpers'
 import { waitForServersIdle } from '../../lib/servers'
-import { createTest, html } from '../../lib/testSetup'
 
 describe('user action collection', () => {
   createTest('track a click user action')
