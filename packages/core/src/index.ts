@@ -10,7 +10,6 @@ export {
   BuildEnv,
   BuildMode,
   Datacenter,
-  makeStub,
   makeGlobal,
   commonInit,
   checkCookiesAuthorized,
@@ -32,5 +31,6 @@ export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from 
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy } from './xhrProxy'
 export { startFetchProxy, FetchCompleteContext, FetchStartContext, FetchProxy } from './fetchProxy'
 export { BoundedBuffer } from './boundedBuffer'
+export { createContextManager } from './contextManager'
 
 export * from './specHelper'

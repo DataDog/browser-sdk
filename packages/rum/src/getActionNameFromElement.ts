@@ -1,3 +1,5 @@
+import { safeTruncate } from '@datadog/browser-core'
+
 export function getActionNameFromElement(element: Element): string {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
@@ -146,7 +148,7 @@ function normalizeWhitespace(s: string) {
 }
 
 function truncate(s: string) {
-  return s.length > 100 ? `${s.slice(0, 100)} [...]` : s
+  return s.length > 100 ? `${safeTruncate(s, 100)} [...]` : s
 }
 
 function getElementById(refElement: Element, id: string) {

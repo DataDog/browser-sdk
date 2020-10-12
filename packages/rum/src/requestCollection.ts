@@ -9,6 +9,7 @@ import {
   XhrCompleteContext,
   XhrStartContext,
 } from '@datadog/browser-core'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracer'
 
@@ -40,19 +41,13 @@ export type RequestObservables = [Observable<RequestStartEvent>, Observable<Requ
 
 let nextRequestIndex = 1
 
-export function startRequestCollection(configuration: Configuration) {
-  const requestObservables: RequestObservables = [new Observable(), new Observable()]
+export function startRequestCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   const tracer = startTracer(configuration)
-  trackXhr(configuration, requestObservables, tracer)
-  trackFetch(configuration, requestObservables, tracer)
-  return requestObservables
+  trackXhr(lifeCycle, configuration, tracer)
+  trackFetch(lifeCycle, configuration, tracer)
 }
 
-export function trackXhr(
-  configuration: Configuration,
-  [requestStartObservable, requestCompleteObservable]: RequestObservables,
-  tracer: Tracer
-) {
+export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
   const xhrProxy = startXhrProxy<CustomContext & XhrStartContext, CustomContext & XhrCompleteContext>()
   xhrProxy.beforeSend((context, xhr) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
@@ -63,14 +58,14 @@ export function trackXhr(
       }
       context.requestIndex = getNextRequestIndex()
 
-      requestStartObservable.notify({
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: context.requestIndex,
       })
     }
   })
   xhrProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      requestCompleteObservable.notify({
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
         requestIndex: context.requestIndex,
@@ -87,11 +82,7 @@ export function trackXhr(
   return xhrProxy
 }
 
-export function trackFetch(
-  configuration: Configuration,
-  [requestStartObservable, requestCompleteObservable]: RequestObservables,
-  tracer: Tracer
-) {
+export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
   const fetchProxy = startFetchProxy<CustomContext & FetchStartContext, CustomContext & FetchCompleteContext>()
   fetchProxy.beforeSend((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
@@ -102,14 +93,14 @@ export function trackFetch(
       }
       context.requestIndex = getNextRequestIndex()
 
-      requestStartObservable.notify({
+      lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: context.requestIndex,
       })
     }
   })
   fetchProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      requestCompleteObservable.notify({
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
         requestIndex: context.requestIndex,

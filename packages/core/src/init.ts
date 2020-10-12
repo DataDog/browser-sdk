@@ -4,10 +4,6 @@ import { ErrorMessage, startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
 import { Observable } from './observable'
 
-export function makeStub(methodName: string) {
-  console.warn(`'${methodName}' not yet available, please call '.init()' first.`)
-}
-
 export function makeGlobal<T>(stub: T): T {
   const global = { ...stub }
 

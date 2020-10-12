@@ -4,6 +4,7 @@ import {
   combine,
   Context,
   ContextValue,
+  createContextManager,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -40,7 +41,7 @@ export type StartLogs = typeof startLogs
 export function makeLogsGlobal(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
-  let globalContext: Context = {}
+  const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
   const beforeInitSendLog = new BoundedBuffer<[LogsMessage, Context]>()
@@ -63,23 +64,17 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
         console.warn('Public API Key is deprecated. Please use Client Token instead.')
       }
 
-      sendLogStrategy = startLogsImpl(userConfiguration, logger, () => globalContext)
+      sendLogStrategy = startLogsImpl(userConfiguration, logger, globalContextManager.get)
       beforeInitSendLog.drain(([message, context]) => sendLogStrategy(message, context))
 
       isAlreadyInitialized = true
     }),
 
-    setLoggerGlobalContext: monitor((context: Context) => {
-      globalContext = context
-    }),
+    setLoggerGlobalContext: monitor(globalContextManager.set),
 
-    addLoggerGlobalContext: monitor((key: string, value: ContextValue) => {
-      globalContext[key] = value
-    }),
+    addLoggerGlobalContext: monitor(globalContextManager.add),
 
-    removeLoggerGlobalContext: monitor((key: string) => {
-      delete globalContext[key]
-    }),
+    removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
       customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
@@ -123,7 +118,7 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
             url: window.location.href,
           },
         },
-        globalContext
+        globalContextManager.get()
       )
     )
   }

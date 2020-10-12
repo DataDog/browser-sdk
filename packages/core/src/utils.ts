@@ -372,3 +372,12 @@ export function findCommaSeparatedValue(rawString: string, name: string) {
   const matches = rawString.match(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
   return matches ? matches[1] : undefined
 }
+
+export function safeTruncate(candidate: string, length: number) {
+  const lastChar = candidate.charCodeAt(length - 1)
+  // check if it is the high part of a surrogate pair
+  if (lastChar >= 0xd800 && lastChar <= 0xdbff) {
+    return candidate.slice(0, length + 1)
+  }
+  return candidate.slice(0, length)
+}
