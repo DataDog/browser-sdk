@@ -48,7 +48,7 @@ export class Logger {
           this.sendLog({
             message,
             status,
-            ...combine({}, this.contextManager.get(), messageContext),
+            ...combine(this.contextManager.get(), messageContext),
           })
           break
         case HandlerType.console:
@@ -78,7 +78,7 @@ export class Logger {
         origin: ErrorOrigin.LOGGER,
       },
     }
-    this.log(message, combine({}, errorOrigin, messageContext), StatusType.error)
+    this.log(message, combine(errorOrigin, messageContext), StatusType.error)
   }
 
   setContext(context: Context) {

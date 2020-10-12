@@ -13,9 +13,9 @@ import {
 describe('utils', () => {
   describe('combine', () => {
     it('should deeply add and replace keys', () => {
-      const target = { a: { b: 'toBeReplaced', c: 'target' } }
-      const source = { a: { b: 'replaced', d: 'source' } }
-      expect(combine(target, source)).toEqual({ a: { b: 'replaced', c: 'target', d: 'source' } })
+      const sourceA = { a: { b: 'toBeReplaced', c: 'source a' } }
+      const sourceB = { a: { b: 'replaced', d: 'source b' } }
+      expect(combine(sourceA, sourceB)).toEqual({ a: { b: 'replaced', c: 'source a', d: 'source b' } })
     })
 
     it('should not replace with undefined', () => {
@@ -33,9 +33,27 @@ describe('utils', () => {
     })
 
     it('should merge arrays', () => {
-      const target = [{ a: 'target' }, 'extraString'] as any
-      const source = [{ b: 'source' }] as any
-      expect(combine(target, source)).toEqual([{ a: 'target', b: 'source' }, 'extraString'])
+      const sourceA = [{ a: 'source a' }, 'extraString'] as any
+      const sourceB = [{ b: 'source b' }] as any
+      expect(combine(sourceA, sourceB)).toEqual([{ a: 'source a', b: 'source b' }, 'extraString'])
+    })
+
+    it('should merge multiple objects', () => {
+      expect(combine({ a: 1 }, { b: 2 }, { c: 3 })).toEqual({ a: 1, b: 2, c: 3 })
+    })
+
+    it('should not keep references on objects', () => {
+      const source = { a: { b: 1 } }
+      const result = combine({}, source)
+      source.a.b = 2
+      expect(result.a.b).toBe(1)
+    })
+
+    it('should not keep references on arrays', () => {
+      const source = { a: [1] }
+      const result = combine({}, source)
+      source.a[0] = 2
+      expect(result.a[0]).toBe(1)
     })
   })
 
