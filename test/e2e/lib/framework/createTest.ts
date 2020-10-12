@@ -1,7 +1,7 @@
 import { deleteAllCookies, withBrowserLogs } from '../browserHelpers'
 import { flushEvents } from '../sdkHelpers'
-import { getTestServers, Servers, waitForServersIdle } from '../servers'
 import { EventRegistry } from './eventsRegistry'
+import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { createIntakeServerApp } from './intakeServerApp'
 import { log } from './logger'
 import { createMockServerApp } from './mockServerApp'

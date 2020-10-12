@@ -1,5 +1,5 @@
 import { browserExecuteAsync, deleteAllCookies } from './browserHelpers'
-import { getTestServers, waitForServersIdle } from './servers'
+import { getTestServers, waitForServersIdle } from './framework'
 
 export async function flushEvents() {
   // wait to process user actions + event loop before switching page

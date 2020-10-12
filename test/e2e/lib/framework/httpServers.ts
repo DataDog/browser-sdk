@@ -1,7 +1,7 @@
 import * as http from 'http'
 import { AddressInfo } from 'net'
-import { getIp } from '../../utils'
-import { log } from './framework/logger'
+import { getIp } from '../../../utils'
+import { log } from './logger'
 
 const MAX_SERVER_CREATION_RETRY = 5
 // Not all port are available with BrowserStack, see https://www.browserstack.com/question/664
