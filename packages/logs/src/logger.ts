@@ -1,4 +1,4 @@
-import { combine, Context, ContextValue, ErrorOrigin, monitored } from '@datadog/browser-core'
+import { combine, Context, ContextValue, createContextManager, ErrorOrigin, monitored } from '@datadog/browser-core'
 
 export enum StatusType {
   debug = 'debug',
@@ -29,12 +29,16 @@ export enum HandlerType {
 }
 
 export class Logger {
+  private contextManager = createContextManager()
+
   constructor(
     private sendLog: (message: LogsMessage) => void,
     private handlerType = HandlerType.http,
     private level = StatusType.debug,
-    private loggerContext: Context = {}
-  ) {}
+    loggerContext: Context = {}
+  ) {
+    this.contextManager.set(loggerContext)
+  }
 
   @monitored
   log(message: string, messageContext?: Context, status = StatusType.info) {
@@ -44,7 +48,7 @@ export class Logger {
           this.sendLog({
             message,
             status,
-            ...combine({}, this.loggerContext, messageContext),
+            ...combine({}, this.contextManager.get(), messageContext),
           })
           break
         case HandlerType.console:
@@ -78,15 +82,15 @@ export class Logger {
   }
 
   setContext(context: Context) {
-    this.loggerContext = context
+    this.contextManager.set(context)
   }
 
   addContext(key: string, value: ContextValue) {
-    this.loggerContext[key] = value
+    this.contextManager.add(key, value)
   }
 
   removeContext(key: string) {
-    delete this.loggerContext[key]
+    this.contextManager.remove(key)
   }
 
   setHandler(handler: HandlerType) {

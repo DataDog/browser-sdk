@@ -1,10 +1,18 @@
-import { Configuration, DEFAULT_CONFIGURATION, ErrorMessage, isIE, SPEC_ENDPOINTS } from '@datadog/browser-core'
+import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
 import { RequestCompleteEvent } from '../src/requestCollection'
-import { handleResourceEntry, RawRumEvent, RumEvent, RumResourceEvent, RumViewEvent, trackView } from '../src/rum'
+import {
+  doGetInternalContext,
+  handleResourceEntry,
+  RawRumEvent,
+  RumEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  trackView,
+} from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
@@ -16,12 +24,6 @@ function getEntry(handler: (startTime: number, event: RumEvent) => void, index: 
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
-}
-
-const configuration = {
-  ...DEFAULT_CONFIGURATION,
-  ...SPEC_ENDPOINTS,
-  maxBatchSize: 1,
 }
 
 function getRumMessage(server: sinon.SinonFakeServer, index: number) {
@@ -62,13 +64,7 @@ describe('rum handle performance entry', () => {
     const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
     const session = createMockSession()
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      session,
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
 
     expect(handler).toHaveBeenCalled()
   })
@@ -78,13 +74,7 @@ describe('rum handle performance entry', () => {
     const session = createMockSession()
     session.isTrackedWithResource = () => false
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      session,
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
 
     expect(handler).not.toHaveBeenCalled()
   })
@@ -125,13 +115,7 @@ describe('rum handle performance entry', () => {
       it(`should compute resource kind: ${description}`, () => {
         const entry: Partial<RumPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
 
-        handleResourceEntry(
-          configuration as Configuration,
-          new LifeCycle(),
-          createMockSession(),
-          handler,
-          entry as RumPerformanceResourceTiming
-        )
+        handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
         const resourceEvent = getEntry(handler, 0) as RumResourceEvent
         expect(resourceEvent.resource.kind).toEqual(expected)
       })
@@ -154,13 +138,7 @@ describe('rum handle performance entry', () => {
       secureConnectionStart: 0,
     }
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      createMockSession(),
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
     expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
@@ -184,13 +162,7 @@ describe('rum handle performance entry', () => {
         secureConnectionStart: 0,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        new LifeCycle(),
-        createMockSession(),
-        handler,
-        entry as RumPerformanceResourceTiming
-      )
+      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
@@ -203,13 +175,7 @@ describe('rum handle performance entry', () => {
         responseStart: 100,
       }
 
-      handleResourceEntry(
-        configuration as Configuration,
-        new LifeCycle(),
-        createMockSession(),
-        handler,
-        entry as RumPerformanceResourceTiming
-      )
+      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
       const resourceEvent = getEntry(handler, 0) as RumResourceEvent
       expect(resourceEvent.http.performance).toBe(undefined)
     })
@@ -222,13 +188,7 @@ describe('rum handle performance entry', () => {
       traceId: '123',
     }
 
-    handleResourceEntry(
-      configuration as Configuration,
-      new LifeCycle(),
-      createMockSession(),
-      handler,
-      entry as RumPerformanceResourceTiming
-    )
+    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
     const resourceEvent = getEntry(handler, 0) as RumResourceEvent
     expect(resourceEvent._dd!.traceId).toBe('123')
   })
@@ -260,10 +220,14 @@ describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_RESOURCE: Partial<RumPerformanceResourceTiming> = { name: 'http://foo.com', entryType: 'resource' }
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
-  const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
-    context: { foo: 'bar' },
-    name: 'action',
-    type: UserActionType.CUSTOM,
+  const FAKE_CUSTOM_USER_ACTION_EVENT = {
+    action: {
+      context: { foo: 'bar' },
+      name: 'action',
+      startTime: 123,
+      type: UserActionType.CUSTOM as const,
+    },
+    context: {},
   }
   let setupBuilder: TestSetupBuilder
 
@@ -292,7 +256,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
 
     expect(server.requests.length).toEqual(4)
   })
@@ -334,7 +298,7 @@ describe('rum session', () => {
     stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
 
     expect(server.requests.length).toEqual(0)
   })
@@ -523,36 +487,23 @@ describe('rum global context', () => {
   })
 
   it('should be added to the request', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ bar: 'foo' })
+    setGlobalContext({ bar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
   })
 
-  it('should be updatable', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+  it('should ignore subsequent context mutation', () => {
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ bar: 'foo' })
+    const globalContext = { bar: 'foo' }
+    setGlobalContext(globalContext)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    rumApi.setRumGlobalContext({ foo: 'bar' })
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
-    expect((getRumMessage(server, 1) as any).foo).toEqual('bar')
-    expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
-  })
-
-  it('should be removable', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
-    server.requests = []
-
-    rumApi.addRumGlobalContext('bar', 'foo')
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    rumApi.removeRumGlobalContext('bar')
+    delete globalContext.bar
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
@@ -560,10 +511,10 @@ describe('rum global context', () => {
   })
 
   it('should not be automatically snake cased', () => {
-    const { server, lifeCycle, rumApi } = setupBuilder.build()
+    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
     server.requests = []
 
-    rumApi.setRumGlobalContext({ fooBar: 'foo' })
+    setGlobalContext({ fooBar: 'foo' })
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
@@ -588,12 +539,36 @@ describe('rum user action', () => {
     server.requests = []
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      context: { fooBar: 'foo' },
-      name: 'hello',
-      type: UserActionType.CUSTOM,
+      action: {
+        context: { fooBar: 'foo' },
+        name: 'hello',
+        startTime: 123,
+        type: UserActionType.CUSTOM,
+      },
+      context: {},
     })
 
     expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
+  })
+
+  it('should ignore the current global context when a saved global context is provided', () => {
+    const { setGlobalContext, server, lifeCycle } = setupBuilder.build()
+    server.requests = []
+
+    setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
+
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
+      action: {
+        context: {},
+        name: 'hello',
+        startTime: 123,
+        type: UserActionType.CUSTOM,
+      },
+      context: { replacedContext: 'a' },
+    })
+
+    expect((getRumMessage(server, 0) as any).replacedContext).toEqual('a')
+    expect((getRumMessage(server, 0) as any).addedContext).toEqual(undefined)
   })
 })
 
@@ -654,11 +629,11 @@ describe('rum internal context', () => {
   })
 
   it('should return current internal context', () => {
-    const { rumApi, lifeCycle } = setupBuilder.build()
+    const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
 
-    expect(rumApi.getInternalContext()).toEqual({
+    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual({
       application_id: 'appId',
       session_id: '1234',
       user_action: {
@@ -673,7 +648,7 @@ describe('rum internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const { rumApi, lifeCycle } = setupBuilder
+    const { lifeCycle, parentContexts, session } = setupBuilder
       .withSession({
         getId: () => '1234',
         isTracked: () => false,
@@ -683,17 +658,17 @@ describe('rum internal context', () => {
 
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
 
-    expect(rumApi.getInternalContext()).toEqual(undefined)
+    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual(undefined)
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const { rumApi, lifeCycle } = setupBuilder.build()
+    const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
     const stubUserAction: Partial<AutoUserAction> = { duration: 10 }
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubUserAction as AutoUserAction)
 
-    expect(rumApi.getInternalContext(15)).toEqual({
+    expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
       application_id: 'appId',
       session_id: '1234',
       user_action: {

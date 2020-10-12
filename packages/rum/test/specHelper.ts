@@ -2,29 +2,23 @@ import {
   assign,
   buildUrl,
   Configuration,
+  Context,
   DEFAULT_CONFIGURATION,
-  InternalMonitoring,
   PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { RumGlobal } from '../src'
 import { LifeCycle } from '../src/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { startRum } from '../src/rum'
+import { startRumEventCollection } from '../src/rum'
+import { InternalContext } from '../src/rum.entry'
 import { RumSession } from '../src/rumSession'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
-}
-
-export type RumApi = Omit<RumGlobal, 'init'>
-
-const internalMonitoringStub: InternalMonitoring = {
-  setExternalContextProvider: () => undefined,
 }
 
 export interface TestSetupBuilder {
@@ -48,10 +42,11 @@ export interface TestIO {
   lifeCycle: LifeCycle
   server: sinon.SinonFakeServer
   stubBuilder: PerformanceObserverStubBuilder
-  rumApi: RumApi
   clock: jasmine.Clock
   parentContexts: ParentContexts
   fakeLocation: Partial<Location>
+  setGlobalContext: (context: Context) => void
+  session: RumSession
 }
 
 export function setup(): TestSetupBuilder {
@@ -65,10 +60,10 @@ export function setup(): TestSetupBuilder {
   const beforeBuildTasks: Array<(lifeCycle: LifeCycle) => void> = []
   const buildTasks: Array<() => void> = []
 
+  let globalContext: Context
   let server: sinon.SinonFakeServer
   let clock: jasmine.Clock
   let stubBuilder: PerformanceObserverStubBuilder
-  let rumApi: RumApi
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
   const configuration: Partial<Configuration> = {
@@ -105,16 +100,17 @@ export function setup(): TestSetupBuilder {
     withRum() {
       buildTasks.push(() => {
         let stopRum
-        ;({ globalApi: rumApi, stop: stopRum } = startRum(
+        ;({ parentContexts, stop: stopRum } = startRumEventCollection(
           'appId',
           fakeLocation as Location,
           lifeCycle,
           configuration as Configuration,
           session,
-          internalMonitoringStub
+          () => globalContext
         ))
         cleanupTasks.push(stopRum)
       })
+
       return setupBuilder
     },
     withViewCollection() {
@@ -175,7 +171,18 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
-      return { server, lifeCycle, stubBuilder, rumApi, clock, parentContexts, fakeLocation }
+      return {
+        clock,
+        fakeLocation,
+        lifeCycle,
+        parentContexts,
+        server,
+        session,
+        stubBuilder,
+        setGlobalContext(context: Context) {
+          globalContext = context
+        },
+      }
     },
     cleanup() {
       cleanupTasks.forEach((task) => task())
