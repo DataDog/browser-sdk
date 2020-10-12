@@ -37,20 +37,6 @@ export async function flushBrowserLogs() {
   })
 }
 
-export async function renewSession() {
-  await expireSession()
-  const documentElement = await $('html')
-  await documentElement.click()
-  expect(await findSessionCookie()).toBeDefined()
-}
-
-export async function expireSession() {
-  await deleteAllCookies()
-  expect(await findSessionCookie()).not.toBeDefined()
-  // Cookies are cached for 1s, wait until the cache expires
-  await browser.pause(1100)
-}
-
 // wdio method does not work for some browsers
 export async function deleteAllCookies() {
   return browserExecute(() => {
@@ -61,12 +47,6 @@ export async function deleteAllCookies() {
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;samesite=strict`
     }
   })
-}
-
-async function findSessionCookie() {
-  const cookies = (await browser.getCookies()) || []
-  // tslint:disable-next-line: no-unsafe-any
-  return cookies.find((cookie: any) => cookie.name === '_dd_s')
 }
 
 export async function sendXhr(url: string, headers: string[][] = []): Promise<string> {
