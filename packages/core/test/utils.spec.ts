@@ -4,6 +4,7 @@ import {
   jsonStringify,
   performDraw,
   round,
+  safeTruncate,
   throttle,
   toSnakeCase,
   withSnakeCaseKeys,
@@ -317,6 +318,20 @@ describe('utils', () => {
       ;(circularReference as any).myself = circularReference
 
       expect(jsonStringify(circularReference)).toEqual('<error: unable to serialize object>')
+    })
+  })
+
+  describe('safeTruncate', () => {
+    it('should truncate a string', () => {
+      const truncated = safeTruncate('1234😎7890', 6)
+      expect(truncated.length).toBe(6)
+      expect(truncated).toBe('1234😎')
+    })
+
+    it('should not break a surrogate characters pair', () => {
+      const truncated = safeTruncate('12345😎890', 6)
+      expect(truncated.length).toBe(7)
+      expect(truncated).toBe('12345😎')
     })
   })
 
