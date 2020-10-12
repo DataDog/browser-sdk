@@ -25,12 +25,9 @@ describe('logs', () => {
       await flushEvents()
       expect(events.logs.length).toBe(1)
       expect(events.logs[0].message).toBe('console error: oh snap')
-      // TODO: when RUM is not initialized, we've got a "'getInternalContext' not yet available, ..."
-      // warning.  This will be fixed by PR https://github.com/DataDog/browser-sdk/pull/551
-      // await withBrowserLogs((browserLogs) => {
-      //   expect(browserLogs.length).toEqual(1)
-      // })
-      await flushBrowserLogs()
+      await withBrowserLogs((browserLogs) => {
+        expect(browserLogs.length).toEqual(1)
+      })
     })
 
   createTest('add RUM internal context to logs')
