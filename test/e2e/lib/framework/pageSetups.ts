@@ -37,10 +37,18 @@ export function asyncSetup(options: SetupOptions) {
         window.addEventListener('load', () => {
           const logs = document.createElement('script')
           logs.src = './datadog-logs.js'
-          logs.onload = () => {
-            DD_LOGS.init(${formatLogsOptions(options.logs)})
-          }
           document.getElementsByTagName('head')[0].appendChild(logs)
+        })
+
+        window.DD_LOGS = window.DD_LOGS || {
+          onReady: function(c) {
+            DD_LOGS.q.push(c)
+          },
+          q: [],
+        }
+
+        DD_LOGS.onReady(function() {
+          DD_LOGS.init(${formatLogsOptions(options.logs)})
         })
       </script>
     `
@@ -52,10 +60,18 @@ export function asyncSetup(options: SetupOptions) {
         window.addEventListener('load', () => {
           const logs = document.createElement('script')
           logs.src = './datadog-rum.js'
-          logs.onload = () => {
-            DD_RUM.init(${formatRumOptions(options.rum)})
-          }
           document.getElementsByTagName('head')[0].appendChild(logs)
+        })
+
+        window.DD_RUM = window.DD_RUM || {
+          onReady: function(c) {
+            DD_RUM.q.push(c)
+          },
+          q: [],
+        }
+
+        DD_RUM.onReady(function() {
+          DD_RUM.init(${formatRumOptions(options.rum)})
         })
       </script>
     `
