@@ -1,5 +1,5 @@
 import { browserExecute, sendXhr } from '../../lib/browserHelpers'
-import { flushEvents, expireSession, renewSession } from '../../lib/sdkHelpers'
+import { expireSession, flushEvents, renewSession } from '../../lib/sdkHelpers'
 import { ServerRumViewLoadingType } from '../../lib/serverTypes'
 import { createTest, html } from '../../lib/testSetup'
 
