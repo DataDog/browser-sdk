@@ -1,7 +1,7 @@
 import { createTest, html } from '../../lib/framework'
 import { browserExecute, sendXhr } from '../../lib/helpers/browser'
 import { expireSession, flushEvents, renewSession } from '../../lib/helpers/sdk'
-import { ServerRumViewLoadingType } from '../../lib/serverTypes'
+import { ServerRumViewLoadingType } from '../../lib/types/serverEvents'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')
