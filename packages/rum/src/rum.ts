@@ -1,5 +1,4 @@
 import {
-  Batch,
   combine,
   commonInit,
   Configuration,
@@ -9,13 +8,13 @@ import {
   generateUUID,
   getTimestamp,
   HttpContext,
-  HttpRequest,
   includes,
   msToNs,
   RequestType,
   ResourceKind,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
+import { startRumBatch } from './batch'
 
 import { buildEnv } from './buildEnv'
 import { startDOMMutationCollection } from './domMutationCollection'
@@ -228,7 +227,7 @@ export function startRumEventCollection(
   getGlobalContext: () => Context
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
-  const batch = makeRumBatch(configuration, lifeCycle)
+  const batch = startRumBatch(configuration, lifeCycle)
   const handler = makeRumEventHandler(
     parentContexts,
     session,
@@ -245,7 +244,7 @@ export function startRumEventCollection(
     getGlobalContext
   )
 
-  trackRumEvents(lifeCycle, session, handler, batch)
+  trackRumEvents(lifeCycle, session, handler)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -255,62 +254,6 @@ export function startRumEventCollection(
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
-    },
-  }
-}
-
-interface RumBatch {
-  add: (message: Context) => void
-  stop: () => void
-  upsert: (message: Context, key: string) => void
-}
-
-function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpoint)
-
-  let replicaBatch: Batch | undefined
-  const replica = configuration.replica
-  if (replica !== undefined) {
-    replicaBatch = createRumBatch(replica.rumEndpoint)
-  }
-
-  function createRumBatch(endpointUrl: string) {
-    return new Batch(
-      new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
-      configuration.maxBatchSize,
-      configuration.batchBytesLimit,
-      configuration.maxMessageSize,
-      configuration.flushTimeout,
-      () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-    )
-  }
-
-  function withReplicaApplicationId(message: Context) {
-    return combine(message, { application_id: replica!.applicationId })
-  }
-
-  let stopped = false
-  return {
-    add: (message: Context) => {
-      if (stopped) {
-        return
-      }
-      primaryBatch.add(message)
-      if (replicaBatch) {
-        replicaBatch.add(withReplicaApplicationId(message))
-      }
-    },
-    stop: () => {
-      stopped = true
-    },
-    upsert: (message: Context, key: string) => {
-      if (stopped) {
-        return
-      }
-      primaryBatch.upsert(message, key)
-      if (replicaBatch) {
-        replicaBatch.upsert(withReplicaApplicationId(message), key)
-      }
     },
   }
 }
@@ -363,7 +306,9 @@ function getSessionType() {
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }
 
-export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler, batch: RumBatch) {
+export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler) {
+  const onHandledEvent = (serverRumEvent: Context, rumEvent: RumEvent) =>
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
   const assembleWithoutAction = (event: RumViewEvent | RumUserActionEvent, { view, rum }: AssembleWithoutAction) =>
     combine(rum, view, event)
   const assembleWithAction = (
@@ -371,15 +316,12 @@ export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handle
     { view, action, rum }: AssembleWithAction
   ) => combine(rum, view, action, event)
 
-  trackView(
-    lifeCycle,
-    handler(assembleWithoutAction, (message, event: RumEvent) => batch.upsert(message, event.view.id))
-  )
-  trackErrors(lifeCycle, handler(assembleWithAction, batch.add))
-  trackRequests(lifeCycle, session, handler(assembleWithAction, batch.add))
-  trackPerformanceTiming(lifeCycle, session, handler(assembleWithAction, batch.add))
-  trackCustomUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
-  trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, batch.add))
+  trackView(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
+  trackErrors(lifeCycle, handler(assembleWithAction, onHandledEvent))
+  trackRequests(lifeCycle, session, handler(assembleWithAction, onHandledEvent))
+  trackPerformanceTiming(lifeCycle, session, handler(assembleWithAction, onHandledEvent))
+  trackCustomUserAction(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
+  trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
 }
 
 export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {

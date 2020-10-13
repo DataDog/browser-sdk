@@ -1,6 +1,7 @@
 import { Context, ErrorMessage } from '@datadog/browser-core'
 import { RumPerformanceEntry } from './performanceCollection'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import { RumEvent } from './rum'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View, ViewCreatedEvent } from './viewCollection'
 
@@ -19,6 +20,7 @@ export enum LifeCycleEventType {
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
   BEFORE_UNLOAD,
+  RUM_EVENT_COLLECTED,
 }
 
 export interface Subscription {
@@ -47,6 +49,10 @@ export class LifeCycle {
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
+  ): void
+  notify(
+    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
+    { rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }
   ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -85,6 +91,10 @@ export class LifeCycle {
       | LifeCycleEventType.AUTO_ACTION_DISCARDED,
     callback: () => void
   ): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
+    callback: ({ rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }) => void
+  ): void
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {
       this.callbacks[eventType] = []
