@@ -1,3 +1,5 @@
+export type AnyServerEvent = ServerLogsMessage | ServerRumEvent | ServerInternalMonitoringMessage
+
 export interface ServerLogsMessage {
   message: string
   application_id: string
@@ -9,6 +11,15 @@ export interface ServerLogsMessage {
   }
   http?: {
     status_code?: number
+    url: string
+  }
+}
+
+export interface ServerInternalMonitoringMessage {
+  message: string
+  status: string
+  error: {
+    kind: string
   }
 }
 
@@ -103,4 +114,18 @@ export interface ServerRumViewEvent extends ServerRumEvent {
 
 export function isRumViewEvent(event: ServerRumEvent): event is ServerRumViewEvent {
   return event.evt.category === 'view'
+}
+
+export interface ServerRumErrorEvent extends ServerRumEvent {
+  evt: {
+    category: 'error'
+  }
+  message: string
+  error: {
+    origin: string
+  }
+}
+
+export function isRumErrorEvent(event: ServerRumEvent): event is ServerRumErrorEvent {
+  return event.evt.category === 'error'
 }

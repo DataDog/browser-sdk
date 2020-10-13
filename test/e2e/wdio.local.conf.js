@@ -1,7 +1,7 @@
 const baseConf = require('./wdio.base.conf')
 
 // https://sites.google.com/a/chromium.org/chromedriver/downloads
-const CHROME_DRIVER_VERSION = '84.0.4147.30'
+const CHROME_DRIVER_VERSION = '86.0.4240.22'
 
 exports.config = {
   ...baseConf,
@@ -14,7 +14,6 @@ exports.config = {
       },
     },
   ],
-  baseUrl: 'http://localhost:3000',
   services: [
     [
       'selenium-standalone',

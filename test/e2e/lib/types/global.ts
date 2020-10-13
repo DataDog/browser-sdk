@@ -6,10 +6,4 @@ declare global {
     DD_LOGS?: LogsGlobal
     DD_RUM?: RumGlobal
   }
-
-  namespace WebdriverIO {
-    interface Config {
-      e2eMode: string
-    }
-  }
 }

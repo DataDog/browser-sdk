@@ -1,30 +1,23 @@
-import { datadogLogs } from '@datadog/browser-logs'
-import { datadogRum } from '@datadog/browser-rum'
+import { datadogLogs, LogsUserConfiguration } from '@datadog/browser-logs'
+import { datadogRum, RumUserConfiguration } from '@datadog/browser-rum'
 
-// fallback for server side rendering
-const hostname = typeof location === 'object' ? location.hostname : ''
-const origin = typeof location === 'object' ? location.origin : ''
-const search = typeof location === 'object' ? location.search : 'spec-id=0'
+declare global {
+  interface Window {
+    LOGS_CONFIG?: LogsUserConfiguration
+    RUM_CONFIG?: RumUserConfiguration
+  }
+}
 
-const intakeOrigin = `http://${hostname}:4000`
-const specIdParam = /spec-id=\d+/.exec(search)![0]
+if (typeof window !== 'undefined') {
+  if (window.LOGS_CONFIG) {
+    datadogLogs.init(window.LOGS_CONFIG)
+  }
 
-datadogLogs.init({
-  clientToken: 'key',
-  forwardErrorsToLogs: true,
-  internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
-  logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
-  rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
-})
-
-datadogRum.init({
-  allowedTracingOrigins: [origin],
-  applicationId: 'rum',
-  clientToken: 'key',
-  enableExperimentalFeatures: [],
-  internalMonitoringEndpoint: `${intakeOrigin}/v1/input/monitoring?${specIdParam}`,
-  logsEndpoint: `${intakeOrigin}/v1/input/logs?${specIdParam}`,
-  rumEndpoint: `${intakeOrigin}/v1/input/rum?${specIdParam}`,
-  service: 'e2e',
-  trackInteractions: true,
-})
+  if (window.RUM_CONFIG) {
+    datadogRum.init(window.RUM_CONFIG)
+  }
+} else {
+  // compat test
+  datadogLogs.init({ clientToken: 'xxx' })
+  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx' })
+}
