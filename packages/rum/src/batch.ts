@@ -31,7 +31,9 @@ interface RumBatch {
 }
 
 function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBatch {
-  const primaryBatch = createRumBatch(configuration.rumEndpoint)
+  const primaryBatch = createRumBatch(configuration.rumEndpoint, () =>
+    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+  )
 
   let replicaBatch: Batch | undefined
   const replica = configuration.replica
@@ -39,15 +41,14 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
     replicaBatch = createRumBatch(replica.rumEndpoint)
   }
 
-  function createRumBatch(endpointUrl: string) {
+  function createRumBatch(endpointUrl: string, unloadCallback?: () => void) {
     return new Batch(
       new HttpRequest(endpointUrl, configuration.batchBytesLimit, true),
       configuration.maxBatchSize,
       configuration.batchBytesLimit,
       configuration.maxMessageSize,
       configuration.flushTimeout,
-      // FIXME before unload is called twice when replica
-      () => lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      unloadCallback
     )
   }
 
