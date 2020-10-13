@@ -1,5 +1,6 @@
 import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
+import { RumEvent } from '../src'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
@@ -8,13 +9,12 @@ import {
   doGetInternalContext,
   handleResourceEntry,
   RawRumEvent,
-  RumEvent,
   RumResourceEvent,
   RumViewEvent,
   trackView,
 } from '../src/rum'
 import { RumSession } from '../src/rumSession'
-import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
+import { AutoUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 

@@ -1,7 +1,8 @@
 import { Context, ErrorMessage } from '@datadog/browser-core'
+import { RumEvent } from './assembly'
 import { RumPerformanceEntry } from './performanceCollection'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { RumEvent } from './rum'
+import { RawRumEvent } from './rum'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View, ViewCreatedEvent } from './viewCollection'
 
@@ -20,6 +21,7 @@ export enum LifeCycleEventType {
   RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
   BEFORE_UNLOAD,
+  RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
 }
 
@@ -49,6 +51,20 @@ export class LifeCycle {
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
+  ): void
+  notify(
+    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+    {
+      startTime,
+      rawRumEvent,
+      savedGlobalContext,
+      customerContext,
+    }: {
+      startTime: number
+      rawRumEvent: RawRumEvent
+      savedGlobalContext?: Context
+      customerContext?: Context
+    }
   ): void
   notify(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
@@ -91,6 +107,20 @@ export class LifeCycle {
       | LifeCycleEventType.AUTO_ACTION_DISCARDED,
     callback: () => void
   ): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+    callback: ({
+      startTime,
+      rawRumEvent,
+      savedGlobalContext,
+      customerContext,
+    }: {
+      startTime: number
+      rawRumEvent: RawRumEvent
+      savedGlobalContext?: Context
+      customerContext?: Context
+    }) => void
+  ): void
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
     callback: ({ rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }) => void

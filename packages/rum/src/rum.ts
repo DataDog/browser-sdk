@@ -14,13 +14,14 @@ import {
   ResourceKind,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
+import { startRumAssembly } from './assembly'
 import { startRumBatch } from './batch'
 
 import { buildEnv } from './buildEnv'
 import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { matchRequestTiming } from './matchRequestTiming'
-import { ActionContext, ParentContexts, startParentContexts, ViewContext } from './parentContexts'
+import { ParentContexts, startParentContexts } from './parentContexts'
 import {
   RumPerformanceLongTaskTiming,
   RumPerformanceResourceTiming,
@@ -133,26 +134,7 @@ export interface RumUserActionEvent {
   }
 }
 
-interface RumContext {
-  applicationId: string
-  date: number
-  session: {
-    type: string
-  }
-}
-
 export type RawRumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserActionEvent
-export type RumEvent =
-  | RumErrorEvent & ActionContext & ViewContext & RumContext
-  | RumResourceEvent & ActionContext & ViewContext & RumContext
-  | RumViewEvent & ViewContext & RumContext
-  | RumLongTaskEvent & ActionContext & ViewContext & RumContext
-  | RumUserActionEvent & ViewContext & RumContext
-
-enum SessionType {
-  SYNTHETICS = 'synthetics',
-  USER = 'user',
-}
 
 export function startRum(userConfiguration: RumUserConfiguration, getGlobalContext: () => Context) {
   const lifeCycle = new LifeCycle()
@@ -228,23 +210,8 @@ export function startRumEventCollection(
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
-  const handler = makeRumEventHandler(
-    parentContexts,
-    session,
-    () => ({
-      applicationId,
-      date: new Date().getTime(),
-      service: configuration.service,
-      session: {
-        // must be computed on each event because synthetics instrumentation can be done after sdk execution
-        // cf https://github.com/puppeteer/puppeteer/issues/3667
-        type: getSessionType(),
-      },
-    }),
-    getGlobalContext
-  )
-
-  trackRumEvents(lifeCycle, session, handler)
+  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
+  trackRumEvents(lifeCycle, session)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -258,70 +225,26 @@ export function startRumEventCollection(
   }
 }
 
-interface AssembleWithoutAction {
-  view: ViewContext
-  rum: RumContext
-}
+export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession) {
+  const handler = (
+    startTime: number,
+    rawRumEvent: RawRumEvent,
+    savedGlobalContext?: Context,
+    customerContext?: Context
+  ) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      customerContext,
+      rawRumEvent,
+      savedGlobalContext,
+      startTime,
+    })
 
-interface AssembleWithAction extends AssembleWithoutAction {
-  action?: ActionContext
-}
-
-type RumEventHandler = <T extends RawRumEvent>(
-  assemble: (event: T, { view, action, rum }: AssembleWithAction) => RumEvent,
-  callback: (message: Context, event: RumEvent) => void
-) => (startTime: number, event: T, customerContext?: Context) => void
-
-function makeRumEventHandler(
-  parentContexts: ParentContexts,
-  session: RumSession,
-  rumContextProvider: () => RumContext,
-  globalContextProvider: () => Context
-): RumEventHandler {
-  return function rumEventHandler<T extends RawRumEvent>(
-    assemble: (event: T, { view, action, rum }: AssembleWithAction) => RumEvent,
-    callback: (message: Context, event: RumEvent) => void
-  ) {
-    return (startTime: number, event: T, savedGlobalContext?: Context, customerContext?: Context) => {
-      const view = parentContexts.findView(startTime)
-      if (session.isTracked() && view && view.sessionId) {
-        const action = parentContexts.findAction(startTime)
-        const rumEvent = assemble(event, { action, view, rum: rumContextProvider() })
-        const message = combine(
-          savedGlobalContext || globalContextProvider(),
-          customerContext,
-          withSnakeCaseKeys(rumEvent)
-        )
-        callback(message, rumEvent)
-      }
-    }
-  }
-}
-
-interface BrowserWindow extends Window {
-  _DATADOG_SYNTHETICS_BROWSER?: unknown
-}
-
-function getSessionType() {
-  return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
-}
-
-export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession, handler: RumEventHandler) {
-  const onHandledEvent = (serverRumEvent: Context, rumEvent: RumEvent) =>
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
-  const assembleWithoutAction = (event: RumViewEvent | RumUserActionEvent, { view, rum }: AssembleWithoutAction) =>
-    combine(rum, view, event)
-  const assembleWithAction = (
-    event: RumErrorEvent | RumResourceEvent | RumLongTaskEvent,
-    { view, action, rum }: AssembleWithAction
-  ) => combine(rum, view, action, event)
-
-  trackView(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
-  trackErrors(lifeCycle, handler(assembleWithAction, onHandledEvent))
-  trackRequests(lifeCycle, session, handler(assembleWithAction, onHandledEvent))
-  trackPerformanceTiming(lifeCycle, session, handler(assembleWithAction, onHandledEvent))
-  trackCustomUserAction(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
-  trackAutoUserAction(lifeCycle, handler(assembleWithoutAction, onHandledEvent))
+  trackView(lifeCycle, handler)
+  trackErrors(lifeCycle, handler)
+  trackRequests(lifeCycle, session, handler)
+  trackPerformanceTiming(lifeCycle, session, handler)
+  trackCustomUserAction(lifeCycle, handler)
+  trackAutoUserAction(lifeCycle, handler)
 }
 
 export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {

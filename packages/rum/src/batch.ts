@@ -1,6 +1,7 @@
 import { Batch, combine, Configuration, Context, HttpRequest } from '@datadog/browser-core'
+import { RumEvent } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RumEvent, RumEventCategory } from './rum'
+import { RumEventCategory } from './rum'
 
 export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle) {
   const batch = makeRumBatch(configuration, lifeCycle)
