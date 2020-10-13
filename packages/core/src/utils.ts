@@ -80,32 +80,59 @@ const isContext = (value: ContextValue): value is Context =>
   !Array.isArray(value) && typeof value === 'object' && value !== null
 
 /**
- * Performs a deep merge of objects and arrays
- * - arrays values are merged index by index
- * - objects are merged by keys
- * - values get replaced, unless undefined
+ * Performs a deep merge of objects and arrays.
+ * - Sources won't be mutated
+ * - Object and arrays in the output value are dereferenced ("deep cloned")
+ * - Arrays values are merged index by index
+ * - Objects are merged by keys
+ * - Values get replaced, unless undefined
  *
- * ⚠️ this method does not prevent infinite loops while merging circular references ⚠️
- *
+ * ⚠️ This function does not prevent infinite loops while merging circular references
  */
-function deepMerge(destination: ContextValue, ...toMerge: ContextValue[]): ContextValue {
-  return toMerge.reduce((value1: ContextValue, value2: ContextValue): ContextValue => {
-    if (isContextArray(value1) && isContextArray(value2)) {
-      return [...Array(Math.max(value1.length, value2.length))].map((_, index) =>
-        deepMerge(value1[index], value2[index])
-      )
+function deepMerge(...sources: ContextValue[]): ContextValue {
+  let destination: ContextValue
+
+  for (let i = sources.length - 1; i >= 0; i -= 1) {
+    const source = sources[i]
+
+    if (source === undefined) {
+      // Ignore any undefined source.
+      continue
     }
-    if (isContext(value1) && isContext(value2)) {
-      return Object.keys(value2).reduce(
-        (merged, key) => ({
-          ...merged,
-          [key]: deepMerge(value1[key], value2[key]),
-        }),
-        value1
-      )
+
+    if (destination === undefined) {
+      // This is the first defined source.  If it is "mergeable" (array or object), initialize the
+      // destination with an empty value that will be populated with all sources sub values.  Else,
+      // just return its value.
+      if (isContext(source)) {
+        destination = {}
+      } else if (isContextArray(source)) {
+        destination = []
+      } else {
+        destination = source
+        break
+      }
     }
-    return value2 === undefined ? value1 : value2
-  }, destination)
+
+    // At this point, 'destination' is either an array or an object.  If the current 'source' has
+    // the same type we can merge it.  Else, don't try to merge it or any other source.
+    if (isContext(destination) && isContext(source)) {
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          destination[key] = deepMerge(source[key], destination[key])
+        }
+      }
+    } else if (isContextArray(destination) && isContextArray(source)) {
+      destination.length = Math.max(destination.length, source.length)
+      for (let index = 0; index < source.length; index += 1) {
+        destination[index] = deepMerge(source[index], destination[index])
+      }
+    } else {
+      break
+    }
+  }
+
+  return destination
 }
 
 export function combine<A, B>(a: A, b: B): A & B
@@ -113,6 +140,10 @@ export function combine<A, B, C>(a: A, b: B, c: C): A & B & C
 export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): A & B & C & D
 export function combine(destination: Context, ...toMerge: Array<Context | null>): Context {
   return deepMerge(destination, ...toMerge.filter((object) => object !== null)) as Context
+}
+
+export function deepClone<T extends ContextValue>(context: T): T {
+  return deepMerge(context) as T
 }
 
 interface Assignable {

@@ -49,7 +49,7 @@ export function doStartLogs(
   errorObservable.subscribe((e: ErrorMessage) =>
     errorLogger.error(
       e.message,
-      combine({ date: getTimestamp(e.startTime), ...e.context }, getRUMInternalContext(e.startTime))
+      combine({ date: getTimestamp(e.startTime) }, e.context, getRUMInternalContext(e.startTime))
     )
   )
 
