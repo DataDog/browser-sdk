@@ -14,6 +14,11 @@
 
 ---
 
+## v1.23.0
+
+- 🐛 [Core] dereference `combine` sources recursively ([#560](https://github.com/DataDog/browser-sdk/pull/560))
+- ✨ [RUMF-530][rum] allow using RUM API before init ([#551](https://github.com/DataDog/browser-sdk/pull/551))
+
 ## v1.22.1
 
 - 🐛[RUMF-716] fix invalid action name ([#557](https://github.com/DataDog/browser-sdk/pull/557))
