@@ -39,7 +39,10 @@ describe('trackEventCounts', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     const userAction = {}
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, userAction as AutoUserAction)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, userAction as CustomUserAction)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
+      action: userAction as CustomUserAction,
+      context: {},
+    })
     expect(eventCounts.userActionCount).toBe(2)
   })
 

@@ -30,6 +30,7 @@ const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
     bar: 123,
   },
   name: 'foo',
+  startTime: 123,
   type: UserActionType.CUSTOM,
 }
 const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {
@@ -525,7 +526,7 @@ describe('rum view measures', () => {
     expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).measures.userActionCount).toEqual(0)
 
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION)
+    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action: FAKE_CUSTOM_USER_ACTION, context: {} })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoUserAction)
     history.pushState({}, '', '/bar')
 

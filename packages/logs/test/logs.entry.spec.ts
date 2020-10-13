@@ -173,7 +173,7 @@ describe('logs entry', () => {
         expect(getLoggedMessage(0).context.view!.url).toEqual(initialLocation)
       })
 
-      it('saves the global context', () => {
+      it('stores a deep copy of the global context', () => {
         LOGS.addLoggerGlobalContext('foo', 'bar')
         LOGS.logger.log('message')
         LOGS.addLoggerGlobalContext('foo', 'baz')
@@ -181,6 +181,16 @@ describe('logs entry', () => {
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(getLoggedMessage(0).context.foo).toEqual('bar')
+      })
+
+      it('stores a deep copy of the log context', () => {
+        const context = { foo: 'bar' }
+        LOGS.logger.log('message', context)
+        context.foo = 'baz'
+
+        LOGS.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(getLoggedMessage(0).message.foo).toEqual('bar')
       })
     })
   })
@@ -217,27 +227,6 @@ describe('logs entry', () => {
         LOGS.logger.log('message')
 
         expect(getLoggedMessage(0).context.bar).toEqual('foo')
-      })
-
-      it('should be updatable', () => {
-        LOGS.setLoggerGlobalContext({ bar: 'foo' })
-        LOGS.logger.log('first')
-        LOGS.setLoggerGlobalContext({ foo: 'bar' })
-        LOGS.logger.log('second')
-
-        expect(getLoggedMessage(0).context.bar).toEqual('foo')
-        expect(getLoggedMessage(1).context.foo).toEqual('bar')
-        expect(getLoggedMessage(1).context.bar).toBeUndefined()
-      })
-
-      it('should be removable', () => {
-        LOGS.addLoggerGlobalContext('bar', 'foo')
-        LOGS.logger.log('first')
-        LOGS.removeLoggerGlobalContext('bar')
-        LOGS.logger.log('second')
-
-        expect(getLoggedMessage(0).context.bar).toEqual('foo')
-        expect(getLoggedMessage(1).context.bar).toBeUndefined()
       })
 
       it('should be used by all loggers', () => {

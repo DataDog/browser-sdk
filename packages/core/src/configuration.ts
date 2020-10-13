@@ -61,11 +61,6 @@ export interface UserConfiguration {
 
   // only on staging build mode
   replica?: ReplicaUserConfiguration
-
-  // only on e2e-test build mode
-  internalMonitoringEndpoint?: string
-  logsEndpoint?: string
-  rumEndpoint?: string
 }
 
 interface ReplicaUserConfiguration {
@@ -165,15 +160,9 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   configuration.cookieOptions = buildCookieOptions(userConfiguration)
 
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
-    if (userConfiguration.internalMonitoringEndpoint !== undefined) {
-      configuration.internalMonitoringEndpoint = userConfiguration.internalMonitoringEndpoint
-    }
-    if (userConfiguration.logsEndpoint !== undefined) {
-      configuration.logsEndpoint = userConfiguration.logsEndpoint
-    }
-    if (userConfiguration.rumEndpoint !== undefined) {
-      configuration.rumEndpoint = userConfiguration.rumEndpoint
-    }
+    configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
+    configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
+    configuration.rumEndpoint = '<<< E2E RUM ENDPOINT >>>'
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {

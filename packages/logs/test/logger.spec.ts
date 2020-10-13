@@ -37,17 +37,6 @@ describe('Logger', () => {
       expect(getLoggedMessage(0).bar).toEqual('foo')
     })
 
-    it('should be updatable', () => {
-      logger.setContext({ bar: 'foo' })
-      logger.log('first')
-      logger.setContext({ foo: 'bar' })
-      logger.log('second')
-
-      expect(getLoggedMessage(0).bar).toEqual('foo')
-      expect(getLoggedMessage(1).foo).toEqual('bar')
-      expect(getLoggedMessage(1).bar).toBeUndefined()
-    })
-
     it('should be deep merged', () => {
       logger.setContext({ foo: { qix: 'qux' } })
       logger.log('message', { foo: { qux: 'qux' } })
@@ -61,18 +50,6 @@ describe('Logger', () => {
         hello: 'hi',
         qix: 'qux',
       })
-    })
-
-    it('should be able to be able to add and remove from context', () => {
-      logger.setContext({})
-      logger.addContext('foo', { bar: 'qux' })
-      logger.log('first')
-      logger.removeContext('foo')
-      logger.log('second')
-      expect(getLoggedMessage(0).foo).toEqual({
-        bar: 'qux',
-      })
-      expect(getLoggedMessage(1).foo).toEqual(undefined)
     })
   })
 
