@@ -77,7 +77,7 @@ describe('utils', () => {
     it('should return different references for arrays items', () => {
       const value = { a: [1] }
       const clonedValue = deepClone(value)
-      expect(clonedValue.a).toEqual(value.a)
+      expect(clonedValue.a).not.toBe(value.a)
     })
   })
 
