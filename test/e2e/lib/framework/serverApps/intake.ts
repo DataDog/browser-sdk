@@ -1,5 +1,5 @@
 import express from 'express'
-import { EventRegistry } from './eventsRegistry'
+import { EventRegistry } from '../eventsRegistry'
 
 export function createIntakeServerApp(events: EventRegistry) {
   const app = express()

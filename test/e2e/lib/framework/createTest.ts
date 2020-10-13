@@ -2,11 +2,11 @@ import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
-import { createIntakeServerApp } from './intakeServerApp'
 import { log } from './logger'
-import { createMockServerApp } from './mockServerApp'
 import { DEFAULT_SETUPS, LogsSetupOptions, RumSetupOptions, SetupFactory, SetupOptions } from './pageSetups'
 import { Endpoints } from './sdkBuilds'
+import { createIntakeServerApp } from './serverApps/intake'
+import { createMockServerApp } from './serverApps/mock'
 
 const DEFAULT_RUM_OPTIONS = {
   applicationId: 'appId',
