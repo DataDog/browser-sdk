@@ -5,6 +5,8 @@ const { getBuildInfos } = require('../utils')
 exports.config = {
   ...baseConf,
 
+  specFileRetries: 1,
+
   capabilities: Object.values(browsers).map((browser) => ({
     ...browser,
     browserName: `${browser.browser} ${browser.browser_version || ''}`,
