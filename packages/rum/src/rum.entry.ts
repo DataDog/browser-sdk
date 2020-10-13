@@ -1,10 +1,10 @@
 import {
   BoundedBuffer,
+  buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
   combine,
   Context,
-  ContextValue,
   createContextManager,
   getGlobalObject,
   isPercentage,
@@ -14,9 +14,7 @@ import {
 } from '@datadog/browser-core'
 
 import { startRum } from './rum'
-import { startRumSession } from './rumSession'
-import { startUserActionCollection } from './userActionCollection'
-import { buildCookieOptions } from '../../core/src/configuration'
+import { CustomUserAction, UserActionType } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -63,7 +61,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   return makeGlobal({
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
-        !checkCookiesAuthorized(mustUseSecureCookie(userConfiguration)) ||
+        !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
         !checkIsNotLocalFile() ||
         !canInitRum(userConfiguration)
       ) {

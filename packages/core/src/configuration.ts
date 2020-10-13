@@ -122,7 +122,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
-    cookieOptions: {},
+    cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
@@ -156,8 +156,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   if ('trackInteractions' in userConfiguration) {
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
-
-  configuration.cookieOptions = buildCookieOptions(userConfiguration)
 
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
     configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
@@ -231,6 +229,6 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
   )
 }
 
-export function mustUseSecureCookie(userConfiguration: UserConfiguration) {
+function mustUseSecureCookie(userConfiguration: UserConfiguration) {
   return !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
 }
