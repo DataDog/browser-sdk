@@ -77,47 +77,19 @@ unit:
     - yarn test:unit
     - ./scripts/codecov.sh
 
-bundle-e2e:
+e2e:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
-    paths:
-      - test/server/test-server.log
     when: always
+    paths:
+      - test-report/e2e/specs.log
     reports:
-      junit: test-report/bundle-e2e/*.xml
+      junit: test-report/e2e/*.xml
   script:
     - yarn
-    - yarn test:e2e:bundle
-
-npm-e2e:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  artifacts:
-    reports:
-      junit: test-report/npm-e2e/*.xml
-    paths:
-      - test/server/test-server.log
-    when: always
-  script:
-    - yarn
-    - yarn test:e2e:npm
-
-async-e2e:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  artifacts:
-    reports:
-      junit: test-report/async-e2e/*.xml
-    paths:
-      - test/server/test-server.log
-    when: always
-  script:
-    - yarn
-    - yarn test:e2e:async
+    - yarn test:e2e
 
 check-licenses:
   stage: test
@@ -150,11 +122,11 @@ e2e-bs:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    when: always
     reports:
       junit: test-report/e2e-bs/*.xml
     paths:
-      - test/server/test-server.log
-    when: always
+      - test-report/e2e-bs/specs.log
   script:
     - yarn
     - ./scripts/ci-bs.sh test:e2e

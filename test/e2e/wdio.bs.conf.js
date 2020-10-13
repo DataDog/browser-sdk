@@ -15,7 +15,6 @@ exports.config = {
   logLevels: {
     '@wdio/browserstack-service': 'info',
   },
-  baseUrl: `http://${getIp()}:3000`,
   services: [
     [
       'browserstack',

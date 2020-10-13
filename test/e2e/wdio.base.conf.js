@@ -1,12 +1,9 @@
 const path = require('path')
-const { exec } = require('child_process')
 const getTestReportDirectory = require('../getTestReportDirectory')
-const { unlinkSync } = require('fs')
-const { CurrentSpecReporter } = require('./currentSpecReporter')
-
-let servers
+const { unlinkSync, mkdirSync } = require('fs')
 
 const reporters = ['spec']
+let logsPath
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -19,11 +16,14 @@ if (testReportDirectory) {
       },
     },
   ])
+  logsPath = path.join(testReportDirectory, 'specs.log')
+} else if (!process.env.LOGS_STDOUT) {
+  logsPath = 'specs.log'
 }
 
 module.exports = {
   runner: 'local',
-  specs: ['./test/e2e/scenario/*.scenario.ts'],
+  specs: ['./test/e2e/scenario/**/*.scenario.ts'],
   maxInstances: 5,
   logLevel: 'warn',
   waitforTimeout: 10000,
@@ -35,27 +35,25 @@ module.exports = {
     defaultTimeoutInterval: 60000,
     requires: [path.resolve(__dirname, './ts-node')],
   },
-  e2eMode: process.env.E2E_MODE || 'bundle',
   onPrepare: function() {
-    try {
-      unlinkSync('test/server/test-server.log')
-    } catch (e) {
-      console.log(e.message)
+    if (testReportDirectory) {
+      try {
+        mkdirSync(testReportDirectory, { recursive: true })
+      } catch (e) {
+        console.log(`Failed to create the test report directory: ${e.message}`)
+      }
     }
-    servers = [
-      // browserstack allowed ports https://www.browserstack.com/question/664
-      // Test server same origin
-      exec('PORT=3000 node test/server/server'),
-      // Test server cross origin
-      exec('PORT=3002 node test/server/server'),
-      // Intake server
-      exec('PORT=4000 node test/server/server'),
-    ]
+
+    if (logsPath) {
+      try {
+        unlinkSync(logsPath)
+      } catch (e) {
+        if (e.code !== 'ENOENT') {
+          console.log(`Failed to remove previous logs: ${e.message}`)
+        }
+      }
+    }
   },
-  before: function() {
-    jasmine.getEnv().addReporter(new CurrentSpecReporter())
-  },
-  onComplete: function() {
-    servers.forEach((server) => server.kill())
-  },
+
+  logsPath,
 }

@@ -20,31 +20,16 @@ describe('configuration', () => {
   })
 
   describe('endpoint overload', () => {
-    it('should not be available for production env', () => {
-      const endpoint = 'bbbbbbbbbbbbbbb'
-      const configuration = buildConfiguration(
-        { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
-        usEnv
-      )
-      expect(configuration.rumEndpoint).not.toEqual(endpoint)
-      expect(configuration.logsEndpoint).not.toEqual(endpoint)
-      expect(configuration.internalMonitoringEndpoint).not.toEqual(endpoint)
-    })
-
     it('should be available for e2e-test build mode', () => {
-      const endpoint = 'bbbbbbbbbbbbbbb'
       const e2eEnv = {
         buildMode: BuildMode.E2E_TEST,
         datacenter: Datacenter.US,
         sdkVersion: 'some_version',
       }
-      const configuration = buildConfiguration(
-        { clientToken, rumEndpoint: endpoint, logsEndpoint: endpoint, internalMonitoringEndpoint: endpoint },
-        e2eEnv
-      )
-      expect(configuration.rumEndpoint).toEqual(endpoint)
-      expect(configuration.logsEndpoint).toEqual(endpoint)
-      expect(configuration.internalMonitoringEndpoint).toEqual(endpoint)
+      const configuration = buildConfiguration({ clientToken }, e2eEnv)
+      expect(configuration.rumEndpoint).toEqual('<<< E2E RUM ENDPOINT >>>')
+      expect(configuration.logsEndpoint).toEqual('<<< E2E LOGS ENDPOINT >>>')
+      expect(configuration.internalMonitoringEndpoint).toEqual('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
     })
   })
 
