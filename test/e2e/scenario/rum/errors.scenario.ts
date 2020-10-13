@@ -1,6 +1,6 @@
-import { browserExecute, withBrowserLogs } from '../../lib/browserHelpers'
 import { createTest } from '../../lib/framework'
-import { flushEvents } from '../../lib/sdkHelpers'
+import { browserExecute, withBrowserLogs } from '../../lib/helpers/browser'
+import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('rum errors', () => {
   createTest('send errors')

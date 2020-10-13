@@ -1,5 +1,5 @@
-import { deleteAllCookies, withBrowserLogs } from '../browserHelpers'
-import { flushEvents } from '../sdkHelpers'
+import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
+import { flushEvents } from '../helpers/sdk'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { createIntakeServerApp } from './intakeServerApp'

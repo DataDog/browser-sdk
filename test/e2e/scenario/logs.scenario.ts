@@ -1,6 +1,6 @@
-import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/browserHelpers'
 import { createTest } from '../lib/framework'
-import { flushEvents } from '../lib/sdkHelpers'
+import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
+import { flushEvents } from '../lib/helpers/sdk'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 

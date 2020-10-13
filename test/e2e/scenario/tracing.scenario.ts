@@ -1,6 +1,6 @@
-import { sendFetch, sendXhr } from '../lib/browserHelpers'
 import { createTest, EventRegistry } from '../lib/framework'
-import { flushEvents } from '../lib/sdkHelpers'
+import { sendFetch, sendXhr } from '../lib/helpers/browser'
+import { flushEvents } from '../lib/helpers/sdk'
 
 describe('tracing', () => {
   createTest('trace xhr')

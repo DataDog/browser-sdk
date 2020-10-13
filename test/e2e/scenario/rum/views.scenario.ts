@@ -1,6 +1,6 @@
-import { browserExecute, sendXhr } from '../../lib/browserHelpers'
 import { createTest, html } from '../../lib/framework'
-import { expireSession, flushEvents, renewSession } from '../../lib/sdkHelpers'
+import { browserExecute, sendXhr } from '../../lib/helpers/browser'
+import { expireSession, flushEvents, renewSession } from '../../lib/helpers/sdk'
 import { ServerRumViewLoadingType } from '../../lib/serverTypes'
 
 describe('rum views', () => {

@@ -1,6 +1,6 @@
-import { sendXhr } from '../../lib/browserHelpers'
 import { createTest, html } from '../../lib/framework'
-import { flushEvents } from '../../lib/sdkHelpers'
+import { sendXhr } from '../../lib/helpers/browser'
+import { flushEvents } from '../../lib/helpers/sdk'
 import { ServerRumResourceEvent } from '../../lib/serverTypes'
 
 const REQUEST_DURATION = 200

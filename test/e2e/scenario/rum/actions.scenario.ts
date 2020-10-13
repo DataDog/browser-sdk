@@ -1,5 +1,5 @@
 import { createTest, html, waitForServersIdle } from '../../lib/framework'
-import { flushEvents } from '../../lib/sdkHelpers'
+import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('user action collection', () => {
   createTest('track a click user action')
