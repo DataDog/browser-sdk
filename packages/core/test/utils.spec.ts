@@ -46,43 +46,38 @@ describe('utils', () => {
     it('should not keep references on objects', () => {
       const source = { a: { b: 1 } }
       const result = combine({}, source)
-      source.a.b = 2
-      expect(result.a.b).toBe(1)
+      expect(result.a).not.toBe(source.a)
     })
 
     it('should not keep references on arrays', () => {
       const source = { a: [1] }
       const result = combine({}, source)
-      source.a[0] = 2
-      expect(result.a[0]).toBe(1)
+      expect(result.a).not.toBe(source.a)
     })
   })
 
   describe('deepClone', () => {
-    it('should return a similar value', () => {
+    it('should return a result deeply equal to the source', () => {
       const clonedValue = deepClone({ a: 1 })
       expect(clonedValue).toEqual({ a: 1 })
     })
 
-    it('should clone the value', () => {
+    it('should return a different reference', () => {
       const value = { a: 1 }
       const clonedValue = deepClone(value)
-      value.a = 2
-      expect(clonedValue).toEqual({ a: 1 })
+      expect(clonedValue).not.toBe(value)
     })
 
-    it('should clone objects sub values', () => {
+    it('should return different references for objects sub values', () => {
       const value = { a: { b: 1 } }
       const clonedValue = deepClone(value)
-      value.a.b = 2
-      expect(clonedValue).toEqual({ a: { b: 1 } })
+      expect(clonedValue.a).not.toBe(value.a)
     })
 
-    it('should clone arrays items', () => {
+    it('should return different references for arrays items', () => {
       const value = { a: [1] }
       const clonedValue = deepClone(value)
-      value.a[0] = 2
-      expect(clonedValue).toEqual({ a: [1] })
+      expect(clonedValue.a).toEqual(value.a)
     })
   })
 
