@@ -31,16 +31,20 @@ export const DEFAULT_SETUPS = [
 export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''
 
+  function formatSnippet(url: string, globalName: string) {
+    return `(function(h,o,u,n,d) {
+h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+d=o.createElement(u);d.async=1;d.src=n
+n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+})(window,document,'script','${url}','${globalName}')`
+  }
+
   if (options.logs) {
     body += html`
-      <script type="text/javascript">
-        window.addEventListener('load', () => {
-          const logs = document.createElement('script')
-          logs.src = './datadog-logs.js'
-          logs.onload = () => {
-            DD_LOGS.init(${formatLogsOptions(options.logs)})
-          }
-          document.getElementsByTagName('head')[0].appendChild(logs)
+      <script>
+        ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
+        DD_LOGS.onReady(function() {
+          DD_LOGS.init(${formatLogsOptions(options.logs)})
         })
       </script>
     `
@@ -49,13 +53,9 @@ export function asyncSetup(options: SetupOptions) {
   if (options.rum) {
     body += html`
       <script type="text/javascript">
-        window.addEventListener('load', () => {
-          const logs = document.createElement('script')
-          logs.src = './datadog-rum.js'
-          logs.onload = () => {
-            DD_RUM.init(${formatRumOptions(options.rum)})
-          }
-          document.getElementsByTagName('head')[0].appendChild(logs)
+        ${formatSnippet('./datadog-rum.js', 'DD_RUM')}
+        DD_RUM.onReady(function() {
+          DD_RUM.init(${formatRumOptions(options.rum)})
         })
       </script>
     `

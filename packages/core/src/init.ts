@@ -4,8 +4,17 @@ import { ErrorMessage, startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
 import { Observable } from './observable'
 
-export function makeGlobal<T>(stub: T): T {
-  const global = { ...stub }
+export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): void } {
+  const global = {
+    ...stub,
+
+    // This API method is intentionally not monitored, since the only thing executed is the
+    // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
+    // we don't want to interfer with the user uncaught exceptions.
+    onReady(callback: () => void) {
+      callback()
+    },
+  }
 
   // Add an "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
@@ -17,6 +26,14 @@ export function makeGlobal<T>(stub: T): T {
   })
 
   return global
+}
+
+export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
+  const existingGlobalVariable: { q?: Array<() => void> } | undefined = global[name]
+  global[name] = api
+  if (existingGlobalVariable && existingGlobalVariable.q) {
+    existingGlobalVariable.q.forEach((fn) => fn())
+  }
 }
 
 export enum Datacenter {

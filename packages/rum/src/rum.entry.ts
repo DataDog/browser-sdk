@@ -7,6 +7,7 @@ import {
   ContextValue,
   createContextManager,
   deepClone,
+  defineGlobal,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -42,8 +43,7 @@ export const datadogRum = makeRumGlobal(startRum)
 interface BrowserWindow extends Window {
   DD_RUM?: RumGlobal
 }
-
-getGlobalObject<BrowserWindow>().DD_RUM = datadogRum
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
 
 export type StartRum = typeof startRum
 
