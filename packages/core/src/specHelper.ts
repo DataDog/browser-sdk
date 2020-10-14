@@ -168,17 +168,28 @@ class StubXhr {
     this.readyState = XMLHttpRequest.DONE
     this.onreadystatechange()
     if (status >= 200 && status < 500) {
-      this.element.dispatchEvent(new Event('load'))
+      this.element.dispatchEvent(createNewEvent('load'))
     }
     if (status >= 500) {
-      this.element.dispatchEvent(new Event('error'))
+      this.element.dispatchEvent(createNewEvent('error'))
     }
-    this.element.dispatchEvent(new Event('loadend'))
+    this.element.dispatchEvent(createNewEvent('loadend'))
   }
 
   addEventListener(name: string, callback: () => void) {
     this.element.addEventListener(name, callback)
   }
+}
+
+function createNewEvent(eventName: string) {
+  let event
+  if (typeof Event === 'function') {
+    event = new Event(eventName)
+  } else {
+    event = document.createEvent('Event')
+    event.initEvent(eventName, true, true)
+  }
+  return event
 }
 
 export function stubXhr() {
