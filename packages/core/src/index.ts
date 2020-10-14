@@ -10,6 +10,7 @@ export {
   BuildEnv,
   BuildMode,
   Datacenter,
+  defineGlobal,
   makeGlobal,
   commonInit,
   checkCookiesAuthorized,
