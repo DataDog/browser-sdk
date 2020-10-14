@@ -141,11 +141,63 @@ export class PerformanceObserverStubBuilder {
   }
 }
 
+class StubXhr {
+  public response: string | undefined = undefined
+  public status: number | undefined = undefined
+  public readyState: number = XMLHttpRequest.UNSENT
+  public onreadystatechange: () => void = noop
+
+  private element: HTMLDivElement
+
+  constructor() {
+    this.element = document.createElement('div')
+  }
+
+  // tslint:disable:no-empty
+  open(method: string, url: string) {}
+  send() {}
+  // tslint:enable:no-empty
+
+  abort() {
+    this.status = 0
+  }
+
+  complete(status: number, response?: string) {
+    this.response = response
+    this.status = status
+    this.readyState = XMLHttpRequest.DONE
+    this.onreadystatechange()
+    if (status >= 200 && status < 500) {
+      this.element.dispatchEvent(new Event('load'))
+    }
+    if (status >= 500) {
+      this.element.dispatchEvent(new Event('error'))
+    }
+    this.element.dispatchEvent(new Event('loadend'))
+  }
+
+  addEventListener(name: string, callback: () => void) {
+    this.element.addEventListener(name, callback)
+  }
+}
+
+export function stubXhr() {
+  const originalXhr = XMLHttpRequest
+
+  XMLHttpRequest = StubXhr as any
+
+  return {
+    reset() {
+      XMLHttpRequest = originalXhr
+    },
+  }
+}
+
 export function withXhr({
   setup,
   onComplete,
 }: {
-  setup: (xhr: XMLHttpRequest) => void
+  setup: (xhr: StubXhr) => void
   onComplete: (xhr: XMLHttpRequest) => void
 }) {
   const xhr = new XMLHttpRequest()
@@ -154,7 +206,7 @@ export function withXhr({
       onComplete(xhr)
     })
   })
-  setup(xhr)
+  setup((xhr as unknown) as StubXhr)
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {
