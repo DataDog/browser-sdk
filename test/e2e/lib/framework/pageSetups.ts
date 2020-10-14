@@ -32,10 +32,10 @@ export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''
 
   function formatSnippet(url: string, globalName: string) {
-    return `(function(r,a,w,l,s) {
-r=r[s]=r[s]||{q:[],onReady:function(c){r.q.push(c)}}
-s=a.createElement(w);s.async=1;s.src=l
-l=a.getElementsByTagName(w)[0];l.parentNode.insertBefore(s,l)
+    return `(function(h,o,u,n,d) {
+h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+d=o.createElement(u);d.async=1;d.src=n
+n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
 
