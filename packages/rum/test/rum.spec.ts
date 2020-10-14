@@ -1,5 +1,6 @@
 import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
+import { RumEvent } from '../src'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
@@ -8,13 +9,12 @@ import {
   doGetInternalContext,
   handleResourceEntry,
   RawRumEvent,
-  RumEvent,
   RumResourceEvent,
   RumViewEvent,
   trackView,
 } from '../src/rum'
 import { RumSession } from '../src/rumSession'
-import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
+import { AutoUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -472,151 +472,6 @@ describe('rum session keep alive', () => {
   })
 })
 
-describe('rum global context', () => {
-  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  let setupBuilder: TestSetupBuilder
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeServer()
-      .withRum()
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should be added to the request', () => {
-    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
-    server.requests = []
-
-    setGlobalContext({ bar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
-  })
-
-  it('should ignore subsequent context mutation', () => {
-    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
-    server.requests = []
-
-    const globalContext = { bar: 'foo' }
-    setGlobalContext(globalContext)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    delete globalContext.bar
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect((getRumMessage(server, 0) as any).bar).toEqual('foo')
-    expect((getRumMessage(server, 1) as any).bar).toBeUndefined()
-  })
-
-  it('should not be automatically snake cased', () => {
-    const { server, lifeCycle, setGlobalContext } = setupBuilder.build()
-    server.requests = []
-
-    setGlobalContext({ fooBar: 'foo' })
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
-  })
-})
-
-describe('rum user action', () => {
-  let setupBuilder: TestSetupBuilder
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeServer()
-      .withRum()
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should not be automatically snake cased', () => {
-    const { server, lifeCycle } = setupBuilder.build()
-    server.requests = []
-
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      action: {
-        context: { fooBar: 'foo' },
-        name: 'hello',
-        startTime: 123,
-        type: UserActionType.CUSTOM,
-      },
-      context: {},
-    })
-
-    expect((getRumMessage(server, 0) as any).fooBar).toEqual('foo')
-  })
-
-  it('should ignore the current global context when a saved global context is provided', () => {
-    const { setGlobalContext, server, lifeCycle } = setupBuilder.build()
-    server.requests = []
-
-    setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
-
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      action: {
-        context: {},
-        name: 'hello',
-        startTime: 123,
-        type: UserActionType.CUSTOM,
-      },
-      context: { replacedContext: 'a' },
-    })
-
-    expect((getRumMessage(server, 0) as any).replacedContext).toEqual('a')
-    expect((getRumMessage(server, 0) as any).addedContext).toEqual(undefined)
-  })
-})
-
-describe('rum context', () => {
-  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  let setupBuilder: TestSetupBuilder
-
-  beforeEach(() => {
-    setupBuilder = setup()
-      .withFakeServer()
-      .withRum()
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should be snake cased and added to request', () => {
-    const { server } = setupBuilder.build()
-    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(initialRequests[0].application_id).toEqual('appId')
-  })
-
-  it('should be merge with event attributes', () => {
-    const { server } = setupBuilder.build()
-    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(initialRequests[0].view.referrer).toBeDefined()
-    expect(initialRequests[0].view.id).toBeDefined()
-  })
-
-  it('should be overwritten by event attributes', () => {
-    const { server, lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
-    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(initialRequests[0].evt.category).toEqual('view')
-    const initialViewDate = initialRequests[0].date
-
-    // generate view update
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    server.requests = []
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
-    expect(subsequentRequests[0].evt.category).toEqual('view')
-    expect(subsequentRequests[0].date).toEqual(initialViewDate)
-  })
-})
-
 describe('rum internal context', () => {
   let setupBuilder: TestSetupBuilder
 
@@ -683,7 +538,7 @@ describe('rum internal context', () => {
   })
 })
 
-describe('rum event assembly', () => {
+describe('rum view url', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
     domComplete: 456,
@@ -706,7 +561,7 @@ describe('rum event assembly', () => {
     setupBuilder.cleanup()
   })
 
-  it('should sets the view URL on long task events', () => {
+  it('should sets the view URL on events', () => {
     const { server, lifeCycle } = setupBuilder.withFakeLocation('http://foo.com/').build()
 
     server.requests = []
