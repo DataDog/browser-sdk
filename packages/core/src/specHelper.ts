@@ -147,10 +147,10 @@ class StubXhr {
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
 
-  private element: HTMLDivElement
+  private fakeEventTarget: HTMLDivElement
 
   constructor() {
-    this.element = document.createElement('div')
+    this.fakeEventTarget = document.createElement('div')
   }
 
   // tslint:disable:no-empty
@@ -168,16 +168,20 @@ class StubXhr {
     this.readyState = XMLHttpRequest.DONE
     this.onreadystatechange()
     if (status >= 200 && status < 500) {
-      this.element.dispatchEvent(createNewEvent('load'))
+      this.dispatchEvent('load')
     }
     if (status >= 500) {
-      this.element.dispatchEvent(createNewEvent('error'))
+      this.dispatchEvent('error')
     }
-    this.element.dispatchEvent(createNewEvent('loadend'))
+    this.dispatchEvent('loadend')
   }
 
   addEventListener(name: string, callback: () => void) {
-    this.element.addEventListener(name, callback)
+    this.fakeEventTarget.addEventListener(name, callback)
+  }
+
+  private dispatchEvent(name: string) {
+    this.fakeEventTarget.dispatchEvent(createNewEvent(name))
   }
 }
 
