@@ -1,12 +1,15 @@
 const baseConf = require('./wdio.base.conf')
 const browsers = require('./browsers.conf')
-const { getBuildInfos, getIp } = require('../utils')
+const { getBuildInfos } = require('../utils')
 
 exports.config = {
   ...baseConf,
 
+  specFileRetries: 1,
+
   capabilities: Object.values(browsers).map((browser) => ({
     ...browser,
+    browserName: `${browser.browser} ${browser.browser_version || ''}`,
     'browserstack.video': false,
     'browserstack.local': true,
     project: 'browser sdk e2e',
