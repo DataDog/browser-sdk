@@ -54,22 +54,14 @@ export class LifeCycle {
   ): void
   notify(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    {
-      startTime,
-      rawRumEvent,
-      savedGlobalContext,
-      customerContext,
-    }: {
+    data: {
       startTime: number
       rawRumEvent: RawRumEvent
       savedGlobalContext?: Context
       customerContext?: Context
     }
   ): void
-  notify(
-    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    { rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }
-  ): void
+  notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: { rumEvent: RumEvent; serverRumEvent: Context }): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -109,12 +101,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    callback: ({
-      startTime,
-      rawRumEvent,
-      savedGlobalContext,
-      customerContext,
-    }: {
+    callback: (data: {
       startTime: number
       rawRumEvent: RawRumEvent
       savedGlobalContext?: Context
@@ -123,7 +110,7 @@ export class LifeCycle {
   ): void
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    callback: ({ rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }) => void
+    callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
   ): void
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {
