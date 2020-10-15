@@ -20,13 +20,10 @@ import { startRumBatch } from './batch'
 import { buildEnv } from './buildEnv'
 import { startDOMMutationCollection } from './domMutationCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { startLongTaskCollection } from './longTaskCollection'
 import { matchRequestTiming } from './matchRequestTiming'
 import { ParentContexts, startParentContexts } from './parentContexts'
-import {
-  RumPerformanceLongTaskTiming,
-  RumPerformanceResourceTiming,
-  startPerformanceCollection,
-} from './performanceCollection'
+import { RumPerformanceResourceTiming, startPerformanceCollection } from './performanceCollection'
 import { RequestCompleteEvent, startRequestCollection } from './requestCollection'
 import {
   computePerformanceResourceDetails,
@@ -212,6 +209,7 @@ export function startRumEventCollection(
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   trackRumEvents(lifeCycle, session)
+  startLongTaskCollection(lifeCycle)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -385,15 +383,8 @@ function trackPerformanceTiming(
   handler: (startTime: number, event: RumResourceEvent | RumLongTaskEvent) => void
 ) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    switch (entry.entryType) {
-      case 'resource':
-        handleResourceEntry(lifeCycle, session, handler, entry)
-        break
-      case 'longtask':
-        handleLongTaskEntry(handler, entry)
-        break
-      default:
-        break
+    if (entry.entryType === 'resource') {
+      handleResourceEntry(lifeCycle, session, handler, entry)
     }
   })
 }
@@ -434,17 +425,4 @@ export function handleResourceEntry(
     },
   })
   lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
-}
-
-function handleLongTaskEntry(
-  handler: (startTime: number, event: RumLongTaskEvent) => void,
-  entry: RumPerformanceLongTaskTiming
-) {
-  handler(entry.startTime, {
-    date: getTimestamp(entry.startTime),
-    duration: msToNs(entry.duration),
-    evt: {
-      category: RumEventCategory.LONG_TASK,
-    },
-  })
 }
