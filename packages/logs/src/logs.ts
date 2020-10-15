@@ -10,7 +10,6 @@ import {
   getTimestamp,
   HttpRequest,
   InternalMonitoring,
-  mustUseSecureCookie,
 } from '@datadog/browser-core'
 import { buildEnv } from './buildEnv'
 import { Logger, LogsMessage } from './logger'
@@ -28,7 +27,7 @@ export function startLogs(
     buildEnv,
     isCollectingError
   )
-  const session = startLoggerSession(configuration, areCookiesAuthorized(mustUseSecureCookie(userConfiguration)))
+  const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
 }
 

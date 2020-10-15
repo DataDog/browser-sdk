@@ -3,7 +3,7 @@ export {
   Configuration,
   UserConfiguration,
   isIntakeRequest,
-  mustUseSecureCookie,
+  buildCookieOptions,
 } from './configuration'
 export { ErrorMessage, ErrorContext, HttpContext, ErrorOrigin, ErrorObservable } from './errorCollection'
 export {

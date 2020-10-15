@@ -122,7 +122,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
-    cookieOptions: {},
+    cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
@@ -157,13 +157,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.trackInteractions = !!userConfiguration.trackInteractions
   }
 
-  configuration.cookieOptions.secure = mustUseSecureCookie(userConfiguration)
-  configuration.cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
-
-  if (!!userConfiguration.trackSessionAcrossSubdomains) {
-    configuration.cookieOptions.domain = getCurrentSite()
-  }
-
   if (transportConfiguration.buildMode === BuildMode.E2E_TEST) {
     configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
     configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
@@ -192,6 +185,19 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   }
 
   return configuration
+}
+
+export function buildCookieOptions(userConfiguration: UserConfiguration) {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure = mustUseSecureCookie(userConfiguration)
+  cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
+
+  if (!!userConfiguration.trackSessionAcrossSubdomains) {
+    cookieOptions.domain = getCurrentSite()
+  }
+
+  return cookieOptions
 }
 
 function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
@@ -223,6 +229,6 @@ export function isIntakeRequest(url: string, configuration: Configuration) {
   )
 }
 
-export function mustUseSecureCookie(userConfiguration: UserConfiguration) {
+function mustUseSecureCookie(userConfiguration: UserConfiguration) {
   return !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
 }

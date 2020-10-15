@@ -1,5 +1,5 @@
 import { buildConfiguration, UserConfiguration } from './configuration'
-import { areCookiesAuthorized } from './cookie'
+import { areCookiesAuthorized, CookieOptions } from './cookie'
 import { ErrorMessage, startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
 import { Observable } from './observable'
@@ -70,8 +70,8 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
   }
 }
 
-export function checkCookiesAuthorized(useSecureCookie: boolean) {
-  if (!areCookiesAuthorized(useSecureCookie)) {
+export function checkCookiesAuthorized(options: CookieOptions) {
+  if (!areCookiesAuthorized(options)) {
     console.warn('Cookies are not authorized, we will not send any data.')
     return false
   }

@@ -1,10 +1,10 @@
 import {
   BoundedBuffer,
+  buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
   combine,
   Context,
-  ContextValue,
   createContextManager,
   deepClone,
   defineGlobal,
@@ -12,7 +12,6 @@ import {
   isPercentage,
   makeGlobal,
   monitor,
-  mustUseSecureCookie,
   UserConfiguration,
 } from '@datadog/browser-core'
 
@@ -63,7 +62,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   return makeGlobal({
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
-        !checkCookiesAuthorized(mustUseSecureCookie(userConfiguration)) ||
+        !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
         !checkIsNotLocalFile() ||
         !canInitRum(userConfiguration)
       ) {

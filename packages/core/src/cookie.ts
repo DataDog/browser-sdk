@@ -57,14 +57,14 @@ export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
 }
 
-export function areCookiesAuthorized(useSecureCookie: boolean): boolean {
+export function areCookiesAuthorized(options: CookieOptions): boolean {
   if (document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {
     const testCookieName = 'dd_cookie_test'
     const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, ONE_SECOND, { secure: useSecureCookie })
+    setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
     return getCookie(testCookieName) === testCookieValue
   } catch (error) {
     console.error(error)
