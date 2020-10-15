@@ -9,10 +9,10 @@ import {
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { startRumAssembly } from '../src/assembly'
-import { LifeCycle } from '../src/lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { startRumEventCollection } from '../src/rum'
+import { RawRumEvent, startRumEventCollection } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
@@ -48,6 +48,12 @@ export interface TestIO {
   fakeLocation: Partial<Location>
   setGlobalContext: (context: Context) => void
   session: RumSession
+  rawRumEvents: Array<{
+    startTime: number
+    rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }>
 }
 
 export function setup(): TestSetupBuilder {
@@ -60,6 +66,12 @@ export function setup(): TestSetupBuilder {
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: Array<(lifeCycle: LifeCycle) => void> = []
   const buildTasks: Array<() => void> = []
+  const rawRumEvents: Array<{
+    startTime: number
+    rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }> = []
 
   let globalContext: Context
   let server: sinon.SinonFakeServer
@@ -190,11 +202,13 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
       return {
         clock,
         fakeLocation,
         lifeCycle,
         parentContexts,
+        rawRumEvents,
         server,
         session,
         stubBuilder,
