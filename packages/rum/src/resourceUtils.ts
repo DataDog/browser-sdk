@@ -10,8 +10,20 @@ import {
 } from '@datadog/browser-core'
 
 import { RumPerformanceResourceTiming } from './performanceCollection'
-import { PerformanceResourceDetails } from './rum'
-import { RumSession } from './rumSession'
+
+interface PerformanceResourceDetailsElement {
+  duration: number
+  start: number
+}
+
+export interface PerformanceResourceDetails {
+  redirect?: PerformanceResourceDetailsElement
+  dns?: PerformanceResourceDetailsElement
+  connect?: PerformanceResourceDetailsElement
+  ssl?: PerformanceResourceDetailsElement
+  firstByte: PerformanceResourceDetailsElement
+  download: PerformanceResourceDetailsElement
+}
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 

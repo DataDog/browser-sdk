@@ -1,27 +1,13 @@
-import { Context, monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
+import { ActionContext, ViewContext } from './types'
 import { AutoActionCreatedEvent, AutoUserAction } from './userActionCollection'
 import { ViewCreatedEvent } from './viewCollection'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
-
-export interface ViewContext extends Context {
-  sessionId: string | undefined
-  view: {
-    id: string
-    url: string
-    referrer: string
-  }
-}
-
-export interface ActionContext extends Context {
-  userAction: {
-    id: string
-  }
-}
 
 interface PreviousContext<T> {
   startTime: number

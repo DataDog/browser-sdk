@@ -1,7 +1,7 @@
+import { RumEventCategory } from '../src'
 import { LifeCycleEventType } from '../src/lifeCycle'
 import { startLongTaskCollection } from '../src/longTaskCollection'
 import { RumPerformanceEntry } from '../src/performanceCollection'
-import { RumEventCategory } from '../src/rum'
 import { setup, TestSetupBuilder } from './specHelper'
 
 describe('long task collection', () => {

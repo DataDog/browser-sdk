@@ -1,7 +1,7 @@
 import { Context } from '@datadog/browser-core'
 import { RumEventCategory } from '../src'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { RawRumEvent } from '../src/rum'
+import { RawRumEvent } from '../src/types'
 import { setup, TestSetupBuilder } from './specHelper'
 
 interface ServerRumEvents {

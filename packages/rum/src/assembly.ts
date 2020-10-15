@@ -1,36 +1,12 @@
 import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { ActionContext, ParentContexts, ViewContext } from './parentContexts'
-import {
-  RawRumEvent,
-  RumErrorEvent,
-  RumEventCategory,
-  RumLongTaskEvent,
-  RumResourceEvent,
-  RumUserActionEvent,
-  RumViewEvent,
-} from './rum'
+import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
+import { RawRumEvent, RumContext, RumErrorEvent, RumEventCategory, RumLongTaskEvent, RumResourceEvent } from './types'
 
 interface BrowserWindow extends Window {
   _DATADOG_SYNTHETICS_BROWSER?: unknown
 }
-
-interface RumContext {
-  applicationId: string
-  date: number
-  service?: string
-  session: {
-    type: string
-  }
-}
-
-export type RumEvent =
-  | RumErrorEvent & ActionContext & ViewContext & RumContext
-  | RumResourceEvent & ActionContext & ViewContext & RumContext
-  | RumViewEvent & ViewContext & RumContext
-  | RumLongTaskEvent & ActionContext & ViewContext & RumContext
-  | RumUserActionEvent & ViewContext & RumContext
 
 enum SessionType {
   SYNTHETICS = 'synthetics',

@@ -1,19 +1,13 @@
 import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { RumEvent } from '../src'
+import { RumEvent, RumResourceEvent, RumViewEvent } from '../src'
 
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../src/performanceCollection'
 import { RequestCompleteEvent } from '../src/requestCollection'
-import {
-  doGetInternalContext,
-  handleResourceEntry,
-  RawRumEvent,
-  RumResourceEvent,
-  RumViewEvent,
-  trackView,
-} from '../src/rum'
+import { doGetInternalContext, handleResourceEntry, trackView } from '../src/rum'
 import { RumSession } from '../src/rumSession'
+import { RawRumEvent } from '../src/types'
 import { AutoUserAction, UserActionType } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
