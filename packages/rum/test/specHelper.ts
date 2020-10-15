@@ -8,11 +8,11 @@ import {
   SPEC_ENDPOINTS,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { LifeCycle } from '../src/lifeCycle'
+import { startRumAssembly } from '../src/assembly'
+import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
-import { startRumEventCollection } from '../src/rum'
-import { InternalContext } from '../src/rum.entry'
+import { RawRumEvent, startRumEventCollection } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
@@ -28,7 +28,8 @@ export interface TestSetupBuilder {
   withViewCollection: () => TestSetupBuilder
   withUserActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
-  withParentContexts: () => TestSetupBuilder
+  withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
+  withAssembly: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
@@ -47,6 +48,12 @@ export interface TestIO {
   fakeLocation: Partial<Location>
   setGlobalContext: (context: Context) => void
   session: RumSession
+  rawRumEvents: Array<{
+    startTime: number
+    rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }>
 }
 
 export function setup(): TestSetupBuilder {
@@ -59,6 +66,12 @@ export function setup(): TestSetupBuilder {
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: Array<(lifeCycle: LifeCycle) => void> = []
   const buildTasks: Array<() => void> = []
+  const rawRumEvents: Array<{
+    startTime: number
+    rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }> = []
 
   let globalContext: Context
   let server: sinon.SinonFakeServer
@@ -72,6 +85,7 @@ export function setup(): TestSetupBuilder {
     isEnabled: () => true,
     maxBatchSize: 1,
   }
+  const FAKE_APP_ID = 'appId'
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
@@ -101,7 +115,7 @@ export function setup(): TestSetupBuilder {
       buildTasks.push(() => {
         let stopRum
         ;({ parentContexts, stop: stopRum } = startRumEventCollection(
-          'appId',
+          FAKE_APP_ID,
           fakeLocation as Location,
           lifeCycle,
           configuration as Configuration,
@@ -111,6 +125,19 @@ export function setup(): TestSetupBuilder {
         cleanupTasks.push(stopRum)
       })
 
+      return setupBuilder
+    },
+    withAssembly() {
+      buildTasks.push(() => {
+        startRumAssembly(
+          FAKE_APP_ID,
+          configuration as Configuration,
+          lifeCycle,
+          session,
+          parentContexts,
+          () => globalContext
+        )
+      })
       return setupBuilder
     },
     withViewCollection() {
@@ -131,7 +158,11 @@ export function setup(): TestSetupBuilder {
       buildTasks.push(() => startPerformanceCollection(lifeCycle, configuration as Configuration))
       return setupBuilder
     },
-    withParentContexts() {
+    withParentContexts(stub?: Partial<ParentContexts>) {
+      if (stub) {
+        parentContexts = stub as ParentContexts
+        return setupBuilder
+      }
       buildTasks.push(() => {
         parentContexts = startParentContexts(lifeCycle, session)
         cleanupTasks.push(() => {
@@ -171,11 +202,13 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle))
       buildTasks.forEach((task) => task())
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
       return {
         clock,
         fakeLocation,
         lifeCycle,
         parentContexts,
+        rawRumEvents,
         server,
         session,
         stubBuilder,

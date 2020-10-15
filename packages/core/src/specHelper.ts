@@ -141,11 +141,78 @@ export class PerformanceObserverStubBuilder {
   }
 }
 
+class StubXhr {
+  public response: string | undefined = undefined
+  public status: number | undefined = undefined
+  public readyState: number = XMLHttpRequest.UNSENT
+  public onreadystatechange: () => void = noop
+
+  private fakeEventTarget: HTMLDivElement
+
+  constructor() {
+    this.fakeEventTarget = document.createElement('div')
+  }
+
+  // tslint:disable:no-empty
+  open(method: string, url: string) {}
+  send() {}
+  // tslint:enable:no-empty
+
+  abort() {
+    this.status = 0
+  }
+
+  complete(status: number, response?: string) {
+    this.response = response
+    this.status = status
+    this.readyState = XMLHttpRequest.DONE
+    this.onreadystatechange()
+    if (status >= 200 && status < 500) {
+      this.dispatchEvent('load')
+    }
+    if (status >= 500) {
+      this.dispatchEvent('error')
+    }
+    this.dispatchEvent('loadend')
+  }
+
+  addEventListener(name: string, callback: () => void) {
+    this.fakeEventTarget.addEventListener(name, callback)
+  }
+
+  private dispatchEvent(name: string) {
+    this.fakeEventTarget.dispatchEvent(createNewEvent(name))
+  }
+}
+
+function createNewEvent(eventName: string) {
+  let event
+  if (typeof Event === 'function') {
+    event = new Event(eventName)
+  } else {
+    event = document.createEvent('Event')
+    event.initEvent(eventName, true, true)
+  }
+  return event
+}
+
+export function stubXhr() {
+  const originalXhr = XMLHttpRequest
+
+  XMLHttpRequest = StubXhr as any
+
+  return {
+    reset() {
+      XMLHttpRequest = originalXhr
+    },
+  }
+}
+
 export function withXhr({
   setup,
   onComplete,
 }: {
-  setup: (xhr: XMLHttpRequest) => void
+  setup: (xhr: StubXhr) => void
   onComplete: (xhr: XMLHttpRequest) => void
 }) {
   const xhr = new XMLHttpRequest()
@@ -154,7 +221,7 @@ export function withXhr({
       onComplete(xhr)
     })
   })
-  setup(xhr)
+  setup((xhr as unknown) as StubXhr)
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {

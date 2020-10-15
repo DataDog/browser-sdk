@@ -6,6 +6,8 @@ import {
   combine,
   Context,
   createContextManager,
+  deepClone,
+  defineGlobal,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -40,8 +42,7 @@ export const datadogRum = makeRumGlobal(startRum)
 interface BrowserWindow extends Window {
   DD_RUM?: RumGlobal
 }
-
-getGlobalObject<BrowserWindow>().DD_RUM = datadogRum
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
 
 export type StartRum = typeof startRum
 
@@ -55,7 +56,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   }
   const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
   let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
-    beforeInitAddUserAction.add([action, combine({}, globalContextManager.get())])
+    beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
   }
 
   return makeGlobal({
@@ -93,7 +94,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     addUserAction: monitor((name: string, context?: Context) => {
       addUserActionStrategy({
         name,
-        context: combine({}, context),
+        context: deepClone(context),
         startTime: performance.now(),
         type: UserActionType.CUSTOM,
       })

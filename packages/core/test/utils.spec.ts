@@ -1,5 +1,6 @@
 import {
   combine,
+  deepClone,
   findCommaSeparatedValue,
   jsonStringify,
   performDraw,
@@ -13,9 +14,9 @@ import {
 describe('utils', () => {
   describe('combine', () => {
     it('should deeply add and replace keys', () => {
-      const target = { a: { b: 'toBeReplaced', c: 'target' } }
-      const source = { a: { b: 'replaced', d: 'source' } }
-      expect(combine(target, source)).toEqual({ a: { b: 'replaced', c: 'target', d: 'source' } })
+      const sourceA = { a: { b: 'toBeReplaced', c: 'source a' } }
+      const sourceB = { a: { b: 'replaced', d: 'source b' } }
+      expect(combine(sourceA, sourceB)).toEqual({ a: { b: 'replaced', c: 'source a', d: 'source b' } })
     })
 
     it('should not replace with undefined', () => {
@@ -33,9 +34,50 @@ describe('utils', () => {
     })
 
     it('should merge arrays', () => {
-      const target = [{ a: 'target' }, 'extraString'] as any
-      const source = [{ b: 'source' }] as any
-      expect(combine(target, source)).toEqual([{ a: 'target', b: 'source' }, 'extraString'])
+      const sourceA = [{ a: 'source a' }, 'extraString'] as any
+      const sourceB = [{ b: 'source b' }] as any
+      expect(combine(sourceA, sourceB)).toEqual([{ a: 'source a', b: 'source b' }, 'extraString'])
+    })
+
+    it('should merge multiple objects', () => {
+      expect(combine({ a: 1 }, { b: 2 }, { c: 3 })).toEqual({ a: 1, b: 2, c: 3 })
+    })
+
+    it('should not keep references on objects', () => {
+      const source = { a: { b: 1 } }
+      const result = combine({}, source)
+      expect(result.a).not.toBe(source.a)
+    })
+
+    it('should not keep references on arrays', () => {
+      const source = { a: [1] }
+      const result = combine({}, source)
+      expect(result.a).not.toBe(source.a)
+    })
+  })
+
+  describe('deepClone', () => {
+    it('should return a result deeply equal to the source', () => {
+      const clonedValue = deepClone({ a: 1 })
+      expect(clonedValue).toEqual({ a: 1 })
+    })
+
+    it('should return a different reference', () => {
+      const value = { a: 1 }
+      const clonedValue = deepClone(value)
+      expect(clonedValue).not.toBe(value)
+    })
+
+    it('should return different references for objects sub values', () => {
+      const value = { a: { b: 1 } }
+      const clonedValue = deepClone(value)
+      expect(clonedValue.a).not.toBe(value.a)
+    })
+
+    it('should return different references for arrays items', () => {
+      const value = { a: [1] }
+      const clonedValue = deepClone(value)
+      expect(clonedValue.a).not.toBe(value.a)
     })
   })
 

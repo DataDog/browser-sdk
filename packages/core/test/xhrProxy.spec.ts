@@ -1,15 +1,17 @@
-import { withXhr } from '../src'
+import { stubXhr, withXhr } from '../src'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrProxy } from '../src/xhrProxy'
 
 describe('xhr proxy', () => {
   let completeSpy: jasmine.Spy<(context: XhrCompleteContext) => void>
   let xhrProxy: XhrProxy
+  let stubXhrManager: { reset(): void }
 
   function getRequest(index: number) {
     return completeSpy.calls.argsFor(index)[0]
   }
 
   beforeEach(() => {
+    stubXhrManager = stubXhr()
     completeSpy = jasmine.createSpy('complete')
     xhrProxy = startXhrProxy()
     xhrProxy.onRequestComplete(completeSpy)
@@ -17,6 +19,7 @@ describe('xhr proxy', () => {
 
   afterEach(() => {
     resetXhrProxy()
+    stubXhrManager.reset()
   })
 
   it('should track successful request', (done) => {
@@ -24,6 +27,7 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200, 'ok')
       },
       onComplete() {
         const request = getRequest(0)
@@ -43,6 +47,7 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', '/expected-404')
         xhr.send()
+        xhr.complete(404, 'NOT FOUND')
       },
       onComplete() {
         const request = getRequest(0)
@@ -62,12 +67,13 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', '/throw')
         xhr.send()
+        xhr.complete(500, 'expected server error')
       },
       onComplete() {
         const request = getRequest(0)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/throw')
-        expect(request.response).toEqual(jasmine.stringMatching('expected server error'))
+        expect(request.response).toEqual('expected server error')
         expect(request.status).toBe(500)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
@@ -81,6 +87,7 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', 'http://foo.bar/qux')
         xhr.send()
+        xhr.complete(0, '')
       },
       onComplete() {
         const request = getRequest(0)
@@ -103,6 +110,7 @@ describe('xhr proxy', () => {
         xhr.addEventListener('load', () => xhr.abort())
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200, 'ok')
       },
       onComplete(xhr) {
         const request = getRequest(0)
@@ -119,31 +127,13 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track successful sync request', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok', false)
-        xhr.send()
-      },
-      onComplete() {
-        const request = getRequest(0)
-        expect(request.method).toBe('GET')
-        expect(request.url).toContain('/ok')
-        expect(request.response).toBe('ok')
-        expect(request.status).toBe(200)
-        expect(request.startTime).toEqual(jasmine.any(Number))
-        expect(request.duration).toEqual(jasmine.any(Number))
-        done()
-      },
-    })
-  })
-
   it('should track request with onreadystatechange overridden', (done) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.onreadystatechange = () => undefined
+        xhr.complete(200, 'ok')
       },
       onComplete() {
         const request = getRequest(0)
@@ -166,6 +156,7 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200)
       },
       onComplete() {
         const request = getRequest(0)
@@ -182,6 +173,7 @@ describe('xhr proxy', () => {
         xhr.open('GET', '/ok')
         startXhrProxy()
         xhr.send()
+        xhr.complete(200)
       },
       onComplete() {
         expect(completeSpy.calls.count()).toBe(0)

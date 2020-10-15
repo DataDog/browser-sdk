@@ -5,22 +5,16 @@ import {
   FetchStub,
   FetchStubManager,
   isIE,
-  Observable,
   RequestType,
   SPEC_ENDPOINTS,
   stubFetch,
+  stubXhr,
   withXhr,
 } from '@datadog/browser-core'
 import { resetFetchProxy } from '../../core/src/fetchProxy'
 import { resetXhrProxy } from '../../core/src/xhrProxy'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import {
-  RequestCompleteEvent,
-  RequestObservables,
-  RequestStartEvent,
-  trackFetch,
-  trackXhr,
-} from '../src/requestCollection'
+import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from '../src/requestCollection'
 import { Tracer } from '../src/tracer'
 
 const configuration = {
@@ -116,12 +110,13 @@ describe('collect fetch', () => {
 describe('collect xhr', () => {
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let stubXhrManager: { reset(): void }
 
   beforeEach(() => {
     if (isIE()) {
       pending('no fetch support')
     }
-
+    stubXhrManager = stubXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -135,6 +130,7 @@ describe('collect xhr', () => {
 
   afterEach(() => {
     resetXhrProxy()
+    stubXhrManager.reset()
   })
 
   it('should notify on request start', (done) => {
@@ -142,6 +138,7 @@ describe('collect xhr', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200)
       },
       onComplete() {
         expect(startSpy).toHaveBeenCalledWith({ requestIndex: (jasmine.any(Number) as unknown) as number })
@@ -155,6 +152,7 @@ describe('collect xhr', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200, 'ok')
       },
       onComplete() {
         const request = completeSpy.calls.argsFor(0)[0]
@@ -174,6 +172,7 @@ describe('collect xhr', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
+        xhr.complete(200)
       },
       onComplete() {
         const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
@@ -190,6 +189,7 @@ describe('collect xhr', () => {
       setup(xhr) {
         xhr.open('GET', SPEC_ENDPOINTS.rumEndpoint!)
         xhr.send()
+        xhr.complete(200)
       },
       onComplete() {
         expect(startSpy).not.toHaveBeenCalled()

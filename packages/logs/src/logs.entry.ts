@@ -5,6 +5,7 @@ import {
   Context,
   ContextValue,
   createContextManager,
+  defineGlobal,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -33,8 +34,7 @@ export const datadogLogs = makeLogsGlobal(startLogs)
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsGlobal
 }
-
-getGlobalObject<BrowserWindow>().DD_LOGS = datadogLogs
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
 
 export type StartLogs = typeof startLogs
 
