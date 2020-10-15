@@ -15,7 +15,7 @@ import {
 } from '@datadog/browser-core'
 
 import { startRum } from './rum'
-import { CustomUserAction, UserActionType } from './userActionCollection'
+import { ActionType, CustomUserAction } from './userActionCollection'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
@@ -82,7 +82,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         name,
         context: deepClone(context),
         startTime: performance.now(),
-        type: UserActionType.CUSTOM,
+        type: ActionType.CUSTOM,
       })
     }),
   })

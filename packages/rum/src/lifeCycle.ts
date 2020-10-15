@@ -2,6 +2,7 @@ import { Context, ErrorMessage } from '@datadog/browser-core'
 import { RumPerformanceEntry } from './performanceCollection'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { RawRumEvent, RumEvent } from './types'
+import { RawRumEventV2, RumEventV2 } from './typesV2'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './userActionCollection'
 import { View, ViewCreatedEvent } from './viewCollection'
 
@@ -21,7 +22,9 @@ export enum LifeCycleEventType {
   DOM_MUTATED,
   BEFORE_UNLOAD,
   RAW_RUM_EVENT_COLLECTED,
+  RAW_RUM_EVENT_V2_COLLECTED,
   RUM_EVENT_COLLECTED,
+  RUM_EVENT_V2_COLLECTED,
 }
 
 export interface Subscription {
@@ -60,7 +63,20 @@ export class LifeCycle {
       customerContext?: Context
     }
   ): void
+  notify(
+    eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+    data: {
+      startTime: number
+      rawRumEvent: RawRumEventV2
+      savedGlobalContext?: Context
+      customerContext?: Context
+    }
+  ): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: { rumEvent: RumEvent; serverRumEvent: Context }): void
+  notify(
+    eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
+    data: { rumEvent: RumEventV2; serverRumEvent: Context }
+  ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -108,8 +124,21 @@ export class LifeCycle {
     }) => void
   ): void
   subscribe(
+    eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+    callback: (data: {
+      startTime: number
+      rawRumEvent: RawRumEventV2
+      savedGlobalContext?: Context
+      customerContext?: Context
+    }) => void
+  ): void
+  subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
     callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
+  ): void
+  subscribe(
+    eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
+    callback: (data: { rumEvent: RumEventV2; serverRumEvent: Context }) => void
   ): void
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {

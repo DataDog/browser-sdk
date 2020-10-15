@@ -8,7 +8,7 @@ import { RequestCompleteEvent } from '../src/requestCollection'
 import { doGetInternalContext, handleResourceEntry, trackView } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { RawRumEvent } from '../src/types'
-import { AutoUserAction, UserActionType } from '../src/userActionCollection'
+import { ActionType, AutoUserAction } from '../src/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD, View } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -219,7 +219,7 @@ describe('rum session', () => {
       context: { foo: 'bar' },
       name: 'action',
       startTime: 123,
-      type: UserActionType.CUSTOM as const,
+      type: ActionType.CUSTOM as const,
     },
     context: {},
   }

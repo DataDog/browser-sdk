@@ -9,7 +9,7 @@ import {
   includes,
   msToNs,
   RequestType,
-  ResourceKind,
+  ResourceType,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startRumAssembly } from './assembly'
@@ -255,7 +255,7 @@ function trackRequests(
       return
     }
     const timing = matchRequestTiming(request)
-    const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    const kind = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
     const startTime = timing ? timing.startTime : request.startTime
     const hasBeenTraced = request.traceId && request.spanId
     handler(startTime, {
@@ -310,7 +310,7 @@ export function handleResourceEntry(
     return
   }
   const resourceKind = computeResourceKind(entry)
-  if (includes([ResourceKind.XHR, ResourceKind.FETCH], resourceKind)) {
+  if (includes([ResourceType.XHR, ResourceType.FETCH], resourceKind)) {
     return
   }
   handler(entry.startTime, {

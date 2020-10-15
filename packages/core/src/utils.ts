@@ -17,7 +17,7 @@ export enum DOM_EVENT {
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
 }
 
-export enum ResourceKind {
+export enum ResourceType {
   DOCUMENT = 'document',
   XHR = 'xhr',
   BEACON = 'beacon',
@@ -31,8 +31,8 @@ export enum ResourceKind {
 }
 
 export enum RequestType {
-  FETCH = ResourceKind.FETCH,
-  XHR = ResourceKind.XHR,
+  FETCH = ResourceType.FETCH,
+  XHR = ResourceType.XHR,
 }
 
 // use lodash API

@@ -6,12 +6,12 @@ import {
   isIntakeRequest,
   isValidUrl,
   msToNs,
-  ResourceKind,
+  ResourceType,
 } from '@datadog/browser-core'
 
 import { RumPerformanceResourceTiming } from './performanceCollection'
 
-interface PerformanceResourceDetailsElement {
+export interface PerformanceResourceDetailsElement {
   duration: number
   start: number
 }
@@ -27,21 +27,21 @@ export interface PerformanceResourceDetails {
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
-const RESOURCE_TYPES: Array<[ResourceKind, (initiatorType: string, path: string) => boolean]> = [
-  [ResourceKind.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
-  [ResourceKind.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
-  [ResourceKind.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
-  [ResourceKind.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
-  [ResourceKind.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
-  [ResourceKind.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
+const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
+  [ResourceType.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
+  [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
+  [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
+  [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
+  [ResourceType.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
+  [ResourceType.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
   [
-    ResourceKind.IMAGE,
+    ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
       includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i) !== null,
   ],
-  [ResourceKind.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [ResourceType.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
   [
-    ResourceKind.MEDIA,
+    ResourceType.MEDIA,
     (initiatorType: string, path: string) =>
       includes(['audio', 'video'], initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
   ],
@@ -51,7 +51,7 @@ export function computeResourceKind(timing: RumPerformanceResourceTiming) {
   const url = timing.name
   if (!isValidUrl(url)) {
     addMonitoringMessage(`Failed to construct URL for "${timing.name}"`)
-    return ResourceKind.OTHER
+    return ResourceType.OTHER
   }
   const path = getPathName(url)
   for (const [type, isType] of RESOURCE_TYPES) {
@@ -59,7 +59,7 @@ export function computeResourceKind(timing: RumPerformanceResourceTiming) {
       return type
     }
   }
-  return ResourceKind.OTHER
+  return ResourceType.OTHER
 }
 
 function areInOrder(...numbers: number[]) {

@@ -1,6 +1,6 @@
-import { Context, ErrorContext, HttpContext, ResourceKind } from '@datadog/browser-core'
+import { Context, ErrorContext, HttpContext, ResourceType } from '@datadog/browser-core'
 import { PerformanceResourceDetails } from './resourceUtils'
-import { UserActionMeasures, UserActionType } from './userActionCollection'
+import { ActionType, UserActionMeasures } from './userActionCollection'
 import { ViewLoadingType, ViewMeasures } from './viewCollection'
 
 export enum RumEventCategory {
@@ -27,7 +27,7 @@ export interface RumResourceEvent {
     bytesWritten?: number
   }
   resource: {
-    kind: ResourceKind
+    kind: ResourceType
     id?: string // only for traced requests
   }
   _dd?: {
@@ -79,7 +79,7 @@ export interface RumUserActionEvent {
   }
   userAction: {
     id?: string
-    type: UserActionType
+    type: ActionType
     measures?: UserActionMeasures
   }
 }
