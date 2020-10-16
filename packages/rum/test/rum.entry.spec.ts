@@ -5,6 +5,7 @@ import { setup, TestSetupBuilder } from './specHelper'
 
 const noopStartRum = () => ({
   addUserAction: () => undefined,
+  captureError: () => undefined,
   getInternalContext: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -203,6 +204,67 @@ describe('rum entry', () => {
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addUserActionSpy.calls.argsFor(0)[0].context).toEqual({
+          foo: 'bar',
+        })
+      })
+    })
+  })
+
+  describe('captureError', () => {
+    let captureErrorSpy: jasmine.Spy<ReturnType<StartRum>['captureError']>
+    let rumGlobal: RumGlobal
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      captureErrorSpy = jasmine.createSpy()
+      rumGlobal = makeRumGlobal(() => ({
+        ...noopStartRum(),
+        captureError: captureErrorSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('allows capturing an error before init', () => {
+      rumGlobal.captureError(new Error('foo'))
+
+      expect(captureErrorSpy).not.toHaveBeenCalled()
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(captureErrorSpy).toHaveBeenCalledTimes(1)
+      expect(captureErrorSpy.calls.argsFor(0)).toEqual([
+        {
+          error: new Error('foo'),
+          startTime: jasmine.any(Number),
+        },
+        {},
+      ])
+    })
+
+    describe('save context when capturing an error', () => {
+      it('saves the date', () => {
+        const { clock } = setupBuilder.withFakeClock().build()
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.captureError(new Error('foo'))
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(captureErrorSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
+      })
+
+      it('stores a deep copy of the global context', () => {
+        rumGlobal.addRumGlobalContext('foo', 'bar')
+        rumGlobal.captureError(new Error('message'))
+        rumGlobal.addRumGlobalContext('foo', 'baz')
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(captureErrorSpy.calls.argsFor(0)[1]).toEqual({
           foo: 'bar',
         })
       })

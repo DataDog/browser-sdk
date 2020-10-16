@@ -3,6 +3,7 @@ import { areCookiesAuthorized, CookieOptions } from './cookie'
 import { ErrorMessage, startErrorCollection } from './errorCollection'
 import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
 import { Observable } from './observable'
+import { noop } from './utils'
 
 export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): void } {
   const global = {
@@ -61,12 +62,13 @@ export interface BuildEnv {
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv, isCollectingError: boolean) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
-  const errorObservable = isCollectingError ? startErrorCollection(configuration) : new Observable<ErrorMessage>()
+  const errorCollection = isCollectingError && startErrorCollection(configuration)
 
   return {
     configuration,
-    errorObservable,
     internalMonitoring,
+    captureError: errorCollection ? errorCollection.captureError : noop,
+    errorObservable: errorCollection ? errorCollection.observable : new Observable<ErrorMessage>(),
   }
 }
 

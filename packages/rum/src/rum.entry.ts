@@ -1,6 +1,7 @@
 import {
   BoundedBuffer,
   buildCookieOptions,
+  CapturedError,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
   Context,
@@ -40,9 +41,15 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
+
   const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
   let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
     beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
+  }
+
+  const beforeInitCaptureError = new BoundedBuffer<[CapturedError, Context]>()
+  let captureErrorStrategy: ReturnType<StartRum>['captureError'] = (capturedError) => {
+    beforeInitCaptureError.add([capturedError, deepClone(globalContextManager.get())])
   }
 
   return makeGlobal({
@@ -58,11 +65,13 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
-      ;({ getInternalContext: getInternalContextStrategy, addUserAction: addUserActionStrategy } = startRumImpl(
-        userConfiguration,
-        globalContextManager.get
-      ))
+      ;({
+        addUserAction: addUserActionStrategy,
+        captureError: captureErrorStrategy,
+        getInternalContext: getInternalContextStrategy,
+      } = startRumImpl(userConfiguration, globalContextManager.get))
       beforeInitAddUserAction.drain(([action, context]) => addUserActionStrategy(action, context))
+      beforeInitCaptureError.drain(([error, context]) => captureErrorStrategy(error, context))
 
       isAlreadyInitialized = true
     }),
@@ -83,6 +92,13 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         context: deepClone(context),
         startTime: performance.now(),
         type: ActionType.CUSTOM,
+      })
+    }),
+
+    captureError: monitor((error: unknown) => {
+      captureErrorStrategy({
+        error,
+        startTime: performance.now(),
       })
     }),
   })

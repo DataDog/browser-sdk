@@ -5,7 +5,7 @@ export {
   isIntakeRequest,
   buildCookieOptions,
 } from './configuration'
-export { ErrorMessage, ErrorContext, HttpContext, ErrorSource, ErrorObservable } from './errorCollection'
+export { CapturedError, ErrorMessage, ErrorContext, HttpContext, ErrorSource, ErrorObservable } from './errorCollection'
 export {
   BuildEnv,
   BuildMode,

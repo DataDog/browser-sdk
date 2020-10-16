@@ -28,6 +28,11 @@ export interface HttpContext {
   method: string
 }
 
+export interface CapturedError {
+  startTime: number
+  error: unknown
+}
+
 export enum ErrorSource {
   AGENT = 'agent',
   CONSOLE = 'console',
@@ -37,17 +42,23 @@ export enum ErrorSource {
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
-let filteredErrorsObservable: ErrorObservable
+let errorCollectionSingleton: {
+  observable: ErrorObservable
+  captureError: ReturnType<typeof makeCaptureError>
+}
 
 export function startErrorCollection(configuration: Configuration) {
-  if (!filteredErrorsObservable) {
+  if (!errorCollectionSingleton) {
     const errorObservable = new Observable<ErrorMessage>()
     trackNetworkError(configuration, errorObservable)
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
-    filteredErrorsObservable = filterErrors(configuration, errorObservable)
+    errorCollectionSingleton = {
+      captureError: makeCaptureError(errorObservable),
+      observable: filterErrors(configuration, errorObservable),
+    }
   }
-  return filteredErrorsObservable
+  return errorCollectionSingleton
 }
 
 export function filterErrors(configuration: Configuration, errorObservable: Observable<ErrorMessage>) {
@@ -128,6 +139,25 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
 
 export function stopRuntimeErrorTracking() {
   ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
+}
+
+export function makeCaptureError(errorObservable: ErrorObservable) {
+  return (capturedError: CapturedError, savedGlobalContext?: Context) => {
+    const stackTrace = capturedError.error instanceof Error ? computeStackTrace(capturedError.error) : undefined
+    const { message, stack, kind } = formatUnknownError(stackTrace, capturedError.error, 'Captured')
+    errorObservable.notify({
+      message,
+      savedGlobalContext,
+      context: {
+        error: {
+          kind,
+          stack,
+          origin: ErrorSource.SOURCE, // TODO
+        },
+      },
+      startTime: capturedError.startTime,
+    })
+  }
 }
 
 export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
