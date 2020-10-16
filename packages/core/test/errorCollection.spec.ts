@@ -4,7 +4,7 @@ import {
   ErrorMessage,
   ErrorSource,
   filterErrors,
-  formatRuntimeError,
+  formatUnknownError,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -115,7 +115,7 @@ describe('runtime error tracker', () => {
   })
 })
 
-describe('runtime error formatter', () => {
+describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
 
   it('should format an error', () => {
@@ -147,12 +147,11 @@ describe('runtime error formatter', () => {
       ],
     }
 
-    const formatted = formatRuntimeError(stack, undefined)
+    const formatted = formatUnknownError(stack, undefined, 'Uncaught')
 
     expect(formatted.message).toEqual('oh snap!')
-    expect(formatted.context.error.kind).toEqual('TypeError')
-    expect(formatted.context.error.origin).toEqual('source')
-    expect(formatted.context.error.stack).toEqual(`TypeError: oh snap!
+    expect(formatted.kind).toEqual('TypeError')
+    expect(formatted.stack).toEqual(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
   at <anonymous>(baz) @ http://path/to/file.js`)
@@ -165,7 +164,7 @@ describe('runtime error formatter', () => {
       stack: [],
     }
 
-    const formatted = formatRuntimeError(stack, undefined)
+    const formatted = formatUnknownError(stack, undefined, 'Uncaught')
 
     expect(formatted.message).toEqual('Empty message')
   })
@@ -173,7 +172,7 @@ describe('runtime error formatter', () => {
   it('should format a string error', () => {
     const errorObject = 'oh snap!'
 
-    const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
+    const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
 
     expect(formatted.message).toEqual('Uncaught "oh snap!"')
   })
@@ -181,7 +180,7 @@ describe('runtime error formatter', () => {
   it('should format an object error', () => {
     const errorObject = { foo: 'bar' }
 
-    const formatted = formatRuntimeError(NOT_COMPUTED_STACK_TRACE, errorObject)
+    const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
 
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
   })
