@@ -8,7 +8,7 @@ Datadog browser logs library.
 
 ### NPM
 
-```
+```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.init({
   clientToken: 'XXX',
@@ -17,10 +17,29 @@ datadogLogs.init({
   sampleRate: 100
 })
 ```
+### Async bundle
 
-### Bundle
-
+```html
+<script>
+ (function(h,o,u,n,d) {
+   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+   d=o.createElement(u);d.async=1;d.src=n
+   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-logs.js','DD_LOGS')
+ DD_LOGS.onReady(function() {
+    DD_LOGS.init({
+      clientToken: 'XXX',
+      site: 'datadoghq.com',
+      forwardErrorsToLogs: true,
+      sampleRate: 100
+   })
+ })
+</script>
 ```
+
+### Sync bundle
+
+```html
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs.js'>
 <script>
   window.DD_LOGS.init({
