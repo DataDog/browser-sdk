@@ -9,6 +9,7 @@ import {
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { startRumAssembly } from '../src/assembly'
+import { startRumAssemblyV2 } from '../src/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/parentContexts'
 import { startPerformanceCollection } from '../src/performanceCollection'
@@ -32,6 +33,7 @@ export interface TestSetupBuilder {
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
+  withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
@@ -144,6 +146,19 @@ export function setup(): TestSetupBuilder {
     withAssembly() {
       buildTasks.push(() => {
         startRumAssembly(
+          FAKE_APP_ID,
+          configuration as Configuration,
+          lifeCycle,
+          session,
+          parentContexts,
+          () => globalContext
+        )
+      })
+      return setupBuilder
+    },
+    withAssemblyV2() {
+      buildTasks.push(() => {
+        startRumAssemblyV2(
           FAKE_APP_ID,
           configuration as Configuration,
           lifeCycle,

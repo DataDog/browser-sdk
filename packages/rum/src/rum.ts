@@ -13,6 +13,7 @@ import {
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startRumAssembly } from './assembly'
+import { startRumAssemblyV2 } from './assemblyV2'
 import { startRumBatch } from './batch'
 
 import { buildEnv } from './buildEnv'
@@ -119,6 +120,7 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
+  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   trackRumEvents(lifeCycle, session)
   startLongTaskCollection(lifeCycle, configuration)
   startViewCollection(location, lifeCycle)
