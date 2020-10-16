@@ -15,6 +15,7 @@ import { startPerformanceCollection } from '../src/performanceCollection'
 import { startRumEventCollection } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { RawRumEvent } from '../src/types'
+import { RawRumEventV2 } from '../src/typesV2'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
 
@@ -34,7 +35,7 @@ export interface TestSetupBuilder {
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
-  beforeBuild: (callback: (lifeCycle: LifeCycle) => void) => TestSetupBuilder
+  beforeBuild: (callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) => TestSetupBuilder
 
   cleanup: () => void
   build: () => TestIO
@@ -55,6 +56,12 @@ export interface TestIO {
     savedGlobalContext?: Context
     customerContext?: Context
   }>
+  rawRumEventsV2: Array<{
+    startTime: number
+    rawRumEvent: RawRumEventV2
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }>
 }
 
 export function setup(): TestSetupBuilder {
@@ -65,11 +72,17 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-  const beforeBuildTasks: Array<(lifeCycle: LifeCycle) => void> = []
+  const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration) => void> = []
   const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
     startTime: number
     rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }> = []
+  const rawRumEventsV2: Array<{
+    startTime: number
+    rawRumEvent: RawRumEventV2
     savedGlobalContext?: Context
     customerContext?: Context
   }> = []
@@ -196,20 +209,22 @@ export function setup(): TestSetupBuilder {
       cleanupTasks.push(() => (browserWindow.PerformanceObserver = original))
       return setupBuilder
     },
-    beforeBuild(callback: (lifeCycle: LifeCycle) => void) {
+    beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) {
       beforeBuildTasks.push(callback)
       return setupBuilder
     },
     build() {
-      beforeBuildTasks.forEach((task) => task(lifeCycle))
+      beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration))
       buildTasks.forEach((task) => task())
       lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => rawRumEventsV2.push(data))
       return {
         clock,
         fakeLocation,
         lifeCycle,
         parentContexts,
         rawRumEvents,
+        rawRumEventsV2,
         server,
         session,
         stubBuilder,
