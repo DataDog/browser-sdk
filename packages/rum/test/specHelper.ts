@@ -1,11 +1,13 @@
 import {
   assign,
   buildUrl,
+  combine,
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
   PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
+  withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { startRumAssembly } from '../src/assembly'
@@ -16,9 +18,10 @@ import { startPerformanceCollection } from '../src/performanceCollection'
 import { startRumEventCollection } from '../src/rum'
 import { RumSession } from '../src/rumSession'
 import { RawRumEvent } from '../src/types'
-import { RawRumEventV2 } from '../src/typesV2'
+import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
 import { startUserActionCollection } from '../src/userActionCollection'
 import { startViewCollection } from '../src/viewCollection'
+import { validateFormat } from './formatValidation'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -232,7 +235,10 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration))
       buildTasks.forEach((task) => task())
       lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
-      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => rawRumEventsV2.push(data))
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
+        rawRumEventsV2.push(data)
+        validateRumEventFormat(data.rawRumEvent)
+      })
       return {
         clock,
         fakeLocation,
@@ -263,4 +269,27 @@ function buildLocation(url: string, base?: string) {
     pathname: urlObject.pathname,
     search: urlObject.search,
   }
+}
+
+function validateRumEventFormat(rawRumEvent: RawRumEventV2) {
+  const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
+  const fakeContext: RumContextV2 & ViewContextV2 = {
+    _dd: {
+      formatVersion: 2,
+    },
+    application: {
+      id: fakeId,
+    },
+    date: 0,
+    session: {
+      id: fakeId,
+      type: 'user',
+    },
+    view: {
+      id: fakeId,
+      referrer: '',
+      url: 'fake url',
+    },
+  }
+  validateFormat(withSnakeCaseKeys(combine(fakeContext, rawRumEvent)))
 }
