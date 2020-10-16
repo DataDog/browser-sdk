@@ -18,6 +18,8 @@ To set up Datadog RUM browser monitoring:
 
 **Note**: Your application shows up on the application list page as "pending" until Datadog starts receiving data.
 
+
+
 ### NPM
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
@@ -39,7 +41,38 @@ datadogRum.init({
 
 **Note**: The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
-### Bundle
+### Bundle async
+
+Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
+
+```html
+<script>
+ (function(h,o,u,n,d) {
+   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+   d=o.createElement(u);d.async=1;d.src=n
+   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum.js','DD_RUM')
+ DD_RUM.onReady(function() {
+    DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      trackInteractions: true,
+   })
+ })
+</script>
+```
+
+**Notes**:
+
+- The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+- The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM SDK.
+
+### Bundle sync
 
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
