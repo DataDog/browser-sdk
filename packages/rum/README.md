@@ -6,21 +6,25 @@ Datadog Real User Monitoring (RUM) enables you to visualize and analyze the real
 
 ## Setup
 
-### Datadog
-
 To set up Datadog RUM browser monitoring:
 
 1. In Datadog, navigate to the [Real User Monitoring page][1] and click the **New Application** button.
 2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Setup the Datadog RUM SDK [NPM](#npm-setup) or the [generated code snippet](#bundle-setup).
+3. Setup the Datadog RUM SDK via [npm](#npm), the [async generated code snippet](#bundle-async) or the [sync generated code snippet](#bundle-sync).
 4. Deploy the changes to your application. Once your deployment is live, Datadog collects events from user browsers.
 5. Visualize the [data collected][2] using Datadog [dashboards][3].
 
 **Note**: Your application shows up on the application list page as "pending" until Datadog starts receiving data.
 
+### Choose the right installation method
 
+|Installation method | Use case |
+| ------------------ | -------- |
+| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| Async bundle | This method is recommended for web applications with  performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| Sync bundle |	This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. However, this method might impact page load performance. |
 
-### NPM
+### npm
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
 
@@ -70,7 +74,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 **Notes**:
 
 - The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
-- The `window.DD_RUM` check is used to prevent issues if a loading failure occurs with the RUM SDK.
+- Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
 
 ### Bundle sync
 
