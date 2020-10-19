@@ -5,7 +5,7 @@ import {
   ErrorSource,
   filterErrors,
   formatUnknownError,
-  makeCaptureError,
+  makeAddError,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -294,18 +294,18 @@ describe('network error tracker', () => {
   })
 })
 
-describe('captureError', () => {
+describe('addError', () => {
   let filteredSubscriber: jasmine.Spy<(errorMessage: ErrorMessage) => void>
-  let captureError: ReturnType<typeof makeCaptureError>
+  let addError: ReturnType<typeof makeAddError>
   beforeEach(() => {
     const errorObservable = new Observable<ErrorMessage>()
     filteredSubscriber = jasmine.createSpy()
     errorObservable.subscribe(filteredSubscriber)
-    captureError = makeCaptureError(errorObservable)
+    addError = makeAddError(errorObservable)
   })
 
   it('notifies a new error on the observable', () => {
-    captureError({ error: new Error('foo'), startTime: 12 })
+    addError({ error: new Error('foo'), startTime: 12 })
 
     expect(filteredSubscriber.calls.count()).toBe(1)
     expect(filteredSubscriber.calls.argsFor(0)[0]).toEqual({
@@ -317,7 +317,7 @@ describe('captureError', () => {
   })
 
   it('should save the specified global context', () => {
-    captureError({ error: new Error('foo'), startTime: 12 }, { foo: 'bar' })
+    addError({ error: new Error('foo'), startTime: 12 }, { foo: 'bar' })
     expect(filteredSubscriber.calls.argsFor(0)[0].savedGlobalContext).toEqual({
       foo: 'bar',
     })

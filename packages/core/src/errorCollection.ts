@@ -28,7 +28,7 @@ export interface HttpContext {
   method: string
 }
 
-export interface CapturedError {
+export interface AddedError {
   startTime: number
   error: unknown
 }
@@ -44,7 +44,7 @@ export enum ErrorSource {
 export type ErrorObservable = Observable<ErrorMessage>
 let errorCollectionSingleton: {
   observable: ErrorObservable
-  captureError: ReturnType<typeof makeCaptureError>
+  addError: ReturnType<typeof makeAddError>
 }
 
 export function startErrorCollection(configuration: Configuration) {
@@ -54,7 +54,7 @@ export function startErrorCollection(configuration: Configuration) {
     startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     errorCollectionSingleton = {
-      captureError: makeCaptureError(errorObservable),
+      addError: makeAddError(errorObservable),
       observable: filterErrors(configuration, errorObservable),
     }
   }
@@ -141,10 +141,10 @@ export function stopRuntimeErrorTracking() {
   ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
-export function makeCaptureError(errorObservable: ErrorObservable) {
-  return (capturedError: CapturedError, savedGlobalContext?: Context) => {
-    const stackTrace = capturedError.error instanceof Error ? computeStackTrace(capturedError.error) : undefined
-    const { message, stack, kind } = formatUnknownError(stackTrace, capturedError.error, 'Captured')
+export function makeAddError(errorObservable: ErrorObservable) {
+  return (addedError: AddedError, savedGlobalContext?: Context) => {
+    const stackTrace = addedError.error instanceof Error ? computeStackTrace(addedError.error) : undefined
+    const { message, stack, kind } = formatUnknownError(stackTrace, addedError.error, 'Captured')
     errorObservable.notify({
       message,
       savedGlobalContext,
@@ -155,7 +155,7 @@ export function makeCaptureError(errorObservable: ErrorObservable) {
           origin: ErrorSource.SOURCE, // TODO
         },
       },
-      startTime: capturedError.startTime,
+      startTime: addedError.startTime,
     })
   }
 }

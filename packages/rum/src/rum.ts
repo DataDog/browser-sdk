@@ -49,7 +49,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   const lifeCycle = new LifeCycle()
 
   const isCollectingError = true
-  const { errorObservable, captureError, configuration, internalMonitoring } = commonInit(
+  const { errorObservable, addError, configuration, internalMonitoring } = commonInit(
     userConfiguration,
     buildEnv,
     isCollectingError
@@ -93,7 +93,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
 
-    captureError,
+    addError,
   }
 }
 

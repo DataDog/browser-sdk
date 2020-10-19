@@ -67,7 +67,7 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
   return {
     configuration,
     internalMonitoring,
-    captureError: errorCollection ? errorCollection.captureError : noop,
+    addError: errorCollection ? errorCollection.addError : noop,
     errorObservable: errorCollection ? errorCollection.observable : new Observable<ErrorMessage>(),
   }
 }

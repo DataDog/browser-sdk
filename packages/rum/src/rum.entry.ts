@@ -1,7 +1,7 @@
 import {
+  AddedError,
   BoundedBuffer,
   buildCookieOptions,
-  CapturedError,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
   Context,
@@ -47,9 +47,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
   }
 
-  const beforeInitCaptureError = new BoundedBuffer<[CapturedError, Context]>()
-  let captureErrorStrategy: ReturnType<StartRum>['captureError'] = (capturedError) => {
-    beforeInitCaptureError.add([capturedError, deepClone(globalContextManager.get())])
+  const beforeInitAddError = new BoundedBuffer<[AddedError, Context]>()
+  let addErrorStrategy: ReturnType<StartRum>['addError'] = (addedError) => {
+    beforeInitAddError.add([addedError, deepClone(globalContextManager.get())])
   }
 
   return makeGlobal({
@@ -66,12 +66,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       }
 
       ;({
+        addError: addErrorStrategy,
         addUserAction: addUserActionStrategy,
-        captureError: captureErrorStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, globalContextManager.get))
       beforeInitAddUserAction.drain(([action, context]) => addUserActionStrategy(action, context))
-      beforeInitCaptureError.drain(([error, context]) => captureErrorStrategy(error, context))
+      beforeInitAddError.drain(([error, context]) => addErrorStrategy(error, context))
 
       isAlreadyInitialized = true
     }),
@@ -95,8 +95,8 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
-    captureError: monitor((error: unknown) => {
-      captureErrorStrategy({
+    addError: monitor((error: unknown) => {
+      addErrorStrategy({
         error,
         startTime: performance.now(),
       })
