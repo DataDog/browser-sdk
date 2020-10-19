@@ -77,15 +77,19 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
  * strategy: find the minimal domain on which cookies are allowed to be set
  * https://web.dev/same-site-same-origin/#site
  */
+let getCurrentSiteCache: string | undefined
 export function getCurrentSite() {
-  const testCookieName = 'dd_site_test'
-  const testCookieValue = 'test'
+  if (getCurrentSiteCache === undefined) {
+    const testCookieName = 'dd_site_test'
+    const testCookieValue = 'test'
 
-  const domainLevels = window.location.hostname.split('.')
-  let candidateDomain = domainLevels.pop()
-  while (domainLevels.length && !getCookie(testCookieName)) {
-    candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
-    setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+    const domainLevels = window.location.hostname.split('.')
+    let candidateDomain = domainLevels.pop()
+    while (domainLevels.length && !getCookie(testCookieName)) {
+      candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
+      setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+    }
+    getCurrentSiteCache = candidateDomain
   }
-  return candidateDomain
+  return getCurrentSiteCache
 }
