@@ -1,5 +1,3 @@
-import { getHash, getPathName, getSearch } from '@datadog/browser-core'
-
 import { LifeCycleEventType } from '../src/lifeCycle'
 import {
   RumPerformanceLongTaskTiming,
@@ -12,7 +10,7 @@ import {
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../src/trackPageActivities'
-import { AutoUserAction, CustomUserAction, UserActionType } from '../src/userActionCollection'
+import { ActionType, AutoUserAction, CustomUserAction } from '../src/userActionCollection'
 import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from '../src/viewCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
@@ -31,11 +29,11 @@ const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
   },
   name: 'foo',
   startTime: 123,
-  type: UserActionType.CUSTOM,
+  type: ActionType.CUSTOM,
 }
 const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {
   name: 'foo',
-  type: UserActionType.CLICK,
+  type: ActionType.CLICK,
 }
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',

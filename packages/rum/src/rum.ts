@@ -3,18 +3,17 @@ import {
   commonInit,
   Configuration,
   Context,
-  ErrorContext,
   ErrorMessage,
   generateUUID,
   getTimestamp,
-  HttpContext,
   includes,
   msToNs,
   RequestType,
-  ResourceKind,
+  ResourceType,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startRumAssembly } from './assembly'
+import { startRumAssemblyV2 } from './assemblyV2'
 import { startRumBatch } from './batch'
 
 import { buildEnv } from './buildEnv'
@@ -31,107 +30,20 @@ import {
   computeResourceKind,
   computeSize,
 } from './resourceUtils'
-import { InternalContext, RumUserConfiguration } from './rum.entry'
+import { RumUserConfiguration } from './rum.entry'
 import { RumSession, startRumSession } from './rumSession'
-import { CustomUserAction, startUserActionCollection, UserActionMeasures, UserActionType } from './userActionCollection'
-import { startViewCollection, ViewLoadingType, ViewMeasures } from './viewCollection'
-
-export enum RumEventCategory {
-  USER_ACTION = 'user_action',
-  ERROR = 'error',
-  LONG_TASK = 'long_task',
-  VIEW = 'view',
-  RESOURCE = 'resource',
-}
-
-interface PerformanceResourceDetailsElement {
-  duration: number
-  start: number
-}
-
-export interface PerformanceResourceDetails {
-  redirect?: PerformanceResourceDetailsElement
-  dns?: PerformanceResourceDetailsElement
-  connect?: PerformanceResourceDetailsElement
-  ssl?: PerformanceResourceDetailsElement
-  firstByte: PerformanceResourceDetailsElement
-  download: PerformanceResourceDetailsElement
-}
-
-export interface RumResourceEvent {
-  date: number
-  duration: number
-  evt: {
-    category: RumEventCategory.RESOURCE
-  }
-  http: {
-    performance?: PerformanceResourceDetails
-    method?: string
-    statusCode?: number
-    url: string
-  }
-  network: {
-    bytesWritten?: number
-  }
-  resource: {
-    kind: ResourceKind
-    id?: string // only for traced requests
-  }
-  _dd?: {
-    traceId: string
-    spanId?: string // not available for initial document tracing
-  }
-}
-
-export interface RumErrorEvent {
-  date: number
-  http?: HttpContext
-  error: ErrorContext
-  evt: {
-    category: RumEventCategory.ERROR
-  }
-  message: string
-}
-
-export interface RumViewEvent {
-  date: number
-  duration: number
-  evt: {
-    category: RumEventCategory.VIEW
-  }
-  rum: {
-    documentVersion: number
-  }
-  view: {
-    loadingTime?: number
-    loadingType: ViewLoadingType
-    measures: ViewMeasures
-  }
-}
-
-export interface RumLongTaskEvent {
-  date: number
-  duration: number
-  evt: {
-    category: RumEventCategory.LONG_TASK
-  }
-}
-
-export interface RumUserActionEvent {
-  date?: number
-  duration?: number
-  evt: {
-    category: RumEventCategory.USER_ACTION
-    name: string
-  }
-  userAction: {
-    id?: string
-    type: UserActionType
-    measures?: UserActionMeasures
-  }
-}
-
-export type RawRumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumUserActionEvent
+import {
+  InternalContext,
+  RawRumEvent,
+  RumErrorEvent,
+  RumEventCategory,
+  RumLongTaskEvent,
+  RumResourceEvent,
+  RumUserActionEvent,
+  RumViewEvent,
+} from './types'
+import { CustomUserAction, startUserActionCollection } from './userActionCollection'
+import { startViewCollection } from './viewCollection'
 
 export function startRum(userConfiguration: RumUserConfiguration, getGlobalContext: () => Context) {
   const lifeCycle = new LifeCycle()
@@ -208,8 +120,9 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
+  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   trackRumEvents(lifeCycle, session)
-  startLongTaskCollection(lifeCycle)
+  startLongTaskCollection(lifeCycle, configuration)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -344,7 +257,7 @@ function trackRequests(
       return
     }
     const timing = matchRequestTiming(request)
-    const kind = request.type === RequestType.XHR ? ResourceKind.XHR : ResourceKind.FETCH
+    const kind = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
     const startTime = timing ? timing.startTime : request.startTime
     const hasBeenTraced = request.traceId && request.spanId
     handler(startTime, {
@@ -399,7 +312,7 @@ export function handleResourceEntry(
     return
   }
   const resourceKind = computeResourceKind(entry)
-  if (includes([ResourceKind.XHR, ResourceKind.FETCH], resourceKind)) {
+  if (includes([ResourceType.XHR, ResourceType.FETCH], resourceKind)) {
     return
   }
   handler(entry.startTime, {

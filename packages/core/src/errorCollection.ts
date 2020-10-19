@@ -18,7 +18,7 @@ export interface ErrorMessage {
 export interface ErrorContext {
   kind?: string
   stack?: string
-  origin: ErrorOrigin
+  origin: ErrorSource
 }
 
 export interface HttpContext {
@@ -27,7 +27,7 @@ export interface HttpContext {
   method: string
 }
 
-export enum ErrorOrigin {
+export enum ErrorSource {
   AGENT = 'agent',
   CONSOLE = 'console',
   NETWORK = 'network',
@@ -61,7 +61,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
       filteredErrorObservable.notify({
         context: {
           error: {
-            origin: ErrorOrigin.AGENT,
+            origin: ErrorSource.AGENT,
           },
         },
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
@@ -82,7 +82,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     errorObservable.notify({
       context: {
         error: {
-          origin: ErrorOrigin.CONSOLE,
+          origin: ErrorSource.CONSOLE,
         },
       },
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
@@ -134,7 +134,7 @@ export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
       error: {
         stack,
         kind: stackTrace.name,
-        origin: ErrorOrigin.SOURCE,
+        origin: ErrorSource.SOURCE,
       },
     },
     startTime: performance.now(),
@@ -162,7 +162,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
       errorObservable.notify({
         context: {
           error: {
-            origin: ErrorOrigin.NETWORK,
+            origin: ErrorSource.NETWORK,
             stack: truncateResponse(request.response, configuration) || 'Failed to load',
           },
           http: {
