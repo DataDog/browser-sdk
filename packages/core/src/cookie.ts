@@ -1,4 +1,4 @@
-import { findCommaSeparatedValue, ONE_SECOND } from './utils'
+import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from './utils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 
@@ -80,7 +80,9 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
 let getCurrentSiteCache: string | undefined
 export function getCurrentSite() {
   if (getCurrentSiteCache === undefined) {
-    const testCookieName = 'dd_site_test'
+    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
+    // the test cookie lifetime
+    const testCookieName = `dd_site_test_${generateUUID()}`
     const testCookieValue = 'test'
 
     const domainLevels = window.location.hostname.split('.')
