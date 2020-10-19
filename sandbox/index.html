@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandbox</title>
+    <script src="http://localhost:8080/datadog-rum.js"></script>
+    <script src="http://localhost:8080/datadog-logs.js"></script>
+    <script>
+      DD_RUM.init({
+        clientToken: 'xxx',
+        applicationId: 'xxx',
+      })
+      DD_LOGS.init({
+        clientToken: 'xxx',
+      })
+    </script>
+  </head>
+  <body></body>
+</html>
