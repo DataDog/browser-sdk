@@ -185,17 +185,27 @@ export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, eve
   })
 }
 
-function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: RumErrorEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, startTime, context }: ErrorMessage) => {
-    handler(startTime, {
-      message,
-      date: getTimestamp(startTime),
-      evt: {
-        category: RumEventCategory.ERROR,
-      },
-      ...context,
-    })
-  })
+function trackErrors(
+  lifeCycle: LifeCycle,
+  handler: (startTime: number, event: RumErrorEvent, savedGlobalContext?: Context) => void
+) {
+  lifeCycle.subscribe(
+    LifeCycleEventType.ERROR_COLLECTED,
+    ({ message, startTime, context, savedGlobalContext }: ErrorMessage) => {
+      handler(
+        startTime,
+        {
+          message,
+          date: getTimestamp(startTime),
+          evt: {
+            category: RumEventCategory.ERROR,
+          },
+          ...context,
+        },
+        savedGlobalContext
+      )
+    }
+  )
 }
 
 function trackCustomUserAction(
