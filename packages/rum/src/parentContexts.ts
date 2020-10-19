@@ -1,27 +1,14 @@
-import { Context, monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RumSession } from './rumSession'
+import { ActionContext, ViewContext } from './types'
+import { ActionContextV2, ViewContextV2 } from './typesV2'
 import { AutoActionCreatedEvent, AutoUserAction } from './userActionCollection'
 import { ViewCreatedEvent } from './viewCollection'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
-
-export interface ViewContext extends Context {
-  sessionId: string | undefined
-  view: {
-    id: string
-    url: string
-    referrer: string
-  }
-}
-
-export interface ActionContext extends Context {
-  userAction: {
-    id: string
-  }
-}
 
 interface PreviousContext<T> {
   startTime: number
@@ -31,7 +18,9 @@ interface PreviousContext<T> {
 
 export interface ParentContexts {
   findAction: (startTime?: number) => ActionContext | undefined
+  findActionV2: (startTime?: number) => ActionContextV2 | undefined
   findView: (startTime?: number) => ViewContext | undefined
+  findViewV2: (startTime?: number) => ViewContextV2 | undefined
   stop: () => void
 }
 
@@ -142,15 +131,39 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     return undefined
   }
 
-  return {
+  const parentContexts: ParentContexts = {
     findAction: (startTime) => {
       return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
     },
+    findActionV2: (startTime) => {
+      const actionContext = parentContexts.findAction(startTime)
+      if (!actionContext) {
+        return
+      }
+      return {
+        action: {
+          id: actionContext.userAction.id,
+        },
+      }
+    },
     findView: (startTime) => {
       return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
+    },
+    findViewV2: (startTime) => {
+      const viewContext = parentContexts.findView(startTime)
+      if (!viewContext) {
+        return
+      }
+      return {
+        session: {
+          id: viewContext.sessionId,
+        },
+        view: viewContext.view,
+      }
     },
     stop: () => {
       window.clearInterval(clearOldContextsInterval)
     },
   }
+  return parentContexts
 }

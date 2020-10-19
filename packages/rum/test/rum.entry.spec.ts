@@ -1,6 +1,6 @@
 import { ONE_SECOND } from '@datadog/browser-core'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from '../src/rum.entry'
-import { UserActionType } from '../src/userActionCollection'
+import { ActionType } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
 
 const noopStartRum = () => ({
@@ -164,7 +164,7 @@ describe('rum entry', () => {
           context: { bar: 'baz' },
           name: 'foo',
           startTime: jasmine.any(Number),
-          type: UserActionType.CUSTOM,
+          type: ActionType.CUSTOM,
         },
         {},
       ])

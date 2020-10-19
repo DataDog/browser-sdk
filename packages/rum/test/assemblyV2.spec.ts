@@ -1,45 +1,49 @@
 import { Context } from '@datadog/browser-core'
-import { RumEventCategory } from '../src'
 import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { RawRumEvent } from '../src/types'
+import { RawRumEventV2, RumEventType } from '../src/typesV2'
 import { setup, TestSetupBuilder } from './specHelper'
 
 interface ServerRumEvents {
-  application_id: string
-  user_action: {
+  application: {
+    id: string
+  }
+  action: {
     id: string
   }
   date: number
-  evt: {
-    category: string
+  type: string
+  session: {
+    id: string
   }
-  session_id: string
   view: {
     id: string
     referrer: string
   }
-  network?: {
-    bytes_written: number
+  long_task?: {
+    duration: number
+  }
+  _dd: {
+    format_version: 2
   }
 }
 
-describe('rum assembly', () => {
+describe('rum assembly v2', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
   let setGlobalContext: (context: Context) => void
   let serverRumEvents: ServerRumEvents[]
 
   function generateRawRumEvent(
-    category: RumEventCategory,
-    properties?: Partial<RawRumEvent>,
+    type: RumEventType,
+    properties?: Partial<RawRumEventV2>,
     savedGlobalContext?: Context,
     customerContext?: Context
   ) {
-    const viewEvent = { evt: { category }, ...properties }
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+    const event = { type, ...properties }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
       customerContext,
       savedGlobalContext,
-      rawRumEvent: viewEvent as RawRumEvent,
+      rawRumEvent: event as RawRumEventV2,
       startTime: 0,
     })
   }
@@ -47,13 +51,15 @@ describe('rum assembly', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withParentContexts({
-        findAction: () => ({
-          userAction: {
+        findActionV2: () => ({
+          action: {
             id: '7890',
           },
         }),
-        findView: () => ({
-          sessionId: '1234',
+        findViewV2: () => ({
+          session: {
+            id: '1234',
+          },
           view: {
             id: 'abcde',
             referrer: 'url',
@@ -61,11 +67,11 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .withAssembly()
+      .withAssemblyV2()
     ;({ lifeCycle, setGlobalContext } = setupBuilder.build())
 
     serverRumEvents = []
-    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
+    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, ({ serverRumEvent }) =>
       serverRumEvents.push((serverRumEvent as unknown) as ServerRumEvents)
     )
   })
@@ -76,28 +82,28 @@ describe('rum assembly', () => {
 
   describe('events', () => {
     it('should have snake cased attributes', () => {
-      generateRawRumEvent(RumEventCategory.RESOURCE, { network: { bytesWritten: 2 } })
+      generateRawRumEvent(RumEventType.LONG_TASK, { longTask: { duration: 2 } })
 
-      expect(serverRumEvents[0].network!.bytes_written).toBe(2)
+      expect(serverRumEvents[0].long_task!.duration).toBe(2)
     })
   })
 
   describe('rum context', () => {
     it('should be merged with event attributes', () => {
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
 
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
     })
 
     it('should be snake cased', () => {
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
 
-      expect(serverRumEvents[0].application_id).toBe('appId')
+      expect(serverRumEvents[0]._dd.format_version).toBe(2)
     })
 
     it('should be overwritten by event attributes', () => {
-      generateRawRumEvent(RumEventCategory.VIEW, { date: 10 })
+      generateRawRumEvent(RumEventType.VIEW, { date: 10 })
 
       expect(serverRumEvents[0].date).toBe(10)
     })
@@ -106,7 +112,7 @@ describe('rum assembly', () => {
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
       setGlobalContext({ bar: 'foo' })
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
 
       expect((serverRumEvents[0] as any).bar).toEqual('foo')
     })
@@ -114,9 +120,9 @@ describe('rum assembly', () => {
     it('should ignore subsequent context mutation', () => {
       const globalContext = { bar: 'foo' }
       setGlobalContext(globalContext)
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
       delete globalContext.bar
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
 
       expect((serverRumEvents[0] as any).bar).toEqual('foo')
       expect((serverRumEvents[1] as any).bar).toBeUndefined()
@@ -124,7 +130,7 @@ describe('rum assembly', () => {
 
     it('should not be automatically snake cased', () => {
       setGlobalContext({ fooBar: 'foo' })
-      generateRawRumEvent(RumEventCategory.VIEW)
+      generateRawRumEvent(RumEventType.VIEW)
 
       expect(((serverRumEvents[0] as any) as any).fooBar).toEqual('foo')
     })
@@ -132,7 +138,7 @@ describe('rum assembly', () => {
     it('should ignore the current global context when a saved global context is provided', () => {
       setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
 
-      generateRawRumEvent(RumEventCategory.VIEW, undefined, { replacedContext: 'a' })
+      generateRawRumEvent(RumEventType.VIEW, undefined, { replacedContext: 'a' })
 
       expect((serverRumEvents[0] as any).replacedContext).toEqual('a')
       expect((serverRumEvents[0] as any).addedContext).toEqual(undefined)
@@ -141,13 +147,13 @@ describe('rum assembly', () => {
 
   describe('customer context', () => {
     it('should be merged with event attributes', () => {
-      generateRawRumEvent(RumEventCategory.VIEW, undefined, undefined, { foo: 'bar' })
+      generateRawRumEvent(RumEventType.VIEW, undefined, undefined, { foo: 'bar' })
 
       expect((serverRumEvents[0] as any).foo).toEqual('bar')
     })
 
     it('should not be automatically snake cased', () => {
-      generateRawRumEvent(RumEventCategory.VIEW, undefined, undefined, { fooBar: 'foo' })
+      generateRawRumEvent(RumEventType.VIEW, undefined, undefined, { fooBar: 'foo' })
 
       expect(((serverRumEvents[0] as any) as any).fooBar).toEqual('foo')
     })
@@ -155,14 +161,14 @@ describe('rum assembly', () => {
 
   describe('action context', () => {
     it('should be added on some event categories', () => {
-      ;[RumEventCategory.RESOURCE, RumEventCategory.LONG_TASK, RumEventCategory.ERROR].forEach((category) => {
+      ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((category) => {
         generateRawRumEvent(category)
-        expect(serverRumEvents[0].user_action.id).toBeDefined()
+        expect(serverRumEvents[0].action.id).toBeDefined()
         serverRumEvents = []
       })
-      ;[RumEventCategory.VIEW, RumEventCategory.USER_ACTION].forEach((category) => {
+      ;[RumEventType.VIEW, RumEventType.ACTION].forEach((category) => {
         generateRawRumEvent(category)
-        expect(serverRumEvents[0].user_action).not.toBeDefined()
+        expect(serverRumEvents[0].action).not.toBeDefined()
         serverRumEvents = []
       })
     })

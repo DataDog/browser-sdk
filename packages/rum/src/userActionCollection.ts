@@ -4,12 +4,12 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
 import { waitIdlePageActivity } from './trackPageActivities'
 
-export enum UserActionType {
+export enum ActionType {
   CLICK = 'click',
   CUSTOM = 'custom',
 }
 
-type AutoUserActionType = UserActionType.CLICK
+type AutoUserActionType = ActionType.CLICK
 
 export interface UserActionMeasures {
   errorCount: number
@@ -18,7 +18,7 @@ export interface UserActionMeasures {
 }
 
 export interface CustomUserAction {
-  type: UserActionType.CUSTOM
+  type: ActionType.CUSTOM
   name: string
   startTime: number
   context?: Context
@@ -56,7 +56,7 @@ export function startUserActionCollection(lifeCycle: LifeCycle) {
       return
     }
 
-    userAction.create(UserActionType.CLICK, name)
+    userAction.create(ActionType.CLICK, name)
   }
 
   return {

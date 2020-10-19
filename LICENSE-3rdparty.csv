@@ -13,6 +13,7 @@ dev,@wdio/local-runner,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/selenium-standalone-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/spec-reporter,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
+dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,codecov,MIT,Copyright 2014 Gregg Caines
 dev,cors,MIT,Copyright 2013 Troy Goode
