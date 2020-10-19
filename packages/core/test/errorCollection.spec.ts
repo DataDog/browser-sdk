@@ -310,9 +310,17 @@ describe('addError', () => {
     expect(filteredSubscriber.calls.count()).toBe(1)
     expect(filteredSubscriber.calls.argsFor(0)[0]).toEqual({
       context: { error: { kind: 'Error', stack: jasmine.stringMatching('Error: foo'), origin: ErrorSource.SOURCE } },
+      customerContext: undefined,
       message: 'foo',
       savedGlobalContext: undefined,
       startTime: 12,
+    })
+  })
+
+  it('should save the specified customer context', () => {
+    addError({ error: new Error('foo'), startTime: 12, context: { foo: 'bar' } })
+    expect(filteredSubscriber.calls.argsFor(0)[0].customerContext).toEqual({
+      foo: 'bar',
     })
   })
 

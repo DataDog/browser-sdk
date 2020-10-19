@@ -237,6 +237,7 @@ describe('rum entry', () => {
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       expect(addErrorSpy.calls.argsFor(0)).toEqual([
         {
+          context: undefined,
           error: new Error('foo'),
           startTime: jasmine.any(Number),
         },
@@ -265,6 +266,18 @@ describe('rum entry', () => {
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[1]).toEqual({
+          foo: 'bar',
+        })
+      })
+
+      it('stores a deep copy of the error context', () => {
+        const context = { foo: 'bar' }
+        rumGlobal.addError(new Error('message'), context)
+        context.foo = 'baz'
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
           foo: 'bar',
         })
       })

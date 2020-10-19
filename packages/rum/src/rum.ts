@@ -189,11 +189,11 @@ export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, eve
 
 function trackErrors(
   lifeCycle: LifeCycle,
-  handler: (startTime: number, event: RumErrorEvent, savedGlobalContext?: Context) => void
+  handler: (startTime: number, event: RumErrorEvent, savedGlobalContext?: Context, customerContext?: Context) => void
 ) {
   lifeCycle.subscribe(
     LifeCycleEventType.ERROR_COLLECTED,
-    ({ message, startTime, context, savedGlobalContext }: ErrorMessage) => {
+    ({ message, startTime, context, customerContext, savedGlobalContext }: ErrorMessage) => {
       handler(
         startTime,
         {
@@ -204,7 +204,8 @@ function trackErrors(
           },
           ...context,
         },
-        savedGlobalContext
+        savedGlobalContext,
+        customerContext
       )
     }
   )

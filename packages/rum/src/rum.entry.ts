@@ -95,9 +95,10 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
-    addError: monitor((error: unknown) => {
+    addError: monitor((error: unknown, context?: Context) => {
       addErrorStrategy({
         error,
+        context: deepClone(context),
         startTime: performance.now(),
       })
     }),

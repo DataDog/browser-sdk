@@ -13,6 +13,7 @@ export interface ErrorMessage {
     error: ErrorContext
     http?: HttpContext
   }
+  customerContext?: Context
   savedGlobalContext?: Context
 }
 
@@ -31,6 +32,7 @@ export interface HttpContext {
 export interface AddedError {
   startTime: number
   error: unknown
+  context?: Context
 }
 
 export enum ErrorSource {
@@ -155,6 +157,7 @@ export function makeAddError(errorObservable: ErrorObservable) {
           origin: ErrorSource.SOURCE, // TODO
         },
       },
+      customerContext: addedError.context,
       startTime: addedError.startTime,
     })
   }
