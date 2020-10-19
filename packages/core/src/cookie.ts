@@ -62,7 +62,9 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
     return false
   }
   try {
-    const testCookieName = 'dd_cookie_test'
+    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
+    // the test cookie lifetime
+    const testCookieName = `dd_cookie_test_${generateUUID()}`
     const testCookieValue = 'test'
     setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
     return getCookie(testCookieName) === testCookieValue
