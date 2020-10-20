@@ -10,7 +10,7 @@ To set up Datadog RUM browser monitoring:
 
 1. In Datadog, navigate to the [Real User Monitoring page][1] and click the **New Application** button.
 2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Setup the Datadog RUM SDK via [npm](#npm), the [async generated code snippet](#bundle-async) or the [sync generated code snippet](#bundle-sync).
+3. Setup the Datadog RUM SDK via [npm](#npm) or via one of the hosted versions: [CDN async](#cdn-async) or [CDN sync](#cdn-sync).
 4. Deploy the changes to your application. Once your deployment is live, Datadog collects events from user browsers.
 5. Visualize the [data collected][2] using Datadog [dashboards][3].
 
@@ -21,8 +21,8 @@ To set up Datadog RUM browser monitoring:
 |Installation method | Use case |
 | ------------------ | -------- |
 | npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
-| Async bundle | This method is recommended for web applications with  performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
-| Sync bundle |	This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. However, this method might impact page load performance. |
+| CDN async | This method is recommended for web applications with  performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| CDN sync |	This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance. |
 
 ### npm
 
@@ -45,7 +45,7 @@ datadogRum.init({
 
 **Note**: The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
-### Bundle async
+### CDN async
 
 Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
 
@@ -76,7 +76,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 - The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 - Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
 
-### Bundle sync
+### CDN sync
 
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
