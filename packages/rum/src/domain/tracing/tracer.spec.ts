@@ -6,7 +6,7 @@ import {
   objectEntries,
   XhrCompleteContext,
 } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { setup, TestSetupBuilder } from '../../../test/specHelper'
 import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {

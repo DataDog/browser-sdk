@@ -13,9 +13,9 @@ import {
   stubXhr,
   withXhr,
 } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { Tracer } from '../tracer'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
+import { Tracer } from './tracing/tracer'
 
 const configuration = {
   ...DEFAULT_CONFIGURATION,

@@ -18,9 +18,9 @@ import { startRumAssembly } from '../domain/assembly'
 import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
+import { RequestCompleteEvent, startRequestCollection } from '../domain/requestCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { matchRequestTiming } from '../domain/rumEventsCollection/matchRequestTiming'
-import { RequestCompleteEvent, startRequestCollection } from '../domain/rumEventsCollection/requestCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,

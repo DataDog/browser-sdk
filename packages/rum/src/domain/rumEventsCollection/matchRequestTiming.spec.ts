@@ -1,8 +1,8 @@
 import { isIE } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RequestCompleteEvent } from '../requestCollection'
 
 import { matchRequestTiming } from './matchRequestTiming'
-import { RequestCompleteEvent } from './requestCollection'
 
 describe('matchRequestTiming', () => {
   const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100, duration: 500 }

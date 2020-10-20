@@ -4,7 +4,7 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { RequestCompleteEvent } from '../domain/rumEventsCollection/requestCollection'
+import { RequestCompleteEvent } from '../domain/requestCollection'
 import { ActionType, AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
 import {
   SESSION_KEEP_ALIVE_INTERVAL,

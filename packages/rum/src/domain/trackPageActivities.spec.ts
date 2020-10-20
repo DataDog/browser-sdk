@@ -1,7 +1,7 @@
 import { noop, Observable } from '@datadog/browser-core'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RequestCompleteEvent } from './rumEventsCollection/requestCollection'
+import { RequestCompleteEvent } from './requestCollection'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
