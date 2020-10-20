@@ -44,6 +44,7 @@ datadogLogs.init({
 ```html
 <script src="https://www.datadoghq-browser-agent.com/datadog-logs.js">
   <script>
+  window.DD_LOGS &&
     window.DD_LOGS.init({
       clientToken: 'XXX',
       site: 'datadoghq.com',
