@@ -7,7 +7,7 @@ import {
   stopSessionManagement,
 } from '@datadog/browser-core'
 
-import { LOGGER_SESSION_KEY, LoggerTrackingType, startLoggerSession } from '../src/loggerSession'
+import { LOGGER_SESSION_KEY, LoggerTrackingType, startLoggerSession } from './loggerSession'
 
 describe('logger session', () => {
   const DURATION = 123456

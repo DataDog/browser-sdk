@@ -10,8 +10,8 @@ import {
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
-import { Logger, LogsMessage, StatusType } from '../src/logger'
-import { assembleMessageContexts, doStartLogs } from '../src/logs'
+import { Logger, LogsMessage, StatusType } from '../domain/logger'
+import { assembleMessageContexts, doStartLogs } from './logs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }

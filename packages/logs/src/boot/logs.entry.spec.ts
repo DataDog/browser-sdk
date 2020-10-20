@@ -1,7 +1,7 @@
 import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
 
-import { HandlerType, LogsMessage, StatusType } from '../src/logger'
-import { LogsGlobal, makeLogsGlobal, StartLogs } from '../src/logs.entry'
+import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
+import { LogsGlobal, makeLogsGlobal, StartLogs } from './logs.entry'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 

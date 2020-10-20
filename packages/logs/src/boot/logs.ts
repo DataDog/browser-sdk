@@ -11,9 +11,9 @@ import {
   HttpRequest,
   InternalMonitoring,
 } from '@datadog/browser-core'
+import { Logger, LogsMessage } from '../domain/logger'
+import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { buildEnv } from './buildEnv'
-import { Logger, LogsMessage } from './logger'
-import { LoggerSession, startLoggerSession } from './loggerSession'
 import { LogsUserConfiguration } from './logs.entry'
 
 export function startLogs(

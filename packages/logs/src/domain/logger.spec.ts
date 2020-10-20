@@ -1,4 +1,4 @@
-import { HandlerType, Logger, LogsMessage, STATUSES, StatusType } from '../src/logger'
+import { HandlerType, Logger, LogsMessage, STATUSES, StatusType } from './logger'
 
 describe('Logger', () => {
   let logger: Logger
