@@ -1,8 +1,8 @@
-import { setup, TestSetupBuilder } from '../../../test/specHelper'
-import { RumPerformanceEntry } from '../../browser/performanceCollection'
-import { RumEventCategory } from '../../index'
-import { RumEventType } from '../../typesV2'
-import { LifeCycleEventType } from '../lifeCycle'
+import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { RumPerformanceEntry } from '../../../browser/performanceCollection'
+import { RumEventCategory } from '../../../index'
+import { RumEventType } from '../../../typesV2'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('long task collection', () => {
