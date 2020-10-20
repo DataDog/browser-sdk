@@ -42,14 +42,14 @@ datadogLogs.init({
 ### CDN sync
 
 ```html
-<script src='https://www.datadoghq-browser-agent.com/datadog-logs.js'>
-<script>
-  window.DD_LOGS.init({
-    clientToken: 'XXX',
-    site: 'datadoghq.com',
-    forwardErrorsToLogs: true,
-    sampleRate: 100,
-  });
+<script src="https://www.datadoghq-browser-agent.com/datadog-logs.js">
+  <script>
+    window.DD_LOGS.init({
+      clientToken: 'XXX',
+      site: 'datadoghq.com',
+      forwardErrorsToLogs: true,
+      sampleRate: 100,
+    });
 </script>
 ```
 
