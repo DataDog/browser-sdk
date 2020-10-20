@@ -50,7 +50,7 @@ datadogLogs.init({
       site: 'datadoghq.com',
       forwardErrorsToLogs: true,
       sampleRate: 100,
-    });
+    })
 </script>
 ```
 
