@@ -49,6 +49,7 @@ datadogRum.init({
 
 Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
 
+<!-- prettier-ignore -->
 ```html
 <script>
  (function(h,o,u,n,d) {

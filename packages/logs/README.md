@@ -20,6 +20,7 @@ datadogLogs.init({
 
 ### CDN async
 
+<!-- prettier-ignore -->
 ```html
 <script>
  (function(h,o,u,n,d) {
