@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from '../src/rum.entry'
 import { ActionType } from '../src/userActionCollection'
 import { setup, TestSetupBuilder } from './specHelper'
@@ -239,10 +239,25 @@ describe('rum entry', () => {
         {
           context: undefined,
           error: new Error('foo'),
+          source: ErrorSource.CUSTOM,
           startTime: jasmine.any(Number),
         },
         {},
       ])
+    })
+
+    it('allows setting an ErrorSource', () => {
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
+      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
+    })
+
+    it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
+      const consoleSpy = spyOn(console, 'error')
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.addError(new Error('foo'), undefined, 'invalid' as ErrorSource)
+      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
+      expect(consoleSpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
 
     describe('save context when capturing an error', () => {

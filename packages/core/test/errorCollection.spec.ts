@@ -306,11 +306,11 @@ describe('addError', () => {
   })
 
   it('notifies a new error on the observable', () => {
-    addError({ error: new Error('foo'), startTime: 12 })
+    addError({ error: new Error('foo'), startTime: 12, source: ErrorSource.CUSTOM })
 
     expect(filteredSubscriber.calls.count()).toBe(1)
     expect(filteredSubscriber.calls.argsFor(0)[0]).toEqual({
-      context: { error: { kind: 'Error', stack: jasmine.stringMatching('Error: foo'), origin: ErrorSource.SOURCE } },
+      context: { error: { kind: 'Error', stack: jasmine.stringMatching('Error: foo'), origin: ErrorSource.CUSTOM } },
       customerContext: undefined,
       message: 'foo',
       savedGlobalContext: undefined,
@@ -319,14 +319,14 @@ describe('addError', () => {
   })
 
   it('should save the specified customer context', () => {
-    addError({ error: new Error('foo'), startTime: 12, context: { foo: 'bar' } })
+    addError({ error: new Error('foo'), startTime: 12, context: { foo: 'bar' }, source: ErrorSource.CUSTOM })
     expect(filteredSubscriber.calls.argsFor(0)[0].customerContext).toEqual({
       foo: 'bar',
     })
   })
 
   it('should save the specified global context', () => {
-    addError({ error: new Error('foo'), startTime: 12 }, { foo: 'bar' })
+    addError({ error: new Error('foo'), startTime: 12, source: ErrorSource.CUSTOM }, { foo: 'bar' })
     expect(filteredSubscriber.calls.argsFor(0)[0].savedGlobalContext).toEqual({
       foo: 'bar',
     })

@@ -8,10 +8,12 @@ import {
   createContextManager,
   deepClone,
   defineGlobal,
+  ErrorSource,
   getGlobalObject,
   isPercentage,
   makeGlobal,
   monitor,
+  objectValues,
   UserConfiguration,
 } from '@datadog/browser-core'
 
@@ -95,10 +97,18 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
-    addError: monitor((error: unknown, context?: Context) => {
+    addError: monitor((error: unknown, context?: Context, source: ErrorSource = ErrorSource.CUSTOM) => {
+      let checkedSource
+      if (objectValues(ErrorSource).indexOf(source) >= 0) {
+        checkedSource = source
+      } else {
+        console.error(`DD_RUM.addError: Invalid source '${source}'`)
+        checkedSource = ErrorSource.CUSTOM
+      }
       addErrorStrategy({
         error,
         context: deepClone(context),
+        source: checkedSource,
         startTime: performance.now(),
       })
     }),

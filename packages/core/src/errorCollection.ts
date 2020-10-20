@@ -33,6 +33,7 @@ export interface AddedError {
   startTime: number
   error: unknown
   context?: Context
+  source: ErrorSource
 }
 
 export enum InternalErrorSource {
@@ -44,6 +45,7 @@ export enum InternalErrorSource {
 export enum ErrorSource {
   NETWORK = 'network',
   SOURCE = 'source',
+  CUSTOM = 'custom',
 }
 
 type AnyErrorSource = ErrorSource | InternalErrorSource
@@ -159,7 +161,7 @@ export function makeAddError(errorObservable: ErrorObservable) {
         error: {
           kind,
           stack,
-          origin: ErrorSource.SOURCE, // TODO
+          origin: addedError.source,
         },
       },
       customerContext: addedError.context,
