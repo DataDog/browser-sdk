@@ -170,22 +170,6 @@ init(configuration: {
 })
 ```
 
-### Name click actions
-
-The RUM library uses various strategies to automatically name click actions. If you want more control, define a `data-dd-action-name` attribute on clickable elements (or any of their parents) to name the action, for example:
-
-```html
-<a class="btn btn-default" href="#" role="button" data-dd-action-name="Login button">Login</a>
-```
-
-```html
-<div class="alert alert-danger" role="alert" data-dd-action-name="Dismiss alert">
-  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-  <span class="sr-only">Error:</span>
-  Enter a valid email address
-</div>
-```
-
 [1]: https://app.datadoghq.com/rum/list
 [2]: https://docs.datadoghq.com/real_user_monitoring/data_collected/
 [3]: https://docs.datadoghq.com/real_user_monitoring/dashboards/
