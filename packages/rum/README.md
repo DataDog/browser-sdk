@@ -57,7 +57,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
    d=o.createElement(u);d.async=1;d.src=n
    n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum.js','DD_RUM')
- DD_RUM.onReady(function() {
+  DD_RUM.onReady(function() {
     DD_RUM.init({
       clientToken: '<CLIENT_TOKEN>',
       applicationId: '<APPLICATION_ID>',
