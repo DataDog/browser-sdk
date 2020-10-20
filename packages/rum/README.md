@@ -18,11 +18,11 @@ To set up Datadog RUM browser monitoring:
 
 ### Choose the right installation method
 
-|Installation method | Use case |
-| ------------------ | -------- |
-| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
-| CDN async | This method is recommended for web applications with  performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
-| CDN sync |	This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance. |
+| Installation method        | Use case                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                            |
+| CDN async                  | This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| CDN sync                   | This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                     |
 
 ### npm
 
@@ -51,12 +51,20 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 
 ```html
 <script>
- (function(h,o,u,n,d) {
-   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-   d=o.createElement(u);d.async=1;d.src=n
-   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum.js','DD_RUM')
- DD_RUM.onReady(function() {
+  ;(function(h, o, u, n, d) {
+    h = h[d] = h[d] || {
+      q: [],
+      onReady: function(c) {
+        h.q.push(c)
+      },
+    }
+    d = o.createElement(u)
+    d.async = 1
+    d.src = n
+    n = o.getElementsByTagName(u)[0]
+    n.parentNode.insertBefore(d, n)
+  })(window, document, 'script', 'https://www.datadoghq-browser-agent.com/datadog-rum.js', 'DD_RUM')
+  DD_RUM.onReady(function() {
     DD_RUM.init({
       clientToken: '<CLIENT_TOKEN>',
       applicationId: '<APPLICATION_ID>',
@@ -66,8 +74,8 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
       //  version: '1.0.0',
       sampleRate: 100,
       trackInteractions: true,
-   })
- })
+    })
+  })
 </script>
 ```
 
