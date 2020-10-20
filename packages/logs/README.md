@@ -17,7 +17,7 @@ datadogLogs.init({
   sampleRate: 100
 })
 ```
-### Async bundle
+### CDN async
 
 ```html
 <script>
@@ -37,7 +37,7 @@ datadogLogs.init({
 </script>
 ```
 
-### Sync bundle
+### CDN sync
 
 ```html
 <script src = 'https://www.datadoghq-browser-agent.com/datadog-logs.js'>
