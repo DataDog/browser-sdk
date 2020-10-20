@@ -42,8 +42,8 @@ datadogLogs.init({
 ### CDN sync
 
 ```html
-<script src="https://www.datadoghq-browser-agent.com/datadog-logs.js">
-  <script>
+<script src="https://www.datadoghq-browser-agent.com/datadog-logs.js"></script>
+<script>
   window.DD_LOGS &&
     window.DD_LOGS.init({
       clientToken: 'XXX',
