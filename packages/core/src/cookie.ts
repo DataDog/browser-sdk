@@ -1,4 +1,4 @@
-import { findCommaSeparatedValue, ONE_SECOND } from './utils'
+import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from './utils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 
@@ -62,7 +62,9 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
     return false
   }
   try {
-    const testCookieName = 'dd_cookie_test'
+    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
+    // the test cookie lifetime
+    const testCookieName = `dd_cookie_test_${generateUUID()}`
     const testCookieValue = 'test'
     setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
     return getCookie(testCookieName) === testCookieValue
@@ -77,15 +79,21 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
  * strategy: find the minimal domain on which cookies are allowed to be set
  * https://web.dev/same-site-same-origin/#site
  */
+let getCurrentSiteCache: string | undefined
 export function getCurrentSite() {
-  const testCookieName = 'dd_site_test'
-  const testCookieValue = 'test'
+  if (getCurrentSiteCache === undefined) {
+    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
+    // the test cookie lifetime
+    const testCookieName = `dd_site_test_${generateUUID()}`
+    const testCookieValue = 'test'
 
-  const domainLevels = window.location.hostname.split('.')
-  let candidateDomain = domainLevels.pop()
-  while (domainLevels.length && !getCookie(testCookieName)) {
-    candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
-    setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+    const domainLevels = window.location.hostname.split('.')
+    let candidateDomain = domainLevels.pop()
+    while (domainLevels.length && !getCookie(testCookieName)) {
+      candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
+      setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+    }
+    getCurrentSiteCache = candidateDomain
   }
-  return candidateDomain
+  return getCurrentSiteCache
 }

@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "git submodule update --init",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml,html}\"",

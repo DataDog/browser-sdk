@@ -4,7 +4,7 @@ import {
   DEFAULT_CONFIGURATION,
   ErrorMessage,
   ErrorObservable,
-  ErrorOrigin,
+  ErrorSource,
   noop,
   Observable,
 } from '@datadog/browser-core'
@@ -217,7 +217,7 @@ describe('logs', () => {
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
-        context: { error: { origin: ErrorOrigin.SOURCE, kind: 'Error' } },
+        context: { error: { origin: ErrorSource.SOURCE, kind: 'Error' } },
         message: 'error!',
         startTime: 1234,
       })
@@ -226,7 +226,7 @@ describe('logs', () => {
       expect(sendLogSpy.calls.first().args).toEqual([
         {
           date: jasmine.any(Number),
-          error: { origin: ErrorOrigin.SOURCE, kind: 'Error' },
+          error: { origin: ErrorSource.SOURCE, kind: 'Error' },
           message: 'error!',
           status: StatusType.error,
         },
@@ -245,7 +245,7 @@ describe('logs', () => {
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
-        context: { error: { origin: ErrorOrigin.SOURCE, kind: 'Error' } },
+        context: { error: { origin: ErrorSource.SOURCE, kind: 'Error' } },
         message: 'error!',
         startTime: 1234,
       })

@@ -1,4 +1,4 @@
-import { combine, Context, ContextValue, createContextManager, ErrorOrigin, monitored } from '@datadog/browser-core'
+import { combine, Context, ContextValue, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
 
 export enum StatusType {
   debug = 'debug',
@@ -75,7 +75,7 @@ export class Logger {
   error(message: string, messageContext?: Context) {
     const errorOrigin = {
       error: {
-        origin: ErrorOrigin.LOGGER,
+        origin: ErrorSource.LOGGER,
       },
     }
     this.log(message, combine(errorOrigin, messageContext), StatusType.error)

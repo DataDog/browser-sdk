@@ -2,7 +2,7 @@ import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '..
 import { Configuration } from '../src/configuration'
 import {
   ErrorMessage,
-  ErrorOrigin,
+  ErrorSource,
   filterErrors,
   formatRuntimeError,
   startConsoleTracking,
@@ -21,7 +21,7 @@ describe('console tracker', () => {
   const CONSOLE_CONTEXT = {
     context: {
       error: {
-        origin: ErrorOrigin.CONSOLE,
+        origin: ErrorSource.CONSOLE,
       },
     },
   }
@@ -300,7 +300,7 @@ describe('error limitation', () => {
   const CONTEXT = {
     context: {
       error: {
-        origin: ErrorOrigin.SOURCE,
+        origin: ErrorSource.SOURCE,
       },
     },
     startTime: 100,
@@ -335,7 +335,7 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '3', ...CONTEXT })
 
     expect(filteredSubscriber).toHaveBeenCalledWith({
-      context: { error: { origin: ErrorOrigin.AGENT } },
+      context: { error: { origin: ErrorSource.AGENT } },
       message: 'Reached max number of errors by minute: 2',
       startTime: jasmine.any(Number),
     })

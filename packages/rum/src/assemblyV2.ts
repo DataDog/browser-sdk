@@ -3,6 +3,14 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
 import { RawRumEvent, RumContext, RumErrorEvent, RumEventCategory, RumLongTaskEvent, RumResourceEvent } from './types'
+import {
+  RawRumEventV2,
+  RumContextV2,
+  RumErrorEventV2,
+  RumEventType,
+  RumLongTaskEventV2,
+  RumResourceEventV2,
+} from './typesV2'
 
 interface BrowserWindow extends Window {
   _DATADOG_SYNTHETICS_BROWSER?: unknown
@@ -13,7 +21,7 @@ enum SessionType {
   USER = 'user',
 }
 
-export function startRumAssembly(
+export function startRumAssemblyV2(
   applicationId: string,
   configuration: Configuration,
   lifeCycle: LifeCycle,
@@ -22,7 +30,7 @@ export function startRumAssembly(
   getGlobalContext: () => Context
 ) {
   lifeCycle.subscribe(
-    LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+    LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
     ({
       startTime,
       rawRumEvent,
@@ -30,15 +38,20 @@ export function startRumAssembly(
       customerContext,
     }: {
       startTime: number
-      rawRumEvent: RawRumEvent
+      rawRumEvent: RawRumEventV2
       savedGlobalContext?: Context
       customerContext?: Context
     }) => {
-      const viewContext = parentContexts.findView(startTime)
-      if (session.isTracked() && viewContext && viewContext.sessionId) {
-        const actionContext = parentContexts.findAction(startTime)
-        const rumContext: RumContext = {
-          applicationId,
+      const viewContext = parentContexts.findViewV2(startTime)
+      if (session.isTracked() && viewContext && viewContext.session.id) {
+        const actionContext = parentContexts.findActionV2(startTime)
+        const rumContext: RumContextV2 = {
+          _dd: {
+            formatVersion: 2,
+          },
+          application: {
+            id: applicationId,
+          },
           date: new Date().getTime(),
           service: configuration.service,
           session: {
@@ -55,16 +68,16 @@ export function startRumAssembly(
           customerContext,
           withSnakeCaseKeys(rumEvent)
         )
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
   )
 }
 
-function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
-  return (
-    [RumEventCategory.ERROR, RumEventCategory.RESOURCE, RumEventCategory.LONG_TASK].indexOf(event.evt.category) !== -1
-  )
+function needToAssembleWithAction(
+  event: RawRumEventV2
+): event is RumErrorEventV2 | RumResourceEventV2 | RumLongTaskEventV2 {
+  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
 function getSessionType() {
