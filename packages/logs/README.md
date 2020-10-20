@@ -101,14 +101,13 @@ Options that must have a matching configuration when using the `RUM` SDK:
 
 ### Custom logs
 
-When the Datadog browser log library is initialized, send a custom log entry directly to Datadog with the API:
+After the Datadog browser log library is initialized, send a custom log entry directly to Datadog with the API:
 
 ```
 logger.debug | info | warn | error (message: string, messageContext = Context)
 ```
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+#### NPM
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -116,8 +115,7 @@ import { datadogLogs } from '@datadog/browser-logs';
 datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 });
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+#### Bundle
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 });
@@ -125,10 +123,9 @@ window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
-{{% /tab %}}
-{{< /tabs >}}
+#### Results
 
-This gives the following result:
+The results are the same when using NPM or Bundle:
 
 ```json
 {
@@ -152,14 +149,17 @@ The logger adds the following information by default:
 * `http.useragent`
 * `network.client.ip`
 
-### Using status as a parameter
+### Status parameter
 
-Once Datadog Browser log library is initialized, send a custom log entry directly with its status as a parameter to Datadog with the API:
+After the Datadog browser log library is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
 
-`log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')`
+```
+log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
+```
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+#### NPM
+
+For NPM, use:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -167,31 +167,33 @@ import { datadogLogs } from '@datadog/browser-logs';
 datadogLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+#### Bundle
+
+For Bundle, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
 ```
 
-{{% /tab %}}
-{{< /tabs >}}
+#### Placeholders
+
+The placeholders in the examples above are described below:
 
 | Placeholder         | Description                                                                             |
 |---------------------|-----------------------------------------------------------------------------------------|
-| `<MESSAGE>`         | The message of your log that is fully indexed by Datadog                                |
-| `<JSON_ATTRIBUTES>` | A valid JSON object that includes all attributes attached to the `<MESSAGE>`            |
-| `<STATUS>`          | Status of your log; the accepted status values are `debug`, `info`, `warn`, or `error`. |
+| `<MESSAGE>`         | The message of your log that is fully indexed by Datadog.                               |
+| `<JSON_ATTRIBUTES>` | A valid JSON object, which includes all attributes attached to the `<MESSAGE>`.         |
+| `<STATUS>`          | The status of your log; accepted status values are `debug`, `info`, `warn`, or `error`. |
 
 ## Advanced usage
 
 ### Define multiple loggers
 
-The Datadog Browser log library contains a default logger, but it is also possible to define different loggers, which can be convenient when several teams are working on the same project
+The Datadog browser log library contains a default logger, but it is possible to define different loggers.
 
 #### Create a new logger
 
-Once Datadog Browser log library is initialized, use the API `createLogger` to define a new logger:
+After the Datadog browser log library is initialized, use the API `createLogger` to define a new logger:
 
 ```text
 createLogger (name: string, conf?: {
@@ -201,20 +203,19 @@ createLogger (name: string, conf?: {
 })
 ```
 
-**Note**: Those parameters can also be set with the [setLevel](#filter-by-status), [setHandler](#change-the-destination), and [setContext](#overwrite-context) APIs.
+**Note**: These parameters can be set with the [setLevel](#filter-by-status), [setHandler](#change-the-destination), and [setContext](#overwrite-context) APIs.
 
 #### Get a custom logger
 
-After the creation of a logger, you can access it in any part of your JavaScript code with the API:
+After the creation of a logger, access it in any part of your JavaScript code with the API:
 
-`getLogger (name: string)`
+```javascript
+getLogger (name: string)
+```
 
-#### Example
+##### NPM
 
-Assume that there is a `signupLogger` logger, defined with all the other loggers:
-
-{{< tabs >}}
-{{% tab "NPM" %}}
+For example, assume there is a `signupLogger`, defined with all the other loggers:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -231,8 +232,9 @@ const signupLogger = datadogLogs.getLogger('signupLogger')
 signupLogger.info('Test sign up completed')
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+##### Bundle
+
+For example, assume there is a `signupLogger`, defined with all the other loggers:
 
 ```javascript
 if (window.DD_LOGS) {
@@ -251,20 +253,18 @@ if (window.DD_LOGS) {
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
-{{% /tab %}}
-{{< /tabs >}}
-
 ### Overwrite context
 
-#### Global Context
+#### Global context
 
-Once Datadog Browser log library is initialized, it is possible to:
+After the Datadog browser log library is initialized, it is possible to:
 
 * Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
 * Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+##### NPM
+
+For NPM, use:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -274,8 +274,9 @@ datadogLogs.setLoggerGlobalContext("{'env': 'staging'}");
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer);
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+##### Bundle
+
+For Bundle, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({env: 'staging'});
@@ -285,18 +286,16 @@ window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer);
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
-{{% /tab %}}
-{{< /tabs >}}
+#### Logger context
 
-#### Logger Context
-
-Once a logger is created, it is possible to:
+After a logger is created, it is possible to:
 
 * Set the entire context for your logger with the `setContext (context: Context)` API.
 * Add a context to your logger with `addContext (key: string, value: any)` API:
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+##### NPM
+
+For NPM, use:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -306,8 +305,9 @@ datadogLogs.setContext("{'env': 'staging'}");
 datadogLogs.addContext('referrer', document.referrer);
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+##### Bundle
+
+For Bundle, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}");
@@ -317,19 +317,19 @@ window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer);
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
-{{% /tab %}}
-{{< /tabs >}}
-
 ### Filter by status
 
-Once Datadog Browser log library is initialized, you can set the minimal log level for your logger with the API:
+After the Datadog browser log library is initialized, the minimal log level for your logger is set with the API:
 
-`setLevel (level?: 'debug' | 'info' | 'warn' | 'error')`
+```
+setLevel (level?: 'debug' | 'info' | 'warn' | 'error')
+```
 
 Only logs with a status equal to or higher than the specified level are sent.
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+##### NPM
+
+For NPM, use:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -337,8 +337,9 @@ import { datadogLogs } from '@datadog/browser-logs';
 datadogLogs.logger.setLevel('<LEVEL>');
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+##### Bundle
+
+For Bundle, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>');
@@ -346,18 +347,17 @@ window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>');
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
-{{% /tab %}}
-{{< /tabs >}}
-
 ### Change the destination
 
-By default, loggers created by the Datadog Browser log library are sending logs to Datadog.
-Once Datadog Browser log library is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) thanks to the API:
+By default, loggers created by the Datadog browser log library are sending logs to Datadog. After the Datadog browser log library is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
 
-`setHandler (handler?: 'http' | 'console' | 'silent')`
+```
+setHandler (handler?: 'http' | 'console' | 'silent')
+```
 
-{{< tabs >}}
-{{% tab "NPM" %}}
+##### NPM
+
+For NPM, use:
 
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs';
@@ -365,21 +365,15 @@ import { datadogLogs } from '@datadog/browser-logs';
 datadogLogs.logger.setHandler('<HANDLER>');
 ```
 
-{{% /tab %}}
-{{% tab "Bundle" %}}
+##### Bundle
+
+For Bundle, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>');
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
-
-{{% /tab %}}
-{{< /tabs >}}
-
-## Further Reading
-
-{{< partial name="whats-next/whats-next.html" >}}
 
 
 [1]: /account_management/api-app-keys/#api-keys
