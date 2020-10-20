@@ -1,5 +1,5 @@
 export { Datacenter } from '@datadog/browser-core'
-export { RumUserConfiguration, RumGlobal, datadogRum } from './rum.entry'
+export { RumUserConfiguration, RumGlobal, datadogRum } from './boot/rum.entry'
 export {
   InternalContext,
   RumEvent,
