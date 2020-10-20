@@ -1,5 +1,13 @@
-import { ONE_HOUR } from '../src'
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions, getCookie, setCookie } from '../src/cookie'
+import {
+  cacheCookieAccess,
+  COOKIE_ACCESS_DELAY,
+  CookieCache,
+  CookieOptions,
+  getCookie,
+  setCookie,
+} from '../browser/cookie'
+import { isIE, restorePageVisibility, setPageVisibility } from '../tools/specHelper'
+import { ONE_HOUR } from '../tools/utils'
 import {
   Session,
   SESSION_COOKIE_NAME,
@@ -8,8 +16,7 @@ import {
   startSessionManagement,
   stopSessionManagement,
   VISIBILITY_CHECK_DELAY,
-} from '../src/sessionManagement'
-import { isIE, restorePageVisibility, setPageVisibility } from '../src/specHelper'
+} from './sessionManagement'
 
 describe('cacheCookieAccess', () => {
   const TEST_COOKIE = 'test'

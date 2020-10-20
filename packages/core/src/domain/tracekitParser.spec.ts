@@ -1,8 +1,8 @@
 // tslint:disable no-unsafe-any
 
-import { isSafari } from '../src/specHelper'
-import { BrowserError, computeStackTrace } from '../src/tracekit'
-import * as CapturedExceptions from './fixtures/capturedExceptions'
+import * as CapturedExceptions from '../../test/capturedExceptions'
+import { isSafari } from '../tools/specHelper'
+import { BrowserError, computeStackTrace } from './tracekit'
 
 describe('Parser', () => {
   function foo() {

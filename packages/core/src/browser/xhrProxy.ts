@@ -1,5 +1,5 @@
-import { monitor } from './internalMonitoring'
-import { normalizeUrl } from './urlPolyfill'
+import { monitor } from '../domain/internalMonitoring'
+import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
   _datadog_xhr: XhrStartContext

@@ -1,12 +1,11 @@
-import { getCookie, SESSION_COOKIE_NAME, setCookie } from '../src'
-import { cacheCookieAccess, CookieOptions } from '../src/cookie'
+import { cacheCookieAccess, CookieOptions, getCookie, setCookie } from '../browser/cookie'
 import {
   OLD_LOGS_COOKIE_NAME,
   OLD_RUM_COOKIE_NAME,
   OLD_SESSION_COOKIE_NAME,
   tryOldCookiesMigration,
-} from '../src/oldCookiesMigration'
-import { SESSION_EXPIRATION_DELAY } from '../src/sessionManagement'
+} from './oldCookiesMigration'
+import { SESSION_COOKIE_NAME, SESSION_EXPIRATION_DELAY } from './sessionManagement'
 
 describe('old cookies migration', () => {
   const options: CookieOptions = {}

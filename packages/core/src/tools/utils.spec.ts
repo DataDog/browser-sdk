@@ -9,7 +9,7 @@ import {
   throttle,
   toSnakeCase,
   withSnakeCaseKeys,
-} from '../src/utils'
+} from './utils'
 
 describe('utils', () => {
   describe('combine', () => {

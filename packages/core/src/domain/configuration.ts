@@ -1,7 +1,7 @@
-import { CookieOptions, getCurrentSite } from './cookie'
-import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from './init'
-import { getPathName, haveSameOrigin } from './urlPolyfill'
-import { includes, ONE_KILO_BYTE, ONE_SECOND } from './utils'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from '../boot/init'
+import { CookieOptions, getCurrentSite } from '../browser/cookie'
+import { getPathName, haveSameOrigin } from '../tools/urlPolyfill'
+import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,

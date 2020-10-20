@@ -1,13 +1,6 @@
-import {
-  getHash,
-  getLocationOrigin,
-  getOrigin,
-  getPathName,
-  getSearch,
-  isFirefox,
-  isValidUrl,
-  normalizeUrl,
-} from '../src'
+import { isFirefox } from './specHelper'
+import { getHash, getOrigin, getPathName, getSearch, isValidUrl, normalizeUrl } from './urlPolyfill'
+import { getLocationOrigin } from './utils'
 
 describe('normalize url', () => {
   it('should add origin to relative path', () => {

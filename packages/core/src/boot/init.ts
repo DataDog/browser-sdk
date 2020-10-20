@@ -1,8 +1,8 @@
-import { buildConfiguration, UserConfiguration } from './configuration'
-import { areCookiesAuthorized, CookieOptions } from './cookie'
-import { ErrorMessage, startErrorCollection } from './errorCollection'
-import { setDebugMode, startInternalMonitoring } from './internalMonitoring'
-import { Observable } from './observable'
+import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
+import { buildConfiguration, UserConfiguration } from '../domain/configuration'
+import { ErrorMessage, startErrorCollection } from '../domain/errorCollection'
+import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
+import { Observable } from '../tools/observable'
 
 export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): void } {
   const global = {

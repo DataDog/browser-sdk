@@ -1,7 +1,7 @@
-import { toStackTraceString } from './errorCollection'
-import { monitor } from './internalMonitoring'
-import { computeStackTrace } from './tracekit'
-import { normalizeUrl } from './urlPolyfill'
+import { toStackTraceString } from '../domain/errorCollection'
+import { monitor } from '../domain/internalMonitoring'
+import { computeStackTrace } from '../domain/tracekit'
+import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<
   StartContext extends FetchStartContext = FetchStartContext,

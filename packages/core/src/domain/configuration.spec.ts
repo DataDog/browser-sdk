@@ -1,5 +1,5 @@
-import { BuildEnv, BuildMode, Datacenter, isIntakeRequest } from '../src'
-import { buildConfiguration } from '../src/configuration'
+import { BuildEnv, BuildMode, Datacenter } from '../boot/init'
+import { buildConfiguration, isIntakeRequest } from './configuration'
 
 describe('configuration', () => {
   const clientToken = 'some_client_token'

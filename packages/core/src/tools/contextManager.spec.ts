@@ -1,4 +1,4 @@
-import { createContextManager } from '../src/contextManager'
+import { createContextManager } from './contextManager'
 
 describe('createContextManager', () => {
   it('starts with an empty context', () => {

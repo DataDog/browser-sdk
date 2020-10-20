@@ -1,5 +1,5 @@
-import { stubXhr, withXhr } from '../src'
-import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrProxy } from '../src/xhrProxy'
+import { stubXhr, withXhr } from '../tools/specHelper'
+import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrProxy } from './xhrProxy'
 
 describe('xhr proxy', () => {
   let completeSpy: jasmine.Spy<(context: XhrCompleteContext) => void>

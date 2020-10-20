@@ -1,6 +1,6 @@
 // tslint:disable no-unsafe-any
 
-import { report, StackFrame, wrap } from '../src/tracekit'
+import { report, StackFrame, wrap } from './tracekit'
 
 describe('Handler', () => {
   it('it should not go into an infinite loop', (done) => {

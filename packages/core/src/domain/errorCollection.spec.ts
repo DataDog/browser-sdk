@@ -1,5 +1,7 @@
-import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../src'
-import { Configuration } from '../src/configuration'
+import { Observable } from '../tools/observable'
+import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
+import { ONE_MINUTE } from '../tools/utils'
+import { Configuration } from './configuration'
 import {
   ErrorMessage,
   ErrorSource,
@@ -10,10 +12,8 @@ import {
   stopConsoleTracking,
   stopRuntimeErrorTracking,
   trackNetworkError,
-} from '../src/errorCollection'
-import { Observable } from '../src/observable'
-import { StackTrace } from '../src/tracekit'
-import { ONE_MINUTE } from '../src/utils'
+} from './errorCollection'
+import { StackTrace } from './tracekit'
 
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy

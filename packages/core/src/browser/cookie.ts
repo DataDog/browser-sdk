@@ -1,4 +1,4 @@
-import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from './utils'
+import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from '../tools/utils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
 

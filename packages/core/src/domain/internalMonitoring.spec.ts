@@ -1,6 +1,6 @@
 import sinon from 'sinon'
 
-import { Configuration } from '../src/configuration'
+import { Configuration } from './configuration'
 import {
   InternalMonitoring,
   monitor,
@@ -8,7 +8,7 @@ import {
   MonitoringMessage,
   resetInternalMonitoring,
   startInternalMonitoring,
-} from '../src/internalMonitoring'
+} from './internalMonitoring'
 
 const configuration: Partial<Configuration> = {
   batchBytesLimit: 100,

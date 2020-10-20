@@ -1,4 +1,4 @@
-import { Configuration } from './configuration'
+import { Configuration } from '../domain/configuration'
 import { noop } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {

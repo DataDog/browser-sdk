@@ -1,6 +1,6 @@
 // tslint:disable no-unsafe-any
 
-import { computeStackTrace, Handler, report } from '../src/tracekit'
+import { computeStackTrace, Handler, report } from './tracekit'
 
 describe('TraceKit', () => {
   describe('General', () => {

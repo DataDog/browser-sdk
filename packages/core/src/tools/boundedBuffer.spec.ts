@@ -1,4 +1,4 @@
-import { BoundedBuffer } from '../src/boundedBuffer'
+import { BoundedBuffer } from './boundedBuffer'
 
 describe('BoundedBuffer', () => {
   it('collect and drain the items', () => {

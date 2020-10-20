@@ -1,8 +1,8 @@
-import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from './cookie'
+import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from '../browser/cookie'
+import { Observable } from '../tools/observable'
+import * as utils from '../tools/utils'
 import { monitor } from './internalMonitoring'
-import { Observable } from './observable'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
-import * as utils from './utils'
 
 export const SESSION_COOKIE_NAME = '_dd_s'
 export const SESSION_EXPIRATION_DELAY = 15 * utils.ONE_MINUTE

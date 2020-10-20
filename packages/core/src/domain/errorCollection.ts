@@ -1,10 +1,10 @@
+import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
+import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
+import { Observable } from '../tools/observable'
+import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
 import { Configuration, isIntakeRequest } from './configuration'
-import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from './fetchProxy'
 import { monitor } from './internalMonitoring'
-import { Observable } from './observable'
 import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
-import { jsonStringify, ONE_MINUTE, RequestType } from './utils'
-import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from './xhrProxy'
 
 export interface ErrorMessage {
   startTime: number

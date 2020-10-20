@@ -1,5 +1,5 @@
-import { FetchCompleteContext, FetchProxy, resetFetchProxy, startFetchProxy } from '../src/fetchProxy'
-import { FetchStub, FetchStubManager, FetchStubPromise, isIE, stubFetch } from '../src/specHelper'
+import { FetchStub, FetchStubManager, FetchStubPromise, isIE, stubFetch } from '../tools/specHelper'
+import { FetchCompleteContext, FetchProxy, resetFetchProxy, startFetchProxy } from './fetchProxy'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
