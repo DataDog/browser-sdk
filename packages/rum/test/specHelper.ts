@@ -1,21 +1,27 @@
 import {
   assign,
   buildUrl,
+  combine,
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
   PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
+  withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { startRumAssembly } from '../src/assembly'
-import { LifeCycle, LifeCycleEventType } from '../src/lifeCycle'
-import { ParentContexts, startParentContexts } from '../src/parentContexts'
-import { startPerformanceCollection } from '../src/performanceCollection'
-import { RawRumEvent, startRumEventCollection } from '../src/rum'
-import { RumSession } from '../src/rumSession'
-import { startUserActionCollection } from '../src/userActionCollection'
-import { startViewCollection } from '../src/viewCollection'
+import { startRumEventCollection } from '../src/boot/rum'
+import { startPerformanceCollection } from '../src/browser/performanceCollection'
+import { startRumAssembly } from '../src/domain/assembly'
+import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
+import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
+import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
+import { startUserActionCollection } from '../src/domain/rumEventsCollection/userActionCollection'
+import { startViewCollection } from '../src/domain/rumEventsCollection/viewCollection'
+import { RumSession } from '../src/domain/rumSession'
+import { RawRumEvent } from '../src/types'
+import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
+import { validateFormat } from './formatValidation'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver
@@ -30,10 +36,11 @@ export interface TestSetupBuilder {
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
+  withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
-  beforeBuild: (callback: (lifeCycle: LifeCycle) => void) => TestSetupBuilder
+  beforeBuild: (callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) => TestSetupBuilder
 
   cleanup: () => void
   build: () => TestIO
@@ -54,6 +61,12 @@ export interface TestIO {
     savedGlobalContext?: Context
     customerContext?: Context
   }>
+  rawRumEventsV2: Array<{
+    startTime: number
+    rawRumEvent: RawRumEventV2
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }>
 }
 
 export function setup(): TestSetupBuilder {
@@ -64,11 +77,17 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-  const beforeBuildTasks: Array<(lifeCycle: LifeCycle) => void> = []
+  const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration) => void> = []
   const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
     startTime: number
     rawRumEvent: RawRumEvent
+    savedGlobalContext?: Context
+    customerContext?: Context
+  }> = []
+  const rawRumEventsV2: Array<{
+    startTime: number
+    rawRumEvent: RawRumEventV2
     savedGlobalContext?: Context
     customerContext?: Context
   }> = []
@@ -140,6 +159,19 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
+    withAssemblyV2() {
+      buildTasks.push(() => {
+        startRumAssemblyV2(
+          FAKE_APP_ID,
+          configuration as Configuration,
+          lifeCycle,
+          session,
+          parentContexts,
+          () => globalContext
+        )
+      })
+      return setupBuilder
+    },
     withViewCollection() {
       buildTasks.push(() => {
         const { stop } = startViewCollection(fakeLocation as Location, lifeCycle)
@@ -195,20 +227,25 @@ export function setup(): TestSetupBuilder {
       cleanupTasks.push(() => (browserWindow.PerformanceObserver = original))
       return setupBuilder
     },
-    beforeBuild(callback: (lifeCycle: LifeCycle) => void) {
+    beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) {
       beforeBuildTasks.push(callback)
       return setupBuilder
     },
     build() {
-      beforeBuildTasks.forEach((task) => task(lifeCycle))
+      beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration))
       buildTasks.forEach((task) => task())
       lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
+      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
+        rawRumEventsV2.push(data)
+        validateRumEventFormat(data.rawRumEvent)
+      })
       return {
         clock,
         fakeLocation,
         lifeCycle,
         parentContexts,
         rawRumEvents,
+        rawRumEventsV2,
         server,
         session,
         stubBuilder,
@@ -232,4 +269,27 @@ function buildLocation(url: string, base?: string) {
     pathname: urlObject.pathname,
     search: urlObject.search,
   }
+}
+
+function validateRumEventFormat(rawRumEvent: RawRumEventV2) {
+  const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
+  const fakeContext: RumContextV2 & ViewContextV2 = {
+    _dd: {
+      formatVersion: 2,
+    },
+    application: {
+      id: fakeId,
+    },
+    date: 0,
+    session: {
+      id: fakeId,
+      type: 'user',
+    },
+    view: {
+      id: fakeId,
+      referrer: '',
+      url: 'fake url',
+    },
+  }
+  validateFormat(withSnakeCaseKeys(combine(fakeContext, rawRumEvent)))
 }

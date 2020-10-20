@@ -4,6 +4,7 @@
     "esModuleInterop": true,
     "importHelpers": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "strict": true,
     "target": "es5",
     "sourceMap": true,

@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "1.23.0",
+  "version": "1.24.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -13,11 +13,12 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "1.23.0",
+    "@datadog/browser-core": "1.24.1",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@types/sinon": "7.0.13",
+    "ajv": "6.12.6",
     "sinon": "7.3.2"
   },
   "repository": {

@@ -9,7 +9,7 @@ const suffix = withSuffix ? `-${datacenter}` : ''
 
 module.exports = (env, argv) => ({
   entry: {
-    logs: path.resolve(__dirname, 'src/logs.entry.ts'),
+    logs: path.resolve(__dirname, 'src/boot/logs.entry.ts'),
   },
   ...webpackBase(argv.mode),
   output: {

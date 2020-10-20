@@ -14,6 +14,16 @@
 
 ---
 
+## v1.24.1
+
+- 🐛 [RUMF-742] fix cookie creation domain when trackSessionAcrossSubdomains: true ([#573](https://github.com/DataDog/browser-sdk/pull/573))
+- ✨ [RUMF-727] introduce v2 format (experimental) ([#570](https://github.com/DataDog/browser-sdk/pull/570))
+
+## v1.24.0
+
+- 🐛 Use the same options to test and set cookies ([#555](https://github.com/DataDog/browser-sdk/pull/555))
+- ✨ [RUMF-534] implement logs.onReady and rum.onReady ([#564](https://github.com/DataDog/browser-sdk/pull/564))
+
 ## v1.23.0
 
 - 🐛 [Core] dereference `combine` sources recursively ([#560](https://github.com/DataDog/browser-sdk/pull/560))
