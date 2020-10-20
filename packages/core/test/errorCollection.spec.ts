@@ -5,6 +5,7 @@ import {
   ErrorSource,
   filterErrors,
   formatUnknownError,
+  InternalErrorSource,
   makeAddError,
   startConsoleTracking,
   startRuntimeErrorTracking,
@@ -22,7 +23,7 @@ describe('console tracker', () => {
   const CONSOLE_CONTEXT = {
     context: {
       error: {
-        origin: ErrorSource.CONSOLE,
+        origin: InternalErrorSource.CONSOLE,
       },
     },
   }
@@ -373,7 +374,7 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '3', ...CONTEXT })
 
     expect(filteredSubscriber).toHaveBeenCalledWith({
-      context: { error: { origin: ErrorSource.AGENT } },
+      context: { error: { origin: InternalErrorSource.AGENT } },
       message: 'Reached max number of errors by minute: 2',
       startTime: jasmine.any(Number),
     })

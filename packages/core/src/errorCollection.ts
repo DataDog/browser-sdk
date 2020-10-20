@@ -20,7 +20,7 @@ export interface ErrorMessage {
 export interface ErrorContext {
   kind?: string
   stack?: string
-  origin: ErrorSource
+  origin: AnyErrorSource
 }
 
 export interface HttpContext {
@@ -35,13 +35,18 @@ export interface AddedError {
   context?: Context
 }
 
-export enum ErrorSource {
+export enum InternalErrorSource {
   AGENT = 'agent',
   CONSOLE = 'console',
-  NETWORK = 'network',
-  SOURCE = 'source',
   LOGGER = 'logger',
 }
+
+export enum ErrorSource {
+  NETWORK = 'network',
+  SOURCE = 'source',
+}
+
+type AnyErrorSource = ErrorSource | InternalErrorSource
 
 export type ErrorObservable = Observable<ErrorMessage>
 let errorCollectionSingleton: {
@@ -75,7 +80,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
       filteredErrorObservable.notify({
         context: {
           error: {
-            origin: ErrorSource.AGENT,
+            origin: InternalErrorSource.AGENT,
           },
         },
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
@@ -96,7 +101,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     errorObservable.notify({
       context: {
         error: {
-          origin: ErrorSource.CONSOLE,
+          origin: InternalErrorSource.CONSOLE,
         },
       },
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
