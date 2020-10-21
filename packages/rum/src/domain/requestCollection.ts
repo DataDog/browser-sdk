@@ -10,7 +10,7 @@ import {
   XhrStartContext,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { isAllowedRequestUrl } from './rumEventsCollection/resourceUtils'
+import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
 
 export interface RequestStartEvent {

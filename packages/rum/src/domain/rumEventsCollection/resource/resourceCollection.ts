@@ -12,14 +12,14 @@ import { RumEventCategory, RumResourceEvent } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
+import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
   isRequestKind,
-} from '../resourceUtils'
-import { matchRequestTiming } from './matchRequestTiming'
+} from './resourceUtils'
 
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {

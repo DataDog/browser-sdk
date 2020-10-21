@@ -9,7 +9,7 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 export interface PerformanceResourceDetailsElement {
   duration: number

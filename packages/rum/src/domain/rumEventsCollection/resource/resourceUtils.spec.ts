@@ -1,5 +1,5 @@
 import { Configuration, DEFAULT_CONFIGURATION, SPEC_ENDPOINTS } from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
