@@ -77,7 +77,7 @@ function runTests() {
 }
 
 function hasSessionCreationFailure(logs) {
-  return logs.includes('@wdio/runner: Error: Failed to create session')
+  return logs.includes('Failed to create session.')
 }
 
 function timeout(ms) {
