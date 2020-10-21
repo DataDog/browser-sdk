@@ -71,6 +71,10 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
+export function isRequestKind(timing: RumPerformanceResourceTiming) {
+  return timing.initiatorType === 'xmlhttprequest' || timing.initiatorType === 'fetch'
+}
+
 export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
   const { duration, startTime, responseEnd } = entry
 

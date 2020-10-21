@@ -42,7 +42,6 @@ describe('resourceCollection', () => {
 
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        _dd: undefined,
         date: (jasmine.any(Number) as unknown) as number,
         duration: 100 * 1e6,
         evt: {
@@ -77,7 +76,6 @@ describe('resourceCollection', () => {
 
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        _dd: undefined,
         date: (jasmine.any(Number) as unknown) as number,
         duration: 100 * 1e6,
         evt: {
@@ -85,15 +83,10 @@ describe('resourceCollection', () => {
         },
         http: {
           method: 'GET',
-          performance: undefined,
           statusCode: 200,
           url: 'https://resource.com/valid',
         },
-        network: {
-          bytesWritten: undefined,
-        },
         resource: {
-          id: undefined,
           kind: ResourceType.XHR,
         },
       })

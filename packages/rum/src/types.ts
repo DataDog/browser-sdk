@@ -23,7 +23,7 @@ export interface RumResourceEvent {
     statusCode?: number
     url: string
   }
-  network: {
+  network?: {
     bytesWritten?: number
   }
   resource: {

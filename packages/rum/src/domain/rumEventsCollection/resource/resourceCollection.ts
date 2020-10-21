@@ -1,14 +1,14 @@
 import {
+  combine,
   Configuration,
   generateUUID,
   getTimestamp,
-  includes,
   msToNs,
   RequestType,
   ResourceType,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RawRumEvent, RumEventCategory, RumResourceEvent } from '../../../types'
+import { RumEventCategory, RumResourceEvent } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
@@ -17,102 +17,107 @@ import {
   computePerformanceResourceDuration,
   computeResourceKind,
   computeSize,
+  isRequestKind,
 } from '../resourceUtils'
 import { matchRequestTiming } from './matchRequestTiming'
 
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) {
-  const handler = (startTime: number, rawRumEvent: RawRumEvent) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent,
-      startTime,
-    })
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    handleRequest(lifeCycle, session, handler, request)
+    if (session.isTrackedWithResource()) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
+      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'resource') {
-      handleResourceEntry(lifeCycle, session, handler, entry)
+    if (session.isTrackedWithResource() && entry.entryType === 'resource' && !isRequestKind(entry)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
+      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     }
   })
 }
 
-function handleRequest(
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: (startTime: number, event: RumResourceEvent) => void,
-  request: RequestCompleteEvent
-) {
-  if (!session.isTrackedWithResource()) {
-    return
-  }
-  const timing = matchRequestTiming(request)
+function processRequest(request: RequestCompleteEvent) {
   const kind = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
-  const startTime = timing ? timing.startTime : request.startTime
-  const hasBeenTraced = request.traceId && request.spanId
-  handler(startTime, {
-    _dd: hasBeenTraced
-      ? {
-          spanId: request.spanId!.toDecimalString(),
-          traceId: request.traceId!.toDecimalString(),
-        }
-      : undefined,
-    date: getTimestamp(startTime),
-    duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
-    evt: {
-      category: RumEventCategory.RESOURCE,
+
+  const matchingTiming = matchRequestTiming(request)
+  const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
+
+  const tracingInfo = computeRequestTracingInfo(request)
+
+  const resourceEvent: RumResourceEvent = combine(
+    {
+      date: getTimestamp(startTime),
+      duration: msToNs(request.duration),
+      evt: {
+        category: RumEventCategory.RESOURCE as const,
+      },
+      http: {
+        method: request.method,
+        statusCode: request.status,
+        url: request.url,
+      },
+      resource: {
+        kind,
+      },
     },
-    http: {
-      method: request.method,
-      performance: timing ? computePerformanceResourceDetails(timing) : undefined,
-      statusCode: request.status,
-      url: request.url,
-    },
-    network: {
-      bytesWritten: timing ? computeSize(timing) : undefined,
-    },
-    resource: {
-      kind,
-      id: hasBeenTraced ? generateUUID() : undefined,
-    },
-  })
-  lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    tracingInfo,
+    correspondingTimingOverrides
+  )
+  return { startTime, rawRumEvent: resourceEvent }
 }
 
-function handleResourceEntry(
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: (startTime: number, event: RumResourceEvent) => void,
-  entry: RumPerformanceResourceTiming
-) {
-  if (!session.isTrackedWithResource()) {
-    return
-  }
+function processResourceEntry(entry: RumPerformanceResourceTiming) {
   const resourceKind = computeResourceKind(entry)
-  if (includes([ResourceType.XHR, ResourceType.FETCH], resourceKind)) {
-    return
-  }
-  handler(entry.startTime, {
-    _dd: entry.traceId
-      ? {
-          traceId: entry.traceId,
-        }
-      : undefined,
-    date: getTimestamp(entry.startTime),
-    duration: computePerformanceResourceDuration(entry),
-    evt: {
-      category: RumEventCategory.RESOURCE,
+  const entryMetrics = computePerformanceEntryMetrics(entry)
+  const tracingInfo = computeEntryTracingInfo(entry)
+
+  const resourceEvent: RumResourceEvent = combine(
+    {
+      date: getTimestamp(entry.startTime),
+      evt: {
+        category: RumEventCategory.RESOURCE as const,
+      },
+      http: {
+        url: entry.name,
+      },
+      resource: {
+        kind: resourceKind,
+      },
     },
+    tracingInfo,
+    entryMetrics
+  )
+  return { startTime: entry.startTime, rawRumEvent: resourceEvent }
+}
+
+function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
+  return {
+    duration: computePerformanceResourceDuration(timing),
     http: {
-      performance: computePerformanceResourceDetails(entry),
-      url: entry.name,
+      performance: computePerformanceResourceDetails(timing),
     },
     network: {
-      bytesWritten: computeSize(entry),
+      bytesWritten: computeSize(timing),
     },
-    resource: {
-      kind: resourceKind,
+  }
+}
+
+function computeRequestTracingInfo(request: RequestCompleteEvent) {
+  const hasBeenTraced = request.traceId && request.spanId
+  if (!hasBeenTraced) {
+    return undefined
+  }
+  return {
+    _dd: {
+      spanId: request.spanId!.toDecimalString(),
+      traceId: request.traceId!.toDecimalString(),
     },
-  })
-  lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+    resource: { id: generateUUID() },
+  }
+}
+
+function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
+  return entry.traceId ? { _dd: { traceId: entry.traceId } } : undefined
 }
