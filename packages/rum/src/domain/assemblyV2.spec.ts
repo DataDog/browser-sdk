@@ -10,6 +10,7 @@ interface ServerRumEvents {
   action: {
     id: string
   }
+  context: any
   date: number
   type: string
   session: {
@@ -114,7 +115,7 @@ describe('rum assembly v2', () => {
       setGlobalContext({ bar: 'foo' })
       generateRawRumEvent(RumEventType.VIEW)
 
-      expect((serverRumEvents[0] as any).bar).toEqual('foo')
+      expect((serverRumEvents[0].context as any).bar).toEqual('foo')
     })
 
     it('should ignore subsequent context mutation', () => {
@@ -124,15 +125,15 @@ describe('rum assembly v2', () => {
       delete globalContext.bar
       generateRawRumEvent(RumEventType.VIEW)
 
-      expect((serverRumEvents[0] as any).bar).toEqual('foo')
-      expect((serverRumEvents[1] as any).bar).toBeUndefined()
+      expect((serverRumEvents[0].context as any).bar).toEqual('foo')
+      expect((serverRumEvents[1].context as any).bar).toBeUndefined()
     })
 
     it('should not be automatically snake cased', () => {
       setGlobalContext({ fooBar: 'foo' })
       generateRawRumEvent(RumEventType.VIEW)
 
-      expect(((serverRumEvents[0] as any) as any).fooBar).toEqual('foo')
+      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
     })
 
     it('should ignore the current global context when a saved global context is provided', () => {
@@ -140,8 +141,8 @@ describe('rum assembly v2', () => {
 
       generateRawRumEvent(RumEventType.VIEW, undefined, { replacedContext: 'a' })
 
-      expect((serverRumEvents[0] as any).replacedContext).toEqual('a')
-      expect((serverRumEvents[0] as any).addedContext).toEqual(undefined)
+      expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
+      expect((serverRumEvents[0].context as any).addedContext).toEqual(undefined)
     })
   })
 
@@ -149,13 +150,13 @@ describe('rum assembly v2', () => {
     it('should be merged with event attributes', () => {
       generateRawRumEvent(RumEventType.VIEW, undefined, undefined, { foo: 'bar' })
 
-      expect((serverRumEvents[0] as any).foo).toEqual('bar')
+      expect((serverRumEvents[0].context as any).foo).toEqual('bar')
     })
 
     it('should not be automatically snake cased', () => {
       generateRawRumEvent(RumEventType.VIEW, undefined, undefined, { fooBar: 'foo' })
 
-      expect(((serverRumEvents[0] as any) as any).fooBar).toEqual('foo')
+      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
     })
   })
 

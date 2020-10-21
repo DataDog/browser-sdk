@@ -62,11 +62,8 @@ export function startRumAssemblyV2(
         const rumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = combine(
-          savedGlobalContext || getGlobalContext(),
-          customerContext,
-          withSnakeCaseKeys(rumEvent)
-        )
+        const serverRumEvent = withSnakeCaseKeys(rumEvent)
+        serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
