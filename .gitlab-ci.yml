@@ -104,6 +104,7 @@ unit-bs:
       - master
       - tags
   stage: browserstack
+  resource_group: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
@@ -119,6 +120,7 @@ e2e-bs:
       - master
       - tags
   stage: browserstack
+  resource_group: browserstack
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
