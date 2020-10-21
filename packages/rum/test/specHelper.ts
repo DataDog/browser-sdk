@@ -40,7 +40,9 @@ export interface TestSetupBuilder {
   withFakeClock: () => TestSetupBuilder
   withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
-  beforeBuild: (callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) => TestSetupBuilder
+  beforeBuild: (
+    callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void
+  ) => TestSetupBuilder
 
   cleanup: () => void
   build: () => TestIO
@@ -77,7 +79,7 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-  const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration) => void> = []
+  const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void> = []
   const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
     startTime: number
@@ -227,12 +229,12 @@ export function setup(): TestSetupBuilder {
       cleanupTasks.push(() => (browserWindow.PerformanceObserver = original))
       return setupBuilder
     },
-    beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration) => void) {
+    beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void) {
       beforeBuildTasks.push(callback)
       return setupBuilder
     },
     build() {
-      beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration))
+      beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration, session))
       buildTasks.forEach((task) => task())
       lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
       lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {

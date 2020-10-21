@@ -28,6 +28,7 @@ describe('rum assembly', () => {
   let lifeCycle: LifeCycle
   let setGlobalContext: (context: Context) => void
   let serverRumEvents: ServerRumEvents[]
+  let isTracked: boolean
 
   function generateRawRumEvent(
     category: RumEventCategory,
@@ -45,7 +46,13 @@ describe('rum assembly', () => {
   }
 
   beforeEach(() => {
+    isTracked = true
     setupBuilder = setup()
+      .withSession({
+        getId: () => '1234',
+        isTracked: () => isTracked,
+        isTrackedWithResource: () => true,
+      })
       .withParentContexts({
         findAction: () => ({
           userAction: {
@@ -165,6 +172,22 @@ describe('rum assembly', () => {
         expect(serverRumEvents[0].user_action).not.toBeDefined()
         serverRumEvents = []
       })
+    })
+  })
+
+  describe('session', () => {
+    it('when tracked, it should generate event ', () => {
+      isTracked = true
+
+      generateRawRumEvent(RumEventCategory.VIEW)
+      expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('when not tracked, it should not generate event ', () => {
+      isTracked = false
+
+      generateRawRumEvent(RumEventCategory.VIEW)
+      expect(serverRumEvents.length).toBe(0)
     })
   })
 })

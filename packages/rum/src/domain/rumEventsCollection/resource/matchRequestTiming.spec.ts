@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
-import { RequestCompleteEvent } from '../requestCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import { RequestCompleteEvent } from '../../requestCollection'
 
 import { matchRequestTiming } from './matchRequestTiming'
 

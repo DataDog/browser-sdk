@@ -11,14 +11,8 @@ import {
   THROTTLE_VIEW_UPDATE_PERIOD,
   View,
 } from '../domain/rumEventsCollection/viewCollection'
-import { RumSession } from '../domain/rumSession'
-import { RumEvent, RumResourceEvent, RumViewEvent } from '../index'
-import { RawRumEvent } from '../types'
-import { doGetInternalContext, handleResourceEntry, trackView } from './rum'
-
-function getEntry(handler: (startTime: number, event: RumEvent) => void, index: number) {
-  return (handler as jasmine.Spy).calls.argsFor(index)[1] as RumEvent
-}
+import { RumEvent, RumViewEvent } from '../index'
+import { doGetInternalContext, trackView } from './rum'
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
@@ -28,13 +22,6 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
   return JSON.parse(server.requests[index].requestBody) as RumEvent
 }
 
-function createMockSession(): RumSession {
-  return {
-    getId: () => 'foo',
-    isTracked: () => true,
-    isTrackedWithResource: () => true,
-  }
-}
 interface ExpectedRequestBody {
   application_id: string
   date: number
@@ -47,150 +34,6 @@ interface ExpectedRequestBody {
     referrer: string
   }
 }
-
-describe('rum handle performance entry', () => {
-  let handler: (startTime: number, event: RawRumEvent) => void
-
-  beforeEach(() => {
-    if (isIE()) {
-      pending('no full rum support')
-    }
-    handler = jasmine.createSpy()
-  })
-
-  it('should handle resource when session track resource', () => {
-    const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
-    const session = createMockSession()
-
-    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
-
-    expect(handler).toHaveBeenCalled()
-  })
-
-  it('should not handle resource when session does not track resource', () => {
-    const entry = { entryType: 'resource' as const, name: 'https://resource.com/valid' }
-    const session = createMockSession()
-    session.isTrackedWithResource = () => false
-
-    handleResourceEntry(new LifeCycle(), session, handler, entry as RumPerformanceResourceTiming)
-
-    expect(handler).not.toHaveBeenCalled()
-  })
-  ;[
-    {
-      description: 'file extension with query params',
-      expected: 'js',
-      url: 'http://localhost/test.js?from=foo.css',
-    },
-    {
-      description: 'css extension',
-      expected: 'css',
-      url: 'http://localhost/test.css',
-    },
-    {
-      description: 'image initiator',
-      expected: 'image',
-      initiatorType: 'img',
-      url: 'http://localhost/test',
-    },
-    {
-      description: 'image extension',
-      expected: 'image',
-      url: 'http://localhost/test.jpg',
-    },
-  ].forEach(
-    ({
-      description,
-      url,
-      initiatorType,
-      expected,
-    }: {
-      description: string
-      url: string
-      initiatorType?: string
-      expected: string
-    }) => {
-      it(`should compute resource kind: ${description}`, () => {
-        const entry: Partial<RumPerformanceResourceTiming> = { initiatorType, name: url, entryType: 'resource' }
-
-        handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
-        const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-        expect(resourceEvent.resource.kind).toEqual(expected)
-      })
-    }
-  )
-
-  it('should compute timing durations', () => {
-    const entry: Partial<RumPerformanceResourceTiming> = {
-      connectEnd: 10,
-      connectStart: 3,
-      domainLookupEnd: 3,
-      domainLookupStart: 3,
-      entryType: 'resource',
-      name: 'http://localhost/test',
-      redirectEnd: 0,
-      redirectStart: 0,
-      requestStart: 20,
-      responseEnd: 100,
-      responseStart: 25,
-      secureConnectionStart: 0,
-    }
-
-    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
-    const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-    expect(resourceEvent.http.performance!.connect!.duration).toEqual(7 * 1e6)
-    expect(resourceEvent.http.performance!.download!.duration).toEqual(75 * 1e6)
-  })
-
-  describe('ignore invalid performance entry', () => {
-    it('when it has a negative timing start', () => {
-      const entry: Partial<RumPerformanceResourceTiming> = {
-        connectEnd: 10,
-        connectStart: -3,
-        domainLookupEnd: 10,
-        domainLookupStart: 10,
-        entryType: 'resource',
-        fetchStart: 10,
-        name: 'http://localhost/test',
-        redirectEnd: 0,
-        redirectStart: 0,
-        requestStart: 10,
-        responseEnd: 100,
-        responseStart: 25,
-        secureConnectionStart: 0,
-      }
-
-      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
-      const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-      expect(resourceEvent.http.performance).toBe(undefined)
-    })
-
-    it('when it has timing start after its end', () => {
-      const entry: Partial<RumPerformanceResourceTiming> = {
-        entryType: 'resource',
-        name: 'http://localhost/test',
-        responseEnd: 25,
-        responseStart: 100,
-      }
-
-      handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
-      const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-      expect(resourceEvent.http.performance).toBe(undefined)
-    })
-  })
-
-  it('should pass the traceId to the generated RumEvent', () => {
-    const entry: Partial<RumPerformanceResourceTiming> = {
-      entryType: 'resource',
-      name: 'http://localhost/test',
-      traceId: '123',
-    }
-
-    handleResourceEntry(new LifeCycle(), createMockSession(), handler, entry as RumPerformanceResourceTiming)
-    const resourceEvent = getEntry(handler, 0) as RumResourceEvent
-    expect(resourceEvent._dd!.traceId).toBe('123')
-  })
-})
 
 describe('rum view', () => {
   it('should convert timings to nanosecond', () => {
@@ -241,115 +84,6 @@ describe('rum session', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-  })
-
-  it('when tracked with resources should enable full tracking', () => {
-    const { server, stubBuilder, lifeCycle } = setupBuilder
-      .withPerformanceObserverStubBuilder()
-      .withPerformanceCollection()
-      .build()
-
-    server.requests = []
-
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
-
-    expect(server.requests.length).toEqual(4)
-  })
-
-  it('when tracked without resources should not track resources', () => {
-    const { server, stubBuilder, lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => '1234',
-        isTracked: () => true,
-        isTrackedWithResource: () => false,
-      })
-      .withPerformanceObserverStubBuilder()
-      .withPerformanceCollection()
-      .build()
-
-    server.requests = []
-
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    expect(server.requests.length).toEqual(0)
-
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    expect(server.requests.length).toEqual(1)
-  })
-
-  it('when not tracked should disable tracking', () => {
-    const { server, stubBuilder, lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => undefined,
-        isTracked: () => false,
-        isTrackedWithResource: () => false,
-      })
-      .withPerformanceObserverStubBuilder()
-      .withPerformanceCollection()
-      .build()
-
-    server.requests = []
-
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, FAKE_CUSTOM_USER_ACTION_EVENT)
-
-    expect(server.requests.length).toEqual(0)
-  })
-
-  it('when type change should enable/disable existing resource tracking', () => {
-    let isTracked = true
-    const { server, stubBuilder } = setupBuilder
-      .withSession({
-        getId: () => '1234',
-        isTracked: () => isTracked,
-        isTrackedWithResource: () => isTracked,
-      })
-      .withPerformanceObserverStubBuilder()
-      .withPerformanceCollection()
-      .build()
-
-    server.requests = []
-
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    expect(server.requests.length).toEqual(1)
-
-    isTracked = false
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    expect(server.requests.length).toEqual(1)
-
-    isTracked = true
-    stubBuilder.fakeEntry(FAKE_RESOURCE as PerformanceEntry, 'resource')
-    expect(server.requests.length).toEqual(2)
-  })
-
-  it('when type change should enable/disable existing request tracking', () => {
-    let isTrackedWithResource = true
-    const { server, lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => '1234',
-        isTracked: () => true,
-        isTrackedWithResource: () => isTrackedWithResource,
-      })
-      .withPerformanceCollection()
-      .build()
-
-    server.requests = []
-
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    expect(server.requests.length).toEqual(1)
-
-    isTrackedWithResource = false
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    expect(server.requests.length).toEqual(1)
-
-    isTrackedWithResource = true
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, FAKE_REQUEST as RequestCompleteEvent)
-    expect(server.requests.length).toEqual(2)
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
