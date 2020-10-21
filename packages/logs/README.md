@@ -4,12 +4,12 @@ Send logs to Datadog from web browsers or other Javascript clients with the `dat
 
 With the `datadog-logs` library, you can send logs directly to Datadog from JS clients and leverage the following features:
 
-* Use the library as a logger. Everything is forwarded to Datadog as JSON documents.
-* Add `context` and extra custom attributes to each log sent.
-* Wrap and forward every frontend error automatically.
-* Forward frontend errors.
-* Record real client IP addresses and user agents.
-* Optimized network usage with automatic bulk posts.
+- Use the library as a logger. Everything is forwarded to Datadog as JSON documents.
+- Add `context` and extra custom attributes to each log sent.
+- Wrap and forward every frontend error automatically.
+- Forward frontend errors.
+- Record real client IP addresses and user agents.
+- Optimized network usage with automatic bulk posts.
 
 ## Setup
 
@@ -24,14 +24,14 @@ With the `datadog-logs` library, you can send logs directly to Datadog from JS c
 After adding [`@datadog/browser-logs`][3] to your `package.json` file, initialize it with:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
 datadogLogs.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
   forwardErrorsToLogs: true,
-  sampleRate: 100
-});
+  sampleRate: 100,
+})
 ```
 
 ### Bundle
@@ -44,12 +44,13 @@ To receive all logs and errors, load and configure the library at the beginning 
     <title>Example to send logs to Datadog</title>
     <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs.js"></script>
     <script>
-      window.DD_LOGS && DD_LOGS.init({
-        clientToken: '<CLIENT_TOKEN>',
-        site: '<DATADOG_SITE>',
-        forwardErrorsToLogs: true,
-        sampleRate: 100
-      });
+      window.DD_LOGS &&
+        DD_LOGS.init({
+          clientToken: '<CLIENT_TOKEN>',
+          site: '<DATADOG_SITE>',
+          forwardErrorsToLogs: true,
+          sampleRate: 100,
+        })
     </script>
   </head>
 </html>
@@ -62,14 +63,14 @@ To receive all logs and errors, load and configure the library at the beginning 
 Types are compatible with TypeScript >= 3.0. For earlier versions, import JS sources and use global variables to avoid any compilation issues:
 
 ```typescript
-import '@datadog/browser-logs/bundle/datadog-logs';
+import '@datadog/browser-logs/bundle/datadog-logs'
 
 window.DD_LOGS.init({
   clientToken: '<CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
   forwardErrorsToLogs: true,
-  sampleRate: 100
-});
+  sampleRate: 100,
+})
 ```
 
 ## Configuration
@@ -79,7 +80,7 @@ window.DD_LOGS.init({
 The following parameters are available to configure the Datadog browser log library to send logs to Datadog:
 
 | Parameter             | Type    | Required | Default         | Description                                                                                              |
-|-----------------------|---------|----------|-----------------|----------------------------------------------------------------------------------------------------------|
+| --------------------- | ------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
 | `clientToken`         | String  | Yes      |                 | A [Datadog client token][2].                                                                             |
 | `site`                | String  | Yes      | `datadoghq.com` | The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`                           |
 | `service`             | String  | No       |                 | The service name for your application.                                                                   |
@@ -92,7 +93,7 @@ The following parameters are available to configure the Datadog browser log libr
 Options that must have a matching configuration when using the `RUM` SDK:
 
 | Parameter                      | Type    | Required | Default | Description                                                                                                                                                  |
-|--------------------------------|---------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------ | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
 | `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                              |
 | `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
@@ -110,15 +111,15 @@ logger.debug | info | warn | error (message: string, messageContext = Context)
 #### NPM
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 });
+datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
 
 #### Bundle
 
 ```javascript
-window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 });
+window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
@@ -138,16 +139,16 @@ The results are the same when using NPM or Bundle:
     "url": "...",
     "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.130 Safari/537.36"
   },
-  "network": {"client": {"ip": "109.30.xx.xxx"}}
+  "network": { "client": { "ip": "109.30.xx.xxx" } }
 }
 ```
 
 The logger adds the following information by default:
 
-* `view.url`
-* `session_id`
-* `http.useragent`
-* `network.client.ip`
+- `view.url`
+- `session_id`
+- `http.useragent`
+- `network.client.ip`
 
 ### Status parameter
 
@@ -180,7 +181,7 @@ window.DD_LOGS && DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
 The placeholders in the examples above are described below:
 
 | Placeholder         | Description                                                                             |
-|---------------------|-----------------------------------------------------------------------------------------|
+| ------------------- | --------------------------------------------------------------------------------------- |
 | `<MESSAGE>`         | The message of your log that is fully indexed by Datadog.                               |
 | `<JSON_ATTRIBUTES>` | A valid JSON object, which includes all attributes attached to the `<MESSAGE>`.         |
 | `<STATUS>`          | The status of your log; accepted status values are `debug`, `info`, `warn`, or `error`. |
@@ -218,15 +219,15 @@ getLogger (name: string)
 For example, assume there is a `signupLogger`, defined with all the other loggers:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.createLogger('signupLogger', 'info', 'http', {'env': 'staging'})
+datadogLogs.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
 ```
 
 It can now be used in a different part of the code with:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
 const signupLogger = datadogLogs.getLogger('signupLogger')
 signupLogger.info('Test sign up completed')
@@ -238,7 +239,7 @@ For example, assume there is a `signupLogger`, defined with all the other logger
 
 ```javascript
 if (window.DD_LOGS) {
-    const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', {'env': 'staging'})
+  const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
 }
 ```
 
@@ -246,8 +247,8 @@ It can now be used in a different part of the code with:
 
 ```javascript
 if (window.DD_LOGS) {
-    const signupLogger = DD_LOGS.getLogger('signupLogger')
-    signupLogger.info('Test sign up completed')
+  const signupLogger = DD_LOGS.getLogger('signupLogger')
+  signupLogger.info('Test sign up completed')
 }
 ```
 
@@ -259,19 +260,19 @@ if (window.DD_LOGS) {
 
 After the Datadog browser log library is initialized, it is possible to:
 
-* Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
-* Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
+- Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
+- Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
 
 ##### NPM
 
 For NPM, use:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.setLoggerGlobalContext("{'env': 'staging'}");
+datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
 
-datadogLogs.addLoggerGlobalContext('referrer', document.referrer);
+datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
 ```
 
 ##### Bundle
@@ -279,9 +280,9 @@ datadogLogs.addLoggerGlobalContext('referrer', document.referrer);
 For Bundle, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({env: 'staging'});
+window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 
-window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer);
+window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
@@ -290,19 +291,19 @@ window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer);
 
 After a logger is created, it is possible to:
 
-* Set the entire context for your logger with the `setContext (context: Context)` API.
-* Add a context to your logger with `addContext (key: string, value: any)` API:
+- Set the entire context for your logger with the `setContext (context: Context)` API.
+- Add a context to your logger with `addContext (key: string, value: any)` API:
 
 ##### NPM
 
 For NPM, use:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.setContext("{'env': 'staging'}");
+datadogLogs.setContext("{'env': 'staging'}")
 
-datadogLogs.addContext('referrer', document.referrer);
+datadogLogs.addContext('referrer', document.referrer)
 ```
 
 ##### Bundle
@@ -310,9 +311,9 @@ datadogLogs.addContext('referrer', document.referrer);
 For Bundle, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}");
+window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}")
 
-window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer);
+window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer)
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
@@ -332,9 +333,9 @@ Only logs with a status equal to or higher than the specified level are sent.
 For NPM, use:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.logger.setLevel('<LEVEL>');
+datadogLogs.logger.setLevel('<LEVEL>')
 ```
 
 ##### Bundle
@@ -342,7 +343,7 @@ datadogLogs.logger.setLevel('<LEVEL>');
 For Bundle, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>');
+window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
@@ -360,9 +361,9 @@ setHandler (handler?: 'http' | 'console' | 'silent')
 For NPM, use:
 
 ```javascript
-import { datadogLogs } from '@datadog/browser-logs';
+import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.logger.setHandler('<HANDLER>');
+datadogLogs.logger.setHandler('<HANDLER>')
 ```
 
 ##### Bundle
@@ -370,11 +371,10 @@ datadogLogs.logger.setHandler('<HANDLER>');
 For Bundle, use:
 
 ```javascript
-window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>');
+window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
-
 
 [1]: /account_management/api-app-keys/#api-keys
 [2]: /account_management/api-app-keys/#client-tokens
