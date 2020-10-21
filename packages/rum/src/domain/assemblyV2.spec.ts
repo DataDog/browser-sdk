@@ -156,7 +156,7 @@ describe('rum assembly v2', () => {
     it('should not be automatically snake cased', () => {
       generateRawRumEvent(RumEventType.VIEW, undefined, undefined, { fooBar: 'foo' })
 
-      expect(((serverRumEvents[0].context as any) as any).fooBar).toEqual('foo')
+      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
     })
   })
 
