@@ -36,6 +36,8 @@ ${changesList}
 
   await spawnCommand(process.env.EDITOR, [CHANGELOG_FILE])
 
+  await spawnCommand('yarn', ['run', 'prettier', '--write', CHANGELOG_FILE])
+
   await executeCommand(`git add ${CHANGELOG_FILE}`)
 }
 
