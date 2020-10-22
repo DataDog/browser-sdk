@@ -18,7 +18,7 @@ import { startRequestCollection } from '../domain/requestCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/userActionCollection'
-import { startViewCollection } from '../domain/rumEventsCollection/viewCollection'
+import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
 import {

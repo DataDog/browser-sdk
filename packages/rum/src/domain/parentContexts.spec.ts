@@ -6,7 +6,7 @@ import {
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
 import { AutoUserAction } from './rumEventsCollection/userActionCollection'
-import { ViewCreatedEvent } from './rumEventsCollection/viewCollection'
+import { ViewCreatedEvent } from './rumEventsCollection/view/viewCollection'
 
 function stubActionWithDuration(duration: number): AutoUserAction {
   const action: Partial<AutoUserAction> = { duration }

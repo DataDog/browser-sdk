@@ -1,8 +1,8 @@
 import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { EventCounts, trackEventCounts } from '../trackEventCounts'
-import { waitIdlePageActivity } from '../trackPageActivities'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import { waitIdlePageActivity } from '../../trackPageActivities'
 
 export interface View {
   id: string

@@ -1,17 +1,17 @@
-import { setup, TestSetupBuilder } from '../../../test/specHelper'
+import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumPerformanceLongTaskTiming,
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
-} from '../../browser/performanceCollection'
-import { LifeCycleEventType } from '../lifeCycle'
+} from '../../../browser/performanceCollection'
+import { LifeCycleEventType } from '../../lifeCycle'
 
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
-} from '../trackPageActivities'
-import { ActionType, AutoUserAction, CustomUserAction } from './userActionCollection'
+} from '../../trackPageActivities'
+import { ActionType, AutoUserAction, CustomUserAction } from '../userActionCollection'
 import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './viewCollection'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
