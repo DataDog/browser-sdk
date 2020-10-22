@@ -26,8 +26,8 @@ export interface RumResourceEventV2 {
     dns?: PerformanceResourceDetailsElement
     connect?: PerformanceResourceDetailsElement
     ssl?: PerformanceResourceDetailsElement
-    firstByte: PerformanceResourceDetailsElement
-    download: PerformanceResourceDetailsElement
+    firstByte?: PerformanceResourceDetailsElement
+    download?: PerformanceResourceDetailsElement
   }
   _dd?: {
     traceId: string
