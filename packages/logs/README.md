@@ -166,7 +166,7 @@ window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id
 
 #### Results
 
-The results are the same when using NPM or Bundle:
+The results are the same when using NPM, CDN async or CDN sync:
 
 ```json
 {
