@@ -35,9 +35,6 @@ describe('rum resources', () => {
   createTest("don't track disallowed cross origin xhr timings")
     .withRum()
     .run(async ({ crossOriginUrl, events }) => {
-      if (browser.capabilities.browserName === 'MicrosoftEdge') {
-        pending('Edge 18 seems to track cross origin xhr timings anyway')
-      }
       await sendXhr(`${crossOriginUrl}/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!

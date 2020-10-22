@@ -117,7 +117,7 @@ The following parameters are available to configure the Datadog browser log libr
 | `env`                 | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc.                                |
 | `version`             | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.                                |
 | `forwardErrorsToLogs` | Boolean | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog. |
-| `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. |
+| `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.       |
 | `silentMultipleInit`  | Boolean | No       |                 | Prevent logging errors while having multiple init.                                                       |
 
 Options that must have a matching configuration when using the `RUM` SDK:
@@ -125,7 +125,7 @@ Options that must have a matching configuration when using the `RUM` SDK:
 | Parameter                      | Type    | Required | Default | Description                                                                                                                                                  |
 | ------------------------------ | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
-| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                              |
+| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables logs sent on insecure (non-HTTPS) connections.                                                                    |
 | `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
 
 ## Usage
