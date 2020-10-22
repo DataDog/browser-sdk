@@ -1,10 +1,10 @@
-// Capabilities `curl -u "user:key" https://api.browserstack.com/automate/browsers.json`
+// Capabilities: https://www.browserstack.com/automate/capabilities
 
 module.exports = {
   EDGE: {
     base: 'BrowserStack',
     browser: 'Edge',
-    browser_version: '18.0',
+    browser_version: '86',
     os: 'Windows',
     os_version: '10',
   },

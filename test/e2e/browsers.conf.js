@@ -2,7 +2,14 @@ const browsers = require('../browsers.conf')
 
 module.exports = [
   browsers['SAFARI'],
-  browsers['EDGE'],
+  {
+    ...browsers['EDGE'],
+    // Without this specific version, execute and executeAsync fails on Edge.
+    'browserstack.selenium_version': '3.5.2',
+    // Note: more recent versions of selenium 3 have the same issue, but selenium 4 seems to be
+    // fine:
+    // 'browserstack.selenium_version': '4.0.0-alpha-6',
+  },
   browsers['FIREFOX'],
   {
     ...browsers['CHROME_MOBILE'],
