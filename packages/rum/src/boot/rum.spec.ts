@@ -20,10 +20,14 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
 interface ExpectedRequestBody {
   application_id: string
   date: number
+  type: string
   evt: {
     category: string
   }
   session_id: string
+  session: {
+    id: string
+  }
   view: {
     id: string
     referrer: string
@@ -48,13 +52,16 @@ describe('rum session', () => {
     setupBuilder.cleanup()
   })
 
-  it('when the session is renewed, a new view event should be sent', () => {
+  it('when the session is renewed, a new view event should be sent (v1)', () => {
     let sessionId = '42'
     const { server, lifeCycle } = setupBuilder
       .withSession({
         getId: () => sessionId,
         isTracked: () => true,
         isTrackedWithResource: () => true,
+      })
+      .beforeBuild((_, configuration) => {
+        configuration.isEnabled = () => false
       })
       .build()
 
@@ -73,6 +80,34 @@ describe('rum session', () => {
     // New view event
     expect(subsequentRequests[0].evt.category).toEqual('view')
     expect(subsequentRequests[0].session_id).toEqual('43')
+    expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
+  })
+
+  it('when the session is renewed, a new view event should be sent', () => {
+    let sessionId = '42'
+    const { server, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => true,
+        isTrackedWithResource: () => true,
+      })
+      .build()
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests.length).toEqual(1)
+    expect(initialRequests[0].type).toEqual('view')
+    expect(initialRequests[0].session.id).toEqual('42')
+
+    server.requests = []
+    sessionId = '43'
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(subsequentRequests.length).toEqual(1)
+
+    // New view event
+    expect(subsequentRequests[0].type).toEqual('view')
+    expect(subsequentRequests[0].session.id).toEqual('43')
     expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
   })
 
@@ -125,8 +160,12 @@ describe('rum session keep alive', () => {
     setupBuilder.cleanup()
   })
 
-  it('should send a view update regularly', () => {
-    const { server, clock } = setupBuilder.build()
+  it('should send a view update regularly (v1)', () => {
+    const { server, clock } = setupBuilder
+      .beforeBuild((_, configuration) => {
+        configuration.isEnabled = () => false
+      })
+      .build()
 
     // clear initial events
     clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
@@ -147,6 +186,30 @@ describe('rum session keep alive', () => {
     server.requests = []
     expect(requests.length).toEqual(1)
     expect(requests[0].evt.category).toEqual('view')
+  })
+
+  it('should send a view update regularly', () => {
+    const { server, clock } = setupBuilder.build()
+
+    // clear initial events
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
+    server.requests = []
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toEqual('view')
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toEqual('view')
   })
 
   it('should not send view update when session is expired', () => {
