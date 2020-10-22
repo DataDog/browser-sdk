@@ -22,11 +22,17 @@ export interface SetupOptions {
 
 export type SetupFactory = (options: SetupOptions) => string
 
-export const DEFAULT_SETUPS = [
-  { name: 'async', factory: asyncSetup },
-  { name: 'npm', factory: npmSetup },
-  { name: 'bundle', factory: bundleSetup },
-]
+const isBrowserStack =
+  browser.config.services &&
+  browser.config.services.some((service) => (Array.isArray(service) ? service[0] : service) === 'browserstack')
+
+export const DEFAULT_SETUPS = isBrowserStack
+  ? [{ name: 'bundle', factory: bundleSetup }]
+  : [
+      { name: 'async', factory: asyncSetup },
+      { name: 'npm', factory: npmSetup },
+      { name: 'bundle', factory: bundleSetup },
+    ]
 
 export function asyncSetup(options: SetupOptions) {
   let body = options.body || ''

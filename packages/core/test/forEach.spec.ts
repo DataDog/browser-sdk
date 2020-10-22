@@ -1,4 +1,4 @@
-import { clearAllCookies } from '../src/specHelper'
+import { clearAllCookies } from '../src/tools/specHelper'
 
 beforeEach(() => {
   ;(navigator.sendBeacon as any) = false
