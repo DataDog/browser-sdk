@@ -33,6 +33,7 @@ export enum ErrorSource {
   NETWORK = 'network',
   SOURCE = 'source',
   LOGGER = 'logger',
+  CUSTOM = 'custom',
 }
 
 export type ErrorObservable = Observable<ErrorMessage>

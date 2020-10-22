@@ -1,6 +1,6 @@
 import { Context, ErrorMessage } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { RawRumEvent, RumEvent } from '../types'
+import { ManuallyAddedError, RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './rumEventsCollection/requestCollection'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './rumEventsCollection/userActionCollection'
@@ -8,6 +8,7 @@ import { View, ViewCreatedEvent } from './rumEventsCollection/viewCollection'
 
 export enum LifeCycleEventType {
   ERROR_COLLECTED,
+  MANUAL_ERROR_COLLECTED,
   PERFORMANCE_ENTRY_COLLECTED,
   CUSTOM_ACTION_COLLECTED,
   AUTO_ACTION_CREATED,
@@ -35,6 +36,10 @@ export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
   notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
+  notify(
+    eventType: LifeCycleEventType.MANUAL_ERROR_COLLECTED,
+    data: { error: ManuallyAddedError; context?: Context }
+  ): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
@@ -85,6 +90,10 @@ export class LifeCycle {
   }
 
   subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.MANUAL_ERROR_COLLECTED,
+    callback: (data: { error: ManuallyAddedError; context?: Context }) => void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     callback: (data: RumPerformanceEntry) => void

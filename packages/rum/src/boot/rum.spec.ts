@@ -1,4 +1,4 @@
-import { ErrorMessage, isIE } from '@datadog/browser-core'
+import { ErrorMessage, ErrorSource, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
@@ -13,7 +13,7 @@ import {
 } from '../domain/rumEventsCollection/viewCollection'
 import { RumSession } from '../domain/rumSession'
 import { RumEvent, RumResourceEvent, RumViewEvent } from '../index'
-import { RawRumEvent } from '../types'
+import { RawRumEvent, RumEventCategory } from '../types'
 import { doGetInternalContext, handleResourceEntry, trackView } from './rum'
 
 function getEntry(handler: (startTime: number, event: RumEvent) => void, index: number) {
@@ -599,5 +599,77 @@ describe('rum view url', () => {
 
     expect(server.requests.length).toEqual(1)
     expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
+  })
+})
+
+describe('rum manual error collection', () => {
+  let setupBuilder: TestSetupBuilder
+
+  beforeEach(() => {
+    setupBuilder = setup().withRum()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('notifies a raw rum error event', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.MANUAL_ERROR_COLLECTED, {
+      error: {
+        error: new Error('foo'),
+        source: ErrorSource.CUSTOM,
+        startTime: 12,
+      },
+    })
+
+    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents[0]).toEqual({
+      customerContext: undefined,
+      rawRumEvent: {
+        date: jasmine.any(Number),
+        error: {
+          kind: 'Error',
+          origin: ErrorSource.CUSTOM,
+          stack: jasmine.stringMatching('Error: foo'),
+        },
+        evt: {
+          category: RumEventCategory.ERROR,
+        },
+        message: 'foo',
+      },
+      savedGlobalContext: undefined,
+      startTime: 12,
+    })
+  })
+
+  it('should save the specified customer context', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.MANUAL_ERROR_COLLECTED, {
+      error: {
+        context: { foo: 'bar' },
+        error: new Error('foo'),
+        source: ErrorSource.CUSTOM,
+        startTime: 12,
+      },
+    })
+    expect(rawRumEvents[0].customerContext).toEqual({
+      foo: 'bar',
+    })
+  })
+
+  it('should save the global context', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.MANUAL_ERROR_COLLECTED, {
+      context: { foo: 'bar' },
+      error: {
+        error: new Error('foo'),
+        source: ErrorSource.CUSTOM,
+        startTime: 12,
+      },
+    })
+    expect(rawRumEvents[0].savedGlobalContext).toEqual({
+      foo: 'bar',
+    })
   })
 })

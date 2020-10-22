@@ -1,4 +1,4 @@
-import { Context, ErrorContext, HttpContext, ResourceType } from '@datadog/browser-core'
+import { Context, ErrorContext, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
 import { PerformanceResourceDetails } from './domain/rumEventsCollection/resourceUtils'
 import { ActionType, UserActionMeasures } from './domain/rumEventsCollection/userActionCollection'
 import { ViewLoadingType, ViewMeasures } from './domain/rumEventsCollection/viewCollection'
@@ -128,4 +128,13 @@ export interface InternalContext {
   user_action?: {
     id: string
   }
+}
+
+export type ManuallyAddedErrorSource = ErrorSource.CUSTOM | ErrorSource.SOURCE | ErrorSource.NETWORK
+
+export interface ManuallyAddedError {
+  startTime: number
+  error: unknown
+  context?: Context
+  source: ManuallyAddedErrorSource
 }

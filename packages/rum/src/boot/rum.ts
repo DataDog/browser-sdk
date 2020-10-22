@@ -1,9 +1,11 @@
 import {
   combine,
   commonInit,
+  computeStackTrace,
   Configuration,
   Context,
   ErrorMessage,
+  formatUnknownError,
   generateUUID,
   getTimestamp,
   includes,
@@ -33,6 +35,7 @@ import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
 import {
   InternalContext,
+  ManuallyAddedError,
   RawRumEvent,
   RumErrorEvent,
   RumEventCategory,
@@ -91,6 +94,10 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
 
     addUserAction(action: CustomUserAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
+    },
+
+    addError(error: ManuallyAddedError, context?: Context) {
+      lifeCycle.notify(LifeCycleEventType.MANUAL_ERROR_COLLECTED, { error, context })
     },
   }
 }
@@ -152,6 +159,7 @@ export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession) {
 
   trackView(lifeCycle, handler)
   trackErrors(lifeCycle, handler)
+  trackManualErrors(lifeCycle, handler)
   trackRequests(lifeCycle, session, handler)
   trackPerformanceTiming(lifeCycle, session, handler)
   trackCustomUserAction(lifeCycle, handler)
@@ -196,6 +204,36 @@ function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: R
       ...context,
     })
   })
+}
+
+function trackManualErrors(
+  lifeCycle: LifeCycle,
+  handler: (startTime: number, event: RumErrorEvent, savedGlobalContext?: Context, customerContext?: Context) => void
+) {
+  lifeCycle.subscribe(
+    LifeCycleEventType.MANUAL_ERROR_COLLECTED,
+    ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
+      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+      const { message, stack, kind } = formatUnknownError(stackTrace, error, 'Captured')
+      handler(
+        startTime,
+        {
+          message,
+          date: getTimestamp(startTime),
+          error: {
+            kind,
+            stack,
+            origin: source,
+          },
+          evt: {
+            category: RumEventCategory.ERROR,
+          },
+        },
+        savedGlobalContext,
+        customerContext
+      )
+    }
+  )
 }
 
 function trackCustomUserAction(
