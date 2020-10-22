@@ -24,23 +24,25 @@ describe('viewCollection', () => {
     const view = {
       documentVersion: 3,
       duration: 100,
-      id: 'xxx',
-      loadingTime: 20,
-      loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: {},
-      measures: {
-        domComplete: 10,
-        domContentLoaded: 10,
-        domInteractive: 10,
+      eventCounts: {
         errorCount: 10,
-        firstContentfulPaint: 10,
-        loadEventEnd: 10,
         longTaskCount: 10,
         resourceCount: 10,
         userActionCount: 10,
       },
+      id: 'xxx',
+      loadingTime: 20,
+      loadingType: ViewLoadingType.INITIAL_LOAD,
+      location: {},
       referrer: '',
       startTime: 1234,
+      timings: {
+        domComplete: 10,
+        domContentLoaded: 10,
+        domInteractive: 10,
+        firstContentfulPaint: 10,
+        loadEventEnd: 10,
+      },
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 
@@ -92,23 +94,25 @@ describe('viewCollection V2', () => {
     const view = {
       documentVersion: 3,
       duration: 100,
-      id: 'xxx',
-      loadingTime: 20,
-      loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: {},
-      measures: {
-        domComplete: 10,
-        domContentLoaded: 10,
-        domInteractive: 10,
+      eventCounts: {
         errorCount: 10,
-        firstContentfulPaint: 10,
-        loadEventEnd: 10,
         longTaskCount: 10,
         resourceCount: 10,
         userActionCount: 10,
       },
+      id: 'xxx',
+      loadingTime: 20,
+      loadingType: ViewLoadingType.INITIAL_LOAD,
+      location: {},
       referrer: '',
       startTime: 1234,
+      timings: {
+        domComplete: 10,
+        domContentLoaded: 10,
+        domInteractive: 10,
+        firstContentfulPaint: 10,
+        loadEventEnd: 10,
+      },
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 

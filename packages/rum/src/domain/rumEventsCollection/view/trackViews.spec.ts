@@ -482,82 +482,82 @@ describe('rum view measures', () => {
   it('should track error count', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures.errorCount).toEqual(0)
+    expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.errorCount).toEqual(2)
-    expect(getViewEvent(2).measures.errorCount).toEqual(0)
+    expect(getViewEvent(1).eventCounts.errorCount).toEqual(2)
+    expect(getViewEvent(2).eventCounts.errorCount).toEqual(0)
   })
 
   it('should track long task count', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures.longTaskCount).toEqual(0)
+    expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.longTaskCount).toEqual(1)
-    expect(getViewEvent(2).measures.longTaskCount).toEqual(0)
+    expect(getViewEvent(1).eventCounts.longTaskCount).toEqual(1)
+    expect(getViewEvent(2).eventCounts.longTaskCount).toEqual(0)
   })
 
   it('should track resource count', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.resourceCount).toEqual(1)
-    expect(getViewEvent(2).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
+    expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
   })
 
   it('should track user action count', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures.userActionCount).toEqual(0)
+    expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action: FAKE_CUSTOM_USER_ACTION, context: {} })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoUserAction)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.userActionCount).toEqual(2)
-    expect(getViewEvent(2).measures.userActionCount).toEqual(0)
+    expect(getViewEvent(1).eventCounts.userActionCount).toEqual(2)
+    expect(getViewEvent(2).eventCounts.userActionCount).toEqual(0)
   })
 
   it('should reset event count when the view changes', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures.resourceCount).toEqual(1)
-    expect(getViewEvent(2).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
+    expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     history.pushState({}, '', '/baz')
 
     expect(getHandledCount()).toEqual(5)
-    expect(getViewEvent(3).measures.resourceCount).toEqual(2)
-    expect(getViewEvent(4).measures.resourceCount).toEqual(0)
+    expect(getViewEvent(3).eventCounts.resourceCount).toEqual(2)
+    expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
   })
 
-  it('should update measures when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+  it('should update eventCounts when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
+    expect(getViewEvent(0).eventCounts).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
@@ -571,22 +571,18 @@ describe('rum view measures', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456,
-      domContentLoaded: 345,
-      domInteractive: 234,
+    expect(getViewEvent(1).eventCounts).toEqual({
       errorCount: 0,
-      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
     })
   })
 
-  it('should update measures when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
+  it('should update eventCounts when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
+    expect(getViewEvent(0).eventCounts).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
@@ -600,7 +596,7 @@ describe('rum view measures', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).measures).toEqual({
+    expect(getViewEvent(1).eventCounts).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 1,
@@ -608,10 +604,10 @@ describe('rum view measures', () => {
     })
   })
 
-  it('should update measures when ending a view', () => {
+  it('should update eventCounts when ending a view', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).measures).toEqual({
+    expect(getViewEvent(0).eventCounts).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
@@ -625,18 +621,13 @@ describe('rum view measures', () => {
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).measures).toEqual({
-      domComplete: 456,
-      domContentLoaded: 345,
-      domInteractive: 234,
+    expect(getViewEvent(1).eventCounts).toEqual({
       errorCount: 0,
-      firstContentfulPaint: 123,
-      loadEventEnd: 567,
       longTaskCount: 0,
       resourceCount: 0,
       userActionCount: 0,
     })
-    expect(getViewEvent(2).measures).toEqual({
+    expect(getViewEvent(2).eventCounts).toEqual({
       errorCount: 0,
       longTaskCount: 0,
       resourceCount: 0,
@@ -644,7 +635,7 @@ describe('rum view measures', () => {
     })
   })
 
-  it('should not update measures after ending a view', () => {
+  it('should not update eventCounts after ending a view', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getHandledCount()).toEqual(1)
 
@@ -698,18 +689,12 @@ describe('rum view measures', () => {
       }
     })
 
-    it('should not set load measures to the second view', () => {
-      expect(getLoadMeasures(secondView.last)).toEqual({
-        domComplete: undefined,
-        domContentLoaded: undefined,
-        domInteractive: undefined,
-        firstContentfulPaint: undefined,
-        loadEventEnd: undefined,
-      })
+    it('should not set timings to the second view', () => {
+      expect(secondView.last.timings).toEqual({})
     })
 
-    it('should set measures only on the initial view', () => {
-      expect(getLoadMeasures(initialView.last)).toEqual({
+    it('should set timings only on the initial view', () => {
+      expect(initialView.last.timings).toEqual({
         domComplete: 456,
         domContentLoaded: 345,
         domInteractive: 234,
@@ -718,7 +703,7 @@ describe('rum view measures', () => {
       })
     })
 
-    it('should not update the initial view duration when updating it with new measures', () => {
+    it('should not update the initial view duration when updating it with new timings', () => {
       expect(initialView.end.duration).toBe(VIEW_DURATION)
       expect(initialView.last.duration).toBe(VIEW_DURATION)
     })
@@ -726,11 +711,5 @@ describe('rum view measures', () => {
     it('should update the initial view loadingTime following the loadEventEnd value', () => {
       expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
     })
-
-    function getLoadMeasures({
-      measures: { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd },
-    }: View) {
-      return { domComplete, domContentLoaded, domInteractive, firstContentfulPaint, loadEventEnd }
-    }
   })
 })

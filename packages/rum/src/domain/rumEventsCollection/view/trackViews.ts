@@ -8,7 +8,8 @@ export interface View {
   id: string
   location: Location
   referrer: string
-  measures: ViewMeasures
+  timings: Timings
+  eventCounts: EventCounts
   documentVersion: number
   startTime: number
   duration: number
@@ -23,15 +24,13 @@ export interface ViewCreatedEvent {
   startTime: number
 }
 
-interface Timings {
+export interface Timings {
   firstContentfulPaint?: number
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
 }
-
-export type ViewMeasures = Timings & EventCounts
 
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
@@ -111,7 +110,7 @@ function newView(
     resourceCount: 0,
     userActionCount: 0,
   }
-  let timings: Timings | undefined
+  let timings: Timings = {}
   let documentVersion = 0
   let loadingTime: number | undefined
   let endTime: number | undefined
@@ -147,14 +146,15 @@ function newView(
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       documentVersion,
+      eventCounts,
       id,
       loadingTime,
       loadingType,
       location,
       referrer,
       startTime,
+      timings,
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
-      measures: { ...timings, ...eventCounts },
     })
   }
 
