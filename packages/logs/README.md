@@ -86,7 +86,6 @@ To receive all logs and errors, load and configure the library at the beginning 
 </html>
 ```
 
-
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
 
 ### TypeScript
@@ -152,7 +151,7 @@ datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```javascript
 DD_LOGS.onReady(function() {
   DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -216,7 +215,7 @@ For CDN async, use:
 ```javascript
 DD_LOGS.onReady(function() {
   DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -293,7 +292,7 @@ For example, assume there is a `signupLogger`, defined with all the other logger
 ```javascript
 DD_LOGS.onReady(function() {
   const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
-}) 
+})
 ```
 
 It can now be used in a different part of the code with:
@@ -302,7 +301,7 @@ It can now be used in a different part of the code with:
 DD_LOGS.onReady(function() {
   const signupLogger = DD_LOGS.getLogger('signupLogger')
   signupLogger.info('Test sign up completed')
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -360,7 +359,7 @@ DD_LOGS.onReady(function() {
 
 DD_LOGS.onReady(function() {
   window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -451,7 +450,7 @@ For CDN async, use:
 ```javascript
 DD_LOGS.onReady(function() {
   DD_LOGS.logger.setLevel('<LEVEL>')
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -491,7 +490,7 @@ For CDN async, use:
 ```javascript
 DD_LOGS.onReady(function() {
   DD_LOGS.logger.setHandler('<HANDLER>')
-}) 
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
