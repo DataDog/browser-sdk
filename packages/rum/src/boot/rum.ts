@@ -18,7 +18,7 @@ import { startRequestCollection } from '../domain/requestCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/userActionCollection'
-import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
+import { trackViews } from '../domain/rumEventsCollection/view/trackViews'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
 import {
@@ -112,7 +112,7 @@ export function startRumEventCollection(
   trackRumEvents(lifeCycle)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
-  startViewCollection(location, lifeCycle)
+  trackViews(location, lifeCycle)
 
   return {
     parentContexts,

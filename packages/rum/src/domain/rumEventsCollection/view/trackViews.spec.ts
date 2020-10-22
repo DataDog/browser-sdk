@@ -12,7 +12,7 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
 import { ActionType, AutoUserAction, CustomUserAction } from '../userActionCollection'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './viewCollection'
+import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8

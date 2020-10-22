@@ -3,7 +3,7 @@ import { ActionContext, ViewContext } from '../types'
 import { ActionContextV2, ViewContextV2 } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoActionCreatedEvent, AutoUserAction } from './rumEventsCollection/userActionCollection'
-import { ViewCreatedEvent } from './rumEventsCollection/view/viewCollection'
+import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 import { RumSession } from './rumSession'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY

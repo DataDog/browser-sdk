@@ -41,7 +41,7 @@ export enum ViewLoadingType {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
   let currentView = initialView

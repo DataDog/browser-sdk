@@ -10,7 +10,7 @@ import {
   SESSION_KEEP_ALIVE_INTERVAL,
   THROTTLE_VIEW_UPDATE_PERIOD,
   View,
-} from '../domain/rumEventsCollection/view/viewCollection'
+} from '../domain/rumEventsCollection/view/trackViews'
 import { RumEvent, RumViewEvent } from '../index'
 import { doGetInternalContext, trackView } from './rum'
 
