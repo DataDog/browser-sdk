@@ -1,18 +1,13 @@
 import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
+import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { RequestCompleteEvent } from '../domain/requestCollection'
-import { ActionType, AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
-import {
-  SESSION_KEEP_ALIVE_INTERVAL,
-  THROTTLE_VIEW_UPDATE_PERIOD,
-  View,
-} from '../domain/rumEventsCollection/view/trackViews'
-import { RumEvent, RumViewEvent } from '../index'
-import { doGetInternalContext, trackView } from './rum'
+import { LifeCycleEventType } from '../domain/lifeCycle'
+import { AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
+import { RumEvent } from '../index'
+import { doGetInternalContext } from './rum'
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
@@ -35,41 +30,8 @@ interface ExpectedRequestBody {
   }
 }
 
-describe('rum view', () => {
-  it('should convert timings to nanosecond', () => {
-    const FAKE_VIEW = {
-      id: 'foo',
-      loadingTime: 17,
-      measures: {
-        loadEventEnd: 15,
-      },
-    }
-
-    const spy = jasmine.createSpy<(startTime: number, event: RumViewEvent) => void>()
-    const lifeCycle = new LifeCycle()
-
-    trackView(lifeCycle, spy)
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, FAKE_VIEW as View)
-
-    const formattedView = spy.calls.mostRecent().args[1]
-    expect(formattedView.view.measures.loadEventEnd).toEqual(15 * 1e6)
-    expect(formattedView.view.loadingTime).toEqual(17 * 1e6)
-  })
-})
-
 describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  const FAKE_RESOURCE: Partial<RumPerformanceResourceTiming> = { name: 'http://foo.com', entryType: 'resource' }
-  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
-  const FAKE_CUSTOM_USER_ACTION_EVENT = {
-    action: {
-      context: { foo: 'bar' },
-      name: 'action',
-      startTime: 123,
-      type: ActionType.CUSTOM as const,
-    },
-    context: {},
-  }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -271,7 +233,6 @@ describe('rum internal context', () => {
 })
 
 describe('rum view url', () => {
-  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
     domComplete: 456,
     domContentLoadedEventEnd: 345,
@@ -291,17 +252,6 @@ describe('rum view url', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-  })
-
-  it('should sets the view URL on events', () => {
-    const { server, lifeCycle } = setupBuilder.withFakeLocation('http://foo.com/').build()
-
-    server.requests = []
-
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect(server.requests.length).toEqual(1)
-    expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
   })
 
   it('should keep the same URL when updating a view ended by a URL change', () => {

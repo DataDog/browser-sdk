@@ -20,6 +20,7 @@ interface ServerRumEvents {
   view: {
     id: string
     referrer: string
+    url: string
   }
   long_task?: {
     duration: number
@@ -180,6 +181,18 @@ describe('rum assembly v2', () => {
         expect(serverRumEvents[0].action).not.toBeDefined()
         serverRumEvents = []
       })
+    })
+  })
+
+  describe('view context', () => {
+    it('should be merged with event attributes', () => {
+      generateRawRumEvent(RumEventType.ACTION)
+      expect(serverRumEvents[0].view).toEqual({
+        id: 'abcde',
+        referrer: 'url',
+        url: 'url',
+      })
+      expect(serverRumEvents[0].session.id).toBe('1234')
     })
   })
 
