@@ -6,9 +6,9 @@ import {
   formatUnknownError,
   getTimestamp,
 } from '@datadog/browser-core'
-import { RumErrorEvent, RumEventCategory } from '../../types'
-import { RumErrorEventV2, RumEventType } from '../../typesV2'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { RumErrorEvent, RumEventCategory } from '../../../types'
+import { RumErrorEventV2, RumEventType } from '../../../typesV2'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ManuallyAddedError {
   startTime: number

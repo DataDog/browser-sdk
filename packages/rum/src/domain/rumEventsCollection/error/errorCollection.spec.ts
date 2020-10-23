@@ -1,7 +1,7 @@
-import { setup, TestSetupBuilder } from '../../../test/specHelper'
-import { ErrorSource, RumEventCategory } from '../../index'
-import { RumEventType } from '../../typesV2'
-import { LifeCycleEventType } from '../lifeCycle'
+import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { ErrorSource, RumEventCategory } from '../../../index'
+import { RumEventType } from '../../../typesV2'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { startManualErrorCollection } from './errorCollection'
 
 describe('manual error collection', () => {

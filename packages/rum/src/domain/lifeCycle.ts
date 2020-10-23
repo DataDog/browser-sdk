@@ -3,7 +3,7 @@ import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { ManuallyAddedError } from './rumEventsCollection/errorCollection'
+import { ManuallyAddedError } from './rumEventsCollection/error/errorCollection'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './rumEventsCollection/userActionCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/viewCollection'
 
