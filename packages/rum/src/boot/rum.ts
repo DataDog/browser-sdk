@@ -1,11 +1,9 @@
 import {
   combine,
   commonInit,
-  computeStackTrace,
   Configuration,
   Context,
   ErrorMessage,
-  formatUnknownError,
   generateUUID,
   getTimestamp,
   includes,
@@ -20,6 +18,7 @@ import { startRumAssembly } from '../domain/assembly'
 import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
+import { ManuallyAddedError, startManualErrorCollection } from '../domain/rumEventsCollection/errorCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTaskCollection'
 import { matchRequestTiming } from '../domain/rumEventsCollection/matchRequestTiming'
 import { RequestCompleteEvent, startRequestCollection } from '../domain/rumEventsCollection/requestCollection'
@@ -35,7 +34,6 @@ import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
 import {
   InternalContext,
-  ManuallyAddedError,
   RawRumEvent,
   RumErrorEvent,
   RumEventCategory,
@@ -131,6 +129,7 @@ export function startRumEventCollection(
   trackRumEvents(lifeCycle, session)
   startLongTaskCollection(lifeCycle, configuration)
   startViewCollection(location, lifeCycle)
+  startManualErrorCollection(lifeCycle)
 
   return {
     parentContexts,
@@ -159,7 +158,6 @@ export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession) {
 
   trackView(lifeCycle, handler)
   trackErrors(lifeCycle, handler)
-  trackManualErrors(lifeCycle, handler)
   trackRequests(lifeCycle, session, handler)
   trackPerformanceTiming(lifeCycle, session, handler)
   trackCustomUserAction(lifeCycle, handler)
@@ -204,36 +202,6 @@ function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: R
       ...context,
     })
   })
-}
-
-function trackManualErrors(
-  lifeCycle: LifeCycle,
-  handler: (startTime: number, event: RumErrorEvent, savedGlobalContext?: Context, customerContext?: Context) => void
-) {
-  lifeCycle.subscribe(
-    LifeCycleEventType.MANUAL_ERROR_COLLECTED,
-    ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
-      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-      const { message, stack, kind } = formatUnknownError(stackTrace, error, 'Captured')
-      handler(
-        startTime,
-        {
-          message,
-          date: getTimestamp(startTime),
-          error: {
-            kind,
-            stack,
-            origin: source,
-          },
-          evt: {
-            category: RumEventCategory.ERROR,
-          },
-        },
-        savedGlobalContext,
-        customerContext
-      )
-    }
-  )
 }
 
 function trackCustomUserAction(

@@ -14,8 +14,8 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
+import { ManuallyAddedError } from '../domain/rumEventsCollection/errorCollection'
 import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/userActionCollection'
-import { ManuallyAddedError } from '../types'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {

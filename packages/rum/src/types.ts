@@ -129,10 +129,3 @@ export interface InternalContext {
     id: string
   }
 }
-
-export interface ManuallyAddedError {
-  startTime: number
-  error: unknown
-  context?: Context
-  source: ErrorSource
-}
