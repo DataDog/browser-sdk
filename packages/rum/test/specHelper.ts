@@ -16,7 +16,7 @@ import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
-import { startUserActionCollection } from '../src/domain/rumEventsCollection/action/userActionCollection'
+import { startActionCollection } from '../src/domain/rumEventsCollection/action/actionCollection'
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
@@ -32,7 +32,7 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
-  withUserActionCollection: () => TestSetupBuilder
+  withActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
@@ -181,9 +181,9 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
-    withUserActionCollection() {
+    withActionCollection() {
       buildTasks.push(() => {
-        const { stop } = startUserActionCollection(lifeCycle)
+        const { stop } = startActionCollection(lifeCycle)
         cleanupTasks.push(stop)
       })
       return setupBuilder

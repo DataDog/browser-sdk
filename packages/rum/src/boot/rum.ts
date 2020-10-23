@@ -15,7 +15,7 @@ import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
-import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/action/userActionCollection'
+import { CustomAction, startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
@@ -60,7 +60,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
   if (configuration.trackInteractions) {
-    startUserActionCollection(lifeCycle)
+    startActionCollection(lifeCycle)
   }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
@@ -70,7 +70,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
       return doGetInternalContext(parentContexts, userConfiguration.applicationId, session, startTime)
     },
 
-    addUserAction(action: CustomUserAction, context?: Context) {
+    addAction(action: CustomAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
   }
@@ -133,8 +133,8 @@ export function trackRumEvents(lifeCycle: LifeCycle) {
     })
 
   trackErrors(lifeCycle, handler)
-  trackCustomUserAction(lifeCycle, handler)
-  trackAutoUserAction(lifeCycle, handler)
+  trackCustomAction(lifeCycle, handler)
+  trackAutoAction(lifeCycle, handler)
 }
 
 function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: RumErrorEvent) => void) {
@@ -150,7 +150,7 @@ function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: R
   })
 }
 
-function trackCustomUserAction(
+function trackCustomAction(
   lifeCycle: LifeCycle,
   handler: (
     startTime: number,
@@ -181,19 +181,19 @@ function trackCustomUserAction(
   )
 }
 
-function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (userAction) => {
-    handler(userAction.startTime, {
-      date: getTimestamp(userAction.startTime),
-      duration: msToNs(userAction.duration),
+function trackAutoAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
+    handler(action.startTime, {
+      date: getTimestamp(action.startTime),
+      duration: msToNs(action.duration),
       evt: {
         category: RumEventCategory.USER_ACTION,
-        name: userAction.name,
+        name: action.name,
       },
       userAction: {
-        id: userAction.id,
-        measures: userAction.measures,
-        type: userAction.type,
+        id: action.id,
+        measures: action.measures,
+        type: action.type,
       },
     })
   })

@@ -13,7 +13,7 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/action/userActionCollection'
+import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/actionCollection'
 
 import { startRum } from './rum'
 
@@ -40,12 +40,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
-  const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
-  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
-    beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, Context]>()
+  let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
+    beforeInitAddAction.add([action, deepClone(globalContextManager.get())])
   }
 
-  return makeGlobal({
+  const rumGlobal = makeGlobal({
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
@@ -58,11 +58,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
-      ;({ getInternalContext: getInternalContextStrategy, addUserAction: addUserActionStrategy } = startRumImpl(
+      ;({ getInternalContext: getInternalContextStrategy, addAction: addActionStrategy } = startRumImpl(
         userConfiguration,
         globalContextManager.get
       ))
-      beforeInitAddUserAction.drain(([action, context]) => addUserActionStrategy(action, context))
+      beforeInitAddAction.drain(([action, context]) => addActionStrategy(action, context))
 
       isAlreadyInitialized = true
     }),
@@ -77,15 +77,21 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       return getInternalContextStrategy(startTime)
     }),
 
-    addUserAction: monitor((name: string, context?: Context) => {
-      addUserActionStrategy({
+    addAction: monitor((name: string, context?: Context) => {
+      addActionStrategy({
         name,
         context: deepClone(context),
         startTime: performance.now(),
         type: ActionType.CUSTOM,
       })
     }),
+
+    addUserAction: (name: string, context?: Context) => {
+      // TODO deprecate in v2
+      rumGlobal.addAction(name, context)
+    },
   })
+  return rumGlobal
 
   function canInitRum(userConfiguration: RumUserConfiguration) {
     if (isAlreadyInitialized) {

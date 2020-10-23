@@ -4,7 +4,7 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { AutoUserAction } from '../domain/rumEventsCollection/action/userActionCollection'
+import { AutoAction } from '../domain/rumEventsCollection/action/actionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { RumEvent } from '../index'
 import { doGetInternalContext } from './rum'
@@ -276,9 +276,9 @@ describe('rum internal context', () => {
   it('should return internal context corresponding to startTime', () => {
     const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
-    const stubUserAction: Partial<AutoUserAction> = { duration: 10 }
+    const stubAction: Partial<AutoAction> = { duration: 10 }
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubUserAction as AutoUserAction)
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubAction as AutoAction)
 
     expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
       application_id: 'appId',

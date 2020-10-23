@@ -1,5 +1,5 @@
 import { Context, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
-import { ActionType } from './domain/rumEventsCollection/action/userActionCollection'
+import { ActionType } from './domain/rumEventsCollection/action/actionCollection'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
 

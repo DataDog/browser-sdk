@@ -11,7 +11,7 @@ import {
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { ActionType, AutoUserAction, CustomUserAction } from '../action/userActionCollection'
+import { ActionType, AutoAction, CustomAction } from '../action/actionCollection'
 import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
@@ -23,7 +23,7 @@ const FAKE_LONG_TASK: RumPerformanceLongTaskTiming = {
   entryType: 'longtask',
   startTime: 456,
 }
-const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
+const FAKE_CUSTOM_USER_ACTION: CustomAction = {
   context: {
     bar: 123,
   },
@@ -31,7 +31,7 @@ const FAKE_CUSTOM_USER_ACTION: CustomUserAction = {
   startTime: 123,
   type: ActionType.CUSTOM,
 }
-const FAKE_AUTO_USER_ACTION: Partial<AutoUserAction> = {
+const FAKE_AUTO_USER_ACTION: Partial<AutoAction> = {
   name: 'foo',
   type: ActionType.CLICK,
 }
@@ -519,13 +519,13 @@ describe('rum view measures', () => {
     expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
   })
 
-  it('should track user action count', () => {
+  it('should track action count', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
     expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
 
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action: FAKE_CUSTOM_USER_ACTION, context: {} })
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoUserAction)
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoAction)
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)

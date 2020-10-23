@@ -3,11 +3,7 @@ import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import {
-  AutoActionCreatedEvent,
-  AutoUserAction,
-  CustomUserAction,
-} from './rumEventsCollection/action/userActionCollection'
+import { AutoActionCreatedEvent, AutoAction, CustomAction } from './rumEventsCollection/action/actionCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
@@ -42,11 +38,8 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
-  notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoUserAction): void
-  notify(
-    eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    data: { action: CustomUserAction; context?: Context }
-  ): void
+  notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
+  notify(eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED, data: { action: CustomAction; context?: Context }): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
@@ -98,14 +91,14 @@ export class LifeCycle {
     eventType: LifeCycleEventType.REQUEST_COMPLETED,
     callback: (data: RequestCompleteEvent) => void
   ): Subscription
-  subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoUserAction) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, callback: (data: AutoAction) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.AUTO_ACTION_CREATED,
     callback: (data: AutoActionCreatedEvent) => void
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    callback: (data: { action: CustomUserAction; context?: Context }) => void
+    callback: (data: { action: CustomAction; context?: Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription

@@ -1,5 +1,5 @@
 import { Context, ErrorContext, HttpContext, ResourceType } from '@datadog/browser-core'
-import { ActionType, UserActionMeasures } from './domain/rumEventsCollection/action/userActionCollection'
+import { ActionType, ActionCounts } from './domain/rumEventsCollection/action/actionCollection'
 import { PerformanceResourceDetails } from './domain/rumEventsCollection/resource/resourceUtils'
 import { Timings, ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
 import { EventCounts } from './domain/trackEventCounts'
@@ -81,7 +81,7 @@ export interface RumUserActionEvent {
   userAction: {
     id?: string
     type: ActionType
-    measures?: UserActionMeasures
+    measures?: ActionCounts
   }
 }
 

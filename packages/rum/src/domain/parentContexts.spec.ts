@@ -5,12 +5,12 @@ import {
   CLEAR_OLD_CONTEXTS_INTERVAL,
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
-import { AutoUserAction } from './rumEventsCollection/action/userActionCollection'
+import { AutoAction } from './rumEventsCollection/action/actionCollection'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
-function stubActionWithDuration(duration: number): AutoUserAction {
-  const action: Partial<AutoUserAction> = { duration }
-  return action as AutoUserAction
+function stubActionWithDuration(duration: number): AutoAction {
+  const action: Partial<AutoAction> = { duration }
+  return action as AutoAction
 }
 
 describe('parentContexts', () => {
