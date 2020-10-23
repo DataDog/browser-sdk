@@ -1,5 +1,6 @@
 import { Context } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { RumEventCategory } from '../types'
 import { RawRumEventV2, RumEventType } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -33,6 +34,7 @@ describe('rum assembly v2', () => {
   let lifeCycle: LifeCycle
   let setGlobalContext: (context: Context) => void
   let serverRumEvents: ServerRumEvents[]
+  let isTracked: boolean
 
   function generateRawRumEvent(
     type: RumEventType,
@@ -50,7 +52,13 @@ describe('rum assembly v2', () => {
   }
 
   beforeEach(() => {
+    isTracked = true
     setupBuilder = setup()
+      .withSession({
+        getId: () => '1234',
+        isTracked: () => isTracked,
+        isTrackedWithResource: () => true,
+      })
       .withParentContexts({
         findActionV2: () => ({
           action: {
@@ -172,6 +180,22 @@ describe('rum assembly v2', () => {
         expect(serverRumEvents[0].action).not.toBeDefined()
         serverRumEvents = []
       })
+    })
+  })
+
+  describe('session', () => {
+    it('when tracked, it should generate event ', () => {
+      isTracked = true
+
+      generateRawRumEvent(RumEventType.VIEW)
+      expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('when not tracked, it should not generate event ', () => {
+      isTracked = false
+
+      generateRawRumEvent(RumEventType.VIEW)
+      expect(serverRumEvents.length).toBe(0)
     })
   })
 })

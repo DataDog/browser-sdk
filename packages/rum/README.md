@@ -6,19 +6,25 @@ Datadog Real User Monitoring (RUM) enables you to visualize and analyze the real
 
 ## Setup
 
-### Datadog
-
 To set up Datadog RUM browser monitoring:
 
 1. In Datadog, navigate to the [Real User Monitoring page][1] and click the **New Application** button.
 2. Enter a name for your application and click **Generate Client Token**. This generates a `clientToken` and an `applicationId` for your application.
-3. Setup the Datadog RUM SDK [NPM](#npm-setup) or the [generated code snippet](#bundle-setup).
+3. Setup the Datadog RUM SDK via [npm](#npm) or via one of the hosted versions: [CDN async](#cdn-async) or [CDN sync](#cdn-sync).
 4. Deploy the changes to your application. Once your deployment is live, Datadog collects events from user browsers.
 5. Visualize the [data collected][2] using Datadog [dashboards][3].
 
 **Note**: Your application shows up on the application list page as "pending" until Datadog starts receiving data.
 
-### NPM
+### Choose the right installation method
+
+| Installation method        | Use case                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                            |
+| CDN async                  | This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| CDN sync                   | This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                     |
+
+### npm
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
 
@@ -39,7 +45,39 @@ datadogRum.init({
 
 **Note**: The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
 
-### Bundle
+### CDN async
+
+Add the generated code snippet to the head tag of every HTML page you want to monitor in your application.
+
+<!-- prettier-ignore -->
+```html
+<script>
+ (function(h,o,u,n,d) {
+   h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+   d=o.createElement(u);d.async=1;d.src=n
+   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum.js','DD_RUM')
+  DD_RUM.onReady(function() {
+    DD_RUM.init({
+      clientToken: '<CLIENT_TOKEN>',
+      applicationId: '<APPLICATION_ID>',
+      site: '<DATADOG_SITE>',
+      //  service: 'my-web-application',
+      //  env: 'production',
+      //  version: '1.0.0',
+      sampleRate: 100,
+      trackInteractions: true,
+    })
+  })
+</script>
+```
+
+**Notes**:
+
+- The `trackInteractions` parameter enables the automatic collection of user clicks in your application. **Sensitive and private data** contained on your pages may be included to identify the elements interacted with.
+- Early RUM API calls must be wrapped in the `DD_RUM.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+### CDN sync
 
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
@@ -104,11 +142,11 @@ The following parameters are available:
 
 Options that must have matching configuration when also using `logs` SDK:
 
-| Parameter                      | Type    | Required | Default | Description                                                                                                                                                  |
-| ------------------------------ | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
-| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                              |
-| `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
+| Parameter                      | Type    | Required | Default | Description                                                                                                                                                 |
+| ------------------------------ | ------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                   |
+| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                             |
+| `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the RUM SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
 
 #### Example
 
@@ -131,22 +169,6 @@ init(configuration: {
     useSecureSessionCookie?: boolean,
     useCrossSiteSessionCookie?: boolean,
 })
-```
-
-### Name click actions
-
-The RUM library uses various strategies to automatically name click actions. If you want more control, define a `data-dd-action-name` attribute on clickable elements (or any of their parents) to name the action, for example:
-
-```html
-<a class="btn btn-default" href="#" role="button" data-dd-action-name="Login button">Login</a>
-```
-
-```html
-<div class="alert alert-danger" role="alert" data-dd-action-name="Dismiss alert">
-  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-  <span class="sr-only">Error:</span>
-  Enter a valid email address
-</div>
 ```
 
 [1]: https://app.datadoghq.com/rum/list

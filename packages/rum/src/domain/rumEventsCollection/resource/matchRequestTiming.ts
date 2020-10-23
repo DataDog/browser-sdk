@@ -1,5 +1,5 @@
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
-import { RequestCompleteEvent } from './requestCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import { RequestCompleteEvent } from '../../requestCollection'
 
 interface Timing {
   startTime: number

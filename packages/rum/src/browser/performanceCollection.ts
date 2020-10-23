@@ -1,8 +1,8 @@
 import { Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
-
-import { getDocumentTraceId } from '../domain/getDocumentTraceId'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resourceUtils'
+import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
+
+import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
 
 interface BrowserWindow extends Window {
   PerformanceObserver?: PerformanceObserver

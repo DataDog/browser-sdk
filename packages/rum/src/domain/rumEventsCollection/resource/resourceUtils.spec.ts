@@ -1,8 +1,9 @@
 import { Configuration, DEFAULT_CONFIGURATION, SPEC_ENDPOINTS } from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import {
   computePerformanceResourceDetails,
   computePerformanceResourceDuration,
+  computeResourceKind,
   isAllowedRequestUrl,
 } from './resourceUtils'
 
@@ -27,6 +28,49 @@ function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) 
   }
   return completeTiming as RumPerformanceResourceTiming
 }
+
+describe('computeResourceKind', () => {
+  ;[
+    {
+      description: 'file extension with query params',
+      expected: 'js',
+      name: 'http://localhost/test.js?from=foo.css',
+    },
+    {
+      description: 'css extension',
+      expected: 'css',
+      name: 'http://localhost/test.css',
+    },
+    {
+      description: 'image initiator',
+      expected: 'image',
+      initiatorType: 'img',
+      name: 'http://localhost/test',
+    },
+    {
+      description: 'image extension',
+      expected: 'image',
+      name: 'http://localhost/test.jpg',
+    },
+  ].forEach(
+    ({
+      description,
+      name,
+      initiatorType,
+      expected,
+    }: {
+      description: string
+      name: string
+      initiatorType?: string
+      expected: string
+    }) => {
+      it(`should compute resource kind: ${description}`, () => {
+        const entry = generateResourceWith({ initiatorType, name })
+        expect(computeResourceKind(entry)).toEqual(expected)
+      })
+    }
+  )
+})
 
 describe('computePerformanceResourceDetails', () => {
   it('should not compute entry without detailed timings', () => {
@@ -177,6 +221,12 @@ describe('computePerformanceResourceDetails', () => {
       connectEnd: 10,
       reason: 'secureConnectionStart > connectEnd',
       secureConnectionStart: 20,
+    },
+    {
+      connectEnd: 10,
+      connectStart: -3,
+      fetchStart: 10,
+      reason: 'negative timing start',
     },
   ].forEach(({ reason, ...overrides }) => {
     it(`should not compute entry when ${reason}`, () => {

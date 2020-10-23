@@ -9,7 +9,7 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 
-import { RumPerformanceResourceTiming } from '../../browser/performanceCollection'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 export interface PerformanceResourceDetailsElement {
   duration: number
@@ -69,6 +69,10 @@ function areInOrder(...numbers: number[]) {
     }
   }
   return true
+}
+
+export function isRequestKind(timing: RumPerformanceResourceTiming) {
+  return timing.initiatorType === 'xmlhttprequest' || timing.initiatorType === 'fetch'
 }
 
 export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
