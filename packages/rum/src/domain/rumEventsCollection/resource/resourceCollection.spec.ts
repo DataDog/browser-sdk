@@ -12,10 +12,6 @@ import { startResourceCollection } from './resourceCollection'
 describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('when resource tracking is enabled', () => {
     beforeEach(() => {
       setupBuilder = setup()
@@ -28,6 +24,10 @@ describe('resourceCollection', () => {
           configuration.isEnabled = () => false
           startResourceCollection(lifeCycle, configuration, session)
         })
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
     })
 
     it('should create resource from performance entry', () => {
@@ -108,6 +108,10 @@ describe('resourceCollection', () => {
         })
     })
 
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
     it('should not create resource from performance entry', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
@@ -137,6 +141,10 @@ describe('resourceCollection', () => {
           configuration.isEnabled = () => false
           startResourceCollection(lifeCycle, configuration, session)
         })
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
     })
 
     it('should enable/disable resource creation from performance entry', () => {
@@ -177,6 +185,11 @@ describe('resourceCollection', () => {
         startResourceCollection(lifeCycle, configuration, session)
       })
     })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
     it('should be processed from traced initial document', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
@@ -212,10 +225,6 @@ describe('resourceCollection', () => {
 describe('resourceCollection V2', () => {
   let setupBuilder: TestSetupBuilder
 
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
   describe('when resource tracking is enabled', () => {
     beforeEach(() => {
       setupBuilder = setup()
@@ -228,6 +237,10 @@ describe('resourceCollection V2', () => {
           configuration.isEnabled = () => true
           startResourceCollection(lifeCycle, configuration, session)
         })
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
     })
 
     it('should create resource from performance entry', () => {
@@ -300,6 +313,10 @@ describe('resourceCollection V2', () => {
         })
     })
 
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
     it('should not create resource from performance entry', () => {
       const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
@@ -329,6 +346,10 @@ describe('resourceCollection V2', () => {
           configuration.isEnabled = () => true
           startResourceCollection(lifeCycle, configuration, session)
         })
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
     })
 
     it('should enable/disable resource creation from performance entry', () => {
@@ -369,6 +390,11 @@ describe('resourceCollection V2', () => {
         startResourceCollection(lifeCycle, configuration, session)
       })
     })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
     it('should be processed from traced initial document', () => {
       const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
       lifeCycle.notify(
