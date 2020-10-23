@@ -15,7 +15,7 @@ With the `datadog-logs` library, you can send logs directly to Datadog from JS c
 
 **Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the `datadog-logs` library, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
 
-**Datadog browser log library**: Configure the library through [NPM](#npm) or use the [bundle](#bundle) directly in the head tag.
+**Datadog browser log library**: Configure the library through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
 
 **Supported browsers**: The `datadog-logs` library supports all modern desktop and mobile browsers including IE10 and IE11. See the [browser support][4] table.
 
@@ -34,7 +34,37 @@ datadogLogs.init({
 })
 ```
 
-### Bundle
+### CDN async
+
+Load and configure the library in the head section of your pages.
+
+<!-- prettier-ignore -->
+```html
+<html>
+  <head>
+    <title>Example to send logs to Datadog</title>
+      <script>
+      (function(h,o,u,n,d) {
+        h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+        d=o.createElement(u);d.async=1;d.src=n
+        n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+      })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-logs.js','DD_LOGS')
+      DD_LOGS.onReady(function() {
+          DD_LOGS.init({
+            clientToken: 'XXX',
+            site: 'datadoghq.com',
+            forwardErrorsToLogs: true,
+            sampleRate: 100,
+          })
+        })
+      </script>
+  </head>
+</html>
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+### CDN sync
 
 To receive all logs and errors, load and configure the library at the beginning of the head section for your pages.
 
@@ -87,7 +117,7 @@ The following parameters are available to configure the Datadog browser log libr
 | `env`                 | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc.                                |
 | `version`             | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.                                |
 | `forwardErrorsToLogs` | Boolean | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog. |
-| `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. |
+| `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.       |
 | `silentMultipleInit`  | Boolean | No       |                 | Prevent logging errors while having multiple init.                                                       |
 
 Options that must have a matching configuration when using the `RUM` SDK:
@@ -95,7 +125,7 @@ Options that must have a matching configuration when using the `RUM` SDK:
 | Parameter                      | Type    | Required | Default | Description                                                                                                                                                  |
 | ------------------------------ | ------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                    |
-| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                              |
+| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables logs sent on insecure (non-HTTPS) connections.                                                                    |
 | `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the logs SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
 
 ## Usage
@@ -116,7 +146,17 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
 
-#### Bundle
+#### CDN async
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+#### CDN sync
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
@@ -126,7 +166,7 @@ window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id
 
 #### Results
 
-The results are the same when using NPM or Bundle:
+The results are the same when using NPM, CDN async or CDN sync:
 
 ```json
 {
@@ -168,9 +208,21 @@ import { datadogLogs } from '@datadog/browser-logs';
 datadogLogs.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
 ```
 
-#### Bundle
+#### CDN async
 
-For Bundle, use:
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+#### CDN sync
+
+For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.log(<MESSAGE>,<JSON_ATTRIBUTES>,<STATUS>);
@@ -233,7 +285,28 @@ const signupLogger = datadogLogs.getLogger('signupLogger')
 signupLogger.info('Test sign up completed')
 ```
 
-##### Bundle
+#### CDN async
+
+For example, assume there is a `signupLogger`, defined with all the other loggers:
+
+```javascript
+DD_LOGS.onReady(function() {
+  const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
+})
+```
+
+It can now be used in a different part of the code with:
+
+```javascript
+DD_LOGS.onReady(function() {
+  const signupLogger = DD_LOGS.getLogger('signupLogger')
+  signupLogger.info('Test sign up completed')
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
 
 For example, assume there is a `signupLogger`, defined with all the other loggers:
 
@@ -275,9 +348,25 @@ datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
 ```
 
-##### Bundle
+#### CDN async
 
-For Bundle, use:
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
+})
+
+DD_LOGS.onReady(function() {
+  window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
+
+For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
@@ -306,9 +395,25 @@ datadogLogs.setContext("{'env': 'staging'}")
 datadogLogs.addContext('referrer', document.referrer)
 ```
 
-##### Bundle
+#### CDN async
 
-For Bundle, use:
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.setContext("{'env': 'staging'}")
+})
+
+DD_LOGS.onReady(function() {
+  DD_LOGS.addContext('referrer', document.referrer)
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
+
+For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}")
@@ -338,9 +443,21 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.logger.setLevel('<LEVEL>')
 ```
 
-##### Bundle
+#### CDN async
 
-For Bundle, use:
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.logger.setLevel('<LEVEL>')
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
+
+For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
@@ -366,9 +483,21 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.logger.setHandler('<HANDLER>')
 ```
 
-##### Bundle
+#### CDN async
 
-For Bundle, use:
+For CDN async, use:
+
+```javascript
+DD_LOGS.onReady(function() {
+  DD_LOGS.logger.setHandler('<HANDLER>')
+})
+```
+
+**Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
+
+##### CDN sync
+
+For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
