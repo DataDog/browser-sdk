@@ -15,7 +15,7 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/userActionCollection'
-import { ManuallyAddedError, ManuallyAddedErrorSource } from '../types'
+import { ManuallyAddedError } from '../types'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -95,21 +95,27 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
-    addError: monitor((error: unknown, context?: Context, source: ManuallyAddedErrorSource = ErrorSource.CUSTOM) => {
-      let checkedSource: ManuallyAddedErrorSource
-      if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-        checkedSource = source
-      } else {
-        console.error(`DD_RUM.addError: Invalid source '${source}'`)
-        checkedSource = ErrorSource.CUSTOM
+    addError: monitor(
+      (
+        error: unknown,
+        context?: Context,
+        source: ErrorSource.CUSTOM | ErrorSource.NETWORK | ErrorSource.SOURCE = ErrorSource.CUSTOM
+      ) => {
+        let checkedSource
+        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
+          checkedSource = source
+        } else {
+          console.error(`DD_RUM.addError: Invalid source '${source}'`)
+          checkedSource = ErrorSource.CUSTOM
+        }
+        addErrorStrategy({
+          error,
+          context: deepClone(context),
+          source: checkedSource,
+          startTime: performance.now(),
+        })
       }
-      addErrorStrategy({
-        error,
-        context: deepClone(context),
-        source: checkedSource,
-        startTime: performance.now(),
-      })
-    }),
+    ),
   })
 
   function canInitRum(userConfiguration: RumUserConfiguration) {

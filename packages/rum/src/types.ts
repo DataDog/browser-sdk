@@ -130,11 +130,9 @@ export interface InternalContext {
   }
 }
 
-export type ManuallyAddedErrorSource = ErrorSource.CUSTOM | ErrorSource.SOURCE | ErrorSource.NETWORK
-
 export interface ManuallyAddedError {
   startTime: number
   error: unknown
   context?: Context
-  source: ManuallyAddedErrorSource
+  source: ErrorSource
 }
