@@ -4,7 +4,7 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import { AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
+import { AutoUserAction } from '../domain/rumEventsCollection/action/userActionCollection'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { RumEvent } from '../index'
 import { doGetInternalContext } from './rum'

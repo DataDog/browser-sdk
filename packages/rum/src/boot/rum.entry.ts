@@ -13,7 +13,7 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/userActionCollection'
+import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/action/userActionCollection'
 
 import { startRum } from './rum'
 

@@ -1,6 +1,6 @@
 import { ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { ActionType } from '../domain/rumEventsCollection/userActionCollection'
+import { ActionType } from '../domain/rumEventsCollection/action/userActionCollection'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from './rum.entry'
 
 const noopStartRum = () => ({

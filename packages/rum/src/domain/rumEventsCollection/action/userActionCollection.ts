@@ -1,7 +1,7 @@
 import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { EventCounts, trackEventCounts } from '../trackEventCounts'
-import { waitIdlePageActivity } from '../trackPageActivities'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import { waitIdlePageActivity } from '../../trackPageActivities'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 export enum ActionType {

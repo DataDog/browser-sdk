@@ -5,7 +5,7 @@ import {
   CLEAR_OLD_CONTEXTS_INTERVAL,
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
-import { AutoUserAction } from './rumEventsCollection/userActionCollection'
+import { AutoUserAction } from './rumEventsCollection/action/userActionCollection'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 function stubActionWithDuration(duration: number): AutoUserAction {

@@ -1,7 +1,7 @@
 import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../../test/specHelper'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../trackPageActivities'
+import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
 import { ActionType, AutoUserAction } from './userActionCollection'
 
 // Used to wait some time after the creation of a user action
