@@ -17,6 +17,7 @@ interface ServerRumEvents {
   view: {
     id: string
     referrer: string
+    url: string
   }
   network?: {
     bytes_written: number
@@ -172,6 +173,19 @@ describe('rum assembly', () => {
         expect(serverRumEvents[0].user_action).not.toBeDefined()
         serverRumEvents = []
       })
+    })
+  })
+
+  describe('view context', () => {
+    it('should be merged with event attributes', () => {
+      generateRawRumEvent(RumEventCategory.USER_ACTION)
+
+      expect(serverRumEvents[0].view).toEqual({
+        id: 'abcde',
+        referrer: 'url',
+        url: 'url',
+      })
+      expect(serverRumEvents[0].session_id).toEqual('1234')
     })
   })
 

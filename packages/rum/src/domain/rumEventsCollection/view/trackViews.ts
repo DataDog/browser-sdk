@@ -1,14 +1,15 @@
 import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { EventCounts, trackEventCounts } from '../trackEventCounts'
-import { waitIdlePageActivity } from '../trackPageActivities'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import { waitIdlePageActivity } from '../../trackPageActivities'
 
 export interface View {
   id: string
   location: Location
   referrer: string
-  measures: ViewMeasures
+  timings: Timings
+  eventCounts: EventCounts
   documentVersion: number
   startTime: number
   duration: number
@@ -23,15 +24,13 @@ export interface ViewCreatedEvent {
   startTime: number
 }
 
-interface Timings {
+export interface Timings {
   firstContentfulPaint?: number
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
   loadEventEnd?: number
 }
-
-export type ViewMeasures = Timings & EventCounts
 
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
@@ -41,7 +40,7 @@ export enum ViewLoadingType {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function startViewCollection(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0
   const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
   let currentView = initialView
@@ -111,7 +110,7 @@ function newView(
     resourceCount: 0,
     userActionCount: 0,
   }
-  let timings: Timings | undefined
+  let timings: Timings = {}
   let documentVersion = 0
   let loadingTime: number | undefined
   let endTime: number | undefined
@@ -147,14 +146,15 @@ function newView(
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       documentVersion,
+      eventCounts,
       id,
       loadingTime,
       loadingType,
       location,
       referrer,
       startTime,
+      timings,
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
-      measures: { ...timings, ...eventCounts },
     })
   }
 

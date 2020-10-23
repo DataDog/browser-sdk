@@ -1,18 +1,13 @@
 import { ErrorMessage, isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
+import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { RequestCompleteEvent } from '../domain/requestCollection'
-import { ActionType, AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
-import {
-  SESSION_KEEP_ALIVE_INTERVAL,
-  THROTTLE_VIEW_UPDATE_PERIOD,
-  View,
-} from '../domain/rumEventsCollection/viewCollection'
-import { RumEvent, RumViewEvent } from '../index'
-import { doGetInternalContext, trackView } from './rum'
+import { LifeCycleEventType } from '../domain/lifeCycle'
+import { AutoUserAction } from '../domain/rumEventsCollection/userActionCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
+import { RumEvent } from '../index'
+import { doGetInternalContext } from './rum'
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
@@ -25,51 +20,22 @@ function getRumMessage(server: sinon.SinonFakeServer, index: number) {
 interface ExpectedRequestBody {
   application_id: string
   date: number
+  type: string
   evt: {
     category: string
   }
   session_id: string
+  session: {
+    id: string
+  }
   view: {
     id: string
     referrer: string
   }
 }
 
-describe('rum view', () => {
-  it('should convert timings to nanosecond', () => {
-    const FAKE_VIEW = {
-      id: 'foo',
-      loadingTime: 17,
-      measures: {
-        loadEventEnd: 15,
-      },
-    }
-
-    const spy = jasmine.createSpy<(startTime: number, event: RumViewEvent) => void>()
-    const lifeCycle = new LifeCycle()
-
-    trackView(lifeCycle, spy)
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, FAKE_VIEW as View)
-
-    const formattedView = spy.calls.mostRecent().args[1]
-    expect(formattedView.view.measures.loadEventEnd).toEqual(15 * 1e6)
-    expect(formattedView.view.loadingTime).toEqual(17 * 1e6)
-  })
-})
-
 describe('rum session', () => {
   const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
-  const FAKE_RESOURCE: Partial<RumPerformanceResourceTiming> = { name: 'http://foo.com', entryType: 'resource' }
-  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { url: 'http://foo.com' }
-  const FAKE_CUSTOM_USER_ACTION_EVENT = {
-    action: {
-      context: { foo: 'bar' },
-      name: 'action',
-      startTime: 123,
-      type: ActionType.CUSTOM as const,
-    },
-    context: {},
-  }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -86,13 +52,16 @@ describe('rum session', () => {
     setupBuilder.cleanup()
   })
 
-  it('when the session is renewed, a new view event should be sent', () => {
+  it('when the session is renewed, a new view event should be sent (v1)', () => {
     let sessionId = '42'
     const { server, lifeCycle } = setupBuilder
       .withSession({
         getId: () => sessionId,
         isTracked: () => true,
         isTrackedWithResource: () => true,
+      })
+      .beforeBuild((_, configuration) => {
+        configuration.isEnabled = () => false
       })
       .build()
 
@@ -111,6 +80,34 @@ describe('rum session', () => {
     // New view event
     expect(subsequentRequests[0].evt.category).toEqual('view')
     expect(subsequentRequests[0].session_id).toEqual('43')
+    expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
+  })
+
+  it('when the session is renewed, a new view event should be sent', () => {
+    let sessionId = '42'
+    const { server, lifeCycle } = setupBuilder
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => true,
+        isTrackedWithResource: () => true,
+      })
+      .build()
+
+    const initialRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(initialRequests.length).toEqual(1)
+    expect(initialRequests[0].type).toEqual('view')
+    expect(initialRequests[0].session.id).toEqual('42')
+
+    server.requests = []
+    sessionId = '43'
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    const subsequentRequests = getServerRequestBodies<ExpectedRequestBody>(server)
+    expect(subsequentRequests.length).toEqual(1)
+
+    // New view event
+    expect(subsequentRequests[0].type).toEqual('view')
+    expect(subsequentRequests[0].session.id).toEqual('43')
     expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
   })
 
@@ -163,8 +160,12 @@ describe('rum session keep alive', () => {
     setupBuilder.cleanup()
   })
 
-  it('should send a view update regularly', () => {
-    const { server, clock } = setupBuilder.build()
+  it('should send a view update regularly (v1)', () => {
+    const { server, clock } = setupBuilder
+      .beforeBuild((_, configuration) => {
+        configuration.isEnabled = () => false
+      })
+      .build()
 
     // clear initial events
     clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
@@ -185,6 +186,30 @@ describe('rum session keep alive', () => {
     server.requests = []
     expect(requests.length).toEqual(1)
     expect(requests[0].evt.category).toEqual('view')
+  })
+
+  it('should send a view update regularly', () => {
+    const { server, clock } = setupBuilder.build()
+
+    // clear initial events
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
+    server.requests = []
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toEqual('view')
+
+    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
+
+    // view update
+    requests = getServerRequestBodies<ExpectedRequestBody>(server)
+    server.requests = []
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toEqual('view')
   })
 
   it('should not send view update when session is expired', () => {
@@ -271,7 +296,6 @@ describe('rum internal context', () => {
 })
 
 describe('rum view url', () => {
-  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
     domComplete: 456,
     domContentLoadedEventEnd: 345,
@@ -291,17 +315,6 @@ describe('rum view url', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-  })
-
-  it('should sets the view URL on events', () => {
-    const { server, lifeCycle } = setupBuilder.withFakeLocation('http://foo.com/').build()
-
-    server.requests = []
-
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-
-    expect(server.requests.length).toEqual(1)
-    expect(getRumMessage(server, 0).view.url).toEqual('http://foo.com/')
   })
 
   it('should keep the same URL when updating a view ended by a URL change', () => {
