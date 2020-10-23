@@ -3,7 +3,7 @@ import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { AutoActionCreatedEvent, AutoAction, CustomAction } from './rumEventsCollection/action/actionCollection'
+import { AutoAction, AutoActionCreatedEvent, CustomAction } from './rumEventsCollection/action/trackActions'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {

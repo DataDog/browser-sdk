@@ -38,7 +38,7 @@ export interface AutoActionCreatedEvent {
   startTime: number
 }
 
-export function startActionCollection(lifeCycle: LifeCycle) {
+export function trackActions(lifeCycle: LifeCycle) {
   const action = startActionManagement(lifeCycle)
 
   // New views trigger the discard of the current pending Action

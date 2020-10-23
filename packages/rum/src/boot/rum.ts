@@ -15,7 +15,7 @@ import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
-import { CustomAction, startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
+import { CustomAction, trackActions } from '../domain/rumEventsCollection/action/trackActions'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
@@ -60,7 +60,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
   if (configuration.trackInteractions) {
-    startActionCollection(lifeCycle)
+    trackActions(lifeCycle)
   }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))

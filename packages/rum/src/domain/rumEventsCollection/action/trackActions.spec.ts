@@ -2,7 +2,7 @@ import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
-import { ActionType, AutoAction } from './actionCollection'
+import { ActionType, AutoAction } from './trackActions'
 
 // Used to wait some time after the creation of a action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -24,7 +24,7 @@ function eventsCollector<T>() {
   }
 }
 
-describe('startActionCollection', () => {
+describe('trackActions', () => {
   const { events, pushEvent } = eventsCollector()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement

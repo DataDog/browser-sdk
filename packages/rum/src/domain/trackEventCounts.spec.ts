@@ -1,7 +1,7 @@
 import { ErrorMessage, objectValues } from '@datadog/browser-core'
 import { RumPerformanceLongTaskTiming, RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { AutoAction, CustomAction } from './rumEventsCollection/action/actionCollection'
+import { AutoAction, CustomAction } from './rumEventsCollection/action/trackActions'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
 
 describe('trackEventCounts', () => {

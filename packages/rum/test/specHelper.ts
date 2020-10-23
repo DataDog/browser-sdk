@@ -16,7 +16,7 @@ import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
-import { startActionCollection } from '../src/domain/rumEventsCollection/action/actionCollection'
+import { trackActions } from '../src/domain/rumEventsCollection/action/trackActions'
 import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
@@ -183,7 +183,7 @@ export function setup(): TestSetupBuilder {
     },
     withActionCollection() {
       buildTasks.push(() => {
-        const { stop } = startActionCollection(lifeCycle)
+        const { stop } = trackActions(lifeCycle)
         cleanupTasks.push(stop)
       })
       return setupBuilder
