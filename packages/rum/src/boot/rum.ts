@@ -5,7 +5,6 @@ import {
   Context,
   ErrorMessage,
   getTimestamp,
-  msToNs,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
@@ -15,13 +14,14 @@ import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
-import { CustomAction, trackActions } from '../domain/rumEventsCollection/action/trackActions'
+import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
+import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import { InternalContext, RawRumEvent, RumErrorEvent, RumEventCategory, RumUserActionEvent } from '../types'
+import { InternalContext, RawRumEvent, RumErrorEvent, RumEventCategory } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
@@ -59,9 +59,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
-  if (configuration.trackInteractions) {
-    trackActions(lifeCycle)
-  }
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
 
@@ -106,6 +103,7 @@ export function startRumEventCollection(
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)
+  startActionCollection(lifeCycle, configuration)
 
   return {
     parentContexts,
@@ -133,8 +131,6 @@ export function trackRumEvents(lifeCycle: LifeCycle) {
     })
 
   trackErrors(lifeCycle, handler)
-  trackCustomAction(lifeCycle, handler)
-  trackAutoAction(lifeCycle, handler)
 }
 
 function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: RumErrorEvent) => void) {
@@ -146,55 +142,6 @@ function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: R
         category: RumEventCategory.ERROR,
       },
       ...context,
-    })
-  })
-}
-
-function trackCustomAction(
-  lifeCycle: LifeCycle,
-  handler: (
-    startTime: number,
-    event: RumUserActionEvent,
-    savedGlobalContext?: Context,
-    customerContext?: Context
-  ) => void
-) {
-  lifeCycle.subscribe(
-    LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    ({ action: { name, type, context: customerContext, startTime }, context: savedGlobalContext }) => {
-      handler(
-        startTime,
-        {
-          date: getTimestamp(startTime),
-          evt: {
-            name,
-            category: RumEventCategory.USER_ACTION,
-          },
-          userAction: {
-            type,
-          },
-        },
-        savedGlobalContext,
-        customerContext
-      )
-    }
-  )
-}
-
-function trackAutoAction(lifeCycle: LifeCycle, handler: (startTime: number, event: RumUserActionEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
-    handler(action.startTime, {
-      date: getTimestamp(action.startTime),
-      duration: msToNs(action.duration),
-      evt: {
-        category: RumEventCategory.USER_ACTION,
-        name: action.name,
-      },
-      userAction: {
-        id: action.id,
-        measures: action.measures,
-        type: action.type,
-      },
     })
   })
 }
