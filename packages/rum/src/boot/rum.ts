@@ -129,7 +129,7 @@ export function startRumEventCollection(
   trackRumEvents(lifeCycle, session)
   startLongTaskCollection(lifeCycle, configuration)
   startViewCollection(location, lifeCycle)
-  startManualErrorCollection(lifeCycle)
+  startManualErrorCollection(lifeCycle, configuration)
 
   return {
     parentContexts,
