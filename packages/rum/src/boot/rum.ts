@@ -4,29 +4,19 @@ import {
   Configuration,
   Context,
   ErrorMessage,
-  generateUUID,
   getTimestamp,
-  includes,
   msToNs,
-  RequestType,
-  ResourceType,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
-import { RumPerformanceResourceTiming, startPerformanceCollection } from '../browser/performanceCollection'
+import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
-import { startLongTaskCollection } from '../domain/rumEventsCollection/longTaskCollection'
-import { matchRequestTiming } from '../domain/rumEventsCollection/matchRequestTiming'
-import { RequestCompleteEvent, startRequestCollection } from '../domain/rumEventsCollection/requestCollection'
-import {
-  computePerformanceResourceDetails,
-  computePerformanceResourceDuration,
-  computeResourceKind,
-  computeSize,
-} from '../domain/rumEventsCollection/resourceUtils'
+import { startRequestCollection } from '../domain/requestCollection'
+import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
+import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/userActionCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
@@ -36,8 +26,6 @@ import {
   RawRumEvent,
   RumErrorEvent,
   RumEventCategory,
-  RumLongTaskEvent,
-  RumResourceEvent,
   RumUserActionEvent,
   RumViewEvent,
 } from '../types'
@@ -121,8 +109,9 @@ export function startRumEventCollection(
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
-  trackRumEvents(lifeCycle, session)
+  trackRumEvents(lifeCycle)
   startLongTaskCollection(lifeCycle, configuration)
+  startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(location, lifeCycle)
 
   return {
@@ -136,7 +125,7 @@ export function startRumEventCollection(
   }
 }
 
-export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession) {
+export function trackRumEvents(lifeCycle: LifeCycle) {
   const handler = (
     startTime: number,
     rawRumEvent: RawRumEvent,
@@ -152,8 +141,6 @@ export function trackRumEvents(lifeCycle: LifeCycle, session: RumSession) {
 
   trackView(lifeCycle, handler)
   trackErrors(lifeCycle, handler)
-  trackRequests(lifeCycle, session, handler)
-  trackPerformanceTiming(lifeCycle, session, handler)
   trackCustomUserAction(lifeCycle, handler)
   trackAutoUserAction(lifeCycle, handler)
 }
@@ -245,97 +232,4 @@ function trackAutoUserAction(lifeCycle: LifeCycle, handler: (startTime: number, 
       },
     })
   })
-}
-
-function trackRequests(
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: (startTime: number, event: RumResourceEvent) => void
-) {
-  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    if (!session.isTrackedWithResource()) {
-      return
-    }
-    const timing = matchRequestTiming(request)
-    const kind = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
-    const startTime = timing ? timing.startTime : request.startTime
-    const hasBeenTraced = request.traceId && request.spanId
-    handler(startTime, {
-      _dd: hasBeenTraced
-        ? {
-            spanId: request.spanId!.toDecimalString(),
-            traceId: request.traceId!.toDecimalString(),
-          }
-        : undefined,
-      date: getTimestamp(startTime),
-      duration: timing ? computePerformanceResourceDuration(timing) : msToNs(request.duration),
-      evt: {
-        category: RumEventCategory.RESOURCE,
-      },
-      http: {
-        method: request.method,
-        performance: timing ? computePerformanceResourceDetails(timing) : undefined,
-        statusCode: request.status,
-        url: request.url,
-      },
-      network: {
-        bytesWritten: timing ? computeSize(timing) : undefined,
-      },
-      resource: {
-        kind,
-        id: hasBeenTraced ? generateUUID() : undefined,
-      },
-    })
-    lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
-  })
-}
-
-function trackPerformanceTiming(
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: (startTime: number, event: RumResourceEvent | RumLongTaskEvent) => void
-) {
-  lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'resource') {
-      handleResourceEntry(lifeCycle, session, handler, entry)
-    }
-  })
-}
-
-export function handleResourceEntry(
-  lifeCycle: LifeCycle,
-  session: RumSession,
-  handler: (startTime: number, event: RumResourceEvent) => void,
-  entry: RumPerformanceResourceTiming
-) {
-  if (!session.isTrackedWithResource()) {
-    return
-  }
-  const resourceKind = computeResourceKind(entry)
-  if (includes([ResourceType.XHR, ResourceType.FETCH], resourceKind)) {
-    return
-  }
-  handler(entry.startTime, {
-    _dd: entry.traceId
-      ? {
-          traceId: entry.traceId,
-        }
-      : undefined,
-    date: getTimestamp(entry.startTime),
-    duration: computePerformanceResourceDuration(entry),
-    evt: {
-      category: RumEventCategory.RESOURCE,
-    },
-    http: {
-      performance: computePerformanceResourceDetails(entry),
-      url: entry.name,
-    },
-    network: {
-      bytesWritten: computeSize(entry),
-    },
-    resource: {
-      kind: resourceKind,
-    },
-  })
-  lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
 }

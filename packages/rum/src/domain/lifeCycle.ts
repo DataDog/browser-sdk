@@ -2,7 +2,7 @@ import { Context, ErrorMessage } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
-import { RequestCompleteEvent, RequestStartEvent } from './rumEventsCollection/requestCollection'
+import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './rumEventsCollection/userActionCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/viewCollection'
 

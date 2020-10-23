@@ -1,7 +1,7 @@
 import { Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { RumEventCategory, RumLongTaskEvent } from '../../types'
-import { RumEventType, RumLongTaskEventV2 } from '../../typesV2'
-import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { RumEventCategory, RumLongTaskEvent } from '../../../types'
+import { RumEventType, RumLongTaskEventV2 } from '../../../typesV2'
+import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
