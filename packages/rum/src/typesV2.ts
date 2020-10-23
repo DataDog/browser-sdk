@@ -88,9 +88,9 @@ export interface RumActionEventV2 {
     id?: string
     type: ActionType
     loadingTime?: number
-    error: Count
-    longTask: Count
-    resource: Count
+    error?: Count
+    longTask?: Count
+    resource?: Count
     target: {
       name: string
     }

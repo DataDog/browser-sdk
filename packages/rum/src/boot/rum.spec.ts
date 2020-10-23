@@ -273,11 +273,40 @@ describe('rum internal context', () => {
     expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual(undefined)
   })
 
-  it('should return internal context corresponding to startTime', () => {
-    const { lifeCycle, parentContexts, session } = setupBuilder.build()
+  it('should return internal context corresponding to startTime (v1)', () => {
+    const { lifeCycle, parentContexts, session } = setupBuilder
+      .beforeBuild((_, configuration) => {
+        configuration.isEnabled = () => false
+      })
+      .build()
 
     const stubAction: Partial<AutoAction> = { duration: 10 }
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubAction as AutoAction)
+
+    expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
+      application_id: 'appId',
+      session_id: '1234',
+      user_action: {
+        id: 'fake',
+      },
+      view: {
+        id: jasmine.any(String),
+        referrer: document.referrer,
+        url: window.location.href,
+      },
+    })
+  })
+
+  it('should return internal context corresponding to startTime', () => {
+    const { lifeCycle, parentContexts, session } = setupBuilder.build()
+
+    const stubAction: Partial<AutoAction> = {
+      duration: 10,
+      measures: { errorCount: 0, longTaskCount: 0, resourceCount: 0 },
+      startTime: 10,
+    }
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: 'fake', startTime: 10 })
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubAction as AutoAction)
 
     expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
