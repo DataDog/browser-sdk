@@ -95,13 +95,13 @@ describe('trackActions', () => {
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
       {
-        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
-        id: jasmine.any(String),
-        measures: {
+        counts: {
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
         },
+        duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+        id: jasmine.any(String),
         name: 'Click me',
         startTime: jasmine.any(Number),
         type: ActionType.CLICK,
@@ -187,7 +187,7 @@ describe('newAction', () => {
 
     expect(events.length).toBe(1)
     const action = events[0] as AutoAction
-    expect(action.measures).toEqual({
+    expect(action.counts).toEqual({
       errorCount: 2,
       longTaskCount: 0,
       resourceCount: 0,

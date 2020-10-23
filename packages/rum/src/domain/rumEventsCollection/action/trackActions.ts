@@ -30,7 +30,7 @@ export interface AutoAction {
   name: string
   startTime: number
   duration: number
-  measures: ActionCounts
+  counts: ActionCounts
 }
 
 export interface AutoActionCreatedEvent {
@@ -114,13 +114,13 @@ class PendingAutoAction {
   complete(endTime: number) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      duration: endTime - this.startTime,
-      id: this.id,
-      measures: {
+      counts: {
         errorCount: eventCounts.errorCount,
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
+      duration: endTime - this.startTime,
+      id: this.id,
       name: this.name,
       startTime: this.startTime,
       type: this.type,

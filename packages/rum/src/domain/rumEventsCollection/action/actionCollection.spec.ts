@@ -21,13 +21,13 @@ describe('actionCollection', () => {
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      duration: 100,
-      id: 'xxx',
-      measures: {
+      counts: {
         errorCount: 10,
         longTaskCount: 10,
         resourceCount: 10,
       },
+      duration: 100,
+      id: 'xxx',
       name: 'foo',
       startTime: 1234,
       type: ActionType.CLICK,
@@ -93,13 +93,13 @@ describe('actionCollection v2', () => {
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
-      duration: 100,
-      id: 'xxx',
-      measures: {
+      counts: {
         errorCount: 10,
         longTaskCount: 10,
         resourceCount: 10,
       },
+      duration: 100,
+      id: 'xxx',
       name: 'foo',
       startTime: 1234,
       type: ActionType.CLICK,

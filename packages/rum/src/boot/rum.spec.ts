@@ -302,8 +302,8 @@ describe('rum internal context', () => {
     const { lifeCycle, parentContexts, session } = setupBuilder.build()
 
     const stubAction: Partial<AutoAction> = {
+      counts: { errorCount: 0, longTaskCount: 0, resourceCount: 0 },
       duration: 10,
-      measures: { errorCount: 0, longTaskCount: 0, resourceCount: 0 },
       startTime: 10,
     }
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: 'fake', startTime: 10 })

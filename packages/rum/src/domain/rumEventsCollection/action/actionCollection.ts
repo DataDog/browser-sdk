@@ -34,7 +34,7 @@ function processAction(action: AutoAction | CustomAction) {
         duration: msToNs(action.duration),
         userAction: {
           id: action.id,
-          measures: action.measures,
+          measures: action.counts,
         },
       }
     : undefined
@@ -64,15 +64,15 @@ function processActionV2(action: AutoAction | CustomAction) {
     ? {
         action: {
           error: {
-            count: action.measures.errorCount,
+            count: action.counts.errorCount,
           },
           id: action.id,
           loadingTime: msToNs(action.duration),
           longTask: {
-            count: action.measures.longTaskCount,
+            count: action.counts.longTaskCount,
           },
           resource: {
-            count: action.measures.resourceCount,
+            count: action.counts.resourceCount,
           },
         },
       }
