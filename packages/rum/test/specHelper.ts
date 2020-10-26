@@ -14,6 +14,7 @@ import { startRumEventCollection } from '../src/boot/rum'
 import { startPerformanceCollection } from '../src/browser/performanceCollection'
 import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
+import { startInternalContext } from '../src/domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
 import { trackActions } from '../src/domain/rumEventsCollection/action/trackActions'
@@ -35,6 +36,7 @@ export interface TestSetupBuilder {
   withActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
+  withInternalContext: () => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
@@ -54,6 +56,7 @@ export interface TestIO {
   stubBuilder: PerformanceObserverStubBuilder
   clock: jasmine.Clock
   parentContexts: ParentContexts
+  internalContext: ReturnType<typeof startInternalContext>
   fakeLocation: Partial<Location>
   setGlobalContext: (context: Context) => void
   session: RumSession
@@ -100,6 +103,7 @@ export function setup(): TestSetupBuilder {
   let stubBuilder: PerformanceObserverStubBuilder
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
+  let internalContext: ReturnType<typeof startInternalContext>
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
@@ -174,6 +178,12 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
+    withInternalContext() {
+      buildTasks.push(() => {
+        internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts)
+      })
+      return setupBuilder
+    },
     withViewCollection() {
       buildTasks.push(() => {
         const { stop } = trackViews(fakeLocation as Location, lifeCycle)
@@ -244,6 +254,7 @@ export function setup(): TestSetupBuilder {
       return {
         clock,
         fakeLocation,
+        internalContext,
         lifeCycle,
         parentContexts,
         rawRumEvents,
