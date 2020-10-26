@@ -32,7 +32,7 @@ export function waitIdlePageActivity(
   return { stop }
 }
 
-// Automatic user action collection lifecycle overview:
+// Automatic action collection lifecycle overview:
 //                      (Start new trackPageActivities)
 //              .-------------------'--------------------.
 //              v                                        v

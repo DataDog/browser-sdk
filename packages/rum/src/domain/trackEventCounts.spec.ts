@@ -1,7 +1,7 @@
 import { ErrorMessage, objectValues } from '@datadog/browser-core'
 import { RumPerformanceLongTaskTiming, RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { AutoUserAction, CustomUserAction } from './rumEventsCollection/userActionCollection'
+import { AutoAction, CustomAction } from './rumEventsCollection/action/trackActions'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
 
 describe('trackEventCounts', () => {
@@ -35,12 +35,12 @@ describe('trackEventCounts', () => {
     expect(objectValues(eventCounts).every((value) => value === 0)).toBe(true)
   })
 
-  it('tracks user actions', () => {
+  it('tracks actions', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
-    const userAction = {}
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, userAction as AutoUserAction)
+    const action = {}
+    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, action as AutoAction)
     lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      action: userAction as CustomUserAction,
+      action: action as CustomAction,
       context: {},
     })
     expect(eventCounts.userActionCount).toBe(2)

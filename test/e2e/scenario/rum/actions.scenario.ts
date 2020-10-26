@@ -1,8 +1,8 @@
 import { createTest, html, waitForServersIdle } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/sdk'
 
-describe('user action collection', () => {
-  createTest('track a click user action')
+describe('action collection', () => {
+  createTest('track a click action')
     .withRum({ trackInteractions: true })
     .withBody(
       html`
@@ -19,10 +19,10 @@ describe('user action collection', () => {
       const button = await $('button')
       await button.click()
       await flushEvents()
-      const userActionEvents = events.rumActions
+      const actionEvents = events.rumActions
 
-      expect(userActionEvents.length).toBe(1)
-      expect(userActionEvents[0].user_action).toEqual({
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].user_action).toEqual({
         id: (jasmine.any(String) as unknown) as string,
         measures: {
           error_count: 0,
@@ -31,11 +31,11 @@ describe('user action collection', () => {
         },
         type: 'click',
       })
-      expect(userActionEvents[0].evt.name).toBe('click me')
-      expect(userActionEvents[0].duration).toBeGreaterThanOrEqual(0)
+      expect(actionEvents[0].evt.name).toBe('click me')
+      expect(actionEvents[0].duration).toBeGreaterThanOrEqual(0)
     })
 
-  createTest('associate a request to its user action')
+  createTest('associate a request to its action')
     .withRum({ trackInteractions: true })
     .withBody(
       html`
@@ -53,11 +53,11 @@ describe('user action collection', () => {
       await button.click()
       await waitForServersIdle()
       await flushEvents()
-      const userActionEvents = events.rumActions
+      const actionEvents = events.rumActions
       const resourceEvents = events.rumResources.filter((event) => event.resource.kind === 'fetch')
 
-      expect(userActionEvents.length).toBe(1)
-      expect(userActionEvents[0].user_action).toEqual({
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].user_action).toEqual({
         id: (jasmine.any(String) as unknown) as string,
         measures: {
           error_count: 0,
@@ -66,10 +66,10 @@ describe('user action collection', () => {
         },
         type: 'click',
       })
-      expect(userActionEvents[0].evt.name).toBe('click me')
-      expect(userActionEvents[0].duration).toBeGreaterThan(0)
+      expect(actionEvents[0].evt.name).toBe('click me')
+      expect(actionEvents[0].duration).toBeGreaterThan(0)
 
       expect(resourceEvents.length).toBe(1)
-      expect(resourceEvents[0].user_action!.id).toBe(userActionEvents[0].user_action.id!)
+      expect(resourceEvents[0].user_action!.id).toBe(actionEvents[0].user_action.id!)
     })
 })

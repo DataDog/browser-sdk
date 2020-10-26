@@ -11,11 +11,11 @@ import {
   waitPageActivitiesCompletion,
 } from './trackPageActivities'
 
-// Used to wait some time after the creation of a user action
+// Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
-// Used to wait some time before the (potential) end of a user action
+// Used to wait some time before the (potential) end of an action
 const BEFORE_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 0.8
-// A long delay used to wait after any user action is finished.
+// A long delay used to wait after any action is finished.
 const EXPIRE_DELAY = PAGE_ACTIVITY_MAX_DURATION * 10
 
 function mockClock() {
@@ -34,7 +34,7 @@ function mockClock() {
       jasmine.clock().tick(ms)
     },
     expire() {
-      // Make sure no user action is still pending
+      // Make sure no action is still pending
       jasmine.clock().tick(EXPIRE_DELAY)
     },
   }
@@ -182,7 +182,7 @@ describe('waitPageActivitiesCompletion', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
 
-      // Extend the user action but stops before PAGE_ACTIVITY_MAX_DURATION
+      // Extend the action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
 
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
@@ -204,7 +204,7 @@ describe('waitPageActivitiesCompletion', () => {
       let stop = false
       const startTime = performance.now()
 
-      // Extend the user action until it's more than PAGE_ACTIVITY_MAX_DURATION
+      // Extend the action until it's more than PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
 
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {

@@ -1,6 +1,6 @@
 import { Context, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
+import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
-import { ActionType } from './domain/rumEventsCollection/userActionCollection'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
 
 export enum RumEventType {
@@ -88,9 +88,9 @@ export interface RumActionEventV2 {
     id?: string
     type: ActionType
     loadingTime?: number
-    error: Count
-    longTask: Count
-    resource: Count
+    error?: Count
+    longTask?: Count
+    resource?: Count
     target: {
       name: string
     }

@@ -2,7 +2,7 @@ import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-co
 import { ActionContext, ViewContext } from '../types'
 import { ActionContextV2, ViewContextV2 } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { AutoActionCreatedEvent, AutoUserAction } from './rumEventsCollection/userActionCollection'
+import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 import { RumSession } from './rumSession'
 
@@ -56,11 +56,11 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     currentAction = currentContext
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (userAction: AutoUserAction) => {
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
     if (currentAction) {
       previousActions.unshift({
         context: buildCurrentActionContext(),
-        endTime: currentAction.startTime + userAction.duration,
+        endTime: currentAction.startTime + action.duration,
         startTime: currentAction.startTime,
       })
     }

@@ -14,8 +14,8 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
+import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
-import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/userActionCollection'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -42,9 +42,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     return undefined
   }
 
-  const beforeInitAddUserAction = new BoundedBuffer<[CustomUserAction, Context]>()
-  let addUserActionStrategy: ReturnType<StartRum>['addUserAction'] = (action) => {
-    beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, Context]>()
+  let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
+    beforeInitAddAction.add([action, deepClone(globalContextManager.get())])
   }
 
   const beforeInitAddError = new BoundedBuffer<[ProvidedError, Context]>()
@@ -52,7 +52,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     beforeInitAddError.add([providedError, deepClone(globalContextManager.get())])
   }
 
-  return makeGlobal({
+  const rumGlobal = makeGlobal({
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
@@ -66,11 +66,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       }
 
       ;({
+        addAction: addActionStrategy,
         addError: addErrorStrategy,
-        addUserAction: addUserActionStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, globalContextManager.get))
-      beforeInitAddUserAction.drain(([action, context]) => addUserActionStrategy(action, context))
+      beforeInitAddAction.drain(([action, context]) => addActionStrategy(action, context))
       beforeInitAddError.drain(([error, context]) => addErrorStrategy(error, context))
 
       isAlreadyInitialized = true
@@ -86,14 +86,19 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       return getInternalContextStrategy(startTime)
     }),
 
-    addUserAction: monitor((name: string, context?: Context) => {
-      addUserActionStrategy({
+    addAction: monitor((name: string, context?: Context) => {
+      addActionStrategy({
         name,
         context: deepClone(context),
         startTime: performance.now(),
         type: ActionType.CUSTOM,
       })
     }),
+
+    addUserAction: (name: string, context?: Context) => {
+      // TODO deprecate in v2
+      rumGlobal.addAction(name, context)
+    },
 
     addError: monitor(
       (
@@ -117,6 +122,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       }
     ),
   })
+  return rumGlobal
 
   function canInitRum(userConfiguration: RumUserConfiguration) {
     if (isAlreadyInitialized) {
