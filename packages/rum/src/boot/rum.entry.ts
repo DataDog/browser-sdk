@@ -7,6 +7,7 @@ import {
   createContextManager,
   deepClone,
   defineGlobal,
+  ErrorSource,
   getGlobalObject,
   isPercentage,
   makeGlobal,
@@ -14,7 +15,7 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-
+import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -40,9 +41,15 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
+
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, Context]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
     beforeInitAddAction.add([action, deepClone(globalContextManager.get())])
+  }
+
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, Context]>()
+  let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
+    beforeInitAddError.add([providedError, deepClone(globalContextManager.get())])
   }
 
   const rumGlobal = makeGlobal({
@@ -58,11 +65,13 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
-      ;({ getInternalContext: getInternalContextStrategy, addAction: addActionStrategy } = startRumImpl(
-        userConfiguration,
-        globalContextManager.get
-      ))
+      ;({
+        addAction: addActionStrategy,
+        addError: addErrorStrategy,
+        getInternalContext: getInternalContextStrategy,
+      } = startRumImpl(userConfiguration, globalContextManager.get))
       beforeInitAddAction.drain(([action, context]) => addActionStrategy(action, context))
+      beforeInitAddError.drain(([error, context]) => addErrorStrategy(error, context))
 
       isAlreadyInitialized = true
     }),
@@ -90,6 +99,28 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       // TODO deprecate in v2
       rumGlobal.addAction(name, context)
     },
+
+    addError: monitor(
+      (
+        error: unknown,
+        context?: Context,
+        source: ErrorSource.CUSTOM | ErrorSource.NETWORK | ErrorSource.SOURCE = ErrorSource.CUSTOM
+      ) => {
+        let checkedSource
+        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
+          checkedSource = source
+        } else {
+          console.error(`DD_RUM.addError: Invalid source '${source}'`)
+          checkedSource = ErrorSource.CUSTOM
+        }
+        addErrorStrategy({
+          error,
+          context: deepClone(context),
+          source: checkedSource,
+          startTime: performance.now(),
+        })
+      }
+    ),
   })
   return rumGlobal
 

@@ -1,4 +1,4 @@
-import { Context, ErrorContext, HttpContext, ResourceType } from '@datadog/browser-core'
+import { Context, ErrorContext, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
 import { ActionCounts, ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetails } from './domain/rumEventsCollection/resource/resourceUtils'
 import { Timings, ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'

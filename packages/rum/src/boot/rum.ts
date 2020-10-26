@@ -16,6 +16,7 @@ import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
+import { ProvidedError, startProvidedErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
@@ -70,6 +71,10 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
     addAction(action: CustomAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
+
+    addError(error: ProvidedError, context?: Context) {
+      lifeCycle.notify(LifeCycleEventType.ERROR_PROVIDED, { error, context })
+    },
   }
 }
 
@@ -103,6 +108,7 @@ export function startRumEventCollection(
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)
+  startProvidedErrorCollection(lifeCycle, configuration)
   startActionCollection(lifeCycle, configuration)
 
   return {

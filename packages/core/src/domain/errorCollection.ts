@@ -33,6 +33,7 @@ export enum ErrorSource {
   NETWORK = 'network',
   SOURCE = 'source',
   LOGGER = 'logger',
+  CUSTOM = 'custom',
 }
 
 export type ErrorObservable = Observable<ErrorMessage>
@@ -108,8 +109,19 @@ function formatConsoleParameters(param: unknown) {
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
 
 export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
-  traceKitReportHandler = (stack: StackTrace, _: boolean, errorObject?: any) => {
-    errorObservable.notify(formatRuntimeError(stack, errorObject))
+  traceKitReportHandler = (stackTrace: StackTrace, _: boolean, errorObject?: any) => {
+    const { stack, message, kind } = formatUnknownError(stackTrace, errorObject, 'Uncaught')
+    errorObservable.notify({
+      message,
+      context: {
+        error: {
+          kind,
+          stack,
+          origin: ErrorSource.SOURCE,
+        },
+      },
+      startTime: performance.now(),
+    })
   }
   ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
@@ -118,26 +130,19 @@ export function stopRuntimeErrorTracking() {
   ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
-export function formatRuntimeError(stackTrace: StackTrace, errorObject: any) {
-  let message: string
-  let stack: string
-  if (stackTrace.message === undefined && !(errorObject instanceof Error)) {
-    message = `Uncaught ${jsonStringify(errorObject)}`
-    stack = 'No stack, consider using an instance of Error'
-  } else {
-    message = stackTrace.message || 'Empty message'
-    stack = toStackTraceString(stackTrace)
+export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
+  if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
+    return {
+      kind: stackTrace && stackTrace.name,
+      message: `${nonErrorPrefix} ${jsonStringify(errorObject)}`,
+      stack: 'No stack, consider using an instance of Error',
+    }
   }
+
   return {
-    message,
-    context: {
-      error: {
-        stack,
-        kind: stackTrace.name,
-        origin: ErrorSource.SOURCE,
-      },
-    },
-    startTime: performance.now(),
+    kind: stackTrace.name,
+    message: stackTrace.message || 'Empty message',
+    stack: toStackTraceString(stackTrace),
   }
 }
 
