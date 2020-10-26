@@ -53,7 +53,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
 
-  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
+  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
 
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
 

@@ -180,7 +180,7 @@ export function setup(): TestSetupBuilder {
     },
     withInternalContext() {
       buildTasks.push(() => {
-        internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts)
+        internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts, configuration as Configuration)
       })
       return setupBuilder
     },
