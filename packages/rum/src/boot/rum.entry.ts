@@ -14,7 +14,7 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { ManuallyAddedError } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
 import { ActionType, CustomUserAction } from '../domain/rumEventsCollection/userActionCollection'
 import { startRum } from './rum'
 
@@ -47,9 +47,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     beforeInitAddUserAction.add([action, deepClone(globalContextManager.get())])
   }
 
-  const beforeInitAddError = new BoundedBuffer<[ManuallyAddedError, Context]>()
-  let addErrorStrategy: ReturnType<StartRum>['addError'] = (manuallyAddedError) => {
-    beforeInitAddError.add([manuallyAddedError, deepClone(globalContextManager.get())])
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, Context]>()
+  let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
+    beforeInitAddError.add([providedError, deepClone(globalContextManager.get())])
   }
 
   return makeGlobal({

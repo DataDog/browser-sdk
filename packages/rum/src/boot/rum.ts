@@ -15,7 +15,7 @@ import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
-import { ManuallyAddedError, startManualErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedError, startProvidedErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/userActionCollection'
@@ -82,8 +82,8 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
     },
 
-    addError(error: ManuallyAddedError, context?: Context) {
-      lifeCycle.notify(LifeCycleEventType.MANUAL_ERROR_COLLECTED, { error, context })
+    addError(error: ProvidedError, context?: Context) {
+      lifeCycle.notify(LifeCycleEventType.ERROR_PROVIDED, { error, context })
     },
   }
 }
@@ -118,7 +118,7 @@ export function startRumEventCollection(
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(location, lifeCycle)
-  startManualErrorCollection(lifeCycle, configuration)
+  startProvidedErrorCollection(lifeCycle, configuration)
 
   return {
     parentContexts,

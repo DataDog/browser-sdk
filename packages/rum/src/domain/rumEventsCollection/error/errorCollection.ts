@@ -10,19 +10,19 @@ import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumErrorEventV2, RumEventType } from '../../../typesV2'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
-export interface ManuallyAddedError {
+export interface ProvidedError {
   startTime: number
   error: unknown
   context?: Context
   source: ErrorSource
 }
 
-export function startManualErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startProvidedErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(
-    LifeCycleEventType.MANUAL_ERROR_COLLECTED,
+    LifeCycleEventType.ERROR_PROVIDED,
     ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
       const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-      const { message, stack, kind } = formatUnknownError(stackTrace, error, 'Captured')
+      const { message, stack, kind } = formatUnknownError(stackTrace, error, 'Provided')
 
       if (configuration.isEnabled('v2_format')) {
         const rawRumEvent: RumErrorEventV2 = {
