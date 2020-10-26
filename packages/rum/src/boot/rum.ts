@@ -19,17 +19,10 @@ import { ProvidedError, startProvidedErrorCollection } from '../domain/rumEvents
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { CustomUserAction, startUserActionCollection } from '../domain/rumEventsCollection/userActionCollection'
-import { startViewCollection } from '../domain/rumEventsCollection/viewCollection'
+import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import {
-  InternalContext,
-  RawRumEvent,
-  RumErrorEvent,
-  RumEventCategory,
-  RumUserActionEvent,
-  RumViewEvent,
-} from '../types'
+import { InternalContext, RawRumEvent, RumErrorEvent, RumEventCategory, RumUserActionEvent } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
@@ -117,7 +110,7 @@ export function startRumEventCollection(
   trackRumEvents(lifeCycle)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
-  startViewCollection(location, lifeCycle)
+  startViewCollection(lifeCycle, configuration, location)
   startProvidedErrorCollection(lifeCycle, configuration)
 
   return {
@@ -145,37 +138,9 @@ export function trackRumEvents(lifeCycle: LifeCycle) {
       startTime,
     })
 
-  trackView(lifeCycle, handler)
   trackErrors(lifeCycle, handler)
   trackCustomUserAction(lifeCycle, handler)
   trackAutoUserAction(lifeCycle, handler)
-}
-
-export function trackView(lifeCycle: LifeCycle, handler: (startTime: number, event: RumViewEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
-    handler(view.startTime, {
-      date: getTimestamp(view.startTime),
-      duration: msToNs(view.duration),
-      evt: {
-        category: RumEventCategory.VIEW,
-      },
-      rum: {
-        documentVersion: view.documentVersion,
-      },
-      view: {
-        loadingTime: msToNs(view.loadingTime),
-        loadingType: view.loadingType,
-        measures: {
-          ...view.measures,
-          domComplete: msToNs(view.measures.domComplete),
-          domContentLoaded: msToNs(view.measures.domContentLoaded),
-          domInteractive: msToNs(view.measures.domInteractive),
-          firstContentfulPaint: msToNs(view.measures.firstContentfulPaint),
-          loadEventEnd: msToNs(view.measures.loadEventEnd),
-        },
-      },
-    })
-  })
 }
 
 function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: RumErrorEvent) => void) {

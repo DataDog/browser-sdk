@@ -5,7 +5,7 @@ import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { ProvidedError } from './rumEventsCollection/error/errorCollection'
 import { AutoActionCreatedEvent, AutoUserAction, CustomUserAction } from './rumEventsCollection/userActionCollection'
-import { View, ViewCreatedEvent } from './rumEventsCollection/viewCollection'
+import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
   ERROR_COLLECTED,

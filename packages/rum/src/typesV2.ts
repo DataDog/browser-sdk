@@ -1,7 +1,7 @@
 import { Context, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ActionType } from './domain/rumEventsCollection/userActionCollection'
-import { ViewLoadingType } from './domain/rumEventsCollection/viewCollection'
+import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
 
 export enum RumEventType {
   ACTION = 'action',
