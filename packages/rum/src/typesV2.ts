@@ -39,7 +39,7 @@ export interface RumErrorEventV2 {
   date: number
   type: RumEventType.ERROR
   error: {
-    resource: HttpContext
+    resource?: HttpContext
     type?: string
     stack?: string
     source: ErrorSource

@@ -1,9 +1,10 @@
-import { ONE_SECOND } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/userActionCollection'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from './rum.entry'
 
 const noopStartRum = () => ({
+  addError: () => undefined,
   addUserAction: () => undefined,
   getInternalContext: () => undefined,
 })
@@ -203,6 +204,95 @@ describe('rum entry', () => {
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addUserActionSpy.calls.argsFor(0)[0].context).toEqual({
+          foo: 'bar',
+        })
+      })
+    })
+  })
+
+  describe('addError', () => {
+    let addErrorSpy: jasmine.Spy<ReturnType<StartRum>['addError']>
+    let rumGlobal: RumGlobal
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addErrorSpy = jasmine.createSpy()
+      rumGlobal = makeRumGlobal(() => ({
+        ...noopStartRum(),
+        addError: addErrorSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('allows capturing an error before init', () => {
+      rumGlobal.addError(new Error('foo'))
+
+      expect(addErrorSpy).not.toHaveBeenCalled()
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addErrorSpy).toHaveBeenCalledTimes(1)
+      expect(addErrorSpy.calls.argsFor(0)).toEqual([
+        {
+          context: undefined,
+          error: new Error('foo'),
+          source: ErrorSource.CUSTOM,
+          startTime: jasmine.any(Number),
+        },
+        {},
+      ])
+    })
+
+    it('allows setting an ErrorSource', () => {
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
+      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
+    })
+
+    it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
+      const consoleSpy = spyOn(console, 'error')
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.addError(new Error('foo'), undefined, 'invalid' as any)
+      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
+      expect(consoleSpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
+    })
+
+    describe('save context when capturing an error', () => {
+      it('saves the date', () => {
+        const { clock } = setupBuilder.withFakeClock().build()
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.addError(new Error('foo'))
+
+        clock.tick(ONE_SECOND)
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
+      })
+
+      it('stores a deep copy of the global context', () => {
+        rumGlobal.addRumGlobalContext('foo', 'bar')
+        rumGlobal.addError(new Error('message'))
+        rumGlobal.addRumGlobalContext('foo', 'baz')
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[1]).toEqual({
+          foo: 'bar',
+        })
+      })
+
+      it('stores a deep copy of the error context', () => {
+        const context = { foo: 'bar' }
+        rumGlobal.addError(new Error('message'), context)
+        context.foo = 'baz'
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
           foo: 'bar',
         })
       })
