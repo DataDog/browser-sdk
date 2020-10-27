@@ -1,12 +1,4 @@
-import {
-  combine,
-  commonInit,
-  Configuration,
-  Context,
-  ErrorMessage,
-  getTimestamp,
-  withSnakeCaseKeys,
-} from '@datadog/browser-core'
+import { combine, commonInit, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -16,13 +8,13 @@ import { ParentContexts, startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-import { ProvidedError, startProvidedErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedError, startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import { InternalContext, RawRumEvent, RumErrorEvent, RumEventCategory } from '../types'
+import { InternalContext } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
@@ -104,11 +96,10 @@ export function startRumEventCollection(
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
-  trackRumEvents(lifeCycle)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)
-  startProvidedErrorCollection(lifeCycle, configuration)
+  startErrorCollection(lifeCycle, configuration)
   startActionCollection(lifeCycle, configuration)
 
   return {
@@ -120,34 +111,4 @@ export function startRumEventCollection(
       batch.stop()
     },
   }
-}
-
-export function trackRumEvents(lifeCycle: LifeCycle) {
-  const handler = (
-    startTime: number,
-    rawRumEvent: RawRumEvent,
-    savedGlobalContext?: Context,
-    customerContext?: Context
-  ) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      customerContext,
-      rawRumEvent,
-      savedGlobalContext,
-      startTime,
-    })
-
-  trackErrors(lifeCycle, handler)
-}
-
-function trackErrors(lifeCycle: LifeCycle, handler: (startTime: number, event: RumErrorEvent) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ message, startTime, context }: ErrorMessage) => {
-    handler(startTime, {
-      message,
-      date: getTimestamp(startTime),
-      evt: {
-        category: RumEventCategory.ERROR,
-      },
-      ...context,
-    })
-  })
 }

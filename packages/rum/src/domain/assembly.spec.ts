@@ -30,6 +30,7 @@ describe('rum assembly', () => {
   let setGlobalContext: (context: Context) => void
   let serverRumEvents: ServerRumEvents[]
   let isTracked: boolean
+  let viewSessionId: string | undefined
 
   function generateRawRumEvent(
     category: RumEventCategory,
@@ -48,6 +49,7 @@ describe('rum assembly', () => {
 
   beforeEach(() => {
     isTracked = true
+    viewSessionId = '1234'
     setupBuilder = setup()
       .withSession({
         getId: () => '1234',
@@ -61,7 +63,7 @@ describe('rum assembly', () => {
           },
         }),
         findView: () => ({
-          sessionId: '1234',
+          sessionId: viewSessionId,
           view: {
             id: 'abcde',
             referrer: 'url',
@@ -190,15 +192,29 @@ describe('rum assembly', () => {
   })
 
   describe('session', () => {
-    it('when tracked, it should generate event ', () => {
+    it('when tracked, it should generate event', () => {
       isTracked = true
 
       generateRawRumEvent(RumEventCategory.VIEW)
       expect(serverRumEvents.length).toBe(1)
     })
 
-    it('when not tracked, it should not generate event ', () => {
+    it('when not tracked, it should not generate event', () => {
       isTracked = false
+
+      generateRawRumEvent(RumEventCategory.VIEW)
+      expect(serverRumEvents.length).toBe(0)
+    })
+
+    it('when view context has session id, it should generate event', () => {
+      viewSessionId = '1234'
+
+      generateRawRumEvent(RumEventCategory.VIEW)
+      expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('when view context has no session id, it should not generate event', () => {
+      viewSessionId = undefined
 
       generateRawRumEvent(RumEventCategory.VIEW)
       expect(serverRumEvents.length).toBe(0)

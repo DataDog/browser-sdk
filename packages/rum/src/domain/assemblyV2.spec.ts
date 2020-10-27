@@ -1,6 +1,5 @@
 import { Context } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumEventCategory } from '../types'
 import { RawRumEventV2, RumEventType } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -36,6 +35,7 @@ describe('rum assembly v2', () => {
   let setGlobalContext: (context: Context) => void
   let serverRumEvents: ServerRumEvents[]
   let isTracked: boolean
+  let viewSessionId: string | undefined
 
   function generateRawRumEvent(
     type: RumEventType,
@@ -54,6 +54,7 @@ describe('rum assembly v2', () => {
 
   beforeEach(() => {
     isTracked = true
+    viewSessionId = '1234'
     setupBuilder = setup()
       .withSession({
         getId: () => '1234',
@@ -68,7 +69,7 @@ describe('rum assembly v2', () => {
         }),
         findViewV2: () => ({
           session: {
-            id: '1234',
+            id: viewSessionId,
           },
           view: {
             id: 'abcde',
@@ -197,15 +198,29 @@ describe('rum assembly v2', () => {
   })
 
   describe('session', () => {
-    it('when tracked, it should generate event ', () => {
+    it('when tracked, it should generate event', () => {
       isTracked = true
 
       generateRawRumEvent(RumEventType.VIEW)
       expect(serverRumEvents.length).toBe(1)
     })
 
-    it('when not tracked, it should not generate event ', () => {
+    it('when not tracked, it should not generate event', () => {
       isTracked = false
+
+      generateRawRumEvent(RumEventType.VIEW)
+      expect(serverRumEvents.length).toBe(0)
+    })
+
+    it('when view context has session id, it should generate event', () => {
+      viewSessionId = '1234'
+
+      generateRawRumEvent(RumEventType.VIEW)
+      expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('when view context has no session id, it should not generate event', () => {
+      viewSessionId = undefined
 
       generateRawRumEvent(RumEventType.VIEW)
       expect(serverRumEvents.length).toBe(0)

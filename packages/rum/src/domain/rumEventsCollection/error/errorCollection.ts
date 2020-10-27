@@ -2,6 +2,7 @@ import {
   computeStackTrace,
   Configuration,
   Context,
+  ErrorMessage,
   ErrorSource,
   formatUnknownError,
   getTimestamp,
@@ -17,7 +18,7 @@ export interface ProvidedError {
   source: ErrorSource
 }
 
-export function startProvidedErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(
     LifeCycleEventType.ERROR_PROVIDED,
     ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
@@ -65,4 +66,37 @@ export function startProvidedErrorCollection(lifeCycle: LifeCycle, configuration
       }
     }
   )
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, ({ startTime, context, message }: ErrorMessage) => {
+    if (configuration.isEnabled('v2_format')) {
+      const rawRumEvent: RumErrorEventV2 = {
+        date: getTimestamp(startTime),
+        error: {
+          message,
+          resource: context.http,
+          source: context.error.origin,
+          stack: context.error.stack,
+          type: context.error.kind,
+        },
+        type: RumEventType.ERROR,
+      }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent,
+        startTime,
+      })
+    } else {
+      const rawRumEvent: RumErrorEvent = {
+        message,
+        date: getTimestamp(startTime),
+        error: context.error,
+        evt: {
+          category: RumEventCategory.ERROR,
+        },
+        http: context.http,
+      }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent,
+        startTime,
+      })
+    }
+  })
 }
