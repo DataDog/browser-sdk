@@ -14,6 +14,16 @@
 
 ---
 
+## v1.25.0
+
+- ✨ [RUMF-724] implement API to capture an error ([#585](https://github.com/DataDog/browser-sdk/pull/585))
+- ✨ [RUMF-739] migrate action to v2 format (experimental) ([#588](https://github.com/DataDog/browser-sdk/pull/588))
+- ✨ [RUMF-738] migrate view to v2 format (experimental) ([#586](https://github.com/DataDog/browser-sdk/pull/586))
+- ✨ [RUMF-737] migrate resource to v2 format (experimental) ([#584](https://github.com/DataDog/browser-sdk/pull/584))
+- 🐛 [RUMF-745] fix V2 context ([#579](https://github.com/DataDog/browser-sdk/pull/579))
+- 📝 Added async installation method ([#571](https://github.com/DataDog/browser-sdk/pull/571))
+- 📝 DOCS-1257 Browser Log Collection ([#575](https://github.com/DataDog/browser-sdk/pull/575))
+
 ## v1.24.1
 
 - 🐛 [RUMF-742] fix cookie creation domain when trackSessionAcrossSubdomains: true ([#573](https://github.com/DataDog/browser-sdk/pull/573))
