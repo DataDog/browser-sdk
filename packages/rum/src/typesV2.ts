@@ -1,4 +1,4 @@
-import { Context, ErrorSource, HttpContext, ResourceType } from '@datadog/browser-core'
+import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -39,7 +39,11 @@ export interface RumErrorEventV2 {
   date: number
   type: RumEventType.ERROR
   error: {
-    resource?: HttpContext
+    resource?: {
+      url: string
+      statusCode: number
+      method: string
+    }
     type?: string
     stack?: string
     source: ErrorSource

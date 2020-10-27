@@ -3,10 +3,10 @@ import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '..
 import { ONE_MINUTE } from '../tools/utils'
 import { Configuration } from './configuration'
 import {
-  ErrorMessage,
   ErrorSource,
   filterErrors,
   formatUnknownError,
+  RawError,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -19,17 +19,13 @@ describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
   const CONSOLE_CONTEXT = {
-    context: {
-      error: {
-        origin: ErrorSource.CONSOLE,
-      },
-    },
+    source: ErrorSource.CONSOLE,
   }
 
   beforeEach(() => {
     consoleErrorStub = spyOn(console, 'error')
     notifyError = jasmine.createSpy()
-    const errorObservable = new Observable<ErrorMessage>()
+    const errorObservable = new Observable<RawError>()
     errorObservable.subscribe(notifyError)
     startConsoleTracking(errorObservable)
   })
@@ -63,9 +59,7 @@ describe('console tracker', () => {
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toContain(
-      'console error: TypeError: hello'
-    )
+    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toContain('console error: TypeError: hello')
   })
 })
 
@@ -81,8 +75,8 @@ describe('runtime error tracker', () => {
     window.onerror = onerrorSpy
 
     notifyError = jasmine.createSpy()
-    const errorObservable = new Observable<ErrorMessage>()
-    errorObservable.subscribe((e: ErrorMessage) => notifyError(e) as void)
+    const errorObservable = new Observable<RawError>()
+    errorObservable.subscribe((e: RawError) => notifyError(e) as void)
 
     startRuntimeErrorTracking(errorObservable)
   })
@@ -109,7 +103,7 @@ describe('runtime error tracker', () => {
     }, 10)
 
     setTimeout(() => {
-      expect((notifyError.calls.mostRecent().args[0] as ErrorMessage).message).toEqual(ERROR_MESSAGE)
+      expect((notifyError.calls.mostRecent().args[0] as RawError).message).toEqual(ERROR_MESSAGE)
       done()
     }, 100)
   })
@@ -150,7 +144,7 @@ describe('formatUnknownError', () => {
     const formatted = formatUnknownError(stack, undefined, 'Uncaught')
 
     expect(formatted.message).toEqual('oh snap!')
-    expect(formatted.kind).toEqual('TypeError')
+    expect(formatted.type).toEqual('TypeError')
     expect(formatted.stack).toEqual(`TypeError: oh snap!
   at foo(1, bar) @ http://path/to/file.js:52:15
   at <anonymous> @ http://path/to/file.js:12
@@ -205,7 +199,7 @@ describe('network error tracker', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    const errorObservable = new Observable<ErrorMessage>()
+    const errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
     const configuration = { requestErrorResponseLengthLimit: 32, ...SPEC_ENDPOINTS }
 
@@ -224,12 +218,13 @@ describe('network error tracker', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalledWith({
-        context: {
-          error: { origin: 'network', stack: 'Server error' },
-          http: { method: 'GET', status_code: 503, url: 'http://fake.com/' },
-        },
         message: 'Fetch error GET http://fake.com/',
+        method: 'GET',
+        source: 'network',
+        stack: 'Server error',
         startTime: jasmine.any(Number),
+        statusCode: 503,
+        url: 'http://fake.com/',
       })
       done()
     })
@@ -276,7 +271,7 @@ describe('network error tracker', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
-      const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+      const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack
       expect(stack).toEqual('Failed to load')
       done()
     })
@@ -286,7 +281,7 @@ describe('network error tracker', () => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
 
     fetchStubManager.whenAllComplete(() => {
-      const stack = (errorObservableSpy.calls.mostRecent().args[0] as ErrorMessage).context.error.stack
+      const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack
       expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
       done()
     })
@@ -294,19 +289,15 @@ describe('network error tracker', () => {
 })
 
 describe('error limitation', () => {
-  let errorObservable: Observable<ErrorMessage>
+  let errorObservable: Observable<RawError>
   let filteredSubscriber: jasmine.Spy
   const CONTEXT = {
-    context: {
-      error: {
-        origin: ErrorSource.SOURCE,
-      },
-    },
+    source: ErrorSource.SOURCE,
     startTime: 100,
   }
 
   beforeEach(() => {
-    errorObservable = new Observable<ErrorMessage>()
+    errorObservable = new Observable<RawError>()
     const configuration: Partial<Configuration> = { maxErrorsByMinute: 2 }
     jasmine.clock().install()
     const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
@@ -334,8 +325,8 @@ describe('error limitation', () => {
     errorObservable.notify({ message: '3', ...CONTEXT })
 
     expect(filteredSubscriber).toHaveBeenCalledWith({
-      context: { error: { origin: ErrorSource.AGENT } },
       message: 'Reached max number of errors by minute: 2',
+      source: ErrorSource.AGENT,
       startTime: jasmine.any(Number),
     })
   })

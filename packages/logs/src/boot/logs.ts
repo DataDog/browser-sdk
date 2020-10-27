@@ -5,11 +5,12 @@ import {
   commonInit,
   Configuration,
   Context,
-  ErrorMessage,
   ErrorObservable,
+  ErrorSource,
   getTimestamp,
   HttpRequest,
   InternalMonitoring,
+  RawError,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
@@ -45,12 +46,31 @@ export function doStartLogs(
 
   const batch = startLoggerBatch(configuration, session)
 
-  errorObservable.subscribe((e: ErrorMessage) =>
+  errorObservable.subscribe((e: RawError) => {
     errorLogger.error(
       e.message,
-      combine({ date: getTimestamp(e.startTime) }, e.context, getRUMInternalContext(e.startTime))
+      combine(
+        {
+          date: getTimestamp(e.startTime),
+          error: {
+            kind: e.type,
+            origin: e.source,
+            stack: e.stack,
+          },
+        },
+        e.source === ErrorSource.NETWORK
+          ? {
+              http: {
+                method: e.method,
+                status_code: e.statusCode,
+                url: e.url,
+              },
+            }
+          : undefined,
+        getRUMInternalContext(e.startTime)
+      )
     )
-  )
+  })
 
   return (message: LogsMessage, currentContext: Context) => {
     if (session.isTracked()) {

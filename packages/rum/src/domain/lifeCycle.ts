@@ -1,4 +1,4 @@
-import { Context, ErrorMessage } from '@datadog/browser-core'
+import { Context, RawError } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
@@ -36,7 +36,7 @@ export interface Subscription {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: ErrorMessage): void
+  notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: RawError): void
   notify(eventType: LifeCycleEventType.ERROR_PROVIDED, data: { error: ProvidedError; context?: Context }): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
@@ -84,7 +84,7 @@ export class LifeCycle {
     }
   }
 
-  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: ErrorMessage) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: RawError) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.ERROR_PROVIDED,
     callback: (data: { error: ProvidedError; context?: Context }) => void

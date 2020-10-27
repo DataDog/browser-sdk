@@ -1,6 +1,6 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
-import { ErrorMessage, startErrorCollection } from '../domain/errorCollection'
+import { RawError, startErrorCollection } from '../domain/errorCollection'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Observable } from '../tools/observable'
 
@@ -61,7 +61,7 @@ export interface BuildEnv {
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv, isCollectingError: boolean) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
-  const errorObservable = isCollectingError ? startErrorCollection(configuration) : new Observable<ErrorMessage>()
+  const errorObservable = isCollectingError ? startErrorCollection(configuration) : new Observable<RawError>()
 
   return {
     configuration,

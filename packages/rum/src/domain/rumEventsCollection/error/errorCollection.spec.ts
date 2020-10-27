@@ -84,20 +84,14 @@ describe('error collection', () => {
     it('should create error event from collected error', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
-        context: {
-          error: {
-            kind: 'foo',
-            origin: ErrorSource.SOURCE,
-            stack: 'bar',
-          },
-          http: {
-            method: 'GET',
-            status_code: 500,
-            url: 'url',
-          },
-        },
         message: 'hello',
+        method: 'GET',
+        source: ErrorSource.NETWORK,
+        stack: 'bar',
         startTime: 1234,
+        statusCode: 500,
+        type: 'foo',
+        url: 'url',
       })
 
       expect(rawRumEvents[0].startTime).toBe(1234)
@@ -105,7 +99,7 @@ describe('error collection', () => {
         date: jasmine.any(Number),
         error: {
           kind: 'foo',
-          origin: ErrorSource.SOURCE,
+          origin: ErrorSource.NETWORK,
           stack: 'bar',
         },
         evt: {
@@ -200,20 +194,14 @@ describe('error collection v2', () => {
     it('should create error event from collected error', () => {
       const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
-        context: {
-          error: {
-            kind: 'foo',
-            origin: ErrorSource.SOURCE,
-            stack: 'bar',
-          },
-          http: {
-            method: 'GET',
-            status_code: 500,
-            url: 'url',
-          },
-        },
         message: 'hello',
+        method: 'GET',
+        source: ErrorSource.NETWORK,
+        stack: 'bar',
         startTime: 1234,
+        statusCode: 500,
+        type: 'foo',
+        url: 'url',
       })
 
       expect(rawRumEventsV2[0].startTime).toBe(1234)
@@ -223,10 +211,10 @@ describe('error collection v2', () => {
           message: 'hello',
           resource: {
             method: 'GET',
-            status_code: 500,
+            statusCode: 500,
             url: 'url',
           },
-          source: ErrorSource.SOURCE,
+          source: ErrorSource.NETWORK,
           stack: 'bar',
           type: 'foo',
         },

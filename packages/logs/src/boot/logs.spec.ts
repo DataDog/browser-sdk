@@ -2,11 +2,11 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
-  ErrorMessage,
   ErrorObservable,
   ErrorSource,
   noop,
   Observable,
+  RawError,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
@@ -65,7 +65,7 @@ describe('logs', () => {
 
   beforeEach(() => {
     sessionIsTracked = true
-    errorObservable = new Observable<ErrorMessage>()
+    errorObservable = new Observable<RawError>()
     server = sinon.fakeServer.create()
   })
 
@@ -217,16 +217,17 @@ describe('logs', () => {
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
-        context: { error: { origin: ErrorSource.SOURCE, kind: 'Error' } },
         message: 'error!',
+        source: ErrorSource.SOURCE,
         startTime: 1234,
+        type: 'Error',
       })
 
       expect(sendLogSpy).toHaveBeenCalled()
       expect(sendLogSpy.calls.first().args).toEqual([
         {
           date: jasmine.any(Number),
-          error: { origin: ErrorSource.SOURCE, kind: 'Error' },
+          error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
           message: 'error!',
           status: StatusType.error,
         },
@@ -245,9 +246,10 @@ describe('logs', () => {
       startLogs({ errorLogger: new Logger(sendLogSpy) })
 
       errorObservable.notify({
-        context: { error: { origin: ErrorSource.SOURCE, kind: 'Error' } },
         message: 'error!',
+        source: ErrorSource.SOURCE,
         startTime: 1234,
+        type: 'Error',
       })
 
       expect(sendLogSpy).toHaveBeenCalled()
