@@ -46,28 +46,28 @@ export function doStartLogs(
 
   const batch = startLoggerBatch(configuration, session)
 
-  errorObservable.subscribe((e: RawError) => {
+  errorObservable.subscribe((error: RawError) => {
     errorLogger.error(
-      e.message,
+      error.message,
       combine(
         {
-          date: getTimestamp(e.startTime),
+          date: getTimestamp(error.startTime),
           error: {
-            kind: e.type,
-            origin: e.source,
-            stack: e.stack,
+            kind: error.type,
+            origin: error.source,
+            stack: error.stack,
           },
         },
-        e.source === ErrorSource.NETWORK
+        error.resource
           ? {
               http: {
-                method: e.method,
-                status_code: e.statusCode,
-                url: e.url,
+                method: error.resource.method,
+                status_code: error.resource.statusCode,
+                url: error.resource.url,
               },
             }
           : undefined,
-        getRUMInternalContext(e.startTime)
+        getRUMInternalContext(error.startTime)
       )
     )
   })

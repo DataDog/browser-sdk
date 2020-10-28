@@ -219,12 +219,14 @@ describe('network error tracker', () => {
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalledWith({
         message: 'Fetch error GET http://fake.com/',
-        method: 'GET',
+        resource: {
+          method: 'GET',
+          statusCode: 503,
+          url: 'http://fake.com/',
+        },
         source: 'network',
         stack: 'Server error',
         startTime: jasmine.any(Number),
-        statusCode: 503,
-        url: 'http://fake.com/',
       })
       done()
     })

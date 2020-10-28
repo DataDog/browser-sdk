@@ -64,12 +64,12 @@ function processError(error: RawError) {
       },
       message: error.message,
     },
-    error.source === ErrorSource.NETWORK
+    error.resource
       ? {
           http: {
-            method: error.method,
-            status_code: error.statusCode,
-            url: error.url,
+            method: error.resource.method,
+            status_code: error.resource.statusCode,
+            url: error.resource.url,
           },
         }
       : undefined
@@ -81,29 +81,18 @@ function processError(error: RawError) {
 }
 
 function processErrorV2(error: RawError) {
-  const rawRumEvent: RumErrorEventV2 = combine(
-    {
-      date: getTimestamp(error.startTime),
-      error: {
-        message: error.message,
-        source: error.source,
-        stack: error.stack,
-        type: error.type,
-      },
-      type: RumEventType.ERROR as const,
+  const rawRumEvent: RumErrorEventV2 = {
+    date: getTimestamp(error.startTime),
+    error: {
+      message: error.message,
+      resource: error.resource,
+      source: error.source,
+      stack: error.stack,
+      type: error.type,
     },
-    error.source === ErrorSource.NETWORK
-      ? {
-          error: {
-            resource: {
-              method: error.method,
-              statusCode: error.statusCode,
-              url: error.url,
-            },
-          },
-        }
-      : undefined
-  )
+    type: RumEventType.ERROR as const,
+  }
+
   return {
     rawRumEvent,
     startTime: error.startTime,

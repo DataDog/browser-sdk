@@ -12,9 +12,11 @@ export interface RawError {
   type?: string
   stack?: string
   source: ErrorSource
-  url?: string
-  statusCode?: number
-  method?: string
+  resource?: {
+    url: string
+    statusCode: number
+    method: string
+  }
 }
 
 export enum ErrorSource {
@@ -144,12 +146,14 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
     if (!isIntakeRequest(request.url, configuration) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         message: `${format(type)} error ${request.method} ${request.url}`,
-        method: request.method,
+        resource: {
+          method: request.method,
+          statusCode: request.status,
+          url: request.url,
+        },
         source: ErrorSource.NETWORK,
         stack: truncateResponse(request.response, configuration) || 'Failed to load',
         startTime: request.startTime,
-        statusCode: request.status,
-        url: request.url,
       })
     }
   }

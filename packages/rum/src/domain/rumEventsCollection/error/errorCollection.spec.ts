@@ -85,13 +85,15 @@ describe('error collection', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
         message: 'hello',
-        method: 'GET',
+        resource: {
+          method: 'GET',
+          statusCode: 500,
+          url: 'url',
+        },
         source: ErrorSource.NETWORK,
         stack: 'bar',
         startTime: 1234,
-        statusCode: 500,
         type: 'foo',
-        url: 'url',
       })
 
       expect(rawRumEvents[0].startTime).toBe(1234)
@@ -148,6 +150,7 @@ describe('error collection v2', () => {
           date: jasmine.any(Number),
           error: {
             message: 'foo',
+            resource: undefined,
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
             type: 'Error',
@@ -195,13 +198,15 @@ describe('error collection v2', () => {
       const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
         message: 'hello',
-        method: 'GET',
+        resource: {
+          method: 'GET',
+          statusCode: 500,
+          url: 'url',
+        },
         source: ErrorSource.NETWORK,
         stack: 'bar',
         startTime: 1234,
-        statusCode: 500,
         type: 'foo',
-        url: 'url',
       })
 
       expect(rawRumEventsV2[0].startTime).toBe(1234)
