@@ -1,4 +1,4 @@
-import { DOM_EVENT, ErrorMessage } from '@datadog/browser-core'
+import { DOM_EVENT, RawError } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
@@ -177,13 +177,13 @@ describe('newAction', () => {
 
     newClick('test-1')
 
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
 
     clock.tick(EXPIRE_DELAY)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
 
     expect(events.length).toBe(1)
     const action = events[0] as AutoAction

@@ -1,10 +1,12 @@
 import {
+  combine,
   computeStackTrace,
   Configuration,
   Context,
   ErrorSource,
   formatUnknownError,
   getTimestamp,
+  RawError,
 } from '@datadog/browser-core'
 import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumErrorEventV2, RumEventType } from '../../../typesV2'
@@ -17,52 +19,82 @@ export interface ProvidedError {
   source: ErrorSource
 }
 
-export function startProvidedErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(
     LifeCycleEventType.ERROR_PROVIDED,
     ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
-      const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-      const { message, stack, kind } = formatUnknownError(stackTrace, error, 'Provided')
+      const rawError = computeRawError(error, startTime, source)
 
-      if (configuration.isEnabled('v2_format')) {
-        const rawRumEvent: RumErrorEventV2 = {
-          date: getTimestamp(startTime),
-          error: {
-            message,
-            source,
-            stack,
-            type: kind,
-          },
-          type: RumEventType.ERROR,
-        }
-
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-          customerContext,
-          rawRumEvent,
-          savedGlobalContext,
-          startTime,
-        })
-      } else {
-        const rawRumEvent: RumErrorEvent = {
-          message,
-          date: getTimestamp(startTime),
-          error: {
-            kind,
-            stack,
-            origin: source,
-          },
-          evt: {
-            category: RumEventCategory.ERROR,
-          },
-        }
-
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          customerContext,
-          rawRumEvent,
-          savedGlobalContext,
-          startTime,
-        })
-      }
+      configuration.isEnabled('v2_format')
+        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+            customerContext,
+            savedGlobalContext,
+            ...processErrorV2(rawError),
+          })
+        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            customerContext,
+            savedGlobalContext,
+            ...processError(rawError),
+          })
     }
   )
+  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, (error: RawError) => {
+    configuration.isEnabled('v2_format')
+      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
+      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
+  })
+}
+
+function computeRawError(error: unknown, startTime: number, source: ErrorSource): RawError {
+  const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
+  return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
+}
+
+function processError(error: RawError) {
+  const rawRumEvent: RumErrorEvent = combine(
+    {
+      date: getTimestamp(error.startTime),
+      error: {
+        kind: error.type,
+        origin: error.source,
+        stack: error.stack,
+      },
+      evt: {
+        category: RumEventCategory.ERROR as const,
+      },
+      message: error.message,
+    },
+    error.resource
+      ? {
+          http: {
+            method: error.resource.method,
+            status_code: error.resource.statusCode,
+            url: error.resource.url,
+          },
+        }
+      : undefined
+  )
+  return {
+    rawRumEvent,
+    startTime: error.startTime,
+  }
+}
+
+function processErrorV2(error: RawError) {
+  const rawRumEvent: RumErrorEventV2 = {
+    date: getTimestamp(error.startTime),
+    error: {
+      message: error.message,
+      resource: error.resource,
+      source: error.source,
+      stack: error.stack,
+      type: error.type,
+    },
+    type: RumEventType.ERROR as const,
+  }
+
+  return {
+    rawRumEvent,
+    startTime: error.startTime,
+  }
 }

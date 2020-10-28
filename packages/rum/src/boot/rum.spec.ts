@@ -1,4 +1,4 @@
-import { ErrorMessage, isIE } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
@@ -35,7 +35,6 @@ interface ExpectedRequestBody {
 }
 
 describe('rum session', () => {
-  const FAKE_ERROR: Partial<ErrorMessage> = { message: 'test' }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -109,29 +108,6 @@ describe('rum session', () => {
     expect(subsequentRequests[0].type).toEqual('view')
     expect(subsequentRequests[0].session.id).toEqual('43')
     expect(subsequentRequests[0].view.id).not.toEqual(initialRequests[0].view.id)
-  })
-
-  it('when switching from not tracked to tracked, it should not send events without sessionId', () => {
-    let sessionId = undefined as string | undefined
-    let isTracked = false
-    const { server, lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => sessionId,
-        isTracked: () => isTracked,
-        isTrackedWithResource: () => false,
-      })
-      .build()
-
-    server.requests = []
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    expect(getServerRequestBodies<ExpectedRequestBody>(server).length).toEqual(0)
-
-    // it can happen without a renew session if the session is renewed on another tab
-    isTracked = true
-    sessionId = '1234'
-
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, FAKE_ERROR as ErrorMessage)
-    expect(getServerRequestBodies<ExpectedRequestBody>(server).length).toEqual(0)
   })
 })
 

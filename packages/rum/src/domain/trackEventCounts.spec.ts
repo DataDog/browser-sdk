@@ -1,4 +1,4 @@
-import { ErrorMessage, objectValues } from '@datadog/browser-core'
+import { objectValues, RawError } from '@datadog/browser-core'
 import { RumPerformanceLongTaskTiming, RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, CustomAction } from './rumEventsCollection/action/trackActions'
@@ -14,7 +14,7 @@ describe('trackEventCounts', () => {
   it('tracks errors', () => {
     const { eventCounts } = trackEventCounts(lifeCycle)
     const error = {}
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as ErrorMessage)
+    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
     expect(eventCounts.errorCount).toBe(1)
   })
 
