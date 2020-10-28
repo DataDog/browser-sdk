@@ -19,6 +19,14 @@ With the `datadog-logs` library, you can send logs directly to Datadog from JS c
 
 **Supported browsers**: The `datadog-logs` library supports all modern desktop and mobile browsers including IE10 and IE11. See the [browser support][4] table.
 
+### Choose the right installation method
+
+| Installation method        | Use case                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                            |
+| CDN async                  | This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| CDN sync                   | This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                     |
+
 ### NPM
 
 After adding [`@datadog/browser-logs`][3] to your `package.json` file, initialize it with:
