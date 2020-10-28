@@ -58,7 +58,7 @@ export function combine(...sources: ContextValue[]): ContextValue {
       continue
     }
 
-    destination = mergeInto(destination, source)
+    destination = mergeInto(destination, source, createStack())
   }
 
   return destination
@@ -69,14 +69,43 @@ export function combine(...sources: ContextValue[]): ContextValue {
  * - Circular references are replaced by 'undefined'
  */
 export function deepClone<T extends ContextValue>(context: T): T {
-  return mergeInto(undefined, context) as T
+  return mergeInto(undefined, context, createStack()) as T
+}
+
+interface Stack {
+  // Add a value and return true if it was already added
+  add(value: Context | ContextArray): boolean
+}
+export function createStack(): Stack {
+  if (typeof Set !== undefined) {
+    const set: Set<Context | ContextArray> = new Set()
+    return {
+      add(value) {
+        const has = set.has(value)
+        if (!has) {
+          set.add(value)
+        }
+        return has
+      },
+    }
+  }
+  const array: Array<Context | ContextArray> = []
+  return {
+    add(value) {
+      const has = array.indexOf(value) >= 0
+      if (!has) {
+        array.push(value)
+      }
+      return has
+    },
+  }
 }
 
 /**
  * Iterate over 'source' and affect its subvalues into 'destination', recursively.  If the 'source'
  * and 'destination' can't be merged, return 'source'.
  */
-export function mergeInto(destination: ContextValue, source: ContextValue) {
+export function mergeInto(destination: ContextValue, source: ContextValue, stack: Stack) {
   // Ignore the 'source' if it is undefined
   if (source === undefined) {
     return destination
@@ -88,12 +117,17 @@ export function mergeInto(destination: ContextValue, source: ContextValue) {
     return source
   }
 
+  // Return 'undefined' if we already iterated over this 'source' to avoid infinite recursion
+  if (stack.add(source)) {
+    return undefined
+  }
+
   // 'source' and 'destination' are objects, merge them together
   if (isContext(source) && (destination === undefined || isContext(destination))) {
     const finalDestination = destination || {}
     for (const key in source) {
       if (Object.prototype.hasOwnProperty.call(source, key)) {
-        finalDestination[key] = mergeInto(finalDestination[key], source[key])
+        finalDestination[key] = mergeInto(finalDestination[key], source[key], stack)
       }
     }
     return finalDestination
@@ -104,7 +138,7 @@ export function mergeInto(destination: ContextValue, source: ContextValue) {
     const finalDestination = destination || []
     finalDestination.length = Math.max(finalDestination.length, source.length)
     for (let index = 0; index < source.length; index += 1) {
-      finalDestination[index] = mergeInto(finalDestination[index], source[index])
+      finalDestination[index] = mergeInto(finalDestination[index], source[index], stack)
     }
     return finalDestination
   }

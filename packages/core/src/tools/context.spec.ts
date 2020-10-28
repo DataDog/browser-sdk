@@ -1,4 +1,4 @@
-import { combine, deepClone, mergeInto, toSnakeCase, withSnakeCaseKeys } from './context'
+import { combine, createStack, deepClone, mergeInto, toSnakeCase, withSnakeCaseKeys } from './context'
 
 describe('context', () => {
   describe('combine', () => {
@@ -68,41 +68,53 @@ describe('context', () => {
       const clonedValue = deepClone(value)
       expect(clonedValue.a).not.toBe(value.a)
     })
+
+    it('should set cyclic references on objects to undefined', () => {
+      const a: { [k: string]: any } = { foo: 1 }
+      a.cyclicRef = a
+      expect(deepClone(a)).toEqual({ foo: 1, cyclicRef: undefined })
+    })
+
+    it('should set cyclic references on arrays to undefined', () => {
+      const a: any[] = [1]
+      a.push(a)
+      expect(deepClone(a)).toEqual([1, undefined])
+    })
   })
 
   describe('mergeInto', () => {
     describe('source is not an object or array', () => {
       it('should ignore undefined sources', () => {
         const destination = {}
-        expect(mergeInto(destination, undefined)).toBe(destination)
+        expect(mergeInto(destination, undefined, createStack())).toBe(destination)
       })
 
       it('should ignore undefined destination', () => {
-        expect(mergeInto(undefined, 1)).toBe(1)
+        expect(mergeInto(undefined, 1, createStack())).toBe(1)
       })
 
       it('should ignore destinations with a different type', () => {
-        expect(mergeInto({}, 1)).toBe(1)
+        expect(mergeInto({}, 1, createStack())).toBe(1)
       })
     })
 
     describe('source is an array', () => {
       it('should create a new array if destination is undefined', () => {
         const source = [1]
-        const result = mergeInto(undefined, source)
+        const result = mergeInto(undefined, source, createStack())
         expect(result).not.toBe(source)
         expect(result).toEqual(source)
       })
 
       it('should return the source if the destination is not an array', () => {
         const source = [1]
-        expect(mergeInto({}, source)).toBe(source)
+        expect(mergeInto({}, source, createStack())).toBe(source)
       })
 
       it('should mutate and return destination if it is an array', () => {
         const destination = ['destination']
         const source = ['source']
-        const result = mergeInto(destination, source)
+        const result = mergeInto(destination, source, createStack())
         expect(result).toBe(destination)
         expect(result).toEqual(source)
       })
@@ -111,23 +123,30 @@ describe('context', () => {
     describe('source is an object', () => {
       it('should create a new object if destination is undefined', () => {
         const source = {}
-        const result = mergeInto(undefined, source)
+        const result = mergeInto(undefined, source, createStack())
         expect(result).not.toBe(source)
         expect(result).toEqual(source)
       })
 
       it('should return the source if the destination is not an object', () => {
         const source = { a: 1 }
-        expect(mergeInto([], source)).toBe(source)
+        expect(mergeInto([], source, createStack())).toBe(source)
       })
 
       it('should mutate and return destination if it is an object', () => {
         const destination = {}
         const source = { a: 'b' }
-        const result = mergeInto(destination, source)
+        const result = mergeInto(destination, source, createStack())
         expect(result).toBe(destination)
         expect(result).toEqual(source)
       })
+    })
+
+    it('should return undefined if the source is in the stack', () => {
+      const source = {}
+      const stack = createStack()
+      stack.add(source)
+      expect(mergeInto({}, source, stack)).toBe(undefined)
     })
   })
 
