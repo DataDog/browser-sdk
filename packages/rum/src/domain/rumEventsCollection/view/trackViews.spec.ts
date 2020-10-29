@@ -3,6 +3,7 @@ import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../..
 import { LifeCycleEventType } from '../../lifeCycle'
 
 import { RawRumEvent, RumEventCategory } from '../../../types'
+import { RawRumEventV2, RumEventType } from '../../../typesV2'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
@@ -702,6 +703,163 @@ describe('rum view measures', () => {
       lifeCycle.notify(
         LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
         createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
+
+      expect(getHandledCount()).toEqual(1)
+
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
+      expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(3)
+    })
+  })
+
+  describe('event counts V2', () => {
+    function createFakeCollectedRawRumEvent(type: RumEventType) {
+      return {
+        rawRumEvent: ({ type } as unknown) as RawRumEventV2,
+        startTime: 0,
+      }
+    }
+
+    it('should track error count', () => {
+      const { lifeCycle } = setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.ERROR)
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.ERROR)
+      )
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).eventCounts.errorCount).toEqual(2)
+      expect(getViewEvent(2).eventCounts.errorCount).toEqual(0)
+    })
+
+    it('should track long task count', () => {
+      const { lifeCycle } = setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.LONG_TASK)
+      )
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).eventCounts.longTaskCount).toEqual(1)
+      expect(getViewEvent(2).eventCounts.longTaskCount).toEqual(0)
+    })
+
+    it('should track resource count', () => {
+      const { lifeCycle } = setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
+      )
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
+      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
+    })
+
+    it('should track action count', () => {
+      const { lifeCycle } = setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.ACTION)
+      )
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).eventCounts.userActionCount).toEqual(1)
+      expect(getViewEvent(2).eventCounts.userActionCount).toEqual(0)
+    })
+
+    it('should reset event count when the view changes', () => {
+      const { lifeCycle } = setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
+      )
+      history.pushState({}, '', '/bar')
+
+      expect(getHandledCount()).toEqual(3)
+      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
+      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
+      )
+      history.pushState({}, '', '/baz')
+
+      expect(getHandledCount()).toEqual(5)
+      expect(getViewEvent(3).eventCounts.resourceCount).toEqual(2)
+      expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
+    })
+
+    it('should update eventCounts when a resource event is collected (throttled)', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).eventCounts).toEqual({
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 0,
+        userActionCount: 0,
+      })
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
+      )
+
+      expect(getHandledCount()).toEqual(1)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(2)
+      expect(getViewEvent(1).eventCounts).toEqual({
+        errorCount: 0,
+        longTaskCount: 0,
+        resourceCount: 1,
+        userActionCount: 0,
+      })
+    })
+
+    it('should not update eventCounts after ending a view', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      expect(getHandledCount()).toEqual(1)
+
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
       )
 
       expect(getHandledCount()).toEqual(1)
