@@ -77,8 +77,8 @@ interface Stack {
   add(value: Context | ContextArray): boolean
 }
 export function createStack(): Stack {
-  if (typeof Set !== undefined) {
-    const set: Set<Context | ContextArray> = new Set()
+  if (typeof WeakSet !== undefined) {
+    const set: WeakSet<Context | ContextArray> = new WeakSet()
     return {
       add(value) {
         const has = set.has(value)
