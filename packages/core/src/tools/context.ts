@@ -77,7 +77,7 @@ interface CircularReferenceChecker {
   hasAlreadyBeenSeen(value: Context | ContextArray): boolean
 }
 export function createCircularReferenceChecker(): CircularReferenceChecker {
-  if (typeof WeakSet !== undefined) {
+  if (typeof WeakSet !== 'undefined') {
     const set: WeakSet<Context | ContextArray> = new WeakSet()
     return {
       hasAlreadyBeenSeen(value) {
