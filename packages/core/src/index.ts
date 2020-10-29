@@ -5,7 +5,13 @@ export {
   isIntakeRequest,
   buildCookieOptions,
 } from './domain/configuration'
-export { ErrorSource, ErrorObservable, formatUnknownError, RawError } from './domain/errorCollection'
+export {
+  startErrorCollection,
+  ErrorSource,
+  ErrorObservable,
+  formatUnknownError,
+  RawError,
+} from './domain/errorCollection'
 export { computeStackTrace } from './domain/tracekit'
 export {
   BuildEnv,

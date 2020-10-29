@@ -6,11 +6,12 @@ import {
   Configuration,
   Context,
   ErrorObservable,
-  ErrorSource,
   getTimestamp,
   HttpRequest,
   InternalMonitoring,
+  Observable,
   RawError,
+  startErrorCollection,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
@@ -22,12 +23,9 @@ export function startLogs(
   errorLogger: Logger,
   getGlobalContext: () => Context
 ) {
-  const isCollectingError = userConfiguration.forwardErrorsToLogs !== false
-  const { configuration, internalMonitoring, errorObservable } = commonInit(
-    userConfiguration,
-    buildEnv,
-    isCollectingError
-  )
+  const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
+  const errorObservable =
+    userConfiguration.forwardErrorsToLogs !== false ? startErrorCollection(configuration) : new Observable<RawError>()
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
 }

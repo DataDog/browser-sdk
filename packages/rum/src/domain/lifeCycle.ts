@@ -8,7 +8,6 @@ import { ProvidedError } from './rumEventsCollection/error/errorCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
-  ERROR_COLLECTED,
   ERROR_PROVIDED,
   PERFORMANCE_ENTRY_COLLECTED,
   CUSTOM_ACTION_COLLECTED,
@@ -35,7 +34,6 @@ export interface Subscription {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: RawError): void
   notify(eventType: LifeCycleEventType.ERROR_PROVIDED, data: { error: ProvidedError; context?: Context }): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
@@ -82,7 +80,6 @@ export class LifeCycle {
     }
   }
 
-  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: RawError) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.ERROR_PROVIDED,
     callback: (data: { error: ProvidedError; context?: Context }) => void
