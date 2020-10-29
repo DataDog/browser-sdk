@@ -128,5 +128,18 @@ interface Rum {
 
 function getRUMInternalContext(startTime?: number): Context | undefined {
   const rum = (window as any).DD_RUM as Rum
-  return rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
+  const context = rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
+  if (!context || !context.session) {
+    return context
+  }
+  // TODO settle on integration strategy
+  // tslint:disable:no-unsafe-any
+  const v2context = context as any
+  v2context.session_id = v2context.session.id
+  v2context.application_id = v2context.application.id
+  if (v2context.action) {
+    v2context.user_action = { id: v2context.action.id }
+  }
+  // tslint:enable:no-unsafe-any
+  return v2context as Context
 }

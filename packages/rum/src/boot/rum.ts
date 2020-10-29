@@ -1,10 +1,11 @@
-import { combine, commonInit, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
+import { combine, commonInit, Configuration, Context } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startRumAssemblyV2 } from '../domain/assemblyV2'
+import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { ParentContexts, startParentContexts } from '../domain/parentContexts'
+import { startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
@@ -14,7 +15,6 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import { InternalContext } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
@@ -53,12 +53,12 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
 
+  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
+
   errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
 
   return {
-    getInternalContext(startTime?: number) {
-      return doGetInternalContext(parentContexts, userConfiguration.applicationId, session, startTime)
-    },
+    getInternalContext: internalContext.get,
 
     addAction(action: CustomAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
@@ -67,20 +67,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
     addError(error: ProvidedError, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.ERROR_PROVIDED, { error, context })
     },
-  }
-}
-
-export function doGetInternalContext(
-  parentContexts: ParentContexts,
-  applicationId: string,
-  session: RumSession,
-  startTime?: number
-) {
-  const viewContext = parentContexts.findView(startTime)
-  if (session.isTracked() && viewContext && viewContext.sessionId) {
-    return (withSnakeCaseKeys(
-      combine({ applicationId }, viewContext, parentContexts.findAction(startTime))
-    ) as unknown) as InternalContext
   }
 }
 
