@@ -1,4 +1,4 @@
-import { Context, ContextValue } from './utils'
+import { Context, ContextValue } from './context'
 
 export function createContextManager() {
   let context: Context = {}

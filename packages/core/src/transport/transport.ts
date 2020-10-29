@@ -1,5 +1,6 @@
 import { monitor } from '../domain/internalMonitoring'
-import { Context, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { Context } from '../tools/context'
+import { DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/

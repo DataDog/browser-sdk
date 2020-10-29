@@ -1,4 +1,5 @@
 // tslint:disable ban-types
+import { combine, Context } from '../tools/context'
 import * as utils from '../tools/utils'
 import { Batch, HttpRequest } from '../transport/transport'
 import { Configuration } from './configuration'
@@ -11,10 +12,10 @@ enum StatusType {
 }
 
 export interface InternalMonitoring {
-  setExternalContextProvider: (provider: () => utils.Context) => void
+  setExternalContextProvider: (provider: () => Context) => void
 }
 
-export interface MonitoringMessage extends utils.Context {
+export interface MonitoringMessage extends Context {
   message: string
   status: StatusType
   error?: {
@@ -30,7 +31,7 @@ const monitoringConfiguration: {
   sentMessageCount: number
 } = { maxMessagesPerPage: 0, sentMessageCount: 0 }
 
-let externalContextProvider: () => utils.Context
+let externalContextProvider: () => Context
 
 export function startInternalMonitoring(configuration: Configuration): InternalMonitoring {
   if (configuration.internalMonitoringEndpoint) {
@@ -43,7 +44,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
     })
   }
   return {
-    setExternalContextProvider: (provider: () => utils.Context) => {
+    setExternalContextProvider: (provider: () => Context) => {
       externalContextProvider = provider
     },
   }
@@ -67,7 +68,7 @@ function startMonitoringBatch(configuration: Configuration) {
   }
 
   function withContext(message: MonitoringMessage) {
-    return utils.combine(
+    return combine(
       {
         date: new Date().getTime(),
         view: {
@@ -118,7 +119,7 @@ export function monitor<T extends Function>(fn: T): T {
   } as unknown) as T // consider output type has input type
 }
 
-export function addMonitoringMessage(message: string, context?: utils.Context) {
+export function addMonitoringMessage(message: string, context?: Context) {
   logMessageIfDebug(message)
   addToMonitoringBatch({
     message,
