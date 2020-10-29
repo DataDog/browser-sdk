@@ -7,7 +7,6 @@ import { LifeCycleEventType } from '../domain/lifeCycle'
 import { AutoAction } from '../domain/rumEventsCollection/action/trackActions'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { RumEvent } from '../index'
-import { doGetInternalContext } from './rum'
 
 function getServerRequestBodies<T>(server: sinon.SinonFakeServer) {
   return server.requests.map((r) => JSON.parse(r.requestBody) as T)
@@ -202,101 +201,6 @@ describe('rum session keep alive', () => {
 
     requests = getServerRequestBodies<ExpectedRequestBody>(server)
     expect(requests.length).toEqual(0)
-  })
-})
-
-describe('rum internal context', () => {
-  let setupBuilder: TestSetupBuilder
-
-  beforeEach(() => {
-    setupBuilder = setup().withRum()
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should return current internal context', () => {
-    const { lifeCycle, parentContexts, session } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
-
-    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual({
-      application_id: 'appId',
-      session_id: '1234',
-      user_action: {
-        id: 'fake',
-      },
-      view: {
-        id: jasmine.any(String),
-        referrer: document.referrer,
-        url: window.location.href,
-      },
-    })
-  })
-
-  it("should return undefined if the session isn't tracked", () => {
-    const { lifeCycle, parentContexts, session } = setupBuilder
-      .withSession({
-        getId: () => '1234',
-        isTracked: () => false,
-        isTrackedWithResource: () => false,
-      })
-      .build()
-
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
-
-    expect(doGetInternalContext(parentContexts, 'appId', session)).toEqual(undefined)
-  })
-
-  it('should return internal context corresponding to startTime (v1)', () => {
-    const { lifeCycle, parentContexts, session } = setupBuilder
-      .beforeBuild((_, configuration) => {
-        configuration.isEnabled = () => false
-      })
-      .build()
-
-    const stubAction: Partial<AutoAction> = { duration: 10 }
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'fake' })
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubAction as AutoAction)
-
-    expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
-      application_id: 'appId',
-      session_id: '1234',
-      user_action: {
-        id: 'fake',
-      },
-      view: {
-        id: jasmine.any(String),
-        referrer: document.referrer,
-        url: window.location.href,
-      },
-    })
-  })
-
-  it('should return internal context corresponding to startTime', () => {
-    const { lifeCycle, parentContexts, session } = setupBuilder.build()
-
-    const stubAction: Partial<AutoAction> = {
-      counts: { errorCount: 0, longTaskCount: 0, resourceCount: 0 },
-      duration: 10,
-      startTime: 10,
-    }
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: 'fake', startTime: 10 })
-    lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubAction as AutoAction)
-
-    expect(doGetInternalContext(parentContexts, 'appId', session, 15)).toEqual({
-      application_id: 'appId',
-      session_id: '1234',
-      user_action: {
-        id: 'fake',
-      },
-      view: {
-        id: jasmine.any(String),
-        referrer: document.referrer,
-        url: window.location.href,
-      },
-    })
   })
 })
 
