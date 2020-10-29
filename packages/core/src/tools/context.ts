@@ -58,7 +58,7 @@ export function combine(...sources: ContextValue[]): ContextValue {
       continue
     }
 
-    destination = mergeInto(destination, source, createStack())
+    destination = mergeInto(destination, source, createCircularReferenceChecker())
   }
 
   return destination
@@ -69,18 +69,18 @@ export function combine(...sources: ContextValue[]): ContextValue {
  * - Circular references are replaced by 'undefined'
  */
 export function deepClone<T extends ContextValue>(context: T): T {
-  return mergeInto(undefined, context, createStack()) as T
+  return mergeInto(undefined, context, createCircularReferenceChecker()) as T
 }
 
-interface Stack {
+interface CircularReferenceChecker {
   // Add a value and return true if it was already added
-  add(value: Context | ContextArray): boolean
+  hasAlreadyBeenSeen(value: Context | ContextArray): boolean
 }
-export function createStack(): Stack {
+export function createCircularReferenceChecker(): CircularReferenceChecker {
   if (typeof WeakSet !== undefined) {
     const set: WeakSet<Context | ContextArray> = new WeakSet()
     return {
-      add(value) {
+      hasAlreadyBeenSeen(value) {
         const has = set.has(value)
         if (!has) {
           set.add(value)
@@ -91,7 +91,7 @@ export function createStack(): Stack {
   }
   const array: Array<Context | ContextArray> = []
   return {
-    add(value) {
+    hasAlreadyBeenSeen(value) {
       const has = array.indexOf(value) >= 0
       if (!has) {
         array.push(value)
@@ -105,7 +105,11 @@ export function createStack(): Stack {
  * Iterate over 'source' and affect its subvalues into 'destination', recursively.  If the 'source'
  * and 'destination' can't be merged, return 'source'.
  */
-export function mergeInto(destination: ContextValue, source: ContextValue, stack: Stack) {
+export function mergeInto(
+  destination: ContextValue,
+  source: ContextValue,
+  circularReferenceChecker: CircularReferenceChecker
+) {
   // Ignore the 'source' if it is undefined
   if (source === undefined) {
     return destination
@@ -118,7 +122,7 @@ export function mergeInto(destination: ContextValue, source: ContextValue, stack
   }
 
   // Return 'undefined' if we already iterated over this 'source' to avoid infinite recursion
-  if (stack.add(source)) {
+  if (circularReferenceChecker.hasAlreadyBeenSeen(source)) {
     return undefined
   }
 
@@ -127,7 +131,7 @@ export function mergeInto(destination: ContextValue, source: ContextValue, stack
     const finalDestination = destination || {}
     for (const key in source) {
       if (Object.prototype.hasOwnProperty.call(source, key)) {
-        finalDestination[key] = mergeInto(finalDestination[key], source[key], stack)
+        finalDestination[key] = mergeInto(finalDestination[key], source[key], circularReferenceChecker)
       }
     }
     return finalDestination
@@ -138,7 +142,7 @@ export function mergeInto(destination: ContextValue, source: ContextValue, stack
     const finalDestination = destination || []
     finalDestination.length = Math.max(finalDestination.length, source.length)
     for (let index = 0; index < source.length; index += 1) {
-      finalDestination[index] = mergeInto(finalDestination[index], source[index], stack)
+      finalDestination[index] = mergeInto(finalDestination[index], source[index], circularReferenceChecker)
     }
     return finalDestination
   }

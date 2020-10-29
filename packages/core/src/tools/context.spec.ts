@@ -1,4 +1,11 @@
-import { combine, createStack, deepClone, mergeInto, toSnakeCase, withSnakeCaseKeys } from './context'
+import {
+  combine,
+  createCircularReferenceChecker,
+  deepClone,
+  mergeInto,
+  toSnakeCase,
+  withSnakeCaseKeys,
+} from './context'
 
 describe('context', () => {
   describe('combine', () => {
@@ -86,35 +93,35 @@ describe('context', () => {
     describe('source is not an object or array', () => {
       it('should ignore undefined sources', () => {
         const destination = {}
-        expect(mergeInto(destination, undefined, createStack())).toBe(destination)
+        expect(mergeInto(destination, undefined, createCircularReferenceChecker())).toBe(destination)
       })
 
       it('should ignore undefined destination', () => {
-        expect(mergeInto(undefined, 1, createStack())).toBe(1)
+        expect(mergeInto(undefined, 1, createCircularReferenceChecker())).toBe(1)
       })
 
       it('should ignore destinations with a different type', () => {
-        expect(mergeInto({}, 1, createStack())).toBe(1)
+        expect(mergeInto({}, 1, createCircularReferenceChecker())).toBe(1)
       })
     })
 
     describe('source is an array', () => {
       it('should create a new array if destination is undefined', () => {
         const source = [1]
-        const result = mergeInto(undefined, source, createStack())
+        const result = mergeInto(undefined, source, createCircularReferenceChecker())
         expect(result).not.toBe(source)
         expect(result).toEqual(source)
       })
 
       it('should return the source if the destination is not an array', () => {
         const source = [1]
-        expect(mergeInto({}, source, createStack())).toBe(source)
+        expect(mergeInto({}, source, createCircularReferenceChecker())).toBe(source)
       })
 
       it('should mutate and return destination if it is an array', () => {
         const destination = ['destination']
         const source = ['source']
-        const result = mergeInto(destination, source, createStack())
+        const result = mergeInto(destination, source, createCircularReferenceChecker())
         expect(result).toBe(destination)
         expect(result).toEqual(source)
       })
@@ -123,30 +130,30 @@ describe('context', () => {
     describe('source is an object', () => {
       it('should create a new object if destination is undefined', () => {
         const source = {}
-        const result = mergeInto(undefined, source, createStack())
+        const result = mergeInto(undefined, source, createCircularReferenceChecker())
         expect(result).not.toBe(source)
         expect(result).toEqual(source)
       })
 
       it('should return the source if the destination is not an object', () => {
         const source = { a: 1 }
-        expect(mergeInto([], source, createStack())).toBe(source)
+        expect(mergeInto([], source, createCircularReferenceChecker())).toBe(source)
       })
 
       it('should mutate and return destination if it is an object', () => {
         const destination = {}
         const source = { a: 'b' }
-        const result = mergeInto(destination, source, createStack())
+        const result = mergeInto(destination, source, createCircularReferenceChecker())
         expect(result).toBe(destination)
         expect(result).toEqual(source)
       })
     })
 
-    it('should return undefined if the source is in the stack', () => {
+    it('should return undefined if the source has already been seen', () => {
       const source = {}
-      const stack = createStack()
-      stack.add(source)
-      expect(mergeInto({}, source, stack)).toBe(undefined)
+      const circularReferenceChecker = createCircularReferenceChecker()
+      circularReferenceChecker.hasAlreadyBeenSeen(source)
+      expect(mergeInto({}, source, circularReferenceChecker)).toBe(undefined)
     })
   })
 
