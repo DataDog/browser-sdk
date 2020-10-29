@@ -1,5 +1,6 @@
-import { DOM_EVENT, RawError } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
 import { ActionType, AutoAction } from './trackActions'
@@ -172,18 +173,21 @@ describe('newAction', () => {
 
   it('counts errors occurring during the action', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    const error = {}
+    const collectedRawRumEvent = {
+      rawRumEvent: ({ evt: { category: RumEventCategory.ERROR } } as unknown) as RumErrorEvent,
+      startTime: 0,
+    }
     lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
     newClick('test-1')
 
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, collectedRawRumEvent)
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, collectedRawRumEvent)
 
     clock.tick(EXPIRE_DELAY)
-    lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, error as RawError)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, collectedRawRumEvent)
 
     expect(events.length).toBe(1)
     const action = events[0] as AutoAction

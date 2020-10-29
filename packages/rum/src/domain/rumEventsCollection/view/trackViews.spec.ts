@@ -1,40 +1,19 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import {
-  RumPerformanceLongTaskTiming,
-  RumPerformanceNavigationTiming,
-  RumPerformancePaintTiming,
-} from '../../../browser/performanceCollection'
+import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 
+import { RawRumEvent, RumEventCategory } from '../../../types'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { ActionType, AutoAction, CustomAction } from '../action/trackActions'
 import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
-const FAKE_LONG_TASK: RumPerformanceLongTaskTiming = {
-  duration: 123,
-  entryType: 'longtask',
-  startTime: 456,
-}
-const FAKE_CUSTOM_USER_ACTION: CustomAction = {
-  context: {
-    bar: 123,
-  },
-  name: 'foo',
-  startTime: 123,
-  type: ActionType.CUSTOM,
-}
-const FAKE_AUTO_USER_ACTION: Partial<AutoAction> = {
-  name: 'foo',
-  type: ActionType.CLICK,
-}
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
   name: 'first-contentful-paint',
@@ -583,13 +562,26 @@ describe('rum view measures', () => {
   })
 
   describe('event counts', () => {
+    function createFakeCollectedRawRumEvent(category: RumEventCategory) {
+      return {
+        rawRumEvent: ({ evt: { category } } as unknown) as RawRumEvent,
+        startTime: 0,
+      }
+    }
+
     it('should track error count', () => {
       const { lifeCycle } = setupBuilder.build()
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
-      lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {} as any)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.ERROR)
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.ERROR)
+      )
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -602,7 +594,10 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LONG_TASK)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.LONG_TASK)
+      )
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -615,7 +610,10 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -628,12 +626,14 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action: FAKE_CUSTOM_USER_ACTION, context: {} })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, FAKE_AUTO_USER_ACTION as AutoAction)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.USER_ACTION)
+      )
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.userActionCount).toEqual(2)
+      expect(getViewEvent(1).eventCounts.userActionCount).toEqual(1)
       expect(getViewEvent(2).eventCounts.userActionCount).toEqual(0)
     })
 
@@ -642,15 +642,24 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
       expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
       expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
       history.pushState({}, '', '/baz')
 
       expect(getHandledCount()).toEqual(5)
@@ -658,7 +667,7 @@ describe('rum view measures', () => {
       expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
     })
 
-    it('should update eventCounts when notified with a RESOURCE_ADDED_TO_BATCH event (throttled)', () => {
+    it('should update eventCounts when a resource event is collected (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts).toEqual({
@@ -668,7 +677,10 @@ describe('rum view measures', () => {
         userActionCount: 0,
       })
 
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
 
       expect(getHandledCount()).toEqual(1)
 
@@ -687,7 +699,10 @@ describe('rum view measures', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
+      lifeCycle.notify(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        createFakeCollectedRawRumEvent(RumEventCategory.RESOURCE)
+      )
 
       expect(getHandledCount()).toEqual(1)
 

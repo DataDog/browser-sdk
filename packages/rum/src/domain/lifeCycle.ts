@@ -126,7 +126,7 @@ export class LifeCycle {
       savedGlobalContext?: Context
       customerContext?: Context
     }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
     callback: (data: {
@@ -135,15 +135,15 @@ export class LifeCycle {
       savedGlobalContext?: Context
       customerContext?: Context
     }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
     callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
     callback: (data: { rumEvent: RumEventV2; serverRumEvent: Context }) => void
-  ): void
+  ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {
       this.callbacks[eventType] = []

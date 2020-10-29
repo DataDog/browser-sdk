@@ -1,5 +1,6 @@
 import { noop } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
+import { RumEventCategory } from '../types'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export interface EventCounts {
   errorCount: number
@@ -15,43 +16,31 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
     resourceCount: 0,
     userActionCount: 0,
   }
-  const subscriptions: Subscription[] = []
 
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, () => {
-      eventCounts.errorCount += 1
-      callback(eventCounts)
-    })
-  )
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, () => {
-      eventCounts.userActionCount += 1
-      callback(eventCounts)
-    })
-  )
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, () => {
-      eventCounts.userActionCount += 1
-      callback(eventCounts)
-    })
-  )
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-      if (entry.entryType === 'longtask') {
+  const subscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent }): void => {
+    switch (rawRumEvent.evt.category) {
+      case RumEventCategory.ERROR:
+        eventCounts.errorCount += 1
+        callback(eventCounts)
+        break
+      case RumEventCategory.USER_ACTION:
+        eventCounts.userActionCount += 1
+        callback(eventCounts)
+        break
+      case RumEventCategory.LONG_TASK:
         eventCounts.longTaskCount += 1
         callback(eventCounts)
-      }
-    })
-  )
-  subscriptions.push(
-    lifeCycle.subscribe(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH, () => {
-      eventCounts.resourceCount += 1
-      callback(eventCounts)
-    })
-  )
+        break
+      case RumEventCategory.RESOURCE:
+        eventCounts.resourceCount += 1
+        callback(eventCounts)
+        break
+    }
+  })
+
   return {
     stop() {
-      subscriptions.forEach((s) => s.unsubscribe())
+      subscription.unsubscribe()
     },
     eventCounts,
   }
