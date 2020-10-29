@@ -554,15 +554,10 @@ describe('rum view measures', () => {
     expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
   })
 
-  it('should update eventCounts when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+  it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
     const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).eventCounts).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
+    expect(getViewEvent(0).timings).toEqual({})
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
@@ -571,11 +566,11 @@ describe('rum view measures', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).eventCounts).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
+    expect(getViewEvent(1).timings).toEqual({
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
+      loadEventEnd: 567,
     })
   })
 
@@ -604,15 +599,10 @@ describe('rum view measures', () => {
     })
   })
 
-  it('should update eventCounts when ending a view', () => {
+  it('should update timings when ending a view', () => {
     const { lifeCycle } = setupBuilder.build()
     expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).eventCounts).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
+    expect(getViewEvent(0).timings).toEqual({})
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
@@ -621,18 +611,14 @@ describe('rum view measures', () => {
     history.pushState({}, '', '/bar')
 
     expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).eventCounts).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
+    expect(getViewEvent(1).timings).toEqual({
+      domComplete: 456,
+      domContentLoaded: 345,
+      domInteractive: 234,
+      firstContentfulPaint: 123,
+      loadEventEnd: 567,
     })
-    expect(getViewEvent(2).eventCounts).toEqual({
-      errorCount: 0,
-      longTaskCount: 0,
-      resourceCount: 0,
-      userActionCount: 0,
-    })
+    expect(getViewEvent(2).timings).toEqual({})
   })
 
   it('should not update eventCounts after ending a view', () => {
