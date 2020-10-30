@@ -1,6 +1,6 @@
-import { createTest, EventRegistry } from '../lib/framework'
-import { sendFetch, sendXhr } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { createTest, EventRegistry } from '../../lib/framework'
+import { sendFetch, sendXhr } from '../../lib/helpers/browser'
+import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('tracing', () => {
   createTest('trace xhr')
@@ -30,7 +30,7 @@ describe('tracing', () => {
 
   async function checkTraceAssociatedToRumEvent(events: EventRegistry) {
     const requests = events.rumResources.filter(
-      (event) => event.resource.kind === 'xhr' || event.resource.kind === 'fetch'
+      (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)
     expect(requests[0]._dd!.trace_id).toMatch(/\d+/)

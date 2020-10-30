@@ -11,6 +11,7 @@ import { createMockServerApp } from './serverApps/mock'
 const DEFAULT_RUM_OPTIONS = {
   applicationId: 'appId',
   clientToken: 'token',
+  enableExperimentalFeatures: ['v2_format'],
 }
 
 const DEFAULT_LOGS_OPTIONS = {
