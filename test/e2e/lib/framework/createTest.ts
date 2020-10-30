@@ -1,5 +1,6 @@
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
+import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
@@ -9,13 +10,12 @@ import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
 const DEFAULT_RUM_OPTIONS = {
-  applicationId: 'appId',
+  applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
   enableExperimentalFeatures: ['v2_format'],
 }
 
 const DEFAULT_LOGS_OPTIONS = {
-  applicationId: 'appId',
   clientToken: 'token',
 }
 
@@ -144,6 +144,7 @@ async function setUpTest({ baseUrl }: TestContext) {
 async function tearDownTest({ events }: TestContext) {
   await flushEvents()
   expect(events.internalMonitoring).toEqual([])
+  validateFormat(events.rum)
   await withBrowserLogs((logs) => {
     logs.forEach((browserLog) => {
       log(`Browser ${browserLog.source}: ${browserLog.level} ${browserLog.message}`)
