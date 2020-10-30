@@ -99,7 +99,7 @@ describe('actionCollection v2', () => {
         resourceCount: 10,
       },
       duration: 100,
-      id: 'xxx',
+      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
       startTime: 1234,
       type: ActionType.CLICK,
@@ -111,7 +111,7 @@ describe('actionCollection v2', () => {
         error: {
           count: 10,
         },
-        id: 'xxx',
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         loadingTime: 100 * 1e6,
         longTask: {
           count: 10,

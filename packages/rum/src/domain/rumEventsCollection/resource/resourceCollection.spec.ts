@@ -49,7 +49,7 @@ describe('resourceCollection', () => {
           category: RumEventCategory.RESOURCE,
         },
         http: {
-          performance: jasmine.anything() as any,
+          performance: undefined,
           url: 'https://resource.com/valid',
         },
         network: {
@@ -258,10 +258,7 @@ describe('resourceCollection V2', () => {
       expect(rawRumEventsV2[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as number,
         resource: {
-          download: jasmine.anything(),
           duration: 100 * 1e6,
-          firstByte: jasmine.anything(),
-          redirect: jasmine.anything(),
           size: undefined,
           type: ResourceType.OTHER,
           url: 'https://resource.com/valid',
@@ -400,13 +397,13 @@ describe('resourceCollection V2', () => {
       lifeCycle.notify(
         LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
         createResourceEntry({
-          traceId: 'xxx',
+          traceId: '1234',
         })
       )
 
       const traceInfo = (rawRumEventsV2[0].rawRumEvent as RumResourceEventV2)._dd!
       expect(traceInfo).toBeDefined()
-      expect(traceInfo.traceId).toBe('xxx')
+      expect(traceInfo.traceId).toBe('1234')
     })
 
     it('should be processed from completed request', () => {
@@ -429,9 +426,21 @@ describe('resourceCollection V2', () => {
 
 function createResourceEntry(details?: Partial<RumPerformanceResourceTiming>): RumPerformanceResourceTiming {
   const entry: Partial<RumPerformanceResourceTiming> = {
+    connectEnd: 0,
+    connectStart: 0,
+    decodedBodySize: 0,
+    domainLookupEnd: 0,
+    domainLookupStart: 0,
     duration: 100,
     entryType: 'resource',
+    fetchStart: 0,
     name: 'https://resource.com/valid',
+    redirectEnd: 0,
+    redirectStart: 0,
+    requestStart: 0,
+    responseEnd: 0,
+    responseStart: 0,
+    secureConnectionStart: 0,
     startTime: 1234,
     ...details,
   }
