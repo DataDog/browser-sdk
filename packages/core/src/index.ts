@@ -6,12 +6,12 @@ export {
   buildCookieOptions,
 } from './domain/configuration'
 export {
-  startErrorCollection,
+  startAutomaticErrorCollection,
   ErrorSource,
   ErrorObservable,
   formatUnknownError,
   RawError,
-} from './domain/errorCollection'
+} from './domain/automaticErrorCollection'
 export { computeStackTrace } from './domain/tracekit'
 export {
   BuildEnv,

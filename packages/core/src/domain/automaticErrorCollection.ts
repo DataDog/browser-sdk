@@ -31,7 +31,7 @@ export enum ErrorSource {
 export type ErrorObservable = Observable<RawError>
 let filteredErrorsObservable: ErrorObservable
 
-export function startErrorCollection(configuration: Configuration) {
+export function startAutomaticErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)

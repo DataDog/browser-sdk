@@ -8,7 +8,7 @@ import {
   getTimestamp,
   Observable,
   RawError,
-  startErrorCollection as startRawErrorCollection,
+  startAutomaticErrorCollection,
 } from '@datadog/browser-core'
 import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumErrorEventV2, RumEventType } from '../../../typesV2'
@@ -22,7 +22,7 @@ export interface ProvidedError {
 }
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  doStartErrorCollection(lifeCycle, configuration, startRawErrorCollection(configuration))
+  doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
 }
 
 export function doStartErrorCollection(

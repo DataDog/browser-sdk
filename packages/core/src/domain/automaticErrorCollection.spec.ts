@@ -1,7 +1,6 @@
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
 import { ONE_MINUTE } from '../tools/utils'
-import { Configuration } from './configuration'
 import {
   ErrorSource,
   filterErrors,
@@ -12,7 +11,8 @@ import {
   stopConsoleTracking,
   stopRuntimeErrorTracking,
   trackNetworkError,
-} from './errorCollection'
+} from './automaticErrorCollection'
+import { Configuration } from './configuration'
 import { StackTrace } from './tracekit'
 
 describe('console tracker', () => {

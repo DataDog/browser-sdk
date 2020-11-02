@@ -1,4 +1,4 @@
-import { toStackTraceString } from '../domain/errorCollection'
+import { toStackTraceString } from '../domain/automaticErrorCollection'
 import { monitor } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { normalizeUrl } from '../tools/urlPolyfill'
