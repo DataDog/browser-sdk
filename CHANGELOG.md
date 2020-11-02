@@ -14,6 +14,13 @@
 
 ---
 
+## v1.25.1
+
+- [RUMF-756] cyclic reference support in Context ([#595](https://github.com/DataDog/browser-sdk/pull/595))
+- ✨[RUMF-518] migrate internal context to v2 format (experimental) ([#593](https://github.com/DataDog/browser-sdk/pull/593))
+- ✨[RUMF-740] migrate error to v2 format (experimental) ([#592](https://github.com/DataDog/browser-sdk/pull/592))
+- [logs] add choose the right installation method ([#594](https://github.com/DataDog/browser-sdk/pull/594))
+
 ## v1.25.0
 
 - ✨ [RUMF-724] implement API to capture an error ([#585](https://github.com/DataDog/browser-sdk/pull/585))
