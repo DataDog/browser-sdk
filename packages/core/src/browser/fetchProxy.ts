@@ -1,6 +1,6 @@
-import { toStackTraceString } from '../domain/automaticErrorCollection'
 import { monitor } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
+import { toStackTraceString } from '../tools/error'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<

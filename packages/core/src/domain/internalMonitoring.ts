@@ -1,8 +1,8 @@
 // tslint:disable ban-types
 import { combine, Context } from '../tools/context'
+import { toStackTraceString } from '../tools/error'
 import * as utils from '../tools/utils'
 import { Batch, HttpRequest } from '../transport/transport'
-import { toStackTraceString } from './automaticErrorCollection'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
 

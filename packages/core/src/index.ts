@@ -5,13 +5,7 @@ export {
   isIntakeRequest,
   buildCookieOptions,
 } from './domain/configuration'
-export {
-  startAutomaticErrorCollection,
-  ErrorSource,
-  ErrorObservable,
-  formatUnknownError,
-  RawError,
-} from './domain/automaticErrorCollection'
+export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
 export { computeStackTrace } from './domain/tracekit'
 export {
   BuildEnv,
@@ -41,6 +35,7 @@ export {
 export { HttpRequest, Batch } from './transport/transport'
 export * from './tools/urlPolyfill'
 export * from './tools/utils'
+export { ErrorSource, formatUnknownError, RawError } from './tools/error'
 export { combine, Context, ContextArray, ContextValue, deepClone, withSnakeCaseKeys } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'

@@ -1,32 +1,11 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
+import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
 import { Configuration, isIntakeRequest } from './configuration'
 import { monitor } from './internalMonitoring'
-import { computeStackTrace, Handler, report, StackFrame, StackTrace } from './tracekit'
-
-export interface RawError {
-  startTime: number
-  message: string
-  type?: string
-  stack?: string
-  source: ErrorSource
-  resource?: {
-    url: string
-    statusCode: number
-    method: string
-  }
-}
-
-export enum ErrorSource {
-  AGENT = 'agent',
-  CONSOLE = 'console',
-  NETWORK = 'network',
-  SOURCE = 'source',
-  LOGGER = 'logger',
-  CUSTOM = 'custom',
-}
+import { computeStackTrace, Handler, report, StackTrace } from './tracekit'
 
 export type ErrorObservable = Observable<RawError>
 let filteredErrorsObservable: ErrorObservable
@@ -110,34 +89,6 @@ export function stopRuntimeErrorTracking() {
   ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
 }
 
-export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
-  if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
-    return {
-      message: `${nonErrorPrefix} ${jsonStringify(errorObject)}`,
-      stack: 'No stack, consider using an instance of Error',
-      type: stackTrace && stackTrace.name,
-    }
-  }
-
-  return {
-    message: stackTrace.message || 'Empty message',
-    stack: toStackTraceString(stackTrace),
-    type: stackTrace.name,
-  }
-}
-
-export function toStackTraceString(stack: StackTrace) {
-  let result = `${stack.name || 'Error'}: ${stack.message}`
-  stack.stack.forEach((frame: StackFrame) => {
-    const func = frame.func === '?' ? '<anonymous>' : frame.func
-    const args = frame.args && frame.args.length > 0 ? `(${frame.args.join(', ')})` : ''
-    const line = frame.line ? `:${frame.line}` : ''
-    const column = frame.line && frame.column ? `:${frame.column}` : ''
-    result += `\n  at ${func}${args} @ ${frame.url}${line}${column}`
-  })
-  return result
-}
-
 export function trackNetworkError(configuration: Configuration, errorObservable: ErrorObservable) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
@@ -166,11 +117,11 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   }
 }
 
-export function isRejected(request: { status: number; responseType?: string }) {
+function isRejected(request: { status: number; responseType?: string }) {
   return request.status === 0 && request.responseType !== 'opaque'
 }
 
-export function isServerError(request: { status: number }) {
+function isServerError(request: { status: number }) {
   return request.status >= 500
 }
 
