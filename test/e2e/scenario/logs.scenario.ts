@@ -40,7 +40,7 @@ describe('logs', () => {
       await flushEvents()
       expect(events.logs.length).toBe(1)
       expect(events.logs[0].view.id).toBeDefined()
-      expect(events.logs[0].application_id).toBe('appId')
+      expect(events.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
 
   createTest('track fetch error')

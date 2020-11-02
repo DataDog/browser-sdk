@@ -11,8 +11,8 @@ describe('rum errors', () => {
       })
       await flushEvents()
       expect(events.rumErrors.length).toBe(1)
-      expect(events.rumErrors[0].message).toBe('console error: oh snap')
-      expect(events.rumErrors[0].error.origin).toBe('console')
+      expect(events.rumErrors[0].error.message).toBe('console error: oh snap')
+      expect(events.rumErrors[0].error.source).toBe('console')
       await withBrowserLogs((browserLogs) => {
         expect(browserLogs.length).toEqual(1)
       })

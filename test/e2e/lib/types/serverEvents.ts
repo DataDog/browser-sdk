@@ -1,5 +1,3 @@
-export type AnyServerEvent = ServerLogsMessage | ServerRumEvent | ServerInternalMonitoringMessage
-
 export interface ServerLogsMessage {
   message: string
   application_id: string
@@ -25,9 +23,7 @@ export interface ServerInternalMonitoringMessage {
 
 export interface ServerRumEvent {
   date: number
-  evt: {
-    category: 'resource' | 'long_task' | 'user_action' | 'error' | 'view'
-  }
+  type: 'resource' | 'long_task' | 'action' | 'error' | 'view'
 }
 
 interface PerformanceTiming {
@@ -36,55 +32,53 @@ interface PerformanceTiming {
 }
 
 export interface ServerRumResourceEvent extends ServerRumEvent {
-  evt: {
-    category: 'resource'
-  }
-  http: {
+  type: 'resource'
+  resource: {
     url: string
     method: string
     status_code: number
-    performance?: {
-      download: PerformanceTiming
-      redirect: PerformanceTiming
-    }
-  }
-  resource: {
-    kind: 'fetch' | 'xhr' | 'document'
+    download: PerformanceTiming
+    redirect: PerformanceTiming
+    type: 'fetch' | 'xhr' | 'document'
     id?: string
+    duration: number
   }
-  duration: number
   _dd?: {
     trace_id: string
     span_id?: string
   }
-  user_action?: {
+  action?: {
     id: string
   }
 }
 
 export function isRumResourceEvent(event: ServerRumEvent): event is ServerRumResourceEvent {
-  return event.evt.category === 'resource'
+  return event.type === 'resource'
 }
 
-export interface ServerRumUserActionEvent extends ServerRumEvent {
-  evt: {
-    category: 'user_action'
-    name: string
-  }
-  duration: number
-  user_action: {
+export interface ServerRumActionEvent extends ServerRumEvent {
+  type: 'action'
+  action: {
+    loading_time: number
     id?: string
     type: 'click' | 'custom'
-    measures: {
-      resource_count: number
-      error_count: number
-      long_task_count: number
+    resource: {
+      count: number
+    }
+    error: {
+      count: number
+    }
+    long_task: {
+      count: number
+    }
+    target: {
+      name: string
     }
   }
 }
 
-export function isRumUserActionEvent(event: ServerRumEvent): event is ServerRumUserActionEvent {
-  return event.evt.category === 'user_action'
+export function isRumUserActionEvent(event: ServerRumEvent): event is ServerRumActionEvent {
+  return event.type === 'action'
 }
 
 export enum ServerRumViewLoadingType {
@@ -93,39 +87,35 @@ export enum ServerRumViewLoadingType {
 }
 
 export interface ServerRumViewEvent extends ServerRumEvent {
-  evt: {
-    category: 'view'
-  }
-  rum: {
+  type: 'view'
+  _dd: {
     document_version: number
   }
-  session_id: string
+  session: {
+    id: string
+  }
   view: {
     id: string
     loading_type: ServerRumViewLoadingType
-    measures: {
-      dom_complete: number
-      dom_content_loaded: number
-      dom_interactive: number
-      load_event_end: number
-    }
+    dom_complete: number
+    dom_content_loaded: number
+    dom_interactive: number
+    load_event_end: number
   }
 }
 
 export function isRumViewEvent(event: ServerRumEvent): event is ServerRumViewEvent {
-  return event.evt.category === 'view'
+  return event.type === 'view'
 }
 
 export interface ServerRumErrorEvent extends ServerRumEvent {
-  evt: {
-    category: 'error'
-  }
-  message: string
+  type: 'error'
   error: {
-    origin: string
+    message: string
+    source: string
   }
 }
 
 export function isRumErrorEvent(event: ServerRumEvent): event is ServerRumErrorEvent {
-  return event.evt.category === 'error'
+  return event.type === 'error'
 }

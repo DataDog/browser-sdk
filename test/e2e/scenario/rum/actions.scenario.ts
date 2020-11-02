@@ -22,17 +22,23 @@ describe('action collection', () => {
       const actionEvents = events.rumActions
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].user_action).toEqual({
+      expect(actionEvents[0].action).toEqual({
+        error: {
+          count: 0,
+        },
         id: (jasmine.any(String) as unknown) as string,
-        measures: {
-          error_count: 0,
-          long_task_count: (jasmine.any(Number) as unknown) as number,
-          resource_count: 0,
+        loading_time: (jasmine.any(Number) as unknown) as number,
+        long_task: {
+          count: (jasmine.any(Number) as unknown) as number,
+        },
+        resource: {
+          count: 0,
+        },
+        target: {
+          name: 'click me',
         },
         type: 'click',
       })
-      expect(actionEvents[0].evt.name).toBe('click me')
-      expect(actionEvents[0].duration).toBeGreaterThanOrEqual(0)
     })
 
   createTest('associate a request to its action')
@@ -54,22 +60,28 @@ describe('action collection', () => {
       await waitForServersIdle()
       await flushEvents()
       const actionEvents = events.rumActions
-      const resourceEvents = events.rumResources.filter((event) => event.resource.kind === 'fetch')
+      const resourceEvents = events.rumResources.filter((event) => event.resource.type === 'fetch')
 
       expect(actionEvents.length).toBe(1)
-      expect(actionEvents[0].user_action).toEqual({
+      expect(actionEvents[0].action).toEqual({
+        error: {
+          count: 0,
+        },
         id: (jasmine.any(String) as unknown) as string,
-        measures: {
-          error_count: 0,
-          long_task_count: (jasmine.any(Number) as unknown) as number,
-          resource_count: 1,
+        loading_time: (jasmine.any(Number) as unknown) as number,
+        long_task: {
+          count: (jasmine.any(Number) as unknown) as number,
+        },
+        resource: {
+          count: 1,
+        },
+        target: {
+          name: 'click me',
         },
         type: 'click',
       })
-      expect(actionEvents[0].evt.name).toBe('click me')
-      expect(actionEvents[0].duration).toBeGreaterThan(0)
 
       expect(resourceEvents.length).toBe(1)
-      expect(resourceEvents[0].user_action!.id).toBe(actionEvents[0].user_action.id!)
+      expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
     })
 })

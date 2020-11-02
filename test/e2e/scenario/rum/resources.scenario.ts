@@ -11,10 +11,10 @@ describe('rum resources', () => {
     .run(async ({ events }) => {
       await sendXhr(`/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
+      const resourceEvent = events.rumResources.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent.http.method).toBe('GET')
-      expect(resourceEvent.http.status_code).toBe(200)
+      expect(resourceEvent.resource.method).toBe('GET')
+      expect(resourceEvent.resource.status_code).toBe(200)
       expectToHaveValidTimings(resourceEvent)
     })
 
@@ -23,13 +23,13 @@ describe('rum resources', () => {
     .run(async ({ events }) => {
       await sendXhr(`/redirect?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/redirect'))!
+      const resourceEvent = events.rumResources.find((r) => r.resource.url.includes('/redirect'))!
       expect(resourceEvent).not.toBeUndefined()
-      expect(resourceEvent.http.method).toEqual('GET')
-      expect(resourceEvent.http.status_code).toEqual(200)
+      expect(resourceEvent.resource.method).toEqual('GET')
+      expect(resourceEvent.resource.status_code).toEqual(200)
       expectToHaveValidTimings(resourceEvent)
-      expect(resourceEvent.http.performance!.redirect).not.toBeUndefined()
-      expect(resourceEvent.http.performance!.redirect!.duration).toBeGreaterThan(0)
+      expect(resourceEvent.resource.redirect).not.toBeUndefined()
+      expect(resourceEvent.resource.redirect!.duration).toBeGreaterThan(0)
     })
 
   createTest("don't track disallowed cross origin xhr timings")
@@ -37,12 +37,12 @@ describe('rum resources', () => {
     .run(async ({ crossOriginUrl, events }) => {
       await sendXhr(`${crossOriginUrl}/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
+      const resourceEvent = events.rumResources.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent.http.method).toEqual('GET')
-      expect(resourceEvent.http.status_code).toEqual(200)
-      expect(resourceEvent.duration).toBeGreaterThan(0)
-      expect(resourceEvent.http.performance).toBeUndefined()
+      expect(resourceEvent.resource.method).toEqual('GET')
+      expect(resourceEvent.resource.status_code).toEqual(200)
+      expect(resourceEvent.resource.duration).toBeGreaterThan(0)
+      expect(resourceEvent.resource.download).toBeUndefined()
     })
 
   createTest('track allowed cross origin xhr timings')
@@ -50,10 +50,10 @@ describe('rum resources', () => {
     .run(async ({ crossOriginUrl, events }) => {
       await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
       await flushEvents()
-      const resourceEvent = events.rumResources.find((r) => r.http.url.includes('/ok'))!
+      const resourceEvent = events.rumResources.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).not.toBeUndefined()
-      expect(resourceEvent.http.method).toEqual('GET')
-      expect(resourceEvent.http.status_code).toEqual(200)
+      expect(resourceEvent.resource.method).toEqual('GET')
+      expect(resourceEvent.resource.status_code).toEqual(200)
       expectToHaveValidTimings(resourceEvent)
     })
 
@@ -66,7 +66,7 @@ describe('rum resources', () => {
     )
     .run(async ({ events }) => {
       await flushEvents()
-      const resourceEvent = events.rumResources.find((event) => event.http.url.includes('empty.css'))
+      const resourceEvent = events.rumResources.find((event) => event.resource.url.includes('empty.css'))
       expect(resourceEvent).toBeDefined()
       expectToHaveValidTimings(resourceEvent!)
     })
@@ -75,19 +75,19 @@ describe('rum resources', () => {
     .withRum()
     .run(async ({ baseUrl, events }) => {
       await flushEvents()
-      const resourceEvent = events.rumResources.find((event) => event.resource.kind === 'document')
+      const resourceEvent = events.rumResources.find((event) => event.resource.type === 'document')
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent!.http.url).toBe(`${baseUrl}/`)
+      expect(resourceEvent!.resource.url).toBe(`${baseUrl}/`)
       expectToHaveValidTimings(resourceEvent!)
     })
 })
 
 function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
   expect(resourceEvent.date).toBeGreaterThan(0)
-  expect(resourceEvent.duration).toBeGreaterThan(0)
-  const performance = resourceEvent.http.performance
+  expect(resourceEvent.resource.duration).toBeGreaterThan(0)
+  const download = resourceEvent.resource.download
   // timing could have been discarded by the SDK if there was not in the correct order
-  if (performance) {
-    expect(performance.download.start).toBeGreaterThan(0)
+  if (download) {
+    expect(download.start).toBeGreaterThan(0)
   }
 }
