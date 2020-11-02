@@ -6,7 +6,6 @@ import {
   Context,
   DEFAULT_CONFIGURATION,
   noop,
-  PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
@@ -24,10 +23,6 @@ import { RawRumEvent } from '../src/types'
 import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
 import { validateFormat } from './formatValidation'
 
-interface BrowserWindow extends Window {
-  PerformanceObserver?: PerformanceObserver
-}
-
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
@@ -41,7 +36,6 @@ export interface TestSetupBuilder {
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
-  withPerformanceObserverStubBuilder: () => TestSetupBuilder
   beforeBuild: (
     callback: (lifeCycle: LifeCycle, configuration: Readonly<Configuration>, session: RumSession) => void
   ) => TestSetupBuilder
@@ -52,7 +46,6 @@ export interface TestSetupBuilder {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  stubBuilder: PerformanceObserverStubBuilder
   clock: jasmine.Clock
   parentContexts: ParentContexts
   internalContext: ReturnType<typeof startInternalContext>
@@ -99,7 +92,6 @@ export function setup(): TestSetupBuilder {
 
   let globalContext: Context
   let clock: jasmine.Clock
-  let stubBuilder: PerformanceObserverStubBuilder
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
   let internalContext: ReturnType<typeof startInternalContext>
@@ -233,14 +225,6 @@ export function setup(): TestSetupBuilder {
       cleanupClock = () => jasmine.clock().uninstall()
       return setupBuilder
     },
-    withPerformanceObserverStubBuilder() {
-      const browserWindow = window as BrowserWindow
-      const original = browserWindow.PerformanceObserver
-      stubBuilder = new PerformanceObserverStubBuilder()
-      browserWindow.PerformanceObserver = stubBuilder.getStub()
-      cleanupTasks.push(() => (browserWindow.PerformanceObserver = original))
-      return setupBuilder
-    },
     beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void) {
       beforeBuildTasks.push(callback)
       return setupBuilder
@@ -257,7 +241,6 @@ export function setup(): TestSetupBuilder {
         rawRumEvents,
         rawRumEventsV2,
         session,
-        stubBuilder,
         setGlobalContext(context: Context) {
           globalContext = context
         },

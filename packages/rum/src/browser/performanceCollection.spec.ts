@@ -5,14 +5,15 @@ import { retrieveInitialDocumentResourceTiming } from './performanceCollection'
 
 describe('rum first_contentful_paint', () => {
   let setupBuilder: TestSetupBuilder
+  let performanceObserverObserveSpy: jasmine.Spy<(options?: PerformanceObserverInit | undefined) => void>
+
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
 
-    setupBuilder = setup()
-      .withPerformanceObserverStubBuilder()
-      .withPerformanceCollection()
+    performanceObserverObserveSpy = spyOn(PerformanceObserver.prototype, 'observe')
+    setupBuilder = setup().withPerformanceCollection()
   })
 
   afterEach(() => {
@@ -22,16 +23,16 @@ describe('rum first_contentful_paint', () => {
 
   it('should not be collected when page starts not visible', () => {
     setPageVisibility('hidden')
-    const { stubBuilder } = setupBuilder.build()
+    setupBuilder.build()
 
-    expect(stubBuilder.getEntryTypes()).not.toContain('paint')
+    expect(performanceObserverObserveSpy.calls.argsFor(0)[0]!.entryTypes).not.toContain('paint')
   })
 
   it('should be collected when page starts visible', () => {
     setPageVisibility('visible')
-    const { stubBuilder } = setupBuilder.build()
+    setupBuilder.build()
 
-    expect(stubBuilder.getEntryTypes()).toContain('paint')
+    expect(performanceObserverObserveSpy.calls.argsFor(0)[0]!.entryTypes).toContain('paint')
   })
 })
 
