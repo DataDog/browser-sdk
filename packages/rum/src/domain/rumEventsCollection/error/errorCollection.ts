@@ -6,7 +6,9 @@ import {
   ErrorSource,
   formatUnknownError,
   getTimestamp,
+  Observable,
   RawError,
+  startAutomaticErrorCollection,
 } from '@datadog/browser-core'
 import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumErrorEventV2, RumEventType } from '../../../typesV2'
@@ -20,6 +22,14 @@ export interface ProvidedError {
 }
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+  doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
+}
+
+export function doStartErrorCollection(
+  lifeCycle: LifeCycle,
+  configuration: Configuration,
+  observable: Observable<RawError>
+) {
   lifeCycle.subscribe(
     LifeCycleEventType.ERROR_PROVIDED,
     ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
@@ -38,7 +48,8 @@ export function startErrorCollection(lifeCycle: LifeCycle, configuration: Config
           })
     }
   )
-  lifeCycle.subscribe(LifeCycleEventType.ERROR_COLLECTED, (error: RawError) => {
+
+  observable.subscribe((error) => {
     configuration.isEnabled('v2_format')
       ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
       : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))

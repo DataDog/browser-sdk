@@ -8,7 +8,6 @@ import { ProvidedError } from './rumEventsCollection/error/errorCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
-  ERROR_COLLECTED,
   ERROR_PROVIDED,
   PERFORMANCE_ENTRY_COLLECTED,
   CUSTOM_ACTION_COLLECTED,
@@ -20,7 +19,6 @@ export enum LifeCycleEventType {
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
-  RESOURCE_ADDED_TO_BATCH,
   DOM_MUTATED,
   BEFORE_UNLOAD,
   RAW_RUM_EVENT_COLLECTED,
@@ -36,7 +34,6 @@ export interface Subscription {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.ERROR_COLLECTED, data: RawError): void
   notify(eventType: LifeCycleEventType.ERROR_PROVIDED, data: { error: ProvidedError; context?: Context }): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
@@ -49,7 +46,6 @@ export class LifeCycle {
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
@@ -84,7 +80,6 @@ export class LifeCycle {
     }
   }
 
-  subscribe(eventType: LifeCycleEventType.ERROR_COLLECTED, callback: (data: RawError) => void): Subscription
   subscribe(
     eventType: LifeCycleEventType.ERROR_PROVIDED,
     callback: (data: { error: ProvidedError; context?: Context }) => void
@@ -112,7 +107,6 @@ export class LifeCycle {
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.RESOURCE_ADDED_TO_BATCH
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED,
@@ -126,7 +120,7 @@ export class LifeCycle {
       savedGlobalContext?: Context
       customerContext?: Context
     }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
     callback: (data: {
@@ -135,15 +129,15 @@ export class LifeCycle {
       savedGlobalContext?: Context
       customerContext?: Context
     }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
     callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
-  ): void
+  ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
     callback: (data: { rumEvent: RumEventV2; serverRumEvent: Context }) => void
-  ): void
+  ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {
       this.callbacks[eventType] = []

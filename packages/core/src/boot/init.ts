@@ -1,8 +1,6 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
-import { RawError, startErrorCollection } from '../domain/errorCollection'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
-import { Observable } from '../tools/observable'
 
 export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): void } {
   const global = {
@@ -58,14 +56,12 @@ export interface BuildEnv {
   sdkVersion: string
 }
 
-export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv, isCollectingError: boolean) {
+export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
-  const errorObservable = isCollectingError ? startErrorCollection(configuration) : new Observable<RawError>()
 
   return {
     configuration,
-    errorObservable,
     internalMonitoring,
   }
 }

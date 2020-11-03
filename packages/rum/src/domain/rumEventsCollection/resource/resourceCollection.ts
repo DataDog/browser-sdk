@@ -28,7 +28,6 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Con
       configuration.isEnabled('v2_format')
         ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processRequestV2(request))
         : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     }
   })
 
@@ -37,7 +36,6 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Con
       configuration.isEnabled('v2_format')
         ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processResourceEntryV2(entry))
         : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
-      lifeCycle.notify(LifeCycleEventType.RESOURCE_ADDED_TO_BATCH)
     }
   })
 }

@@ -10,11 +10,10 @@ describe('rum views', () => {
       await flushEvents()
       const viewEvent = events.rumViews[0]
       expect(viewEvent).toBeDefined()
-      const measures = viewEvent!.view.measures!
-      expect(measures.dom_complete).toBeGreaterThan(0)
-      expect(measures.dom_content_loaded).toBeGreaterThan(0)
-      expect(measures.dom_interactive).toBeGreaterThan(0)
-      expect(measures.load_event_end).toBeGreaterThan(0)
+      expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
+      expect(viewEvent.view.dom_content_loaded).toBeGreaterThan(0)
+      expect(viewEvent.view.dom_interactive).toBeGreaterThan(0)
+      expect(viewEvent.view.load_event_end).toBeGreaterThan(0)
     })
 
   createTest('create a new View when the session is renewed')
@@ -25,7 +24,7 @@ describe('rum views', () => {
       const viewEvents = events.rumViews
       const firstViewEvent = viewEvents[0]
       const lastViewEvent = viewEvents[viewEvents.length - 1]
-      expect(firstViewEvent.session_id).not.toBe(lastViewEvent.session_id)
+      expect(firstViewEvent.session.id).not.toBe(lastViewEvent.session.id)
       expect(firstViewEvent.view.id).not.toBe(lastViewEvent.view.id)
 
       const distinctIds = new Set(viewEvents.map((viewEvent) => viewEvent.view.id))
