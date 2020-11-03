@@ -9,7 +9,7 @@ import { startParentContexts } from '../domain/parentContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-import { ProvidedError, startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
+import { startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
@@ -35,7 +35,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
     )
   })
 
-  const { parentContexts } = startRumEventCollection(
+  const { parentContexts, addError } = startRumEventCollection(
     userConfiguration.applicationId,
     location,
     lifeCycle,
@@ -51,14 +51,11 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
 
   return {
+    addError,
     getInternalContext: internalContext.get,
 
     addAction(action: CustomAction, context?: Context) {
       lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, { action, context })
-    },
-
-    addError(error: ProvidedError, context?: Context) {
-      lifeCycle.notify(LifeCycleEventType.ERROR_PROVIDED, { error, context })
     },
   }
 }
@@ -78,10 +75,11 @@ export function startRumEventCollection(
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)
-  startErrorCollection(lifeCycle, configuration)
+  const { addError } = startErrorCollection(lifeCycle, configuration)
   startActionCollection(lifeCycle, configuration)
 
   return {
+    addError,
     parentContexts,
 
     stop() {
