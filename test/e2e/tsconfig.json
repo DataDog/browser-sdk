@@ -4,13 +4,14 @@
     "strict": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "target": "es5",
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }
     ],
-    "types": ["node", "webdriverio", "jasmine"],
+    "types": ["node", "webdriverio", "jasmine", "ajv"],
     "paths": {
       "@datadog/browser-logs": ["../../packages/logs/src"],
       "@datadog/browser-rum": ["../../packages/rum/src"],

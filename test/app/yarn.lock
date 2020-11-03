@@ -2,21 +2,21 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@1.22.0", "@datadog/browser-core@file:../../packages/core":
-  version "1.22.0"
+"@datadog/browser-core@1.25.0", "@datadog/browser-core@file:../../packages/core":
+  version "1.25.0"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "1.22.0"
+  version "1.25.0"
   dependencies:
-    "@datadog/browser-core" "1.22.0"
+    "@datadog/browser-core" "1.25.0"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "1.22.0"
+  version "1.25.0"
   dependencies:
-    "@datadog/browser-core" "1.22.0"
+    "@datadog/browser-core" "1.25.0"
     tslib "^1.10.0"
 
 "@webassemblyjs/ast@1.8.5":
