@@ -22,12 +22,7 @@ import { RumUserConfiguration } from './rum.entry'
 export function startRum(userConfiguration: RumUserConfiguration, getGlobalContext: () => Context) {
   const lifeCycle = new LifeCycle()
 
-  const isCollectingError = true
-  const { errorObservable, configuration, internalMonitoring } = commonInit(
-    userConfiguration,
-    buildEnv,
-    isCollectingError
-  )
+  const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
 
   internalMonitoring.setExternalContextProvider(() => {
@@ -54,8 +49,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startDOMMutationCollection(lifeCycle)
 
   const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
-
-  errorObservable.subscribe((errorMessage) => lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, errorMessage))
 
   return {
     getInternalContext: internalContext.get,

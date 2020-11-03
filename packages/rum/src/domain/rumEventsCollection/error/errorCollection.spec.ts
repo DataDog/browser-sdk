@@ -1,16 +1,18 @@
+import { Observable, RawError } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { ErrorSource, RumEventCategory } from '../../../index'
 import { RumEventType } from '../../../typesV2'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { startErrorCollection } from './errorCollection'
+import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
+  const errorObservable = new Observable<RawError>()
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
       configuration.isEnabled = () => false
-      startErrorCollection(lifeCycle, configuration)
+      doStartErrorCollection(lifeCycle, configuration, errorObservable)
     })
   })
 
@@ -82,8 +84,8 @@ describe('error collection', () => {
 
   describe('auto', () => {
     it('should create error event from collected error', () => {
-      const { lifeCycle, rawRumEvents } = setupBuilder.build()
-      lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
+      const { rawRumEvents } = setupBuilder.build()
+      errorObservable.notify({
         message: 'hello',
         resource: {
           method: 'GET',
@@ -120,11 +122,12 @@ describe('error collection', () => {
 
 describe('error collection v2', () => {
   let setupBuilder: TestSetupBuilder
+  const errorObservable = new Observable<RawError>()
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
       configuration.isEnabled = () => true
-      startErrorCollection(lifeCycle, configuration)
+      doStartErrorCollection(lifeCycle, configuration, errorObservable)
     })
   })
 
@@ -195,8 +198,8 @@ describe('error collection v2', () => {
 
   describe('auto', () => {
     it('should create error event from collected error', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
-      lifeCycle.notify(LifeCycleEventType.ERROR_COLLECTED, {
+      const { rawRumEventsV2 } = setupBuilder.build()
+      errorObservable.notify({
         message: 'hello',
         resource: {
           method: 'GET',
