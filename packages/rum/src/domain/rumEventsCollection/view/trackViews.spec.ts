@@ -1,9 +1,10 @@
+import { createRawRumEvent } from '../../../../test/createRawRumEvent'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
-import { LifeCycleEventType } from '../../lifeCycle'
 
 import { RawRumEvent, RumEventCategory } from '../../../types'
-import { RawRumEventV2, RumEventType } from '../../../typesV2'
+import { RumEventType } from '../../../typesV2'
+import { LifeCycleEventType } from '../../lifeCycle'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
@@ -70,7 +71,6 @@ describe('rum track url change', () => {
   let createSpy: jasmine.Spy<(event: ViewCreatedEvent) => void>
 
   beforeEach(() => {
-    const fakeLocation: Partial<Location> = { pathname: '/foo', hash: '' }
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
@@ -720,26 +720,19 @@ describe('rum view measures', () => {
   })
 
   describe('event counts V2', () => {
-    function createFakeCollectedRawRumEvent(type: RumEventType) {
-      return {
-        rawRumEvent: ({ type } as unknown) as RawRumEventV2,
-        startTime: 0,
-      }
-    }
-
     it('should track error count', () => {
       const { lifeCycle } = setupBuilder.build()
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.ERROR)
-      )
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.ERROR)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+        startTime: 0,
+      })
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+        startTime: 0,
+      })
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -752,10 +745,10 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.LONG_TASK)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+        startTime: 0,
+      })
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -768,10 +761,10 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -784,10 +777,10 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.ACTION)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        startTime: 0,
+      })
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -800,24 +793,24 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
       expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
       expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
       history.pushState({}, '', '/baz')
 
       expect(getHandledCount()).toEqual(5)
@@ -835,10 +828,10 @@ describe('rum view measures', () => {
         userActionCount: 0,
       })
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
 
       expect(getHandledCount()).toEqual(1)
 
@@ -857,10 +850,10 @@ describe('rum view measures', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
 
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-        createFakeCollectedRawRumEvent(RumEventType.RESOURCE)
-      )
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0,
+      })
 
       expect(getHandledCount()).toEqual(1)
 
