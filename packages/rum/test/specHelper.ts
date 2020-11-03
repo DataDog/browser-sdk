@@ -5,6 +5,7 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
+  noop,
   PerformanceObserverStubBuilder,
   SPEC_ENDPOINTS,
   withSnakeCaseKeys,
@@ -82,6 +83,7 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
+  let cleanupClock = noop
   const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void> = []
   const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
@@ -111,6 +113,13 @@ export function setup(): TestSetupBuilder {
     maxBatchSize: 1,
   }
   const FAKE_APP_ID = 'appId'
+
+  // ensure that events generated before build are collected
+  lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
+  const rawRumEventsV2Collected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
+    rawRumEventsV2.push(data)
+    validateRumEventFormat(data.rawRumEvent)
+  })
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
@@ -221,9 +230,7 @@ export function setup(): TestSetupBuilder {
       const start = Date.now()
       spyOn(performance, 'now').and.callFake(() => Date.now() - start)
       clock = jasmine.clock()
-      cleanupTasks.push(() => {
-        jasmine.clock().uninstall()
-      })
+      cleanupClock = () => jasmine.clock().uninstall()
       return setupBuilder
     },
     withFakeServer() {
@@ -246,11 +253,6 @@ export function setup(): TestSetupBuilder {
     build() {
       beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration, session))
       buildTasks.forEach((task) => task())
-      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
-      lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
-        rawRumEventsV2.push(data)
-        validateRumEventFormat(data.rawRumEvent)
-      })
       return {
         clock,
         fakeLocation,
@@ -269,6 +271,9 @@ export function setup(): TestSetupBuilder {
     },
     cleanup() {
       cleanupTasks.forEach((task) => task())
+      // perform these steps at the end to generate correct events in cleanup and validate them
+      cleanupClock()
+      rawRumEventsV2Collected.unsubscribe()
     },
   }
   return setupBuilder

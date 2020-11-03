@@ -313,7 +313,7 @@ describe('rum track renew session', () => {
   })
 })
 
-describe('rum track load duration', () => {
+describe('rum track loading type', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
