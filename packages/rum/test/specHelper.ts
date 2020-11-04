@@ -9,7 +9,6 @@ import {
   SPEC_ENDPOINTS,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
-import { startRumEventCollection } from '../src/boot/rum'
 import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { startInternalContext } from '../src/domain/internalContext'
@@ -24,7 +23,6 @@ export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
-  withRum: () => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
   withInternalContext: () => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
@@ -42,6 +40,7 @@ interface BuildContext {
   configuration: Readonly<Configuration>
   session: RumSession
   location: Location
+  applicationId: string
 }
 
 export interface TestIO {
@@ -136,22 +135,6 @@ export function setup(): TestSetupBuilder {
       assign(configuration, overrides)
       return setupBuilder
     },
-    withRum() {
-      buildTasks.push(() => {
-        let stopRum
-        ;({ parentContexts, stop: stopRum } = startRumEventCollection(
-          FAKE_APP_ID,
-          fakeLocation as Location,
-          lifeCycle,
-          configuration as Configuration,
-          session,
-          () => globalContext
-        ))
-        cleanupTasks.push(stopRum)
-      })
-
-      return setupBuilder
-    },
     withAssembly() {
       buildTasks.push(() => {
         startRumAssembly(
@@ -206,6 +189,7 @@ export function setup(): TestSetupBuilder {
         const cleanup = task({
           lifeCycle,
           session,
+          applicationId: FAKE_APP_ID,
           configuration: configuration as Configuration,
           location: fakeLocation as Location,
         })

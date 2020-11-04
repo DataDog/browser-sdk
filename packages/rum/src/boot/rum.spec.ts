@@ -4,6 +4,7 @@ import { RumPerformanceNavigationTiming } from '../browser/performanceCollection
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
+import { startRumEventCollection } from './rum'
 
 interface ServerRumEvent {
   application_id: string
@@ -43,11 +44,11 @@ describe('rum session', () => {
       pending('no full rum support')
     }
 
-    setupBuilder = setup()
-      .withRum()
-      .beforeBuild(({ lifeCycle }) => {
-        serverRumEvents = collectServerEvents(lifeCycle)
-      })
+    setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
+      serverRumEvents = collectServerEvents(lifeCycle)
+      const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
+      return stop
+    })
   })
 
   afterEach(() => {
@@ -125,9 +126,10 @@ describe('rum session keep alive', () => {
         isTracked: () => isSessionTracked,
         isTrackedWithResource: () => true,
       })
-      .withRum()
-      .beforeBuild(({ lifeCycle }) => {
+      .beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
+        const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
+        return stop
       })
   })
 
@@ -209,11 +211,11 @@ describe('rum view url', () => {
   let serverRumEvents: ServerRumEvent[]
 
   beforeEach(() => {
-    setupBuilder = setup()
-      .withRum()
-      .beforeBuild(({ lifeCycle }) => {
-        serverRumEvents = collectServerEvents(lifeCycle)
-      })
+    setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
+      serverRumEvents = collectServerEvents(lifeCycle)
+      const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
+      return stop
+    })
   })
 
   afterEach(() => {
