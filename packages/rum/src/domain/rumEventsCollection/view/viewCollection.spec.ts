@@ -46,8 +46,8 @@ describe('viewCollection', () => {
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
-    expect(rawRumEvents[0].rawRumEvent).toEqual({
+    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
+    expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       duration: 100 * 1e6,
       evt: {
@@ -116,8 +116,8 @@ describe('viewCollection V2', () => {
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 
-    expect(rawRumEventsV2[0].startTime).toBe(1234)
-    expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+    expect(rawRumEventsV2[rawRumEventsV2.length - 1].startTime).toBe(1234)
+    expect(rawRumEventsV2[rawRumEventsV2.length - 1].rawRumEvent).toEqual({
       _dd: {
         documentVersion: 3,
       },
