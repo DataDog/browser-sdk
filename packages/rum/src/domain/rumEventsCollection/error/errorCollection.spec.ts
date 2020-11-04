@@ -14,7 +14,7 @@ describe('error collection', () => {
       .withConfiguration({
         isEnabled: () => false,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         doStartErrorCollection(lifeCycle, configuration, errorObservable)
       })
   })
@@ -132,7 +132,7 @@ describe('error collection v2', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         doStartErrorCollection(lifeCycle, configuration, errorObservable)
       })
   })

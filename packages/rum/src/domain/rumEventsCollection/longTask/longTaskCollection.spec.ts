@@ -13,7 +13,7 @@ describe('long task collection', () => {
       .withConfiguration({
         isEnabled: () => false,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startLongTaskCollection(lifeCycle, configuration)
       })
   })
@@ -62,7 +62,7 @@ describe('long task collection v2', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startLongTaskCollection(lifeCycle, configuration)
       })
   })

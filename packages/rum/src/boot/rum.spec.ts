@@ -45,7 +45,7 @@ describe('rum session', () => {
 
     setupBuilder = setup()
       .withRum()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
       })
   })
@@ -126,7 +126,7 @@ describe('rum session keep alive', () => {
         isTrackedWithResource: () => true,
       })
       .withRum()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
       })
   })
@@ -211,7 +211,7 @@ describe('rum view url', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withRum()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
       })
   })

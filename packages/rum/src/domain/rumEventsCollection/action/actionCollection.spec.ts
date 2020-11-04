@@ -13,7 +13,7 @@ describe('actionCollection', () => {
       .withConfiguration({
         isEnabled: () => false,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startActionCollection(lifeCycle, configuration)
       })
   })
@@ -88,7 +88,7 @@ describe('actionCollection v2', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startActionCollection(lifeCycle, configuration)
       })
   })

@@ -74,7 +74,7 @@ describe('rum track url change', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
@@ -212,7 +212,7 @@ describe('rum view referrer', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
           initialViewCreatedEvent = event
           subscription.unsubscribe()
@@ -278,7 +278,7 @@ describe('rum track renew session', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
@@ -325,7 +325,7 @@ describe('rum track loading type', () => {
       .withFakeClock()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {
@@ -361,7 +361,7 @@ describe('rum track loading time', () => {
       .withFakeClock()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {
@@ -452,7 +452,7 @@ describe('rum view measures', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
   })
 
   afterEach(() => {

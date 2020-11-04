@@ -23,7 +23,7 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -107,7 +107,7 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -144,7 +144,7 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -190,7 +190,7 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -245,7 +245,7 @@ describe('resourceCollection V2', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -318,7 +318,7 @@ describe('resourceCollection V2', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -355,7 +355,7 @@ describe('resourceCollection V2', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -401,7 +401,7 @@ describe('resourceCollection V2', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })

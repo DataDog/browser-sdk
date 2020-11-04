@@ -36,12 +36,17 @@ export interface TestSetupBuilder {
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
-  beforeBuild: (
-    callback: (lifeCycle: LifeCycle, configuration: Readonly<Configuration>, session: RumSession) => void
-  ) => TestSetupBuilder
+  beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
   cleanup: () => void
   build: () => TestIO
+}
+
+type BeforeBuildCallback = (buildContext: BuildContext) => void
+interface BuildContext {
+  lifeCycle: LifeCycle
+  configuration: Readonly<Configuration>
+  session: RumSession
 }
 
 export interface TestIO {
@@ -75,7 +80,7 @@ export function setup(): TestSetupBuilder {
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
   let cleanupClock = noop
-  const beforeBuildTasks: Array<(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void> = []
+  const beforeBuildTasks: BeforeBuildCallback[] = []
   const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
     startTime: number
@@ -225,12 +230,12 @@ export function setup(): TestSetupBuilder {
       cleanupClock = () => jasmine.clock().uninstall()
       return setupBuilder
     },
-    beforeBuild(callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void) {
+    beforeBuild(callback: BeforeBuildCallback) {
       beforeBuildTasks.push(callback)
       return setupBuilder
     },
     build() {
-      beforeBuildTasks.forEach((task) => task(lifeCycle, configuration as Configuration, session))
+      beforeBuildTasks.forEach((task) => task({ lifeCycle, session, configuration: configuration as Configuration }))
       buildTasks.forEach((task) => task())
       return {
         clock,

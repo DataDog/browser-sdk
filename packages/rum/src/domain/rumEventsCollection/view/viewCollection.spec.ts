@@ -13,7 +13,7 @@ describe('viewCollection', () => {
       .withConfiguration({
         isEnabled: () => false,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startViewCollection(lifeCycle, configuration, location)
       })
   })
@@ -86,7 +86,7 @@ describe('viewCollection V2', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild((lifeCycle, configuration) => {
+      .beforeBuild(({ lifeCycle, configuration }) => {
         startViewCollection(lifeCycle, configuration, location)
       })
   })

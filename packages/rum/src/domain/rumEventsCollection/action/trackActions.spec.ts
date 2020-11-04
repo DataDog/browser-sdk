@@ -61,7 +61,7 @@ describe('trackActions', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withActionCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
