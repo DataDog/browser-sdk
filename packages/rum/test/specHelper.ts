@@ -17,7 +17,6 @@ import { startInternalContext } from '../src/domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
 import { trackActions } from '../src/domain/rumEventsCollection/action/trackActions'
-import { trackViews } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
 import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
@@ -28,7 +27,6 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
-  withViewCollection: () => TestSetupBuilder
   withActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
@@ -47,6 +45,7 @@ interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>
   session: RumSession
+  location: Location
 }
 
 export interface TestIO {
@@ -190,13 +189,6 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
-    withViewCollection() {
-      buildTasks.push(() => {
-        const { stop } = trackViews(fakeLocation as Location, lifeCycle)
-        cleanupTasks.push(stop)
-      })
-      return setupBuilder
-    },
     withActionCollection() {
       buildTasks.push(() => {
         const { stop } = trackActions(lifeCycle)
@@ -236,7 +228,12 @@ export function setup(): TestSetupBuilder {
     },
     build() {
       beforeBuildTasks.forEach((task) => {
-        const cleanup = task({ lifeCycle, session, configuration: configuration as Configuration })
+        const cleanup = task({
+          lifeCycle,
+          session,
+          configuration: configuration as Configuration,
+          location: fakeLocation as Location,
+        })
         if (cleanup) {
           cleanupTasks.push(cleanup)
         }
