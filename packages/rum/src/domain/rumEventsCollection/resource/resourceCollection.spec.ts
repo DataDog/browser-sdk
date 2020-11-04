@@ -1,6 +1,6 @@
 import { RequestType, ResourceType } from '@datadog/browser-core'
+import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RumEventCategory, RumResourceEvent } from '../../../types'
 import { RumEventType, RumResourceEventV2 } from '../../../typesV2'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -423,29 +423,6 @@ describe('resourceCollection V2', () => {
     })
   })
 })
-
-function createResourceEntry(details?: Partial<RumPerformanceResourceTiming>): RumPerformanceResourceTiming {
-  const entry: Partial<RumPerformanceResourceTiming> = {
-    connectEnd: 0,
-    connectStart: 0,
-    decodedBodySize: 0,
-    domainLookupEnd: 0,
-    domainLookupStart: 0,
-    duration: 100,
-    entryType: 'resource',
-    fetchStart: 0,
-    name: 'https://resource.com/valid',
-    redirectEnd: 0,
-    redirectStart: 0,
-    requestStart: 0,
-    responseEnd: 0,
-    responseStart: 0,
-    secureConnectionStart: 0,
-    startTime: 1234,
-    ...details,
-  }
-  return entry as RumPerformanceResourceTiming
-}
 
 function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
   const request: Partial<RequestCompleteEvent> = {

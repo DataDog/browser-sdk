@@ -89,9 +89,16 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
 export function computePerformanceResourceDetails(
   entry: RumPerformanceResourceTiming
 ): PerformanceResourceDetails | undefined {
+  const validEntry = toValidEntry(entry)
+
+  if (!validEntry) {
+    return undefined
+  }
   const {
     startTime,
     fetchStart,
+    redirectStart,
+    redirectEnd,
     domainLookupStart,
     domainLookupEnd,
     connectStart,
@@ -100,47 +107,7 @@ export function computePerformanceResourceDetails(
     requestStart,
     responseStart,
     responseEnd,
-  } = entry
-  let { redirectStart, redirectEnd } = entry
-
-  // Ensure timings are in the right order.  On top of filtering out potential invalid
-  // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
-  // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
-  // it.
-  if (
-    !areInOrder(
-      startTime,
-      fetchStart,
-      domainLookupStart,
-      domainLookupEnd,
-      connectStart,
-      connectEnd,
-      requestStart,
-      responseStart,
-      responseEnd
-    )
-  ) {
-    return undefined
-  }
-
-  // The only time fetchStart is different than startTime is if a redirection occurred.
-  const hasRedirectionOccurred = fetchStart !== startTime
-
-  if (hasRedirectionOccurred) {
-    // Firefox doesn't provide redirect timings on cross origin requests.  Provide a default for
-    // those.
-    if (redirectStart < startTime) {
-      redirectStart = startTime
-    }
-    if (redirectEnd < startTime) {
-      redirectEnd = fetchStart
-    }
-
-    // Make sure redirect timings are in order
-    if (!areInOrder(startTime, redirectStart, redirectEnd, fetchStart)) {
-      return undefined
-    }
-  }
+  } = validEntry
 
   const details: PerformanceResourceDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
@@ -162,11 +129,63 @@ export function computePerformanceResourceDetails(
     details.dns = formatTiming(startTime, domainLookupStart, domainLookupEnd)
   }
 
-  if (hasRedirectionOccurred) {
+  if (hasRedirection(entry)) {
     details.redirect = formatTiming(startTime, redirectStart, redirectEnd)
   }
 
   return details
+}
+
+export function toValidEntry(entry: RumPerformanceResourceTiming) {
+  // Ensure timings are in the right order. On top of filtering out potential invalid
+  // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
+  // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
+  // it.
+  if (
+    !areInOrder(
+      entry.startTime,
+      entry.fetchStart,
+      entry.domainLookupStart,
+      entry.domainLookupEnd,
+      entry.connectStart,
+      entry.connectEnd,
+      entry.requestStart,
+      entry.responseStart,
+      entry.responseEnd
+    )
+  ) {
+    return undefined
+  }
+
+  if (!hasRedirection(entry)) {
+    return entry
+  }
+
+  let { redirectStart, redirectEnd } = entry
+  // Firefox doesn't provide redirect timings on cross origin requests.
+  // Provide a default for those.
+  if (redirectStart < entry.startTime) {
+    redirectStart = entry.startTime
+  }
+  if (redirectEnd < entry.startTime) {
+    redirectEnd = entry.fetchStart
+  }
+
+  // Make sure redirect timings are in order
+  if (!areInOrder(entry.startTime, redirectStart, redirectEnd, entry.fetchStart)) {
+    return undefined
+  }
+
+  return {
+    ...entry,
+    redirectEnd,
+    redirectStart,
+  }
+}
+
+function hasRedirection(entry: RumPerformanceResourceTiming) {
+  // The only time fetchStart is different than startTime is if a redirection occurred.
+  return entry.fetchStart !== entry.startTime
 }
 
 function formatTiming(origin: number, start: number, end: number) {
