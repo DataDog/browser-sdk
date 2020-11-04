@@ -325,7 +325,9 @@ describe('rum track loading type', () => {
       .withFakeClock()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      })
   })
 
   afterEach(() => {
@@ -361,7 +363,9 @@ describe('rum track loading time', () => {
       .withFakeClock()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      })
   })
 
   afterEach(() => {
@@ -452,7 +456,9 @@ describe('rum view measures', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withViewCollection()
-      .beforeBuild(({ lifeCycle }) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      })
   })
 
   afterEach(() => {
