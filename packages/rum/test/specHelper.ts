@@ -16,7 +16,6 @@ import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { startInternalContext } from '../src/domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
-import { trackActions } from '../src/domain/rumEventsCollection/action/trackActions'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
 import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
@@ -27,7 +26,6 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
-  withActionCollection: () => TestSetupBuilder
   withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
   withInternalContext: () => TestSetupBuilder
@@ -186,13 +184,6 @@ export function setup(): TestSetupBuilder {
     withInternalContext() {
       buildTasks.push(() => {
         internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts, configuration as Configuration)
-      })
-      return setupBuilder
-    },
-    withActionCollection() {
-      buildTasks.push(() => {
-        const { stop } = trackActions(lifeCycle)
-        cleanupTasks.push(stop)
       })
       return setupBuilder
     },
