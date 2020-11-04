@@ -1,4 +1,4 @@
-import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
+import { combine, Configuration, Context, getTimestamp, msToNs } from '@datadog/browser-core'
 import { RumEventCategory, RumUserActionEvent } from '../../../types'
 import { RumActionEventV2, RumEventType } from '../../../typesV2'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -11,20 +11,22 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
       : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, ({ action, context }) => {
-    configuration.isEnabled('v2_format')
-      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-          savedGlobalContext: context,
-          ...processActionV2(action),
-        })
-      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          savedGlobalContext: context,
-          ...processAction(action),
-        })
-  })
-
   if (configuration.trackInteractions) {
     trackActions(lifeCycle)
+  }
+
+  return {
+    addAction(action: CustomAction, savedGlobalContext?: Context) {
+      configuration.isEnabled('v2_format')
+        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+            savedGlobalContext,
+            ...processActionV2(action),
+          })
+        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            savedGlobalContext,
+            ...processAction(action),
+          })
+    },
   }
 }
 

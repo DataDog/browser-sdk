@@ -1,16 +1,13 @@
-import { Context, RawError } from '@datadog/browser-core'
+import { Context } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent, CustomAction } from './rumEventsCollection/action/trackActions'
-import { ProvidedError } from './rumEventsCollection/error/errorCollection'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
-  ERROR_PROVIDED,
   PERFORMANCE_ENTRY_COLLECTED,
-  CUSTOM_ACTION_COLLECTED,
   AUTO_ACTION_CREATED,
   AUTO_ACTION_COMPLETED,
   AUTO_ACTION_DISCARDED,
@@ -34,12 +31,10 @@ export interface Subscription {
 export class LifeCycle {
   private callbacks: { [key in LifeCycleEventType]?: Array<(data: any) => void> } = {}
 
-  notify(eventType: LifeCycleEventType.ERROR_PROVIDED, data: { error: ProvidedError; context?: Context }): void
   notify(eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, data: RumPerformanceEntry): void
   notify(eventType: LifeCycleEventType.REQUEST_STARTED, data: RequestStartEvent): void
   notify(eventType: LifeCycleEventType.REQUEST_COMPLETED, data: RequestCompleteEvent): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
-  notify(eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED, data: { action: CustomAction; context?: Context }): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
@@ -81,10 +76,6 @@ export class LifeCycle {
   }
 
   subscribe(
-    eventType: LifeCycleEventType.ERROR_PROVIDED,
-    callback: (data: { error: ProvidedError; context?: Context }) => void
-  ): Subscription
-  subscribe(
     eventType: LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     callback: (data: RumPerformanceEntry) => void
   ): Subscription
@@ -97,10 +88,6 @@ export class LifeCycle {
   subscribe(
     eventType: LifeCycleEventType.AUTO_ACTION_CREATED,
     callback: (data: AutoActionCreatedEvent) => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.CUSTOM_ACTION_COLLECTED,
-    callback: (data: { action: CustomAction; context?: Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
