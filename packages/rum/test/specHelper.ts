@@ -11,7 +11,6 @@ import {
 } from '@datadog/browser-core'
 import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
-import { startInternalContext } from '../src/domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
@@ -24,7 +23,6 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
-  withInternalContext: () => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
@@ -41,12 +39,12 @@ interface BuildContext {
   session: RumSession
   location: Location
   applicationId: string
+  parentContexts: ParentContexts
 }
 
 export interface TestIO {
   lifeCycle: LifeCycle
   clock: jasmine.Clock
-  internalContext: ReturnType<typeof startInternalContext>
   fakeLocation: Partial<Location>
   setGlobalContext: (context: Context) => void
   session: RumSession
@@ -92,7 +90,6 @@ export function setup(): TestSetupBuilder {
   let clock: jasmine.Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
-  let internalContext: ReturnType<typeof startInternalContext>
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
@@ -161,12 +158,6 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
-    withInternalContext() {
-      buildTasks.push(() => {
-        internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts, configuration as Configuration)
-      })
-      return setupBuilder
-    },
     withParentContexts(stub: Partial<ParentContexts>) {
       parentContexts = stub as ParentContexts
       return setupBuilder
@@ -188,6 +179,7 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.forEach((task) => {
         const cleanup = task({
           lifeCycle,
+          parentContexts,
           session,
           applicationId: FAKE_APP_ID,
           configuration: configuration as Configuration,
@@ -201,7 +193,6 @@ export function setup(): TestSetupBuilder {
       return {
         clock,
         fakeLocation,
-        internalContext,
         lifeCycle,
         rawRumEvents,
         rawRumEventsV2,

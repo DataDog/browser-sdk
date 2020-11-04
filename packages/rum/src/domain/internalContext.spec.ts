@@ -1,9 +1,11 @@
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
 
 describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
+  let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
     parentContextsStub = {
@@ -23,9 +25,11 @@ describe('internal context', () => {
     }
     setupBuilder = setup()
       .withParentContexts(parentContextsStub)
-      .withInternalContext()
       .withConfiguration({
         isEnabled: () => false,
+      })
+      .beforeBuild(({ applicationId, session, parentContexts, configuration }) => {
+        internalContext = startInternalContext(applicationId, session, parentContexts, configuration)
       })
   })
 
@@ -34,7 +38,7 @@ describe('internal context', () => {
   })
 
   it('should return current internal context', () => {
-    const { internalContext } = setupBuilder.build()
+    setupBuilder.build()
 
     expect(internalContext.get()).toEqual({
       application_id: 'appId',
@@ -51,7 +55,7 @@ describe('internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const { internalContext } = setupBuilder
+    setupBuilder
       .withSession({
         getId: () => '1234',
         isTracked: () => false,
@@ -63,7 +67,7 @@ describe('internal context', () => {
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const { internalContext } = setupBuilder.build()
+    setupBuilder.build()
 
     internalContext.get(123)
 
@@ -75,6 +79,7 @@ describe('internal context', () => {
 describe('internal context v2', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
+  let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
     parentContextsStub = {
@@ -96,7 +101,9 @@ describe('internal context v2', () => {
     }
     setupBuilder = setup()
       .withParentContexts(parentContextsStub)
-      .withInternalContext()
+      .beforeBuild(({ applicationId, session, parentContexts, configuration }) => {
+        internalContext = startInternalContext(applicationId, session, parentContexts, configuration)
+      })
   })
 
   afterEach(() => {
@@ -104,7 +111,7 @@ describe('internal context v2', () => {
   })
 
   it('should return current internal context', () => {
-    const { internalContext } = setupBuilder.build()
+    setupBuilder.build()
 
     expect(internalContext.get()).toEqual({
       action: {
@@ -125,7 +132,7 @@ describe('internal context v2', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const { internalContext } = setupBuilder
+    setupBuilder
       .withSession({
         getId: () => '1234',
         isTracked: () => false,
@@ -137,7 +144,7 @@ describe('internal context v2', () => {
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const { internalContext } = setupBuilder.build()
+    setupBuilder.build()
 
     internalContext.get(123)
 
