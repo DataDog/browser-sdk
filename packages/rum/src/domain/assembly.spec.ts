@@ -2,6 +2,7 @@ import { Context } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventCategory } from '../index'
 import { RawRumEvent } from '../types'
+import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 interface ServerRumEvents {
@@ -27,7 +28,7 @@ interface ServerRumEvents {
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
-  let setGlobalContext: (context: Context) => void
+  let globalContext: Context
   let serverRumEvents: ServerRumEvents[]
   let isTracked: boolean
   let viewSessionId: string | undefined
@@ -71,8 +72,10 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .withAssembly()
-    ;({ lifeCycle, setGlobalContext } = setupBuilder.build())
+      .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
+        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => globalContext)
+      })
+    ;({ lifeCycle } = setupBuilder.build())
 
     serverRumEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
@@ -115,15 +118,14 @@ describe('rum assembly', () => {
 
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
-      setGlobalContext({ bar: 'foo' })
+      globalContext = { bar: 'foo' }
       generateRawRumEvent(RumEventCategory.VIEW)
 
       expect((serverRumEvents[0] as any).bar).toEqual('foo')
     })
 
     it('should ignore subsequent context mutation', () => {
-      const globalContext = { bar: 'foo' }
-      setGlobalContext(globalContext)
+      globalContext = { bar: 'foo' }
       generateRawRumEvent(RumEventCategory.VIEW)
       delete globalContext.bar
       generateRawRumEvent(RumEventCategory.VIEW)
@@ -133,14 +135,14 @@ describe('rum assembly', () => {
     })
 
     it('should not be automatically snake cased', () => {
-      setGlobalContext({ fooBar: 'foo' })
+      globalContext = { fooBar: 'foo' }
       generateRawRumEvent(RumEventCategory.VIEW)
 
       expect(((serverRumEvents[0] as any) as any).fooBar).toEqual('foo')
     })
 
     it('should ignore the current global context when a saved global context is provided', () => {
-      setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
+      globalContext = { replacedContext: 'b', addedContext: 'x' }
 
       generateRawRumEvent(RumEventCategory.VIEW, undefined, { replacedContext: 'a' })
 

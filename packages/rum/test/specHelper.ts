@@ -9,8 +9,6 @@ import {
   SPEC_ENDPOINTS,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
-import { startRumAssembly } from '../src/domain/assembly'
-import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
@@ -23,8 +21,6 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
-  withAssembly: () => TestSetupBuilder
-  withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
@@ -46,7 +42,6 @@ export interface TestIO {
   lifeCycle: LifeCycle
   clock: jasmine.Clock
   fakeLocation: Partial<Location>
-  setGlobalContext: (context: Context) => void
   session: RumSession
   rawRumEvents: Array<{
     startTime: number
@@ -72,7 +67,6 @@ export function setup(): TestSetupBuilder {
   const cleanupTasks: Array<() => void> = []
   let cleanupClock = noop
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const buildTasks: Array<() => void> = []
   const rawRumEvents: Array<{
     startTime: number
     rawRumEvent: RawRumEvent
@@ -86,7 +80,6 @@ export function setup(): TestSetupBuilder {
     customerContext?: Context
   }> = []
 
-  let globalContext: Context
   let clock: jasmine.Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
@@ -132,32 +125,6 @@ export function setup(): TestSetupBuilder {
       assign(configuration, overrides)
       return setupBuilder
     },
-    withAssembly() {
-      buildTasks.push(() => {
-        startRumAssembly(
-          FAKE_APP_ID,
-          configuration as Configuration,
-          lifeCycle,
-          session,
-          parentContexts,
-          () => globalContext
-        )
-      })
-      return setupBuilder
-    },
-    withAssemblyV2() {
-      buildTasks.push(() => {
-        startRumAssemblyV2(
-          FAKE_APP_ID,
-          configuration as Configuration,
-          lifeCycle,
-          session,
-          parentContexts,
-          () => globalContext
-        )
-      })
-      return setupBuilder
-    },
     withParentContexts(stub: Partial<ParentContexts>) {
       parentContexts = stub as ParentContexts
       return setupBuilder
@@ -189,7 +156,6 @@ export function setup(): TestSetupBuilder {
           cleanupTasks.push(cleanup)
         }
       })
-      buildTasks.forEach((task) => task())
       return {
         clock,
         fakeLocation,
@@ -197,9 +163,6 @@ export function setup(): TestSetupBuilder {
         rawRumEvents,
         rawRumEventsV2,
         session,
-        setGlobalContext(context: Context) {
-          globalContext = context
-        },
       }
     },
     cleanup() {

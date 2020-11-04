@@ -2,6 +2,7 @@ import { Context } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/createRawRumEvent'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventType } from '../typesV2'
+import { startRumAssemblyV2 } from './assemblyV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 interface ServerRumEvents {
@@ -33,7 +34,7 @@ interface ServerRumEvents {
 describe('rum assembly v2', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
-  let setGlobalContext: (context: Context) => void
+  let globalContext: Context
   let serverRumEvents: ServerRumEvents[]
   let isTracked: boolean
   let viewSessionId: string | undefined
@@ -64,8 +65,10 @@ describe('rum assembly v2', () => {
           },
         }),
       })
-      .withAssemblyV2()
-    ;({ lifeCycle, setGlobalContext } = setupBuilder.build())
+      .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
+        startRumAssemblyV2(applicationId, configuration, localLifeCycle, session, parentContexts, () => globalContext)
+      })
+    ;({ lifeCycle } = setupBuilder.build())
 
     serverRumEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, ({ serverRumEvent }) =>
@@ -120,7 +123,7 @@ describe('rum assembly v2', () => {
 
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
-      setGlobalContext({ bar: 'foo' })
+      globalContext = { bar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -130,8 +133,7 @@ describe('rum assembly v2', () => {
     })
 
     it('should ignore subsequent context mutation', () => {
-      const globalContext = { bar: 'foo' }
-      setGlobalContext(globalContext)
+      globalContext = { bar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -147,7 +149,7 @@ describe('rum assembly v2', () => {
     })
 
     it('should not be automatically snake cased', () => {
-      setGlobalContext({ fooBar: 'foo' })
+      globalContext = { fooBar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -157,7 +159,7 @@ describe('rum assembly v2', () => {
     })
 
     it('should ignore the current global context when a saved global context is provided', () => {
-      setGlobalContext({ replacedContext: 'b', addedContext: 'x' })
+      globalContext = { replacedContext: 'b', addedContext: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
