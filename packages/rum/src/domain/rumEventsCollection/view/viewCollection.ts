@@ -11,7 +11,7 @@ export function startViewCollection(lifeCycle: LifeCycle, configuration: Configu
       : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   })
 
-  trackViews(location, lifeCycle)
+  return trackViews(location, lifeCycle)
 }
 
 function processViewUpdate(view: View) {

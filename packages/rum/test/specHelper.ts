@@ -10,7 +10,6 @@ import {
   SPEC_ENDPOINTS,
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
-import sinon from 'sinon'
 import { startRumEventCollection } from '../src/boot/rum'
 import { startPerformanceCollection } from '../src/browser/performanceCollection'
 import { startRumAssembly } from '../src/domain/assembly'
@@ -41,7 +40,6 @@ export interface TestSetupBuilder {
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
-  withFakeServer: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
   beforeBuild: (
     callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void
@@ -53,7 +51,6 @@ export interface TestSetupBuilder {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  server: sinon.SinonFakeServer
   stubBuilder: PerformanceObserverStubBuilder
   clock: jasmine.Clock
   parentContexts: ParentContexts
@@ -100,7 +97,6 @@ export function setup(): TestSetupBuilder {
   }> = []
 
   let globalContext: Context
-  let server: sinon.SinonFakeServer
   let clock: jasmine.Clock
   let stubBuilder: PerformanceObserverStubBuilder
   let fakeLocation: Partial<Location> = location
@@ -110,7 +106,6 @@ export function setup(): TestSetupBuilder {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
     isEnabled: () => true,
-    maxBatchSize: 1,
   }
   const FAKE_APP_ID = 'appId'
 
@@ -233,11 +228,6 @@ export function setup(): TestSetupBuilder {
       cleanupClock = () => jasmine.clock().uninstall()
       return setupBuilder
     },
-    withFakeServer() {
-      server = sinon.fakeServer.create()
-      cleanupTasks.push(() => server.restore())
-      return setupBuilder
-    },
     withPerformanceObserverStubBuilder() {
       const browserWindow = window as BrowserWindow
       const original = browserWindow.PerformanceObserver
@@ -261,7 +251,6 @@ export function setup(): TestSetupBuilder {
         parentContexts,
         rawRumEvents,
         rawRumEventsV2,
-        server,
         session,
         stubBuilder,
         setGlobalContext(context: Context) {
