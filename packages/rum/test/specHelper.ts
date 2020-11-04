@@ -10,7 +10,6 @@ import {
   withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { startRumEventCollection } from '../src/boot/rum'
-import { startPerformanceCollection } from '../src/browser/performanceCollection'
 import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { startInternalContext } from '../src/domain/internalContext'
@@ -26,7 +25,6 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
-  withPerformanceCollection: () => TestSetupBuilder
   withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
   withInternalContext: () => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
@@ -185,10 +183,6 @@ export function setup(): TestSetupBuilder {
       buildTasks.push(() => {
         internalContext = startInternalContext(FAKE_APP_ID, session, parentContexts, configuration as Configuration)
       })
-      return setupBuilder
-    },
-    withPerformanceCollection() {
-      buildTasks.push(() => startPerformanceCollection(lifeCycle, configuration as Configuration))
       return setupBuilder
     },
     withParentContexts(stub?: Partial<ParentContexts>) {

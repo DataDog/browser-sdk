@@ -1,7 +1,7 @@
 import { isIE, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { retrieveInitialDocumentResourceTiming } from './performanceCollection'
+import { retrieveInitialDocumentResourceTiming, startPerformanceCollection } from './performanceCollection'
 
 describe('rum first_contentful_paint', () => {
   let setupBuilder: TestSetupBuilder
@@ -13,7 +13,9 @@ describe('rum first_contentful_paint', () => {
     }
 
     performanceObserverObserveSpy = spyOn(PerformanceObserver.prototype, 'observe')
-    setupBuilder = setup().withPerformanceCollection()
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      startPerformanceCollection(lifeCycle, configuration)
+    })
   })
 
   afterEach(() => {
@@ -39,7 +41,9 @@ describe('rum first_contentful_paint', () => {
 describe('rum initial document resource', () => {
   let setupBuilder: TestSetupBuilder
   beforeEach(() => {
-    setupBuilder = setup().withPerformanceCollection()
+    setupBuilder = setup().beforeBuild(({ lifeCycle, configuration }) => {
+      startPerformanceCollection(lifeCycle, configuration)
+    })
   })
 
   afterEach(() => {
