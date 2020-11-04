@@ -15,6 +15,10 @@ describe('long task collection', () => {
     })
   })
 
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
   it('should only listen to long task performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     ;[
@@ -55,6 +59,10 @@ describe('long task collection v2', () => {
       configuration.isEnabled = () => true
       startLongTaskCollection(lifeCycle, configuration)
     })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('should only listen to long task performance entry', () => {

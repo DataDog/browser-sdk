@@ -12,7 +12,7 @@ export function validateFormat(rumEvent: Context) {
   const instance = new ajv({
     allErrors: true,
   })
-  const valid = instance
+  instance
     .addSchema(_commonSchemaJson, 'schemas/_common-schema.json')
     .addSchema(viewSchemaJson, 'schemas/view-schema.json')
     .addSchema(actionSchemaJson, 'schemas/action-schema.json')
@@ -20,10 +20,9 @@ export function validateFormat(rumEvent: Context) {
     .addSchema(long_taskSchemaJson, 'schemas/long_task-schema.json')
     .addSchema(errorSchemaJson, 'schemas/error-schema.json')
     .addSchema(rumEventsFormatJson, 'rum-events-format.json')
-    .validate('schemas/_common-schema.json', rumEvent)
+    .validate('rum-events-format.json', rumEvent)
 
-  expect(valid).toBe(true, 'invalid rum event')
   if (instance.errors) {
-    instance.errors.map((error) => expect(error.message).toBeUndefined())
+    instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message}`))
   }
 }
