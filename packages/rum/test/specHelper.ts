@@ -14,7 +14,7 @@ import { startRumAssembly } from '../src/domain/assembly'
 import { startRumAssemblyV2 } from '../src/domain/assemblyV2'
 import { startInternalContext } from '../src/domain/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
-import { ParentContexts, startParentContexts } from '../src/domain/parentContexts'
+import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
 import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
@@ -25,7 +25,7 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
-  withParentContexts: (stub?: Partial<ParentContexts>) => TestSetupBuilder
+  withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
   withInternalContext: () => TestSetupBuilder
   withAssembly: () => TestSetupBuilder
   withAssemblyV2: () => TestSetupBuilder
@@ -47,7 +47,6 @@ interface BuildContext {
 export interface TestIO {
   lifeCycle: LifeCycle
   clock: jasmine.Clock
-  parentContexts: ParentContexts
   internalContext: ReturnType<typeof startInternalContext>
   fakeLocation: Partial<Location>
   setGlobalContext: (context: Context) => void
@@ -185,17 +184,8 @@ export function setup(): TestSetupBuilder {
       })
       return setupBuilder
     },
-    withParentContexts(stub?: Partial<ParentContexts>) {
-      if (stub) {
-        parentContexts = stub as ParentContexts
-        return setupBuilder
-      }
-      buildTasks.push(() => {
-        parentContexts = startParentContexts(lifeCycle, session)
-        cleanupTasks.push(() => {
-          parentContexts.stop()
-        })
-      })
+    withParentContexts(stub: Partial<ParentContexts>) {
+      parentContexts = stub as ParentContexts
       return setupBuilder
     },
     withFakeClock() {
@@ -229,7 +219,6 @@ export function setup(): TestSetupBuilder {
         fakeLocation,
         internalContext,
         lifeCycle,
-        parentContexts,
         rawRumEvents,
         rawRumEventsV2,
         session,

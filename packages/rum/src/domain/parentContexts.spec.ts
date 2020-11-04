@@ -3,6 +3,8 @@ import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
   CLEAR_OLD_CONTEXTS_INTERVAL,
+  ParentContexts,
+  startParentContexts,
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
@@ -23,6 +25,7 @@ describe('parentContexts', () => {
 
   let sessionId: string
   let setupBuilder: TestSetupBuilder
+  let parentContexts: ParentContexts
 
   beforeEach(() => {
     sessionId = 'fake-session'
@@ -33,7 +36,10 @@ describe('parentContexts', () => {
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })
-      .withParentContexts()
+      .beforeBuild(({ lifeCycle, session }) => {
+        parentContexts = startParentContexts(lifeCycle, session)
+        return parentContexts.stop
+      })
   })
 
   afterEach(() => {
@@ -42,13 +48,13 @@ describe('parentContexts', () => {
 
   describe('findView', () => {
     it('should return undefined when there is no current view and no startTime', () => {
-      const { parentContexts } = setupBuilder.build()
+      setupBuilder.build()
 
       expect(parentContexts.findView()).toBeUndefined()
     })
 
     it('should return the current view context when there is no start time', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
 
@@ -57,7 +63,7 @@ describe('parentContexts', () => {
     })
 
     it('should return the view context corresponding to startTime', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
@@ -69,7 +75,7 @@ describe('parentContexts', () => {
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
@@ -78,7 +84,7 @@ describe('parentContexts', () => {
     })
 
     it('should replace the current view context on VIEW_CREATED', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
       const newViewId = 'fake 2'
@@ -88,7 +94,7 @@ describe('parentContexts', () => {
     })
 
     it('should return the current url with the current view', () => {
-      const { lifeCycle, parentContexts, fakeLocation } = setupBuilder.build()
+      const { lifeCycle, fakeLocation } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
@@ -99,7 +105,7 @@ describe('parentContexts', () => {
     })
 
     it('should update session id only on VIEW_CREATED', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
       expect(parentContexts.findView()!.sessionId).toBe('fake-session')
@@ -114,13 +120,13 @@ describe('parentContexts', () => {
 
   describe('findAction', () => {
     it('should return undefined when there is no current action and no startTime', () => {
-      const { parentContexts } = setupBuilder.build()
+      setupBuilder.build()
 
       expect(parentContexts.findAction()).toBeUndefined()
     })
 
     it('should return the current action context when no startTime', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
 
@@ -129,7 +135,7 @@ describe('parentContexts', () => {
     })
 
     it('should return the action context corresponding to startTime', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
@@ -146,7 +152,7 @@ describe('parentContexts', () => {
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
@@ -157,7 +163,7 @@ describe('parentContexts', () => {
     })
 
     it('should clear the current action on ACTION_DISCARDED', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
@@ -166,7 +172,7 @@ describe('parentContexts', () => {
     })
 
     it('should clear the current action on ACTION_COMPLETED', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
@@ -177,7 +183,7 @@ describe('parentContexts', () => {
 
   describe('history contexts', () => {
     it('should be cleared on SESSION_RENEWED', () => {
-      const { lifeCycle, parentContexts } = setupBuilder.build()
+      const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
@@ -211,7 +217,7 @@ describe('parentContexts', () => {
     })
 
     it('should be cleared when too old', () => {
-      const { lifeCycle, parentContexts, clock } = setupBuilder.withFakeClock().build()
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       const originalTime = performance.now()
       const targetTime = originalTime + 5
