@@ -62,8 +62,8 @@ describe('rum session', () => {
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })
-      .beforeBuild((_, configuration) => {
-        configuration.isEnabled = () => false
+      .withConfiguration({
+        isEnabled: () => false,
       })
       .build()
 
@@ -137,8 +137,8 @@ describe('rum session keep alive', () => {
 
   it('should send a view update regularly (v1)', () => {
     const { clock } = setupBuilder
-      .beforeBuild((_, configuration) => {
-        configuration.isEnabled = () => false
+      .withConfiguration({
+        isEnabled: () => false,
       })
       .build()
 

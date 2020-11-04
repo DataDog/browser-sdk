@@ -9,10 +9,13 @@ describe('actionCollection', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      startActionCollection(lifeCycle, configuration)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        startActionCollection(lifeCycle, configuration)
+      })
   })
 
   afterEach(() => {
@@ -81,10 +84,13 @@ describe('actionCollection v2', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      startActionCollection(lifeCycle, configuration)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        startActionCollection(lifeCycle, configuration)
+      })
   })
 
   afterEach(() => {

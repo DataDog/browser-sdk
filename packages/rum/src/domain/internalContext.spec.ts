@@ -24,8 +24,8 @@ describe('internal context', () => {
     setupBuilder = setup()
       .withParentContexts(parentContextsStub)
       .withInternalContext()
-      .beforeBuild((_, configuration) => {
-        configuration.isEnabled = () => false
+      .withConfiguration({
+        isEnabled: () => false,
       })
   })
 

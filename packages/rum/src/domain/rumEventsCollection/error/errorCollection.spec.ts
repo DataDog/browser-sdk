@@ -10,10 +10,13 @@ describe('error collection', () => {
   const errorObservable = new Observable<RawError>()
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      doStartErrorCollection(lifeCycle, configuration, errorObservable)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        doStartErrorCollection(lifeCycle, configuration, errorObservable)
+      })
   })
 
   afterEach(() => {
@@ -125,10 +128,13 @@ describe('error collection v2', () => {
   const errorObservable = new Observable<RawError>()
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      doStartErrorCollection(lifeCycle, configuration, errorObservable)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        doStartErrorCollection(lifeCycle, configuration, errorObservable)
+      })
   })
 
   afterEach(() => {

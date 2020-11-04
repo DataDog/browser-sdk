@@ -9,10 +9,13 @@ describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      startLongTaskCollection(lifeCycle, configuration)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        startLongTaskCollection(lifeCycle, configuration)
+      })
   })
 
   afterEach(() => {
@@ -55,10 +58,13 @@ describe('long task collection v2', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      startLongTaskCollection(lifeCycle, configuration)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild((lifeCycle, configuration) => {
+        startLongTaskCollection(lifeCycle, configuration)
+      })
   })
 
   afterEach(() => {

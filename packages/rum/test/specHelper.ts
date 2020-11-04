@@ -31,6 +31,7 @@ interface BrowserWindow extends Window {
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
   withSession: (session: RumSession) => TestSetupBuilder
+  withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withRum: () => TestSetupBuilder
   withViewCollection: () => TestSetupBuilder
   withActionCollection: () => TestSetupBuilder
@@ -42,7 +43,7 @@ export interface TestSetupBuilder {
   withFakeClock: () => TestSetupBuilder
   withPerformanceObserverStubBuilder: () => TestSetupBuilder
   beforeBuild: (
-    callback: (lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) => void
+    callback: (lifeCycle: LifeCycle, configuration: Readonly<Configuration>, session: RumSession) => void
   ) => TestSetupBuilder
 
   cleanup: () => void
@@ -138,6 +139,10 @@ export function setup(): TestSetupBuilder {
     },
     withSession(sessionStub: RumSession) {
       session = sessionStub
+      return setupBuilder
+    },
+    withConfiguration(overrides: Partial<Configuration>) {
+      assign(configuration, overrides)
       return setupBuilder
     },
     withRum() {
