@@ -100,47 +100,6 @@ export interface FetchStubPromise extends Promise<Response> {
   rejectWith: (error: Error) => Promise<Error>
 }
 
-export class PerformanceObserverStubBuilder {
-  public instance: any
-
-  getEntryTypes() {
-    // tslint:disable-next-line: no-unsafe-any
-    return this.instance.entryTypes
-  }
-
-  fakeEntry(entry: PerformanceEntry, entryType: string) {
-    const asEntryList = () => [entry]
-    // tslint:disable-next-line: no-unsafe-any
-    this.instance.callback({
-      getEntries: asEntryList,
-      getEntriesByName: asEntryList,
-      getEntriesByType: (type: string) => {
-        if (type === entryType) {
-          return asEntryList()
-        }
-        return []
-      },
-    })
-  }
-
-  getStub(): PerformanceObserver {
-    // tslint:disable-next-line:no-this-assignment
-    const builder = this
-    return (class {
-      static supportedEntryTypes = ['navigation']
-      constructor(public callback: PerformanceObserverCallback) {
-        builder.instance = this
-      }
-      observe(options?: PerformanceObserverInit) {
-        if (options) {
-          // tslint:disable-next-line: no-unsafe-any
-          builder.instance.entryTypes = options.entryTypes
-        }
-      }
-    } as unknown) as PerformanceObserver
-  }
-}
-
 class StubXhr {
   public response: string | undefined = undefined
   public status: number | undefined = undefined

@@ -10,10 +10,13 @@ describe('error collection', () => {
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      ;({ addError } = doStartErrorCollection(lifeCycle, configuration, errorObservable))
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, configuration, errorObservable))
+      })
   })
 
   afterEach(() => {
@@ -122,10 +125,13 @@ describe('error collection v2', () => {
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      ;({ addError } = doStartErrorCollection(lifeCycle, configuration, errorObservable))
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, configuration, errorObservable))
+      })
   })
 
   afterEach(() => {

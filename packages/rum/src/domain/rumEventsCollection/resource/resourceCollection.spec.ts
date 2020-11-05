@@ -20,8 +20,10 @@ describe('resourceCollection', () => {
           isTracked: () => true,
           isTrackedWithResource: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => false
+        .withConfiguration({
+          isEnabled: () => false,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -102,8 +104,10 @@ describe('resourceCollection', () => {
           isTracked: () => true,
           isTrackedWithResource: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => false
+        .withConfiguration({
+          isEnabled: () => false,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -137,8 +141,10 @@ describe('resourceCollection', () => {
           isTracked: () => true,
           isTrackedWithResource: () => isTrackedWithResource,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => false
+        .withConfiguration({
+          isEnabled: () => false,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -180,10 +186,13 @@ describe('resourceCollection', () => {
 
   describe('tracing info', () => {
     beforeEach(() => {
-      setupBuilder = setup().beforeBuild((lifeCycle, configuration, session: RumSession) => {
-        configuration.isEnabled = () => false
-        startResourceCollection(lifeCycle, configuration, session)
-      })
+      setupBuilder = setup()
+        .withConfiguration({
+          isEnabled: () => false,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
+          startResourceCollection(lifeCycle, configuration, session)
+        })
     })
 
     afterEach(() => {
@@ -233,8 +242,10 @@ describe('resourceCollection V2', () => {
           isTracked: () => true,
           isTrackedWithResource: () => true,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => true
+        .withConfiguration({
+          isEnabled: () => true,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -304,8 +315,10 @@ describe('resourceCollection V2', () => {
           isTracked: () => true,
           isTrackedWithResource: () => false,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => true
+        .withConfiguration({
+          isEnabled: () => true,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -339,8 +352,10 @@ describe('resourceCollection V2', () => {
           isTracked: () => true,
           isTrackedWithResource: () => isTrackedWithResource,
         })
-        .beforeBuild((lifeCycle, configuration, session: RumSession) => {
-          configuration.isEnabled = () => true
+        .withConfiguration({
+          isEnabled: () => true,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
           startResourceCollection(lifeCycle, configuration, session)
         })
     })
@@ -382,10 +397,13 @@ describe('resourceCollection V2', () => {
 
   describe('tracing info', () => {
     beforeEach(() => {
-      setupBuilder = setup().beforeBuild((lifeCycle, configuration, session: RumSession) => {
-        configuration.isEnabled = () => true
-        startResourceCollection(lifeCycle, configuration, session)
-      })
+      setupBuilder = setup()
+        .withConfiguration({
+          isEnabled: () => true,
+        })
+        .beforeBuild(({ lifeCycle, configuration, session }) => {
+          startResourceCollection(lifeCycle, configuration, session)
+        })
     })
 
     afterEach(() => {

@@ -5,7 +5,7 @@ import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumEventType } from '../../../typesV2'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
-import { ActionType, AutoAction } from './trackActions'
+import { ActionType, AutoAction, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -60,11 +60,11 @@ describe('trackActions', () => {
 
     setupBuilder = setup()
       .withFakeClock()
-      .withActionCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
+        return trackActions(lifeCycle)
       })
   })
 
@@ -149,7 +149,9 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .withActionCollection()
+      .beforeBuild(({ lifeCycle }) => {
+        return trackActions(lifeCycle)
+      })
   })
 
   afterEach(() => {

@@ -10,7 +10,7 @@ import {
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { THROTTLE_VIEW_UPDATE_PERIOD, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -73,12 +73,12 @@ describe('rum track url change', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ location, lifeCycle }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
+        return trackViews(location, lifeCycle)
       })
     createSpy = jasmine.createSpy('create')
   })
@@ -211,12 +211,12 @@ describe('rum view referrer', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ location, lifeCycle }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
           initialViewCreatedEvent = event
           subscription.unsubscribe()
         })
+        return trackViews(location, lifeCycle)
       })
     createSpy = jasmine.createSpy('create')
   })
@@ -277,13 +277,13 @@ describe('rum track renew session', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => {
+      .beforeBuild(({ lifeCycle, location }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
+        return trackViews(location, lifeCycle)
       })
   })
 
@@ -324,8 +324,10 @@ describe('rum track loading type', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
   })
 
   afterEach(() => {
@@ -360,8 +362,10 @@ describe('rum track loading time', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
   })
 
   afterEach(() => {
@@ -451,8 +455,10 @@ describe('rum view measures', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .withViewCollection()
-      .beforeBuild((lifeCycle) => lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler))
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
   })
 
   afterEach(() => {

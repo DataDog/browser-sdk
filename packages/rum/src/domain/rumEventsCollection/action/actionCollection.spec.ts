@@ -10,10 +10,13 @@ describe('actionCollection', () => {
   let addAction: ReturnType<typeof startActionCollection>['addAction']
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      ;({ addAction } = startActionCollection(lifeCycle, configuration))
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, configuration))
+      })
   })
 
   afterEach(() => {
@@ -81,10 +84,13 @@ describe('actionCollection v2', () => {
   let addAction: ReturnType<typeof startActionCollection>['addAction']
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      ;({ addAction } = startActionCollection(lifeCycle, configuration))
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, configuration))
+      })
   })
 
   afterEach(() => {

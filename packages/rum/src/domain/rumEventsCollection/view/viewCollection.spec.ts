@@ -9,10 +9,13 @@ describe('viewCollection', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => false
-      startViewCollection(lifeCycle, configuration, location)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => false,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        startViewCollection(lifeCycle, configuration, location)
+      })
   })
 
   afterEach(() => {
@@ -79,10 +82,13 @@ describe('viewCollection V2', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
-      configuration.isEnabled = () => true
-      startViewCollection(lifeCycle, configuration, location)
-    })
+    setupBuilder = setup()
+      .withConfiguration({
+        isEnabled: () => true,
+      })
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        startViewCollection(lifeCycle, configuration, location)
+      })
   })
 
   afterEach(() => {
