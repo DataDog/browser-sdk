@@ -7,11 +7,12 @@ import { ActionType } from './trackActions'
 
 describe('actionCollection', () => {
   let setupBuilder: TestSetupBuilder
+  let addAction: ReturnType<typeof startActionCollection>['addAction']
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
       configuration.isEnabled = () => false
-      startActionCollection(lifeCycle, configuration)
+      ;({ addAction } = startActionCollection(lifeCycle, configuration))
     })
   })
 
@@ -54,13 +55,11 @@ describe('actionCollection', () => {
   })
 
   it('should create action from custom action', () => {
-    const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      action: {
-        name: 'foo',
-        startTime: 1234,
-        type: ActionType.CUSTOM,
-      },
+    const { rawRumEvents } = setupBuilder.build()
+    addAction({
+      name: 'foo',
+      startTime: 1234,
+      type: ActionType.CUSTOM,
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234)
@@ -79,11 +78,12 @@ describe('actionCollection', () => {
 
 describe('actionCollection v2', () => {
   let setupBuilder: TestSetupBuilder
+  let addAction: ReturnType<typeof startActionCollection>['addAction']
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild((lifeCycle, configuration) => {
       configuration.isEnabled = () => true
-      startActionCollection(lifeCycle, configuration)
+      ;({ addAction } = startActionCollection(lifeCycle, configuration))
     })
   })
 
@@ -130,13 +130,11 @@ describe('actionCollection v2', () => {
   })
 
   it('should create action from custom action', () => {
-    const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.CUSTOM_ACTION_COLLECTED, {
-      action: {
-        name: 'foo',
-        startTime: 1234,
-        type: ActionType.CUSTOM,
-      },
+    const { rawRumEventsV2 } = setupBuilder.build()
+    addAction({
+      name: 'foo',
+      startTime: 1234,
+      type: ActionType.CUSTOM,
     })
 
     expect(rawRumEventsV2[0].startTime).toBe(1234)

@@ -22,7 +22,7 @@ export interface ProvidedError {
 }
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
+  return doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
 }
 
 export function doStartErrorCollection(
@@ -30,9 +30,14 @@ export function doStartErrorCollection(
   configuration: Configuration,
   observable: Observable<RawError>
 ) {
-  lifeCycle.subscribe(
-    LifeCycleEventType.ERROR_PROVIDED,
-    ({ error: { error, startTime, context: customerContext, source }, context: savedGlobalContext }) => {
+  observable.subscribe((error) => {
+    configuration.isEnabled('v2_format')
+      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
+      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
+  })
+
+  return {
+    addError({ error, startTime, context: customerContext, source }: ProvidedError, savedGlobalContext?: Context) {
       const rawError = computeRawError(error, startTime, source)
 
       configuration.isEnabled('v2_format')
@@ -46,14 +51,8 @@ export function doStartErrorCollection(
             savedGlobalContext,
             ...processError(rawError),
           })
-    }
-  )
-
-  observable.subscribe((error) => {
-    configuration.isEnabled('v2_format')
-      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
-      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
-  })
+    },
+  }
 }
 
 function computeRawError(error: unknown, startTime: number, source: ErrorSource): RawError {
