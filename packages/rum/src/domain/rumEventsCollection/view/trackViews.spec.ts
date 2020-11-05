@@ -1,4 +1,4 @@
-import { createRawRumEvent } from '../../../../test/createRawRumEvent'
+import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
 

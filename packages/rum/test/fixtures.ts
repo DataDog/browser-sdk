@@ -1,4 +1,5 @@
 import { combine, Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
 import { ActionType } from '../src/domain/rumEventsCollection/action/trackActions'
 import { ViewLoadingType } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RawRumEventV2, RumEventType } from '../src/typesV2'
@@ -75,4 +76,30 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         overrides
       )
   }
+}
+
+export function createResourceEntry(
+  overrides?: Partial<RumPerformanceResourceTiming>
+): RumPerformanceResourceTiming & PerformanceResourceTiming {
+  const entry: Partial<RumPerformanceResourceTiming & PerformanceResourceTiming> = {
+    connectEnd: 200,
+    connectStart: 200,
+    decodedBodySize: 200,
+    domainLookupEnd: 200,
+    domainLookupStart: 200,
+    duration: 100,
+    entryType: 'resource',
+    fetchStart: 200,
+    name: 'https://resource.com/valid',
+    redirectEnd: 200,
+    redirectStart: 200,
+    requestStart: 200,
+    responseEnd: 300,
+    responseStart: 200,
+    secureConnectionStart: 200,
+    startTime: 200,
+    ...overrides,
+  }
+  entry.toJSON = () => entry
+  return entry as RumPerformanceResourceTiming & PerformanceResourceTiming
 }

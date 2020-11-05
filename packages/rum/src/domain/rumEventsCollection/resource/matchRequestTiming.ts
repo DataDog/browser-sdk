@@ -1,5 +1,6 @@
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
+import { toValidEntry } from './resourceUtils'
 
 interface Timing {
   startTime: number
@@ -14,6 +15,7 @@ interface Timing {
  * - Browsers generate a timing entry for OPTIONS request
  *
  * Strategy:
+ * - from valid nested entries
  * - if a single timing match, return the timing
  * - if two following timings match (OPTIONS request), return the timing for the actual request
  * - otherwise we can't decide, return undefined
@@ -22,11 +24,11 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
-  const candidates = (performance
+  const candidates = performance
     .getEntriesByName(request.url, 'resource')
-    .filter((entry) =>
-      isBetween(entry, request.startTime, endTime(request))
-    ) as unknown) as RumPerformanceResourceTiming[]
+    .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
+    .filter(toValidEntry)
+    .filter((entry) => isBetween(entry, request.startTime, endTime(request)))
 
   if (candidates.length === 1) {
     return candidates[0]
