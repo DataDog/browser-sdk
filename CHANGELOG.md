@@ -14,6 +14,14 @@
 
 ---
 
+## v1.25.2
+
+- [RUMF-766] prevent request duration override by wrong matching timing ([#604](https://github.com/DataDog/browser-sdk/pull/604))
+- ♻️ [RUMF-748] cleanup add user add action events ([#602](https://github.com/DataDog/browser-sdk/pull/602))
+- 🐛 Fix unit test format validation ([#598](https://github.com/DataDog/browser-sdk/pull/598))
+- [RUMF-748] use RAW_RUM_EVENT_COLLECTED to compute event counts ([#596](https://github.com/DataDog/browser-sdk/pull/596))
+- [RUMF-729] validate rum events in e2e ([#597](https://github.com/DataDog/browser-sdk/pull/597))
+
 ## v1.25.1
 
 - [RUMF-756] cyclic reference support in Context ([#595](https://github.com/DataDog/browser-sdk/pull/595))
