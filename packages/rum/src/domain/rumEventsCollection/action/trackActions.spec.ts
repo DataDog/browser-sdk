@@ -1,5 +1,5 @@
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createRawRumEvent } from '../../../../test/createRawRumEvent'
+import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumErrorEvent, RumEventCategory } from '../../../types'
 import { RumEventType } from '../../../typesV2'

@@ -1,5 +1,5 @@
 import { Context } from '@datadog/browser-core'
-import { createRawRumEvent } from '../../test/createRawRumEvent'
+import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventType } from '../typesV2'
 import { startRumAssemblyV2 } from './assemblyV2'
