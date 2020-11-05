@@ -64,8 +64,7 @@ describe('trackActions', () => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
-        const { stop } = trackActions(lifeCycle)
-        return stop
+        return trackActions(lifeCycle)
       })
   })
 
@@ -151,8 +150,7 @@ describe('newAction', () => {
     setupBuilder = setup()
       .withFakeClock()
       .beforeBuild(({ lifeCycle }) => {
-        const { stop } = trackActions(lifeCycle)
-        return stop
+        return trackActions(lifeCycle)
       })
   })
 

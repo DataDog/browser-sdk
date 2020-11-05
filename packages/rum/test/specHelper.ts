@@ -28,7 +28,7 @@ export interface TestSetupBuilder {
   build: () => TestIO
 }
 
-type BeforeBuildCallback = (buildContext: BuildContext) => void | (() => void)
+type BeforeBuildCallback = (buildContext: BuildContext) => void | ({ stop?(): void })
 interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>
@@ -144,7 +144,7 @@ export function setup(): TestSetupBuilder {
     },
     build() {
       beforeBuildTasks.forEach((task) => {
-        const cleanup = task({
+        const result = task({
           lifeCycle,
           parentContexts,
           session,
@@ -152,8 +152,8 @@ export function setup(): TestSetupBuilder {
           configuration: configuration as Configuration,
           location: fakeLocation as Location,
         })
-        if (cleanup) {
-          cleanupTasks.push(cleanup)
+        if (result && result.stop) {
+          cleanupTasks.push(result.stop)
         }
       })
       return {

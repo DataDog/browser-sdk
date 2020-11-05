@@ -38,7 +38,7 @@ describe('parentContexts', () => {
       })
       .beforeBuild(({ lifeCycle, session }) => {
         parentContexts = startParentContexts(lifeCycle, session)
-        return parentContexts.stop
+        return parentContexts
       })
   })
 

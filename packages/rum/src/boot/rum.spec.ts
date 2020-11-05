@@ -46,8 +46,7 @@ describe('rum session', () => {
 
     setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
       serverRumEvents = collectServerEvents(lifeCycle)
-      const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
-      return stop
+      return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
     })
   })
 
@@ -128,8 +127,7 @@ describe('rum session keep alive', () => {
       })
       .beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
-        return stop
+        return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
       })
   })
 
@@ -213,8 +211,7 @@ describe('rum view url', () => {
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
       serverRumEvents = collectServerEvents(lifeCycle)
-      const { stop } = startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
-      return stop
+      return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({}))
     })
   })
 
