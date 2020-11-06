@@ -22,7 +22,7 @@ interface Timing {
  */
 export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
-    return
+    return {}
   }
   const candidates = performance
     .getEntriesByName(request.url, 'resource')
@@ -30,15 +30,26 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
     .filter(toValidEntry)
     .filter((entry) => isBetween(entry, request.startTime, endTime(request)))
 
+  let result
+
   if (candidates.length === 1) {
-    return candidates[0]
+    result = candidates[0]
   }
 
   if (candidates.length === 2 && firstCanBeOptionRequest(candidates)) {
-    return candidates[1]
+    result = candidates[1]
   }
 
-  return
+  return {
+    candidate: result,
+    debug: {
+      candidates: candidates.map((c) => ({ startTime: c.startTime, duration: c.duration })),
+      matchesNb: candidates.length,
+      request: { startTime: request.startTime, duration: request.duration },
+      result: result && { startTime: result.startTime, duration: result.duration },
+      resultDiff: result && request.duration - result.duration,
+    },
+  }
 }
 
 function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTiming[]) {

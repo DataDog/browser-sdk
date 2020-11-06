@@ -13,6 +13,7 @@ export enum RumEventType {
 
 export interface RumResourceEventV2 {
   date: number
+  debug?: any
   type: RumEventType.RESOURCE
   resource: {
     type: ResourceType

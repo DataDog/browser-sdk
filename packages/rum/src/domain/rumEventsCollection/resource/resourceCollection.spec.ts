@@ -295,6 +295,7 @@ describe('resourceCollection V2', () => {
       expect(rawRumEventsV2[0].startTime).toBe(1234)
       expect(rawRumEventsV2[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as number,
+        debug: jasmine.anything(),
         resource: {
           duration: 100 * 1e6,
           method: 'GET',
