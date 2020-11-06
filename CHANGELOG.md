@@ -14,6 +14,10 @@
 
 ---
 
+## v1.25.3
+
+- ⚗️[RUMF-766] add match request timing debug infos (experimental) ([#609](https://github.com/DataDog/browser-sdk/pull/609))
+
 ## v1.25.2
 
 - [RUMF-766] prevent request duration override by wrong matching timing ([#604](https://github.com/DataDog/browser-sdk/pull/604))
