@@ -26,8 +26,8 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Con
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     if (session.isTrackedWithResource()) {
       configuration.isEnabled('v2_format')
-        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processRequestV2(request, configuration))
-        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request, configuration))
+        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processRequestV2(request))
+        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
     }
   })
 
@@ -40,14 +40,12 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Con
   })
 }
 
-function processRequest(request: RequestCompleteEvent, configuration: Configuration) {
+function processRequest(request: RequestCompleteEvent) {
   const kind = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-  const startTime = matchingTiming.candidate ? matchingTiming.candidate.startTime : request.startTime
-  const correspondingTimingOverrides = matchingTiming.candidate
-    ? computePerformanceEntryMetrics(matchingTiming.candidate)
-    : undefined
+  const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request)
 
@@ -68,24 +66,17 @@ function processRequest(request: RequestCompleteEvent, configuration: Configurat
       },
     },
     tracingInfo,
-    correspondingTimingOverrides,
-    configuration.isEnabled('match-debug')
-      ? {
-          debug: matchingTiming.debug,
-        }
-      : undefined
+    correspondingTimingOverrides
   )
   return { startTime, rawRumEvent: resourceEvent }
 }
 
-function processRequestV2(request: RequestCompleteEvent, configuration: Configuration) {
+function processRequestV2(request: RequestCompleteEvent) {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-  const startTime = matchingTiming.candidate ? matchingTiming.candidate.startTime : request.startTime
-  const correspondingTimingOverrides = matchingTiming.candidate
-    ? computePerformanceEntryMetricsV2(matchingTiming.candidate)
-    : undefined
+  const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetricsV2(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request)
 
@@ -102,12 +93,7 @@ function processRequestV2(request: RequestCompleteEvent, configuration: Configur
       type: RumEventType.RESOURCE,
     },
     tracingInfo,
-    correspondingTimingOverrides,
-    configuration.isEnabled('match-debug')
-      ? {
-          debug: matchingTiming.debug,
-        }
-      : undefined
+    correspondingTimingOverrides
   )
   return { startTime, rawRumEvent: resourceEvent as RumResourceEventV2 }
 }

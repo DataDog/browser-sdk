@@ -23,7 +23,7 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(match)
+    expect(timing).toEqual(match)
   })
 
   it('should not match single timing outside the request ', () => {
@@ -32,7 +32,7 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(undefined)
+    expect(timing).toEqual(undefined)
   })
 
   it('should match two following timings nested in the request ', () => {
@@ -42,7 +42,7 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(actualTiming)
+    expect(timing).toEqual(actualTiming)
   })
 
   it('should not match two not following timings nested in the request ', () => {
@@ -52,7 +52,7 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(undefined)
+    expect(timing).toEqual(undefined)
   })
 
   it('should not match multiple timings nested in the request', () => {
@@ -63,7 +63,7 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(undefined)
+    expect(timing).toEqual(undefined)
   })
 
   it('should match invalid timing nested in the request ', () => {
@@ -76,6 +76,6 @@ describe('matchRequestTiming', () => {
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
 
-    expect(timing.candidate).toEqual(undefined)
+    expect(timing).toEqual(undefined)
   })
 })
