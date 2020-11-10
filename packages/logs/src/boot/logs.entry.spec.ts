@@ -271,7 +271,10 @@ describe('logs entry', () => {
         logger.error('message')
 
         expect(sendLogsSpy).not.toHaveBeenCalled()
-        expect(console.log).toHaveBeenCalledWith('error: message')
+        expect(console.log).toHaveBeenCalledWith('error: message', {
+          error: { origin: 'logger' },
+          logger: { name: 'foo' },
+        })
       })
 
       it('should have their name in their context', () => {

@@ -52,7 +52,7 @@ export class Logger {
           })
           break
         case HandlerType.console:
-          console.log(`${status}: ${message}`)
+          console.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
           break
         case HandlerType.silent:
           break

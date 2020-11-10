@@ -83,11 +83,16 @@ describe('Logger', () => {
 
     it('should be configurable to "console"', () => {
       logger.setHandler(HandlerType.console)
+      logger.setContext({ foo: 'bar' })
 
-      logger.error('message')
+      logger.error('message', { lorem: 'ipsum' })
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(console.log).toHaveBeenCalledWith('error: message')
+      expect(console.log).toHaveBeenCalledWith('error: message', {
+        error: { origin: 'logger' },
+        foo: 'bar',
+        lorem: 'ipsum',
+      })
     })
 
     it('should be configurable to "silent"', () => {
