@@ -3,7 +3,6 @@ import {
   checkIsNotLocalFile,
   combine,
   Context,
-  ContextValue,
   createContextManager,
   defineGlobal,
   getGlobalObject,
