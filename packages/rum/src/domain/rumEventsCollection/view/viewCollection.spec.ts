@@ -44,6 +44,7 @@ describe('viewCollection', () => {
         domContentLoaded: 10,
         domInteractive: 10,
         firstContentfulPaint: 10,
+        largestContentfulPaint: 10,
         loadEventEnd: 10,
       },
     }
@@ -117,6 +118,7 @@ describe('viewCollection V2', () => {
         domContentLoaded: 10,
         domInteractive: 10,
         firstContentfulPaint: 10,
+        largestContentfulPaint: 10,
         loadEventEnd: 10,
       },
     }
@@ -140,6 +142,7 @@ describe('viewCollection V2', () => {
           count: 10,
         },
         firstContentfulPaint: 10 * 1e6,
+        largestContentfulPaint: 10 * 1e6,
         loadEventEnd: 10 * 1e6,
         loadingTime: 20 * 1e6,
         loadingType: ViewLoadingType.INITIAL_LOAD,

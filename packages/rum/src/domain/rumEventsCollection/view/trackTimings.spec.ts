@@ -1,9 +1,19 @@
-import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
+import {
+  RumLargestContentfulPaintTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+} from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
-import { Timings, trackFirstContentfulPaint, trackNavigationTimings, trackTimings } from './trackTimings'
+import {
+  Timings,
+  trackFirstContentfulPaint,
+  trackLargestContentfulPaint,
+  trackNavigationTimings,
+  trackTimings,
+} from './trackTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -17,6 +27,11 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domInteractive: 234,
   entryType: 'navigation',
   loadEventEnd: 567,
+}
+
+const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
+  entryType: 'largest-contentful-paint',
+  startTime: 789,
 }
 
 describe('trackTimings', () => {
@@ -112,6 +127,59 @@ describe('trackFirstContentfulPaint', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('largestContentfulPaint', () => {
+  let setupBuilder: TestSetupBuilder
+  let spy: jasmine.Spy<(value: number) => void>
+  let emitter: Element
+
+  beforeEach(() => {
+    spy = jasmine.createSpy()
+    emitter = document.createElement('div')
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      return trackLargestContentfulPaint(lifeCycle, emitter, spy)
+    })
+    resetFirstHidden()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+    restorePageVisibility()
+    resetFirstHidden()
+  })
+
+  it('should provide the largest contentful paint timing', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(789)
+  })
+
+  it('should not be present if it happens after a user interaction', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    const event = createNewEvent(DOM_EVENT.KEY_DOWN)
+    Object.defineProperty(event, 'timeStamp', {
+      get() {
+        return 1
+      },
+    })
+    emitter.dispatchEvent(event)
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('should not be present if the page is hidden', () => {
+    setPageVisibility('hidden')
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+
     expect(spy).not.toHaveBeenCalled()
   })
 })

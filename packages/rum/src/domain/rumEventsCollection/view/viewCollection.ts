@@ -61,6 +61,7 @@ function processViewUpdateV2(view: View) {
         count: view.eventCounts.errorCount,
       },
       firstContentfulPaint: msToNs(view.timings.firstContentfulPaint),
+      largestContentfulPaint: msToNs(view.timings.largestContentfulPaint),
       loadEventEnd: msToNs(view.timings.loadEventEnd),
       loadingTime: msToNs(view.loadingTime),
       loadingType: view.loadingType,

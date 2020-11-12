@@ -15,6 +15,7 @@ export enum DOM_EVENT {
   TOUCH_START = 'touchstart',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
+  POINTER_DOWN = 'pointerdown',
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
 }
