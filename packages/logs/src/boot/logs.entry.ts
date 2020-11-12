@@ -69,8 +69,8 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
       isAlreadyInitialized = true
     }),
 
-    setLoggerGlobalContext: monitor(globalContextManager.set),
     getLoggerGlobalContext: monitor(globalContextManager.get),
+    setLoggerGlobalContext: monitor(globalContextManager.set),
 
     addLoggerGlobalContext: monitor(globalContextManager.add),
 

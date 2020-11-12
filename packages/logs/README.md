@@ -356,7 +356,7 @@ datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
 
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
 
-datadogLogs.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+const context = datadogLogs.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 ```
 
 #### CDN async
@@ -372,7 +372,9 @@ DD_LOGS.onReady(function() {
   window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 })
 
-window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+DD_LOGS.onReady(function() {
+  var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -386,7 +388,7 @@ window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 
 window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 
-window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
