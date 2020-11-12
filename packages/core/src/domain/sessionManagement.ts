@@ -142,14 +142,12 @@ export function stopSessionManagement() {
 let stopCallbacks: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
-  const doExpandOrRenewSession = monitor(expandOrRenewSession)
-  const options = { capture: true, passive: true }
-  ;[utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL].forEach(
-    (event: string) => {
-      document.addEventListener(event, doExpandOrRenewSession, options)
-      stopCallbacks.push(() => document.removeEventListener(event, doExpandOrRenewSession, options))
-    }
+  const { stop } = utils.addGlobalEventListeners(
+    [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],
+    monitor(expandOrRenewSession),
+    { capture: true }
   )
+  stopCallbacks.push(stop)
 }
 
 function trackVisibility(expandSession: () => void) {
@@ -159,11 +157,13 @@ function trackVisibility(expandSession: () => void) {
     }
   })
 
-  const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
-  document.addEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const { stop } = utils.addGlobalEventListeners([utils.DOM_EVENT.VISIBILITY_CHANGE], expandSessionWhenVisible, {
+    capture: true,
+  })
+  stopCallbacks.push(stop)
 
+  const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
   stopCallbacks.push(() => {
     clearInterval(visibilityCheckInterval)
-    document.removeEventListener(utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   })
 }

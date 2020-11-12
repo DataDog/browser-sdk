@@ -1,4 +1,11 @@
-import { Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
+import {
+  addGlobalEventListeners,
+  Configuration,
+  DOM_EVENT,
+  getRelativeTime,
+  isNumber,
+  monitor,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
@@ -147,12 +154,7 @@ function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callbac
     callback()
   } else {
     const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-    const listener = monitor(() => {
-      window.removeEventListener(eventName, listener)
-      callback()
-    })
-
-    window.addEventListener(eventName, listener)
+    addGlobalEventListeners([eventName], callback, { once: true })
   }
 }
 

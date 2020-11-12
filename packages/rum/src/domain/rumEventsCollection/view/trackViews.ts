@@ -1,4 +1,4 @@
-import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { addGlobalEventListeners, DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
@@ -207,11 +207,11 @@ function trackHistory(onHistoryChange: () => void) {
     originalReplaceState.apply(this, arguments as any)
     onHistoryChange()
   })
-  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
+  addGlobalEventListeners([DOM_EVENT.POP_STATE], onHistoryChange)
 }
 
 function trackHash(onHashChange: () => void) {
-  window.addEventListener('hashchange', monitor(onHashChange))
+  addGlobalEventListeners([DOM_EVENT.HASH_CHANGE], onHashChange)
 }
 
 function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {

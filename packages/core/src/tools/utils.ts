@@ -1,3 +1,5 @@
+import { monitor } from '../domain/internalMonitoring'
+
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
@@ -13,6 +15,7 @@ export enum DOM_EVENT {
   TOUCH_START = 'touchstart',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
+  HASH_CHANGE = 'hashchange',
 }
 
 export enum ResourceType {
@@ -303,4 +306,53 @@ export function safeTruncate(candidate: string, length: number) {
     return candidate.slice(0, length + 1)
   }
   return candidate.slice(0, length)
+}
+
+export function addGlobalEventListeners(
+  events: DOM_EVENT[],
+  listener: (event: Event) => void,
+  { once, capture }: { once?: boolean; capture?: boolean } = {}
+): { stop(): void } {
+  const wrapedListener = monitor(
+    once
+      ? (event: Event) => {
+          stop()
+          listener(event)
+        }
+      : listener
+  )
+
+  const options = supportPassiveEventListeners() ? { capture, passive: true } : capture
+  events.forEach((event) => addEventListener(event, wrapedListener, options))
+  const stop = () => events.forEach((event) => removeEventListener(event, wrapedListener, options))
+
+  return {
+    stop,
+  }
+}
+
+let supportPassiveEventListenersCache: boolean | undefined
+// Inspired by
+// https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Safely_detecting_option_support
+function supportPassiveEventListeners() {
+  if (supportPassiveEventListenersCache === undefined) {
+    supportPassiveEventListenersCache = false
+
+    try {
+      const options: AddEventListenerOptions = {
+        get passive() {
+          supportPassiveEventListenersCache = true
+          return false
+        },
+      }
+
+      // tslint:disable-next-line: no-null-keyword
+      addEventListener('test' as any, null as any, options)
+      // tslint:disable-next-line: no-null-keyword
+      removeEventListener('test' as any, null as any, options)
+    } catch (err) {
+      supportPassiveEventListenersCache = false
+    }
+  }
+  return supportPassiveEventListenersCache
 }
