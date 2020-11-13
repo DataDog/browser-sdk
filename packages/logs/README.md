@@ -1,10 +1,10 @@
 # Browser Log Collection
 
-Send logs to Datadog from web browsers or other Javascript clients with the `datadog-logs` client-side JavaScript logging library.
+Send logs to Datadog from web browsers or other Javascript clients with the browser logs SDK.
 
-With the `datadog-logs` library, you can send logs directly to Datadog from JS clients and leverage the following features:
+With the browser logs SDK, you can send logs directly to Datadog from JS clients and leverage the following features:
 
-- Use the library as a logger. Everything is forwarded to Datadog as JSON documents.
+- Use the SDK as a logger. Everything is forwarded to Datadog as JSON documents.
 - Add `context` and extra custom attributes to each log sent.
 - Wrap and forward every frontend error automatically.
 - Forward frontend errors.
@@ -13,19 +13,19 @@ With the `datadog-logs` library, you can send logs directly to Datadog from JS c
 
 ## Setup
 
-**Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the `datadog-logs` library, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
+**Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the browser logs SDK, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
 
-**Datadog browser log library**: Configure the library through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
+**Datadog browser log SDK**: Configure the SDK through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
 
-**Supported browsers**: The `datadog-logs` library supports all modern desktop and mobile browsers including IE10 and IE11. See the [browser support][4] table.
+**Supported browsers**: The browser logs SDK supports all modern desktop and mobile browsers including IE10 and IE11. See the [browser support][4] table.
 
 ### Choose the right installation method
 
-| Installation method        | Use case                                                                                                                                                                                                                                                                                                         |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                            |
-| CDN async                  | This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
-| CDN sync                   | This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                     |
+| Installation method        | Use case                                                                                                                                                                                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm (node package manager) | This method is recommended for modern web applications. The browser logs SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                            |
+| CDN async                  | This method is recommended for web applications with performance targets. The browser logs SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. |
+| CDN sync                   | This method is recommended for collecting all RUM events. The browser logs SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                     |
 
 ### NPM
 
@@ -44,7 +44,7 @@ datadogLogs.init({
 
 ### CDN async
 
-Load and configure the library in the head section of your pages.
+Load and configure the SDK in the head section of your pages.
 
 <!-- prettier-ignore -->
 ```html
@@ -74,7 +74,7 @@ Load and configure the library in the head section of your pages.
 
 ### CDN sync
 
-To receive all logs and errors, load and configure the library at the beginning of the head section for your pages.
+To receive all logs and errors, load and configure the SDK at the beginning of the head section for your pages.
 
 ```html
 <html>
@@ -94,7 +94,7 @@ To receive all logs and errors, load and configure the library at the beginning 
 </html>
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 ### TypeScript
 
@@ -115,7 +115,7 @@ window.DD_LOGS.init({
 
 ### Initialization parameters
 
-The following parameters are available to configure the Datadog browser log library to send logs to Datadog:
+The following parameters are available to configure the Datadog browser log SDK to send logs to Datadog:
 
 | Parameter             | Type    | Required | Default         | Description                                                                                              |
 | --------------------- | ------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
@@ -140,7 +140,7 @@ Options that must have a matching configuration when using the `RUM` SDK:
 
 ### Custom logs
 
-After the Datadog browser log library is initialized, send a custom log entry directly to Datadog with the API:
+After the Datadog browser log SDK is initialized, send a custom log entry directly to Datadog with the API:
 
 ```
 logger.debug | info | warn | error (message: string, messageContext = Context)
@@ -170,7 +170,7 @@ DD_LOGS.onReady(function() {
 window.DD_LOGS && DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 #### Results
 
@@ -200,7 +200,7 @@ The logger adds the following information by default:
 
 ### Status parameter
 
-After the Datadog browser log library is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
+After the Datadog browser log SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
 
 ```
 log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
@@ -250,11 +250,11 @@ The placeholders in the examples above are described below:
 
 ### Define multiple loggers
 
-The Datadog browser log library contains a default logger, but it is possible to define different loggers.
+The Datadog browser log SDK contains a default logger, but it is possible to define different loggers.
 
 #### Create a new logger
 
-After the Datadog browser log library is initialized, use the API `createLogger` to define a new logger:
+After the Datadog browser log SDK is initialized, use the API `createLogger` to define a new logger:
 
 ```text
 createLogger (name: string, conf?: {
@@ -333,13 +333,13 @@ if (window.DD_LOGS) {
 }
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 ### Overwrite context
 
 #### Global context
 
-After the Datadog browser log library is initialized, it is possible to:
+After the Datadog browser log SDK is initialized, it is possible to:
 
 - Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
 - Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
@@ -382,7 +382,7 @@ window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 #### Logger context
 
@@ -429,11 +429,11 @@ window.DD_LOGS && DD_LOGS.setContext("{'env': 'staging'}")
 window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer)
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 ### Filter by status
 
-After the Datadog browser log library is initialized, the minimal log level for your logger is set with the API:
+After the Datadog browser log SDK is initialized, the minimal log level for your logger is set with the API:
 
 ```
 setLevel (level?: 'debug' | 'info' | 'warn' | 'error')
@@ -471,11 +471,11 @@ For CDN sync, use:
 window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 ### Change the destination
 
-By default, loggers created by the Datadog browser log library are sending logs to Datadog. After the Datadog browser log library is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
+By default, loggers created by the Datadog browser log SDK are sending logs to Datadog. After the Datadog browser log SDK is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
 
 ```
 setHandler (handler?: 'http' | 'console' | 'silent')
@@ -511,7 +511,7 @@ For CDN sync, use:
 window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
 ```
 
-**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the library.
+**Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
 
 [1]: /account_management/api-app-keys/#api-keys
 [2]: /account_management/api-app-keys/#client-tokens
