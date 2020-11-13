@@ -104,6 +104,12 @@ interface TransportConfiguration {
   version?: string
 }
 
+enum EndpointType {
+  BROWSER = 'browser',
+  RUM = 'rum',
+  TRACE = 'public-trace'
+}
+
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
     applicationId: userConfiguration.applicationId,
@@ -126,16 +132,16 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    logsEndpoint: getEndpoint('browser', transportConfiguration),
+    logsEndpoint: getEndpoint(EndpointType.BROWSER, transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
-    rumEndpoint: getEndpoint('rum', transportConfiguration),
+    rumEndpoint: getEndpoint(EndpointType.RUM, transportConfiguration),
     service: userConfiguration.service,
-    traceEndpoint: getEndpoint('public-trace', transportConfiguration),
+    traceEndpoint: getEndpoint(EndpointType.TRACE, transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
-      'browser',
+      EndpointType.BROWSER,
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
@@ -174,12 +180,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
-          'browser',
+          EndpointType.BROWSER,
           replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint('browser', replicaTransportConfiguration),
-        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
+        logsEndpoint: getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration),
+        rumEndpoint: getEndpoint(EndpointType.RUM, replicaTransportConfiguration),
       }
     }
   }
@@ -200,7 +206,7 @@ export function buildCookieOptions(userConfiguration: UserConfiguration) {
   return cookieOptions
 }
 
-function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
+function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string) {
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
