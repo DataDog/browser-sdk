@@ -16,6 +16,7 @@ export enum DOM_EVENT {
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
   HASH_CHANGE = 'hashchange',
+  PAGE_HIDE = 'pagehide',
 }
 
 export enum ResourceType {
