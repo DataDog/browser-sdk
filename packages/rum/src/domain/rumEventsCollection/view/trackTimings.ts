@@ -28,7 +28,7 @@ export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) 
   }
 }
 
-function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimings: Partial<Timings>) => void) {
+export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimings: Partial<Timings>) => void) {
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       callback({
@@ -43,7 +43,7 @@ function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimings: Par
   return { stop }
 }
 
-function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: number) => void) {
+export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: number) => void) {
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
