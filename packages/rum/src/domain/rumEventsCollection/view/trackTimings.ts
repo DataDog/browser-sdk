@@ -9,6 +9,7 @@ export interface Timings {
   domComplete?: number
   loadEventEnd?: number
   largestContentfulPaint?: number
+  firstInputDelay?: number
 }
 
 export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
@@ -27,12 +28,18 @@ export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) 
       largestContentfulPaint,
     })
   })
+  const { stop: stopFIDTracking } = trackFirstInputDelay(lifeCycle, (firstInputDelay) => {
+    setTimings({
+      firstInputDelay,
+    })
+  })
 
   return {
     stop() {
       stopNavigationTracking()
       stopFCPTracking()
       stopLCPTracking()
+      stopFIDTracking()
     },
   }
 }
@@ -110,5 +117,25 @@ export function trackLargestContentfulPaint(
       stopEventListener()
       unsubcribeLifeCycle()
     },
+  }
+}
+
+/**
+ * Track the first input delay (FID) occuring during the initial View.  This yields at most one
+ * value.
+ * Documentation: https://web.dev/fid/
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getFID.ts
+ */
+export function trackFirstInputDelay(lifeCycle: LifeCycle, callback: (value: number) => void) {
+  const firstHidden = trackFirstHidden()
+
+  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
+    if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
+      callback(entry.processingStart - entry.startTime)
+    }
+  })
+
+  return {
+    stop,
   }
 }
