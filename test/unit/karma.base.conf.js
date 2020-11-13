@@ -10,7 +10,7 @@ if (testReportDirectory) {
 
 module.exports = {
   basePath: '../..',
-  files: ['packages/*/+(src|test)/**/*.ts'],
+  files: ['packages/*/+(src|test)/**/*.spec.ts'],
   frameworks: ['jasmine'],
   client: {
     jasmine: {
