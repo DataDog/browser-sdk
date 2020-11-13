@@ -10,26 +10,51 @@ export interface Timings {
 
 export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
   let timings: Timings | undefined
-  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
+  function setTimings(newTimings: Partial<Timings>) {
+    timings = { ...timings, ...newTimings }
+    callback(timings)
+  }
+
+  const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, setTimings)
+  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, (firstContentfulPaint) =>
+    setTimings({ firstContentfulPaint })
+  )
+
+  return {
+    stop() {
+      stopNavigationTracking()
+      stopFCPTracking()
+    },
+  }
+}
+
+function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimings: Partial<Timings>) => void) {
+  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
+    if (entry.entryType === 'navigation') {
+      callback({
+        domComplete: entry.domComplete,
+        domContentLoaded: entry.domContentLoadedEventEnd,
+        domInteractive: entry.domInteractive,
+        loadEventEnd: entry.loadEventEnd,
+      })
+    }
+  })
+
+  return { stop }
+}
+
+function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: number) => void) {
+  const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
-      if (entry.entryType === 'navigation') {
-        timings = {
-          ...timings,
-          domComplete: entry.domComplete,
-          domContentLoaded: entry.domContentLoadedEventEnd,
-          domInteractive: entry.domInteractive,
-          loadEventEnd: entry.loadEventEnd,
-        }
-        callback(timings)
-      } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-        timings = {
-          ...timings,
-          firstContentfulPaint: entry.startTime,
-        }
-        callback(timings)
+      if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+        callback(entry.startTime)
       }
     }
   )
-  return { stop: stopPerformanceTracking }
+  return {
+    stop() {
+      unsubscribeLifeCycle()
+    },
+  }
 }
