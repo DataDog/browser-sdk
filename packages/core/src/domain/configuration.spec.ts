@@ -52,9 +52,9 @@ describe('configuration', () => {
 
   describe('proxyHost', () => {
     it('should replace endpoint host add set it as a query parameter', () => {
-      const configuration = buildConfiguration({ clientToken, proxyHost: 'proxy.io' }, usEnv)
+      const configuration = buildConfiguration({ clientToken, site: 'datadoghq.eu', proxyHost: 'proxy.io' }, usEnv)
       expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
-      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.com&')
+      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.eu&')
     })
   })
 
@@ -110,13 +110,20 @@ describe('configuration', () => {
       expect(isIntakeRequest('https://www.foo.com', configuration)).toBe(false)
     })
 
-    it('should detect intake request', () => {
-      const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(
+    it('should detect intake request for EU site', () => {
+      const configuration = buildConfiguration({ clientToken, site: 'datadoghq.eu' }, usEnv)
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.eu/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.eu/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.eu/v1/input/xxx', configuration)).toBe(
         true
       )
+    })
+
+    it('should detect intake request for US site', () => {
+      const configuration = buildConfiguration({ clientToken }, usEnv)
+      expect(isIntakeRequest('https://rum.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://trace.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
     })
 
     it('should detect proxy intake request', () => {
@@ -140,8 +147,8 @@ describe('configuration', () => {
       expect(isIntakeRequest('https://browser-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
       expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
 
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://rum.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
     })
   })
 })

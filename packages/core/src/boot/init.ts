@@ -44,6 +44,11 @@ export const INTAKE_SITE = {
   [Datacenter.US]: 'datadoghq.com',
 }
 
+export const STAGING_INTAKE_SITE = {
+  [Datacenter.EU]: 'datad0g.eu',
+  [Datacenter.US]: 'datad0g.com',
+}
+
 export enum BuildMode {
   RELEASE = 'release',
   STAGING = 'staging',

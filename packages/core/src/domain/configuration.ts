@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from '../boot/init'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, STAGING_INTAKE_SITE } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { getPathName, haveSameOrigin } from '../tools/urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
@@ -107,7 +107,7 @@ interface TransportConfiguration {
 enum EndpointType {
   BROWSER = 'browser',
   RUM = 'rum',
-  TRACE = 'public-trace'
+  TRACE = 'public-trace',
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
@@ -212,13 +212,27 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = `${type}-http-intake.logs.${conf.site}`
+  const datadogHost = getHost(type, conf)
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
   const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
+}
+function getHost(type: EndpointType, conf: TransportConfiguration) {
+  const subdomains = {
+    [EndpointType.BROWSER]: 'logs',
+    [EndpointType.RUM]: 'rum',
+    [EndpointType.TRACE]: 'trace',
+  }
+  if (conf.site === INTAKE_SITE[Datacenter.US]) {
+    return `${subdomains[type]}.browser-intake-datadoghq.com`
+  }
+  if (conf.site === STAGING_INTAKE_SITE[Datacenter.US]) {
+    return `${subdomains[type]}.browser-intake-datad0g.com`
+  }
+  return `${type}-http-intake.logs.${conf.site}`
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
