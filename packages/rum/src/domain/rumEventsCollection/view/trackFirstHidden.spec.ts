@@ -22,10 +22,9 @@ describe('trackFirstHidden', () => {
   it('should return the timestamp of the first pagehide event', () => {
     let pageHideListener: (event: Event) => void
 
-    spyOn(window, 'addEventListener').and.callFake((eventName: any, listener: any) => {
+    spyOn(window, 'addEventListener').and.callFake((eventName: unknown, listener: unknown) => {
       if (eventName === 'pagehide') {
-        // tslint:disable-next-line: no-unsafe-any
-        pageHideListener = listener
+        pageHideListener = listener as any
       }
     })
 

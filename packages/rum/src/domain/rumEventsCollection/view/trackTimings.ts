@@ -1,4 +1,5 @@
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { trackFirstHidden } from './trackFirstHidden'
 
 export interface Timings {
   firstContentfulPaint?: number
@@ -44,10 +45,15 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
 }
 
 export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: number) => void) {
+  const firstHidden = trackFirstHidden()
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
-      if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+      if (
+        entry.entryType === 'paint' &&
+        entry.name === 'first-contentful-paint' &&
+        entry.startTime < firstHidden.timeStamp
+      ) {
         callback(entry.startTime)
       }
     }

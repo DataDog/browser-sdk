@@ -86,12 +86,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
-    const entryTypes = ['resource', 'navigation', 'longtask']
+    const entryTypes = ['resource', 'navigation', 'longtask', 'paint']
 
-    // cf https://github.com/w3c/paint-timing/issues/40
-    if (document.visibilityState === 'visible') {
-      entryTypes.push('paint')
-    }
     observer.observe({ entryTypes })
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {

@@ -1,6 +1,8 @@
+import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
+import { resetFirstHidden } from './trackFirstHidden'
 import { Timings, trackFirstContentfulPaint, trackNavigationTimings, trackTimings } from './trackTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
@@ -88,10 +90,13 @@ describe('trackFirstContentfulPaint', () => {
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
       return trackFirstContentfulPaint(lifeCycle, spy)
     })
+    resetFirstHidden()
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
+    restorePageVisibility()
+    resetFirstHidden()
   })
 
   it('should provide the first contentful paint timing', () => {
@@ -101,5 +106,12 @@ describe('trackFirstContentfulPaint', () => {
 
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy).toHaveBeenCalledWith(123)
+  })
+
+  it('should not set the first contentful paint if the page is hidden', () => {
+    setPageVisibility('hidden')
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    expect(spy).not.toHaveBeenCalled()
   })
 })

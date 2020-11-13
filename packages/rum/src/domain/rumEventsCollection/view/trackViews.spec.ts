@@ -1,7 +1,6 @@
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
-
 import { RawRumEvent, RumEventCategory } from '../../../types'
 import { RumEventType } from '../../../typesV2'
 import { LifeCycleEventType } from '../../lifeCycle'
