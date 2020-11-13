@@ -29,7 +29,7 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
   }
 }
 
-function computeTrackingType(configuration: Configuration): LoggerTrackingType {
+function computeTrackingType(configuration: Configuration) {
   if (!performDraw(configuration.sampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
   }
