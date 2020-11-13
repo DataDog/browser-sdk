@@ -1,3 +1,4 @@
+const webpack = require('webpack')
 const webpackConfig = require('../../webpack.base')('development')
 const getTestReportDirectory = require('../getTestReportDirectory')
 
@@ -19,7 +20,7 @@ module.exports = {
     },
   },
   preprocessors: {
-    'packages/*/+(src|test)/**/*.ts': ['webpack'],
+    'packages/*/+(src|test)/**/*.ts': ['webpack', 'sourcemap'],
   },
   reporters,
   specReporter: {
@@ -32,10 +33,16 @@ module.exports = {
   },
   singleRun: true,
   webpack: {
-    mode: webpackConfig.mode,
     stats: 'minimal',
     module: webpackConfig.module,
     resolve: webpackConfig.resolve,
+    devtool: false,
+    mode: 'development',
+    plugins: [
+      new webpack.SourceMapDevToolPlugin({
+        test: /\.(ts|js)($|\?)/i,
+      }),
+    ],
   },
   webpackMiddleware: {
     stats: 'errors-only',
