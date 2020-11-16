@@ -15,7 +15,7 @@ With the browser logs SDK, you can send logs directly to Datadog from JS clients
 
 **Datadog client token**: For security reasons, [API keys][1] cannot be used to configure the browser logs SDK, because they would be exposed client-side in the JavaScript code. To collect logs from web browsers, a [client token][2] must be used. See the [client token documentation][2] for more details.
 
-**Datadog browser log SDK**: Configure the SDK through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
+**Datadog browser logs SDK**: Configure the SDK through [NPM](#npm) or use the [CDN async](#cdn-async) or [CDN sync](#cdn-sync) code snippets in the head tag.
 
 **Supported browsers**: The browser logs SDK supports all modern desktop and mobile browsers including IE10 and IE11. See the [browser support][4] table.
 
@@ -115,7 +115,7 @@ window.DD_LOGS.init({
 
 ### Initialization parameters
 
-The following parameters are available to configure the Datadog browser log SDK to send logs to Datadog:
+The following parameters are available to configure the Datadog browser logs SDK to send logs to Datadog:
 
 | Parameter             | Type    | Required | Default         | Description                                                                                              |
 | --------------------- | ------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
@@ -140,7 +140,7 @@ Options that must have a matching configuration when using the `RUM` SDK:
 
 ### Custom logs
 
-After the Datadog browser log SDK is initialized, send a custom log entry directly to Datadog with the API:
+After the Datadog browser logs SDK is initialized, send a custom log entry directly to Datadog with the API:
 
 ```
 logger.debug | info | warn | error (message: string, messageContext = Context)
@@ -200,7 +200,7 @@ The logger adds the following information by default:
 
 ### Status parameter
 
-After the Datadog browser log SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
+After the Datadog browser logs SDK is initialized, send a custom log entry to Datadog with the API using the status as a parameter:
 
 ```
 log (message: string, messageContext: Context, status? = 'debug' | 'info' | 'warn' | 'error')
@@ -250,11 +250,11 @@ The placeholders in the examples above are described below:
 
 ### Define multiple loggers
 
-The Datadog browser log SDK contains a default logger, but it is possible to define different loggers.
+The Datadog browser logs SDK contains a default logger, but it is possible to define different loggers.
 
 #### Create a new logger
 
-After the Datadog browser log SDK is initialized, use the API `createLogger` to define a new logger:
+After the Datadog browser logs SDK is initialized, use the API `createLogger` to define a new logger:
 
 ```text
 createLogger (name: string, conf?: {
@@ -339,7 +339,7 @@ if (window.DD_LOGS) {
 
 #### Global context
 
-After the Datadog browser log SDK is initialized, it is possible to:
+After the Datadog browser logs SDK is initialized, it is possible to:
 
 - Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
 - Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
@@ -433,7 +433,7 @@ window.DD_LOGS && DD_LOGS.addContext('referrer', document.referrer)
 
 ### Filter by status
 
-After the Datadog browser log SDK is initialized, the minimal log level for your logger is set with the API:
+After the Datadog browser logs SDK is initialized, the minimal log level for your logger is set with the API:
 
 ```
 setLevel (level?: 'debug' | 'info' | 'warn' | 'error')
@@ -475,7 +475,7 @@ window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 
 ### Change the destination
 
-By default, loggers created by the Datadog browser log SDK are sending logs to Datadog. After the Datadog browser log SDK is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
+By default, loggers created by the Datadog browser logs SDK are sending logs to Datadog. After the Datadog browser logs SDK is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
 
 ```
 setHandler (handler?: 'http' | 'console' | 'silent')
