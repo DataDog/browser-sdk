@@ -1,7 +1,8 @@
 const webpackConfig = require('../../webpack.base')('development')
 const getTestReportDirectory = require('../getTestReportDirectory')
+const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 
-const reporters = ['spec']
+const reporters = ['spec', 'jasmine-seed']
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -41,5 +42,5 @@ module.exports = {
     stats: 'errors-only',
     logLevel: 'warn',
   },
-  plugins: ['karma-*'],
+  plugins: ['karma-*', jasmineSeedReporterPlugin],
 }
