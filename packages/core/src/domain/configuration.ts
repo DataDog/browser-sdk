@@ -76,6 +76,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
   proxyHost?: string
 
+  legacyEndpoints: string[]
+
   service?: string
 
   isEnabled: (feature: string) => boolean
@@ -137,6 +139,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     rumEndpoint: getEndpoint(EndpointType.RUM, transportConfiguration),
     service: userConfiguration.service,
     traceEndpoint: getEndpoint(EndpointType.TRACE, transportConfiguration),
+
+    legacyEndpoints: [
+      getEndpoint(EndpointType.BROWSER, transportConfiguration, undefined, true),
+      getEndpoint(EndpointType.RUM, transportConfiguration, undefined, true),
+      getEndpoint(EndpointType.TRACE, transportConfiguration, undefined, true),
+    ],
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
@@ -144,6 +152,9 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       EndpointType.BROWSER,
       transportConfiguration,
       'browser-agent-internal-monitoring'
+    )
+    configuration.legacyEndpoints.push(
+      getEndpoint(EndpointType.BROWSER, transportConfiguration, 'browser-agent-internal-monitoring', true)
     )
   }
 
@@ -187,6 +198,11 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
         logsEndpoint: getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration),
         rumEndpoint: getEndpoint(EndpointType.RUM, replicaTransportConfiguration),
       }
+      configuration.legacyEndpoints.push(
+        getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration, 'browser-agent-internal-monitoring', true),
+        getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration, undefined, true),
+        getEndpoint(EndpointType.RUM, replicaTransportConfiguration, undefined, true)
+      )
     }
   }
 
@@ -206,13 +222,13 @@ export function buildCookieOptions(userConfiguration: UserConfiguration) {
   return cookieOptions
 }
 
-function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string) {
+function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string, withLegacyHost = false) {
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = getHost(type, conf)
+  const datadogHost = getHost(type, conf, withLegacyHost)
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
@@ -220,26 +236,30 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
-function getHost(type: EndpointType, conf: TransportConfiguration) {
-  const subdomains = {
-    [EndpointType.BROWSER]: 'logs',
-    [EndpointType.RUM]: 'rum',
-    [EndpointType.TRACE]: 'trace',
-  }
-  if (conf.site === INTAKE_SITE[Datacenter.US]) {
-    return `${subdomains[type]}.browser-intake-datadoghq.com`
-  }
-  if (conf.site === STAGING_INTAKE_SITE[Datacenter.US]) {
-    return `${subdomains[type]}.browser-intake-datad0g.com`
+function getHost(type: EndpointType, conf: TransportConfiguration, useLegacyDomain: boolean) {
+  if (!useLegacyDomain) {
+    const subdomains = {
+      [EndpointType.BROWSER]: 'logs',
+      [EndpointType.RUM]: 'rum',
+      [EndpointType.TRACE]: 'trace',
+    }
+    if (conf.site === INTAKE_SITE[Datacenter.US]) {
+      return `${subdomains[type]}.browser-intake-datadoghq.com`
+    }
+    if (conf.site === STAGING_INTAKE_SITE[Datacenter.US]) {
+      return `${subdomains[type]}.browser-intake-datad0g.com`
+    }
   }
   return `${type}-http-intake.logs.${conf.site}`
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
-  if (!getPathName(url).includes('/v1/input/')) return false
-  return getIntakeEndpoints(configuration)
-    .map(getOrigin)
-    .includes(getOrigin(url))
+  if (getPathName(url).includes('/v1/input/')) {
+    return getIntakeEndpoints(configuration)
+      .map(getOrigin)
+      .includes(getOrigin(url))
+  }
+  return false
 }
 
 function getIntakeEndpoints(configuration: Configuration) {
@@ -254,7 +274,7 @@ function getIntakeEndpoints(configuration: Configuration) {
       configuration.replica.internalMonitoringEndpoint
     )
   }
-  return endpoints
+  return endpoints.concat(configuration.legacyEndpoints || [])
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {

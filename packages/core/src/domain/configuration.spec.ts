@@ -122,8 +122,27 @@ describe('configuration', () => {
     it('should detect intake request for US site', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
       expect(isIntakeRequest('https://rum.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://logs.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
       expect(isIntakeRequest('https://trace.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(
+        true
+      )
+    })
+
+    it('should detect intake request for staging US site', () => {
+      const configuration = buildConfiguration({ clientToken, site: 'datad0g.com' }, usEnv)
+      expect(isIntakeRequest('https://rum.browser-intake-datad0g.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://logs.browser-intake-datad0g.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://trace.browser-intake-datad0g.com/v1/input/xxx', configuration)).toBe(true)
+
+      expect(isIntakeRequest('https://rum-http-intake.logs.datad0g.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datad0g.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://public-trace-http-intake.logs.datad0g.com/v1/input/xxx', configuration)).toBe(
+        true
+      )
     })
 
     it('should detect proxy intake request', () => {
@@ -148,7 +167,7 @@ describe('configuration', () => {
       expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
 
       expect(isIntakeRequest('https://rum.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://logs.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
     })
   })
 })
