@@ -3,7 +3,6 @@ import {
   checkIsNotLocalFile,
   combine,
   Context,
-  ContextValue,
   createContextManager,
   defineGlobal,
   getGlobalObject,
@@ -70,6 +69,7 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
       isAlreadyInitialized = true
     }),
 
+    getLoggerGlobalContext: monitor(globalContextManager.get),
     setLoggerGlobalContext: monitor(globalContextManager.set),
 
     addLoggerGlobalContext: monitor(globalContextManager.add),
