@@ -69,6 +69,9 @@ function proxyXhr() {
   originalXhrSend = XMLHttpRequest.prototype.send
 
   XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
+    // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
+    // and can be used by different code versions depending on customer setup
+    // so it should stay compatible with older versions
     this._datadog_xhr = {
       method,
       startTime: -1, // computed in send call
