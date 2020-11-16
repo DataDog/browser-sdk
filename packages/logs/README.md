@@ -343,6 +343,7 @@ After the Datadog browser logs SDK is initialized, it is possible to:
 
 - Set the entire context for all your loggers with the `setLoggerGlobalContext (context: Context)` API.
 - Add a context to all your loggers with `addLoggerGlobalContext (key: string, value: any)` API.
+- Get the entire global context with `getLoggerGlobalContext ()` API.
 
 ##### NPM
 
@@ -354,6 +355,8 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
 
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
+
+const context = datadogLogs.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 ```
 
 #### CDN async
@@ -368,6 +371,10 @@ DD_LOGS.onReady(function() {
 DD_LOGS.onReady(function() {
   window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 })
+
+DD_LOGS.onReady(function() {
+  var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+})
 ```
 
 **Note:** Early API calls must be wrapped in the `DD_LOGS.onReady()` callback. This ensures the code only gets executed once the SDK is properly loaded.
@@ -380,6 +387,8 @@ For CDN sync, use:
 window.DD_LOGS && DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 
 window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
+
+var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.

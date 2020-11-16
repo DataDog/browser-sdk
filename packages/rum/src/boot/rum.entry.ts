@@ -80,6 +80,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
 
     removeRumGlobalContext: monitor(globalContextManager.remove),
 
+    getRumGlobalContext: monitor(globalContextManager.get),
     setRumGlobalContext: monitor(globalContextManager.set),
 
     getInternalContext: monitor((startTime?: number) => {
