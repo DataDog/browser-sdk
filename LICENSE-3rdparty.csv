@@ -30,6 +30,7 @@ dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-jasmine-seed-reporter,MIT,Copyright 2018 ThoughtWorks, Inc.
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
+dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
