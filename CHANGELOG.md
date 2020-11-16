@@ -14,6 +14,12 @@
 
 ---
 
+## v1.25.4
+
+- ✨ [RUMF-771] Add getLoggerGlobalContext and getRumGlobalContext ([#614](https://github.com/DataDog/browser-sdk/pull/614))
+- ✨ [RUMF-762] include the context when using console handler ([#613](https://github.com/DataDog/browser-sdk/pull/613))
+- Revert "⚗️[RUMF-766] add match request timing debug infos (experimental) ([#609](https://github.com/DataDog/browser-sdk/pull/609))" ([#612](https://github.com/DataDog/browser-sdk/pull/612))
+
 ## v1.25.3
 
 - ⚗️[RUMF-766] add match request timing debug infos (experimental) ([#609](https://github.com/DataDog/browser-sdk/pull/609))
