@@ -25,7 +25,7 @@ module.exports = {
   CHROME_MOBILE: {
     base: 'BrowserStack',
     os: 'android',
-    os_version: '10.0',
+    os_version: '11.0',
     browser: 'android',
     device: 'Google Pixel 4',
     browser_version: null,
