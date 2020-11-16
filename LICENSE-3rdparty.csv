@@ -28,7 +28,6 @@ dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
-dev,karma-jasmine-seed-reporter,MIT,Copyright 2018 ThoughtWorks, Inc.
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors

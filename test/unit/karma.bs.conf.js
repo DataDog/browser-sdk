@@ -11,7 +11,7 @@ module.exports = function(config) {
   config.set({
     ...karmaBaseConf,
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
-    reporters: [...karmaBaseConf.reporters, 'BrowserStack', 'jasmine-seed'],
+    reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: Object.keys(browsers),
     concurrency: 5,
     hostname: getIp(),
