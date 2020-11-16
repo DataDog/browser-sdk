@@ -1,6 +1,6 @@
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, STAGING_INTAKE_SITE } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
-import { getPathName, haveSameOrigin } from '../tools/urlPolyfill'
+import { getOrigin, getPathName, haveSameOrigin } from '../tools/urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -236,17 +236,25 @@ function getHost(type: EndpointType, conf: TransportConfiguration) {
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
-  return (
-    getPathName(url).indexOf('/v1/input/') !== -1 &&
-    (haveSameOrigin(url, configuration.logsEndpoint) ||
-      haveSameOrigin(url, configuration.rumEndpoint) ||
-      haveSameOrigin(url, configuration.traceEndpoint) ||
-      (!!configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
-      (!!configuration.replica &&
-        (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
-          haveSameOrigin(url, configuration.replica.rumEndpoint) ||
-          haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint))))
-  )
+  if (!getPathName(url).includes('/v1/input/')) return false
+  return getIntakeEndpoints(configuration)
+    .map(getOrigin)
+    .includes(getOrigin(url))
+}
+
+function getIntakeEndpoints(configuration: Configuration) {
+  const endpoints = [configuration.logsEndpoint, configuration.rumEndpoint, configuration.traceEndpoint]
+  if (!!configuration.internalMonitoringEndpoint) {
+    endpoints.push(configuration.internalMonitoringEndpoint)
+  }
+  if (!!configuration.replica) {
+    endpoints.push(
+      configuration.replica.logsEndpoint,
+      configuration.replica.rumEndpoint,
+      configuration.replica.internalMonitoringEndpoint
+    )
+  }
+  return endpoints
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {
