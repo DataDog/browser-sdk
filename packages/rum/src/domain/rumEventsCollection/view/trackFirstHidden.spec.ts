@@ -20,19 +20,12 @@ describe('trackFirstHidden', () => {
   })
 
   it('should return the timestamp of the first pagehide event', () => {
-    let pageHideListener: (event: Event) => void
-
-    spyOn(window, 'addEventListener').and.callFake((eventName: unknown, listener: unknown) => {
-      if (eventName === 'pagehide') {
-        pageHideListener = listener as any
-      }
-    })
-
-    const firstHidden = trackFirstHidden()
+    const emitter = document.createElement('div')
+    const firstHidden = trackFirstHidden(emitter)
 
     const event = new Event(DOM_EVENT.PAGE_HIDE)
     Object.defineProperty(event, 'timeStamp', { value: 100 })
-    pageHideListener!(event)
+    emitter.dispatchEvent(event)
 
     expect(firstHidden.timeStamp).toBe(100)
   })
