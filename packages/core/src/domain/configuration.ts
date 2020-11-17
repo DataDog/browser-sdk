@@ -254,10 +254,9 @@ function getHost(type: EndpointType, conf: TransportConfiguration, useLegacyDoma
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
-  if (getPathName(url).includes('/v1/input/')) {
-    return getIntakeEndpoints(configuration)
-      .map(getOrigin)
-      .includes(getOrigin(url))
+  if (getPathName(url).indexOf('/v1/input/') !== -1) {
+    const origins = getIntakeEndpoints(configuration).map(getOrigin)
+    return origins.indexOf(getOrigin(url)) !== -1
   }
   return false
 }
