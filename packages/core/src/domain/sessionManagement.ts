@@ -142,10 +142,11 @@ export function stopSessionManagement() {
 let stopCallbacks: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
-  const { stop } = utils.addGlobalEventListeners(
+  const { stop } = utils.addEventListeners(
+    window,
     [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],
     monitor(expandOrRenewSession),
-    { capture: true }
+    { capture: true, passive: true }
   )
   stopCallbacks.push(stop)
 }
@@ -157,7 +158,7 @@ function trackVisibility(expandSession: () => void) {
     }
   })
 
-  const { stop } = utils.addGlobalEventListeners([utils.DOM_EVENT.VISIBILITY_CHANGE], expandSessionWhenVisible, {
+  const { stop } = utils.addEventListeners(document, [utils.DOM_EVENT.VISIBILITY_CHANGE], expandSessionWhenVisible, {
     capture: true,
   })
   stopCallbacks.push(stop)

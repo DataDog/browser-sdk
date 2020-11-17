@@ -1,4 +1,4 @@
-import { addGlobalEventListeners, Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
+import { addEventListeners, Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -46,7 +46,8 @@ export function trackActions(lifeCycle: LifeCycle) {
     action.discardCurrent()
   })
 
-  const { stop: stopListener } = addGlobalEventListeners(
+  const { stop: stopListener } = addEventListeners(
+    window,
     [DOM_EVENT.CLICK],
     (event) => {
       if (!(event.target instanceof Element)) {

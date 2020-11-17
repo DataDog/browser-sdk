@@ -1,6 +1,6 @@
 import { monitor } from '../domain/internalMonitoring'
 import { Context } from '../tools/context'
-import { addGlobalEventListeners, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { addEventListeners, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -164,13 +164,13 @@ export class Batch {
        * register first to be sure to be called before flush on beforeunload
        * caveat: unload can still be canceled by another listener
        */
-      addGlobalEventListeners([DOM_EVENT.BEFORE_UNLOAD], this.beforeUnloadCallback)
+      addEventListeners(window, [DOM_EVENT.BEFORE_UNLOAD], this.beforeUnloadCallback)
 
       /**
        * Only event that guarantee to fire on mobile devices when the page transitions to background state
        * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.
        */
-      addGlobalEventListeners([DOM_EVENT.VISIBILITY_CHANGE], () => {
+      addEventListeners(document, [DOM_EVENT.VISIBILITY_CHANGE], () => {
         if (document.visibilityState === 'hidden') {
           this.flush()
         }
@@ -180,7 +180,7 @@ export class Batch {
        * - a visibility change during doc unload (cf: https://bugs.webkit.org/show_bug.cgi?id=194897)
        * - a page hide transition (cf: https://bugs.webkit.org/show_bug.cgi?id=188329)
        */
-      addGlobalEventListeners([DOM_EVENT.BEFORE_UNLOAD], () => this.flush())
+      addEventListeners(window, [DOM_EVENT.BEFORE_UNLOAD], () => this.flush())
     }
   }
 }

@@ -309,10 +309,36 @@ export function safeTruncate(candidate: string, length: number) {
   return candidate.slice(0, length)
 }
 
-export function addGlobalEventListeners(
+export interface EventEmitter {
+  addEventListener(
+    event: DOM_EVENT,
+    listener: (event: Event) => void,
+    options?: boolean | { capture?: boolean; passive?: boolean }
+  ): void
+  removeEventListener(
+    event: DOM_EVENT,
+    listener: (event: Event) => void,
+    options?: boolean | { capture?: boolean; passive?: boolean }
+  ): void
+}
+
+/**
+ * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
+ * a few conveniences compared to using `addEventListener` directly:
+ *
+ * * supports IE11 by:
+ *   * using an option object only if needed
+ *   * emulating the `once` option
+ *
+ * * wraps the listener with a `monitor` function
+ *
+ * * returns a `stop` function to unsubscribe the listener
+ */
+export function addEventListeners(
+  emitter: EventEmitter,
   events: DOM_EVENT[],
   listener: (event: Event) => void,
-  { once, capture }: { once?: boolean; capture?: boolean } = {}
+  { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
 ): { stop(): void } {
   const wrapedListener = monitor(
     once
@@ -323,37 +349,11 @@ export function addGlobalEventListeners(
       : listener
   )
 
-  const options = supportPassiveEventListeners() ? { capture, passive: true } : capture
-  events.forEach((event) => addEventListener(event, wrapedListener, options))
-  const stop = () => events.forEach((event) => removeEventListener(event, wrapedListener, options))
+  const options = passive ? { capture, passive } : capture
+  events.forEach((event) => emitter.addEventListener(event, wrapedListener, options))
+  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrapedListener, options))
 
   return {
     stop,
   }
-}
-
-let supportPassiveEventListenersCache: boolean | undefined
-// Inspired by
-// https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Safely_detecting_option_support
-function supportPassiveEventListeners() {
-  if (supportPassiveEventListenersCache === undefined) {
-    supportPassiveEventListenersCache = false
-
-    try {
-      const options: AddEventListenerOptions = {
-        get passive() {
-          supportPassiveEventListenersCache = true
-          return false
-        },
-      }
-
-      // tslint:disable-next-line: no-null-keyword
-      addEventListener('test' as any, null as any, options)
-      // tslint:disable-next-line: no-null-keyword
-      removeEventListener('test' as any, null as any, options)
-    } catch (err) {
-      supportPassiveEventListenersCache = false
-    }
-  }
-  return supportPassiveEventListenersCache
 }
