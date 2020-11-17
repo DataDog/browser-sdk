@@ -144,7 +144,7 @@ class StubXhr {
   }
 }
 
-function createNewEvent(eventName: string) {
+export function createNewEvent(eventName: string) {
   let event
   if (typeof Event === 'function') {
     event = new Event(eventName)

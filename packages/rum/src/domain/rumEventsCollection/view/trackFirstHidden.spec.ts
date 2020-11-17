@@ -1,4 +1,4 @@
-import { DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
@@ -23,8 +23,12 @@ describe('trackFirstHidden', () => {
     const emitter = document.createElement('div')
     const firstHidden = trackFirstHidden(emitter)
 
-    const event = new Event(DOM_EVENT.PAGE_HIDE)
-    Object.defineProperty(event, 'timeStamp', { value: 100 })
+    const event = createNewEvent(DOM_EVENT.PAGE_HIDE)
+    Object.defineProperty(event, 'timeStamp', {
+      get() {
+        return 100
+      },
+    })
     emitter.dispatchEvent(event)
 
     expect(firstHidden.timeStamp).toBe(100)
