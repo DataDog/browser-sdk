@@ -145,7 +145,7 @@ export function trackActivity(expandOrRenewSession: () => void) {
   const { stop } = utils.addEventListeners(
     window,
     [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],
-    monitor(expandOrRenewSession),
+    expandOrRenewSession,
     { capture: true, passive: true }
   )
   stopCallbacks.push(stop)
