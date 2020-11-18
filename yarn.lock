@@ -5606,11 +5606,6 @@ karma-coverage-istanbul-reporter@2.1.1:
     istanbul-api "^2.1.6"
     minimatch "^3.0.4"
 
-karma-jasmine-seed-reporter@0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/karma-jasmine-seed-reporter/-/karma-jasmine-seed-reporter-0.2.0.tgz#a8f7d4c66d23d756deb63cb8dac88e0e058958b9"
-  integrity sha512-15d6kNFakKfqNnCNQoRzJpivwbaAjaEdOBfBf4lojLUyLDRkSKhFEujL/kPI4eqM4XtYzHGpuxh3M+MSTBQBjA==
-
 karma-jasmine@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/karma-jasmine/-/karma-jasmine-3.1.1.tgz#f592b253e7619a8d84559d7daf473a647498ade8"
