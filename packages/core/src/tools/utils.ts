@@ -360,6 +360,9 @@ export function addEventListener(
  * * wraps the listener with a `monitor` function
  *
  * * returns a `stop` function to remove the listener
+ *
+ * * with `once: true`, the listener will be called at most once, even if different events are
+ *   listened
  */
 export function addEventListeners(
   emitter: EventEmitter,
