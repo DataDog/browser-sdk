@@ -2,11 +2,8 @@ import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } f
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
-  beforeEach(() => {
-    resetFirstHidden()
-  })
-
   afterEach(() => {
+    resetFirstHidden()
     restorePageVisibility()
   })
 
