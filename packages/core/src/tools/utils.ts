@@ -322,9 +322,15 @@ export interface EventEmitter {
   ): void
 }
 
+interface AddEventListenerOptions {
+  once?: boolean
+  capture?: boolean
+  passive?: boolean
+}
+
 /**
- * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
- * a few conveniences compared to using `addEventListener` directly:
+ * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
+ * a few conveniences compared to using `element.addEventListener` directly:
  *
  * * supports IE11 by:
  *   * using an option object only if needed
@@ -332,7 +338,28 @@ export interface EventEmitter {
  *
  * * wraps the listener with a `monitor` function
  *
- * * returns a `stop` function to unsubscribe the listener
+ * * returns a `stop` function to remove the listener
+ */
+export function addEventListener(
+  emitter: EventEmitter,
+  event: DOM_EVENT,
+  listener: (event: Event) => void,
+  options?: AddEventListenerOptions
+) {
+  return addEventListeners(emitter, [event], listener, options)
+}
+
+/**
+ * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
+ * a few conveniences compared to using `element.addEventListener` directly:
+ *
+ * * supports IE11 by:
+ *   * using an option object only if needed
+ *   * emulating the `once` option
+ *
+ * * wraps the listener with a `monitor` function
+ *
+ * * returns a `stop` function to remove the listener
  */
 export function addEventListeners(
   emitter: EventEmitter,

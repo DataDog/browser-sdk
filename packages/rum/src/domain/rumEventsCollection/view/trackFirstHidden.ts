@@ -1,13 +1,13 @@
-import { addEventListeners, DOM_EVENT, EventEmitter } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, EventEmitter } from '@datadog/browser-core'
 
 let trackFirstHiddenSingleton: { timeStamp: number } | undefined
 let stopListeners: (() => void) | undefined
 
 export function trackFirstHidden(emitter: EventEmitter = window) {
   if (!trackFirstHiddenSingleton) {
-    ;({ stop: stopListeners } = addEventListeners(
+    ;({ stop: stopListeners } = addEventListener(
       emitter,
-      [DOM_EVENT.PAGE_HIDE],
+      DOM_EVENT.PAGE_HIDE,
       ({ timeStamp }) => {
         trackFirstHiddenSingleton!.timeStamp = timeStamp
       },
