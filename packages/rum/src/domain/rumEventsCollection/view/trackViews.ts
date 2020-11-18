@@ -1,5 +1,6 @@
-import { addEventListener, DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
+import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -16,6 +17,7 @@ export interface View {
   duration: number
   loadingTime?: number | undefined
   loadingType: ViewLoadingType
+  cumulativeLayoutShift?: number
 }
 
 export interface ViewCreatedEvent {
@@ -105,6 +107,7 @@ function newView(
   }
   let timings: Timings = {}
   let documentVersion = 0
+  let cumulativeLayoutShift = isLayoutShiftSupported() ? 0 : undefined
   let loadingTime: number | undefined
   let endTime: number | undefined
   let location: Location = { ...initialLocation }
@@ -132,12 +135,18 @@ function newView(
 
   const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
 
+  const { stop: stopCLSTracking } = trackLayoutShift(lifeCycle, (layoutShift) => {
+    cumulativeLayoutShift = (cumulativeLayoutShift || 0) + layoutShift
+    scheduleViewUpdate()
+  })
+
   // Initial view update
   triggerViewUpdate()
 
   function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      cumulativeLayoutShift,
       documentVersion,
       eventCounts,
       id,
@@ -157,6 +166,7 @@ function newView(
       endTime = performance.now()
       stopEventCountsTracking()
       stopActivityLoadingTimeTracking()
+      stopCLSTracking()
     },
     isDifferentView(otherLocation: Location) {
       return (
@@ -249,4 +259,36 @@ function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeVa
   })
 
   return { stop: stopWaitIdlePageActivity }
+}
+
+/**
+ * Track layout shifts (LS) occuring during the Views.  This yields multiple values that can be
+ * added up to compute the cumulated layout shift (CLS).
+ *
+ * See isLayoutShiftSupported to check for browser support.
+ *
+ * Documentation: https://web.dev/cls/
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
+ */
+function trackLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
+  let stop
+  if (isLayoutShiftSupported()) {
+    ;({ unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
+      if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+        callback(entry.value)
+      }
+    }))
+  } else {
+    stop = noop
+  }
+  return {
+    stop,
+  }
+}
+
+/**
+ * Check whether `layout-shift` is supported by the browser.
+ */
+function isLayoutShiftSupported() {
+  return supportPerformanceTimingEvent('layout-shift')
 }

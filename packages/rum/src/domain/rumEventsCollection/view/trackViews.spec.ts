@@ -885,4 +885,63 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(3)
     })
   })
+
+  describe('cumulativeLayoutShift', () => {
+    let isLayoutShiftSupported: boolean
+    beforeEach(() => {
+      isLayoutShiftSupported = true
+      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() => {
+        return isLayoutShiftSupported ? ['layout-shift'] : []
+      })
+    })
+
+    it('should be initialized to 0', () => {
+      setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
+    })
+
+    it('should be initialized to 0 if layout-shift is not supported', () => {
+      isLayoutShiftSupported = false
+      setupBuilder.build()
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).cumulativeLayoutShift).toBe(undefined)
+    })
+
+    it('should accmulate layout shift values', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 0.1,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 0.2,
+      })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(2)
+      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.1 + 0.2)
+    })
+
+    it('should ignore entries with recent input', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: true,
+        value: 0.1,
+      })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(1)
+      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
+    })
+  })
 })
