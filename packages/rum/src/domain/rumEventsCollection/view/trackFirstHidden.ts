@@ -5,17 +5,20 @@ let stopListeners: (() => void) | undefined
 
 export function trackFirstHidden(emitter: EventEmitter = window) {
   if (!trackFirstHiddenSingleton) {
-    ;({ stop: stopListeners } = addEventListener(
-      emitter,
-      DOM_EVENT.PAGE_HIDE,
-      ({ timeStamp }) => {
-        trackFirstHiddenSingleton!.timeStamp = timeStamp
-      },
-      { capture: true }
-    ))
-
-    trackFirstHiddenSingleton = {
-      timeStamp: document.visibilityState === 'hidden' ? 0 : Infinity,
+    if (document.visibilityState === 'hidden') {
+      trackFirstHiddenSingleton = { timeStamp: 0 }
+    } else {
+      trackFirstHiddenSingleton = {
+        timeStamp: Infinity,
+      }
+      ;({ stop: stopListeners } = addEventListener(
+        emitter,
+        DOM_EVENT.PAGE_HIDE,
+        ({ timeStamp }) => {
+          trackFirstHiddenSingleton!.timeStamp = timeStamp
+        },
+        { capture: true, once: true }
+      ))
     }
   }
 
