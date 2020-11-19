@@ -241,7 +241,7 @@ export function objectValues(object: { [key: string]: unknown }) {
   return values
 }
 
-export function objectEntries(object: { [key: string]: unknown }) {
+export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 

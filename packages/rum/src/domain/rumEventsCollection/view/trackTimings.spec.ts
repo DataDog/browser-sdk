@@ -162,13 +162,7 @@ describe('largestContentfulPaint', () => {
   it('should not be present if it happens after a user interaction', () => {
     const { lifeCycle } = setupBuilder.build()
 
-    const event = createNewEvent(DOM_EVENT.KEY_DOWN)
-    Object.defineProperty(event, 'timeStamp', {
-      get() {
-        return 1
-      },
-    })
-    emitter.dispatchEvent(event)
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
     expect(lcpCallback).not.toHaveBeenCalled()
