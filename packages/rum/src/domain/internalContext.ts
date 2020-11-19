@@ -1,9 +1,12 @@
 import { combine, Configuration, withSnakeCaseKeys } from '@datadog/browser-core'
 import { InternalContext } from '../types'
-import { InternalContextV2 } from '../typesV2'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
 
+/**
+ * Internal context keep returning v1 format
+ * to not break compatibility with logs data format
+ */
 export function startInternalContext(
   applicationId: string,
   session: RumSession,
@@ -15,17 +18,14 @@ export function startInternalContext(
       if (configuration.isEnabled('v2_format')) {
         const viewContext = parentContexts.findViewV2(startTime)
         if (session.isTracked() && viewContext && viewContext.session.id) {
+          const actionContext = parentContexts.findActionV2(startTime)
           return (withSnakeCaseKeys(
             combine(
-              {
-                application: {
-                  id: applicationId,
-                },
-              },
-              viewContext,
-              parentContexts.findActionV2(startTime)
+              { applicationId },
+              { sessionId: viewContext.session.id, view: viewContext.view },
+              actionContext ? { userAction: { id: actionContext.action.id } } : undefined
             )
-          ) as unknown) as InternalContextV2
+          ) as unknown) as InternalContext
         }
       } else {
         const viewContext = parentContexts.findView(startTime)
