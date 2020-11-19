@@ -66,6 +66,12 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
   return { stop }
 }
 
+/**
+ * Track the largest contentful paint (LCP) occuring during the initial View.  This can yield
+ * multiple values, only the most recent one should be used.
+ * Documentation: https://web.dev/lcp/
+ * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
+ */
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   emitter: EventEmitter,
@@ -73,11 +79,13 @@ export function trackLargestContentfulPaint(
 ) {
   const firstHidden = trackFirstHidden()
 
-  // Ignore entries that come after the first user interaction
+  // Ignore entries that come after the first user interaction.  According to the documentation, the
+  // browser should not send largest-contentful-paint entries after a user interact with the page,
+  // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp: number = Infinity
   const { stop: stopEventListener } = addEventListeners(
     emitter,
-    [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL],
+    [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     (event) => {
       firstInteractionTimestamp = event.timeStamp
     },
