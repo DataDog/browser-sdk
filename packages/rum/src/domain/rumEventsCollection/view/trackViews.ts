@@ -1,8 +1,9 @@
-import { DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, monitor, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
+import { Timings, trackTimings } from './trackTimings'
 
 export interface View {
   id: string
@@ -22,14 +23,6 @@ export interface ViewCreatedEvent {
   location: Location
   referrer: string
   startTime: number
-}
-
-export interface Timings {
-  firstContentfulPaint?: number
-  domInteractive?: number
-  domContentLoaded?: number
-  domComplete?: number
-  loadEventEnd?: number
 }
 
 export enum ViewLoadingType {
@@ -207,37 +200,11 @@ function trackHistory(onHistoryChange: () => void) {
     originalReplaceState.apply(this, arguments as any)
     onHistoryChange()
   })
-  window.addEventListener(DOM_EVENT.POP_STATE, monitor(onHistoryChange))
+  addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
 }
 
 function trackHash(onHashChange: () => void) {
-  window.addEventListener('hashchange', monitor(onHashChange))
-}
-
-function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
-  let timings: Timings | undefined
-  const { unsubscribe: stopPerformanceTracking } = lifeCycle.subscribe(
-    LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-    (entry) => {
-      if (entry.entryType === 'navigation') {
-        timings = {
-          ...timings,
-          domComplete: entry.domComplete,
-          domContentLoaded: entry.domContentLoadedEventEnd,
-          domInteractive: entry.domInteractive,
-          loadEventEnd: entry.loadEventEnd,
-        }
-        callback(timings)
-      } else if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
-        timings = {
-          ...timings,
-          firstContentfulPaint: entry.startTime,
-        }
-        callback(timings)
-      }
-    }
-  )
-  return { stop: stopPerformanceTracking }
+  addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {

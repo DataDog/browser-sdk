@@ -1,3 +1,5 @@
+import { monitor } from '../domain/internalMonitoring'
+
 export const ONE_SECOND = 1000
 export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
@@ -13,6 +15,8 @@ export enum DOM_EVENT {
   TOUCH_START = 'touchstart',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
+  HASH_CHANGE = 'hashchange',
+  PAGE_HIDE = 'pagehide',
 }
 
 export enum ResourceType {
@@ -303,4 +307,83 @@ export function safeTruncate(candidate: string, length: number) {
     return candidate.slice(0, length + 1)
   }
   return candidate.slice(0, length)
+}
+
+export interface EventEmitter {
+  addEventListener(
+    event: DOM_EVENT,
+    listener: (event: Event) => void,
+    options?: boolean | { capture?: boolean; passive?: boolean }
+  ): void
+  removeEventListener(
+    event: DOM_EVENT,
+    listener: (event: Event) => void,
+    options?: boolean | { capture?: boolean; passive?: boolean }
+  ): void
+}
+
+interface AddEventListenerOptions {
+  once?: boolean
+  capture?: boolean
+  passive?: boolean
+}
+
+/**
+ * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
+ * a few conveniences compared to using `element.addEventListener` directly:
+ *
+ * * supports IE11 by:
+ *   * using an option object only if needed
+ *   * emulating the `once` option
+ *
+ * * wraps the listener with a `monitor` function
+ *
+ * * returns a `stop` function to remove the listener
+ */
+export function addEventListener(
+  emitter: EventEmitter,
+  event: DOM_EVENT,
+  listener: (event: Event) => void,
+  options?: AddEventListenerOptions
+) {
+  return addEventListeners(emitter, [event], listener, options)
+}
+
+/**
+ * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
+ * a few conveniences compared to using `element.addEventListener` directly:
+ *
+ * * supports IE11 by:
+ *   * using an option object only if needed
+ *   * emulating the `once` option
+ *
+ * * wraps the listener with a `monitor` function
+ *
+ * * returns a `stop` function to remove the listener
+ *
+ * * with `once: true`, the listener will be called at most once, even if different events are
+ *   listened
+ */
+export function addEventListeners(
+  emitter: EventEmitter,
+  events: DOM_EVENT[],
+  listener: (event: Event) => void,
+  { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
+): { stop(): void } {
+  const wrapedListener = monitor(
+    once
+      ? (event: Event) => {
+          stop()
+          listener(event)
+        }
+      : listener
+  )
+
+  const options = passive ? { capture, passive } : capture
+  events.forEach((event) => emitter.addEventListener(event, wrapedListener, options))
+  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrapedListener, options))
+
+  return {
+    stop,
+  }
 }

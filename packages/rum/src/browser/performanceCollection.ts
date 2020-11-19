@@ -1,4 +1,4 @@
-import { Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
+import { addEventListener, Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
@@ -79,12 +79,8 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
-    const entryTypes = ['resource', 'navigation', 'longtask']
+    const entryTypes = ['resource', 'navigation', 'longtask', 'paint']
 
-    // cf https://github.com/w3c/paint-timing/issues/40
-    if (document.visibilityState === 'visible') {
-      entryTypes.push('paint')
-    }
     observer.observe({ entryTypes })
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
@@ -147,12 +143,7 @@ function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callbac
     callback()
   } else {
     const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-    const listener = monitor(() => {
-      window.removeEventListener(eventName, listener)
-      callback()
-    })
-
-    window.addEventListener(eventName, listener)
+    addEventListener(window, eventName, callback, { once: true })
   }
 }
 

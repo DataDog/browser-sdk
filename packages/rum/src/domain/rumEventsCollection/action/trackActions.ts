@@ -1,4 +1,4 @@
-import { Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
+import { addEventListener, Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -46,23 +46,27 @@ export function trackActions(lifeCycle: LifeCycle) {
     action.discardCurrent()
   })
 
-  addEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
-  function processClick(event: Event) {
-    if (!(event.target instanceof Element)) {
-      return
-    }
-    const name = getActionNameFromElement(event.target)
-    if (!name) {
-      return
-    }
+  const { stop: stopListener } = addEventListener(
+    window,
+    DOM_EVENT.CLICK,
+    (event) => {
+      if (!(event.target instanceof Element)) {
+        return
+      }
+      const name = getActionNameFromElement(event.target)
+      if (!name) {
+        return
+      }
 
-    action.create(ActionType.CLICK, name)
-  }
+      action.create(ActionType.CLICK, name)
+    },
+    { capture: true }
+  )
 
   return {
     stop() {
       action.discardCurrent()
-      removeEventListener(DOM_EVENT.CLICK, processClick, { capture: true })
+      stopListener()
     },
   }
 }
