@@ -49,11 +49,17 @@ export interface RumPerformanceNavigationTiming {
   loadEventEnd: number
 }
 
+export interface RumLargestContentfulPaintTiming {
+  entryType: 'largest-contentful-paint'
+  startTime: number
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
   | RumPerformancePaintTiming
   | RumPerformanceNavigationTiming
+  | RumLargestContentfulPaintTiming
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
@@ -79,7 +85,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
-    const entryTypes = ['resource', 'navigation', 'longtask', 'paint']
+    const entryTypes = ['resource', 'navigation', 'longtask', 'paint', 'largest-contentful-paint']
 
     observer.observe({ entryTypes })
 
@@ -168,7 +174,8 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
       entry.entryType === 'resource' ||
       entry.entryType === 'navigation' ||
       entry.entryType === 'paint' ||
-      entry.entryType === 'longtask'
+      entry.entryType === 'longtask' ||
+      entry.entryType === 'largest-contentful-paint'
     ) {
       handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
     }

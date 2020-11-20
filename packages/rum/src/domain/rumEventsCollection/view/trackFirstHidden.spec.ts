@@ -21,7 +21,7 @@ describe('trackFirstHidden', () => {
     const emitter = document.createElement('div')
     const firstHidden = trackFirstHidden(emitter)
 
-    dispatchPageHideEvent(emitter, 100)
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
     expect(firstHidden.timeStamp).toBe(0)
   })
@@ -30,7 +30,7 @@ describe('trackFirstHidden', () => {
     const emitter = document.createElement('div')
     const firstHidden = trackFirstHidden(emitter)
 
-    dispatchPageHideEvent(emitter, 100)
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
     expect(firstHidden.timeStamp).toBe(100)
   })
@@ -39,19 +39,9 @@ describe('trackFirstHidden', () => {
     const emitter = document.createElement('div')
     const firstHidden = trackFirstHidden(emitter)
 
-    dispatchPageHideEvent(emitter, 100)
-    dispatchPageHideEvent(emitter, 200)
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 200 }))
 
     expect(firstHidden.timeStamp).toBe(100)
   })
-
-  function dispatchPageHideEvent(emitter: Node, timeStamp: number) {
-    const event = createNewEvent(DOM_EVENT.PAGE_HIDE)
-    Object.defineProperty(event, 'timeStamp', {
-      get() {
-        return timeStamp
-      },
-    })
-    emitter.dispatchEvent(event)
-  }
 })

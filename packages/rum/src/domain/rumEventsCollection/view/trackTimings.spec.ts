@@ -1,9 +1,19 @@
-import { restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
+import {
+  RumLargestContentfulPaintTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+} from '../../../browser/performanceCollection'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
-import { Timings, trackFirstContentfulPaint, trackNavigationTimings, trackTimings } from './trackTimings'
+import {
+  Timings,
+  trackFirstContentfulPaint,
+  trackLargestContentfulPaint,
+  trackNavigationTimings,
+  trackTimings,
+} from './trackTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -19,14 +29,19 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   loadEventEnd: 567,
 }
 
+const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
+  entryType: 'largest-contentful-paint',
+  startTime: 789,
+}
+
 describe('trackTimings', () => {
   let setupBuilder: TestSetupBuilder
-  let spy: jasmine.Spy<(value: Partial<Timings>) => void>
+  let timingsCallback: jasmine.Spy<(value: Partial<Timings>) => void>
 
   beforeEach(() => {
-    spy = jasmine.createSpy()
+    timingsCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackTimings(lifeCycle, spy)
+      return trackTimings(lifeCycle, timingsCallback)
     })
   })
 
@@ -40,8 +55,8 @@ describe('trackTimings', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
 
-    expect(spy).toHaveBeenCalledTimes(2)
-    expect(spy.calls.mostRecent().args[0]).toEqual({
+    expect(timingsCallback).toHaveBeenCalledTimes(2)
+    expect(timingsCallback.calls.mostRecent().args[0]).toEqual({
       domComplete: 456,
       domContentLoaded: 345,
       domInteractive: 234,
@@ -53,12 +68,12 @@ describe('trackTimings', () => {
 
 describe('trackNavigationTimings', () => {
   let setupBuilder: TestSetupBuilder
-  let spy: jasmine.Spy<(value: Partial<Timings>) => void>
+  let navigationTimingsCallback: jasmine.Spy<(value: Partial<Timings>) => void>
 
   beforeEach(() => {
-    spy = jasmine.createSpy()
+    navigationTimingsCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackNavigationTimings(lifeCycle, spy)
+      return trackNavigationTimings(lifeCycle, navigationTimingsCallback)
     })
   })
 
@@ -71,8 +86,8 @@ describe('trackNavigationTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
-    expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).toHaveBeenCalledWith({
+    expect(navigationTimingsCallback).toHaveBeenCalledTimes(1)
+    expect(navigationTimingsCallback).toHaveBeenCalledWith({
       domComplete: 456,
       domContentLoaded: 345,
       domInteractive: 234,
@@ -83,12 +98,12 @@ describe('trackNavigationTimings', () => {
 
 describe('trackFirstContentfulPaint', () => {
   let setupBuilder: TestSetupBuilder
-  let spy: jasmine.Spy<(value: number) => void>
+  let fcpCallback: jasmine.Spy<(value: number) => void>
 
   beforeEach(() => {
-    spy = jasmine.createSpy()
+    fcpCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackFirstContentfulPaint(lifeCycle, spy)
+      return trackFirstContentfulPaint(lifeCycle, fcpCallback)
     })
     resetFirstHidden()
   })
@@ -104,14 +119,61 @@ describe('trackFirstContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
 
-    expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).toHaveBeenCalledWith(123)
+    expect(fcpCallback).toHaveBeenCalledTimes(1)
+    expect(fcpCallback).toHaveBeenCalledWith(123)
   })
 
   it('should not set the first contentful paint if the page is hidden', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-    expect(spy).not.toHaveBeenCalled()
+    expect(fcpCallback).not.toHaveBeenCalled()
+  })
+})
+
+describe('largestContentfulPaint', () => {
+  let setupBuilder: TestSetupBuilder
+  let lcpCallback: jasmine.Spy<(value: number) => void>
+  let emitter: Element
+
+  beforeEach(() => {
+    lcpCallback = jasmine.createSpy()
+    emitter = document.createElement('div')
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      return trackLargestContentfulPaint(lifeCycle, emitter, lcpCallback)
+    })
+    resetFirstHidden()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+    restorePageVisibility()
+    resetFirstHidden()
+  })
+
+  it('should provide the largest contentful paint timing', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith(789)
+  })
+
+  it('should not be present if it happens after a user interaction', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    emitter.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    expect(lcpCallback).not.toHaveBeenCalled()
+  })
+
+  it('should not be present if the page is hidden', () => {
+    setPageVisibility('hidden')
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+
+    expect(lcpCallback).not.toHaveBeenCalled()
   })
 })

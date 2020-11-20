@@ -1,5 +1,5 @@
 import { Configuration } from '../domain/configuration'
-import { noop } from './utils'
+import { noop, objectEntries } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
@@ -144,14 +144,22 @@ class StubXhr {
   }
 }
 
-export function createNewEvent(eventName: string) {
-  let event
+export function createNewEvent(eventName: string, properties: { [name: string]: unknown } = {}) {
+  let event: Event
   if (typeof Event === 'function') {
     event = new Event(eventName)
   } else {
     event = document.createEvent('Event')
     event.initEvent(eventName, true, true)
   }
+  objectEntries(properties).forEach(([name, value]) => {
+    // Setting values directly or with a `value` descriptor seems unsupported in IE11
+    Object.defineProperty(event, name, {
+      get() {
+        return value
+      },
+    })
+  })
   return event
 }
 

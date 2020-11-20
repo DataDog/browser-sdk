@@ -1,6 +1,10 @@
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumPerformanceNavigationTiming, RumPerformancePaintTiming } from '../../../browser/performanceCollection'
+import {
+  RumLargestContentfulPaintTiming,
+  RumPerformanceNavigationTiming,
+  RumPerformancePaintTiming,
+} from '../../../browser/performanceCollection'
 import { RawRumEvent, RumEventCategory } from '../../../types'
 import { RumEventType } from '../../../typesV2'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -19,6 +23,10 @@ const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
   name: 'first-contentful-paint',
   startTime: 123,
+}
+const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
+  entryType: 'largest-contentful-paint',
+  startTime: 789,
 }
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domComplete: 456,
@@ -491,6 +499,7 @@ describe('rum view measures', () => {
       expect(getViewEvent(0).timings).toEqual({})
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
       expect(getHandledCount()).toEqual(1)
 
@@ -502,6 +511,7 @@ describe('rum view measures', () => {
         domContentLoaded: 345,
         domInteractive: 234,
         firstContentfulPaint: 123,
+        largestContentfulPaint: 789,
         loadEventEnd: 567,
       })
       expect(getViewEvent(2).timings).toEqual({})
@@ -525,6 +535,7 @@ describe('rum view measures', () => {
         expect(getHandledCount()).toEqual(3)
 
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
         lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -552,6 +563,7 @@ describe('rum view measures', () => {
           domContentLoaded: 345,
           domInteractive: 234,
           firstContentfulPaint: 123,
+          largestContentfulPaint: 789,
           loadEventEnd: 567,
         })
       })

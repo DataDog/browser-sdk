@@ -15,6 +15,7 @@ export enum DOM_EVENT {
   TOUCH_START = 'touchstart',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
+  POINTER_DOWN = 'pointerdown',
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
 }
@@ -240,7 +241,7 @@ export function objectValues(object: { [key: string]: unknown }) {
   return values
 }
 
-export function objectEntries(object: { [key: string]: unknown }) {
+export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
   return Object.keys(object).map((key) => [key, object[key]])
 }
 
