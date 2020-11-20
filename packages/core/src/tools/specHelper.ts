@@ -2,6 +2,12 @@ import { Configuration } from '../domain/configuration'
 import { noop, objectEntries } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
+  intakeUrls: [
+    'https://monitoring-intake.com/v1/input/',
+    'https://logs-intake.com/v1/input/',
+    'https://rum-intake.com/v1/input/',
+    'https://trace-intake.com/v1/input/',
+  ],
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
   logsEndpoint: 'https://logs-intake.com/v1/input/abcde?foo=bar',
   rumEndpoint: 'https://rum-intake.com/v1/input/abcde?foo=bar',

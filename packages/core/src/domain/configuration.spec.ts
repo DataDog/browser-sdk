@@ -168,6 +168,8 @@ describe('configuration', () => {
 
       expect(isIntakeRequest('https://rum.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
       expect(isIntakeRequest('https://logs.browser-intake-datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
     })
   })
 })

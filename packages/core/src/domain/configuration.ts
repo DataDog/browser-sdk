@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, STAGING_INTAKE_SITE } from '../boot/init'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, NEW_INTAKE_DOMAIN_ALLOWED_SITES } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { getOrigin, getPathName, haveSameOrigin } from '../tools/urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
@@ -76,7 +76,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
   proxyHost?: string
 
-  legacyEndpoints: string[]
+  intakeUrls: string[]
 
   service?: string
 
@@ -107,9 +107,9 @@ interface TransportConfiguration {
 }
 
 enum EndpointType {
-  BROWSER = 'browser',
+  LOGS = 'logs',
   RUM = 'rum',
-  TRACE = 'public-trace',
+  TRACE = 'trace',
 }
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
@@ -134,27 +134,20 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    logsEndpoint: getEndpoint(EndpointType.BROWSER, transportConfiguration),
+    logsEndpoint: getEndpoint(EndpointType.LOGS, transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
     rumEndpoint: getEndpoint(EndpointType.RUM, transportConfiguration),
     service: userConfiguration.service,
     traceEndpoint: getEndpoint(EndpointType.TRACE, transportConfiguration),
 
-    legacyEndpoints: [
-      getEndpoint(EndpointType.BROWSER, transportConfiguration, undefined, true),
-      getEndpoint(EndpointType.RUM, transportConfiguration, undefined, true),
-      getEndpoint(EndpointType.TRACE, transportConfiguration, undefined, true),
-    ],
+    intakeUrls: getIntakeUrls(transportConfiguration),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
-      EndpointType.BROWSER,
+      EndpointType.LOGS,
       transportConfiguration,
       'browser-agent-internal-monitoring'
-    )
-    configuration.legacyEndpoints.push(
-      getEndpoint(EndpointType.BROWSER, transportConfiguration, 'browser-agent-internal-monitoring', true)
     )
   }
 
@@ -191,18 +184,14 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
-          EndpointType.BROWSER,
+          EndpointType.LOGS,
           replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration),
+        logsEndpoint: getEndpoint(EndpointType.LOGS, replicaTransportConfiguration),
         rumEndpoint: getEndpoint(EndpointType.RUM, replicaTransportConfiguration),
       }
-      configuration.legacyEndpoints.push(
-        getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration, 'browser-agent-internal-monitoring', true),
-        getEndpoint(EndpointType.BROWSER, replicaTransportConfiguration, undefined, true),
-        getEndpoint(EndpointType.RUM, replicaTransportConfiguration, undefined, true)
-      )
+      configuration.intakeUrls.push(...getIntakeUrls(replicaTransportConfiguration))
     }
   }
 
@@ -222,13 +211,13 @@ export function buildCookieOptions(userConfiguration: UserConfiguration) {
   return cookieOptions
 }
 
-function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string, withLegacyHost = false) {
+function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string) {
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = getHost(type, conf, withLegacyHost)
+  const datadogHost = getHost(type, conf)
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
@@ -236,44 +225,45 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
-function getHost(type: EndpointType, conf: TransportConfiguration, useLegacyDomain: boolean) {
-  if (!useLegacyDomain) {
-    const subdomains = {
-      [EndpointType.BROWSER]: 'logs',
-      [EndpointType.RUM]: 'rum',
-      [EndpointType.TRACE]: 'trace',
-    }
-    if (conf.site === INTAKE_SITE[Datacenter.US]) {
-      return `${subdomains[type]}.browser-intake-datadoghq.com`
-    }
-    if (conf.site === STAGING_INTAKE_SITE[Datacenter.US]) {
-      return `${subdomains[type]}.browser-intake-datad0g.com`
-    }
+
+function getHost(type: EndpointType, conf: TransportConfiguration) {
+  if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
+    return `${type}.browser-intake-${conf.site}`
   }
-  return `${type}-http-intake.logs.${conf.site}`
+  const oldTypes = {
+    [EndpointType.LOGS]: 'browser',
+    [EndpointType.RUM]: 'rum',
+    [EndpointType.TRACE]: 'public-trace',
+  }
+  return `${oldTypes[type]}-http-intake.logs.${conf.site}`
+}
+
+function getIntakeUrls(conf: TransportConfiguration) {
+  if (conf.proxyHost) {
+    return [`https://${conf.proxyHost}/v1/input/`]
+  }
+  const urls = [
+    `https://rum-http-intake.logs.${conf.site}/v1/input/`,
+    `https://browser-http-intake.logs.${conf.site}/v1/input/`,
+    `https://public-trace-http-intake.logs.${conf.site}/v1/input/`,
+  ]
+  if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
+    urls.push(
+      `https://rum.browser-intake-${conf.site}/v1/input/`,
+      `https://logs.browser-intake-${conf.site}/v1/input/`,
+      `https://trace.browser-intake-${conf.site}/v1/input/`
+    )
+  }
+  return urls
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
-  if (getPathName(url).indexOf('/v1/input/') !== -1) {
-    const origins = getIntakeEndpoints(configuration).map(getOrigin)
-    return origins.indexOf(getOrigin(url)) !== -1
+  for (const intakeUrl of configuration.intakeUrls) {
+    if (url.indexOf(intakeUrl) === 0) {
+      return true
+    }
   }
   return false
-}
-
-function getIntakeEndpoints(configuration: Configuration) {
-  const endpoints = [configuration.logsEndpoint, configuration.rumEndpoint, configuration.traceEndpoint]
-  if (!!configuration.internalMonitoringEndpoint) {
-    endpoints.push(configuration.internalMonitoringEndpoint)
-  }
-  if (!!configuration.replica) {
-    endpoints.push(
-      configuration.replica.logsEndpoint,
-      configuration.replica.rumEndpoint,
-      configuration.replica.internalMonitoringEndpoint
-    )
-  }
-  return endpoints.concat(configuration.legacyEndpoints || [])
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {
