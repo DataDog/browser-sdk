@@ -29,8 +29,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   let currentAction: AutoActionCreatedEvent | undefined
   let currentSessionId: string | undefined
 
-  let previousViews: Array<PreviousContext<ViewContext>> = []
-  let previousActions: Array<PreviousContext<ActionContext>> = []
+  let previousViews: Array<PreviousContext<ViewContextV2>> = []
+  let previousActions: Array<PreviousContext<ActionContextV2>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     if (currentView) {
@@ -95,7 +95,9 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
 
   function buildCurrentViewContext() {
     return {
-      sessionId: currentSessionId,
+      session: {
+        id: currentSessionId,
+      },
       view: {
         id: currentView!.id,
         referrer: currentView!.referrer,
@@ -105,7 +107,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   }
 
   function buildCurrentActionContext() {
-    return { userAction: { id: currentAction!.id } }
+    return { action: { id: currentAction!.id } }
   }
 
   function findContext<T>(
@@ -133,33 +135,31 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
 
   const parentContexts: ParentContexts = {
     findAction: (startTime) => {
-      return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
-    },
-    findActionV2: (startTime) => {
-      const actionContext = parentContexts.findAction(startTime)
+      const actionContext = parentContexts.findActionV2(startTime)
       if (!actionContext) {
         return
       }
       return {
-        action: {
-          id: actionContext.userAction.id,
+        userAction: {
+          id: actionContext.action.id,
         },
       }
     },
-    findView: (startTime) => {
-      return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
+    findActionV2: (startTime) => {
+      return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
     },
-    findViewV2: (startTime) => {
-      const viewContext = parentContexts.findView(startTime)
+    findView: (startTime) => {
+      const viewContext = parentContexts.findViewV2(startTime)
       if (!viewContext) {
         return
       }
       return {
-        session: {
-          id: viewContext.sessionId,
-        },
+        sessionId: viewContext.session.id,
         view: viewContext.view,
       }
+    },
+    findViewV2: (startTime) => {
+      return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
     },
     stop: () => {
       window.clearInterval(clearOldContextsInterval)
