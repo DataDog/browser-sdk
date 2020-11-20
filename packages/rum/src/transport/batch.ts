@@ -1,21 +1,9 @@
 import { Batch, combine, Configuration, Context, HttpRequest } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { RumEvent, RumEventCategory } from '../types'
 import { RumEventType, RumEventV2 } from '../typesV2'
 
 export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle) {
   const batch = makeRumBatch(configuration, lifeCycle)
-
-  lifeCycle.subscribe(
-    LifeCycleEventType.RUM_EVENT_COLLECTED,
-    ({ rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }) => {
-      if (rumEvent.evt.category === RumEventCategory.VIEW) {
-        batch.upsert(serverRumEvent, rumEvent.view.id)
-      } else {
-        batch.add(serverRumEvent)
-      }
-    }
-  )
 
   lifeCycle.subscribe(
     LifeCycleEventType.RUM_EVENT_V2_COLLECTED,

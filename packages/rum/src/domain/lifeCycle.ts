@@ -1,9 +1,8 @@
 import { Context } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { RawRumEvent, RumEvent } from '../types'
 import { RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { AutoAction, AutoActionCreatedEvent, CustomAction } from './rumEventsCollection/action/trackActions'
+import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
@@ -18,9 +17,7 @@ export enum LifeCycleEventType {
   SESSION_RENEWED,
   DOM_MUTATED,
   BEFORE_UNLOAD,
-  RAW_RUM_EVENT_COLLECTED,
   RAW_RUM_EVENT_V2_COLLECTED,
-  RUM_EVENT_COLLECTED,
   RUM_EVENT_V2_COLLECTED,
 }
 
@@ -46,15 +43,6 @@ export class LifeCycle {
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
   ): void
   notify(
-    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    data: {
-      startTime: number
-      rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
-      customerContext?: Context
-    }
-  ): void
-  notify(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
     data: {
       startTime: number
@@ -63,7 +51,6 @@ export class LifeCycle {
       customerContext?: Context
     }
   ): void
-  notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: { rumEvent: RumEvent; serverRumEvent: Context }): void
   notify(
     eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
     data: { rumEvent: RumEventV2; serverRumEvent: Context }
@@ -100,15 +87,6 @@ export class LifeCycle {
     callback: () => void
   ): Subscription
   subscribe(
-    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    callback: (data: {
-      startTime: number
-      rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
-      customerContext?: Context
-    }) => void
-  ): Subscription
-  subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
     callback: (data: {
       startTime: number
@@ -116,10 +94,6 @@ export class LifeCycle {
       savedGlobalContext?: Context
       customerContext?: Context
     }) => void
-  ): Subscription
-  subscribe(
-    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_V2_COLLECTED,

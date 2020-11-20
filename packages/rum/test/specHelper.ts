@@ -12,7 +12,6 @@ import {
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
-import { RawRumEvent } from '../src/types'
 import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
 import { validateFormat } from './formatValidation'
 
@@ -43,12 +42,6 @@ export interface TestIO {
   clock: jasmine.Clock
   fakeLocation: Partial<Location>
   session: RumSession
-  rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedGlobalContext?: Context
-    customerContext?: Context
-  }>
   rawRumEventsV2: Array<{
     startTime: number
     rawRumEvent: RawRumEventV2
@@ -67,12 +60,6 @@ export function setup(): TestSetupBuilder {
   const cleanupTasks: Array<() => void> = []
   let cleanupClock = noop
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedGlobalContext?: Context
-    customerContext?: Context
-  }> = []
   const rawRumEventsV2: Array<{
     startTime: number
     rawRumEvent: RawRumEventV2
@@ -91,7 +78,6 @@ export function setup(): TestSetupBuilder {
   const FAKE_APP_ID = 'appId'
 
   // ensure that events generated before build are collected
-  lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => rawRumEvents.push(data))
   const rawRumEventsV2Collected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
     rawRumEventsV2.push(data)
     validateRumEventFormat(data.rawRumEvent)
@@ -160,7 +146,6 @@ export function setup(): TestSetupBuilder {
         clock,
         fakeLocation,
         lifeCycle,
-        rawRumEvents,
         rawRumEventsV2,
         session,
       }

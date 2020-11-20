@@ -1,5 +1,4 @@
 import { noop } from '@datadog/browser-core'
-import { RumEventCategory } from '../types'
 import { RumEventType } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -17,27 +16,6 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
     resourceCount: 0,
     userActionCount: 0,
   }
-
-  const subscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent }): void => {
-    switch (rawRumEvent.evt.category) {
-      case RumEventCategory.ERROR:
-        eventCounts.errorCount += 1
-        callback(eventCounts)
-        break
-      case RumEventCategory.USER_ACTION:
-        eventCounts.userActionCount += 1
-        callback(eventCounts)
-        break
-      case RumEventCategory.LONG_TASK:
-        eventCounts.longTaskCount += 1
-        callback(eventCounts)
-        break
-      case RumEventCategory.RESOURCE:
-        eventCounts.resourceCount += 1
-        callback(eventCounts)
-        break
-    }
-  })
 
   const subscriptionV2 = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, ({ rawRumEvent }): void => {
     switch (rawRumEvent.type) {
@@ -62,7 +40,6 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
 
   return {
     stop() {
-      subscription.unsubscribe()
       subscriptionV2.unsubscribe()
     },
     eventCounts,

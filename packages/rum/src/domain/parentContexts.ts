@@ -1,5 +1,4 @@
 import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import { ActionContext, ViewContext } from '../types'
 import { ActionContextV2, ViewContextV2 } from '../typesV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -17,9 +16,7 @@ interface PreviousContext<T> {
 }
 
 export interface ParentContexts {
-  findAction: (startTime?: number) => ActionContext | undefined
   findActionV2: (startTime?: number) => ActionContextV2 | undefined
-  findView: (startTime?: number) => ViewContext | undefined
   findViewV2: (startTime?: number) => ViewContextV2 | undefined
   stop: () => void
 }
@@ -133,30 +130,9 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     return undefined
   }
 
-  const parentContexts: ParentContexts = {
-    findAction: (startTime) => {
-      const actionContext = parentContexts.findActionV2(startTime)
-      if (!actionContext) {
-        return
-      }
-      return {
-        userAction: {
-          id: actionContext.action.id,
-        },
-      }
-    },
+  return {
     findActionV2: (startTime) => {
       return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
-    },
-    findView: (startTime) => {
-      const viewContext = parentContexts.findViewV2(startTime)
-      if (!viewContext) {
-        return
-      }
-      return {
-        sessionId: viewContext.session.id,
-        view: viewContext.view,
-      }
     },
     findViewV2: (startTime) => {
       return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
@@ -165,5 +141,4 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       window.clearInterval(clearOldContextsInterval)
     },
   }
-  return parentContexts
 }
