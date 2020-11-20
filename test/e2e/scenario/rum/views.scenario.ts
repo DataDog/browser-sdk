@@ -16,6 +16,26 @@ describe('rum views', () => {
       expect(viewEvent.view.load_event_end).toBeGreaterThan(0)
     })
 
+  // When run via WebDriver, Safari 12 and 13 (at least) have an issue with `event.timeStamp`,
+  // so the 'first-input' polyfill is ignoring it and doesn't send a performance entry.
+  // See https://bugs.webkit.org/show_bug.cgi?id=211101
+  if (browser.capabilities.browserName !== 'Safari 12.0') {
+    createTest('send performance first input delay')
+      .withRum()
+      .withBody(
+        html`
+          <button>Hop</button>
+        `
+      )
+      .run(async ({ events }) => {
+        await (await $('button')).click()
+        await flushEvents()
+        const viewEvent = events.rumViews[0]
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent.view.first_input_delay).toBeGreaterThanOrEqual(0)
+      })
+  }
+
   createTest('create a new View when the session is renewed')
     .withRum()
     .run(async ({ events }) => {
