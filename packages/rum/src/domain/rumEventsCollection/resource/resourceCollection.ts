@@ -8,7 +8,7 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RumEventType, RumResourceEventV2 } from '../../../typesV2'
+import { RumEventType, RumResourceEvent } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
@@ -24,23 +24,23 @@ import {
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     if (session.isTrackedWithResource()) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processRequestV2(request))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (session.isTrackedWithResource() && entry.entryType === 'resource' && !isRequestKind(entry)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processResourceEntryV2(entry))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
     }
   })
 }
 
-function processRequestV2(request: RequestCompleteEvent) {
+function processRequest(request: RequestCompleteEvent) {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
   const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
-  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetricsV2(matchingTiming) : undefined
+  const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request)
 
@@ -59,12 +59,12 @@ function processRequestV2(request: RequestCompleteEvent) {
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime, rawRumEvent: resourceEvent as RumResourceEventV2 }
+  return { startTime, rawRumEvent: resourceEvent as RumResourceEvent }
 }
 
-function processResourceEntryV2(entry: RumPerformanceResourceTiming) {
+function processResourceEntry(entry: RumPerformanceResourceTiming) {
   const type = computeResourceKind(entry)
-  const entryMetrics = computePerformanceEntryMetricsV2(entry)
+  const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry)
 
   const resourceEvent = combine(
@@ -79,10 +79,10 @@ function processResourceEntryV2(entry: RumPerformanceResourceTiming) {
     tracingInfo,
     entryMetrics
   )
-  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RumResourceEventV2 }
+  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RumResourceEvent }
 }
 
-function computePerformanceEntryMetricsV2(timing: RumPerformanceResourceTiming) {
+function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {
   return {
     resource: {
       duration: computePerformanceResourceDuration(timing),

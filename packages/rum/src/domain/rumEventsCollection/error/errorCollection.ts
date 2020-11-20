@@ -9,7 +9,7 @@ import {
   RawError,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
-import { RumErrorEventV2, RumEventType } from '../../../typesV2'
+import { RumErrorEvent, RumEventType } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
@@ -28,17 +28,15 @@ export function doStartErrorCollection(
   configuration: Configuration,
   observable: Observable<RawError>
 ) {
-  observable.subscribe((error) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
-  )
+  observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {
     addError({ error, startTime, context: customerContext, source }: ProvidedError, savedGlobalContext?: Context) {
       const rawError = computeRawError(error, startTime, source)
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
         savedGlobalContext,
-        ...processErrorV2(rawError),
+        ...processError(rawError),
       })
     },
   }
@@ -49,8 +47,8 @@ function computeRawError(error: unknown, startTime: number, source: ErrorSource)
   return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
-function processErrorV2(error: RawError) {
-  const rawRumEvent: RumErrorEventV2 = {
+function processError(error: RawError) {
+  const rawRumEvent: RumErrorEvent = {
     date: getTimestamp(error.startTime),
     error: {
       message: error.message,

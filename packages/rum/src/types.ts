@@ -11,7 +11,7 @@ export enum RumEventType {
   RESOURCE = 'resource',
 }
 
-export interface RumResourceEventV2 {
+export interface RumResourceEvent {
   date: number
   type: RumEventType.RESOURCE
   resource: {
@@ -35,7 +35,7 @@ export interface RumResourceEventV2 {
   }
 }
 
-export interface RumErrorEventV2 {
+export interface RumErrorEvent {
   date: number
   type: RumEventType.ERROR
   error: {
@@ -51,7 +51,7 @@ export interface RumErrorEventV2 {
   }
 }
 
-export interface RumViewEventV2 {
+export interface RumViewEvent {
   date: number
   type: RumEventType.VIEW
   view: {
@@ -79,7 +79,7 @@ interface Count {
   count: number
 }
 
-export interface RumLongTaskEventV2 {
+export interface RumLongTaskEvent {
   date: number
   type: RumEventType.LONG_TASK
   longTask: {
@@ -87,7 +87,7 @@ export interface RumLongTaskEventV2 {
   }
 }
 
-export interface RumActionEventV2 {
+export interface RumActionEvent {
   date?: number
   type: RumEventType.ACTION
   action: {
@@ -103,14 +103,14 @@ export interface RumActionEventV2 {
   }
 }
 
-export type RawRumEventV2 =
-  | RumErrorEventV2
-  | RumResourceEventV2
-  | RumViewEventV2
-  | RumLongTaskEventV2
-  | RumActionEventV2
+export type RawRumEvent =
+  | RumErrorEvent
+  | RumResourceEvent
+  | RumViewEvent
+  | RumLongTaskEvent
+  | RumActionEvent
 
-export interface RumContextV2 {
+export interface RumContext {
   date: number
   application: {
     id: string
@@ -124,7 +124,7 @@ export interface RumContextV2 {
   }
 }
 
-export interface ViewContextV2 extends Context {
+export interface ViewContext extends Context {
   session: {
     id: string | undefined
   }
@@ -135,18 +135,18 @@ export interface ViewContextV2 extends Context {
   }
 }
 
-export interface ActionContextV2 extends Context {
+export interface ActionContext extends Context {
   action: {
     id: string
   }
 }
 
-export type RumEventV2 =
-  | RumErrorEventV2 & ActionContextV2 & ViewContextV2 & RumContextV2
-  | RumResourceEventV2 & ActionContextV2 & ViewContextV2 & RumContextV2
-  | RumViewEventV2 & ViewContextV2 & RumContextV2
-  | RumLongTaskEventV2 & ActionContextV2 & ViewContextV2 & RumContextV2
-  | RumActionEventV2 & ViewContextV2 & RumContextV2
+export type RumEvent =
+  | RumErrorEvent & ActionContext & ViewContext & RumContext
+  | RumResourceEvent & ActionContext & ViewContext & RumContext
+  | RumViewEvent & ViewContext & RumContext
+  | RumLongTaskEvent & ActionContext & ViewContext & RumContext
+  | RumActionEvent & ViewContext & RumContext
 
 export interface InternalContext {
   application_id: string

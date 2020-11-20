@@ -1,10 +1,10 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../typesV2'
+import { RumEventType } from '../../../types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { startActionCollection } from './actionCollection'
 import { ActionType } from './trackActions'
 
-describe('actionCollection v2', () => {
+describe('actionCollection', () => {
   let setupBuilder: TestSetupBuilder
   let addAction: ReturnType<typeof startActionCollection>['addAction']
 
@@ -22,7 +22,7 @@ describe('actionCollection v2', () => {
     setupBuilder.cleanup()
   })
   it('should create action from auto action', () => {
-    const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
         errorCount: 10,
@@ -36,8 +36,8 @@ describe('actionCollection v2', () => {
       type: ActionType.CLICK,
     })
 
-    expect(rawRumEventsV2[0].startTime).toBe(1234)
-    expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         error: {
           count: 10,
@@ -61,15 +61,15 @@ describe('actionCollection v2', () => {
   })
 
   it('should create action from custom action', () => {
-    const { rawRumEventsV2 } = setupBuilder.build()
+    const { rawRumEvents } = setupBuilder.build()
     addAction({
       name: 'foo',
       startTime: 1234,
       type: ActionType.CUSTOM,
     })
 
-    expect(rawRumEventsV2[0].startTime).toBe(1234)
-    expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         target: {
           name: 'foo',

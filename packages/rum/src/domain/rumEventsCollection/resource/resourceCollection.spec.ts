@@ -1,13 +1,13 @@
 import { RequestType, ResourceType } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType, RumResourceEventV2 } from '../../../typesV2'
+import { RumEventType, RumResourceEvent } from '../../../types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { startResourceCollection } from './resourceCollection'
 
-describe('resourceCollection V2', () => {
+describe('resourceCollection', () => {
   let setupBuilder: TestSetupBuilder
 
   describe('when resource tracking is enabled', () => {
@@ -31,7 +31,7 @@ describe('resourceCollection V2', () => {
     })
 
     it('should create resource from performance entry', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
         LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
         createResourceEntry({
@@ -41,8 +41,8 @@ describe('resourceCollection V2', () => {
         })
       )
 
-      expect(rawRumEventsV2[0].startTime).toBe(1234)
-      expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as number,
         resource: {
           duration: 100 * 1e6,
@@ -55,7 +55,7 @@ describe('resourceCollection V2', () => {
     })
 
     it('should create resource from completed request', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -68,8 +68,8 @@ describe('resourceCollection V2', () => {
         })
       )
 
-      expect(rawRumEventsV2[0].startTime).toBe(1234)
-      expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as number,
         resource: {
           duration: 100 * 1e6,
@@ -104,17 +104,17 @@ describe('resourceCollection V2', () => {
     })
 
     it('should not create resource from performance entry', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
 
-      expect(rawRumEventsV2.length).toBe(0)
+      expect(rawRumEvents.length).toBe(0)
     })
 
     it('should not create resource from completed request', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
 
-      expect(rawRumEventsV2.length).toBe(0)
+      expect(rawRumEvents.length).toBe(0)
     })
   })
 
@@ -141,33 +141,33 @@ describe('resourceCollection V2', () => {
     })
 
     it('should enable/disable resource creation from performance entry', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
-      expect(rawRumEventsV2.length).toBe(1)
+      expect(rawRumEvents.length).toBe(1)
 
       isTrackedWithResource = false
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
-      expect(rawRumEventsV2.length).toBe(1)
+      expect(rawRumEvents.length).toBe(1)
 
       isTrackedWithResource = true
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, createResourceEntry())
-      expect(rawRumEventsV2.length).toBe(2)
+      expect(rawRumEvents.length).toBe(2)
     })
 
     it('should enable/disable resource creation from completed request', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
-      expect(rawRumEventsV2.length).toBe(1)
+      expect(rawRumEvents.length).toBe(1)
 
       isTrackedWithResource = false
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
-      expect(rawRumEventsV2.length).toBe(1)
+      expect(rawRumEvents.length).toBe(1)
 
       isTrackedWithResource = true
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest())
-      expect(rawRumEventsV2.length).toBe(2)
+      expect(rawRumEvents.length).toBe(2)
     })
   })
 
@@ -187,7 +187,7 @@ describe('resourceCollection V2', () => {
     })
 
     it('should be processed from traced initial document', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
         LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
         createResourceEntry({
@@ -195,13 +195,13 @@ describe('resourceCollection V2', () => {
         })
       )
 
-      const traceInfo = (rawRumEventsV2[0].rawRumEvent as RumResourceEventV2)._dd!
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.traceId).toBe('1234')
     })
 
     it('should be processed from completed request', () => {
-      const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -210,7 +210,7 @@ describe('resourceCollection V2', () => {
         })
       )
 
-      const traceInfo = (rawRumEventsV2[0].rawRumEvent as RumResourceEventV2)._dd!
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.traceId).toBeDefined()
       expect(traceInfo.spanId).toBeDefined()

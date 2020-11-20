@@ -26,7 +26,7 @@ interface ServerRumEvent {
 
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: ServerRumEvent[] = []
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, ({ serverRumEvent }) => {
+  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) => {
     serverRumEvents.push(serverRumEvent as any)
   })
   return serverRumEvents

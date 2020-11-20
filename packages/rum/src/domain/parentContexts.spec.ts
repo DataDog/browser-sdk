@@ -15,7 +15,7 @@ function stubActionWithDuration(duration: number): AutoAction {
   return action as AutoAction
 }
 
-describe('parentContexts v2', () => {
+describe('parentContexts', () => {
   const FAKE_ID = 'fake'
   const startTime = 10
 
@@ -50,7 +50,7 @@ describe('parentContexts v2', () => {
     it('should return undefined when there is no current view and no startTime', () => {
       setupBuilder.build()
 
-      expect(parentContexts.findViewV2()).toBeUndefined()
+      expect(parentContexts.findView()).toBeUndefined()
     })
 
     it('should return the current view context when there is no start time', () => {
@@ -58,8 +58,8 @@ describe('parentContexts v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
 
-      expect(parentContexts.findViewV2()).toBeDefined()
-      expect(parentContexts.findViewV2()!.view.id).toEqual(FAKE_ID)
+      expect(parentContexts.findView()).toBeDefined()
+      expect(parentContexts.findView()!.view.id).toEqual(FAKE_ID)
     })
 
     it('should return the view context corresponding to startTime', () => {
@@ -69,9 +69,9 @@ describe('parentContexts v2', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 30, id: 'view 3' }))
 
-      expect(parentContexts.findViewV2(15)!.view.id).toEqual('view 1')
-      expect(parentContexts.findViewV2(20)!.view.id).toEqual('view 2')
-      expect(parentContexts.findViewV2(40)!.view.id).toEqual('view 3')
+      expect(parentContexts.findView(15)!.view.id).toEqual('view 1')
+      expect(parentContexts.findView(20)!.view.id).toEqual('view 2')
+      expect(parentContexts.findView(40)!.view.id).toEqual('view 3')
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
@@ -80,7 +80,7 @@ describe('parentContexts v2', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
 
-      expect(parentContexts.findViewV2(5)).not.toBeDefined()
+      expect(parentContexts.findView(5)).not.toBeDefined()
     })
 
     it('should replace the current view context on VIEW_CREATED', () => {
@@ -90,31 +90,31 @@ describe('parentContexts v2', () => {
       const newViewId = 'fake 2'
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: newViewId }))
 
-      expect(parentContexts.findViewV2()!.view.id).toEqual(newViewId)
+      expect(parentContexts.findView()!.view.id).toEqual(newViewId)
     })
 
     it('should return the current url with the current view', () => {
       const { lifeCycle, fakeLocation } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
-      expect(parentContexts.findViewV2()!.view.url).toBe('http://fake-url.com/')
+      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
       history.pushState({}, '', '/foo')
 
-      expect(parentContexts.findViewV2()!.view.url).toBe('http://fake-url.com/foo')
+      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })
 
     it('should update session id only on VIEW_CREATED', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
-      expect(parentContexts.findViewV2()!.session.id).toBe('fake-session')
+      expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
       sessionId = 'other-session'
-      expect(parentContexts.findViewV2()!.session.id).toBe('fake-session')
+      expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))
-      expect(parentContexts.findViewV2()!.session.id).toBe('other-session')
+      expect(parentContexts.findView()!.session.id).toBe('other-session')
     })
   })
 
@@ -122,7 +122,7 @@ describe('parentContexts v2', () => {
     it('should return undefined when there is no current action and no startTime', () => {
       setupBuilder.build()
 
-      expect(parentContexts.findActionV2()).toBeUndefined()
+      expect(parentContexts.findAction()).toBeUndefined()
     })
 
     it('should return the current action context when no startTime', () => {
@@ -130,8 +130,8 @@ describe('parentContexts v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
 
-      expect(parentContexts.findActionV2()).toBeDefined()
-      expect(parentContexts.findActionV2()!.action.id).toBe(FAKE_ID)
+      expect(parentContexts.findAction()).toBeDefined()
+      expect(parentContexts.findAction()!.action.id).toBe(FAKE_ID)
     })
 
     it('should return the action context corresponding to startTime', () => {
@@ -145,10 +145,10 @@ describe('parentContexts v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 50, id: 'action 3' })
 
-      expect(parentContexts.findActionV2(15)!.action.id).toBe('action 1')
-      expect(parentContexts.findActionV2(20)!.action.id).toBe('action 1')
-      expect(parentContexts.findActionV2(30)!.action.id).toBe('action 2')
-      expect(parentContexts.findActionV2(55)!.action.id).toBe('action 3')
+      expect(parentContexts.findAction(15)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(20)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(30)!.action.id).toBe('action 2')
+      expect(parentContexts.findAction(55)!.action.id).toBe('action 3')
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {
@@ -159,7 +159,7 @@ describe('parentContexts v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
 
-      expect(parentContexts.findActionV2(10)).toBeUndefined()
+      expect(parentContexts.findAction(10)).toBeUndefined()
     })
 
     it('should clear the current action on ACTION_DISCARDED', () => {
@@ -168,7 +168,7 @@ describe('parentContexts v2', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
 
-      expect(parentContexts.findActionV2()).toBeUndefined()
+      expect(parentContexts.findAction()).toBeUndefined()
     })
 
     it('should clear the current action on ACTION_COMPLETED', () => {
@@ -177,7 +177,7 @@ describe('parentContexts v2', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
 
-      expect(parentContexts.findActionV2()).toBeUndefined()
+      expect(parentContexts.findAction()).toBeUndefined()
     })
   })
 
@@ -203,17 +203,17 @@ describe('parentContexts v2', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
 
-      expect(parentContexts.findViewV2(15)).toBeDefined()
-      expect(parentContexts.findActionV2(15)).toBeDefined()
-      expect(parentContexts.findViewV2(25)).toBeDefined()
-      expect(parentContexts.findActionV2(25)).toBeDefined()
+      expect(parentContexts.findView(15)).toBeDefined()
+      expect(parentContexts.findAction(15)).toBeDefined()
+      expect(parentContexts.findView(25)).toBeDefined()
+      expect(parentContexts.findAction(25)).toBeDefined()
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(parentContexts.findViewV2(15)).toBeUndefined()
-      expect(parentContexts.findActionV2(15)).toBeUndefined()
-      expect(parentContexts.findViewV2(25)).toBeUndefined()
-      expect(parentContexts.findActionV2(25)).toBeUndefined()
+      expect(parentContexts.findView(15)).toBeUndefined()
+      expect(parentContexts.findAction(15)).toBeUndefined()
+      expect(parentContexts.findView(25)).toBeUndefined()
+      expect(parentContexts.findAction(25)).toBeUndefined()
     })
 
     it('should be cleared when too old', () => {
@@ -237,16 +237,16 @@ describe('parentContexts v2', () => {
       )
 
       clock.tick(10)
-      expect(parentContexts.findViewV2(targetTime)).toBeDefined()
-      expect(parentContexts.findActionV2(targetTime)).toBeDefined()
+      expect(parentContexts.findView(targetTime)).toBeDefined()
+      expect(parentContexts.findAction(targetTime)).toBeDefined()
 
       clock.tick(ACTION_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
-      expect(parentContexts.findViewV2(targetTime)).toBeDefined()
-      expect(parentContexts.findActionV2(targetTime)).toBeUndefined()
+      expect(parentContexts.findView(targetTime)).toBeDefined()
+      expect(parentContexts.findAction(targetTime)).toBeUndefined()
 
       clock.tick(VIEW_CONTEXT_TIME_OUT_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
-      expect(parentContexts.findViewV2(targetTime)).toBeUndefined()
-      expect(parentContexts.findActionV2(targetTime)).toBeUndefined()
+      expect(parentContexts.findView(targetTime)).toBeUndefined()
+      expect(parentContexts.findAction(targetTime)).toBeUndefined()
     })
   })
 })

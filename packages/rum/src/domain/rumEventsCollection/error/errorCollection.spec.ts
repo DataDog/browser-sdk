@@ -1,10 +1,10 @@
 import { Observable, RawError } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { ErrorSource } from '../../../index'
-import { RumEventType } from '../../../typesV2'
+import { RumEventType } from '../../../types'
 import { doStartErrorCollection } from './errorCollection'
 
-describe('error collection v2', () => {
+describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
   const errorObservable = new Observable<RawError>()
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
@@ -25,15 +25,15 @@ describe('error collection v2', () => {
 
   describe('provided', () => {
     it('notifies a raw rum error event', () => {
-      const { rawRumEventsV2 } = setupBuilder.build()
+      const { rawRumEvents } = setupBuilder.build()
       addError({
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
         startTime: 12,
       })
 
-      expect(rawRumEventsV2.length).toBe(1)
-      expect(rawRumEventsV2[0]).toEqual({
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0]).toEqual({
         customerContext: undefined,
         rawRumEvent: {
           date: jasmine.any(Number),
@@ -52,20 +52,20 @@ describe('error collection v2', () => {
     })
 
     it('should save the specified customer context', () => {
-      const { rawRumEventsV2 } = setupBuilder.build()
+      const { rawRumEvents } = setupBuilder.build()
       addError({
         context: { foo: 'bar' },
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
         startTime: 12,
       })
-      expect(rawRumEventsV2[0].customerContext).toEqual({
+      expect(rawRumEvents[0].customerContext).toEqual({
         foo: 'bar',
       })
     })
 
     it('should save the global context', () => {
-      const { rawRumEventsV2 } = setupBuilder.build()
+      const { rawRumEvents } = setupBuilder.build()
       addError(
         {
           error: new Error('foo'),
@@ -74,7 +74,7 @@ describe('error collection v2', () => {
         },
         { foo: 'bar' }
       )
-      expect(rawRumEventsV2[0].savedGlobalContext).toEqual({
+      expect(rawRumEvents[0].savedGlobalContext).toEqual({
         foo: 'bar',
       })
     })
@@ -82,7 +82,7 @@ describe('error collection v2', () => {
 
   describe('auto', () => {
     it('should create error event from collected error', () => {
-      const { rawRumEventsV2 } = setupBuilder.build()
+      const { rawRumEvents } = setupBuilder.build()
       errorObservable.notify({
         message: 'hello',
         resource: {
@@ -96,8 +96,8 @@ describe('error collection v2', () => {
         type: 'foo',
       })
 
-      expect(rawRumEventsV2[0].startTime).toBe(1234)
-      expect(rawRumEventsV2[0].rawRumEvent).toEqual({
+      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         error: {
           message: 'hello',

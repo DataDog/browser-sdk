@@ -1,5 +1,5 @@
 import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import { ActionContextV2, ViewContextV2 } from '../typesV2'
+import { ActionContext, ViewContext } from '../types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
@@ -16,8 +16,8 @@ interface PreviousContext<T> {
 }
 
 export interface ParentContexts {
-  findActionV2: (startTime?: number) => ActionContextV2 | undefined
-  findViewV2: (startTime?: number) => ViewContextV2 | undefined
+  findAction: (startTime?: number) => ActionContext | undefined
+  findView: (startTime?: number) => ViewContext | undefined
   stop: () => void
 }
 
@@ -26,8 +26,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   let currentAction: AutoActionCreatedEvent | undefined
   let currentSessionId: string | undefined
 
-  let previousViews: Array<PreviousContext<ViewContextV2>> = []
-  let previousActions: Array<PreviousContext<ActionContextV2>> = []
+  let previousViews: Array<PreviousContext<ViewContext>> = []
+  let previousActions: Array<PreviousContext<ActionContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     if (currentView) {
@@ -131,10 +131,10 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   }
 
   return {
-    findActionV2: (startTime) => {
+    findAction: (startTime) => {
       return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
     },
-    findViewV2: (startTime) => {
+    findView: (startTime) => {
       return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
     },
     stop: () => {

@@ -12,7 +12,7 @@ import {
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
-import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
+import { RawRumEvent, RumContext, ViewContext } from '../src/types'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -42,9 +42,9 @@ export interface TestIO {
   clock: jasmine.Clock
   fakeLocation: Partial<Location>
   session: RumSession
-  rawRumEventsV2: Array<{
+  rawRumEvents: Array<{
     startTime: number
-    rawRumEvent: RawRumEventV2
+    rawRumEvent: RawRumEvent
     savedGlobalContext?: Context
     customerContext?: Context
   }>
@@ -60,9 +60,9 @@ export function setup(): TestSetupBuilder {
   const cleanupTasks: Array<() => void> = []
   let cleanupClock = noop
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const rawRumEventsV2: Array<{
+  const rawRumEvents: Array<{
     startTime: number
-    rawRumEvent: RawRumEventV2
+    rawRumEvent: RawRumEvent
     savedGlobalContext?: Context
     customerContext?: Context
   }> = []
@@ -78,8 +78,8 @@ export function setup(): TestSetupBuilder {
   const FAKE_APP_ID = 'appId'
 
   // ensure that events generated before build are collected
-  const rawRumEventsV2Collected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, (data) => {
-    rawRumEventsV2.push(data)
+  const rawRumEventsCollected = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
+    rawRumEvents.push(data)
     validateRumEventFormat(data.rawRumEvent)
   })
 
@@ -146,7 +146,7 @@ export function setup(): TestSetupBuilder {
         clock,
         fakeLocation,
         lifeCycle,
-        rawRumEventsV2,
+        rawRumEvents,
         session,
       }
     },
@@ -154,7 +154,7 @@ export function setup(): TestSetupBuilder {
       cleanupTasks.forEach((task) => task())
       // perform these steps at the end to generate correct events in cleanup and validate them
       cleanupClock()
-      rawRumEventsV2Collected.unsubscribe()
+      rawRumEventsCollected.unsubscribe()
     },
   }
   return setupBuilder
@@ -170,9 +170,9 @@ function buildLocation(url: string, base?: string) {
   }
 }
 
-function validateRumEventFormat(rawRumEvent: RawRumEventV2) {
+function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
-  const fakeContext: RumContextV2 & ViewContextV2 = {
+  const fakeContext: RumContext & ViewContext = {
     _dd: {
       formatVersion: 2,
     },

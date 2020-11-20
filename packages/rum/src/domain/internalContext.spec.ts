@@ -2,19 +2,19 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
 
-describe('internal context v2', () => {
+describe('internal context', () => {
   let setupBuilder: TestSetupBuilder
   let parentContextsStub: Partial<ParentContexts>
   let internalContext: ReturnType<typeof startInternalContext>
 
   beforeEach(() => {
     parentContextsStub = {
-      findActionV2: jasmine.createSpy('findAction').and.returnValue({
+      findAction: jasmine.createSpy('findAction').and.returnValue({
         action: {
           id: '7890',
         },
       }),
-      findViewV2: jasmine.createSpy('findView').and.returnValue({
+      findView: jasmine.createSpy('findView').and.returnValue({
         session: {
           id: '1234',
         },
@@ -70,7 +70,7 @@ describe('internal context v2', () => {
 
     internalContext.get(123)
 
-    expect(parentContextsStub.findViewV2).toHaveBeenCalledWith(123)
-    expect(parentContextsStub.findActionV2).toHaveBeenCalledWith(123)
+    expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
+    expect(parentContextsStub.findAction).toHaveBeenCalledWith(123)
   })
 })

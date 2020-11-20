@@ -1,10 +1,10 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../typesV2'
+import { RumEventType } from '../../../types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { View, ViewLoadingType } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
-describe('viewCollection V2', () => {
+describe('viewCollection', () => {
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('viewCollection V2', () => {
   })
 
   it('should create view from view update', () => {
-    const { lifeCycle, rawRumEventsV2 } = setupBuilder.build()
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const view = {
       documentVersion: 3,
       duration: 100,
@@ -50,8 +50,8 @@ describe('viewCollection V2', () => {
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 
-    expect(rawRumEventsV2[rawRumEventsV2.length - 1].startTime).toBe(1234)
-    expect(rawRumEventsV2[rawRumEventsV2.length - 1].rawRumEvent).toEqual({
+    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
+    expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         documentVersion: 3,
       },

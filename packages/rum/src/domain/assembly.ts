@@ -1,12 +1,5 @@
 import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
-import {
-  RawRumEventV2,
-  RumContextV2,
-  RumErrorEventV2,
-  RumEventType,
-  RumLongTaskEventV2,
-  RumResourceEventV2,
-} from '../typesV2'
+import { RawRumEvent, RumContext, RumErrorEvent, RumEventType, RumLongTaskEvent, RumResourceEvent } from '../types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -20,7 +13,7 @@ enum SessionType {
   USER = 'user',
 }
 
-export function startRumAssemblyV2(
+export function startRumAssembly(
   applicationId: string,
   configuration: Configuration,
   lifeCycle: LifeCycle,
@@ -29,7 +22,7 @@ export function startRumAssemblyV2(
   getGlobalContext: () => Context
 ) {
   lifeCycle.subscribe(
-    LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
+    LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({
       startTime,
       rawRumEvent,
@@ -37,14 +30,14 @@ export function startRumAssemblyV2(
       customerContext,
     }: {
       startTime: number
-      rawRumEvent: RawRumEventV2
+      rawRumEvent: RawRumEvent
       savedGlobalContext?: Context
       customerContext?: Context
     }) => {
-      const viewContext = parentContexts.findViewV2(startTime)
+      const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
-        const actionContext = parentContexts.findActionV2(startTime)
-        const rumContext: RumContextV2 = {
+        const actionContext = parentContexts.findAction(startTime)
+        const rumContext: RumContext = {
           _dd: {
             formatVersion: 2,
           },
@@ -64,15 +57,13 @@ export function startRumAssemblyV2(
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(rumEvent)
         serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
   )
 }
 
-function needToAssembleWithAction(
-  event: RawRumEventV2
-): event is RumErrorEventV2 | RumResourceEventV2 | RumLongTaskEventV2 {
+function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 

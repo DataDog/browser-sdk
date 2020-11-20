@@ -1,11 +1,11 @@
 import { combine, Configuration, Context, getTimestamp, msToNs } from '@datadog/browser-core'
-import { RumActionEventV2, RumEventType } from '../../../typesV2'
+import { RumActionEvent, RumEventType } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
 
 export function startActionCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processActionV2(action))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   )
 
   if (configuration.trackInteractions) {
@@ -14,15 +14,15 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
 
   return {
     addAction(action: CustomAction, savedGlobalContext?: Context) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedGlobalContext,
-        ...processActionV2(action),
+        ...processAction(action),
       })
     },
   }
 }
 
-function processActionV2(action: AutoAction | CustomAction) {
+function processAction(action: AutoAction | CustomAction) {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -41,7 +41,7 @@ function processActionV2(action: AutoAction | CustomAction) {
       }
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent: RumActionEventV2 = combine(
+  const actionEvent: RumActionEvent = combine(
     {
       action: {
         target: {
