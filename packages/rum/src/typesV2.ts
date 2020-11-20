@@ -145,20 +145,3 @@ export type RumEventV2 =
   | RumViewEventV2 & ViewContextV2 & RumContextV2
   | RumLongTaskEventV2 & ActionContextV2 & ViewContextV2 & RumContextV2
   | RumActionEventV2 & ViewContextV2 & RumContextV2
-
-export interface InternalContextV2 {
-  application: {
-    id: string
-  }
-  session: {
-    id: string | undefined
-  }
-  view?: {
-    id: string
-    url: string
-    referrer: string
-  }
-  action?: {
-    id: string
-  }
-}

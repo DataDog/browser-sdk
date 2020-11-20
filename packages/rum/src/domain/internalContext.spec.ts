@@ -114,14 +114,10 @@ describe('internal context v2', () => {
     setupBuilder.build()
 
     expect(internalContext.get()).toEqual({
-      action: {
+      application_id: 'appId',
+      session_id: '1234',
+      user_action: {
         id: '7890',
-      },
-      application: {
-        id: 'appId',
-      },
-      session: {
-        id: '1234',
       },
       view: {
         id: 'abcde',
