@@ -488,7 +488,7 @@ describe('rum view measures', () => {
         domComplete: 456,
         domContentLoaded: 345,
         domInteractive: 234,
-        loadEventEnd: 567,
+        loadEvent: 567,
       })
     })
 
@@ -511,7 +511,7 @@ describe('rum view measures', () => {
         domInteractive: 234,
         firstContentfulPaint: 123,
         largestContentfulPaint: 789,
-        loadEventEnd: 567,
+        loadEvent: 567,
       })
       expect(getViewEvent(2).timings).toEqual({})
     })
@@ -563,7 +563,7 @@ describe('rum view measures', () => {
           domInteractive: 234,
           firstContentfulPaint: 123,
           largestContentfulPaint: 789,
-          loadEventEnd: 567,
+          loadEvent: 567,
         })
       })
 

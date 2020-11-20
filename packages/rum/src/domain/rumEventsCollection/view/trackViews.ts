@@ -125,7 +125,7 @@ function newView(
     scheduleViewUpdate()
   })
 
-  const { setActivityLoadingTime, setLoadEventEnd } = trackLoadingTime(loadingType, (newLoadingTime) => {
+  const { setActivityLoadingTime, setLoadEvent } = trackLoadingTime(loadingType, (newLoadingTime) => {
     loadingTime = newLoadingTime
     scheduleViewUpdate()
   })
@@ -171,8 +171,8 @@ function newView(
     },
     updateTimings(newTimings: Timings) {
       timings = newTimings
-      if (newTimings.loadEventEnd !== undefined) {
-        setLoadEventEnd(newTimings.loadEventEnd)
+      if (newTimings.loadEvent !== undefined) {
+        setLoadEvent(newTimings.loadEvent)
       }
     },
     updateLocation(newLocation: Location) {
@@ -208,21 +208,21 @@ function trackHash(onHashChange: () => void) {
 }
 
 function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
-  let isWaitingForLoadEventEnd = loadType === ViewLoadingType.INITIAL_LOAD
+  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: number[] = []
 
   function invokeCallbackIfAllCandidatesAreReceived() {
-    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEventEnd && loadingTimeCandidates.length > 0) {
+    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
       callback(Math.max(...loadingTimeCandidates))
     }
   }
 
   return {
-    setLoadEventEnd(loadEventEnd: number) {
-      if (isWaitingForLoadEventEnd) {
-        isWaitingForLoadEventEnd = false
-        loadingTimeCandidates.push(loadEventEnd)
+    setLoadEvent(loadEvent: number) {
+      if (isWaitingForLoadEvent) {
+        isWaitingForLoadEvent = false
+        loadingTimeCandidates.push(loadEvent)
         invokeCallbackIfAllCandidatesAreReceived()
       }
     },

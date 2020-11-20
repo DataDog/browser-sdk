@@ -45,7 +45,7 @@ describe('viewCollection', () => {
         firstContentfulPaint: 10,
         firstInputDelay: 12,
         largestContentfulPaint: 10,
-        loadEventEnd: 10,
+        loadEvent: 10,
       },
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
@@ -70,7 +70,7 @@ describe('viewCollection', () => {
         firstContentfulPaint: 10 * 1e6,
         firstInputDelay: 12 * 1e6,
         largestContentfulPaint: 10 * 1e6,
-        loadEventEnd: 10 * 1e6,
+        loadEvent: 10 * 1e6,
         loadingTime: 20 * 1e6,
         loadingType: ViewLoadingType.INITIAL_LOAD,
         longTask: {

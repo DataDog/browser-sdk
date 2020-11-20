@@ -13,7 +13,7 @@ describe('rum views', () => {
       expect(viewEvent.view.dom_complete).toBeGreaterThan(0)
       expect(viewEvent.view.dom_content_loaded).toBeGreaterThan(0)
       expect(viewEvent.view.dom_interactive).toBeGreaterThan(0)
-      expect(viewEvent.view.load_event_end).toBeGreaterThan(0)
+      expect(viewEvent.view.load_event).toBeGreaterThan(0)
     })
 
   // When run via WebDriver, Safari 12 and 13 (at least) have an issue with `event.timeStamp`,

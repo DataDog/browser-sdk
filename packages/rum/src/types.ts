@@ -62,7 +62,7 @@ export interface RumViewEvent {
     domInteractive?: number
     domContentLoaded?: number
     domComplete?: number
-    loadEventEnd?: number
+    loadEvent?: number
     loadingTime?: number
     timeSpent: number
     error: Count
@@ -103,12 +103,7 @@ export interface RumActionEvent {
   }
 }
 
-export type RawRumEvent =
-  | RumErrorEvent
-  | RumResourceEvent
-  | RumViewEvent
-  | RumLongTaskEvent
-  | RumActionEvent
+export type RawRumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumActionEvent
 
 export interface RumContext {
   date: number
