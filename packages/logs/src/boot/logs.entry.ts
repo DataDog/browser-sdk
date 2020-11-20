@@ -19,12 +19,10 @@ export interface LogsUserConfiguration extends UserConfiguration {
 }
 
 export interface LoggerConfiguration {
-  level?: StatusType
-  handler?: HandlerType
+  level?: 'debug' | 'info' | 'warn' | 'error'
+  handler?: 'http' | 'console' | 'silent'
   context?: Context
 }
-
-export type Status = keyof typeof StatusType
 
 export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
@@ -77,7 +75,7 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
+      customLoggers[name] = new Logger(sendLog, conf.handler as HandlerType, conf.level as StatusType, {
         ...conf.context,
         logger: { name },
       })

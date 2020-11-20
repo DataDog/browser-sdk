@@ -7,7 +7,7 @@ export enum StatusType {
   error = 'error',
 }
 
-export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
+const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
   [StatusType.info]: 1,
   [StatusType.warn]: 2,
@@ -41,13 +41,13 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: Context, status = StatusType.info) {
+  log(message: string, messageContext?: Context, status: 'debug' | 'info' | 'warn' | 'error' = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
           this.sendLog({
             message,
-            status,
+            status: status as StatusType,
             ...combine(this.contextManager.get(), messageContext),
           })
           break
@@ -93,11 +93,11 @@ export class Logger {
     this.contextManager.remove(key)
   }
 
-  setHandler(handler: HandlerType) {
-    this.handlerType = handler
+  setHandler(handler: 'http' | 'console' | 'silent') {
+    this.handlerType = handler as HandlerType
   }
 
-  setLevel(level: StatusType) {
-    this.level = level
+  setLevel(level: 'debug' | 'info' | 'warn' | 'error') {
+    this.level = level as StatusType
   }
 }

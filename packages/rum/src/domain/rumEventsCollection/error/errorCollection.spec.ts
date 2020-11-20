@@ -1,6 +1,5 @@
-import { Observable, RawError } from '@datadog/browser-core'
+import { ErrorSource, Observable, RawError } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { ErrorSource } from '../../../index'
 import { RumEventType } from '../../../types'
 import { doStartErrorCollection } from './errorCollection'
 
