@@ -1,6 +1,5 @@
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, NEW_INTAKE_DOMAIN_ALLOWED_SITES } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
-import { getOrigin, getPathName, haveSameOrigin } from '../tools/urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 
 export const DEFAULT_CONFIGURATION = {
