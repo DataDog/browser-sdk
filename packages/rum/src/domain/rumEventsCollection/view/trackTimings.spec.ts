@@ -1,6 +1,7 @@
 import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
+  RumFirstInputTiming,
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
@@ -10,6 +11,7 @@ import { resetFirstHidden } from './trackFirstHidden'
 import {
   Timings,
   trackFirstContentfulPaint,
+  trackFirstInputDelay,
   trackLargestContentfulPaint,
   trackNavigationTimings,
   trackTimings,
@@ -34,6 +36,12 @@ const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   startTime: 789,
 }
 
+const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
+  entryType: 'first-input',
+  processingStart: 1100,
+  startTime: 1000,
+}
+
 describe('trackTimings', () => {
   let setupBuilder: TestSetupBuilder
   let timingsCallback: jasmine.Spy<(value: Partial<Timings>) => void>
@@ -54,13 +62,15 @@ describe('trackTimings', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
 
-    expect(timingsCallback).toHaveBeenCalledTimes(2)
+    expect(timingsCallback).toHaveBeenCalledTimes(3)
     expect(timingsCallback.calls.mostRecent().args[0]).toEqual({
       domComplete: 456,
       domContentLoaded: 345,
       domInteractive: 234,
       firstContentfulPaint: 123,
+      firstInputDelay: 100,
       loadEventEnd: 567,
     })
   })
@@ -175,5 +185,41 @@ describe('largestContentfulPaint', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
 
     expect(lcpCallback).not.toHaveBeenCalled()
+  })
+})
+
+describe('firstInputDelay', () => {
+  let setupBuilder: TestSetupBuilder
+  let fidCallback: jasmine.Spy<(value: number) => void>
+
+  beforeEach(() => {
+    fidCallback = jasmine.createSpy()
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
+      return trackFirstInputDelay(lifeCycle, fidCallback)
+    })
+    resetFirstHidden()
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+    restorePageVisibility()
+    resetFirstHidden()
+  })
+
+  it('should provide the first input delay', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
+    expect(fidCallback).toHaveBeenCalledTimes(1)
+    expect(fidCallback).toHaveBeenCalledWith(100)
+  })
+
+  it('should not be present if the page is hidden', () => {
+    setPageVisibility('hidden')
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
+
+    expect(fidCallback).not.toHaveBeenCalled()
   })
 })

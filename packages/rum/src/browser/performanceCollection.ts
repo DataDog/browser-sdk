@@ -1,4 +1,12 @@
-import { addEventListener, Configuration, DOM_EVENT, getRelativeTime, isNumber, monitor } from '@datadog/browser-core'
+import {
+  addEventListener,
+  addEventListeners,
+  Configuration,
+  DOM_EVENT,
+  getRelativeTime,
+  isNumber,
+  monitor,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
@@ -54,22 +62,29 @@ export interface RumLargestContentfulPaintTiming {
   startTime: number
 }
 
+export interface RumFirstInputTiming {
+  entryType: 'first-input'
+  startTime: number
+  processingStart: number
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
   | RumPerformancePaintTiming
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
+  | RumFirstInputTiming
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-function supportPerformanceNavigationTimingEvent() {
+function supportPerformanceTimingEvent(entryType: string) {
   return (
     (window as BrowserWindow).PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
-    PerformanceObserver.supportedEntryTypes.includes('navigation')
+    PerformanceObserver.supportedEntryTypes.includes(entryType)
   )
 }
 
@@ -85,7 +100,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
-    const entryTypes = ['resource', 'navigation', 'longtask', 'paint', 'largest-contentful-paint']
+    const entryTypes = ['resource', 'navigation', 'longtask', 'paint', 'largest-contentful-paint', 'first-input']
 
     observer.observe({ entryTypes })
 
@@ -96,8 +111,13 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       })
     }
   }
-  if (!supportPerformanceNavigationTimingEvent()) {
+  if (!supportPerformanceTimingEvent('navigation')) {
     retrieveNavigationTiming((timing) => {
+      handleRumPerformanceEntry(lifeCycle, configuration, timing)
+    })
+  }
+  if (!supportPerformanceTimingEvent('first-input')) {
+    retrieveFirstInputTiming((timing) => {
       handleRumPerformanceEntry(lifeCycle, configuration, timing)
     })
   }
@@ -112,7 +132,7 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
       initiatorType: FAKE_INITIAL_DOCUMENT,
       traceId: getDocumentTraceId(document),
     }
-    if (supportPerformanceNavigationTimingEvent() && performance.getEntriesByType('navigation').length > 0) {
+    if (supportPerformanceTimingEvent('navigation') && performance.getEntriesByType('navigation').length > 0) {
       const navigationEntry = performance.getEntriesByType('navigation')[0]
       timing = { ...navigationEntry.toJSON(), ...forcedAttributes }
     } else {
@@ -142,6 +162,77 @@ function retrieveNavigationTiming(callback: (timing: RumPerformanceNavigationTim
     // Send it a bit after the actual load event, so the "loadEventEnd" timing is accurate
     setTimeout(monitor(sendFakeTiming))
   })
+}
+
+/**
+ * first-input timing entry polyfill based on
+ * https://github.com/GoogleChrome/web-vitals/blob/master/src/lib/polyfills/firstInputPolyfill.ts
+ */
+function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => void) {
+  const startTimeStamp = Date.now()
+  let timingSent = false
+
+  const { stop: removeEventListeners } = addEventListeners(
+    window,
+    [DOM_EVENT.CLICK, DOM_EVENT.MOUSE_DOWN, DOM_EVENT.KEY_DOWN, DOM_EVENT.TOUCH_START, DOM_EVENT.POINTER_DOWN],
+    (evt) => {
+      // Only count cancelable events, which should trigger behavior important to the user.
+      if (!evt.cancelable) {
+        return
+      }
+
+      // This timing will be used to compute the "first Input delay", which is the delta between
+      // when the system received the event (e.g. evt.timeStamp) and when it could run the callback
+      // (e.g. performance.now()).
+      const timing: RumFirstInputTiming = {
+        entryType: 'first-input',
+        processingStart: performance.now(),
+        startTime: evt.timeStamp,
+      }
+
+      if (evt.type === DOM_EVENT.POINTER_DOWN) {
+        sendTimingIfPointerIsNotCancelled(timing)
+      } else {
+        sendTiming(timing)
+      }
+    },
+    { passive: true, capture: true }
+  )
+
+  /**
+   * Pointer events are a special case, because they can trigger main or compositor thread behavior.
+   * We differenciate these cases based on whether or not we see a pointercancel event, which are
+   * fired when we scroll. If we're scrolling we don't need to report input delay since FID excludes
+   * scrolling and pinch/zooming.
+   */
+  function sendTimingIfPointerIsNotCancelled(timing: RumFirstInputTiming) {
+    addEventListeners(
+      window,
+      [DOM_EVENT.POINTER_UP, DOM_EVENT.POINTER_CANCEL],
+      (event) => {
+        if (event.type === DOM_EVENT.POINTER_UP) {
+          sendTiming(timing)
+        }
+      },
+      { once: true }
+    )
+  }
+
+  function sendTiming(timing: RumFirstInputTiming) {
+    if (!timingSent) {
+      timingSent = true
+      removeEventListeners()
+      // In some cases the recorded delay is clearly wrong, e.g. it's negative or it's larger than
+      // the time between now and when the page was loaded.
+      // - https://github.com/GoogleChromeLabs/first-input-delay/issues/4
+      // - https://github.com/GoogleChromeLabs/first-input-delay/issues/6
+      // - https://github.com/GoogleChromeLabs/first-input-delay/issues/7
+      const delay = timing.processingStart - timing.startTime
+      if (delay >= 0 && delay < Date.now() - startTimeStamp) {
+        callback(timing)
+      }
+    }
+  }
 }
 
 function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
@@ -175,7 +266,8 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
       entry.entryType === 'navigation' ||
       entry.entryType === 'paint' ||
       entry.entryType === 'longtask' ||
-      entry.entryType === 'largest-contentful-paint'
+      entry.entryType === 'largest-contentful-paint' ||
+      entry.entryType === 'first-input'
     ) {
       handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
     }

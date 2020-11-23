@@ -16,8 +16,11 @@ export enum DOM_EVENT {
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
   POINTER_DOWN = 'pointerdown',
+  POINTER_UP = 'pointerup',
+  POINTER_CANCEL = 'pointercancel',
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
+  MOUSE_DOWN = 'mousedown',
 }
 
 export enum ResourceType {
