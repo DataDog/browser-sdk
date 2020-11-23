@@ -904,7 +904,7 @@ describe('rum view measures', () => {
       expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
     })
 
-    it('should be initialized to 0 if layout-shift is not supported', () => {
+    it('should be initialized to undefined if layout-shift is not supported', () => {
       isLayoutShiftSupported = false
       setupBuilder.build()
       expect(getHandledCount()).toEqual(1)
