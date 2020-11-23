@@ -107,7 +107,7 @@ function newView(
   }
   let timings: Timings = {}
   let documentVersion = 0
-  let cumulativeLayoutShift = isLayoutShiftSupported() ? 0 : undefined
+  let cumulativeLayoutShift: number | undefined
   let loadingTime: number | undefined
   let endTime: number | undefined
   let location: Location = { ...initialLocation }
@@ -135,10 +135,16 @@ function newView(
 
   const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
 
-  const { stop: stopCLSTracking } = trackLayoutShift(lifeCycle, (layoutShift) => {
-    cumulativeLayoutShift = (cumulativeLayoutShift || 0) + layoutShift
-    scheduleViewUpdate()
-  })
+  let stopCLSTracking: () => void
+  if (isLayoutShiftSupported()) {
+    cumulativeLayoutShift = 0
+    ;({ stop: stopCLSTracking } = trackLayoutShift(lifeCycle, (layoutShift) => {
+      cumulativeLayoutShift! += layoutShift
+      scheduleViewUpdate()
+    }))
+  } else {
+    stopCLSTracking = noop
+  }
 
   // Initial view update
   triggerViewUpdate()
@@ -271,16 +277,12 @@ function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeVa
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
 function trackLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
-  let stop
-  if (isLayoutShiftSupported()) {
-    ;({ unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-      if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-        callback(entry.value)
-      }
-    }))
-  } else {
-    stop = noop
-  }
+  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
+    if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+      callback(entry.value)
+    }
+  })
+
   return {
     stop,
   }
