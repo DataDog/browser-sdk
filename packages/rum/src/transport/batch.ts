@@ -52,10 +52,7 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
   }
 
   function withReplicaApplicationId(message: Context) {
-    const applicationIdOverwrite = configuration.isEnabled('v2_format')
-      ? { application: { id: replica!.applicationId } }
-      : { application_id: replica!.applicationId }
-    return combine(message, applicationIdOverwrite)
+    return combine(message, { application: { id: replica!.applicationId } })
   }
 
   let stopped = false
