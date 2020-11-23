@@ -889,6 +889,9 @@ describe('rum view measures', () => {
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
     beforeEach(() => {
+      if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
+        pending('No PerformanceObserver support')
+      }
       isLayoutShiftSupported = true
       spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() => {
         return isLayoutShiftSupported ? ['layout-shift'] : []
