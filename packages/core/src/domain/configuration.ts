@@ -75,11 +75,10 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   internalMonitoringEndpoint?: string
   proxyHost?: string
 
-  intakeUrls: string[]
-
   service?: string
 
   isEnabled: (feature: string) => boolean
+  isIntakeUrl: (url: string) => boolean
 
   // only on staging build mode
   replica?: ReplicaConfiguration
@@ -128,6 +127,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     ? userConfiguration.enableExperimentalFeatures
     : []
 
+  const intakeUrls = getIntakeUrls(transportConfiguration, userConfiguration.replica !== undefined)
   const configuration: Configuration = {
     cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
@@ -139,7 +139,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     service: userConfiguration.service,
     traceEndpoint: getEndpoint(EndpointType.TRACE, transportConfiguration),
 
-    intakeUrls: getIntakeUrls(transportConfiguration),
+    isIntakeUrl: (url) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
@@ -190,7 +190,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
         logsEndpoint: getEndpoint(EndpointType.LOGS, replicaTransportConfiguration),
         rumEndpoint: getEndpoint(EndpointType.RUM, replicaTransportConfiguration),
       }
-      configuration.intakeUrls.push(...getIntakeUrls(replicaTransportConfiguration))
     }
   }
 
@@ -237,27 +236,30 @@ function getHost(type: EndpointType, conf: TransportConfiguration) {
   return `${oldTypes[type]}-http-intake.logs.${conf.site}`
 }
 
-function getIntakeUrls(conf: TransportConfiguration) {
+function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
   if (conf.proxyHost) {
     return [`https://${conf.proxyHost}/v1/input/`]
   }
-  const urls = [
-    `https://rum-http-intake.logs.${conf.site}/v1/input/`,
-    `https://browser-http-intake.logs.${conf.site}/v1/input/`,
-    `https://public-trace-http-intake.logs.${conf.site}/v1/input/`,
-  ]
-  if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
+  const sites = [conf.site]
+  if (conf.buildMode === BuildMode.STAGING && withReplica) {
+    sites.push(INTAKE_SITE[Datacenter.US])
+  }
+  const urls = []
+  for (const site of sites) {
     urls.push(
-      `https://rum.browser-intake-${conf.site}/v1/input/`,
-      `https://logs.browser-intake-${conf.site}/v1/input/`,
-      `https://trace.browser-intake-${conf.site}/v1/input/`
+      `https://rum-http-intake.logs.${site}/v1/input/`,
+      `https://browser-http-intake.logs.${site}/v1/input/`,
+      `https://public-trace-http-intake.logs.${site}/v1/input/`
     )
+    if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(site) !== -1) {
+      urls.push(
+        `https://rum.browser-intake-${site}/v1/input/`,
+        `https://logs.browser-intake-${site}/v1/input/`,
+        `https://trace.browser-intake-${site}/v1/input/`
+      )
+    }
   }
   return urls
-}
-
-export function isIntakeRequest(url: string, configuration: Configuration) {
-  return configuration.intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {

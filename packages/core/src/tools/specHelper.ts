@@ -2,16 +2,20 @@ import { Configuration } from '../domain/configuration'
 import { noop, objectEntries } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
-  intakeUrls: [
-    'https://monitoring-intake.com/v1/input/',
-    'https://logs-intake.com/v1/input/',
-    'https://rum-intake.com/v1/input/',
-    'https://trace-intake.com/v1/input/',
-  ],
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
   logsEndpoint: 'https://logs-intake.com/v1/input/abcde?foo=bar',
   rumEndpoint: 'https://rum-intake.com/v1/input/abcde?foo=bar',
   traceEndpoint: 'https://trace-intake.com/v1/input/abcde?foo=bar',
+
+  isIntakeUrl: (url: string) => {
+    const intakeUrls = [
+      'https://monitoring-intake.com/v1/input/',
+      'https://logs-intake.com/v1/input/',
+      'https://rum-intake.com/v1/input/',
+      'https://trace-intake.com/v1/input/',
+    ]
+    return intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
+  },
 }
 
 export function isSafari() {
