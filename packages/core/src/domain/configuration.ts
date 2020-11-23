@@ -258,12 +258,7 @@ function getIntakeUrls(conf: TransportConfiguration) {
 }
 
 export function isIntakeRequest(url: string, configuration: Configuration) {
-  for (const intakeUrl of configuration.intakeUrls) {
-    if (url.indexOf(intakeUrl) === 0) {
-      return true
-    }
-  }
-  return false
+  return configuration.intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0)
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {
