@@ -14,6 +14,7 @@ module.exports = function(config) {
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: Object.keys(browsers),
     concurrency: 5,
+    browserDisconnectTolerance: 3,
     hostname: getIp(),
     browserStack: {
       username: process.env.BS_USERNAME,
