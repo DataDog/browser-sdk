@@ -14,11 +14,13 @@ const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
+export type Status = 'debug' | 'info' | 'warn' | 'error'
+
 export const STATUSES = Object.keys(StatusType)
 
 export interface LogsMessage {
   message: string
-  status: 'debug' | 'info' | 'warn' | 'error'
+  status: Status
   [key: string]: ContextValue
 }
 
@@ -28,20 +30,22 @@ export enum HandlerType {
   silent = 'silent',
 }
 
+export type Handler = 'http' | 'console' | 'silent'
+
 export class Logger {
   private contextManager = createContextManager()
 
   constructor(
     private sendLog: (message: LogsMessage) => void,
-    private handlerType: 'http' | 'console' | 'silent' = HandlerType.http,
-    private level: 'debug' | 'info' | 'warn' | 'error' = StatusType.debug,
+    private handlerType: Handler = HandlerType.http,
+    private level: Status = StatusType.debug,
     loggerContext: Context = {}
   ) {
     this.contextManager.set(loggerContext)
   }
 
   @monitored
-  log(message: string, messageContext?: Context, status: 'debug' | 'info' | 'warn' | 'error' = StatusType.info) {
+  log(message: string, messageContext?: Context, status: Status = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
@@ -93,11 +97,11 @@ export class Logger {
     this.contextManager.remove(key)
   }
 
-  setHandler(handler: 'http' | 'console' | 'silent') {
+  setHandler(handler: Handler) {
     this.handlerType = handler
   }
 
-  setLevel(level: 'debug' | 'info' | 'warn' | 'error') {
+  setLevel(level: Status) {
     this.level = level
   }
 }

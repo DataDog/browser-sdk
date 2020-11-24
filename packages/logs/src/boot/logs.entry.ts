@@ -11,7 +11,7 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
+import { Handler, Logger, LogsMessage, Status } from '../domain/logger'
 import { startLogs } from './logs'
 
 export interface LogsUserConfiguration extends UserConfiguration {
@@ -19,8 +19,8 @@ export interface LogsUserConfiguration extends UserConfiguration {
 }
 
 export interface LoggerConfiguration {
-  level?: 'debug' | 'info' | 'warn' | 'error'
-  handler?: 'http' | 'console' | 'silent'
+  level?: Status
+  handler?: Handler
   context?: Context
 }
 
