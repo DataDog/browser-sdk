@@ -18,7 +18,7 @@ export const STATUSES = Object.keys(StatusType)
 
 export interface LogsMessage {
   message: string
-  status: StatusType
+  status: 'debug' | 'info' | 'warn' | 'error'
   [key: string]: ContextValue
 }
 
@@ -33,8 +33,8 @@ export class Logger {
 
   constructor(
     private sendLog: (message: LogsMessage) => void,
-    private handlerType = HandlerType.http,
-    private level = StatusType.debug,
+    private handlerType: 'http' | 'console' | 'silent' = HandlerType.http,
+    private level: 'debug' | 'info' | 'warn' | 'error' = StatusType.debug,
     loggerContext: Context = {}
   ) {
     this.contextManager.set(loggerContext)
@@ -47,7 +47,7 @@ export class Logger {
         case HandlerType.http:
           this.sendLog({
             message,
-            status: status as StatusType,
+            status,
             ...combine(this.contextManager.get(), messageContext),
           })
           break
@@ -94,10 +94,10 @@ export class Logger {
   }
 
   setHandler(handler: 'http' | 'console' | 'silent') {
-    this.handlerType = handler as HandlerType
+    this.handlerType = handler
   }
 
   setLevel(level: 'debug' | 'info' | 'warn' | 'error') {
-    this.level = level as StatusType
+    this.level = level
   }
 }

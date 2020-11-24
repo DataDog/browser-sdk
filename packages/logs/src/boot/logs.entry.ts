@@ -75,7 +75,7 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
     removeLoggerGlobalContext: monitor(globalContextManager.remove),
 
     createLogger: monitor((name: string, conf: LoggerConfiguration = {}) => {
-      customLoggers[name] = new Logger(sendLog, conf.handler as HandlerType, conf.level as StatusType, {
+      customLoggers[name] = new Logger(sendLog, conf.handler, conf.level, {
         ...conf.context,
         logger: { name },
       })
