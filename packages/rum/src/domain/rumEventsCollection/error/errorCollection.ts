@@ -15,8 +15,10 @@ export interface ProvidedError {
   startTime: number
   error: unknown
   context?: Context
-  source: 'custom' | 'network' | 'source'
+  source: ProvidedSource
 }
+
+export type ProvidedSource = 'custom' | 'network' | 'source'
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   return doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
@@ -41,7 +43,7 @@ export function doStartErrorCollection(
   }
 }
 
-function computeRawError(error: unknown, startTime: number, source: 'custom' | 'network' | 'source'): RawError {
+function computeRawError(error: unknown, startTime: number, source: ProvidedSource): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
   return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }

@@ -6,7 +6,7 @@ export interface RawError {
   message: string
   type?: string
   stack?: string
-  source: 'agent' | 'console' | 'custom' | 'network' | 'source' | 'logger'
+  source: Source
   resource?: {
     url: string
     statusCode: number
@@ -22,6 +22,8 @@ export enum ErrorSource {
   LOGGER = 'logger',
   CUSTOM = 'custom',
 }
+
+export type Source = 'agent' | 'console' | 'custom' | 'network' | 'source' | 'logger'
 
 export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
