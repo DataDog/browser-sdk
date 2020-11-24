@@ -24,8 +24,13 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   if (!performance || !('getEntriesByName' in performance)) {
     return
   }
-  const candidates = performance
-    .getEntriesByName(request.url, 'resource')
+  const sameNameEntries = performance.getEntriesByName(request.url, 'resource')
+
+  if (!(sameNameEntries.length > 0 && 'toJSON' in sameNameEntries[0])) {
+    return
+  }
+
+  const candidates = sameNameEntries
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
     .filter((entry) => isBetween(entry, request.startTime, endTime(request)))
