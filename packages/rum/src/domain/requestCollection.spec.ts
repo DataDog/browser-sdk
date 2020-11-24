@@ -84,6 +84,18 @@ describe('collect fetch', () => {
     })
   })
 
+  it('should not trace cancelled requests', (done) => {
+    fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
+
+    fetchStubManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+
+      expect(request.status).toEqual(0)
+      expect(request.traceId).toEqual(undefined)
+      done()
+    })
+  })
+
   it('should assign a request id', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
@@ -194,6 +206,22 @@ describe('collect xhr', () => {
       onComplete() {
         expect(startSpy).not.toHaveBeenCalled()
         expect(completeSpy).not.toHaveBeenCalled()
+        done()
+      },
+    })
+  })
+
+  it('should not trace cancelled requests', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', '/ok')
+        xhr.send()
+        xhr.complete(0)
+      },
+      onComplete() {
+        const request = completeSpy.calls.argsFor(0)[0]
+        expect(request.status).toEqual(0)
+        expect(request.traceId).toEqual(undefined)
         done()
       },
     })

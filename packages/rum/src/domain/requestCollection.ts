@@ -73,7 +73,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
         spanId: context.spanId,
         startTime: context.startTime,
         status: context.status,
-        traceId: context.traceId,
+        traceId: context.status === 0 ? undefined : context.traceId,
         type: RequestType.XHR,
         url: context.url,
       })
@@ -109,7 +109,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         spanId: context.spanId,
         startTime: context.startTime,
         status: context.status,
-        traceId: context.traceId,
+        traceId: context.status === 0 ? undefined : context.traceId,
         type: RequestType.FETCH,
         url: context.url,
       })
