@@ -24,6 +24,7 @@ describe('viewCollection', () => {
   it('should create view from view update', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const view = {
+      cumulativeLayoutShift: 1,
       documentVersion: 3,
       duration: 100,
       eventCounts: {
@@ -61,6 +62,7 @@ describe('viewCollection', () => {
         action: {
           count: 10,
         },
+        cumulativeLayoutShift: 1,
         domComplete: 10 * 1e6,
         domContentLoaded: 10 * 1e6,
         domInteractive: 10 * 1e6,

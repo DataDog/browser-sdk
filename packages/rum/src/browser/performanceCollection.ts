@@ -68,6 +68,12 @@ export interface RumFirstInputTiming {
   processingStart: number
 }
 
+export interface RumLayoutShiftTiming {
+  entryType: 'layout-shift'
+  value: number
+  hadRecentInput: boolean
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
@@ -75,12 +81,13 @@ export type RumPerformanceEntry =
   | RumPerformanceNavigationTiming
   | RumLargestContentfulPaintTiming
   | RumFirstInputTiming
+  | RumLayoutShiftTiming
 
 function supportPerformanceObject() {
   return window.performance !== undefined && 'getEntries' in performance
 }
 
-function supportPerformanceTimingEvent(entryType: string) {
+export function supportPerformanceTimingEvent(entryType: string) {
   return (
     (window as BrowserWindow).PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
@@ -100,7 +107,15 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const observer = new PerformanceObserver(
       monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
     )
-    const entryTypes = ['resource', 'navigation', 'longtask', 'paint', 'largest-contentful-paint', 'first-input']
+    const entryTypes = [
+      'resource',
+      'navigation',
+      'longtask',
+      'paint',
+      'largest-contentful-paint',
+      'first-input',
+      'layout-shift',
+    ]
 
     observer.observe({ entryTypes })
 
@@ -267,7 +282,8 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
       entry.entryType === 'paint' ||
       entry.entryType === 'longtask' ||
       entry.entryType === 'largest-contentful-paint' ||
-      entry.entryType === 'first-input'
+      entry.entryType === 'first-input' ||
+      entry.entryType === 'layout-shift'
     ) {
       handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
     }
