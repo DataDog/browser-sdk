@@ -14,6 +14,10 @@
 
 ---
 
+## v1.26.1
+
+- 🐛 [RUMF-791] prevent IE11 performance entry error ([#633](https://github.com/DataDog/browser-sdk/pull/633))
+
 ## v1.26.0
 
 - ✨ [RUMF-777] implement Cumulative Layout Shift ([#628](https://github.com/DataDog/browser-sdk/pull/628))
