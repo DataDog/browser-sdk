@@ -106,9 +106,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
 
     addError: monitor(
       (error: unknown, context?: Context, source: 'custom' | 'network' | 'source' = ErrorSource.CUSTOM) => {
-        let checkedSource
+        let checkedSource: 'custom' | 'network' | 'source'
         if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-          checkedSource = source as ErrorSource
+          checkedSource = source
         } else {
           console.error(`DD_RUM.addError: Invalid source '${source}'`)
           checkedSource = ErrorSource.CUSTOM

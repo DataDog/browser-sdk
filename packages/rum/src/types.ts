@@ -1,4 +1,4 @@
-import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -46,7 +46,7 @@ export interface RumErrorEvent {
     }
     type?: string
     stack?: string
-    source: ErrorSource
+    source: 'agent' | 'console' | 'custom' | 'network' | 'source' | 'logger'
     message: string
   }
 }

@@ -2,7 +2,6 @@ import {
   computeStackTrace,
   Configuration,
   Context,
-  ErrorSource,
   formatUnknownError,
   getTimestamp,
   Observable,
@@ -16,7 +15,7 @@ export interface ProvidedError {
   startTime: number
   error: unknown
   context?: Context
-  source: ErrorSource
+  source: 'custom' | 'network' | 'source'
 }
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
@@ -42,7 +41,7 @@ export function doStartErrorCollection(
   }
 }
 
-function computeRawError(error: unknown, startTime: number, source: ErrorSource): RawError {
+function computeRawError(error: unknown, startTime: number, source: 'custom' | 'network' | 'source'): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
   return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }

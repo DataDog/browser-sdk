@@ -6,7 +6,7 @@ export interface RawError {
   message: string
   type?: string
   stack?: string
-  source: ErrorSource
+  source: 'agent' | 'console' | 'custom' | 'network' | 'source' | 'logger'
   resource?: {
     url: string
     statusCode: number
