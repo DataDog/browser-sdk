@@ -26,7 +26,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   }
   const sameNameEntries = performance.getEntriesByName(request.url, 'resource')
 
-  if (!(sameNameEntries.length > 0 && 'toJSON' in sameNameEntries[0])) {
+  if (!sameNameEntries.length || !('toJSON' in sameNameEntries[0])) {
     return
   }
 
