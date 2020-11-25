@@ -54,6 +54,7 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
+  useNewIntakeDomains?: boolean
   useCrossSiteSessionCookie?: boolean
   useSecureSessionCookie?: boolean
   trackSessionAcrossSubdomains?: boolean
@@ -98,6 +99,7 @@ interface TransportConfiguration {
   sdkVersion: string
   applicationId?: string
   proxyHost?: string
+  useNewIntakeDomains: boolean
 
   service?: string
   env?: string
@@ -120,6 +122,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     sdkVersion: buildEnv.sdkVersion,
     service: userConfiguration.service,
     site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
+    useNewIntakeDomains: userConfiguration.useNewIntakeDomains || false,
     version: userConfiguration.version,
   }
 
@@ -225,7 +228,7 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
 }
 
 function getHost(type: EndpointType, conf: TransportConfiguration) {
-  if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
+  if (conf.useNewIntakeDomains && NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
     return `${type}.browser-intake-${conf.site}`
   }
   const oldTypes = {
@@ -251,7 +254,7 @@ function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
       `https://browser-http-intake.logs.${site}/v1/input/`,
       `https://public-trace-http-intake.logs.${site}/v1/input/`
     )
-    if (NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(site) !== -1) {
+    if (conf.useNewIntakeDomains && NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(site) !== -1) {
       urls.push(
         `https://rum.browser-intake-${site}/v1/input/`,
         `https://logs.browser-intake-${site}/v1/input/`,
