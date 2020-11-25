@@ -1,21 +1,24 @@
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  FetchCompleteContext,
-  isIE,
-  objectEntries,
-  XhrCompleteContext,
-} from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../test/specHelper'
-import { startTracer, TraceIdentifier } from './tracer'
+import {
+  startTracer,
+  TracedFetchCompleteContext,
+  TracedXhrCompleteContext,
+  TracedXhrStartContext,
+  TraceIdentifier,
+} from './tracer'
 
 describe('tracer', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
-  const ALLOWED_DOMAIN_CONTEXT: Partial<XhrCompleteContext | FetchCompleteContext> = { url: window.location.origin }
-  const DISALLOWED_DOMAIN_CONTEXT: Partial<XhrCompleteContext | FetchCompleteContext> = { url: 'http://foo.com' }
+  const ALLOWED_DOMAIN_CONTEXT: Partial<TracedXhrCompleteContext | TracedFetchCompleteContext> = {
+    url: window.location.origin,
+  }
+  const DISALLOWED_DOMAIN_CONTEXT: Partial<TracedXhrCompleteContext | TracedFetchCompleteContext> = {
+    url: 'http://foo.com',
+  }
   let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
@@ -43,19 +46,23 @@ describe('tracer', () => {
       }
     })
 
-    it('should return traceId and add tracing headers', () => {
+    it('should add traceId and spanId to context and add tracing headers', () => {
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceXhr(ALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)!
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
 
-      expect(tracingResult).toBeDefined()
-      expect(xhrStub.headers).toEqual(tracingHeadersFor(tracingResult.traceId, tracingResult.spanId))
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(xhrStub.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!))
     })
 
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceXhr(DISALLOWED_DOMAIN_CONTEXT, (xhrStub as unknown) as XMLHttpRequest)
+      const context = { ...DISALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, (xhrStub as unknown) as XMLHttpRequest)
 
-      expect(tracingResult).toBeUndefined()
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
       expect(xhrStub.headers).toEqual({})
     })
 
@@ -68,8 +75,14 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceXhr({ url: 'http://qux.com' }, stub)).toBeDefined()
-      expect(tracer.traceXhr({ url: 'http://bar.com' }, stub)).toBeDefined()
+      let context: Partial<TracedXhrStartContext> = { url: 'http://qux.com' }
+      tracer.traceXhr(context, stub)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      context = { url: 'http://bar.com' }
+      tracer.traceXhr(context, stub)
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
     })
   })
 
@@ -80,47 +93,47 @@ describe('tracer', () => {
       }
     })
 
-    it('should return traceId and add tracing headers', () => {
-      const context: Partial<FetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
-
+    it('should add traceId and spanId to context, and add tracing headers', () => {
+      const context: Partial<TracedFetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)!
+      tracer.traceFetch(context)
 
-      expect(tracingResult).toBeDefined()
-      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!))
     })
 
     it('should preserve original request init', () => {
       const init = { method: 'POST' }
-      const context: Partial<FetchCompleteContext> = {
+      const context: Partial<TracedFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
       }
 
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)!
+      tracer.traceFetch(context)
 
       expect(context.init).not.toBe(init)
       expect(context.init!.method).toBe('POST')
-      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId))
+      expect(context.init!.headers).toEqual(tracingHeadersAsArrayFor(context.traceId!, context.spanId!))
     })
 
     it('should preserve original headers object', () => {
       const headers = new Headers()
       headers.set('foo', 'bar')
 
-      const context: Partial<FetchCompleteContext> = {
+      const context: Partial<TracedFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
 
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)!
+      tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
       ])
       expect(toPlainObject(headers)).toEqual({
         foo: 'bar',
@@ -130,18 +143,18 @@ describe('tracer', () => {
     it('should preserve original headers plain object', () => {
       const headers = { foo: 'bar' }
 
-      const context: Partial<FetchCompleteContext> = {
+      const context: Partial<TracedFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
 
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)!
+      tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
       ])
 
       expect(headers).toEqual({
@@ -152,31 +165,32 @@ describe('tracer', () => {
     it('should preserve original headers array', () => {
       const headers = [['foo', 'bar'], ['foo', 'baz']]
 
-      const context: Partial<FetchCompleteContext> = {
+      const context: Partial<TracedFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
 
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)!
+      tracer.traceFetch(context)
 
       expect(context.init!.headers).not.toBe(headers)
       expect(context.init!.headers).toEqual([
         ['foo', 'bar'],
         ['foo', 'baz'],
-        ...tracingHeadersAsArrayFor(tracingResult.traceId, tracingResult.spanId),
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
       ])
 
       expect(headers).toEqual([['foo', 'bar'], ['foo', 'baz']])
     })
 
     it('should not trace request on disallowed domain', () => {
-      const context: Partial<FetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<TracedFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
-      const tracingResult = tracer.traceFetch(context)
+      tracer.traceFetch(context)
 
-      expect(tracingResult).toBeUndefined()
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
       expect(context.init).toBeUndefined()
     })
 
@@ -185,13 +199,47 @@ describe('tracer', () => {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
       }
-      const quxDomainContext: Partial<FetchCompleteContext> = { url: 'http://qux.com' }
-      const barDomainContext: Partial<FetchCompleteContext> = { url: 'http://bar.com' }
+      const quxDomainContext: Partial<TracedFetchCompleteContext> = { url: 'http://qux.com' }
+      const barDomainContext: Partial<TracedFetchCompleteContext> = { url: 'http://bar.com' }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      expect(tracer.traceFetch(quxDomainContext)).toBeDefined()
-      expect(tracer.traceFetch(barDomainContext)).toBeDefined()
+      tracer.traceFetch(quxDomainContext)
+      tracer.traceFetch(barDomainContext)
+      expect(quxDomainContext.traceId).toBeDefined()
+      expect(quxDomainContext.spanId).toBeDefined()
+      expect(barDomainContext.traceId).toBeDefined()
+      expect(barDomainContext.spanId).toBeDefined()
+    })
+  })
+
+  describe('clearTracingIfCancelled', () => {
+    it('should clear tracing if status is 0', () => {
+      const tracer = startTracer(configuration as Configuration)
+      const context: TracedFetchCompleteContext = {
+        status: 0,
+
+        spanId: new TraceIdentifier(),
+        traceId: new TraceIdentifier(),
+      } as any
+      tracer.clearTracingIfCancelled(context)
+
+      expect(context.traceId).toBeUndefined()
+      expect(context.spanId).toBeUndefined()
+    })
+
+    it('should not clear tracing if status is not 0', () => {
+      const tracer = startTracer(configuration as Configuration)
+      const context: TracedFetchCompleteContext = {
+        status: 200,
+
+        spanId: new TraceIdentifier(),
+        traceId: new TraceIdentifier(),
+      } as any
+      tracer.clearTracingIfCancelled(context)
+
+      expect(context.traceId).toBeDefined()
+      expect(context.spanId).toBeDefined()
     })
   })
 })

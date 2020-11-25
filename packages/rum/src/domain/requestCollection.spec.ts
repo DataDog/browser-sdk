@@ -15,7 +15,7 @@ import {
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
-import { Tracer } from './tracing/tracer'
+import { clearTracingIfCancelled, Tracer } from './tracing/tracer'
 
 const configuration = {
   ...DEFAULT_CONFIGURATION,
@@ -43,6 +43,7 @@ describe('collect fetch', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
+      clearTracingIfCancelled,
       traceFetch: () => undefined,
     }
     fetchProxy = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
@@ -135,6 +136,7 @@ describe('collect xhr', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
+      clearTracingIfCancelled,
       traceXhr: () => undefined,
     }
     trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer)
