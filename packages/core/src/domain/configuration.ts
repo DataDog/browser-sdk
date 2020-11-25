@@ -44,7 +44,7 @@ export interface UserConfiguration {
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   resourceSampleRate?: number
-  datacenter?: 'us' | 'eu' // deprecated
+  datacenter?: Datacenter // deprecated
   site?: string
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean

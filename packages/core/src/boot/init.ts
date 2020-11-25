@@ -34,10 +34,12 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   }
 }
 
-export enum Datacenter {
-  US = 'us',
-  EU = 'eu',
-}
+export const Datacenter = {
+  EU: 'eu',
+  US: 'us',
+} as const
+
+export type Datacenter = (typeof Datacenter)[keyof typeof Datacenter]
 
 export const INTAKE_SITE = {
   [Datacenter.EU]: 'datadoghq.eu',

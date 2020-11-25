@@ -1,11 +1,13 @@
 import { combine, Context, ContextValue, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
 
-export enum StatusType {
-  debug = 'debug',
-  info = 'info',
-  warn = 'warn',
-  error = 'error',
-}
+export const StatusType = {
+  debug: 'debug',
+  error: 'error',
+  info: 'info',
+  warn: 'warn',
+} as const
+
+export type StatusType = (typeof StatusType)[keyof typeof StatusType]
 
 const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
@@ -14,38 +16,36 @@ const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
-export type Status = 'debug' | 'info' | 'warn' | 'error'
-
 export const STATUSES = Object.keys(StatusType)
 
 export interface LogsMessage {
   message: string
-  status: Status
+  status: StatusType
   [key: string]: ContextValue
 }
 
-export enum HandlerType {
-  http = 'http',
-  console = 'console',
-  silent = 'silent',
-}
+export const HandlerType = {
+  console: 'console',
+  http: 'http',
+  silent: 'silent',
+} as const
 
-export type Handler = 'http' | 'console' | 'silent'
+export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
 
 export class Logger {
   private contextManager = createContextManager()
 
   constructor(
     private sendLog: (message: LogsMessage) => void,
-    private handlerType: Handler = HandlerType.http,
-    private level: Status = StatusType.debug,
+    private handlerType: HandlerType = HandlerType.http,
+    private level: StatusType = StatusType.debug,
     loggerContext: Context = {}
   ) {
     this.contextManager.set(loggerContext)
   }
 
   @monitored
-  log(message: string, messageContext?: Context, status: Status = StatusType.info) {
+  log(message: string, messageContext?: Context, status: StatusType = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
@@ -97,11 +97,11 @@ export class Logger {
     this.contextManager.remove(key)
   }
 
-  setHandler(handler: Handler) {
+  setHandler(handler: HandlerType) {
     this.handlerType = handler
   }
 
-  setLevel(level: Status) {
+  setLevel(level: StatusType) {
     this.level = level
   }
 }

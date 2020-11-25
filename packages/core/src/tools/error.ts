@@ -6,7 +6,7 @@ export interface RawError {
   message: string
   type?: string
   stack?: string
-  source: Source
+  source: ErrorSource
   resource?: {
     url: string
     statusCode: number
@@ -14,16 +14,16 @@ export interface RawError {
   }
 }
 
-export enum ErrorSource {
-  AGENT = 'agent',
-  CONSOLE = 'console',
-  NETWORK = 'network',
-  SOURCE = 'source',
-  LOGGER = 'logger',
-  CUSTOM = 'custom',
-}
+export const ErrorSource = {
+  AGENT: 'agent',
+  CONSOLE: 'console',
+  CUSTOM: 'custom',
+  LOGGER: 'logger',
+  NETWORK: 'network',
+  SOURCE: 'source',
+} as const
 
-export type Source = 'agent' | 'console' | 'custom' | 'network' | 'source' | 'logger'
+export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]
 
 export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
