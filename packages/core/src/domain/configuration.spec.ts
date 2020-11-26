@@ -119,9 +119,6 @@ describe('configuration', () => {
 
     it('should detect intake request for US site', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      // expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
-      // expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
-      // expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
@@ -162,8 +159,6 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
 
-      // expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
-      // expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
     })
