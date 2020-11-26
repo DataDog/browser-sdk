@@ -249,16 +249,17 @@ function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
   }
   const urls = []
   for (const site of sites) {
-    urls.push(
-      `https://rum-http-intake.logs.${site}/v1/input/`,
-      `https://browser-http-intake.logs.${site}/v1/input/`,
-      `https://public-trace-http-intake.logs.${site}/v1/input/`
-    )
     if (conf.useNewIntakeDomains && NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(site) !== -1) {
       urls.push(
         `https://rum.browser-intake-${site}/v1/input/`,
         `https://logs.browser-intake-${site}/v1/input/`,
         `https://trace.browser-intake-${site}/v1/input/`
+      )
+    } else {
+      urls.push(
+        `https://rum-http-intake.logs.${site}/v1/input/`,
+        `https://browser-http-intake.logs.${site}/v1/input/`,
+        `https://public-trace-http-intake.logs.${site}/v1/input/`
       )
     }
   }
