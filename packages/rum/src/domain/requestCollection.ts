@@ -15,10 +15,6 @@ export interface RequestStartEvent {
   requestIndex: number
 }
 
-interface CustomContext {
-  requestIndex: number
-}
-
 export interface RequestCompleteEvent {
   requestIndex: number
   type: RequestType
@@ -44,7 +40,7 @@ export function startRequestCollection(lifeCycle: LifeCycle, configuration: Conf
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const xhrProxy = startXhrProxy<CustomContext & TracedXhrStartContext, CustomContext & TracedXhrCompleteContext>()
+  const xhrProxy = startXhrProxy<TracedXhrStartContext, TracedXhrCompleteContext>()
   xhrProxy.beforeSend((context, xhr) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.traceXhr(context, xhr)
@@ -76,10 +72,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<
-    CustomContext & TracedFetchStartContext,
-    CustomContext & TracedFetchCompleteContext
-  >()
+  const fetchProxy = startFetchProxy<TracedFetchStartContext, TracedFetchCompleteContext>()
   fetchProxy.beforeSend((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.traceFetch(context)
@@ -102,7 +95,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         spanId: context.spanId,
         startTime: context.startTime,
         status: context.status,
-        traceId: context.status === 0 ? undefined : context.traceId,
+        traceId: context.traceId,
         type: RequestType.FETCH,
         url: context.url,
       })

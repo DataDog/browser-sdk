@@ -9,6 +9,7 @@ import {
 } from '@datadog/browser-core'
 
 export interface TracingContext {
+  requestIndex: number
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
 }
