@@ -67,7 +67,7 @@ export function startTracer(configuration: Configuration): Tracer {
 
 function injectHeadersIfTracingAllowed(
   configuration: Configuration,
-  context: Partial<TracedFetchStartContext | TracedXhrCompleteContext>,
+  context: Partial<TracedFetchStartContext | TracedXhrStartContext>,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
   if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!)) {
@@ -76,7 +76,7 @@ function injectHeadersIfTracingAllowed(
 
   context.traceId = new TraceIdentifier()
   context.spanId = new TraceIdentifier()
-  inject(makeTracingHeaders(context.traceId!, context.spanId))
+  inject(makeTracingHeaders(context.traceId, context.spanId))
 }
 
 function isAllowedUrl(configuration: Configuration, requestUrl: string) {
