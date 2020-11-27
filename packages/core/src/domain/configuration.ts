@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE, NEW_INTAKE_DOMAIN_ALLOWED_SITES } from '../boot/init'
+import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 
@@ -228,7 +228,7 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
 }
 
 function getHost(type: EndpointType, conf: TransportConfiguration) {
-  if (conf.useAlternateIntakeDomains && NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(conf.site) !== -1) {
+  if (conf.useAlternateIntakeDomains) {
     return `${type}.browser-intake-${conf.site}`
   }
   const oldTypes = {
@@ -249,7 +249,7 @@ function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
   }
   const urls = []
   for (const site of sites) {
-    if (conf.useAlternateIntakeDomains && NEW_INTAKE_DOMAIN_ALLOWED_SITES.indexOf(site) !== -1) {
+    if (conf.useAlternateIntakeDomains) {
       urls.push(
         `https://rum.browser-intake-${site}/v1/input/`,
         `https://logs.browser-intake-${site}/v1/input/`,

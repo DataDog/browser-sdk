@@ -125,7 +125,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
-    it('should detect new intake domains for US site', () => {
+    it('should detect alternate intake domains for US site', () => {
       const configuration = buildConfiguration({ clientToken, useAlternateIntakeDomains: true }, usEnv)
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
@@ -162,14 +162,14 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
-    it('should detect replica intake request with new domains', () => {
+    it('should detect replica intake request with alternate intake domains', () => {
       const configuration = buildConfiguration(
         { clientToken, site: 'foo.com', replica: { clientToken }, useAlternateIntakeDomains: true },
         { ...usEnv, buildMode: BuildMode.STAGING }
       )
-      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-foo.com/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
