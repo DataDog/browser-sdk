@@ -14,6 +14,18 @@
 
 ---
 
+## v1.26.1
+
+- 🐛 [RUMF-791] prevent IE11 performance entry error ([#633](https://github.com/DataDog/browser-sdk/pull/633))
+
+## v1.26.0
+
+- ✨ [RUMF-777] implement Cumulative Layout Shift ([#628](https://github.com/DataDog/browser-sdk/pull/628))
+- ✨ [RUMF-776] implement First Input Delay ([#626](https://github.com/DataDog/browser-sdk/pull/626))
+- ✨ [RUMF-775] implement Largest Contentful Paint ([#624](https://github.com/DataDog/browser-sdk/pull/624))
+- ✨ [RUMF-758] keep internal context in v1 format ([#625](https://github.com/DataDog/browser-sdk/pull/625))
+- ✨ [RUMF-780] implement track first hidden ([#621](https://github.com/DataDog/browser-sdk/pull/621))
+
 ## v1.25.4
 
 - ✨ [RUMF-771] Add getLoggerGlobalContext and getRumGlobalContext ([#614](https://github.com/DataDog/browser-sdk/pull/614))
