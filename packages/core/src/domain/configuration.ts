@@ -106,11 +106,20 @@ interface TransportConfiguration {
   version?: string
 }
 
-enum EndpointType {
-  LOGS = 'logs',
-  RUM = 'rum',
-  TRACE = 'trace',
+const ENDPOINTS = {
+  alternate: {
+    logs: 'logs',
+    rum: 'rum',
+    trace: 'trace',
+  },
+  classic: {
+    logs: 'browser',
+    rum: 'rum',
+    trace: 'public-trace',
+  },
 }
+type IntakeType = keyof typeof ENDPOINTS
+type EndpointType = keyof (typeof ENDPOINTS)[IntakeType]
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
@@ -136,18 +145,18 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    logsEndpoint: getEndpoint(EndpointType.LOGS, transportConfiguration),
+    logsEndpoint: getEndpoint('logs', transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
-    rumEndpoint: getEndpoint(EndpointType.RUM, transportConfiguration),
+    rumEndpoint: getEndpoint('rum', transportConfiguration),
     service: userConfiguration.service,
-    traceEndpoint: getEndpoint(EndpointType.TRACE, transportConfiguration),
+    traceEndpoint: getEndpoint('trace', transportConfiguration),
 
     isIntakeUrl: (url) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
-      EndpointType.LOGS,
+      'logs',
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
@@ -186,12 +195,12 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
-          EndpointType.LOGS,
+          'logs',
           replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint(EndpointType.LOGS, replicaTransportConfiguration),
-        rumEndpoint: getEndpoint(EndpointType.RUM, replicaTransportConfiguration),
+        logsEndpoint: getEndpoint('logs', replicaTransportConfiguration),
+        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
       }
     }
   }
@@ -231,12 +240,8 @@ function getHost(type: EndpointType, conf: TransportConfiguration) {
   if (conf.useAlternateIntakeDomains) {
     return `${type}.browser-intake-${conf.site}`
   }
-  const oldTypes = {
-    [EndpointType.LOGS]: 'browser',
-    [EndpointType.RUM]: 'rum',
-    [EndpointType.TRACE]: 'public-trace',
-  }
-  return `${oldTypes[type]}-http-intake.logs.${conf.site}`
+  const endpoint = ENDPOINTS.classic[type]
+  return `${endpoint}-http-intake.logs.${conf.site}`
 }
 
 function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
