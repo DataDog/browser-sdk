@@ -99,7 +99,6 @@ interface TransportConfiguration {
   sdkVersion: string
   applicationId?: string
   proxyHost?: string
-  useAlternateIntakeDomains: boolean
 
   service?: string
   env?: string
@@ -136,7 +135,6 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     sdkVersion: buildEnv.sdkVersion,
     service: userConfiguration.service,
     site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
-    useAlternateIntakeDomains: userConfiguration.useAlternateIntakeDomains || false,
     version: userConfiguration.version,
   }
 
