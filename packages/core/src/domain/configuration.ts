@@ -121,6 +121,11 @@ const ENDPOINTS = {
 type IntakeType = keyof typeof ENDPOINTS
 type EndpointType = keyof (typeof ENDPOINTS)[IntakeType]
 
+const INTAKE_MIDDLE_DOMAINS: { [key in IntakeType]: string } = {
+  alternate: '.browser-intake-',
+  classic: '-http-intake.logs.',
+}
+
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
     applicationId: userConfiguration.applicationId,
@@ -139,23 +144,25 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     ? userConfiguration.enableExperimentalFeatures
     : []
 
-  const intakeUrls = getIntakeUrls(transportConfiguration, userConfiguration.replica !== undefined)
+  const intakeType: IntakeType = userConfiguration.useAlternateIntakeDomains ? 'alternate' : 'classic'
+  const intakeUrls = getIntakeUrls(intakeType, transportConfiguration, userConfiguration.replica !== undefined)
   const configuration: Configuration = {
     cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    logsEndpoint: getEndpoint('logs', transportConfiguration),
+    logsEndpoint: getEndpoint(intakeType, 'logs', transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
-    rumEndpoint: getEndpoint('rum', transportConfiguration),
+    rumEndpoint: getEndpoint(intakeType, 'rum', transportConfiguration),
     service: userConfiguration.service,
-    traceEndpoint: getEndpoint('trace', transportConfiguration),
+    traceEndpoint: getEndpoint(intakeType, 'trace', transportConfiguration),
 
     isIntakeUrl: (url) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
+      intakeType,
       'logs',
       transportConfiguration,
       'browser-agent-internal-monitoring'
@@ -195,12 +202,13 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
+          intakeType,
           'logs',
           replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint('logs', replicaTransportConfiguration),
-        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
+        logsEndpoint: getEndpoint(intakeType, 'logs', replicaTransportConfiguration),
+        rumEndpoint: getEndpoint(intakeType, 'rum', replicaTransportConfiguration),
       }
     }
   }
@@ -221,13 +229,18 @@ export function buildCookieOptions(userConfiguration: UserConfiguration) {
   return cookieOptions
 }
 
-function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: string) {
+function getEndpoint(
+  intakeType: IntakeType,
+  endpointType: EndpointType,
+  conf: TransportConfiguration,
+  source?: string
+) {
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = getHost(type, conf)
+  const datadogHost = getHost(intakeType, endpointType, conf.site)
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
@@ -236,15 +249,13 @@ function getEndpoint(type: EndpointType, conf: TransportConfiguration, source?: 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
 
-function getHost(type: EndpointType, conf: TransportConfiguration) {
-  if (conf.useAlternateIntakeDomains) {
-    return `${type}.browser-intake-${conf.site}`
-  }
-  const endpoint = ENDPOINTS.classic[type]
-  return `${endpoint}-http-intake.logs.${conf.site}`
+function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
+  const middleDomain = INTAKE_MIDDLE_DOMAINS[intakeType]
+  const endpoint = ENDPOINTS[intakeType][endpointType]
+  return `${endpoint}${middleDomain}${site}`
 }
 
-function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
+function getIntakeUrls(intakeType: IntakeType, conf: TransportConfiguration, withReplica: boolean) {
   if (conf.proxyHost) {
     return [`https://${conf.proxyHost}/v1/input/`]
   }
@@ -253,19 +264,10 @@ function getIntakeUrls(conf: TransportConfiguration, withReplica: boolean) {
     sites.push(INTAKE_SITE[Datacenter.US])
   }
   const urls = []
+  const endpointTypes = Object.keys(ENDPOINTS[intakeType]) as EndpointType[]
   for (const site of sites) {
-    if (conf.useAlternateIntakeDomains) {
-      urls.push(
-        `https://rum.browser-intake-${site}/v1/input/`,
-        `https://logs.browser-intake-${site}/v1/input/`,
-        `https://trace.browser-intake-${site}/v1/input/`
-      )
-    } else {
-      urls.push(
-        `https://rum-http-intake.logs.${site}/v1/input/`,
-        `https://browser-http-intake.logs.${site}/v1/input/`,
-        `https://public-trace-http-intake.logs.${site}/v1/input/`
-      )
+    for (const endpointType of endpointTypes) {
+      urls.push(`https://${getHost(intakeType, endpointType, site)}/v1/input/`)
     }
   }
   return urls
