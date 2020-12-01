@@ -1,34 +1,22 @@
+import { Configuration, getOrigin, objectEntries } from '@datadog/browser-core'
 import {
-  Configuration,
-  FetchCompleteContext,
-  FetchStartContext,
-  getOrigin,
-  objectEntries,
-  XhrCompleteContext,
-  XhrStartContext,
-} from '@datadog/browser-core'
-
-export interface TracingContext {
-  requestIndex: number
-  spanId?: TraceIdentifier
-  traceId?: TraceIdentifier
-}
-export interface TracedFetchStartContext extends FetchStartContext, TracingContext {}
-export interface TracedFetchCompleteContext extends FetchCompleteContext, TracingContext {}
-export interface TracedXhrStartContext extends XhrStartContext, TracingContext {}
-export interface TracedXhrCompleteContext extends XhrCompleteContext, TracingContext {}
+  RumFetchCompleteContext,
+  RumFetchStartContext,
+  RumXhrCompleteContext,
+  RumXhrStartContext,
+} from '../requestCollection'
 
 export interface Tracer {
-  traceFetch: (context: Partial<TracedFetchStartContext>) => void
-  traceXhr: (context: Partial<TracedXhrStartContext>, xhr: XMLHttpRequest) => void
-  clearTracingIfCancelled: (context: TracedFetchCompleteContext | TracedXhrCompleteContext) => void
+  traceFetch: (context: Partial<RumFetchStartContext>) => void
+  traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
+  clearTracingIfCancelled: (context: RumFetchCompleteContext | RumXhrCompleteContext) => void
 }
 
 interface TracingHeaders {
   [key: string]: string
 }
 
-export function clearTracingIfCancelled(context: TracedFetchCompleteContext | TracedXhrCompleteContext) {
+export function clearTracingIfCancelled(context: RumFetchCompleteContext | RumXhrCompleteContext) {
   if (context.status === 0) {
     context.traceId = undefined
     context.spanId = undefined
@@ -68,7 +56,7 @@ export function startTracer(configuration: Configuration): Tracer {
 
 function injectHeadersIfTracingAllowed(
   configuration: Configuration,
-  context: Partial<TracedFetchStartContext | TracedXhrStartContext>,
+  context: Partial<RumFetchStartContext | RumXhrStartContext>,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
   if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!)) {

@@ -1,15 +1,27 @@
-import { Configuration, Observable, RequestType, startFetchProxy, startXhrProxy } from '@datadog/browser-core'
+import {
+  Configuration,
+  FetchCompleteContext,
+  FetchStartContext,
+  Observable,
+  RequestType,
+  startFetchProxy,
+  startXhrProxy,
+  XhrCompleteContext,
+  XhrStartContext,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
-import {
-  startTracer,
-  TracedFetchCompleteContext,
-  TracedFetchStartContext,
-  TracedXhrCompleteContext,
-  TracedXhrStartContext,
-  TraceIdentifier,
-  Tracer,
-} from './tracing/tracer'
+import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
+
+export interface CustomContext {
+  requestIndex: number
+  spanId?: TraceIdentifier
+  traceId?: TraceIdentifier
+}
+export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
+export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
+export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
+export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
 
 export interface RequestStartEvent {
   requestIndex: number
@@ -40,7 +52,7 @@ export function startRequestCollection(lifeCycle: LifeCycle, configuration: Conf
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const xhrProxy = startXhrProxy<TracedXhrStartContext, TracedXhrCompleteContext>()
+  const xhrProxy = startXhrProxy<RumXhrStartContext, RumXhrCompleteContext>()
   xhrProxy.beforeSend((context, xhr) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.traceXhr(context, xhr)
@@ -72,7 +84,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<TracedFetchStartContext, TracedFetchCompleteContext>()
+  const fetchProxy = startFetchProxy<RumFetchStartContext, RumFetchCompleteContext>()
   fetchProxy.beforeSend((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
       tracer.traceFetch(context)

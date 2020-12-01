@@ -1,22 +1,22 @@
 import { Configuration, DEFAULT_CONFIGURATION, isIE, objectEntries } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../test/specHelper'
 import {
-  startTracer,
-  TracedFetchCompleteContext,
-  TracedXhrCompleteContext,
-  TracedXhrStartContext,
-  TraceIdentifier,
-} from './tracer'
+  RumFetchCompleteContext,
+  RumFetchStartContext,
+  RumXhrCompleteContext,
+  RumXhrStartContext,
+} from '../requestCollection'
+import { startTracer, TraceIdentifier } from './tracer'
 
 describe('tracer', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     allowedTracingOrigins: [window.location.origin],
   }
-  const ALLOWED_DOMAIN_CONTEXT: Partial<TracedXhrCompleteContext | TracedFetchCompleteContext> = {
+  const ALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchCompleteContext> = {
     url: window.location.origin,
   }
-  const DISALLOWED_DOMAIN_CONTEXT: Partial<TracedXhrCompleteContext | TracedFetchCompleteContext> = {
+  const DISALLOWED_DOMAIN_CONTEXT: Partial<RumXhrCompleteContext | RumFetchCompleteContext> = {
     url: 'http://foo.com',
   }
   let setupBuilder: TestSetupBuilder
@@ -75,7 +75,7 @@ describe('tracer', () => {
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
-      let context: Partial<TracedXhrStartContext> = { url: 'http://qux.com' }
+      let context: Partial<RumXhrStartContext> = { url: 'http://qux.com' }
       tracer.traceXhr(context, stub)
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
@@ -94,7 +94,7 @@ describe('tracer', () => {
     })
 
     it('should add traceId and spanId to context, and add tracing headers', () => {
-      const context: Partial<TracedFetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<RumFetchCompleteContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       const tracer = startTracer(configuration as Configuration)
       tracer.traceFetch(context)
 
@@ -105,7 +105,7 @@ describe('tracer', () => {
 
     it('should preserve original request init', () => {
       const init = { method: 'POST' }
-      const context: Partial<TracedFetchCompleteContext> = {
+      const context: Partial<RumFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init,
       }
@@ -122,7 +122,7 @@ describe('tracer', () => {
       const headers = new Headers()
       headers.set('foo', 'bar')
 
-      const context: Partial<TracedFetchCompleteContext> = {
+      const context: Partial<RumFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -143,7 +143,7 @@ describe('tracer', () => {
     it('should preserve original headers plain object', () => {
       const headers = { foo: 'bar' }
 
-      const context: Partial<TracedFetchCompleteContext> = {
+      const context: Partial<RumFetchStartContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -165,7 +165,7 @@ describe('tracer', () => {
     it('should preserve original headers array', () => {
       const headers = [['foo', 'bar'], ['foo', 'baz']]
 
-      const context: Partial<TracedFetchCompleteContext> = {
+      const context: Partial<RumFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
         init: { headers, method: 'POST' },
       }
@@ -184,7 +184,7 @@ describe('tracer', () => {
     })
 
     it('should not trace request on disallowed domain', () => {
-      const context: Partial<TracedFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
+      const context: Partial<RumFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracer(configuration as Configuration)
       tracer.traceFetch(context)
@@ -199,8 +199,8 @@ describe('tracer', () => {
         ...configuration,
         allowedTracingOrigins: [/^https?:\/\/qux\.com.*/, 'http://bar.com'],
       }
-      const quxDomainContext: Partial<TracedFetchCompleteContext> = { url: 'http://qux.com' }
-      const barDomainContext: Partial<TracedFetchCompleteContext> = { url: 'http://bar.com' }
+      const quxDomainContext: Partial<RumFetchCompleteContext> = { url: 'http://qux.com' }
+      const barDomainContext: Partial<RumFetchCompleteContext> = { url: 'http://bar.com' }
 
       const tracer = startTracer(configurationWithTracingUrls as Configuration)
 
@@ -216,7 +216,7 @@ describe('tracer', () => {
   describe('clearTracingIfCancelled', () => {
     it('should clear tracing if status is 0', () => {
       const tracer = startTracer(configuration as Configuration)
-      const context: TracedFetchCompleteContext = {
+      const context: RumFetchCompleteContext = {
         status: 0,
 
         spanId: new TraceIdentifier(),
@@ -230,7 +230,7 @@ describe('tracer', () => {
 
     it('should not clear tracing if status is not 0', () => {
       const tracer = startTracer(configuration as Configuration)
-      const context: TracedFetchCompleteContext = {
+      const context: RumFetchCompleteContext = {
         status: 200,
 
         spanId: new TraceIdentifier(),
