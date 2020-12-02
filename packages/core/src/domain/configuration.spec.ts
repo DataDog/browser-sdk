@@ -132,6 +132,16 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
+    it('should handle sites with subdomains', () => {
+      const configuration = buildConfiguration(
+        { clientToken, site: 'us3.datadoghq.com', useAlternateIntakeDomains: true },
+        usEnv
+      )
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
     it('should detect proxy intake request', () => {
       let configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
       expect(configuration.isIntakeUrl('https://www.proxy.com/v1/input/xxx')).toBe(true)
