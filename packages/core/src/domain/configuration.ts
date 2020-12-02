@@ -120,11 +120,6 @@ const ENDPOINTS = {
 type IntakeType = keyof typeof ENDPOINTS
 type EndpointType = keyof (typeof ENDPOINTS)[IntakeType]
 
-const INTAKE_MIDDLE_DOMAINS: { [key in IntakeType]: string } = {
-  alternate: '.browser-intake-',
-  classic: '-http-intake.logs.',
-}
-
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
     applicationId: userConfiguration.applicationId,
@@ -248,15 +243,14 @@ function getEndpoint(
 }
 
 function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
-  const middleDomain = INTAKE_MIDDLE_DOMAINS[intakeType]
   const endpoint = ENDPOINTS[intakeType][endpointType]
-  let suffix = site
-  if (intakeType === 'alternate') {
-    const domainParts = site.split('.')
-    const ext = domainParts.pop()
-    suffix = `${domainParts.join('-')}.${ext}`
+  if (intakeType === 'classic') {
+    return `${endpoint}-http-intake.logs.${site}`
   }
-  return `${endpoint}${middleDomain}${suffix}`
+  const domainParts = site.split('.')
+  const extension = domainParts.pop()
+  const suffix = `${domainParts.join('-')}.${extension}`
+  return `${endpoint}.browser-intake-${suffix}`
 }
 
 function getIntakeUrls(intakeType: IntakeType, conf: TransportConfiguration, withReplica: boolean) {
