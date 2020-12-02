@@ -132,7 +132,16 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
-    it('should handle sites with subdomains', () => {
+    it('should handle sites with subdomains and classic intake', () => {
+      const configuration = buildConfiguration({ clientToken, site: 'us3.datadoghq.com' }, usEnv)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
+    })
+
+    it('should handle sites with subdomains and alternate intake', () => {
       const configuration = buildConfiguration(
         { clientToken, site: 'us3.datadoghq.com', useAlternateIntakeDomains: true },
         usEnv

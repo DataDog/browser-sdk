@@ -250,9 +250,13 @@ function getEndpoint(
 function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
   const middleDomain = INTAKE_MIDDLE_DOMAINS[intakeType]
   const endpoint = ENDPOINTS[intakeType][endpointType]
-  const domainParts = site.split('.')
-  const ext = domainParts.pop()
-  return `${endpoint}${middleDomain}${domainParts.join('-')}.${ext}`
+  let suffix = site
+  if (intakeType === 'alternate') {
+    const domainParts = site.split('.')
+    const ext = domainParts.pop()
+    suffix = `${domainParts.join('-')}.${ext}`
+  }
+  return `${endpoint}${middleDomain}${suffix}`
 }
 
 function getIntakeUrls(intakeType: IntakeType, conf: TransportConfiguration, withReplica: boolean) {
