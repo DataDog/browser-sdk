@@ -42,5 +42,6 @@ export {
 } from './browser/fetchProxy'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { createContextManager } from './tools/contextManager'
+export { limitModification } from './tools/limitModification'
 
 export * from './tools/specHelper'
