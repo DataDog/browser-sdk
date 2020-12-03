@@ -1,5 +1,5 @@
 import { BuildEnv, BuildMode, Datacenter } from '../boot/init'
-import { buildConfiguration, isIntakeRequest } from './configuration'
+import { buildConfiguration } from './configuration'
 
 describe('configuration', () => {
   const clientToken = 'some_client_token'
@@ -52,9 +52,9 @@ describe('configuration', () => {
 
   describe('proxyHost', () => {
     it('should replace endpoint host add set it as a query parameter', () => {
-      const configuration = buildConfiguration({ clientToken, proxyHost: 'proxy.io' }, usEnv)
+      const configuration = buildConfiguration({ clientToken, site: 'datadoghq.eu', proxyHost: 'proxy.io' }, usEnv)
       expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
-      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.com&')
+      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.eu&')
     })
   })
 
@@ -104,31 +104,68 @@ describe('configuration', () => {
     })
   })
 
-  describe('isIntakeRequest', () => {
+  describe('isIntakeUrl', () => {
     it('should not detect non intake request', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(isIntakeRequest('https://www.foo.com', configuration)).toBe(false)
+      expect(configuration.isIntakeUrl('https://www.foo.com')).toBe(false)
     })
 
-    it('should detect intake request', () => {
+    it('should detect intake request for EU site', () => {
+      const configuration = buildConfiguration({ clientToken, site: 'datadoghq.eu' }, usEnv)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
+    })
+
+    it('should detect intake request for US site', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(
+
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
+    it('should detect alternate intake domains for US site', () => {
+      const configuration = buildConfiguration({ clientToken, useAlternateIntakeDomains: true }, usEnv)
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
+    it('should handle sites with subdomains and classic intake', () => {
+      const configuration = buildConfiguration({ clientToken, site: 'us3.datadoghq.com' }, usEnv)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(
         true
       )
     })
 
+    it('should handle sites with subdomains and alternate intake', () => {
+      const configuration = buildConfiguration(
+        { clientToken, site: 'us3.datadoghq.com', useAlternateIntakeDomains: true },
+        usEnv
+      )
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
     it('should detect proxy intake request', () => {
       let configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
-      expect(isIntakeRequest('https://www.proxy.com/v1/input/xxx', configuration)).toBe(true)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/v1/input/xxx')).toBe(true)
+      configuration = buildConfiguration(
+        { clientToken, proxyHost: 'www.proxy.com', useAlternateIntakeDomains: true },
+        usEnv
+      )
+      expect(configuration.isIntakeUrl('https://www.proxy.com/v1/input/xxx')).toBe(true)
       configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com/custom/path' }, usEnv)
-      expect(isIntakeRequest('https://www.proxy.com/custom/path/v1/input/xxx', configuration)).toBe(true)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/custom/path/v1/input/xxx')).toBe(true)
     })
 
     it('should not detect request done on the same host as the proxy', () => {
       const configuration = buildConfiguration({ clientToken, proxyHost: 'www.proxy.com' }, usEnv)
-      expect(isIntakeRequest('https://www.proxy.com/foo', configuration)).toBe(false)
+      expect(configuration.isIntakeUrl('https://www.proxy.com/foo')).toBe(false)
     })
 
     it('should detect replica intake request', () => {
@@ -136,12 +173,25 @@ describe('configuration', () => {
         { clientToken, site: 'foo.com', replica: { clientToken } },
         { ...usEnv, buildMode: BuildMode.STAGING }
       )
-      expect(isIntakeRequest('https://rum-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://public-trace-http-intake.logs.foo.com/v1/input/xxx', configuration)).toBe(true)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
 
-      expect(isIntakeRequest('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
-      expect(isIntakeRequest('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx', configuration)).toBe(true)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
+    it('should detect replica intake request with alternate intake domains', () => {
+      const configuration = buildConfiguration(
+        { clientToken, site: 'foo.com', replica: { clientToken }, useAlternateIntakeDomains: true },
+        { ...usEnv, buildMode: BuildMode.STAGING }
+      )
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
   })
 })
