@@ -352,7 +352,7 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
+datadogLogs.setLoggerGlobalContext({ 'env': 'staging' })
 
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
 
