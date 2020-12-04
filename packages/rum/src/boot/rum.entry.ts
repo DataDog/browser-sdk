@@ -16,6 +16,7 @@ import {
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
+import { GlobalAttributes, User } from '../typesV2'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -37,19 +38,27 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
+  let user: User = {}
 
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
 
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, Context]>()
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, GlobalAttributes]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
-    beforeInitAddAction.add([action, deepClone(globalContextManager.get())])
+    beforeInitAddAction.add([action, clonedGlobalAttributes()])
   }
 
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, Context]>()
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, GlobalAttributes]>()
   let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, deepClone(globalContextManager.get())])
+    beforeInitAddError.add([providedError, clonedGlobalAttributes()])
+  }
+
+  function clonedGlobalAttributes(): GlobalAttributes {
+    return deepClone({
+      context: globalContextManager.get(),
+      user: user as Context,
+    })
   }
 
   const rumGlobal = makeGlobal({
@@ -69,9 +78,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         getInternalContext: getInternalContextStrategy,
-      } = startRumImpl(userConfiguration, globalContextManager.get))
-      beforeInitAddAction.drain(([action, context]) => addActionStrategy(action, context))
-      beforeInitAddError.drain(([error, context]) => addErrorStrategy(error, context))
+      } = startRumImpl(userConfiguration, () => ({
+        user,
+        context: globalContextManager.get(),
+      })))
+      beforeInitAddAction.drain(([action, globalAttributes]) => addActionStrategy(action, globalAttributes))
+      beforeInitAddError.drain(([error, globalAttributes]) => addErrorStrategy(error, globalAttributes))
 
       isAlreadyInitialized = true
     }),
@@ -122,6 +134,10 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         })
       }
     ),
+
+    setUser: monitor((newUser: User) => {
+      user = newUser
+    }),
   })
   return rumGlobal
 

@@ -73,7 +73,7 @@ describe('error collection', () => {
           source: ErrorSource.CUSTOM,
           startTime: 12,
         },
-        { foo: 'bar' }
+        { context: { foo: 'bar' }, user: {} }
       )
       expect(rawRumEvents[0].savedGlobalContext).toEqual({
         foo: 'bar',
@@ -161,7 +161,7 @@ describe('error collection v2', () => {
           },
           type: RumEventType.ERROR,
         },
-        savedGlobalContext: undefined,
+        savedGlobalAttributes: undefined,
         startTime: 12,
       })
     })
@@ -187,10 +187,25 @@ describe('error collection v2', () => {
           source: ErrorSource.CUSTOM,
           startTime: 12,
         },
-        { foo: 'bar' }
+        { context: { foo: 'bar' }, user: {} }
       )
-      expect(rawRumEventsV2[0].savedGlobalContext).toEqual({
+      expect(rawRumEventsV2[0].savedGlobalAttributes!.context).toEqual({
         foo: 'bar',
+      })
+    })
+
+    it('should save the user', () => {
+      const { rawRumEventsV2 } = setupBuilder.build()
+      addError(
+        {
+          error: new Error('foo'),
+          source: ErrorSource.CUSTOM,
+          startTime: 12,
+        },
+        { context: {}, user: { id: 1 } }
+      )
+      expect(rawRumEventsV2[0].savedGlobalAttributes!.user).toEqual({
+        id: 1,
       })
     })
   })

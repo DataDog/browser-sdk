@@ -167,7 +167,7 @@ describe('rum entry', () => {
           startTime: jasmine.any(Number),
           type: ActionType.CUSTOM,
         },
-        {},
+        { context: {}, user: {} },
       ])
     })
 
@@ -191,8 +191,21 @@ describe('rum entry', () => {
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addActionSpy.calls.argsFor(0)[1]).toEqual({
+        expect(addActionSpy.calls.argsFor(0)[1]!.context).toEqual({
           foo: 'bar',
+        })
+      })
+
+      it('stores a deep copy of the user', () => {
+        const user = { id: 1 }
+        rumGlobal.setUser(user)
+        rumGlobal.addAction('message')
+        user.id = 2
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+          id: 1,
         })
       })
 
@@ -242,7 +255,7 @@ describe('rum entry', () => {
           source: ErrorSource.CUSTOM,
           startTime: jasmine.any(Number),
         },
-        {},
+        { context: {}, user: {} },
       ])
     })
 
@@ -280,8 +293,21 @@ describe('rum entry', () => {
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addErrorSpy.calls.argsFor(0)[1]).toEqual({
+        expect(addErrorSpy.calls.argsFor(0)[1]!.context).toEqual({
           foo: 'bar',
+        })
+      })
+
+      it('stores a deep copy of the user', () => {
+        const user = { id: 1 }
+        rumGlobal.setUser(user)
+        rumGlobal.addError(new Error('message'))
+        user.id = 2
+
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+        expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
+          id: 1,
         })
       })
 

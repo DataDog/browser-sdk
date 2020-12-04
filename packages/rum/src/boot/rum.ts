@@ -14,11 +14,12 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
+import { GlobalAttributes } from '../typesV2'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
 
-export function startRum(userConfiguration: RumUserConfiguration, getGlobalContext: () => Context) {
+export function startRum(userConfiguration: RumUserConfiguration, getGlobalAttributes: () => GlobalAttributes) {
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
@@ -30,7 +31,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
         application_id: userConfiguration.applicationId,
       },
       parentContexts.findView(),
-      getGlobalContext()
+      getGlobalAttributes().context
     )
   })
 
@@ -40,7 +41,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
     lifeCycle,
     configuration,
     session,
-    getGlobalContext
+    getGlobalAttributes
   )
 
   startRequestCollection(lifeCycle, configuration)
@@ -62,12 +63,19 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  getGlobalContext: () => Context
+  getGlobalAttributes: () => GlobalAttributes
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
-  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
-  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
+  startRumAssembly(
+    applicationId,
+    configuration,
+    lifeCycle,
+    session,
+    parentContexts,
+    () => getGlobalAttributes().context
+  )
+  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalAttributes)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)

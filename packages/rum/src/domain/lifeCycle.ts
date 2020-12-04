@@ -1,7 +1,7 @@
 import { Context } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { RawRumEvent, RumEvent } from '../types'
-import { RawRumEventV2, RumEventV2 } from '../typesV2'
+import { GlobalAttributes, RawRumEventV2, RumEventV2 } from '../typesV2'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent, CustomAction } from './rumEventsCollection/action/trackActions'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
@@ -59,7 +59,7 @@ export class LifeCycle {
     data: {
       startTime: number
       rawRumEvent: RawRumEventV2
-      savedGlobalContext?: Context
+      savedGlobalAttributes?: GlobalAttributes
       customerContext?: Context
     }
   ): void
@@ -113,7 +113,7 @@ export class LifeCycle {
     callback: (data: {
       startTime: number
       rawRumEvent: RawRumEventV2
-      savedGlobalContext?: Context
+      savedGlobalAttributes?: GlobalAttributes
       customerContext?: Context
     }) => void
   ): Subscription

@@ -1,4 +1,4 @@
-import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, ContextValue, ErrorSource, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -148,3 +148,15 @@ export type RumEventV2 =
   | RumViewEventV2 & ViewContextV2 & RumContextV2
   | RumLongTaskEventV2 & ActionContextV2 & ViewContextV2 & RumContextV2
   | RumActionEventV2 & ViewContextV2 & RumContextV2
+
+export interface User {
+  id?: number | string
+  email?: string
+  name?: string
+  [key: string]: unknown
+}
+
+export interface GlobalAttributes {
+  user: User
+  context: Context
+}

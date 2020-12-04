@@ -1,7 +1,7 @@
 import { Context } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumEventType } from '../typesV2'
+import { RumEventType, User } from '../typesV2'
 import { startRumAssemblyV2 } from './assemblyV2'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -13,6 +13,7 @@ interface ServerRumEvents {
     id: string
   }
   context: any
+  user: User
   date: number
   type: string
   session: {
@@ -35,6 +36,7 @@ describe('rum assembly v2', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
   let globalContext: Context
+  let user: User
   let serverRumEvents: ServerRumEvents[]
   let isTracked: boolean
   let viewSessionId: string | undefined
@@ -66,7 +68,10 @@ describe('rum assembly v2', () => {
         }),
       })
       .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
-        startRumAssemblyV2(applicationId, configuration, localLifeCycle, session, parentContexts, () => globalContext)
+        startRumAssemblyV2(applicationId, configuration, localLifeCycle, session, parentContexts, () => ({
+          user,
+          context: globalContext,
+        }))
       })
     ;({ lifeCycle } = setupBuilder.build())
 
@@ -163,12 +168,69 @@ describe('rum assembly v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedGlobalContext: { replacedContext: 'a' },
+        savedGlobalAttributes: {
+          context: { replacedContext: 'a' },
+          user: {},
+        },
         startTime: 0,
       })
 
       expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
       expect((serverRumEvents[0].context as any).addedContext).toEqual(undefined)
+    })
+  })
+
+  describe('rum user', () => {
+    it('should be included in event attributes', () => {
+      user = { id: 1 }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].user.id).toEqual(1)
+    })
+
+    it('should ignore subsequent user mutation', () => {
+      user = { id: 1, bar: 'foo' }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+      delete user.bar
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].user.bar).toEqual('foo')
+      expect(serverRumEvents[1].user.bar).toBeUndefined()
+    })
+
+    it('should not be automatically snake cased', () => {
+      user = { fooBar: 'foo' }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].user.fooBar).toEqual('foo')
+    })
+
+    it('should ignore the current global context when a saved global context is provided', () => {
+      user = { replacedAttribute: 'b', addedAttribute: 'x' }
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        savedGlobalAttributes: {
+          context: {},
+          user: { replacedAttribute: 'a' },
+        },
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].user.replacedAttribute).toEqual('a')
+      expect(serverRumEvents[0].user.addedAttribute).toEqual(undefined)
     })
   })
 

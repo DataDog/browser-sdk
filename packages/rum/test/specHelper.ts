@@ -13,7 +13,7 @@ import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { RawRumEvent } from '../src/types'
-import { RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
+import { GlobalAttributes, RawRumEventV2, RumContextV2, ViewContextV2 } from '../src/typesV2'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -52,7 +52,7 @@ export interface TestIO {
   rawRumEventsV2: Array<{
     startTime: number
     rawRumEvent: RawRumEventV2
-    savedGlobalContext?: Context
+    savedGlobalAttributes?: GlobalAttributes
     customerContext?: Context
   }>
 }
