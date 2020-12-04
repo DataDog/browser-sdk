@@ -13,6 +13,16 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
 import { startTracer, TraceIdentifier, Tracer } from './tracing/tracer'
 
+export interface CustomContext {
+  requestIndex: number
+  spanId?: TraceIdentifier
+  traceId?: TraceIdentifier
+}
+export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
+export interface RumFetchCompleteContext extends FetchCompleteContext, CustomContext {}
+export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
+export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
+
 export interface RequestStartEvent {
   requestIndex: number
 }
@@ -27,14 +37,8 @@ export interface RequestCompleteEvent {
   responseType?: string
   startTime: number
   duration: number
-  traceId?: TraceIdentifier
   spanId?: TraceIdentifier
-}
-
-interface CustomContext {
-  traceId: TraceIdentifier | undefined
-  spanId: TraceIdentifier | undefined
-  requestIndex: number
+  traceId?: TraceIdentifier
 }
 
 export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
@@ -48,14 +52,10 @@ export function startRequestCollection(lifeCycle: LifeCycle, configuration: Conf
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const xhrProxy = startXhrProxy<CustomContext & XhrStartContext, CustomContext & XhrCompleteContext>()
+  const xhrProxy = startXhrProxy<RumXhrStartContext, RumXhrCompleteContext>()
   xhrProxy.beforeSend((context, xhr) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      const tracingResult = tracer.traceXhr(context, xhr)
-      if (tracingResult) {
-        context.traceId = tracingResult.traceId
-        context.spanId = tracingResult.spanId
-      }
+      tracer.traceXhr(context, xhr)
       context.requestIndex = getNextRequestIndex()
 
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
@@ -65,6 +65,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
   })
   xhrProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
+      tracer.clearTracingIfCancelled(context)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
@@ -83,14 +84,10 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, tracer: Tracer) {
-  const fetchProxy = startFetchProxy<CustomContext & FetchStartContext, CustomContext & FetchCompleteContext>()
+  const fetchProxy = startFetchProxy<RumFetchStartContext, RumFetchCompleteContext>()
   fetchProxy.beforeSend((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      const tracingResult = tracer.traceFetch(context)
-      if (tracingResult) {
-        context.traceId = tracingResult.traceId
-        context.spanId = tracingResult.spanId
-      }
+      tracer.traceFetch(context)
       context.requestIndex = getNextRequestIndex()
 
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
@@ -100,6 +97,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
   })
   fetchProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
+      tracer.clearTracingIfCancelled(context)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
