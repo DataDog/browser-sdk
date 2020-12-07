@@ -22,6 +22,7 @@ dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014
 dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
+dev,json-schema-to-typescript,MIT,
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
