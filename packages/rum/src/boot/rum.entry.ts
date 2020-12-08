@@ -16,7 +16,7 @@ import {
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
-import { GlobalAttributes, User } from '../typesV2'
+import { CommonContext, User } from '../typesV2'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -44,17 +44,17 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     return undefined
   }
 
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, GlobalAttributes]>()
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
-    beforeInitAddAction.add([action, clonedGlobalAttributes()])
+    beforeInitAddAction.add([action, clonedCommonContext()])
   }
 
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, GlobalAttributes]>()
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
   let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, clonedGlobalAttributes()])
+    beforeInitAddError.add([providedError, clonedCommonContext()])
   }
 
-  function clonedGlobalAttributes(): GlobalAttributes {
+  function clonedCommonContext(): CommonContext {
     return deepClone({
       context: globalContextManager.get(),
       user: user as Context,
@@ -82,8 +82,8 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         user,
         context: globalContextManager.get(),
       })))
-      beforeInitAddAction.drain(([action, globalAttributes]) => addActionStrategy(action, globalAttributes))
-      beforeInitAddError.drain(([error, globalAttributes]) => addErrorStrategy(error, globalAttributes))
+      beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
+      beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
 
       isAlreadyInitialized = true
     }),

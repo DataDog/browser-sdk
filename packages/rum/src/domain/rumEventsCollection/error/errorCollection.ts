@@ -11,7 +11,7 @@ import {
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
 import { RumErrorEvent, RumEventCategory } from '../../../types'
-import { GlobalAttributes, RumErrorEventV2, RumEventType } from '../../../typesV2'
+import { CommonContext, RumErrorEventV2, RumEventType } from '../../../typesV2'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
@@ -39,19 +39,19 @@ export function doStartErrorCollection(
   return {
     addError(
       { error, startTime, context: customerContext, source }: ProvidedError,
-      savedGlobalAttributes?: GlobalAttributes
+      savedCommonContext?: CommonContext
     ) {
       const rawError = computeRawError(error, startTime, source)
 
       configuration.isEnabled('v2_format')
         ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
             customerContext,
-            savedGlobalAttributes,
+            savedCommonContext,
             ...processErrorV2(rawError),
           })
         : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
             customerContext,
-            savedGlobalContext: savedGlobalAttributes && savedGlobalAttributes.context,
+            savedGlobalContext: savedCommonContext && savedCommonContext.context,
             ...processError(rawError),
           })
     },

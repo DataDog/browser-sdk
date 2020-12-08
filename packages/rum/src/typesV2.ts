@@ -156,7 +156,7 @@ export interface User {
   [key: string]: unknown
 }
 
-export interface GlobalAttributes {
+export interface CommonContext {
   user: User
   context: Context
 }

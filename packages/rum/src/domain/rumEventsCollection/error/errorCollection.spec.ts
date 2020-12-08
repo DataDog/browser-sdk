@@ -161,7 +161,7 @@ describe('error collection v2', () => {
           },
           type: RumEventType.ERROR,
         },
-        savedGlobalAttributes: undefined,
+        savedCommonContext: undefined,
         startTime: 12,
       })
     })
@@ -189,7 +189,7 @@ describe('error collection v2', () => {
         },
         { context: { foo: 'bar' }, user: {} }
       )
-      expect(rawRumEventsV2[0].savedGlobalAttributes!.context).toEqual({
+      expect(rawRumEventsV2[0].savedCommonContext!.context).toEqual({
         foo: 'bar',
       })
     })
@@ -204,7 +204,7 @@ describe('error collection v2', () => {
         },
         { context: {}, user: { id: 1 } }
       )
-      expect(rawRumEventsV2[0].savedGlobalAttributes!.user).toEqual({
+      expect(rawRumEventsV2[0].savedCommonContext!.user).toEqual({
         id: 1,
       })
     })

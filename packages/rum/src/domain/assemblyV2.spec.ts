@@ -168,7 +168,7 @@ describe('rum assembly v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedGlobalAttributes: {
+        savedCommonContext: {
           context: { replacedContext: 'a' },
           user: {},
         },
@@ -206,7 +206,7 @@ describe('rum assembly v2', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedGlobalAttributes: {
+        savedCommonContext: {
           context: {},
           user: { replacedAttribute: 'a' },
         },

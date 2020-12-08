@@ -14,12 +14,12 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import { GlobalAttributes } from '../typesV2'
+import { CommonContext } from '../typesV2'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
 
-export function startRum(userConfiguration: RumUserConfiguration, getGlobalAttributes: () => GlobalAttributes) {
+export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
@@ -31,7 +31,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalAttri
         application_id: userConfiguration.applicationId,
       },
       parentContexts.findView(),
-      getGlobalAttributes().context
+      getCommonContext().context
     )
   })
 
@@ -41,7 +41,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalAttri
     lifeCycle,
     configuration,
     session,
-    getGlobalAttributes
+    getCommonContext
   )
 
   startRequestCollection(lifeCycle, configuration)
@@ -63,19 +63,12 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  getGlobalAttributes: () => GlobalAttributes
+  getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
-  startRumAssembly(
-    applicationId,
-    configuration,
-    lifeCycle,
-    session,
-    parentContexts,
-    () => getGlobalAttributes().context
-  )
-  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalAttributes)
+  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, () => getCommonContext().context)
+  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)

@@ -1,6 +1,6 @@
 import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
 import {
-  GlobalAttributes,
+  CommonContext,
   RawRumEventV2,
   RumContextV2,
   RumErrorEventV2,
@@ -27,11 +27,11 @@ export function startRumAssemblyV2(
   lifeCycle: LifeCycle,
   session: RumSession,
   parentContexts: ParentContexts,
-  getGlobalAttributes: () => GlobalAttributes
+  getCommonContext: () => CommonContext
 ) {
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED,
-    ({ startTime, rawRumEvent, savedGlobalAttributes, customerContext }) => {
+    ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findViewV2(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findActionV2(startTime)
@@ -54,9 +54,9 @@ export function startRumAssemblyV2(
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(rumEvent)
-        const globalAttributes = savedGlobalAttributes || getGlobalAttributes()
-        serverRumEvent.context = combine(globalAttributes.context, customerContext)
-        serverRumEvent.user = globalAttributes.user as Context
+        const commonContext = savedCommonContext || getCommonContext()
+        serverRumEvent.context = combine(commonContext.context, customerContext)
+        serverRumEvent.user = commonContext.user as Context
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
       }
     }

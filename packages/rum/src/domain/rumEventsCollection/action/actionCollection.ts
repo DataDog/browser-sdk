@@ -1,6 +1,6 @@
 import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
 import { RumEventCategory, RumUserActionEvent } from '../../../types'
-import { GlobalAttributes, RumActionEventV2, RumEventType } from '../../../typesV2'
+import { CommonContext, RumActionEventV2, RumEventType } from '../../../typesV2'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
 
@@ -16,14 +16,14 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
   }
 
   return {
-    addAction(action: CustomAction, savedGlobalAttributes?: GlobalAttributes) {
+    addAction(action: CustomAction, savedCommonContext?: CommonContext) {
       configuration.isEnabled('v2_format')
         ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-            savedGlobalAttributes,
+            savedCommonContext,
             ...processActionV2(action),
           })
         : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-            savedGlobalContext: savedGlobalAttributes && savedGlobalAttributes.context,
+            savedGlobalContext: savedCommonContext && savedCommonContext.context,
             ...processAction(action),
           })
     },
