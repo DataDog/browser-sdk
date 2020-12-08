@@ -1,4 +1,4 @@
-import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
+import { combine, Configuration, Context, isEmptyObject, withSnakeCaseKeys } from '@datadog/browser-core'
 import {
   CommonContext,
   RawRumEventV2,
@@ -55,8 +55,16 @@ export function startRumAssemblyV2(
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(rumEvent)
         const commonContext = savedCommonContext || getCommonContext()
-        serverRumEvent.context = combine(commonContext.context, customerContext)
-        serverRumEvent.user = commonContext.user as Context
+
+        const context = combine(commonContext.context, customerContext)
+        if (!isEmptyObject(context)) {
+          serverRumEvent.context = context
+        }
+
+        if (!isEmptyObject(commonContext.user)) {
+          serverRumEvent.user = commonContext.user as Context
+        }
+
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
       }
     }

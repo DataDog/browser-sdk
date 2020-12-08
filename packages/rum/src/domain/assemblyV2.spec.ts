@@ -13,7 +13,7 @@ interface ServerRumEvents {
     id: string
   }
   context: any
-  user: User
+  user?: User
   date: number
   type: string
   session: {
@@ -44,6 +44,8 @@ describe('rum assembly v2', () => {
   beforeEach(() => {
     isTracked = true
     viewSessionId = '1234'
+    globalContext = {}
+    user = {}
     setupBuilder = setup()
       .withSession({
         getId: () => '1234',
@@ -137,8 +139,18 @@ describe('rum assembly v2', () => {
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
     })
 
+    it('should not be included if empty', () => {
+      globalContext = {}
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].context).toBe(undefined)
+    })
+
     it('should ignore subsequent context mutation', () => {
-      globalContext = { bar: 'foo' }
+      globalContext = { bar: 'foo', baz: 'foz' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -188,7 +200,17 @@ describe('rum assembly v2', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user.id).toEqual(1)
+      expect(serverRumEvents[0].user!.id).toEqual(1)
+    })
+
+    it('should not be included if empty', () => {
+      user = {}
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].user).toBe(undefined)
     })
 
     it('should not be automatically snake cased', () => {
@@ -198,7 +220,7 @@ describe('rum assembly v2', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user.fooBar).toEqual('foo')
+      expect(serverRumEvents[0].user!.fooBar).toEqual('foo')
     })
 
     it('should ignore the current global context when a saved global context is provided', () => {
@@ -213,8 +235,8 @@ describe('rum assembly v2', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user.replacedAttribute).toEqual('a')
-      expect(serverRumEvents[0].user.addedAttribute).toEqual(undefined)
+      expect(serverRumEvents[0].user!.replacedAttribute).toEqual('a')
+      expect(serverRumEvents[0].user!.addedAttribute).toEqual(undefined)
     })
   })
 
