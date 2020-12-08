@@ -191,22 +191,6 @@ describe('rum assembly v2', () => {
       expect(serverRumEvents[0].user.id).toEqual(1)
     })
 
-    it('should ignore subsequent user mutation', () => {
-      user = { id: 1, bar: 'foo' }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-      delete user.bar
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect(serverRumEvents[0].user.bar).toEqual('foo')
-      expect(serverRumEvents[1].user.bar).toBeUndefined()
-    })
-
     it('should not be automatically snake cased', () => {
       user = { fooBar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {

@@ -1,4 +1,4 @@
-import { combine, Configuration, Context, deepClone, withSnakeCaseKeys } from '@datadog/browser-core'
+import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
 import {
   GlobalAttributes,
   RawRumEventV2,
@@ -56,7 +56,7 @@ export function startRumAssemblyV2(
         const serverRumEvent = withSnakeCaseKeys(rumEvent)
         const globalAttributes = savedGlobalAttributes || getGlobalAttributes()
         serverRumEvent.context = combine(globalAttributes.context, customerContext)
-        serverRumEvent.user = deepClone(globalAttributes.user as Context)
+        serverRumEvent.user = globalAttributes.user as Context
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
