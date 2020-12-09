@@ -223,7 +223,7 @@ describe('rum assembly v2', () => {
       expect(serverRumEvents[0].user!.fooBar).toEqual('foo')
     })
 
-    it('should ignore the current global context when a saved global context is provided', () => {
+    it('should ignore the current user when a saved common context user is provided', () => {
       user = { replacedAttribute: 'b', addedAttribute: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
