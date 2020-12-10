@@ -1,10 +1,4 @@
-export {
-  DEFAULT_CONFIGURATION,
-  Configuration,
-  UserConfiguration,
-  isIntakeRequest,
-  buildCookieOptions,
-} from './domain/configuration'
+export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration, buildCookieOptions } from './domain/configuration'
 export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
 export { computeStackTrace } from './domain/tracekit'
 export {

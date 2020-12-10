@@ -3,7 +3,6 @@ import {
   Configuration,
   getPathName,
   includes,
-  isIntakeRequest,
   isValidUrl,
   msToNs,
   ResourceType,
@@ -204,5 +203,5 @@ export function computeSize(entry: RumPerformanceResourceTiming) {
 }
 
 export function isAllowedRequestUrl(configuration: Configuration, url: string) {
-  return url && !isIntakeRequest(url, configuration)
+  return url && !configuration.isIntakeUrl(url)
 }

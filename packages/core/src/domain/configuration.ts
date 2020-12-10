@@ -1,6 +1,5 @@
 import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
-import { getPathName, haveSameOrigin } from '../tools/urlPolyfill'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 
 export const DEFAULT_CONFIGURATION = {
@@ -55,6 +54,7 @@ export interface UserConfiguration {
   env?: string
   version?: string
 
+  useAlternateIntakeDomains?: boolean
   useCrossSiteSessionCookie?: boolean
   useSecureSessionCookie?: boolean
   trackSessionAcrossSubdomains?: boolean
@@ -79,6 +79,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   service?: string
 
   isEnabled: (feature: string) => boolean
+  isIntakeUrl: (url: string) => boolean
 
   // only on staging build mode
   replica?: ReplicaConfiguration
@@ -104,6 +105,21 @@ interface TransportConfiguration {
   version?: string
 }
 
+const ENDPOINTS = {
+  alternate: {
+    logs: 'logs',
+    rum: 'rum',
+    trace: 'trace',
+  },
+  classic: {
+    logs: 'browser',
+    rum: 'rum',
+    trace: 'public-trace',
+  },
+}
+type IntakeType = keyof typeof ENDPOINTS
+type EndpointType = keyof (typeof ENDPOINTS)[IntakeType]
+
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
     applicationId: userConfiguration.applicationId,
@@ -121,21 +137,26 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     ? userConfiguration.enableExperimentalFeatures
     : []
 
+  const intakeType: IntakeType = userConfiguration.useAlternateIntakeDomains ? 'alternate' : 'classic'
+  const intakeUrls = getIntakeUrls(intakeType, transportConfiguration, userConfiguration.replica !== undefined)
   const configuration: Configuration = {
     cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)
     },
-    logsEndpoint: getEndpoint('browser', transportConfiguration),
+    logsEndpoint: getEndpoint(intakeType, 'logs', transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
-    rumEndpoint: getEndpoint('rum', transportConfiguration),
+    rumEndpoint: getEndpoint(intakeType, 'rum', transportConfiguration),
     service: userConfiguration.service,
-    traceEndpoint: getEndpoint('public-trace', transportConfiguration),
+    traceEndpoint: getEndpoint(intakeType, 'trace', transportConfiguration),
+
+    isIntakeUrl: (url) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
     ...DEFAULT_CONFIGURATION,
   }
   if (userConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
-      'browser',
+      intakeType,
+      'logs',
       transportConfiguration,
       'browser-agent-internal-monitoring'
     )
@@ -174,12 +195,13 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
       configuration.replica = {
         applicationId: userConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
-          'browser',
+          intakeType,
+          'logs',
           replicaTransportConfiguration,
           'browser-agent-internal-monitoring'
         ),
-        logsEndpoint: getEndpoint('browser', replicaTransportConfiguration),
-        rumEndpoint: getEndpoint('rum', replicaTransportConfiguration),
+        logsEndpoint: getEndpoint(intakeType, 'logs', replicaTransportConfiguration),
+        rumEndpoint: getEndpoint(intakeType, 'rum', replicaTransportConfiguration),
       }
     }
   }
@@ -200,13 +222,18 @@ export function buildCookieOptions(userConfiguration: UserConfiguration) {
   return cookieOptions
 }
 
-function getEndpoint(type: string, conf: TransportConfiguration, source?: string) {
+function getEndpoint(
+  intakeType: IntakeType,
+  endpointType: EndpointType,
+  conf: TransportConfiguration,
+  source?: string
+) {
   const tags =
     `sdk_version:${conf.sdkVersion}` +
     `${conf.env ? `,env:${conf.env}` : ''}` +
     `${conf.service ? `,service:${conf.service}` : ''}` +
     `${conf.version ? `,version:${conf.version}` : ''}`
-  const datadogHost = `${type}-http-intake.logs.${conf.site}`
+  const datadogHost = getHost(intakeType, endpointType, conf.site)
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
@@ -215,18 +242,33 @@ function getEndpoint(type: string, conf: TransportConfiguration, source?: string
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
 
-export function isIntakeRequest(url: string, configuration: Configuration) {
-  return (
-    getPathName(url).indexOf('/v1/input/') !== -1 &&
-    (haveSameOrigin(url, configuration.logsEndpoint) ||
-      haveSameOrigin(url, configuration.rumEndpoint) ||
-      haveSameOrigin(url, configuration.traceEndpoint) ||
-      (!!configuration.internalMonitoringEndpoint && haveSameOrigin(url, configuration.internalMonitoringEndpoint)) ||
-      (!!configuration.replica &&
-        (haveSameOrigin(url, configuration.replica.logsEndpoint) ||
-          haveSameOrigin(url, configuration.replica.rumEndpoint) ||
-          haveSameOrigin(url, configuration.replica.internalMonitoringEndpoint))))
-  )
+function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
+  const endpoint = ENDPOINTS[intakeType][endpointType]
+  if (intakeType === 'classic') {
+    return `${endpoint}-http-intake.logs.${site}`
+  }
+  const domainParts = site.split('.')
+  const extension = domainParts.pop()
+  const suffix = `${domainParts.join('-')}.${extension}`
+  return `${endpoint}.browser-intake-${suffix}`
+}
+
+function getIntakeUrls(intakeType: IntakeType, conf: TransportConfiguration, withReplica: boolean) {
+  if (conf.proxyHost) {
+    return [`https://${conf.proxyHost}/v1/input/`]
+  }
+  const sites = [conf.site]
+  if (conf.buildMode === BuildMode.STAGING && withReplica) {
+    sites.push(INTAKE_SITE[Datacenter.US])
+  }
+  const urls = []
+  const endpointTypes = Object.keys(ENDPOINTS[intakeType]) as EndpointType[]
+  for (const site of sites) {
+    for (const endpointType of endpointTypes) {
+      urls.push(`https://${getHost(intakeType, endpointType, site)}/v1/input/`)
+    }
+  }
+  return urls
 }
 
 function mustUseSecureCookie(userConfiguration: UserConfiguration) {
