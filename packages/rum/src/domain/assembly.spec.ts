@@ -1,41 +1,16 @@
 import { Context } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { ActionSchema, LongTaskSchema, RumEventsFormat } from '../rumEventsFormat'
 import { RumEventType } from '../types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-
-interface ServerRumEvents {
-  application: {
-    id: string
-  }
-  action: {
-    id: string
-  }
-  context: any
-  date: number
-  type: string
-  session: {
-    id: string
-  }
-  view: {
-    id: string
-    referrer: string
-    url: string
-  }
-  long_task?: {
-    duration: number
-  }
-  _dd: {
-    format_version: 2
-  }
-}
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
   let globalContext: Context
-  let serverRumEvents: ServerRumEvents[]
+  let serverRumEvents: RumEventsFormat[]
   let isTracked: boolean
   let viewSessionId: string | undefined
 
@@ -72,7 +47,7 @@ describe('rum assembly', () => {
 
     serverRumEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
-      serverRumEvents.push((serverRumEvent as unknown) as ServerRumEvents)
+      serverRumEvents.push(serverRumEvent as RumEventsFormat)
     )
   })
 
@@ -87,7 +62,7 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].long_task!.duration).toBe(2)
+      expect((serverRumEvents[0] as LongTaskSchema).long_task.duration).toBe(2)
     })
   })
 
@@ -216,7 +191,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 0,
       })
-      expect(serverRumEvents[0].action.id).not.toBeDefined()
+      expect((serverRumEvents[0] as ActionSchema).action.id).not.toBeDefined()
       serverRumEvents = []
     })
   })

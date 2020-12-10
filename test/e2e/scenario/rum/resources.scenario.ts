@@ -1,7 +1,7 @@
+import { ResourceSchema } from '@datadog/browser-rum'
 import { createTest, html } from '../../lib/framework'
 import { sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
-import { ServerRumResourceEvent } from '../../lib/types/serverEvents'
 
 const REQUEST_DURATION = 200
 
@@ -82,7 +82,7 @@ describe('rum resources', () => {
     })
 })
 
-function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
+function expectToHaveValidTimings(resourceEvent: ResourceSchema) {
   expect(resourceEvent.date).toBeGreaterThan(0)
   expect(resourceEvent.resource.duration).toBeGreaterThan(0)
   const download = resourceEvent.resource.download
