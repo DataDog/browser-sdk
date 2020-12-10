@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "yarn submodule:update",
+    "postinstall": "scripts/cli update_submodule",
     "build": "lerna run build --stream",
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check \"**/*.{ts,js,json,md,yml,html}\"",
@@ -24,9 +24,7 @@
     "test:e2e:bs": "BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build) && node ./scripts/bs-wrapper.js wdio test/e2e/wdio.bs.conf.js",
     "test:compat:tsc": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:tsc) || yarn fail 'typescript 3.0 compatibility broken'",
     "test:compat:ssr": "yarn build && (cd test/app && rm -rf node_modules && yarn && yarn compat:ssr) || yarn fail 'server side rendering compatibility broken'",
-    "submodule:update": "git submodule update --init && git submodule update --remote",
-    "json2type:build": "cd ./node_modules/json-schema-to-typescript && rm -rf dist && npm i; npm run clean && npm run build:server; echo '>>> errors due to build inside node_modules, but it should still work fine'",
-    "rum-events-format:sync": "yarn submodule:update && yarn json2type:build && node scripts/generate-schema-types.js"
+    "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js"
   },
   "devDependencies": {
     "@types/cors": "2.8.7",
