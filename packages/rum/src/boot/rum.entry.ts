@@ -16,10 +16,12 @@ import {
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
+import { RumEventsFormat } from '../rumEventsFormat'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
+  beforeSend?: (event: RumEventsFormat) => void
 }
 
 export type RumGlobal = ReturnType<typeof makeRumGlobal>

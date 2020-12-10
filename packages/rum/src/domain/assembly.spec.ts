@@ -1,4 +1,4 @@
-import { Context } from '@datadog/browser-core'
+import { Context, DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionSchema, LongTaskSchema, RumEventsFormat } from '../rumEventsFormat'
@@ -13,15 +13,21 @@ describe('rum assembly', () => {
   let serverRumEvents: RumEventsFormat[]
   let isTracked: boolean
   let viewSessionId: string | undefined
+  let beforeSend: (event: RumEventsFormat) => void
 
   beforeEach(() => {
     isTracked = true
     viewSessionId = '1234'
+    beforeSend = noop
     setupBuilder = setup()
       .withSession({
         getId: () => '1234',
         isTracked: () => isTracked,
         isTrackedWithResource: () => true,
+      })
+      .withConfiguration({
+        ...DEFAULT_CONFIGURATION,
+        beforeSend: (x: RumEventsFormat) => beforeSend(x),
       })
       .withParentContexts({
         findAction: () => ({
@@ -63,6 +69,30 @@ describe('rum assembly', () => {
       })
 
       expect((serverRumEvents[0] as LongTaskSchema).long_task.duration).toBe(2)
+    })
+
+    it('should allow modification on sensitive field', () => {
+      beforeSend = (event: RumEventsFormat) => (event.view.url = 'modified')
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].view.url).toBe('modified')
+    })
+
+    it('should reject modification on non sensitive field', () => {
+      beforeSend = (event: RumEventsFormat) => ((event.view as any).id = 'modified')
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
   })
 

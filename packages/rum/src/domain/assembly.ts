@@ -1,4 +1,5 @@
-import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
+import { combine, Configuration, Context, limitModification, noop, withSnakeCaseKeys } from '@datadog/browser-core'
+import { RumEventsFormat } from '../rumEventsFormat'
 import { RawRumEvent, RumContext, RumErrorEvent, RumEventType, RumLongTaskEvent, RumResourceEvent } from '../types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
@@ -12,6 +13,16 @@ enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
 }
+
+const FIELDS_WITH_SENSITIVE_DATA = [
+  'view.url',
+  'view.referrer',
+  'action.target.name',
+  'error.message',
+  'error.stack',
+  'error.resource.url',
+  'resource.url',
+]
 
 export function startRumAssembly(
   applicationId: string,
@@ -57,6 +68,13 @@ export function startRumAssembly(
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(rumEvent)
         serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
+        if (configuration.beforeSend) {
+          limitModification(
+            serverRumEvent as RumEventsFormat & Context,
+            FIELDS_WITH_SENSITIVE_DATA,
+            configuration.beforeSend
+          )
+        }
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
