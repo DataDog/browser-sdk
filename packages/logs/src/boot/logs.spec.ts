@@ -11,7 +11,8 @@ import {
 import sinon from 'sinon'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { assembleMessageContexts, doStartLogs } from './logs'
+import { LogsEventsFormat } from '../logsEventsFormat'
+import { buildAssemble, doStartLogs } from './logs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
@@ -126,16 +127,35 @@ describe('logs', () => {
     })
   })
 
-  describe('assembleMessageContexts', () => {
-    it('assembles various contexts', () => {
-      expect(
-        assembleMessageContexts(
-          { session_id: SESSION_ID, service: 'Service' },
-          { foo: 'from-current-context' },
-          { view: { url: 'http://from-rum-context.com', id: 'view-id' } },
-          DEFAULT_MESSAGE
-        )
-      ).toEqual({
+  describe('assemble', () => {
+    let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
+    let beforeSend: (event: LogsEventsFormat) => void
+
+    beforeEach(() => {
+      beforeSend = noop
+      assemble = buildAssemble(session, {
+        ...(baseConfiguration as Configuration),
+        beforeSend: (x: LogsEventsFormat) => beforeSend(x),
+      })
+      window.DD_RUM = {
+        getInternalContext: noop,
+      }
+    })
+
+    it('should not assemble when session is not tracked', () => {
+      sessionIsTracked = false
+
+      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
+    })
+
+    it('add default, current and RUM context to message', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+        view: { url: 'http://from-rum-context.com', id: 'view-id' },
+      })
+
+      const assembledMessage = assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })
+
+      expect(assembledMessage).toEqual({
         foo: 'from-current-context',
         message: DEFAULT_MESSAGE.message,
         service: 'Service',
@@ -146,36 +166,41 @@ describe('logs', () => {
     })
 
     it('message context should take precedence over RUM context', () => {
-      expect(
-        assembleMessageContexts(
-          {},
-          { session_id: 'from-rum-context' },
-          {},
-          { ...DEFAULT_MESSAGE, session_id: 'from-message-context' }
-        ).session_id
-      ).toBe('from-message-context')
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
+
+      const assembledMessage = assemble({ ...DEFAULT_MESSAGE, session_id: 'from-message-context' }, {})
+
+      expect(assembledMessage!.session_id).toBe('from-message-context')
     })
 
     it('RUM context should take precedence over current context', () => {
-      expect(
-        assembleMessageContexts(
-          {},
-          { session_id: 'from-current-context' },
-          { session_id: 'from-rum-context' },
-          DEFAULT_MESSAGE
-        ).session_id
-      ).toBe('from-rum-context')
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ session_id: 'from-rum-context' })
+
+      const assembledMessage = assemble(DEFAULT_MESSAGE, { session_id: 'from-current-context' })
+
+      expect(assembledMessage!.session_id).toBe('from-rum-context')
     })
 
     it('current context should take precedence over default context', () => {
-      expect(
-        assembleMessageContexts(
-          { service: 'from-default-context' },
-          { service: 'from-current-context' },
-          undefined,
-          DEFAULT_MESSAGE
-        ).service
-      ).toBe('from-current-context')
+      const assembledMessage = assemble(DEFAULT_MESSAGE, { service: 'from-current-context' })
+
+      expect(assembledMessage!.service).toBe('from-current-context')
+    })
+
+    it('should allow modification on sensitive field', () => {
+      beforeSend = (event: LogsEventsFormat) => (event.message = 'modified')
+
+      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
+
+      expect(assembledMessage!.message).toBe('modified')
+    })
+
+    it('should reject modification on non sensitive field', () => {
+      beforeSend = (event: LogsEventsFormat) => ((event.service as any) = 'modified')
+
+      const assembledMessage = assemble(DEFAULT_MESSAGE, {})
+
+      expect(assembledMessage!.service).toBe('Service')
     })
   })
 

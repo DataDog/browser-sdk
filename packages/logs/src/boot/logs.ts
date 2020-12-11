@@ -9,14 +9,19 @@ import {
   getTimestamp,
   HttpRequest,
   InternalMonitoring,
+  limitModification,
+  noop,
   Observable,
   RawError,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
+import { LogsEventsFormat } from '../logsEventsFormat'
 import { buildEnv } from './buildEnv'
 import { LogsUserConfiguration } from './logs.entry'
+
+const FIELDS_WITH_SENSITIVE_DATA = ['view.url', 'view.referrer', 'message', 'error.stack', 'http.url']
 
 export function startLogs(
   userConfiguration: LogsUserConfiguration,
@@ -44,7 +49,8 @@ export function doStartLogs(
     combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
   )
 
-  const batch = startLoggerBatch(configuration, session)
+  const assemble = buildAssemble(session, configuration)
+  const batch = startLoggerBatch(configuration)
 
   errorObservable.subscribe((error: RawError) => {
     errorLogger.error(
@@ -73,13 +79,14 @@ export function doStartLogs(
   })
 
   return (message: LogsMessage, currentContext: Context) => {
-    if (session.isTracked()) {
-      batch.add(message, currentContext)
+    const contextualizedMessage = assemble(message, currentContext)
+    if (contextualizedMessage) {
+      batch.add(contextualizedMessage)
     }
   }
 }
 
-function startLoggerBatch(configuration: Configuration, session: LoggerSession) {
+function startLoggerBatch(configuration: Configuration) {
   const primaryBatch = createLoggerBatch(configuration.logsEndpoint)
 
   let replicaBatch: Batch | undefined
@@ -98,18 +105,37 @@ function startLoggerBatch(configuration: Configuration, session: LoggerSession) 
   }
 
   return {
-    add(message: LogsMessage, currentContext: Context) {
-      const contextualizedMessage = assembleMessageContexts(
-        { service: configuration.service, session_id: session.getId() },
-        currentContext,
-        getRUMInternalContext(),
-        message
-      )
-      primaryBatch.add(contextualizedMessage)
+    add(message: Context) {
+      primaryBatch.add(message)
       if (replicaBatch) {
-        replicaBatch.add(contextualizedMessage)
+        replicaBatch.add(message)
       }
     },
+  }
+}
+
+export function buildAssemble(
+  session: LoggerSession,
+  configuration: Configuration
+): (message: LogsMessage, currentContext: Context) => Context | undefined {
+  return (message: LogsMessage, currentContext: Context) => {
+    if (!session.isTracked()) {
+      return undefined
+    }
+    const contextualizedMessage = combine(
+      { service: configuration.service, session_id: session.getId() },
+      currentContext,
+      getRUMInternalContext(),
+      message
+    )
+    if (configuration.beforeSend) {
+      limitModification(
+        contextualizedMessage as LogsEventsFormat & Context,
+        FIELDS_WITH_SENSITIVE_DATA,
+        configuration.beforeSend
+      )
+    }
+    return contextualizedMessage
   }
 }
 
