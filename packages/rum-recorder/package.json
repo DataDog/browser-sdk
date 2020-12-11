@@ -1,0 +1,25 @@
+{
+  "name": "@datadog/browser-rum-recorder",
+  "version": "2.0.1",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "scripts": {
+    "build": "run-p build:cjs build:esm build:bundle",
+    "build:bundle": "rm -rf bundle && webpack --config webpack.config.js --mode=production && yarn replace-build-env bundle",
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
+    "replace-build-env": "node ../../scripts/replace-build-env.js"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "2.0.1",
+    "@datadog/browser-rum": "2.0.1",
+    "tslib": "^1.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-recorder"
+  }
+}
