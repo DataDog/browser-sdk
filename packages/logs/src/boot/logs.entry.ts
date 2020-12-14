@@ -24,8 +24,6 @@ export interface LoggerConfiguration {
   context?: Context
 }
 
-export type Status = keyof typeof StatusType
-
 export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
 
 export const datadogLogs = makeLogsGlobal(startLogs)
