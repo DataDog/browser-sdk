@@ -138,11 +138,11 @@ export interface ActionContext extends Context {
 }
 
 export type RumEvent =
-  | RumErrorEvent & ActionContext & ViewContext & RumContext
-  | RumResourceEvent & ActionContext & ViewContext & RumContext
-  | RumViewEvent & ViewContext & RumContext
-  | RumLongTaskEvent & ActionContext & ViewContext & RumContext
-  | RumActionEvent & ViewContext & RumContext
+  | (RumErrorEvent & ActionContext & ViewContext & RumContext)
+  | (RumResourceEvent & ActionContext & ViewContext & RumContext)
+  | (RumViewEvent & ViewContext & RumContext)
+  | (RumLongTaskEvent & ActionContext & ViewContext & RumContext)
+  | (RumActionEvent & ViewContext & RumContext)
 
 export interface InternalContext {
   application_id: string

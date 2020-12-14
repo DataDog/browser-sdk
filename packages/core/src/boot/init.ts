@@ -39,7 +39,7 @@ export const Datacenter = {
   US: 'us',
 } as const
 
-export type Datacenter = (typeof Datacenter)[keyof typeof Datacenter]
+export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
 
 export const INTAKE_SITE = {
   [Datacenter.EU]: 'datadoghq.eu',

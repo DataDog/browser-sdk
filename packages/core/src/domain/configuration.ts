@@ -118,7 +118,7 @@ const ENDPOINTS = {
   },
 }
 type IntakeType = keyof typeof ENDPOINTS
-type EndpointType = keyof (typeof ENDPOINTS)[IntakeType]
+type EndpointType = keyof typeof ENDPOINTS[IntakeType]
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const transportConfiguration: TransportConfiguration = {
