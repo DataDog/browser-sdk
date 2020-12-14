@@ -1,5 +1,4 @@
 import {
-  combine,
   computeStackTrace,
   Configuration,
   Context,
@@ -10,8 +9,7 @@ import {
   RawError,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
-import { RumErrorEvent, RumEventCategory } from '../../../types'
-import { CommonContext, RumErrorEventV2, RumEventType } from '../../../typesV2'
+import { CommonContext, RumErrorEvent, RumEventType } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
@@ -30,11 +28,7 @@ export function doStartErrorCollection(
   configuration: Configuration,
   observable: Observable<RawError>
 ) {
-  observable.subscribe((error) => {
-    configuration.isEnabled('v2_format')
-      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processErrorV2(error))
-      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
-  })
+  observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {
     addError(
@@ -42,18 +36,11 @@ export function doStartErrorCollection(
       savedCommonContext?: CommonContext
     ) {
       const rawError = computeRawError(error, startTime, source)
-
-      configuration.isEnabled('v2_format')
-        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-            customerContext,
-            savedCommonContext,
-            ...processErrorV2(rawError),
-          })
-        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-            customerContext,
-            savedGlobalContext: savedCommonContext && savedCommonContext.context,
-            ...processError(rawError),
-          })
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        customerContext,
+        savedCommonContext,
+        ...processError(rawError),
+      })
     },
   }
 }
@@ -64,37 +51,7 @@ function computeRawError(error: unknown, startTime: number, source: ErrorSource)
 }
 
 function processError(error: RawError) {
-  const rawRumEvent: RumErrorEvent = combine(
-    {
-      date: getTimestamp(error.startTime),
-      error: {
-        kind: error.type,
-        origin: error.source,
-        stack: error.stack,
-      },
-      evt: {
-        category: RumEventCategory.ERROR as const,
-      },
-      message: error.message,
-    },
-    error.resource
-      ? {
-          http: {
-            method: error.resource.method,
-            status_code: error.resource.statusCode,
-            url: error.resource.url,
-          },
-        }
-      : undefined
-  )
-  return {
-    rawRumEvent,
-    startTime: error.startTime,
-  }
-}
-
-function processErrorV2(error: RawError) {
-  const rawRumEvent: RumErrorEventV2 = {
+  const rawRumEvent: RumErrorEvent = {
     date: getTimestamp(error.startTime),
     error: {
       message: error.message,

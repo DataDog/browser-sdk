@@ -2,7 +2,6 @@ import { combine, commonInit, Configuration, Context } from '@datadog/browser-co
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
-import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle } from '../domain/lifeCycle'
 import { startParentContexts } from '../domain/parentContexts'
@@ -14,7 +13,7 @@ import { startResourceCollection } from '../domain/rumEventsCollection/resource/
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { startRumBatch } from '../transport/batch'
-import { CommonContext } from '../typesV2'
+import { CommonContext } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'
@@ -48,7 +47,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
 
-  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
+  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
 
   return {
     addAction,
@@ -67,8 +66,7 @@ export function startRumEventCollection(
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
-  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, () => getCommonContext().context)
-  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
+  startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)

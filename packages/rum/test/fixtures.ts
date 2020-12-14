@@ -2,9 +2,9 @@ import { combine, Context, ErrorSource, ResourceType } from '@datadog/browser-co
 import { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
 import { ActionType } from '../src/domain/rumEventsCollection/action/trackActions'
 import { ViewLoadingType } from '../src/domain/rumEventsCollection/view/trackViews'
-import { RawRumEventV2, RumEventType } from '../src/typesV2'
+import { RawRumEvent, RumEventType } from '../src/types'
 
-export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEventV2 {
+export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {
     case RumEventType.ACTION:
       return combine(

@@ -16,7 +16,7 @@ import {
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
-import { CommonContext, User } from '../typesV2'
+import { CommonContext, User } from '../types'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -108,8 +108,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
+    /**
+     * @deprecated
+     * @see addAction
+     */
     addUserAction: (name: string, context?: Context) => {
-      // TODO deprecate in v2
       rumGlobal.addAction(name, context)
     },
 

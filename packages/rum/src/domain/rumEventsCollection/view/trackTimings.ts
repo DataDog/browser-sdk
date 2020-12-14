@@ -7,7 +7,7 @@ export interface Timings {
   domInteractive?: number
   domContentLoaded?: number
   domComplete?: number
-  loadEventEnd?: number
+  loadEvent?: number
   largestContentfulPaint?: number
   firstInputDelay?: number
 }
@@ -51,7 +51,7 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
         domComplete: entry.domComplete,
         domContentLoaded: entry.domContentLoadedEventEnd,
         domInteractive: entry.domInteractive,
-        loadEventEnd: entry.loadEventEnd,
+        loadEvent: entry.loadEventEnd,
       })
     }
   })

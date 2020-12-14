@@ -100,7 +100,7 @@ export interface ServerRumViewEvent extends ServerRumEvent {
     dom_complete: number
     dom_content_loaded: number
     dom_interactive: number
-    load_event_end: number
+    load_event: number
     first_input_delay?: number
   }
 }

@@ -1,15 +1,12 @@
 import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { RumEventCategory, RumUserActionEvent } from '../../../types'
-import { CommonContext, RumActionEventV2, RumEventType } from '../../../typesV2'
+import { CommonContext, RumActionEvent, RumEventType } from '../../../types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
 
 export function startActionCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
-    configuration.isEnabled('v2_format')
-      ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, processActionV2(action))
-      : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
-  })
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  )
 
   if (configuration.trackInteractions) {
     trackActions(lifeCycle)
@@ -17,51 +14,15 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
 
   return {
     addAction(action: CustomAction, savedCommonContext?: CommonContext) {
-      configuration.isEnabled('v2_format')
-        ? lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_V2_COLLECTED, {
-            savedCommonContext,
-            ...processActionV2(action),
-          })
-        : lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-            savedGlobalContext: savedCommonContext && savedCommonContext.context,
-            ...processAction(action),
-          })
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        savedCommonContext,
+        ...processAction(action),
+      })
     },
   }
 }
 
 function processAction(action: AutoAction | CustomAction) {
-  const autoActionProperties = isAutoAction(action)
-    ? {
-        duration: msToNs(action.duration),
-        userAction: {
-          id: action.id,
-          measures: action.counts,
-        },
-      }
-    : undefined
-  const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent: RumUserActionEvent = combine(
-    {
-      date: getTimestamp(action.startTime),
-      evt: {
-        category: RumEventCategory.USER_ACTION as const,
-        name: action.name,
-      },
-      userAction: {
-        type: action.type,
-      },
-    },
-    autoActionProperties
-  )
-  return {
-    customerContext,
-    rawRumEvent: actionEvent,
-    startTime: action.startTime,
-  }
-}
-
-function processActionV2(action: AutoAction | CustomAction) {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -80,7 +41,7 @@ function processActionV2(action: AutoAction | CustomAction) {
       }
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent: RumActionEventV2 = combine(
+  const actionEvent: RumActionEvent = combine(
     {
       action: {
         target: {
