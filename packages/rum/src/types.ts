@@ -58,6 +58,7 @@ export interface RumViewEvent {
     loadingType: ViewLoadingType
     firstContentfulPaint?: number
     firstInputDelay?: number
+    cumulativeLayoutShift?: number
     largestContentfulPaint?: number
     domInteractive?: number
     domContentLoaded?: number

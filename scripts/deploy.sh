@@ -41,7 +41,7 @@ case "${datacenter}" in
     ;;
 esac
 
-BROWSER_CACHE=900
+CACHE_CONTROL='max-age=900, s-maxage=60, stale-while-revalidate=31536000'
 LOGS_BUNDLE_PATH="packages/logs/bundle"
 RUM_BUNDLE_PATH="packages/rum/bundle"
 declare -A paths
@@ -57,7 +57,7 @@ upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
     for file_name in ${LOGS_FILE_NAME} ${RUM_FILE_NAME}; do
       echo "Upload ${file_name}"
-      aws s3 cp --cache-control max-age=${BROWSER_CACHE} ${paths[${file_name}]} s3://${BUCKET_NAME}/${file_name};
+      aws s3 cp --cache-control "$CACHE_CONTROL" ${paths[${file_name}]} s3://${BUCKET_NAME}/${file_name};
     done
 }
 
