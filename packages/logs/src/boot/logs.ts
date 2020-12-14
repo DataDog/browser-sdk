@@ -10,7 +10,6 @@ import {
   HttpRequest,
   InternalMonitoring,
   limitModification,
-  noop,
   Observable,
   RawError,
   startAutomaticErrorCollection,
@@ -114,10 +113,7 @@ function startLoggerBatch(configuration: Configuration) {
   }
 }
 
-export function buildAssemble(
-  session: LoggerSession,
-  configuration: Configuration
-): (message: LogsMessage, currentContext: Context) => Context | undefined {
+export function buildAssemble(session: LoggerSession, configuration: Configuration) {
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined
@@ -135,7 +131,7 @@ export function buildAssemble(
         configuration.beforeSend
       )
     }
-    return contextualizedMessage
+    return contextualizedMessage as Context
   }
 }
 
