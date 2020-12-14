@@ -1,6 +1,9 @@
 Component,Origin,License,Copyright
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
+file,rrweb,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb/graphs/contributors) and SmartX Inc.
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
+prod,@types/css-font-loading-module,MIT,Copyright Microsoft Corporation
+prod,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
@@ -29,8 +32,8 @@ dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-coverage-istanbul-reporter,MIT,Copyright 2017 Matt Lewis
 dev,karma-jasmine,MIT,Copyright 2011-2013 Google Inc.
 dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
-dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
+dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
