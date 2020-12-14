@@ -1,5 +1,6 @@
 import { Context } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
+import { RumEventsFormat } from '../rumEventsFormat'
 import { RawRumEvent, RumEvent } from '../types'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -51,7 +52,10 @@ export class LifeCycle {
       customerContext?: Context
     }
   ): void
-  notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: { rumEvent: RumEvent; serverRumEvent: Context }): void
+  notify(
+    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
+    data: { rumEvent: RumEvent; serverRumEvent: RumEventsFormat & Context }
+  ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -94,7 +98,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
+    callback: (data: { rumEvent: RumEvent; serverRumEvent: RumEventsFormat & Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {

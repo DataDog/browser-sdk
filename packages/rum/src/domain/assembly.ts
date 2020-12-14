@@ -66,14 +66,10 @@ export function startRumAssembly(
         const rumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(rumEvent)
+        const serverRumEvent = withSnakeCaseKeys(rumEvent) as RumEventsFormat & Context
         serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
         if (configuration.beforeSend) {
-          limitModification(
-            serverRumEvent as RumEventsFormat & Context,
-            FIELDS_WITH_SENSITIVE_DATA,
-            configuration.beforeSend
-          )
+          limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
         }
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
       }

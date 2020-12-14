@@ -10,7 +10,7 @@ import { startRumEventCollection } from './rum'
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEventsFormat[] = []
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) => {
-    serverRumEvents.push(serverRumEvent as RumEventsFormat)
+    serverRumEvents.push(serverRumEvent)
   })
   return serverRumEvents
 }

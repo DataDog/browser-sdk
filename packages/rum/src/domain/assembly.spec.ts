@@ -53,7 +53,7 @@ describe('rum assembly', () => {
 
     serverRumEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
-      serverRumEvents.push(serverRumEvent as RumEventsFormat)
+      serverRumEvents.push(serverRumEvent)
     )
   })
 
