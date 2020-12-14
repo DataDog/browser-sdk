@@ -12,12 +12,12 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsEventsFormat } from '../logsEventsFormat'
+import { LogsEvent } from '../logsEvent.types'
 import { startLogs } from './logs'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
-  beforeSend?: (event: LogsEventsFormat) => void
+  beforeSend?: (event: LogsEvent) => void
 }
 
 export interface LoggerConfiguration {

@@ -16,7 +16,7 @@ import {
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
-import { LogsEventsFormat } from '../logsEventsFormat'
+import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
 import { LogsUserConfiguration } from './logs.entry'
 
@@ -126,7 +126,7 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
     )
     if (configuration.beforeSend) {
       limitModification(
-        contextualizedMessage as LogsEventsFormat & Context,
+        contextualizedMessage as LogsEvent & Context,
         FIELDS_WITH_SENSITIVE_DATA,
         configuration.beforeSend
       )

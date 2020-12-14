@@ -1,4 +1,3 @@
-import { LogsEventsFormat } from '@datadog/browser-logs'
 import { createTest } from '../lib/framework'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'

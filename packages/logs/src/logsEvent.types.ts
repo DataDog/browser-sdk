@@ -1,4 +1,4 @@
-export interface LogsEventsFormat {
+export interface LogsEvent {
   /**
    * Start of the log in ms from epoch
    */

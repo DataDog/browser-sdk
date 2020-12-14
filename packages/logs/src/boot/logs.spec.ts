@@ -11,7 +11,7 @@ import {
 import sinon from 'sinon'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsEventsFormat } from '../logsEventsFormat'
+import { LogsEvent } from '../logsEvent.types'
 import { buildAssemble, doStartLogs } from './logs'
 
 interface SentMessage extends LogsMessage {
@@ -129,13 +129,13 @@ describe('logs', () => {
 
   describe('assemble', () => {
     let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
-    let beforeSend: (event: LogsEventsFormat) => void
+    let beforeSend: (event: LogsEvent) => void
 
     beforeEach(() => {
       beforeSend = noop
       assemble = buildAssemble(session, {
         ...(baseConfiguration as Configuration),
-        beforeSend: (x: LogsEventsFormat) => beforeSend(x),
+        beforeSend: (x: LogsEvent) => beforeSend(x),
       })
       window.DD_RUM = {
         getInternalContext: noop,
@@ -188,7 +188,7 @@ describe('logs', () => {
     })
 
     it('should allow modification on sensitive field', () => {
-      beforeSend = (event: LogsEventsFormat) => (event.message = 'modified')
+      beforeSend = (event: LogsEvent) => (event.message = 'modified')
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
@@ -196,7 +196,7 @@ describe('logs', () => {
     })
 
     it('should reject modification on non sensitive field', () => {
-      beforeSend = (event: LogsEventsFormat) => ((event.service as any) = 'modified')
+      beforeSend = (event: LogsEvent) => ((event.service as any) = 'modified')
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
