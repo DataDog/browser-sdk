@@ -96,8 +96,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
+    /**
+     * @deprecated
+     * @see addAction
+     */
     addUserAction: (name: string, context?: Context) => {
-      // TODO deprecate in v2
       rumGlobal.addAction(name, context)
     },
 

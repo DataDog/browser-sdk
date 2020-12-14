@@ -71,7 +71,7 @@ describe('trackTimings', () => {
       domInteractive: 234,
       firstContentfulPaint: 123,
       firstInputDelay: 100,
-      loadEventEnd: 567,
+      loadEvent: 567,
     })
   })
 })
@@ -101,7 +101,7 @@ describe('trackNavigationTimings', () => {
       domComplete: 456,
       domContentLoaded: 345,
       domInteractive: 234,
-      loadEventEnd: 567,
+      loadEvent: 567,
     })
   })
 })

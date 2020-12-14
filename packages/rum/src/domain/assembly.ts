@@ -1,5 +1,5 @@
 import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
-import { RawRumEvent, RumContext, RumErrorEvent, RumEventCategory, RumLongTaskEvent, RumResourceEvent } from '../types'
+import { RawRumEvent, RumContext, RumErrorEvent, RumEventType, RumLongTaskEvent, RumResourceEvent } from '../types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -35,10 +35,15 @@ export function startRumAssembly(
       customerContext?: Context
     }) => {
       const viewContext = parentContexts.findView(startTime)
-      if (session.isTracked() && viewContext && viewContext.sessionId) {
+      if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
         const rumContext: RumContext = {
-          applicationId,
+          _dd: {
+            formatVersion: 2,
+          },
+          application: {
+            id: applicationId,
+          },
           date: new Date().getTime(),
           service: configuration.service,
           session: {
@@ -50,11 +55,8 @@ export function startRumAssembly(
         const rumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = combine(
-          savedGlobalContext || getGlobalContext(),
-          customerContext,
-          withSnakeCaseKeys(rumEvent)
-        )
+        const serverRumEvent = withSnakeCaseKeys(rumEvent)
+        serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
       }
     }
@@ -62,9 +64,7 @@ export function startRumAssembly(
 }
 
 function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
-  return (
-    [RumEventCategory.ERROR, RumEventCategory.RESOURCE, RumEventCategory.LONG_TASK].indexOf(event.evt.category) !== -1
-  )
+  return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
 function getSessionType() {

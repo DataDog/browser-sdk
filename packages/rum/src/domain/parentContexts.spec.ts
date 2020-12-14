@@ -108,13 +108,13 @@ describe('parentContexts', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
-      expect(parentContexts.findView()!.sessionId).toBe('fake-session')
+      expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
       sessionId = 'other-session'
-      expect(parentContexts.findView()!.sessionId).toBe('fake-session')
+      expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))
-      expect(parentContexts.findView()!.sessionId).toBe('other-session')
+      expect(parentContexts.findView()!.session.id).toBe('other-session')
     })
   })
 
@@ -131,7 +131,7 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime, id: FAKE_ID })
 
       expect(parentContexts.findAction()).toBeDefined()
-      expect(parentContexts.findAction()!.userAction.id).toBe(FAKE_ID)
+      expect(parentContexts.findAction()!.action.id).toBe(FAKE_ID)
     })
 
     it('should return the action context corresponding to startTime', () => {
@@ -145,10 +145,10 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 50, id: 'action 3' })
 
-      expect(parentContexts.findAction(15)!.userAction.id).toBe('action 1')
-      expect(parentContexts.findAction(20)!.userAction.id).toBe('action 1')
-      expect(parentContexts.findAction(30)!.userAction.id).toBe('action 2')
-      expect(parentContexts.findAction(55)!.userAction.id).toBe('action 3')
+      expect(parentContexts.findAction(15)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(20)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(30)!.action.id).toBe('action 2')
+      expect(parentContexts.findAction(55)!.action.id).toBe('action 3')
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {

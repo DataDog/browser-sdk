@@ -2,7 +2,6 @@ import { combine, commonInit, Configuration, Context } from '@datadog/browser-co
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
-import { startRumAssemblyV2 } from '../domain/assemblyV2'
 import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle } from '../domain/lifeCycle'
 import { startParentContexts } from '../domain/parentContexts'
@@ -47,7 +46,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getGlobalConte
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
 
-  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts, configuration)
+  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
 
   return {
     addAction,
@@ -67,7 +66,6 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
-  startRumAssemblyV2(applicationId, configuration, lifeCycle, session, parentContexts, getGlobalContext)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
   startViewCollection(lifeCycle, configuration, location)

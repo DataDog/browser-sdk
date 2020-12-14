@@ -12,7 +12,7 @@ import { createMockServerApp } from './serverApps/mock'
 const DEFAULT_RUM_OPTIONS = {
   applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
-  enableExperimentalFeatures: ['v2_format'],
+  enableExperimentalFeatures: [],
 }
 
 const DEFAULT_LOGS_OPTIONS = {

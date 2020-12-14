@@ -29,9 +29,6 @@ function collectServerEvents(lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) => {
     serverRumEvents.push(serverRumEvent as any)
   })
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_V2_COLLECTED, ({ serverRumEvent }) => {
-    serverRumEvents.push(serverRumEvent as any)
-  })
   return serverRumEvents
 }
 
@@ -52,34 +49,6 @@ describe('rum session', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-  })
-
-  it('when the session is renewed, a new view event should be sent (v1)', () => {
-    let sessionId = '42'
-    const { lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => sessionId,
-        isTracked: () => true,
-        isTrackedWithResource: () => true,
-      })
-      .withConfiguration({
-        isEnabled: () => false,
-      })
-      .build()
-
-    expect(serverRumEvents.length).toEqual(1)
-    expect(serverRumEvents[0].evt.category).toEqual('view')
-    expect(serverRumEvents[0].session_id).toEqual('42')
-
-    sessionId = '43'
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-    expect(serverRumEvents.length).toEqual(2)
-
-    // New view event
-    expect(serverRumEvents[1].evt.category).toEqual('view')
-    expect(serverRumEvents[1].session_id).toEqual('43')
-    expect(serverRumEvents[1].view.id).not.toEqual(serverRumEvents[0].view.id)
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
@@ -133,30 +102,6 @@ describe('rum session keep alive', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
-  })
-
-  it('should send a view update regularly (v1)', () => {
-    const { clock } = setupBuilder
-      .withConfiguration({
-        isEnabled: () => false,
-      })
-      .build()
-
-    // clear initial events
-    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.9)
-    serverRumEvents.length = 0
-
-    clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
-
-    // view update
-    expect(serverRumEvents.length).toEqual(1)
-    expect(serverRumEvents[0].evt.category).toEqual('view')
-
-    clock.tick(SESSION_KEEP_ALIVE_INTERVAL)
-
-    // view update
-    expect(serverRumEvents.length).toEqual(2)
-    expect(serverRumEvents[1].evt.category).toEqual('view')
   })
 
   it('should send a view update regularly', () => {

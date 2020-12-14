@@ -1,7 +1,6 @@
 import { Batch, combine, Configuration, Context, HttpRequest } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { RumEvent, RumEventCategory } from '../types'
-import { RumEventType, RumEventV2 } from '../typesV2'
+import { RumEvent, RumEventType } from '../types'
 
 export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle) {
   const batch = makeRumBatch(configuration, lifeCycle)
@@ -9,17 +8,6 @@ export function startRumBatch(configuration: Configuration, lifeCycle: LifeCycle
   lifeCycle.subscribe(
     LifeCycleEventType.RUM_EVENT_COLLECTED,
     ({ rumEvent, serverRumEvent }: { rumEvent: RumEvent; serverRumEvent: Context }) => {
-      if (rumEvent.evt.category === RumEventCategory.VIEW) {
-        batch.upsert(serverRumEvent, rumEvent.view.id)
-      } else {
-        batch.add(serverRumEvent)
-      }
-    }
-  )
-
-  lifeCycle.subscribe(
-    LifeCycleEventType.RUM_EVENT_V2_COLLECTED,
-    ({ rumEvent, serverRumEvent }: { rumEvent: RumEventV2; serverRumEvent: Context }) => {
       if (rumEvent.type === RumEventType.VIEW) {
         batch.upsert(serverRumEvent, rumEvent.view.id)
       } else {
@@ -64,10 +52,7 @@ function makeRumBatch(configuration: Configuration, lifeCycle: LifeCycle): RumBa
   }
 
   function withReplicaApplicationId(message: Context) {
-    const applicationIdOverwrite = configuration.isEnabled('v2_format')
-      ? { application: { id: replica!.applicationId } }
-      : { application_id: replica!.applicationId }
-    return combine(message, applicationIdOverwrite)
+    return combine(message, { application: { id: replica!.applicationId } })
   }
 
   let stopped = false
