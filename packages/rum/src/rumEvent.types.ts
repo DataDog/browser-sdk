@@ -6,11 +6,11 @@
 /**
  * Schema of all properties of a RUM event
  */
-export type RumEventsFormat = ActionSchema | ErrorSchema | LongTaskSchema | ResourceSchema | ViewSchema
+export type RumEvent = RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent | RumViewEvent
 /**
  * Schema of all properties of an Action event
  */
-export type ActionSchema = CommonSchema & {
+export type RumActionEvent = CommonProperties & {
   /**
    * RUM event type
    */
@@ -88,7 +88,7 @@ export type ActionSchema = CommonSchema & {
 /**
  * Schema of all properties of an Error event
  */
-export type ErrorSchema = CommonSchema & {
+export type RumErrorEvent = CommonProperties & {
   /**
    * RUM event type
    */
@@ -180,7 +180,7 @@ export type ErrorSchema = CommonSchema & {
 /**
  * Schema of all properties of a Long Task event
  */
-export type LongTaskSchema = CommonSchema & {
+export type RumLongTaskEvent = CommonProperties & {
   /**
    * RUM event type
    */
@@ -210,7 +210,7 @@ export type LongTaskSchema = CommonSchema & {
 /**
  * Schema of all properties of a Resource event
  */
-export type ResourceSchema = CommonSchema & {
+export type RumResourceEvent = CommonProperties & {
   /**
    * RUM event type
    */
@@ -394,7 +394,7 @@ export type ResourceSchema = CommonSchema & {
 /**
  * Schema of all properties of a View event
  */
-export type ViewSchema = CommonSchema & {
+export type RumViewEvent = CommonProperties & {
   /**
    * RUM event type
    */
@@ -527,7 +527,7 @@ export type ViewSchema = CommonSchema & {
 /**
  * Schema of common properties of RUM events
  */
-export interface CommonSchema {
+export interface CommonProperties {
   /**
    * Start of the event in ms from epoch
    */

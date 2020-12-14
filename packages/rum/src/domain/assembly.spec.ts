@@ -2,7 +2,7 @@ import { Context, DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventType } from '../rawRumEvent.types'
-import { ActionSchema, LongTaskSchema, RumEventsFormat } from '../rumEventsFormat'
+import { RumActionEvent, RumEvent, RumLongTaskEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -10,10 +10,10 @@ describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
   let globalContext: Context
-  let serverRumEvents: RumEventsFormat[]
+  let serverRumEvents: RumEvent[]
   let isTracked: boolean
   let viewSessionId: string | undefined
-  let beforeSend: (event: RumEventsFormat) => void
+  let beforeSend: (event: RumEvent) => void
 
   beforeEach(() => {
     isTracked = true
@@ -27,7 +27,7 @@ describe('rum assembly', () => {
       })
       .withConfiguration({
         ...DEFAULT_CONFIGURATION,
-        beforeSend: (x: RumEventsFormat) => beforeSend(x),
+        beforeSend: (x: RumEvent) => beforeSend(x),
       })
       .withParentContexts({
         findAction: () => ({
@@ -68,11 +68,11 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect((serverRumEvents[0] as LongTaskSchema).long_task.duration).toBe(2)
+      expect((serverRumEvents[0] as RumLongTaskEvent).long_task.duration).toBe(2)
     })
 
     it('should allow modification on sensitive field', () => {
-      beforeSend = (event: RumEventsFormat) => (event.view.url = 'modified')
+      beforeSend = (event: RumEvent) => (event.view.url = 'modified')
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
@@ -83,7 +83,7 @@ describe('rum assembly', () => {
     })
 
     it('should reject modification on non sensitive field', () => {
-      beforeSend = (event: RumEventsFormat) => ((event.view as any).id = 'modified')
+      beforeSend = (event: RumEvent) => ((event.view as any).id = 'modified')
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
@@ -221,7 +221,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 0,
       })
-      expect((serverRumEvents[0] as ActionSchema).action.id).not.toBeDefined()
+      expect((serverRumEvents[0] as RumActionEvent).action.id).not.toBeDefined()
       serverRumEvents = []
     })
   })

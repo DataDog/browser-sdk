@@ -1,4 +1,4 @@
-import { RumEventsFormat } from '@datadog/browser-rum'
+import { RumEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
 import rumEventsFormatJson from '../../../../rum-events-format/rum-events-format.json'
 import _commonSchemaJson from '../../../../rum-events-format/schemas/_common-schema.json'
@@ -8,7 +8,7 @@ import long_taskSchemaJson from '../../../../rum-events-format/schemas/long_task
 import resourceSchemaJson from '../../../../rum-events-format/schemas/resource-schema.json'
 import viewSchemaJson from '../../../../rum-events-format/schemas/view-schema.json'
 
-export function validateFormat(events: RumEventsFormat[]) {
+export function validateFormat(events: RumEvent[]) {
   events.forEach((event) => {
     const instance = new ajv({
       allErrors: true,

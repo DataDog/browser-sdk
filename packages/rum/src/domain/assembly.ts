@@ -1,13 +1,13 @@
 import { combine, Configuration, Context, limitModification, withSnakeCaseKeys } from '@datadog/browser-core'
 import {
-  RawRumEvent,
-  RumContext,
   RawRumErrorEvent,
-  RumEventType,
+  RawRumEvent,
   RawRumLongTaskEvent,
   RawRumResourceEvent,
+  RumContext,
+  RumEventType,
 } from '../rawRumEvent.types'
-import { RumEventsFormat } from '../rumEventsFormat'
+import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -70,15 +70,15 @@ export function startRumAssembly(
             type: getSessionType(),
           },
         }
-        const rumEvent = needToAssembleWithAction(rawRumEvent)
+        const assembledRumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(rumEvent) as RumEventsFormat & Context
+        const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
         serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
         if (configuration.beforeSend) {
           limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
         }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { assembledRumEvent, serverRumEvent })
       }
     }
   )

@@ -1,5 +1,5 @@
 import { LogsEvent } from '@datadog/browser-logs'
-import { RumEventsFormat } from '@datadog/browser-rum'
+import { RumEvent } from '@datadog/browser-rum'
 import {
   isRumErrorEvent,
   isRumResourceEvent,
@@ -11,7 +11,7 @@ import {
 type IntakeType = 'logs' | 'rum' | 'internalMonitoring'
 
 export class EventRegistry {
-  readonly rum: RumEventsFormat[] = []
+  readonly rum: RumEvent[] = []
   readonly logs: LogsEvent[] = []
   readonly internalMonitoring: ServerInternalMonitoringMessage[] = []
 
