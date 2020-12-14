@@ -1,8 +1,8 @@
 import { Context, DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { RumEventType } from '../rawRumEvent.types'
 import { ActionSchema, LongTaskSchema, RumEventsFormat } from '../rumEventsFormat'
-import { RumEventType } from '../types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 

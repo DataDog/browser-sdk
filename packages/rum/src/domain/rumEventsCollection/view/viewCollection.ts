@@ -1,5 +1,5 @@
 import { Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { RumEventType, RumViewEvent } from '../../../types'
+import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
 
@@ -12,7 +12,7 @@ export function startViewCollection(lifeCycle: LifeCycle, configuration: Configu
 }
 
 function processViewUpdate(view: View) {
-  const viewEvent: RumViewEvent = {
+  const viewEvent: RawRumViewEvent = {
     _dd: {
       documentVersion: view.documentVersion,
     },

@@ -1,6 +1,13 @@
-import { combine, Configuration, Context, limitModification, noop, withSnakeCaseKeys } from '@datadog/browser-core'
+import { combine, Configuration, Context, limitModification, withSnakeCaseKeys } from '@datadog/browser-core'
+import {
+  RawRumEvent,
+  RumContext,
+  RawRumErrorEvent,
+  RumEventType,
+  RawRumLongTaskEvent,
+  RawRumResourceEvent,
+} from '../rawRumEvent.types'
 import { RumEventsFormat } from '../rumEventsFormat'
-import { RawRumEvent, RumContext, RumErrorEvent, RumEventType, RumLongTaskEvent, RumResourceEvent } from '../types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -77,7 +84,9 @@ export function startRumAssembly(
   )
 }
 
-function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
+function needToAssembleWithAction(
+  event: RawRumEvent
+): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 
