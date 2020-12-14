@@ -1,4 +1,4 @@
-import { LogWithRumSchema } from '@datadog/browser-logs'
+import { LogsEventsFormat } from '@datadog/browser-logs'
 import { createTest } from '../lib/framework'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
@@ -40,8 +40,8 @@ describe('logs', () => {
       })
       await flushEvents()
       expect(events.logs.length).toBe(1)
-      expect((events.logs[0] as LogWithRumSchema).view.id).toBeDefined()
-      expect((events.logs[0] as LogWithRumSchema).application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect((events.logs[0] as LogsEventsFormat).view.id).toBeDefined()
+      expect((events.logs[0] as LogsEventsFormat).application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
 
   createTest('track fetch error')

@@ -1,6 +1,4 @@
-export type LogsEventsFormat = LogSchema | LogWithRumSchema
-
-export interface LogSchema {
+export interface LogsEventsFormat {
   /**
    * Start of the log in ms from epoch
    */
@@ -13,6 +11,10 @@ export interface LogSchema {
    * The log status
    */
   readonly status: 'debug' | 'info' | 'warn' | 'error'
+  /**
+   * UUID of the application
+   */
+  readonly application_id?: string
   /**
    * The service name
    */
@@ -33,6 +35,10 @@ export interface LogSchema {
      * URL of the view
      */
     url: string
+    /**
+     * UUID of the view
+     */
+    readonly id?: string
 
     [k: string]: unknown
   }
@@ -88,33 +94,3 @@ export interface LogSchema {
 
   [k: string]: unknown
 }
-
-export interface RumInternalContextSchema {
-  /**
-   * UUID of the application
-   */
-  readonly application_id: string
-  /**
-   * UUID of the session
-   */
-  readonly session_id: string
-  /**
-   * View properties
-   */
-  readonly view: {
-    /**
-     * UUID of the view
-     */
-    readonly id: string
-    /**
-     * URL that linked to the initial view of the page
-     */
-    referrer?: string
-    /**
-     * URL of the view
-     */
-    url: string
-  }
-}
-
-export type LogWithRumSchema = LogSchema & RumInternalContextSchema
