@@ -33,6 +33,8 @@ export interface LogSchema {
      * URL of the view
      */
     url: string
+
+    [k: string]: unknown
   }
   /**
    * Logger properties
@@ -42,6 +44,8 @@ export interface LogSchema {
      * Name of the logger
      */
     readonly name: string
+
+    [k: string]: unknown
   }
   /**
    * Error properties
@@ -59,6 +63,8 @@ export interface LogSchema {
      * Stacktrace of the error
      */
     readonly stack?: string
+
+    [k: string]: unknown
   }
   /**
    * Resource properties of the error
@@ -76,7 +82,11 @@ export interface LogSchema {
      * URL of the resource
      */
     url: string
+
+    [k: string]: unknown
   }
+
+  [k: string]: unknown
 }
 
 export interface RumInternalContextSchema {
