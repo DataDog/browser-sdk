@@ -389,7 +389,7 @@ describe('rum track view is active', () => {
     expect(getViewEvent(2).isActive).toBe(true)
   })
 
-  it('should collect view as active after a search change', () => {
+  it('should not collect view as inactive after any location change', () => {
     setupBuilder.build()
     history.pushState({}, '', '/foo?bar=qux')
     expect(getViewEvent(1).isActive).toBe(true)
