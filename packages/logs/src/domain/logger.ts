@@ -7,7 +7,7 @@ export const StatusType = {
   warn: 'warn',
 } as const
 
-export type StatusType = (typeof StatusType)[keyof typeof StatusType]
+export type StatusType = typeof StatusType[keyof typeof StatusType]
 
 const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
@@ -30,7 +30,7 @@ export const HandlerType = {
   silent: 'silent',
 } as const
 
-export type HandlerType = (typeof HandlerType)[keyof typeof HandlerType]
+export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 
 export class Logger {
   private contextManager = createContextManager()
