@@ -102,6 +102,13 @@ Error: foo
 
       expect(stackFrames.stack[0].url).toEqual('<anonymous>')
     })
+
+    it('should ensure that message and name are string', () => {
+      const ex = { message: { foo: 'bar' }, name: { bar: 'qux' } }
+      const stack = computeStackTrace(ex)
+      expect(stack.message).toEqual('{"foo":"bar"}')
+      expect(stack.name).toEqual('{"bar":"qux"}')
+    })
   })
 
   describe('error notifications', () => {
