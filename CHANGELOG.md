@@ -14,6 +14,20 @@
 
 ---
 
+## v2.0.0
+
+- 💥 [RUMF-730] prefer object and type alias over enum in APIs ([#630](https://github.com/DataDog/browser-sdk/pull/630))
+- 💥 [RUMF-730] use v2 events format ([#627](https://github.com/DataDog/browser-sdk/pull/627))
+
+## v1.26.3
+
+- 🐛⚡️ [RUMF-793] tweak the cache-control header ([#642](https://github.com/DataDog/browser-sdk/pull/642))
+
+## v1.26.2
+
+- ✨ [RUMF-764] Use new intake domain for US ([#616](https://github.com/DataDog/browser-sdk/pull/616))
+- ✨ [RUMF-770] Disable tracing for cancelled requests ([#635](https://github.com/DataDog/browser-sdk/pull/635))
+
 ## v1.26.1
 
 - 🐛 [RUMF-791] prevent IE11 performance entry error ([#633](https://github.com/DataDog/browser-sdk/pull/633))

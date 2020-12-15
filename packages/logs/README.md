@@ -352,7 +352,7 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.setLoggerGlobalContext("{'env': 'staging'}")
+datadogLogs.setLoggerGlobalContext({ env: 'staging' })
 
 datadogLogs.addLoggerGlobalContext('referrer', document.referrer)
 
@@ -369,11 +369,11 @@ DD_LOGS.onReady(function() {
 })
 
 DD_LOGS.onReady(function() {
-  window.DD_LOGS && DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
+  DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 })
 
 DD_LOGS.onReady(function() {
-  var context = window.DD_LOGS && DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
+  var context = DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 })
 ```
 

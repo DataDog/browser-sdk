@@ -14,14 +14,16 @@ export interface RawError {
   }
 }
 
-export enum ErrorSource {
-  AGENT = 'agent',
-  CONSOLE = 'console',
-  NETWORK = 'network',
-  SOURCE = 'source',
-  LOGGER = 'logger',
-  CUSTOM = 'custom',
-}
+export const ErrorSource = {
+  AGENT: 'agent',
+  CONSOLE: 'console',
+  CUSTOM: 'custom',
+  LOGGER: 'logger',
+  NETWORK: 'network',
+  SOURCE: 'source',
+} as const
+
+export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]
 
 export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {

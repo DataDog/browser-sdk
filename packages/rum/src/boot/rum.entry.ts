@@ -15,7 +15,7 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-import { ProvidedError } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
@@ -104,27 +104,21 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       rumGlobal.addAction(name, context)
     },
 
-    addError: monitor(
-      (
-        error: unknown,
-        context?: Context,
-        source: ErrorSource.CUSTOM | ErrorSource.NETWORK | ErrorSource.SOURCE = ErrorSource.CUSTOM
-      ) => {
-        let checkedSource
-        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-          checkedSource = source
-        } else {
-          console.error(`DD_RUM.addError: Invalid source '${source}'`)
-          checkedSource = ErrorSource.CUSTOM
-        }
-        addErrorStrategy({
-          error,
-          context: deepClone(context),
-          source: checkedSource,
-          startTime: performance.now(),
-        })
+    addError: monitor((error: unknown, context?: Context, source: ProvidedSource = ErrorSource.CUSTOM) => {
+      let checkedSource: ProvidedSource
+      if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
+        checkedSource = source
+      } else {
+        console.error(`DD_RUM.addError: Invalid source '${source}'`)
+        checkedSource = ErrorSource.CUSTOM
       }
-    ),
+      addErrorStrategy({
+        error,
+        context: deepClone(context),
+        source: checkedSource,
+        startTime: performance.now(),
+      })
+    }),
   })
   return rumGlobal
 

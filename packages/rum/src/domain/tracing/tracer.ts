@@ -1,29 +1,33 @@
+import { Configuration, getOrigin, objectEntries } from '@datadog/browser-core'
 import {
-  Configuration,
-  FetchCompleteContext,
-  getOrigin,
-  objectEntries,
-  XhrCompleteContext,
-} from '@datadog/browser-core'
-
-export interface TracingResult {
-  spanId: TraceIdentifier
-  traceId: TraceIdentifier
-}
+  RumFetchCompleteContext,
+  RumFetchStartContext,
+  RumXhrCompleteContext,
+  RumXhrStartContext,
+} from '../requestCollection'
 
 export interface Tracer {
-  traceFetch: (context: Partial<FetchCompleteContext>) => TracingResult | undefined
-  traceXhr: (context: Partial<XhrCompleteContext>, xhr: XMLHttpRequest) => TracingResult | undefined
+  traceFetch: (context: Partial<RumFetchStartContext>) => void
+  traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
+  clearTracingIfCancelled: (context: RumFetchCompleteContext | RumXhrCompleteContext) => void
 }
 
 interface TracingHeaders {
   [key: string]: string
 }
 
+export function clearTracingIfCancelled(context: RumFetchCompleteContext | RumXhrCompleteContext) {
+  if (context.status === 0) {
+    context.traceId = undefined
+    context.spanId = undefined
+  }
+}
+
 export function startTracer(configuration: Configuration): Tracer {
   return {
+    clearTracingIfCancelled,
     traceFetch: (context) =>
-      injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
         context.init = { ...context.init }
         const headers: string[][] = []
         if (context.init.headers instanceof Headers) {
@@ -42,7 +46,7 @@ export function startTracer(configuration: Configuration): Tracer {
         context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
       }),
     traceXhr: (context, xhr) =>
-      injectHeadersIfTracingAllowed(configuration, context.url!, (tracingHeaders: TracingHeaders) => {
+      injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
         Object.keys(tracingHeaders).forEach((name) => {
           xhr.setRequestHeader(name, tracingHeaders[name])
         })
@@ -52,17 +56,16 @@ export function startTracer(configuration: Configuration): Tracer {
 
 function injectHeadersIfTracingAllowed(
   configuration: Configuration,
-  url: string,
+  context: Partial<RumFetchStartContext | RumXhrStartContext>,
   inject: (tracingHeaders: TracingHeaders) => void
-): TracingResult | undefined {
-  if (!isTracingSupported() || !isAllowedUrl(configuration, url)) {
-    return undefined
+) {
+  if (!isTracingSupported() || !isAllowedUrl(configuration, context.url!)) {
+    return
   }
 
-  const traceId = new TraceIdentifier()
-  const spanId = new TraceIdentifier()
-  inject(makeTracingHeaders(traceId, spanId))
-  return { traceId, spanId }
+  context.traceId = new TraceIdentifier()
+  context.spanId = new TraceIdentifier()
+  inject(makeTracingHeaders(context.traceId, context.spanId))
 }
 
 function isAllowedUrl(configuration: Configuration, requestUrl: string) {

@@ -3,7 +3,7 @@ import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhr
 import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
-import { Configuration, isIntakeRequest } from './configuration'
+import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { computeStackTrace, Handler, report, StackTrace } from './tracekit'
 
@@ -94,7 +94,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
-    if (!isIntakeRequest(request.url, configuration) && (isRejected(request) || isServerError(request))) {
+    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         message: `${format(type)} error ${request.method} ${request.url}`,
         resource: {
