@@ -31,4 +31,23 @@ cmd_lint () {
   tslint -p "$project_path" -c ./tslint.json
 }
 
+cmd_update_submodule () {
+  git submodule update --init
+  git submodule update --remote
+}
+
+# needed because using fork instead of the npm package
+# TODO remove me when json-schema-to-typescript natively supports readOnly
+cmd_build_json2type () {
+  cd ./node_modules/json-schema-to-typescript
+  rm -rf dist
+  # due to installation on node_modules, some of these steps can fail
+  # built version still behaves correctly though
+  set +e
+  npm i
+  npm run clean
+  npm run build:server
+  set -e
+}
+
 main "$@"
