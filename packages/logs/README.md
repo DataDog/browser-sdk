@@ -270,8 +270,8 @@ createLogger (name: string, conf?: {
 
 After the creation of a logger, access it in any part of your JavaScript code with the API:
 
-```javascript
-getLogger((name: string))
+```text
+getLogger(name: string)
 ```
 
 ##### NPM
