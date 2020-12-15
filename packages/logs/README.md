@@ -256,10 +256,10 @@ The Datadog browser logs SDK contains a default logger, but it is possible to de
 
 After the Datadog browser logs SDK is initialized, use the API `createLogger` to define a new logger:
 
-```text
+```typescript
 createLogger (name: string, conf?: {
-    level?: 'debug' | 'info' | 'warn' | 'error'
-    handler?: 'http' | 'console' | 'silent'
+    level?: 'debug' | 'info' | 'warn' | 'error',
+    handler?: 'http' | 'console' | 'silent',
     context?: Context
 })
 ```
@@ -270,7 +270,7 @@ createLogger (name: string, conf?: {
 
 After the creation of a logger, access it in any part of your JavaScript code with the API:
 
-```text
+```typescript
 getLogger(name: string)
 ```
 
