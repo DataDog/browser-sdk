@@ -43,7 +43,7 @@ export interface StackFrame {
  */
 export interface StackTrace {
   name?: string
-  message: string
+  message?: string
   url?: string
   stack: StackFrame[]
   incomplete?: boolean
@@ -879,7 +879,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @param {(string|number)=} depth
    * @memberof computeStackTrace
    */
-  function doComputeStackTrace(ex: Error, depth?: string | number): StackTrace {
+  function doComputeStackTrace(ex: unknown, depth?: string | number): StackTrace {
     let stack
     const normalizedDepth = depth === undefined ? 0 : +depth
 
@@ -887,7 +887,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
       // This must be tried first because Opera 10 *destroys*
       // its stacktrace property if you try to access the stack
       // property first!!
-      stack = computeStackTraceFromStacktraceProp(ex)
+      stack = computeStackTraceFromStacktraceProp(ex as Error)
       if (stack) {
         return stack
       }
@@ -898,7 +898,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     try {
-      stack = computeStackTraceFromStackProp(ex)
+      stack = computeStackTraceFromStackProp(ex as Error)
       if (stack) {
         return stack
       }
@@ -909,7 +909,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     try {
-      stack = computeStackTraceFromOperaMultiLineMessage(ex)
+      stack = computeStackTraceFromOperaMultiLineMessage(ex as Error)
       if (stack) {
         return stack
       }
@@ -920,7 +920,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     try {
-      stack = computeStackTraceByWalkingCallerChain(ex, normalizedDepth + 1)
+      stack = computeStackTraceByWalkingCallerChain(ex as Error, normalizedDepth + 1)
       if (stack) {
         return stack
       }
@@ -931,10 +931,18 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     return {
-      message: ex.message,
-      name: ex.name,
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
       stack: [],
     }
+  }
+
+  function tryToGetString(candidate: unknown, property: string) {
+    if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
+      return undefined
+    }
+    const value = (candidate as { [k: string]: unknown })[property]
+    return typeof value === 'string' ? value : undefined
   }
 
   /**

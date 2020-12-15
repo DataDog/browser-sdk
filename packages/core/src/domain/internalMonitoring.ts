@@ -154,7 +154,7 @@ function formatError(e: unknown) {
         kind: stackTrace.name,
         stack: toStackTraceString(stackTrace),
       },
-      message: stackTrace.message,
+      message: stackTrace.message!,
     }
   }
   return {
