@@ -14,6 +14,10 @@
 
 ---
 
+## v2.0.1
+
+- 🐛 fix tracekit handling of exotic errors ([#651](https://github.com/DataDog/browser-sdk/pull/651))
+
 ## v2.0.0
 
 - 💥 [RUMF-730] prefer object and type alias over enum in APIs ([#630](https://github.com/DataDog/browser-sdk/pull/630))
