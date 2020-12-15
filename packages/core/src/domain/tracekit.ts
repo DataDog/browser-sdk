@@ -43,7 +43,7 @@ export interface StackFrame {
  */
 export interface StackTrace {
   name?: string
-  message: string
+  message?: string
   url?: string
   stack: StackFrame[]
   incomplete?: boolean
@@ -931,14 +931,18 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     return {
-      message: forceString((ex as any).message),
-      name: forceString((ex as any).name),
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
       stack: [],
     }
   }
 
-  function forceString(candidate: unknown) {
-    return typeof candidate !== 'string' ? JSON.stringify(candidate) : candidate
+  function tryToGetString(candidate: unknown, property: string) {
+    if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
+      return undefined
+    }
+    const value = (candidate as { [k: string]: unknown })[property]
+    return typeof value === 'string' ? value : undefined
   }
 
   /**

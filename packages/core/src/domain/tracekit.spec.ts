@@ -103,11 +103,14 @@ Error: foo
       expect(stackFrames.stack[0].url).toEqual('<anonymous>')
     })
 
-    it('should ensure that message and name are string', () => {
-      const ex = { message: { foo: 'bar' }, name: { bar: 'qux' } }
-      const stack = computeStackTrace(ex)
-      expect(stack.message).toEqual('{"foo":"bar"}')
-      expect(stack.name).toEqual('{"bar":"qux"}')
+    it('should handle edge case values', () => {
+      expect(computeStackTrace({ message: { foo: 'bar' } }).message).toBeUndefined()
+      expect(computeStackTrace({ name: { foo: 'bar' } }).name).toBeUndefined()
+      expect(computeStackTrace(2).message).toBeUndefined()
+      expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
+      expect(computeStackTrace(undefined).message).toBeUndefined()
+      // tslint:disable-next-line:no-null-keyword
+      expect(computeStackTrace(null).message).toBeUndefined()
     })
   })
 
