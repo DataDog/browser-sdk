@@ -616,7 +616,8 @@ export interface CommonSchema {
       | 'mixed'
       | 'other'
       | 'unknown'
-      | 'none')[]
+      | 'none'
+    )[]
     /**
      * Cellular connectivity properties
      */
