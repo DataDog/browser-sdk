@@ -365,7 +365,6 @@ describe('rum track view is active', () => {
     ;({ handler, getViewEvent } = spyOnViews())
 
     setupBuilder = setup()
-      .withFakeClock()
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
