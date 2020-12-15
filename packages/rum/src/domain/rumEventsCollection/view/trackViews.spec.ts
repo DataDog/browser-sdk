@@ -377,19 +377,19 @@ describe('rum track view is active', () => {
     setupBuilder.cleanup()
   })
 
-  it('should collect initial view as active', () => {
+  it('should set initial view as active', () => {
     setupBuilder.build()
     expect(getViewEvent(0).isActive).toBe(true)
   })
 
-  it('should collect old view as inactive and new one as active after a route change', () => {
+  it('should set old view as inactive and new one as active after a route change', () => {
     setupBuilder.build()
     history.pushState({}, '', '/bar')
     expect(getViewEvent(1).isActive).toBe(false)
     expect(getViewEvent(2).isActive).toBe(true)
   })
 
-  it('should not collect view as inactive after any location change', () => {
+  it('should keep view as active after a search change', () => {
     setupBuilder.build()
     history.pushState({}, '', '/foo?bar=qux')
     expect(getViewEvent(1).isActive).toBe(true)
