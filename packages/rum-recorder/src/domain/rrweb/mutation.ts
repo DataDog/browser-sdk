@@ -141,12 +141,19 @@ export default class MutationBuffer {
   private movedSet = new Set<Node>()
   private droppedSet = new Set<Node>()
 
+  // @ts-ignore
   private emissionCallback: mutationCallBack
+  // @ts-ignore
   private blockClass: blockClass
+  // @ts-ignore
   private blockSelector: string | null
+  // @ts-ignore
   private inlineStylesheet: boolean
+  // @ts-ignore
   private maskInputOptions: MaskInputOptions
+  // @ts-ignore
   private recordCanvas: boolean
+  // @ts-ignore
   private slimDOMOptions: SlimDOMOptions
 
   public init(
@@ -242,14 +249,14 @@ export default class MutationBuffer {
       mirror.removeNodeFromMap(this.mapRemoves.shift() as INode)
     }
 
-    for (const n of this.movedSet) {
+    this.movedSet.forEach(n => {
       if (isParentRemoved(this.removes, n) && !this.movedSet.has(n.parentNode!)) {
-        continue
+        return
       }
       pushAdd(n)
-    }
+    })
 
-    for (const n of this.addedSet) {
+    this.addedSet.forEach(n => {
       if (!isAncestorInSet(this.droppedSet, n) && !isParentRemoved(this.removes, n)) {
         pushAdd(n)
       } else if (isAncestorInSet(this.movedSet, n)) {
@@ -257,7 +264,7 @@ export default class MutationBuffer {
       } else {
         this.droppedSet.add(n)
       }
-    }
+    })
 
     let candidate: DoubleLinkedListNode | null = null
     while (addList.length) {

@@ -173,7 +173,7 @@ export type recordOptions<T> = {
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
   hooks?: hooksParam
-  packFn?: PackFn
+  packFn?: (event: event) => event
   sampling?: SamplingStrategy
   recordCanvas?: boolean
   collectFonts?: boolean
@@ -390,81 +390,6 @@ export type throttleOptions = {
 export type listenerHandler = () => void
 export type hookResetter = () => void
 
-export type playerConfig = {
-  speed: number
-  root: Element
-  loadTimeout: number
-  skipInactive: boolean
-  showWarning: boolean
-  showDebug: boolean
-  blockClass: string
-  liveMode: boolean
-  insertStyleRules: string[]
-  triggerFocus: boolean
-  UNSAFE_replayCanvas: boolean
-  pauseAnimation?: boolean
-  mouseTail:
-    | boolean
-    | {
-        duration?: number
-        lineCap?: string
-        lineWidth?: number
-        strokeStyle?: string
-      }
-  unpackFn?: UnpackFn
-}
-
-export type playerMetaData = {
-  startTime: number
-  endTime: number
-  totalTime: number
-}
-
-export type missingNode = {
-  node: Node
-  mutation: addedNodeMutation
-}
-export type missingNodeMap = {
-  [id: number]: missingNode
-}
-
-export type actionWithDelay = {
-  doAction: () => void
-  delay: number
-}
-
-export type Handler = (event?: unknown) => void
-
-export type Emitter = {
-  on(type: string, handler: Handler): void
-  emit(type: string, event?: unknown): void
-  off(type: string, handler: Handler): void
-}
-
 export type Arguments<T> = T extends (...payload: infer U) => unknown ? U : unknown
 
-export enum ReplayerEvents {
-  Start = 'start',
-  Pause = 'pause',
-  Resume = 'resume',
-  Resize = 'resize',
-  Finish = 'finish',
-  FullsnapshotRebuilded = 'fullsnapshot-rebuilded',
-  LoadStylesheetStart = 'load-stylesheet-start',
-  LoadStylesheetEnd = 'load-stylesheet-end',
-  SkipStart = 'skip-start',
-  SkipEnd = 'skip-end',
-  MouseInteraction = 'mouse-interaction',
-  EventCast = 'event-cast',
-  CustomEvent = 'custom-event',
-  Flush = 'flush',
-  StateChange = 'state-change',
-}
-
 export type MaskInputFn = (text: string) => string
-
-// store the state that would be changed during the process(unmount from dom and mount again)
-export type ElementState = {
-  // [scrollLeft,scrollTop]
-  scroll?: [number, number]
-}

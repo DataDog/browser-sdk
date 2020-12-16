@@ -138,7 +138,7 @@ function initMouseInteractionObserver(
       })
     }
   }
-  Object.keys(MouseInteractions)
+  ;(Object.keys(MouseInteractions) as Array<keyof typeof MouseInteractions>)
     .filter((key) => Number.isNaN(Number(key)) && !key.endsWith('_Departed') && disableMap[key] !== false)
     .forEach((eventKey: keyof typeof MouseInteractions) => {
       const eventName = eventKey.toLowerCase()
@@ -267,7 +267,7 @@ function initInputObserver(
         hookSetter<HTMLElement>(p[0], p[1], {
           set() {
             // mock to a normal event
-            eventHandler({ target: this } as Event)
+            eventHandler(({ target: this } as unknown) as Event)
           },
         })
       )
@@ -288,7 +288,7 @@ function initStyleSheetObserver(cb: styleSheetRuleCallback): listenerHandler {
         adds: [{ rule, index }],
       })
     }
-    return insertRule.apply(this, arguments)
+    return insertRule.call(this, rule, index)
   }
 
   const deleteRule = CSSStyleSheet.prototype.deleteRule
@@ -300,7 +300,7 @@ function initStyleSheetObserver(cb: styleSheetRuleCallback): listenerHandler {
         removes: [{ index }],
       })
     }
-    return deleteRule.apply(this, arguments)
+    return deleteRule.call(this, index)
   }
 
   return () => {
