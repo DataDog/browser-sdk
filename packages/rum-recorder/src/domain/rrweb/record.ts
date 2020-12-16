@@ -1,18 +1,19 @@
-import { snapshot, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+/* tslint:disable:no-null-keyword */
+import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
 import { initObservers, mutationBuffer } from './observer'
-import { mirror, on, getWindowWidth, getWindowHeight, polyfill } from './utils'
-import { EventType, event, eventWithTime, recordOptions, IncrementalSource, listenerHandler } from './types'
+import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordOptions } from './types'
+import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
-function wrapEvent(e: event): eventWithTime {
+function wrapEvent(e: Event): EventWithTime {
   return {
     ...e,
     timestamp: Date.now(),
   }
 }
 
-let wrappedEmit!: (e: eventWithTime, isCheckout?: boolean) => void
+let wrappedEmit!: (e: EventWithTime, isCheckout?: boolean) => void
 
-function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHandler | undefined {
+function record<T = EventWithTime>(options: RecordOptions<T> = {}): ListenerHandler | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -22,8 +23,8 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
     ignoreClass = 'rr-ignore',
     inlineStylesheet = true,
     maskAllInputs,
-    maskInputOptions: _maskInputOptions,
-    slimDOMOptions: _slimDOMOptions,
+    maskInputOptions: maskInputOptionsArg,
+    slimDOMOptions: slimDOMOptionsArg,
     maskInputFn,
     hooks,
     packFn,
@@ -52,43 +53,43 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
           number: true,
           range: true,
           search: true,
+          select: true,
           tel: true,
           text: true,
+          textarea: true,
           time: true,
           url: true,
           week: true,
-          textarea: true,
-          select: true,
         }
-      : _maskInputOptions !== undefined
-      ? _maskInputOptions
+      : maskInputOptionsArg !== undefined
+      ? maskInputOptionsArg
       : {}
 
   const slimDOMOptions: SlimDOMOptions =
-    _slimDOMOptions === true || _slimDOMOptions === 'all'
+    slimDOMOptionsArg === true || slimDOMOptionsArg === 'all'
       ? {
-          script: true,
           comment: true,
           headFavicon: true,
-          headWhitespace: true,
-          headMetaSocial: true,
-          headMetaRobots: true,
-          headMetaHttpEquiv: true,
-          headMetaVerification: true,
           // the following are off for slimDOMOptions === true,
           // as they destroy some (hidden) info:
-          headMetaAuthorship: _slimDOMOptions === 'all',
-          headMetaDescKeywords: _slimDOMOptions === 'all',
+          headMetaAuthorship: slimDOMOptionsArg === 'all',
+          headMetaDescKeywords: slimDOMOptionsArg === 'all',
+          headMetaHttpEquiv: true,
+          headMetaRobots: true,
+          headMetaSocial: true,
+          headMetaVerification: true,
+          headWhitespace: true,
+          script: true,
         }
-      : _slimDOMOptions
-      ? _slimDOMOptions
+      : slimDOMOptionsArg
+      ? slimDOMOptionsArg
       : {}
 
   polyfill()
 
-  let lastFullSnapshotEvent: eventWithTime
+  let lastFullSnapshotEvent: EventWithTime
   let incrementalSnapshotCount = 0
-  wrappedEmit = (e: eventWithTime, isCheckout?: boolean) => {
+  wrappedEmit = (e: EventWithTime, isCheckout?: boolean) => {
     if (
       mutationBuffer.isFrozen() &&
       e.type !== EventType.FullSnapshot &&
@@ -105,7 +106,7 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
       lastFullSnapshotEvent = e
       incrementalSnapshotCount = 0
     } else if (e.type === EventType.IncrementalSnapshot) {
-      incrementalSnapshotCount++
+      incrementalSnapshotCount += 1
       const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
       const exceedTime = checkoutEveryNms && e.timestamp - lastFullSnapshotEvent.timestamp > checkoutEveryNms
       if (exceedCount || exceedTime) {
@@ -117,25 +118,25 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
   function takeFullSnapshot(isCheckout = false) {
     wrappedEmit(
       wrapEvent({
-        type: EventType.Meta,
         data: {
+          height: getWindowHeight(),
           href: window.location.href,
           width: getWindowWidth(),
-          height: getWindowHeight(),
         },
+        type: EventType.Meta,
       }),
       isCheckout
     )
 
-    let wasFrozen = mutationBuffer.isFrozen()
+    const wasFrozen = mutationBuffer.isFrozen()
     mutationBuffer.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
       blockClass,
       blockSelector,
       inlineStylesheet,
+      recordCanvas,
       maskAllInputs: maskInputOptions,
       slimDOM: slimDOMOptions,
-      recordCanvas,
     })
 
     if (!node) {
@@ -145,7 +146,6 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
     mirror.map = idNodeMap
     wrappedEmit(
       wrapEvent({
-        type: EventType.FullSnapshot,
         data: {
           node,
           initialOffset: {
@@ -165,6 +165,7 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
                   0,
           },
         },
+        type: EventType.FullSnapshot,
       })
     )
     if (!wasFrozen) {
@@ -174,13 +175,13 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
   }
 
   try {
-    const handlers: listenerHandler[] = []
+    const handlers: ListenerHandler[] = []
     handlers.push(
       on('DOMContentLoaded', () => {
         wrappedEmit(
           wrapEvent({
-            type: EventType.DomContentLoaded,
             data: {},
+            type: EventType.DomContentLoaded,
           })
         )
       })
@@ -191,116 +192,116 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
       handlers.push(
         initObservers(
           {
-            mutationCb: (m) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.Mutation,
-                    ...m,
-                  },
-                })
-              ),
-            mousemoveCb: (positions, source) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source,
-                    positions,
-                  },
-                })
-              ),
-            mouseInteractionCb: (d) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.MouseInteraction,
-                    ...d,
-                  },
-                })
-              ),
-            scrollCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.Scroll,
-                    ...p,
-                  },
-                })
-              ),
-            viewportResizeCb: (d) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.ViewportResize,
-                    ...d,
-                  },
-                })
-              ),
-            inputCb: (v) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.Input,
-                    ...v,
-                  },
-                })
-              ),
-            mediaInteractionCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.MediaInteraction,
-                    ...p,
-                  },
-                })
-              ),
-            styleSheetRuleCb: (r) =>
-              wrappedEmit(
-                wrapEvent({
-                  type: EventType.IncrementalSnapshot,
-                  data: {
-                    source: IncrementalSource.StyleSheetRule,
-                    ...r,
-                  },
-                })
-              ),
+            blockClass,
+            blockSelector,
+            collectFonts,
+            ignoreClass,
+            inlineStylesheet,
+            maskInputFn,
+            maskInputOptions,
+            recordCanvas,
+            sampling,
+            slimDOMOptions,
             canvasMutationCb: (p) =>
               wrappedEmit(
                 wrapEvent({
-                  type: EventType.IncrementalSnapshot,
                   data: {
                     source: IncrementalSource.CanvasMutation,
                     ...p,
                   },
+                  type: EventType.IncrementalSnapshot,
                 })
               ),
             fontCb: (p) =>
               wrappedEmit(
                 wrapEvent({
-                  type: EventType.IncrementalSnapshot,
                   data: {
                     source: IncrementalSource.Font,
                     ...p,
                   },
+                  type: EventType.IncrementalSnapshot,
                 })
               ),
-            blockClass,
-            blockSelector,
-            ignoreClass,
-            maskInputOptions,
-            maskInputFn,
-            inlineStylesheet,
-            sampling,
-            recordCanvas,
-            collectFonts,
-            slimDOMOptions,
+            inputCb: (v) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.Input,
+                    ...v,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            mediaInteractionCb: (p) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.MediaInteraction,
+                    ...p,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            mouseInteractionCb: (d) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.MouseInteraction,
+                    ...d,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            mousemoveCb: (positions, source) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    positions,
+                    source,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            mutationCb: (m) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.Mutation,
+                    ...m,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            scrollCb: (p) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.Scroll,
+                    ...p,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            styleSheetRuleCb: (r) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.StyleSheetRule,
+                    ...r,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
+            viewportResizeCb: (d) =>
+              wrappedEmit(
+                wrapEvent({
+                  data: {
+                    source: IncrementalSource.ViewportResize,
+                    ...d,
+                  },
+                  type: EventType.IncrementalSnapshot,
+                })
+              ),
           },
           hooks
         )
@@ -315,8 +316,8 @@ function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHand
           () => {
             wrappedEmit(
               wrapEvent({
-                type: EventType.Load,
                 data: {},
+                type: EventType.Load,
               })
             )
             init()
@@ -340,11 +341,11 @@ record.addCustomEvent = <T>(tag: string, payload: T) => {
   }
   wrappedEmit(
     wrapEvent({
-      type: EventType.Custom,
       data: {
-        tag,
         payload,
+        tag,
       },
+      type: EventType.Custom,
     })
   )
 }
@@ -353,4 +354,4 @@ record.freezePage = () => {
   mutationBuffer.freeze()
 }
 
-export default record
+export { record }

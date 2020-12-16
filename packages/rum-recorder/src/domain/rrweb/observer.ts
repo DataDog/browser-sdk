@@ -1,49 +1,52 @@
-import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+/* tslint:disable:no-null-keyword */
+import { noop } from '@datadog/browser-core'
+// tslint:disable-next-line: no-implicit-dependencies
 import { FontFaceDescriptors, FontFaceSet } from 'css-font-loading-module'
+import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+import { MutationBuffer } from './mutation'
 import {
-  mirror,
-  throttle,
-  on,
-  hookSetter,
+  Arguments,
+  BlockClass,
+  CanvasMutationCallback,
+  FontCallback,
+  FontParam,
+  HookResetter,
+  HooksParam,
+  IncrementalSource,
+  InputCallback,
+  InputValue,
+  ListenerHandler,
+  MaskInputFn,
+  MediaInteractionCallback,
+  MediaInteractions,
+  MouseInteractionCallBack,
+  MouseInteractions,
+  MousemoveCallBack,
+  MousePosition,
+  MutationCallBack,
+  ObserverParam,
+  SamplingStrategy,
+  ScrollCallback,
+  StyleSheetRuleCallback,
+  ViewportResizeCallback,
+} from './types'
+import {
   getWindowHeight,
   getWindowWidth,
+  hookSetter,
   isBlocked,
   isTouchEvent,
+  mirror,
+  on,
   patch,
+  throttle,
 } from './utils'
-import {
-  mutationCallBack,
-  observerParam,
-  mousemoveCallBack,
-  mousePosition,
-  mouseInteractionCallBack,
-  MouseInteractions,
-  listenerHandler,
-  scrollCallback,
-  styleSheetRuleCallback,
-  viewportResizeCallback,
-  inputValue,
-  inputCallback,
-  hookResetter,
-  blockClass,
-  IncrementalSource,
-  hooksParam,
-  Arguments,
-  mediaInteractionCallback,
-  MediaInteractions,
-  SamplingStrategy,
-  canvasMutationCallback,
-  fontCallback,
-  fontParam,
-  MaskInputFn,
-} from './types'
-import MutationBuffer from './mutation'
 
 export const mutationBuffer = new MutationBuffer()
 
 function initMutationObserver(
-  cb: mutationCallBack,
-  blockClass: blockClass,
+  cb: MutationCallBack,
+  blockClass: BlockClass,
   blockSelector: string | null,
   inlineStylesheet: boolean,
   maskInputOptions: MaskInputOptions,
@@ -52,10 +55,10 @@ function initMutationObserver(
 ): MutationObserver {
   // see mutation.ts for details
   mutationBuffer.init(cb, blockClass, blockSelector, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
-  const observer = new MutationObserver(mutationBuffer.processMutations.bind(mutationBuffer))
+  const observer = new MutationObserver(mutationBuffer.processMutations)
   observer.observe(document, {
-    attributes: true,
     attributeOldValue: true,
+    attributes: true,
     characterData: true,
     characterDataOldValue: true,
     childList: true,
@@ -64,14 +67,14 @@ function initMutationObserver(
   return observer
 }
 
-function initMoveObserver(cb: mousemoveCallBack, sampling: SamplingStrategy): listenerHandler {
+function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): ListenerHandler {
   if (sampling.mousemove === false) {
-    return () => {}
+    return noop
   }
 
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
-  let positions: mousePosition[] = []
+  let positions: MousePosition[] = []
   let timeBaseline: number | null
   const wrappedCb = throttle((isTouch: boolean) => {
     const totalOffset = Date.now() - timeBaseline!
@@ -93,10 +96,10 @@ function initMoveObserver(cb: mousemoveCallBack, sampling: SamplingStrategy): li
         timeBaseline = Date.now()
       }
       positions.push({
-        x: clientX,
-        y: clientY,
         id: mirror.getId(target as INode),
         timeOffset: Date.now() - timeBaseline,
+        x: clientX,
+        y: clientY,
       })
       wrappedCb(isTouchEvent(evt))
     },
@@ -112,17 +115,17 @@ function initMoveObserver(cb: mousemoveCallBack, sampling: SamplingStrategy): li
 }
 
 function initMouseInteractionObserver(
-  cb: mouseInteractionCallBack,
-  blockClass: blockClass,
+  cb: MouseInteractionCallBack,
+  blockClass: BlockClass,
   sampling: SamplingStrategy
-): listenerHandler {
+): ListenerHandler {
   if (sampling.mouseInteraction === false) {
-    return () => {}
+    return noop
   }
   const disableMap: Record<string, boolean | undefined> =
     sampling.mouseInteraction === true || sampling.mouseInteraction === undefined ? {} : sampling.mouseInteraction
 
-  const handlers: listenerHandler[] = []
+  const handlers: ListenerHandler[] = []
   const getHandler = (eventKey: keyof typeof MouseInteractions) => {
     return (event: MouseEvent | TouchEvent) => {
       if (isBlocked(event.target as Node, blockClass)) {
@@ -131,8 +134,8 @@ function initMouseInteractionObserver(
       const id = mirror.getId(event.target as INode)
       const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
       cb({
-        type: MouseInteractions[eventKey],
         id,
+        type: MouseInteractions[eventKey],
         x: clientX,
         y: clientY,
       })
@@ -150,7 +153,7 @@ function initMouseInteractionObserver(
   }
 }
 
-function initScrollObserver(cb: scrollCallback, blockClass: blockClass, sampling: SamplingStrategy): listenerHandler {
+function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
   const updatePosition = throttle<UIEvent>((evt) => {
     if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
       return
@@ -174,28 +177,28 @@ function initScrollObserver(cb: scrollCallback, blockClass: blockClass, sampling
   return on('scroll', updatePosition)
 }
 
-function initViewportResizeObserver(cb: viewportResizeCallback): listenerHandler {
+function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
   const updateDimension = throttle(() => {
     const height = getWindowHeight()
     const width = getWindowWidth()
     cb({
-      width: Number(width),
       height: Number(height),
+      width: Number(width),
     })
   }, 200)
   return on('resize', updateDimension, window)
 }
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
-const lastInputValueMap: WeakMap<EventTarget, inputValue> = new WeakMap()
+const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(
-  cb: inputCallback,
-  blockClass: blockClass,
+  cb: InputCallback,
+  blockClass: BlockClass,
   ignoreClass: string,
   maskInputOptions: MaskInputOptions,
   maskInputFn: MaskInputFn | undefined,
   sampling: SamplingStrategy
-): listenerHandler {
+): ListenerHandler {
   function eventHandler(event: Event) {
     const { target } = event
     if (
@@ -218,11 +221,7 @@ function initInputObserver(
       maskInputOptions[(target as Element).tagName.toLowerCase() as keyof MaskInputOptions] ||
       maskInputOptions[type as keyof MaskInputOptions]
     ) {
-      if (maskInputFn) {
-        text = maskInputFn(text)
-      } else {
-        text = '*'.repeat(text.length)
-      }
+      text = maskInputFn ? maskInputFn(text) : '*'.repeat(text.length)
     }
     cbWithDedup(target, { text, isChecked })
     // if a radio was checked
@@ -232,14 +231,14 @@ function initInputObserver(
       document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach((el) => {
         if (el !== target) {
           cbWithDedup(el, {
-            text: (el as HTMLInputElement).value,
             isChecked: !isChecked,
+            text: (el as HTMLInputElement).value,
           })
         }
       })
     }
   }
-  function cbWithDedup(target: EventTarget, v: inputValue) {
+  function cbWithDedup(target: EventTarget, v: InputValue) {
     const lastInputValue = lastInputValueMap.get(target)
     if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
       lastInputValueMap.set(target, v)
@@ -251,7 +250,7 @@ function initInputObserver(
     }
   }
   const events = sampling.input === 'last' ? ['change'] : ['input', 'change']
-  const handlers: Array<listenerHandler | hookResetter> = events.map((eventName) => on(eventName, eventHandler))
+  const handlers: Array<ListenerHandler | HookResetter> = events.map((eventName) => on(eventName, eventHandler))
   const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
   const hookProperties: Array<[HTMLElement, string]> = [
     [HTMLInputElement.prototype, 'value'],
@@ -278,7 +277,7 @@ function initInputObserver(
   }
 }
 
-function initStyleSheetObserver(cb: styleSheetRuleCallback): listenerHandler {
+function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number) {
     const id = mirror.getId(this.ownerNode as INode)
@@ -310,17 +309,17 @@ function initStyleSheetObserver(cb: styleSheetRuleCallback): listenerHandler {
 }
 
 function initMediaInteractionObserver(
-  mediaInteractionCb: mediaInteractionCallback,
-  blockClass: blockClass
-): listenerHandler {
+  mediaInteractionCb: MediaInteractionCallback,
+  blockClass: BlockClass
+): ListenerHandler {
   const handler = (type: 'play' | 'pause') => (event: Event) => {
     const { target } = event
     if (!target || isBlocked(target as Node, blockClass)) {
       return
     }
     mediaInteractionCb({
-      type: type === 'play' ? MediaInteractions.Play : MediaInteractions.Pause,
       id: mirror.getId(target as INode),
+      type: type === 'play' ? MediaInteractions.Play : MediaInteractions.Pause,
     })
   }
   const handlers = [on('play', handler('play')), on('pause', handler('pause'))]
@@ -329,42 +328,46 @@ function initMediaInteractionObserver(
   }
 }
 
-function initCanvasMutationObserver(cb: canvasMutationCallback, blockClass: blockClass): listenerHandler {
+function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: BlockClass): ListenerHandler {
   const props = Object.getOwnPropertyNames(CanvasRenderingContext2D.prototype)
-  const handlers: listenerHandler[] = []
+  const handlers: ListenerHandler[] = []
   for (const prop of props) {
     try {
       if (typeof CanvasRenderingContext2D.prototype[prop as keyof CanvasRenderingContext2D] !== 'function') {
         continue
       }
-      const restoreHandler = patch(CanvasRenderingContext2D.prototype, prop, function (original) {
-        return function (this: CanvasRenderingContext2D, ...args: Array<unknown>) {
-          if (!isBlocked(this.canvas, blockClass)) {
-            setTimeout(() => {
-              const recordArgs = [...args]
-              if (prop === 'drawImage') {
-                if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                  recordArgs[0] = recordArgs[0].toDataURL()
+      const restoreHandler = patch(
+        CanvasRenderingContext2D.prototype,
+        prop,
+        (original: (...args: unknown[]) => unknown) => {
+          return function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+            if (!isBlocked(this.canvas, blockClass)) {
+              setTimeout(() => {
+                const recordArgs = [...args]
+                if (prop === 'drawImage') {
+                  if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
+                    recordArgs[0] = recordArgs[0].toDataURL()
+                  }
                 }
-              }
-              cb({
-                id: mirror.getId((this.canvas as unknown) as INode),
-                property: prop,
-                args: recordArgs,
-              })
-            }, 0)
+                cb({
+                  args: recordArgs,
+                  id: mirror.getId((this.canvas as unknown) as INode),
+                  property: prop,
+                })
+              }, 0)
+            }
+            return original.apply(this, args)
           }
-          return original.apply(this, args)
         }
-      })
+      )
       handlers.push(restoreHandler)
     } catch {
       const hookHandler = hookSetter<CanvasRenderingContext2D>(CanvasRenderingContext2D.prototype, prop, {
         set(v) {
           cb({
+            args: [v],
             id: mirror.getId((this.canvas as unknown) as INode),
             property: prop,
-            args: [v],
             setter: true,
           })
         },
@@ -377,10 +380,10 @@ function initCanvasMutationObserver(cb: canvasMutationCallback, blockClass: bloc
   }
 }
 
-function initFontObserver(cb: fontCallback): listenerHandler {
-  const handlers: listenerHandler[] = []
+function initFontObserver(cb: FontCallback): ListenerHandler {
+  const handlers: ListenerHandler[] = []
 
-  const fontMap = new WeakMap<FontFace, fontParam>()
+  const fontMap = new WeakMap<FontFace, FontParam>()
 
   const originalFontFace = FontFace
   // tslint:disable-next-line: no-any
@@ -391,9 +394,9 @@ function initFontObserver(cb: fontCallback): listenerHandler {
   ) {
     const fontFace = new originalFontFace(family, source, descriptors)
     fontMap.set(fontFace, {
+      descriptors,
       family,
       buffer: typeof source !== 'string',
-      descriptors,
       fontSource:
         typeof source === 'string'
           ? source
@@ -403,7 +406,7 @@ function initFontObserver(cb: fontCallback): listenerHandler {
     return fontFace
   }
 
-  const restoreHandler = patch(document.fonts, 'add', function (original) {
+  const restoreHandler = patch(document.fonts, 'add', (original: (fontFace: FontFace) => unknown) => {
     return function (this: FontFaceSet, fontFace: FontFace) {
       setTimeout(() => {
         const p = fontMap.get(fontFace)
@@ -427,7 +430,7 @@ function initFontObserver(cb: fontCallback): listenerHandler {
   }
 }
 
-function mergeHooks(o: observerParam, hooks: hooksParam) {
+function mergeHooks(o: ObserverParam, hooks: HooksParam) {
   const {
     mutationCb,
     mousemoveCb,
@@ -440,61 +443,61 @@ function mergeHooks(o: observerParam, hooks: hooksParam) {
     canvasMutationCb,
     fontCb,
   } = o
-  o.mutationCb = (...p: Arguments<mutationCallBack>) => {
+  o.mutationCb = (...p: Arguments<MutationCallBack>) => {
     if (hooks.mutation) {
       hooks.mutation(...p)
     }
     mutationCb(...p)
   }
-  o.mousemoveCb = (...p: Arguments<mousemoveCallBack>) => {
+  o.mousemoveCb = (...p: Arguments<MousemoveCallBack>) => {
     if (hooks.mousemove) {
       hooks.mousemove(...p)
     }
     mousemoveCb(...p)
   }
-  o.mouseInteractionCb = (...p: Arguments<mouseInteractionCallBack>) => {
+  o.mouseInteractionCb = (...p: Arguments<MouseInteractionCallBack>) => {
     if (hooks.mouseInteraction) {
       hooks.mouseInteraction(...p)
     }
     mouseInteractionCb(...p)
   }
-  o.scrollCb = (...p: Arguments<scrollCallback>) => {
+  o.scrollCb = (...p: Arguments<ScrollCallback>) => {
     if (hooks.scroll) {
       hooks.scroll(...p)
     }
     scrollCb(...p)
   }
-  o.viewportResizeCb = (...p: Arguments<viewportResizeCallback>) => {
+  o.viewportResizeCb = (...p: Arguments<ViewportResizeCallback>) => {
     if (hooks.viewportResize) {
       hooks.viewportResize(...p)
     }
     viewportResizeCb(...p)
   }
-  o.inputCb = (...p: Arguments<inputCallback>) => {
+  o.inputCb = (...p: Arguments<InputCallback>) => {
     if (hooks.input) {
       hooks.input(...p)
     }
     inputCb(...p)
   }
-  o.mediaInteractionCb = (...p: Arguments<mediaInteractionCallback>) => {
+  o.mediaInteractionCb = (...p: Arguments<MediaInteractionCallback>) => {
     if (hooks.mediaInteaction) {
       hooks.mediaInteaction(...p)
     }
     mediaInteractionCb(...p)
   }
-  o.styleSheetRuleCb = (...p: Arguments<styleSheetRuleCallback>) => {
+  o.styleSheetRuleCb = (...p: Arguments<StyleSheetRuleCallback>) => {
     if (hooks.styleSheetRule) {
       hooks.styleSheetRule(...p)
     }
     styleSheetRuleCb(...p)
   }
-  o.canvasMutationCb = (...p: Arguments<canvasMutationCallback>) => {
+  o.canvasMutationCb = (...p: Arguments<CanvasMutationCallback>) => {
     if (hooks.canvasMutation) {
       hooks.canvasMutation(...p)
     }
     canvasMutationCb(...p)
   }
-  o.fontCb = (...p: Arguments<fontCallback>) => {
+  o.fontCb = (...p: Arguments<FontCallback>) => {
     if (hooks.font) {
       hooks.font(...p)
     }
@@ -502,7 +505,7 @@ function mergeHooks(o: observerParam, hooks: hooksParam) {
   }
 }
 
-export function initObservers(o: observerParam, hooks: hooksParam = {}): listenerHandler {
+export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
   const mutationObserver = initMutationObserver(
     o.mutationCb,
@@ -527,10 +530,8 @@ export function initObservers(o: observerParam, hooks: hooksParam = {}): listene
   )
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.blockClass)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const canvasMutationObserver = o.recordCanvas
-    ? initCanvasMutationObserver(o.canvasMutationCb, o.blockClass)
-    : () => {}
-  const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : () => {}
+  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb, o.blockClass) : noop
+  const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
     mutationObserver.disconnect()

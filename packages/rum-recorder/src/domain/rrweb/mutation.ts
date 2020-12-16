@@ -1,23 +1,24 @@
+/* tslint:disable:no-null-keyword */
 import {
-  INode,
-  serializeNodeWithId,
-  transformAttribute,
-  MaskInputOptions,
-  SlimDOMOptions,
   IGNORED_NODE,
+  INode,
+  MaskInputOptions,
+  serializeNodeWithId,
+  SlimDOMOptions,
+  transformAttribute,
 } from 'rrweb-snapshot'
 import {
-  mutationRecord,
-  blockClass,
-  mutationCallBack,
-  textCursor,
-  attributeCursor,
-  removedNodeMutation,
-  addedNodeMutation,
+  AddedNodeMutation,
+  AttributeCursor,
+  BlockClass,
+  MutationCallBack,
+  MutationRecord,
+  RemovedNodeMutation,
+  TextCursor,
 } from './types'
-import { mirror, isBlocked, isAncestorRemoved, isIgnored } from './utils'
+import { isAncestorRemoved, isBlocked, isIgnored, mirror } from './utils'
 
-type DoubleLinkedListNode = {
+interface DoubleLinkedListNode {
   previous: DoubleLinkedListNode | null
   next: DoubleLinkedListNode | null
   value: NodeInLinkedList
@@ -39,7 +40,7 @@ class DoubleLinkedList {
     }
 
     let current = this.head
-    for (let index = 0; index < position; index++) {
+    for (let index = 0; index < position; index += 1) {
       current = current?.next || null
     }
     return current
@@ -47,9 +48,9 @@ class DoubleLinkedList {
 
   public addNode(n: Node) {
     const node: DoubleLinkedListNode = {
-      value: n as NodeInLinkedList,
-      previous: null,
       next: null,
+      previous: null,
+      value: n as NodeInLinkedList,
     }
     ;(n as NodeInLinkedList).__ln = node
     if (n.previousSibling && isNodeInLinkedList(n.previousSibling)) {
@@ -75,7 +76,7 @@ class DoubleLinkedList {
       node.next = this.head
       this.head = node
     }
-    this.length++
+    this.length += 1
   }
 
   public removeNode(n: NodeInLinkedList) {
@@ -98,7 +99,7 @@ class DoubleLinkedList {
     if (n.__ln) {
       delete n.__ln
     }
-    this.length--
+    this.length -= 1
   }
 }
 
@@ -110,12 +111,12 @@ function isINode(n: Node | INode): n is INode {
 /**
  * controls behaviour of a MutationObserver
  */
-export default class MutationBuffer {
+export class MutationBuffer {
   private frozen: boolean = false
 
-  private texts: textCursor[] = []
-  private attributes: attributeCursor[] = []
-  private removes: removedNodeMutation[] = []
+  private texts: TextCursor[] = []
+  private attributes: AttributeCursor[] = []
+  private removes: RemovedNodeMutation[] = []
   private mapRemoves: Node[] = []
 
   private movedMap: Record<string, true> = {}
@@ -142,9 +143,9 @@ export default class MutationBuffer {
   private droppedSet = new Set<Node>()
 
   // @ts-ignore
-  private emissionCallback: mutationCallBack
+  private emissionCallback: MutationCallBack
   // @ts-ignore
-  private blockClass: blockClass
+  private blockClass: BlockClass
   // @ts-ignore
   private blockSelector: string | null
   // @ts-ignore
@@ -157,8 +158,8 @@ export default class MutationBuffer {
   private slimDOMOptions: SlimDOMOptions
 
   public init(
-    cb: mutationCallBack,
-    blockClass: blockClass,
+    cb: MutationCallBack,
+    blockClass: BlockClass,
     blockSelector: string | null,
     inlineStylesheet: boolean,
     maskInputOptions: MaskInputOptions,
@@ -186,7 +187,7 @@ export default class MutationBuffer {
     return this.frozen
   }
 
-  public processMutations = (mutations: mutationRecord[]) => {
+  public processMutations = (mutations: MutationRecord[]) => {
     mutations.forEach(this.processMutation)
     if (!this.frozen) {
       this.emit()
@@ -197,7 +198,7 @@ export default class MutationBuffer {
     // delay any modification of the mirror until this function
     // so that the mirror for takeFullSnapshot doesn't get mutated while it's event is being processed
 
-    const adds: addedNodeMutation[] = []
+    const adds: AddedNodeMutation[] = []
 
     /**
      * Sometimes child node may be pushed before its newly added
@@ -225,21 +226,21 @@ export default class MutationBuffer {
       if (parentId === -1 || nextId === -1) {
         return addList.addNode(n)
       }
-      let sn = serializeNodeWithId(n, {
-        doc: document,
-        map: mirror.map,
+      const sn = serializeNodeWithId(n, {
         blockClass: this.blockClass,
         blockSelector: this.blockSelector,
-        skipChild: true,
+        doc: document,
         inlineStylesheet: this.inlineStylesheet,
+        map: mirror.map,
         maskInputOptions: this.maskInputOptions,
-        slimDOMOptions: this.slimDOMOptions,
         recordCanvas: this.recordCanvas,
+        skipChild: true,
+        slimDOMOptions: this.slimDOMOptions,
       })
       if (sn) {
         adds.push({
-          parentId,
           nextId,
+          parentId,
           node: sn,
         })
       }
@@ -249,14 +250,14 @@ export default class MutationBuffer {
       mirror.removeNodeFromMap(this.mapRemoves.shift() as INode)
     }
 
-    this.movedSet.forEach(n => {
+    this.movedSet.forEach((n) => {
       if (isParentRemoved(this.removes, n) && !this.movedSet.has(n.parentNode!)) {
         return
       }
       pushAdd(n)
     })
 
-    this.addedSet.forEach(n => {
+    this.addedSet.forEach((n) => {
       if (!isAncestorInSet(this.droppedSet, n) && !isParentRemoved(this.removes, n)) {
         pushAdd(n)
       } else if (isAncestorInSet(this.movedSet, n)) {
@@ -277,12 +278,12 @@ export default class MutationBuffer {
         }
       }
       if (!node) {
-        for (let index = addList.length - 1; index >= 0; index--) {
-          const _node = addList.get(index)!
-          const parentId = mirror.getId((_node.value.parentNode as Node) as INode)
-          const nextId = getNextId(_node.value)
+        for (let index = addList.length - 1; index >= 0; index += 1) {
+          const nodeCandidate = addList.get(index)!
+          const parentId = mirror.getId((nodeCandidate.value.parentNode as Node) as INode)
+          const nextId = getNextId(nodeCandidate.value)
           if (parentId !== -1 && nextId !== -1) {
-            node = _node
+            node = nodeCandidate
             break
           }
         }
@@ -301,6 +302,15 @@ export default class MutationBuffer {
     }
 
     const payload = {
+      adds,
+      attributes: this.attributes
+        .map((attribute) => ({
+          attributes: attribute.attributes,
+          id: mirror.getId(attribute.node as INode),
+        }))
+        // attribute mutation's id was not in the mirror map means the target node has been removed
+        .filter((attribute) => mirror.has(attribute.id)),
+      removes: this.removes,
       texts: this.texts
         .map((text) => ({
           id: mirror.getId(text.node as INode),
@@ -308,15 +318,6 @@ export default class MutationBuffer {
         }))
         // text mutation's id was not in the mirror map means the target node has been removed
         .filter((text) => mirror.has(text.id)),
-      attributes: this.attributes
-        .map((attribute) => ({
-          id: mirror.getId(attribute.node as INode),
-          attributes: attribute.attributes,
-        }))
-        // attribute mutation's id was not in the mirror map means the target node has been removed
-        .filter((attribute) => mirror.has(attribute.id)),
-      removes: this.removes,
-      adds,
     }
     // payload may be empty if the mutations happened in some blocked elements
     if (!payload.texts.length && !payload.attributes.length && !payload.removes.length && !payload.adds.length) {
@@ -335,7 +336,7 @@ export default class MutationBuffer {
     this.emissionCallback(payload)
   }
 
-  private processMutation = (m: mutationRecord) => {
+  private processMutation = (m: MutationRecord) => {
     if (isIgnored(m.target)) {
       return
     }
@@ -355,11 +356,11 @@ export default class MutationBuffer {
         if (isBlocked(m.target, this.blockClass) || value === m.oldValue) {
           return
         }
-        let item: attributeCursor | undefined = this.attributes.find((a) => a.node === m.target)
+        let item: AttributeCursor | undefined = this.attributes.find((a) => a.node === m.target)
         if (!item) {
           item = {
-            node: m.target,
             attributes: {},
+            node: m.target,
           }
           this.attributes.push(item)
         }
@@ -446,7 +447,7 @@ function deepDelete(addsSet: Set<Node>, n: Node) {
   n.childNodes.forEach((childN) => deepDelete(addsSet, childN))
 }
 
-function isParentRemoved(removes: removedNodeMutation[], n: Node): boolean {
+function isParentRemoved(removes: RemovedNodeMutation[], n: Node): boolean {
   const { parentNode } = n
   if (!parentNode) {
     return false

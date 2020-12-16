@@ -1,7 +1,8 @@
-import { Mirror, throttleOptions, listenerHandler, hookResetter, blockClass } from './types'
-import { INode, IGNORED_NODE } from 'rrweb-snapshot'
+import { noop } from '@datadog/browser-core'
+import { IGNORED_NODE, INode } from 'rrweb-snapshot'
+import { BlockClass, HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
 
-export function on(type: string, fn: (event: any) => void, target: Document | Window = document): listenerHandler {
+export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
   const options = { capture: true, passive: true }
   target.addEventListener(type, fn, options)
   return () => target.removeEventListener(type, fn, options)
@@ -17,6 +18,7 @@ export const mirror: Mirror = {
     return n.__sn.id
   },
   getNode(id) {
+    // tslint:disable-next-line: no-null-keyword
     return mirror.map[id] || null
   },
   // TODO: use a weakmap to get rid of manually memory management
@@ -33,28 +35,27 @@ export const mirror: Mirror = {
 }
 
 // copy from underscore and modified
-export function throttle<T>(func: (arg: T) => void, wait: number, options: throttleOptions = {}) {
-  let timeout: number | null = null
+export function throttle<T>(func: (arg: T) => void, wait: number, options: ThrottleOptions = {}) {
+  let timeout: number | undefined
   let previous = 0
-  // tslint:disable-next-line: only-arrow-functions
-  return function (this: unknown, arg: T) {
-    let now = Date.now()
+  return function (this: unknown, _: T) {
+    const now = Date.now()
     if (!previous && options.leading === false) {
       previous = now
     }
-    let remaining = wait - (now - previous)
-    let args = (arguments as unknown) as [T]
+    const remaining = wait - (now - previous)
+    const args = (arguments as unknown) as [T]
     if (remaining <= 0 || remaining > wait) {
       if (timeout) {
         window.clearTimeout(timeout)
-        timeout = null
+        timeout = undefined
       }
       previous = now
       func.apply(this, args)
     } else if (!timeout && options.trailing !== false) {
       timeout = window.setTimeout(() => {
         previous = options.leading === false ? 0 : Date.now()
-        timeout = null
+        timeout = undefined
         func.apply(this, args)
       }, remaining)
     }
@@ -64,11 +65,10 @@ export function throttle<T>(func: (arg: T) => void, wait: number, options: throt
 export function hookSetter<T>(
   target: T,
   key: string | number | symbol,
-  d: { set(this: T, value: unknown): void },
-  win = window
-): hookResetter {
-  const original = win.Object.getOwnPropertyDescriptor(target, key)
-  win.Object.defineProperty(target, key, {
+  d: { set(this: T, value: unknown): void }
+): HookResetter {
+  const original = Object.getOwnPropertyDescriptor(target, key)
+  Object.defineProperty(target, key, {
     set(this: T, value) {
       // put hooked setter into event loop to avoid of set latency
       setTimeout(() => {
@@ -80,21 +80,20 @@ export function hookSetter<T>(
     },
   })
   return () => {
-    win.Object.defineProperty(target, key, original || {})
+    Object.defineProperty(target, key, original || {})
   }
 }
 
+// tslint:disable-next-line: max-line-length
 // copy from https://github.com/getsentry/sentry-javascript/blob/b2109071975af8bf0316d3b5b38f519bdaf5dc15/packages/utils/src/object.ts
 export function patch(
-  // tslint:disable-next-line:no-any
   source: { [key: string]: any },
   name: string,
-  // tslint:disable-next-line:no-any
-  replacement: (...args: any[]) => any
+  replacement: (...args: any[]) => unknown
 ): () => void {
   try {
     if (!(name in source)) {
-      return () => {}
+      return noop
     }
 
     const original = source[name] as () => unknown
@@ -102,7 +101,6 @@ export function patch(
 
     // Make sure it's a function first, as we need to attach an empty prototype for `defineProperties` to work
     // otherwise it'll throw "TypeError: Object.defineProperties called on non-object"
-    // tslint:disable-next-line:strict-type-predicates
     if (typeof wrapped === 'function') {
       wrapped.prototype = wrapped.prototype || {}
       Object.defineProperties(wrapped, {
@@ -119,7 +117,7 @@ export function patch(
       source[name] = original
     }
   } catch {
-    return () => {}
+    return noop
     // This can throw if multiple fill happens on a global object like XMLHttpRequest
     // Fixes https://github.com/getsentry/sentry-javascript/issues/2043
   }
@@ -141,7 +139,7 @@ export function getWindowWidth(): number {
   )
 }
 
-export function isBlocked(node: Node | null, blockClass: blockClass): boolean {
+export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
   if (!node) {
     return false
   }

@@ -1,5 +1,6 @@
-import { serializedNodeWithId, idNodeMap, INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+// tslint:disable-next-line: no-implicit-dependencies
 import { FontFaceDescriptors } from 'css-font-loading-module'
+import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
 
 export enum EventType {
   DomContentLoaded,
@@ -10,17 +11,17 @@ export enum EventType {
   Custom,
 }
 
-export type domContentLoadedEvent = {
+export interface DomContentLoadedEvent {
   type: EventType.DomContentLoaded
   data: {}
 }
 
-export type loadedEvent = {
+export interface LoadedEvent {
   type: EventType.Load
   data: {}
 }
 
-export type fullSnapshotEvent = {
+export interface FullSnapshotEvent {
   type: EventType.FullSnapshot
   data: {
     node: serializedNodeWithId
@@ -31,12 +32,12 @@ export type fullSnapshotEvent = {
   }
 }
 
-export type incrementalSnapshotEvent = {
+export interface IncrementalSnapshotEvent {
   type: EventType.IncrementalSnapshot
-  data: incrementalData
+  data: IncrementalData
 }
 
-export type metaEvent = {
+export interface MetaEvent {
   type: EventType.Meta
   data: {
     href: string
@@ -45,16 +46,13 @@ export type metaEvent = {
   }
 }
 
-export type customEvent<T = unknown> = {
+export interface CustomEvent<T = unknown> {
   type: EventType.Custom
   data: {
     tag: string
     payload: T
   }
 }
-
-export type styleSheetEvent = {}
-
 export enum IncrementalSource {
   Mutation,
   MouseMove,
@@ -69,74 +67,74 @@ export enum IncrementalSource {
   Font,
 }
 
-export type mutationData = {
+export type MutationData = {
   source: IncrementalSource.Mutation
-} & mutationCallbackParam
+} & MutationCallbackParam
 
-export type mousemoveData = {
+export interface MousemoveData {
   source: IncrementalSource.MouseMove | IncrementalSource.TouchMove
-  positions: mousePosition[]
+  positions: MousePosition[]
 }
 
-export type mouseInteractionData = {
+export type MouseInteractionData = {
   source: IncrementalSource.MouseInteraction
-} & mouseInteractionParam
+} & MouseInteractionParam
 
-export type scrollData = {
+export type ScrollData = {
   source: IncrementalSource.Scroll
-} & scrollPosition
+} & ScrollPosition
 
-export type viewportResizeData = {
+export type ViewportResizeData = {
   source: IncrementalSource.ViewportResize
-} & viewportResizeDimention
+} & ViewportResizeDimention
 
-export type inputData = {
+export type InputData = {
   source: IncrementalSource.Input
   id: number
-} & inputValue
+} & InputValue
 
-export type mediaInteractionData = {
+export type MediaInteractionData = {
   source: IncrementalSource.MediaInteraction
-} & mediaInteractionParam
+} & MediaInteractionParam
 
-export type styleSheetRuleData = {
+export type StyleSheetRuleData = {
   source: IncrementalSource.StyleSheetRule
-} & styleSheetRuleParam
+} & StyleSheetRuleParam
 
-export type canvasMutationData = {
+export type CanvasMutationData = {
   source: IncrementalSource.CanvasMutation
-} & canvasMutationParam
+} & CanvasMutationParam
 
-export type fontData = {
+export type FontData = {
   source: IncrementalSource.Font
-} & fontParam
+} & FontParam
 
-export type incrementalData =
-  | mutationData
-  | mousemoveData
-  | mouseInteractionData
-  | scrollData
-  | viewportResizeData
-  | inputData
-  | mediaInteractionData
-  | styleSheetRuleData
-  | canvasMutationData
-  | fontData
+export type IncrementalData =
+  | MutationData
+  | MousemoveData
+  | MouseInteractionData
+  | ScrollData
+  | ViewportResizeData
+  | InputData
+  | MediaInteractionData
+  | StyleSheetRuleData
+  | CanvasMutationData
+  | FontData
 
-export type event =
-  | domContentLoadedEvent
-  | loadedEvent
-  | fullSnapshotEvent
-  | incrementalSnapshotEvent
-  | metaEvent
-  | customEvent
+export type Event =
+  | DomContentLoadedEvent
+  | LoadedEvent
+  | FullSnapshotEvent
+  | IncrementalSnapshotEvent
+  | MetaEvent
+  | CustomEvent
 
-export type eventWithTime = event & {
+export type EventWithTime = Event & {
   timestamp: number
   delay?: number
 }
 
-export type blockClass = string | RegExp
+export type BlockClass = string | RegExp
 
 export type SamplingStrategy = Partial<{
   /**
@@ -160,11 +158,11 @@ export type SamplingStrategy = Partial<{
   input: 'all' | 'last'
 }>
 
-export type recordOptions<T> = {
+export interface RecordOptions<T> {
   emit?: (e: T, isCheckout?: boolean) => void
   checkoutEveryNth?: number
   checkoutEveryNms?: number
-  blockClass?: blockClass
+  blockClass?: BlockClass
   blockSelector?: string
   ignoreClass?: string
   maskAllInputs?: boolean
@@ -172,8 +170,8 @@ export type recordOptions<T> = {
   maskInputFn?: MaskInputFn
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
-  hooks?: hooksParam
-  packFn?: (event: event) => event
+  hooks?: HooksParam
+  packFn?: (event: Event) => Event
   sampling?: SamplingStrategy
   recordCanvas?: boolean
   collectFonts?: boolean
@@ -181,44 +179,44 @@ export type recordOptions<T> = {
   mousemoveWait?: number
 }
 
-export type observerParam = {
-  mutationCb: mutationCallBack
-  mousemoveCb: mousemoveCallBack
-  mouseInteractionCb: mouseInteractionCallBack
-  scrollCb: scrollCallback
-  viewportResizeCb: viewportResizeCallback
-  inputCb: inputCallback
-  mediaInteractionCb: mediaInteractionCallback
-  blockClass: blockClass
+export interface ObserverParam {
+  mutationCb: MutationCallBack
+  mousemoveCb: MousemoveCallBack
+  mouseInteractionCb: MouseInteractionCallBack
+  scrollCb: ScrollCallback
+  viewportResizeCb: ViewportResizeCallback
+  inputCb: InputCallback
+  mediaInteractionCb: MediaInteractionCallback
+  blockClass: BlockClass
   blockSelector: string | null
   ignoreClass: string
   maskInputOptions: MaskInputOptions
   maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
-  styleSheetRuleCb: styleSheetRuleCallback
-  canvasMutationCb: canvasMutationCallback
-  fontCb: fontCallback
+  styleSheetRuleCb: StyleSheetRuleCallback
+  canvasMutationCb: CanvasMutationCallback
+  fontCb: FontCallback
   sampling: SamplingStrategy
   recordCanvas: boolean
   collectFonts: boolean
   slimDOMOptions: SlimDOMOptions
 }
 
-export type hooksParam = {
-  mutation?: mutationCallBack
-  mousemove?: mousemoveCallBack
-  mouseInteraction?: mouseInteractionCallBack
-  scroll?: scrollCallback
-  viewportResize?: viewportResizeCallback
-  input?: inputCallback
-  mediaInteaction?: mediaInteractionCallback
-  styleSheetRule?: styleSheetRuleCallback
-  canvasMutation?: canvasMutationCallback
-  font?: fontCallback
+export interface HooksParam {
+  mutation?: MutationCallBack
+  mousemove?: MousemoveCallBack
+  mouseInteraction?: MouseInteractionCallBack
+  scroll?: ScrollCallback
+  viewportResize?: ViewportResizeCallback
+  input?: InputCallback
+  mediaInteaction?: MediaInteractionCallback
+  styleSheetRule?: StyleSheetRuleCallback
+  canvasMutation?: CanvasMutationCallback
+  font?: FontCallback
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
-export type mutationRecord = {
+export interface MutationRecord {
   type: string
   target: Node
   oldValue: string | null
@@ -227,34 +225,34 @@ export type mutationRecord = {
   attributeName: string | null
 }
 
-export type textCursor = {
+export interface TextCursor {
   node: Node
   value: string | null
 }
-export type textMutation = {
+export interface TextMutation {
   id: number
   value: string | null
 }
 
-export type attributeCursor = {
+export interface AttributeCursor {
   node: Node
   attributes: {
     [key: string]: string | null
   }
 }
-export type attributeMutation = {
+export interface AttributeMutation {
   id: number
   attributes: {
     [key: string]: string | null
   }
 }
 
-export type removedNodeMutation = {
+export interface RemovedNodeMutation {
   parentId: number
   id: number
 }
 
-export type addedNodeMutation = {
+export interface AddedNodeMutation {
   parentId: number
   // Newly recorded mutations will not have previousId any more, just for compatibility
   previousId?: number | null
@@ -262,21 +260,21 @@ export type addedNodeMutation = {
   node: serializedNodeWithId
 }
 
-type mutationCallbackParam = {
-  texts: textMutation[]
-  attributes: attributeMutation[]
-  removes: removedNodeMutation[]
-  adds: addedNodeMutation[]
+interface MutationCallbackParam {
+  texts: TextMutation[]
+  attributes: AttributeMutation[]
+  removes: RemovedNodeMutation[]
+  adds: AddedNodeMutation[]
 }
 
-export type mutationCallBack = (m: mutationCallbackParam) => void
+export type MutationCallBack = (m: MutationCallbackParam) => void
 
-export type mousemoveCallBack = (
-  p: mousePosition[],
+export type MousemoveCallBack = (
+  p: MousePosition[],
   source: IncrementalSource.MouseMove | IncrementalSource.TouchMove
 ) => void
 
-export type mousePosition = {
+export interface MousePosition {
   x: number
   y: number
   id: number
@@ -296,85 +294,85 @@ export enum MouseInteractions {
   TouchEnd,
 }
 
-type mouseInteractionParam = {
+interface MouseInteractionParam {
   type: MouseInteractions
   id: number
   x: number
   y: number
 }
 
-export type mouseInteractionCallBack = (d: mouseInteractionParam) => void
+export type MouseInteractionCallBack = (d: MouseInteractionParam) => void
 
-export type scrollPosition = {
+export interface ScrollPosition {
   id: number
   x: number
   y: number
 }
 
-export type scrollCallback = (p: scrollPosition) => void
+export type ScrollCallback = (p: ScrollPosition) => void
 
-export type styleSheetAddRule = {
+export interface StyleSheetAddRule {
   rule: string
   index?: number
 }
 
-export type styleSheetDeleteRule = {
+export interface StyleSheetDeleteRule {
   index: number
 }
 
-export type styleSheetRuleParam = {
+export interface StyleSheetRuleParam {
   id: number
-  removes?: styleSheetDeleteRule[]
-  adds?: styleSheetAddRule[]
+  removes?: StyleSheetDeleteRule[]
+  adds?: StyleSheetAddRule[]
 }
 
-export type styleSheetRuleCallback = (s: styleSheetRuleParam) => void
+export type StyleSheetRuleCallback = (s: StyleSheetRuleParam) => void
 
-export type canvasMutationCallback = (p: canvasMutationParam) => void
+export type CanvasMutationCallback = (p: CanvasMutationParam) => void
 
-export type canvasMutationParam = {
+export interface CanvasMutationParam {
   id: number
   property: string
-  args: Array<unknown>
+  args: unknown[]
   setter?: true
 }
 
-export type fontParam = {
+export interface FontParam {
   family: string
   fontSource: string
   buffer: boolean
   descriptors?: FontFaceDescriptors
 }
 
-export type fontCallback = (p: fontParam) => void
+export type FontCallback = (p: FontParam) => void
 
-export type viewportResizeDimention = {
+export interface ViewportResizeDimention {
   width: number
   height: number
 }
 
-export type viewportResizeCallback = (d: viewportResizeDimention) => void
+export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
 
-export type inputValue = {
+export interface InputValue {
   text: string
   isChecked: boolean
 }
 
-export type inputCallback = (v: inputValue & { id: number }) => void
+export type InputCallback = (v: InputValue & { id: number }) => void
 
 export const enum MediaInteractions {
   Play,
   Pause,
 }
 
-export type mediaInteractionParam = {
+export interface MediaInteractionParam {
   type: MediaInteractions
   id: number
 }
 
-export type mediaInteractionCallback = (p: mediaInteractionParam) => void
+export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
-export type Mirror = {
+export interface Mirror {
   map: idNodeMap
   getId: (n: INode) => number
   getNode: (id: number) => INode | null
@@ -382,14 +380,13 @@ export type Mirror = {
   has: (id: number) => boolean
 }
 
-export type throttleOptions = {
+export interface ThrottleOptions {
   leading?: boolean
   trailing?: boolean
 }
 
-export type listenerHandler = () => void
-export type hookResetter = () => void
-
+export type ListenerHandler = () => void
+export type HookResetter = () => void
 export type Arguments<T> = T extends (...payload: infer U) => unknown ? U : unknown
 
 export type MaskInputFn = (text: string) => string

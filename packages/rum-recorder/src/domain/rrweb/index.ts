@@ -1,3 +1,1 @@
-import record from './record'
-
-export { record }
+export { record } from './record'
