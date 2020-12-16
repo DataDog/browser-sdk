@@ -14,6 +14,10 @@
 
 ---
 
+## v2.0.3
+
+- 🐛 handle direct onerror calls with objects ([#659](https://github.com/DataDog/browser-sdk/pull/659))
+
 ## v2.0.2
 
 - 🐛 sanitize error properties even when there is a valid stack ([#655](https://github.com/DataDog/browser-sdk/pull/655))
