@@ -27,7 +27,7 @@ export interface TestSetupBuilder {
   build: () => TestIO
 }
 
-type BeforeBuildCallback = (buildContext: BuildContext) => void | ({ stop?(): void })
+type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop?(): void }
 interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>

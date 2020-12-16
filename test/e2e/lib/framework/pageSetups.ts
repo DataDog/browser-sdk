@@ -49,7 +49,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     body += html`
       <script>
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
-        DD_LOGS.onReady(function() {
+        DD_LOGS.onReady(function () {
           DD_LOGS.init(${formatLogsOptions(options.logs)})
         })
       </script>
@@ -60,7 +60,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     body += html`
       <script type="text/javascript">
         ${formatSnippet('./datadog-rum.js', 'DD_RUM')}
-        DD_RUM.onReady(function() {
+        DD_RUM.onReady(function () {
           DD_RUM.init(${formatRumOptions(options.rum)})
         })
       </script>
@@ -117,9 +117,7 @@ export function npmSetup(options: SetupOptions) {
     `
   }
 
-  header += html`
-    <script type="text/javascript" src="./app.js"></script>
-  `
+  header += html` <script type="text/javascript" src="./app.js"></script> `
 
   return basePage({
     header,

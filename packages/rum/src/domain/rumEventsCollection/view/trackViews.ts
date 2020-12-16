@@ -209,12 +209,12 @@ function isHashAnAnchor(hash: string) {
 
 function trackHistory(onHistoryChange: () => void) {
   const originalPushState = history.pushState
-  history.pushState = monitor(function(this: History['pushState']) {
+  history.pushState = monitor(function (this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
     onHistoryChange()
   })
   const originalReplaceState = history.replaceState
-  history.replaceState = monitor(function(this: History['replaceState']) {
+  history.replaceState = monitor(function (this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
     onHistoryChange()
   })

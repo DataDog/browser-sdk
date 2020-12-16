@@ -28,7 +28,10 @@ try {
         )}`,
     })
   }
-  console.log('Changed files:', results.filter((entry) => entry.hasChanged).map((entry) => entry.file))
+  console.log(
+    'Changed files:',
+    results.filter((entry) => entry.hasChanged).map((entry) => entry.file)
+  )
   process.exit(0)
 } catch (error) {
   console.error('Error occurred:', error)

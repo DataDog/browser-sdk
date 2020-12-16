@@ -7,7 +7,7 @@ const { getBuildInfos, getIp } = require('../utils')
 // https://github.com/sinonjs/sinon/blob/894951c/package.json#L113
 karmaBaseConf.webpack.resolve.mainFields = ['cdn', 'main']
 
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
     ...karmaBaseConf,
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],

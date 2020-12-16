@@ -79,6 +79,13 @@ ReferenceError: baz is not defined
   })
 
   describe('.computeStackTrace', () => {
+    const stackStr = `
+Error: foo
+    at <anonymous>:2:11
+    at Object.InjectedScript._evaluateOn (<anonymous>:904:140)
+    at Object.InjectedScript._evaluateAndWrap (<anonymous>:837:34)
+    at Object.InjectedScript.evaluate (<anonymous>:693:21)`
+
     it('should handle a native error object', () => {
       const ex = new Error('test')
       const stack = computeStackTrace(ex)
@@ -87,12 +94,6 @@ ReferenceError: baz is not defined
     })
 
     it('should handle a native error object stack from Chrome', () => {
-      const stackStr = `
-Error: foo
-    at <anonymous>:2:11
-    at Object.InjectedScript._evaluateOn (<anonymous>:904:140)
-    at Object.InjectedScript._evaluateAndWrap (<anonymous>:837:34)
-    at Object.InjectedScript.evaluate (<anonymous>:693:21)`
       const mockErr = {
         message: 'foo',
         name: 'Error',
@@ -101,6 +102,18 @@ Error: foo
       const stackFrames = computeStackTrace(mockErr)
 
       expect(stackFrames.stack[0].url).toEqual('<anonymous>')
+    })
+
+    it('should handle edge case values', () => {
+      expect(computeStackTrace({ message: { foo: 'bar' } }).message).toBeUndefined()
+      expect(computeStackTrace({ name: { foo: 'bar' } }).name).toBeUndefined()
+      expect(computeStackTrace({ message: { foo: 'bar' }, stack: stackStr }).message).toBeUndefined()
+      expect(computeStackTrace({ name: { foo: 'bar' }, stack: stackStr }).name).toBeUndefined()
+      expect(computeStackTrace(2).message).toBeUndefined()
+      expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
+      expect(computeStackTrace(undefined).message).toBeUndefined()
+      // tslint:disable-next-line:no-null-keyword
+      expect(computeStackTrace(null).message).toBeUndefined()
     })
   })
 
