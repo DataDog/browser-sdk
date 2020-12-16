@@ -5,7 +5,7 @@ import {
   MaskInputOptions,
   SlimDOMOptions,
   IGNORED_NODE,
-} from 'rrweb-snapshot';
+} from 'rrweb-snapshot'
 import {
   mutationRecord,
   blockClass,
@@ -14,35 +14,35 @@ import {
   attributeCursor,
   removedNodeMutation,
   addedNodeMutation,
-} from './types';
-import { mirror, isBlocked, isAncestorRemoved, isIgnored } from './utils';
+} from './types'
+import { mirror, isBlocked, isAncestorRemoved, isIgnored } from './utils'
 
 type DoubleLinkedListNode = {
-  previous: DoubleLinkedListNode | null;
-  next: DoubleLinkedListNode | null;
-  value: NodeInLinkedList;
-};
+  previous: DoubleLinkedListNode | null
+  next: DoubleLinkedListNode | null
+  value: NodeInLinkedList
+}
 type NodeInLinkedList = Node & {
-  __ln: DoubleLinkedListNode;
-};
+  __ln: DoubleLinkedListNode
+}
 
 function isNodeInLinkedList(n: Node | NodeInLinkedList): n is NodeInLinkedList {
-  return '__ln' in n;
+  return '__ln' in n
 }
 class DoubleLinkedList {
-  public length = 0;
-  public head: DoubleLinkedListNode | null = null;
+  public length = 0
+  public head: DoubleLinkedListNode | null = null
 
   public get(position: number) {
     if (position >= this.length) {
-      throw new Error('Position outside of list range');
+      throw new Error('Position outside of list range')
     }
 
-    let current = this.head;
+    let current = this.head
     for (let index = 0; index < position; index++) {
-      current = current?.next || null;
+      current = current?.next || null
     }
-    return current;
+    return current
   }
 
   public addNode(n: Node) {
@@ -50,75 +50,75 @@ class DoubleLinkedList {
       value: n as NodeInLinkedList,
       previous: null,
       next: null,
-    };
-    (n as NodeInLinkedList).__ln = node;
+    }
+    ;(n as NodeInLinkedList).__ln = node
     if (n.previousSibling && isNodeInLinkedList(n.previousSibling)) {
-      const current = n.previousSibling.__ln.next;
-      node.next = current;
-      node.previous = n.previousSibling.__ln;
-      n.previousSibling.__ln.next = node;
+      const current = n.previousSibling.__ln.next
+      node.next = current
+      node.previous = n.previousSibling.__ln
+      n.previousSibling.__ln.next = node
       if (current) {
-        current.previous = node;
+        current.previous = node
       }
     } else if (n.nextSibling && isNodeInLinkedList(n.nextSibling)) {
-      const current = n.nextSibling.__ln.previous;
-      node.previous = current;
-      node.next = n.nextSibling.__ln;
-      n.nextSibling.__ln.previous = node;
+      const current = n.nextSibling.__ln.previous
+      node.previous = current
+      node.next = n.nextSibling.__ln
+      n.nextSibling.__ln.previous = node
       if (current) {
-        current.next = node;
+        current.next = node
       }
     } else {
       if (this.head) {
-        this.head.previous = node;
+        this.head.previous = node
       }
-      node.next = this.head;
-      this.head = node;
+      node.next = this.head
+      this.head = node
     }
-    this.length++;
+    this.length++
   }
 
   public removeNode(n: NodeInLinkedList) {
-    const current = n.__ln;
+    const current = n.__ln
     if (!this.head) {
-      return;
+      return
     }
 
     if (!current.previous) {
-      this.head = current.next;
+      this.head = current.next
       if (this.head) {
-        this.head.previous = null;
+        this.head.previous = null
       }
     } else {
-      current.previous.next = current.next;
+      current.previous.next = current.next
       if (current.next) {
-        current.next.previous = current.previous;
+        current.next.previous = current.previous
       }
     }
     if (n.__ln) {
-      delete n.__ln;
+      delete n.__ln
     }
-    this.length--;
+    this.length--
   }
 }
 
-const moveKey = (id: number, parentId: number) => `${id}@${parentId}`;
+const moveKey = (id: number, parentId: number) => `${id}@${parentId}`
 function isINode(n: Node | INode): n is INode {
-  return '__sn' in n;
+  return '__sn' in n
 }
 
 /**
  * controls behaviour of a MutationObserver
  */
 export default class MutationBuffer {
-  private frozen: boolean = false;
+  private frozen: boolean = false
 
-  private texts: textCursor[] = [];
-  private attributes: attributeCursor[] = [];
-  private removes: removedNodeMutation[] = [];
-  private mapRemoves: Node[] = [];
+  private texts: textCursor[] = []
+  private attributes: attributeCursor[] = []
+  private removes: removedNodeMutation[] = []
+  private mapRemoves: Node[] = []
 
-  private movedMap: Record<string, true> = {};
+  private movedMap: Record<string, true> = {}
 
   /**
    * the browser MutationObserver emits multiple mutations after
@@ -137,17 +137,17 @@ export default class MutationBuffer {
    * this also causes newly added nodes will not be serialized with id ASAP,
    * which means all the id related calculation should be lazy too.
    */
-  private addedSet = new Set<Node>();
-  private movedSet = new Set<Node>();
-  private droppedSet = new Set<Node>();
+  private addedSet = new Set<Node>()
+  private movedSet = new Set<Node>()
+  private droppedSet = new Set<Node>()
 
-  private emissionCallback: mutationCallBack;
-  private blockClass: blockClass;
-  private blockSelector: string | null;
-  private inlineStylesheet: boolean;
-  private maskInputOptions: MaskInputOptions;
-  private recordCanvas: boolean;
-  private slimDOMOptions: SlimDOMOptions;
+  private emissionCallback: mutationCallBack
+  private blockClass: blockClass
+  private blockSelector: string | null
+  private inlineStylesheet: boolean
+  private maskInputOptions: MaskInputOptions
+  private recordCanvas: boolean
+  private slimDOMOptions: SlimDOMOptions
 
   public init(
     cb: mutationCallBack,
@@ -156,67 +156,67 @@ export default class MutationBuffer {
     inlineStylesheet: boolean,
     maskInputOptions: MaskInputOptions,
     recordCanvas: boolean,
-    slimDOMOptions: SlimDOMOptions,
+    slimDOMOptions: SlimDOMOptions
   ) {
-    this.blockClass = blockClass;
-    this.blockSelector = blockSelector;
-    this.inlineStylesheet = inlineStylesheet;
-    this.maskInputOptions = maskInputOptions;
-    this.recordCanvas = recordCanvas;
-    this.slimDOMOptions = slimDOMOptions;
-    this.emissionCallback = cb;
+    this.blockClass = blockClass
+    this.blockSelector = blockSelector
+    this.inlineStylesheet = inlineStylesheet
+    this.maskInputOptions = maskInputOptions
+    this.recordCanvas = recordCanvas
+    this.slimDOMOptions = slimDOMOptions
+    this.emissionCallback = cb
   }
 
   public freeze() {
-    this.frozen = true;
+    this.frozen = true
   }
 
   public unfreeze() {
-    this.frozen = false;
+    this.frozen = false
   }
 
   public isFrozen() {
-    return this.frozen;
+    return this.frozen
   }
 
   public processMutations = (mutations: mutationRecord[]) => {
-    mutations.forEach(this.processMutation);
+    mutations.forEach(this.processMutation)
     if (!this.frozen) {
-      this.emit();
+      this.emit()
     }
-  };
+  }
 
   public emit = () => {
     // delay any modification of the mirror until this function
     // so that the mirror for takeFullSnapshot doesn't get mutated while it's event is being processed
 
-    const adds: addedNodeMutation[] = [];
+    const adds: addedNodeMutation[] = []
 
     /**
      * Sometimes child node may be pushed before its newly added
      * parent, so we init a queue to store these nodes.
      */
-    const addList = new DoubleLinkedList();
+    const addList = new DoubleLinkedList()
     const getNextId = (n: Node): number | null => {
-      let ns: Node | null = n;
-      let nextId: number | null = IGNORED_NODE; // slimDOM: ignored
+      let ns: Node | null = n
+      let nextId: number | null = IGNORED_NODE // slimDOM: ignored
       while (nextId === IGNORED_NODE) {
-        ns = ns && ns.nextSibling;
-        nextId = ns && mirror.getId((ns as unknown) as INode);
+        ns = ns && ns.nextSibling
+        nextId = ns && mirror.getId((ns as unknown) as INode)
       }
       if (nextId === -1 && isBlocked(n.nextSibling, this.blockClass)) {
-        nextId = null;
+        nextId = null
       }
-      return nextId;
-    };
+      return nextId
+    }
     const pushAdd = (n: Node) => {
       if (!n.parentNode) {
-        return;
+        return
       }
-      const parentId = mirror.getId((n.parentNode as Node) as INode);
-      const nextId = getNextId(n);
+      const parentId = mirror.getId((n.parentNode as Node) as INode)
+      const nextId = getNextId(n)
       if (parentId === -1 || nextId === -1) {
-        return addList.addNode(n);
+        return addList.addNode(n)
       }
       let sn = serializeNodeWithId(n, {
         doc: document,
@@ -228,65 +228,55 @@ export default class MutationBuffer {
         maskInputOptions: this.maskInputOptions,
         slimDOMOptions: this.slimDOMOptions,
         recordCanvas: this.recordCanvas,
-      });
+      })
       if (sn) {
         adds.push({
           parentId,
           nextId,
           node: sn,
-        });
+        })
       }
-    };
+    }
 
     while (this.mapRemoves.length) {
-      mirror.removeNodeFromMap(this.mapRemoves.shift() as INode);
+      mirror.removeNodeFromMap(this.mapRemoves.shift() as INode)
     }
 
     for (const n of this.movedSet) {
-      if (
-        isParentRemoved(this.removes, n) &&
-        !this.movedSet.has(n.parentNode!)
-      ) {
-        continue;
+      if (isParentRemoved(this.removes, n) && !this.movedSet.has(n.parentNode!)) {
+        continue
       }
-      pushAdd(n);
+      pushAdd(n)
     }
 
     for (const n of this.addedSet) {
-      if (
-        !isAncestorInSet(this.droppedSet, n) &&
-        !isParentRemoved(this.removes, n)
-      ) {
-        pushAdd(n);
+      if (!isAncestorInSet(this.droppedSet, n) && !isParentRemoved(this.removes, n)) {
+        pushAdd(n)
       } else if (isAncestorInSet(this.movedSet, n)) {
-        pushAdd(n);
+        pushAdd(n)
       } else {
-        this.droppedSet.add(n);
+        this.droppedSet.add(n)
       }
     }
 
-    let candidate: DoubleLinkedListNode | null = null;
+    let candidate: DoubleLinkedListNode | null = null
     while (addList.length) {
-      let node: DoubleLinkedListNode | null = null;
+      let node: DoubleLinkedListNode | null = null
       if (candidate) {
-        const parentId = mirror.getId(
-          (candidate.value.parentNode as Node) as INode,
-        );
-        const nextId = getNextId(candidate.value);
+        const parentId = mirror.getId((candidate.value.parentNode as Node) as INode)
+        const nextId = getNextId(candidate.value)
         if (parentId !== -1 && nextId !== -1) {
-          node = candidate;
+          node = candidate
         }
       }
       if (!node) {
         for (let index = addList.length - 1; index >= 0; index--) {
-          const _node = addList.get(index)!;
-          const parentId = mirror.getId(
-            (_node.value.parentNode as Node) as INode,
-          );
-          const nextId = getNextId(_node.value);
+          const _node = addList.get(index)!
+          const parentId = mirror.getId((_node.value.parentNode as Node) as INode)
+          const nextId = getNextId(_node.value)
           if (parentId !== -1 && nextId !== -1) {
-            node = _node;
-            break;
+            node = _node
+            break
           }
         }
       }
@@ -296,11 +286,11 @@ export default class MutationBuffer {
          * it may be a bug or corner case. We need to escape the
          * dead while loop at once.
          */
-        break;
+        break
       }
-      candidate = node.previous;
-      addList.removeNode(node.value);
-      pushAdd(node.value);
+      candidate = node.previous
+      addList.removeNode(node.value)
+      pushAdd(node.value)
     }
 
     const payload = {
@@ -320,83 +310,68 @@ export default class MutationBuffer {
         .filter((attribute) => mirror.has(attribute.id)),
       removes: this.removes,
       adds,
-    };
+    }
     // payload may be empty if the mutations happened in some blocked elements
-    if (
-      !payload.texts.length &&
-      !payload.attributes.length &&
-      !payload.removes.length &&
-      !payload.adds.length
-    ) {
-      return;
+    if (!payload.texts.length && !payload.attributes.length && !payload.removes.length && !payload.adds.length) {
+      return
     }
 
     // reset
-    this.texts = [];
-    this.attributes = [];
-    this.removes = [];
-    this.addedSet = new Set<Node>();
-    this.movedSet = new Set<Node>();
-    this.droppedSet = new Set<Node>();
-    this.movedMap = {};
+    this.texts = []
+    this.attributes = []
+    this.removes = []
+    this.addedSet = new Set<Node>()
+    this.movedSet = new Set<Node>()
+    this.droppedSet = new Set<Node>()
+    this.movedMap = {}
 
-    this.emissionCallback(payload);
-  };
+    this.emissionCallback(payload)
+  }
 
   private processMutation = (m: mutationRecord) => {
     if (isIgnored(m.target)) {
-      return;
+      return
     }
     switch (m.type) {
       case 'characterData': {
-        const value = m.target.textContent;
+        const value = m.target.textContent
         if (!isBlocked(m.target, this.blockClass) && value !== m.oldValue) {
           this.texts.push({
             value,
             node: m.target,
-          });
+          })
         }
-        break;
+        break
       }
       case 'attributes': {
-        const value = (m.target as HTMLElement).getAttribute(m.attributeName!);
+        const value = (m.target as HTMLElement).getAttribute(m.attributeName!)
         if (isBlocked(m.target, this.blockClass) || value === m.oldValue) {
-          return;
+          return
         }
-        let item: attributeCursor | undefined = this.attributes.find(
-          (a) => a.node === m.target,
-        );
+        let item: attributeCursor | undefined = this.attributes.find((a) => a.node === m.target)
         if (!item) {
           item = {
             node: m.target,
             attributes: {},
-          };
-          this.attributes.push(item);
+          }
+          this.attributes.push(item)
         }
         // overwrite attribute if the mutations was triggered in same time
-        item.attributes[m.attributeName!] = transformAttribute(
-          document,
-          m.attributeName!,
-          value!,
-        );
-        break;
+        item.attributes[m.attributeName!] = transformAttribute(document, m.attributeName!, value!)
+        break
       }
       case 'childList': {
-        m.addedNodes.forEach((n) => this.genAdds(n, m.target));
+        m.addedNodes.forEach((n) => this.genAdds(n, m.target))
         m.removedNodes.forEach((n) => {
-          const nodeId = mirror.getId(n as INode);
-          const parentId = mirror.getId(m.target as INode);
-          if (
-            isBlocked(n, this.blockClass) ||
-            isBlocked(m.target, this.blockClass) ||
-            isIgnored(n)
-          ) {
-            return;
+          const nodeId = mirror.getId(n as INode)
+          const parentId = mirror.getId(m.target as INode)
+          if (isBlocked(n, this.blockClass) || isBlocked(m.target, this.blockClass) || isIgnored(n)) {
+            return
           }
           // removed node has not been serialized yet, just remove it from the Set
           if (this.addedSet.has(n)) {
-            deepDelete(this.addedSet, n);
-            this.droppedSet.add(n);
+            deepDelete(this.addedSet, n)
+            this.droppedSet.add(n)
           } else if (this.addedSet.has(m.target) && nodeId === -1) {
             /**
              * If target was newly added and removed child node was
@@ -412,48 +387,45 @@ export default class MutationBuffer {
              * the node is also removed which we do not need to track
              * and replay.
              */
-          } else if (
-            this.movedSet.has(n) &&
-            this.movedMap[moveKey(nodeId, parentId)]
-          ) {
-            deepDelete(this.movedSet, n);
+          } else if (this.movedSet.has(n) && this.movedMap[moveKey(nodeId, parentId)]) {
+            deepDelete(this.movedSet, n)
           } else {
             this.removes.push({
               parentId,
               id: nodeId,
-            });
+            })
           }
-          this.mapRemoves.push(n);
-        });
-        break;
+          this.mapRemoves.push(n)
+        })
+        break
       }
       default:
-        break;
+        break
     }
-  };
+  }
 
   private genAdds = (n: Node | INode, target?: Node | INode) => {
     if (isBlocked(n, this.blockClass)) {
-      return;
+      return
     }
     if (isINode(n)) {
       if (isIgnored(n)) {
-        return;
+        return
       }
-      this.movedSet.add(n);
-      let targetId: number | null = null;
+      this.movedSet.add(n)
+      let targetId: number | null = null
       if (target && isINode(target)) {
-        targetId = target.__sn.id;
+        targetId = target.__sn.id
       }
       if (targetId) {
-        this.movedMap[moveKey(n.__sn.id, targetId)] = true;
+        this.movedMap[moveKey(n.__sn.id, targetId)] = true
       }
     } else {
-      this.addedSet.add(n);
-      this.droppedSet.delete(n);
+      this.addedSet.add(n)
+      this.droppedSet.delete(n)
     }
-    n.childNodes.forEach((childN) => this.genAdds(childN));
-  };
+    n.childNodes.forEach((childN) => this.genAdds(childN))
+  }
 }
 
 /**
@@ -463,29 +435,29 @@ export default class MutationBuffer {
  * that.
  */
 function deepDelete(addsSet: Set<Node>, n: Node) {
-  addsSet.delete(n);
-  n.childNodes.forEach((childN) => deepDelete(addsSet, childN));
+  addsSet.delete(n)
+  n.childNodes.forEach((childN) => deepDelete(addsSet, childN))
 }
 
 function isParentRemoved(removes: removedNodeMutation[], n: Node): boolean {
-  const { parentNode } = n;
+  const { parentNode } = n
   if (!parentNode) {
-    return false;
+    return false
   }
-  const parentId = mirror.getId((parentNode as Node) as INode);
+  const parentId = mirror.getId((parentNode as Node) as INode)
   if (removes.some((r) => r.id === parentId)) {
-    return true;
+    return true
   }
-  return isParentRemoved(removes, parentNode);
+  return isParentRemoved(removes, parentNode)
 }
 
 function isAncestorInSet(set: Set<Node>, n: Node): boolean {
-  const { parentNode } = n;
+  const { parentNode } = n
   if (!parentNode) {
-    return false;
+    return false
   }
   if (set.has(parentNode)) {
-    return true;
+    return true
   }
-  return isAncestorInSet(set, parentNode);
+  return isAncestorInSet(set, parentNode)
 }

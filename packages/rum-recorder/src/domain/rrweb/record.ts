@@ -1,33 +1,18 @@
-import { snapshot, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot';
-import { initObservers, mutationBuffer } from './observer';
-import {
-  mirror,
-  on,
-  getWindowWidth,
-  getWindowHeight,
-  polyfill,
-} from './utils';
-import {
-  EventType,
-  event,
-  eventWithTime,
-  recordOptions,
-  IncrementalSource,
-  listenerHandler,
-} from './types';
+import { snapshot, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+import { initObservers, mutationBuffer } from './observer'
+import { mirror, on, getWindowWidth, getWindowHeight, polyfill } from './utils'
+import { EventType, event, eventWithTime, recordOptions, IncrementalSource, listenerHandler } from './types'
 
 function wrapEvent(e: event): eventWithTime {
   return {
     ...e,
     timestamp: Date.now(),
-  };
+  }
 }
 
-let wrappedEmit!: (e: eventWithTime, isCheckout?: boolean) => void;
+let wrappedEmit!: (e: eventWithTime, isCheckout?: boolean) => void
 
-function record<T = eventWithTime>(
-  options: recordOptions<T> = {},
-): listenerHandler | undefined {
+function record<T = eventWithTime>(options: recordOptions<T> = {}): listenerHandler | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -46,14 +31,14 @@ function record<T = eventWithTime>(
     mousemoveWait,
     recordCanvas = false,
     collectFonts = false,
-  } = options;
+  } = options
   // runtime checks for user options
   if (!emit) {
-    throw new Error('emit function is required');
+    throw new Error('emit function is required')
   }
   // move departed options to new options
   if (mousemoveWait !== undefined && sampling.mousemove === undefined) {
-    sampling.mousemove = mousemoveWait;
+    sampling.mousemove = mousemoveWait
   }
 
   const maskInputOptions: MaskInputOptions =
@@ -77,7 +62,7 @@ function record<T = eventWithTime>(
         }
       : _maskInputOptions !== undefined
       ? _maskInputOptions
-      : {};
+      : {}
 
   const slimDOMOptions: SlimDOMOptions =
     _slimDOMOptions === true || _slimDOMOptions === 'all'
@@ -97,43 +82,37 @@ function record<T = eventWithTime>(
         }
       : _slimDOMOptions
       ? _slimDOMOptions
-      : {};
+      : {}
 
-  polyfill();
+  polyfill()
 
-  let lastFullSnapshotEvent: eventWithTime;
-  let incrementalSnapshotCount = 0;
+  let lastFullSnapshotEvent: eventWithTime
+  let incrementalSnapshotCount = 0
   wrappedEmit = (e: eventWithTime, isCheckout?: boolean) => {
     if (
       mutationBuffer.isFrozen() &&
       e.type !== EventType.FullSnapshot &&
-      !(
-        e.type === EventType.IncrementalSnapshot &&
-        e.data.source === IncrementalSource.Mutation
-      )
+      !(e.type === EventType.IncrementalSnapshot && e.data.source === IncrementalSource.Mutation)
     ) {
       // we've got a user initiated event so first we need to apply
       // all DOM changes that have been buffering during paused state
-      mutationBuffer.emit();
-      mutationBuffer.unfreeze();
+      mutationBuffer.emit()
+      mutationBuffer.unfreeze()
     }
 
-    emit(((packFn ? packFn(e) : e) as unknown) as T, isCheckout);
+    emit(((packFn ? packFn(e) : e) as unknown) as T, isCheckout)
     if (e.type === EventType.FullSnapshot) {
-      lastFullSnapshotEvent = e;
-      incrementalSnapshotCount = 0;
+      lastFullSnapshotEvent = e
+      incrementalSnapshotCount = 0
     } else if (e.type === EventType.IncrementalSnapshot) {
-      incrementalSnapshotCount++;
-      const exceedCount =
-        checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth;
-      const exceedTime =
-        checkoutEveryNms &&
-        e.timestamp - lastFullSnapshotEvent.timestamp > checkoutEveryNms;
+      incrementalSnapshotCount++
+      const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
+      const exceedTime = checkoutEveryNms && e.timestamp - lastFullSnapshotEvent.timestamp > checkoutEveryNms
       if (exceedCount || exceedTime) {
-        takeFullSnapshot(true);
+        takeFullSnapshot(true)
       }
     }
-  };
+  }
 
   function takeFullSnapshot(isCheckout = false) {
     wrappedEmit(
@@ -145,11 +124,11 @@ function record<T = eventWithTime>(
           height: getWindowHeight(),
         },
       }),
-      isCheckout,
-    );
+      isCheckout
+    )
 
-    let wasFrozen = mutationBuffer.isFrozen();
-    mutationBuffer.freeze(); // don't allow any mirror modifications during snapshotting
+    let wasFrozen = mutationBuffer.isFrozen()
+    mutationBuffer.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
       blockClass,
       blockSelector,
@@ -157,13 +136,13 @@ function record<T = eventWithTime>(
       maskAllInputs: maskInputOptions,
       slimDOM: slimDOMOptions,
       recordCanvas,
-    });
+    })
 
     if (!node) {
-      return console.warn('Failed to snapshot the document');
+      return console.warn('Failed to snapshot the document')
     }
 
-    mirror.map = idNodeMap;
+    mirror.map = idNodeMap
     wrappedEmit(
       wrapEvent({
         type: EventType.FullSnapshot,
@@ -186,28 +165,28 @@ function record<T = eventWithTime>(
                   0,
           },
         },
-      }),
-    );
+      })
+    )
     if (!wasFrozen) {
-      mutationBuffer.emit(); // emit anything queued up now
-      mutationBuffer.unfreeze();
+      mutationBuffer.emit() // emit anything queued up now
+      mutationBuffer.unfreeze()
     }
   }
 
   try {
-    const handlers: listenerHandler[] = [];
+    const handlers: listenerHandler[] = []
     handlers.push(
       on('DOMContentLoaded', () => {
         wrappedEmit(
           wrapEvent({
             type: EventType.DomContentLoaded,
             data: {},
-          }),
-        );
-      }),
-    );
+          })
+        )
+      })
+    )
     const init = () => {
-      takeFullSnapshot();
+      takeFullSnapshot()
 
       handlers.push(
         initObservers(
@@ -220,7 +199,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.Mutation,
                     ...m,
                   },
-                }),
+                })
               ),
             mousemoveCb: (positions, source) =>
               wrappedEmit(
@@ -230,7 +209,7 @@ function record<T = eventWithTime>(
                     source,
                     positions,
                   },
-                }),
+                })
               ),
             mouseInteractionCb: (d) =>
               wrappedEmit(
@@ -240,7 +219,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.MouseInteraction,
                     ...d,
                   },
-                }),
+                })
               ),
             scrollCb: (p) =>
               wrappedEmit(
@@ -250,7 +229,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.Scroll,
                     ...p,
                   },
-                }),
+                })
               ),
             viewportResizeCb: (d) =>
               wrappedEmit(
@@ -260,7 +239,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.ViewportResize,
                     ...d,
                   },
-                }),
+                })
               ),
             inputCb: (v) =>
               wrappedEmit(
@@ -270,7 +249,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.Input,
                     ...v,
                   },
-                }),
+                })
               ),
             mediaInteractionCb: (p) =>
               wrappedEmit(
@@ -280,7 +259,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.MediaInteraction,
                     ...p,
                   },
-                }),
+                })
               ),
             styleSheetRuleCb: (r) =>
               wrappedEmit(
@@ -290,7 +269,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.StyleSheetRule,
                     ...r,
                   },
-                }),
+                })
               ),
             canvasMutationCb: (p) =>
               wrappedEmit(
@@ -300,7 +279,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.CanvasMutation,
                     ...p,
                   },
-                }),
+                })
               ),
             fontCb: (p) =>
               wrappedEmit(
@@ -310,7 +289,7 @@ function record<T = eventWithTime>(
                     source: IncrementalSource.Font,
                     ...p,
                   },
-                }),
+                })
               ),
             blockClass,
             blockSelector,
@@ -323,15 +302,12 @@ function record<T = eventWithTime>(
             collectFonts,
             slimDOMOptions,
           },
-          hooks,
-        ),
-      );
-    };
-    if (
-      document.readyState === 'interactive' ||
-      document.readyState === 'complete'
-    ) {
-      init();
+          hooks
+        )
+      )
+    }
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      init()
     } else {
       handlers.push(
         on(
@@ -341,26 +317,26 @@ function record<T = eventWithTime>(
               wrapEvent({
                 type: EventType.Load,
                 data: {},
-              }),
-            );
-            init();
+              })
+            )
+            init()
           },
-          window,
-        ),
-      );
+          window
+        )
+      )
     }
     return () => {
-      handlers.forEach((h) => h());
-    };
+      handlers.forEach((h) => h())
+    }
   } catch (error) {
     // TODO: handle internal error
-    console.warn(error);
+    console.warn(error)
   }
 }
 
 record.addCustomEvent = <T>(tag: string, payload: T) => {
   if (!wrappedEmit) {
-    throw new Error('please add custom event after start recording');
+    throw new Error('please add custom event after start recording')
   }
   wrappedEmit(
     wrapEvent({
@@ -369,12 +345,12 @@ record.addCustomEvent = <T>(tag: string, payload: T) => {
         tag,
         payload,
       },
-    }),
-  );
-};
+    })
+  )
+}
 
 record.freezePage = () => {
-  mutationBuffer.freeze();
-};
+  mutationBuffer.freeze()
+}
 
-export default record;
+export default record
