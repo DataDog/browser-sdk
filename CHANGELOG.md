@@ -14,6 +14,10 @@
 
 ---
 
+## v2.0.2
+
+- 🐛 sanitize error properties even when there is a valid stack ([#655](https://github.com/DataDog/browser-sdk/pull/655))
+
 ## v2.0.1
 
 - 🐛 fix tracekit handling of exotic errors ([#651](https://github.com/DataDog/browser-sdk/pull/651))
