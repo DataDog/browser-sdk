@@ -102,6 +102,16 @@ Error: foo
 
       expect(stackFrames.stack[0].url).toEqual('<anonymous>')
     })
+
+    it('should handle edge case values', () => {
+      expect(computeStackTrace({ message: { foo: 'bar' } }).message).toBeUndefined()
+      expect(computeStackTrace({ name: { foo: 'bar' } }).name).toBeUndefined()
+      expect(computeStackTrace(2).message).toBeUndefined()
+      expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
+      expect(computeStackTrace(undefined).message).toBeUndefined()
+      // tslint:disable-next-line:no-null-keyword
+      expect(computeStackTrace(null).message).toBeUndefined()
+    })
   })
 
   describe('error notifications', () => {
