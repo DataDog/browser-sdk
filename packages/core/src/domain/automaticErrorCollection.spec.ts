@@ -104,6 +104,19 @@ describe('runtime error tracker', () => {
       done()
     }, 100)
   })
+
+  it('should handle direct onerror calls with objects', (done) => {
+    setTimeout(() => {
+      window.onerror!({ foo: 'bar' } as any)
+    }, 10)
+
+    setTimeout(() => {
+      const collectedError = notifyError.calls.mostRecent().args[0] as RawError
+      expect(collectedError.message).toEqual('Uncaught {"foo":"bar"}')
+      expect(collectedError.stack).toEqual('No stack, consider using an instance of Error')
+      done()
+    }, 100)
+  })
 })
 
 describe('network error tracker', () => {
