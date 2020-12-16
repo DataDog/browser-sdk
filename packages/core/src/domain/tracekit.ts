@@ -253,11 +253,11 @@ export const report = (function reportModuleWrapper() {
 
       stack = {
         name,
-        message: msg as string,
+        message: typeof msg === 'string' ? msg : undefined,
         stack: [location],
       }
 
-      notifyHandlers(stack, true)
+      notifyHandlers(stack, true, message)
     }
 
     if (oldOnerrorHandler) {
