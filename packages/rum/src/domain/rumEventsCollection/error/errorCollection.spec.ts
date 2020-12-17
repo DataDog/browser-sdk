@@ -45,7 +45,7 @@ describe('error collection', () => {
           },
           type: RumEventType.ERROR,
         },
-        savedGlobalContext: undefined,
+        savedCommonContext: undefined,
         startTime: 12,
       })
     })
@@ -71,10 +71,25 @@ describe('error collection', () => {
           source: ErrorSource.CUSTOM,
           startTime: 12,
         },
-        { foo: 'bar' }
+        { context: { foo: 'bar' }, user: {} }
       )
-      expect(rawRumEvents[0].savedGlobalContext).toEqual({
+      expect(rawRumEvents[0].savedCommonContext!.context).toEqual({
         foo: 'bar',
+      })
+    })
+
+    it('should save the user', () => {
+      const { rawRumEvents } = setupBuilder.build()
+      addError(
+        {
+          error: new Error('foo'),
+          source: ErrorSource.CUSTOM,
+          startTime: 12,
+        },
+        { context: {}, user: { id: 'foo' } }
+      )
+      expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
+        id: 'foo',
       })
     })
   })

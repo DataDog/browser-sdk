@@ -1,4 +1,4 @@
-import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, ContextValue, ErrorSource, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -160,4 +160,16 @@ export interface InternalContext {
   user_action?: {
     id: string
   }
+}
+
+export interface User {
+  id?: string
+  email?: string
+  name?: string
+  [key: string]: unknown
+}
+
+export interface CommonContext {
+  user: User
+  context: Context
 }

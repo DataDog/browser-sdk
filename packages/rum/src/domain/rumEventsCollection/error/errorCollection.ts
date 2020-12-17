@@ -8,7 +8,7 @@ import {
   RawError,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
-import { RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
+import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
@@ -32,11 +32,14 @@ export function doStartErrorCollection(
   observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {
-    addError({ error, startTime, context: customerContext, source }: ProvidedError, savedGlobalContext?: Context) {
+    addError(
+      { error, startTime, context: customerContext, source }: ProvidedError,
+      savedCommonContext?: CommonContext
+    ) {
       const rawError = computeRawError(error, startTime, source)
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
-        savedGlobalContext,
+        savedCommonContext,
         ...processError(rawError),
       })
     },

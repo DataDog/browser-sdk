@@ -1,5 +1,5 @@
-import { combine, Configuration, Context, getTimestamp, msToNs } from '@datadog/browser-core'
-import { RawRumActionEvent, RumEventType } from '../../../rawRumEvent.types'
+import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
+import { CommonContext, RawRumActionEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
 
@@ -13,9 +13,9 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
   }
 
   return {
-    addAction(action: CustomAction, savedGlobalContext?: Context) {
+    addAction(action: CustomAction, savedCommonContext?: CommonContext) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        savedGlobalContext,
+        savedCommonContext,
         ...processAction(action),
       })
     },

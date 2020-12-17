@@ -1,11 +1,20 @@
-import { combine, Configuration, Context, limitModification, withSnakeCaseKeys } from '@datadog/browser-core'
 import {
+  combine,
+  Configuration,
+  Context,
+  isEmptyObject,
+  limitModification,
+  withSnakeCaseKeys,
+} from '@datadog/browser-core'
+import {
+  CommonContext,
   RawRumErrorEvent,
   RawRumEvent,
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
   RumEventType,
+  User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -37,21 +46,11 @@ export function startRumAssembly(
   lifeCycle: LifeCycle,
   session: RumSession,
   parentContexts: ParentContexts,
-  getGlobalContext: () => Context
+  getCommonContext: () => CommonContext
 ) {
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({
-      startTime,
-      rawRumEvent,
-      savedGlobalContext,
-      customerContext,
-    }: {
-      startTime: number
-      rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
-      customerContext?: Context
-    }) => {
+    ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
@@ -74,7 +73,17 @@ export function startRumAssembly(
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
-        serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
+        const commonContext = savedCommonContext || getCommonContext()
+
+        const context = combine(commonContext.context, customerContext)
+        if (!isEmptyObject(context)) {
+          serverRumEvent.context = context
+        }
+
+        if (!isEmptyObject(commonContext.user)) {
+          ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
+        }
+
         if (configuration.beforeSend) {
           limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
         }

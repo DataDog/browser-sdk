@@ -16,6 +16,7 @@ import {
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
+import { CommonContext, User } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { startRum } from './rum'
 
@@ -39,19 +40,27 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
+  let user: User = {}
 
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
 
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, Context]>()
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
-    beforeInitAddAction.add([action, deepClone(globalContextManager.get())])
+    beforeInitAddAction.add([action, clonedCommonContext()])
   }
 
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, Context]>()
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
   let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, deepClone(globalContextManager.get())])
+    beforeInitAddError.add([providedError, clonedCommonContext()])
+  }
+
+  function clonedCommonContext(): CommonContext {
+    return deepClone({
+      context: globalContextManager.get(),
+      user: user as Context,
+    })
   }
 
   const rumGlobal = makeGlobal({
@@ -71,9 +80,12 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         getInternalContext: getInternalContextStrategy,
-      } = startRumImpl(userConfiguration, globalContextManager.get))
-      beforeInitAddAction.drain(([action, context]) => addActionStrategy(action, context))
-      beforeInitAddError.drain(([error, context]) => addErrorStrategy(error, context))
+      } = startRumImpl(userConfiguration, () => ({
+        user,
+        context: globalContextManager.get(),
+      })))
+      beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
+      beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
 
       isAlreadyInitialized = true
     }),
@@ -121,8 +133,34 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         startTime: performance.now(),
       })
     }),
+
+    setUser: monitor((newUser: User) => {
+      const sanitizedUser = sanitizeUser(newUser)
+      if (sanitizedUser) {
+        user = sanitizedUser
+      } else {
+        console.error('Unsupported user:', newUser)
+      }
+    }),
   })
   return rumGlobal
+
+  function sanitizeUser(newUser: unknown) {
+    if (typeof newUser !== 'object' || !newUser) {
+      return
+    }
+    const result = deepClone(newUser as Context)
+    if ('id' in result) {
+      result.id = String(result.id)
+    }
+    if ('name' in result) {
+      result.name = String(result.name)
+    }
+    if ('email' in result) {
+      result.email = String(result.email)
+    }
+    return result
+  }
 
   function canInitRum(userConfiguration: RumUserConfiguration) {
     if (isAlreadyInitialized) {
