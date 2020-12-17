@@ -59,11 +59,7 @@ describe('rum resources', () => {
 
   createTest('retrieve early requests timings')
     .withRum()
-    .withHead(
-      html`
-        <link rel="stylesheet" href="/empty.css" />
-      `
-    )
+    .withHead(html` <link rel="stylesheet" href="/empty.css" /> `)
     .run(async ({ events }) => {
       await flushEvents()
       const resourceEvent = events.rumResources.find((event) => event.resource.url.includes('empty.css'))

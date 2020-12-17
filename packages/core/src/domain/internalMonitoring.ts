@@ -98,14 +98,14 @@ export function resetInternalMonitoring() {
 
 export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
-  descriptor.value = function() {
+  descriptor.value = function () {
     const decorated = (monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod) as Function
     return decorated.apply(this, arguments)
   }
 }
 
 export function monitor<T extends Function>(fn: T): T {
-  return (function(this: any) {
+  return (function (this: any) {
     try {
       return fn.apply(this, arguments)
     } catch (e) {
@@ -154,7 +154,7 @@ function formatError(e: unknown) {
         kind: stackTrace.name,
         stack: toStackTraceString(stackTrace),
       },
-      message: stackTrace.message,
+      message: stackTrace.message!,
     }
   }
   return {

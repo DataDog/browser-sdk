@@ -163,7 +163,10 @@ describe('tracer', () => {
     })
 
     it('should preserve original headers array', () => {
-      const headers = [['foo', 'bar'], ['foo', 'baz']]
+      const headers = [
+        ['foo', 'bar'],
+        ['foo', 'baz'],
+      ]
 
       const context: Partial<RumFetchCompleteContext> = {
         ...ALLOWED_DOMAIN_CONTEXT,
@@ -180,7 +183,10 @@ describe('tracer', () => {
         ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
       ])
 
-      expect(headers).toEqual([['foo', 'bar'], ['foo', 'baz']])
+      expect(headers).toEqual([
+        ['foo', 'bar'],
+        ['foo', 'baz'],
+      ])
     })
 
     it('should not trace request on disallowed domain', () => {

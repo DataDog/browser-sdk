@@ -160,10 +160,7 @@ describe('rum view url', () => {
   })
 
   it('should keep the same URL when updating an ended view', () => {
-    const { lifeCycle, clock } = setupBuilder
-      .withFakeClock()
-      .withFakeLocation('http://foo.com/')
-      .build()
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().withFakeLocation('http://foo.com/').build()
 
     clock.tick(VIEW_DURATION)
 

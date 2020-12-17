@@ -21,11 +21,7 @@ describe('rum views', () => {
   if (browser.capabilities.browserName !== 'Safari 12.0') {
     createTest('send performance first input delay')
       .withRum()
-      .withBody(
-        html`
-          <button>Hop</button>
-        `
-      )
+      .withBody(html` <button>Hop</button> `)
       .run(async ({ events }) => {
         await (await $('button')).click()
         await flushEvents()

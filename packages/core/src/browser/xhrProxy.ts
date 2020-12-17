@@ -68,7 +68,7 @@ function proxyXhr() {
   originalXhrOpen = XMLHttpRequest.prototype.open
   originalXhrSend = XMLHttpRequest.prototype.send
 
-  XMLHttpRequest.prototype.open = monitor(function(this: BrowserXHR, method: string, url: string) {
+  XMLHttpRequest.prototype.open = monitor(function (this: BrowserXHR, method: string, url: string) {
     // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
     // and can be used by different code versions depending on customer setup
     // so it should stay compatible with older versions
@@ -80,13 +80,13 @@ function proxyXhr() {
     return originalXhrOpen.apply(this, arguments as any)
   })
 
-  XMLHttpRequest.prototype.send = monitor(function(this: BrowserXHR, body: unknown) {
+  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR, body: unknown) {
     if (this._datadog_xhr) {
       this._datadog_xhr.startTime = performance.now()
 
       const originalOnreadystatechange = this.onreadystatechange
 
-      this.onreadystatechange = function() {
+      this.onreadystatechange = function () {
         if (this.readyState === XMLHttpRequest.DONE) {
           monitor(reportXhr)()
         }

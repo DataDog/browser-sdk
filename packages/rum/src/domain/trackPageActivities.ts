@@ -116,15 +116,24 @@ export function waitPageActivitiesCompletion(
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
 
-  const validationTimeoutId = setTimeout(monitor(() => complete(false, 0)), PAGE_ACTIVITY_VALIDATION_DELAY)
-  const maxDurationTimeoutId = setTimeout(monitor(() => complete(true, performance.now())), PAGE_ACTIVITY_MAX_DURATION)
+  const validationTimeoutId = setTimeout(
+    monitor(() => complete(false, 0)),
+    PAGE_ACTIVITY_VALIDATION_DELAY
+  )
+  const maxDurationTimeoutId = setTimeout(
+    monitor(() => complete(true, performance.now())),
+    PAGE_ACTIVITY_MAX_DURATION
+  )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
     const lastChangeTime = performance.now()
     if (!isBusy) {
-      idleTimeoutId = setTimeout(monitor(() => complete(true, lastChangeTime)), PAGE_ACTIVITY_END_DELAY)
+      idleTimeoutId = setTimeout(
+        monitor(() => complete(true, lastChangeTime)),
+        PAGE_ACTIVITY_END_DELAY
+      )
     }
   })
 

@@ -6,7 +6,10 @@ describe('tracing', () => {
   createTest('trace xhr')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await sendXhr(`/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
+      const rawHeaders = await sendXhr(`/headers`, [
+        ['x-foo', 'bar'],
+        ['x-foo', 'baz'],
+      ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       await checkTraceAssociatedToRumEvent(events)
@@ -15,7 +18,10 @@ describe('tracing', () => {
   createTest('trace fetch')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await sendFetch(`/headers`, [['x-foo', 'bar'], ['x-foo', 'baz']])
+      const rawHeaders = await sendFetch(`/headers`, [
+        ['x-foo', 'bar'],
+        ['x-foo', 'baz'],
+      ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       await checkTraceAssociatedToRumEvent(events)

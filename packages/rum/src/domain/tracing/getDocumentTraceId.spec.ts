@@ -71,8 +71,9 @@ describe('getDocumentTraceId', () => {
   it('ignores the trace id if it has been created too long ago', () => {
     expect(
       getDocumentTraceId(
-        createDocument(`<!-- DATADOG;trace-id=foo;trace-time=${Date.now() -
-          INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD} -->
+        createDocument(`<!-- DATADOG;trace-id=foo;trace-time=${
+          Date.now() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD
+        } -->
           ${HTML_DOCTYPE}
           <html>
             <head>

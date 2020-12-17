@@ -43,7 +43,7 @@ export interface StackFrame {
  */
 export interface StackTrace {
   name?: string
-  message: string
+  message?: string
   url?: string
   stack: StackFrame[]
   incomplete?: boolean
@@ -253,11 +253,11 @@ export const report = (function reportModuleWrapper() {
 
       stack = {
         name,
-        message: msg as string,
+        message: typeof msg === 'string' ? msg : undefined,
         stack: [location],
       }
 
-      notifyHandlers(stack, true)
+      notifyHandlers(stack, true, message)
     }
 
     if (oldOnerrorHandler) {
@@ -493,8 +493,9 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @return {?StackTrace} Stack trace information.
    * @memberof computeStackTrace
    */
-  function computeStackTraceFromStackProp(ex: Error) {
-    if (!ex.stack) {
+  function computeStackTraceFromStackProp(ex: unknown) {
+    const stacktrace = tryToGetString(ex, 'stack')
+    if (!stacktrace) {
       return
     }
 
@@ -509,7 +510,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     let isEval
     const geckoEval = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
     const chromeEval = /\((\S*)(?::(\d+))(?::(\d+))\)/
-    const lines = ex.stack.split('\n')
+    const lines = stacktrace.split('\n')
     const stack = []
     let submatch
     let parts
@@ -582,8 +583,8 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
 
     return {
       stack,
-      message: ex.message,
-      name: ex.name,
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
     }
   }
 
@@ -594,11 +595,11 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @return {?StackTrace} Stack trace information.
    * @memberof computeStackTrace
    */
-  function computeStackTraceFromStacktraceProp(ex: Error) {
+  function computeStackTraceFromStacktraceProp(ex: unknown) {
     // Access and store the stacktrace property before doing ANYTHING
     // else to it because Opera is not very good at providing it
     // reliably in other circumstances.
-    const stacktrace = (ex as any).stacktrace
+    const stacktrace = tryToGetString(ex, 'stacktrace')
     if (!stacktrace) {
       return
     }
@@ -648,8 +649,8 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
 
     return {
       stack,
-      message: ex.message,
-      name: ex.name,
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
     }
   }
 
@@ -663,7 +664,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @return {?StackTrace} Stack information.
    * @memberof computeStackTrace
    */
-  function computeStackTraceFromOperaMultiLineMessage(ex: Error): StackTrace | undefined {
+  function computeStackTraceFromOperaMultiLineMessage(ex: unknown): StackTrace | undefined {
     // TODO: Clean this function up
     // Opera includes a stack trace into the exception message. An example is:
     //
@@ -682,7 +683,11 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     //     try { xxx('hi'); return false; } catch(ex) { report(ex); }
     //   ...
 
-    const lines = ex.message.split('\n')
+    const message = tryToGetString(ex, 'message')
+    if (!message) {
+      return
+    }
+    const lines = message.split('\n')
     if (lines.length < 4) {
       return
     }
@@ -748,7 +753,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     return {
       stack,
       message: lines[0],
-      name: ex.name,
+      name: tryToGetString(ex, 'name'),
     }
   }
 
@@ -814,7 +819,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @return {StackTrace} Stack trace information.
    * @memberof computeStackTrace
    */
-  function computeStackTraceByWalkingCallerChain(ex: BrowserError, depth: number) {
+  function computeStackTraceByWalkingCallerChain(ex: unknown, depth: number) {
     const functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i
     const stack = []
     const funcs: any = {}
@@ -861,14 +866,14 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
 
     const result: StackTrace = {
       stack,
-      message: ex.message,
-      name: ex.name,
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
     }
     augmentStackTraceWithInitialElement(
       result,
-      ex.sourceURL || ex.fileName,
-      ex.line || ex.lineNumber,
-      ex.message || ex.description
+      tryToGetString(ex, 'sourceURL') || tryToGetString(ex, 'fileName'),
+      tryToGetString(ex, 'line') || tryToGetString(ex, 'lineNumber'),
+      tryToGetString(ex, 'message') || tryToGetString(ex, 'description')
     )
     return result
   }
@@ -879,7 +884,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * @param {(string|number)=} depth
    * @memberof computeStackTrace
    */
-  function doComputeStackTrace(ex: Error, depth?: string | number): StackTrace {
+  function doComputeStackTrace(ex: unknown, depth?: string | number): StackTrace {
     let stack
     const normalizedDepth = depth === undefined ? 0 : +depth
 
@@ -931,10 +936,18 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     return {
-      message: ex.message,
-      name: ex.name,
+      message: tryToGetString(ex, 'message'),
+      name: tryToGetString(ex, 'name'),
       stack: [],
     }
+  }
+
+  function tryToGetString(candidate: unknown, property: string) {
+    if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
+      return undefined
+    }
+    const value = (candidate as { [k: string]: unknown })[property]
+    return typeof value === 'string' ? value : undefined
   }
 
   /**

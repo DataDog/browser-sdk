@@ -616,7 +616,8 @@ export interface CommonProperties {
       | 'mixed'
       | 'other'
       | 'unknown'
-      | 'none')[]
+      | 'none'
+    )[]
     /**
      * Cellular connectivity properties
      */
