@@ -207,16 +207,6 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
     })
 
-    it('should send number id as string', () => {
-      user = { id: 1 }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect(serverRumEvents[0].usr!.id).toEqual('1')
-    })
-
     it('should not be included if empty', () => {
       user = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {

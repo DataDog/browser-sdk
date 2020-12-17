@@ -197,15 +197,15 @@ describe('rum entry', () => {
       })
 
       it('stores a deep copy of the user', () => {
-        const user = { id: 1 }
+        const user = { id: 'foo' }
         rumGlobal.setUser(user)
         rumGlobal.addAction('message')
-        user.id = 2
+        user.id = 'bar'
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 1,
+          id: 'foo',
         })
       })
 
@@ -299,15 +299,15 @@ describe('rum entry', () => {
       })
 
       it('stores a deep copy of the user', () => {
-        const user = { id: 1 }
+        const user = { id: 'foo' }
         rumGlobal.setUser(user)
         rumGlobal.addError(new Error('message'))
-        user.id = 2
+        user.id = 'bar'
 
         rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
-          id: 1,
+          id: 'foo',
         })
       })
 
@@ -322,6 +322,67 @@ describe('rum entry', () => {
           foo: 'bar',
         })
       })
+    })
+  })
+
+  describe('setUser', () => {
+    let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
+    let errorSpy: jasmine.Spy<() => void>
+    let rumGlobal: RumGlobal
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addActionSpy = jasmine.createSpy()
+      errorSpy = spyOn(console, 'error')
+      rumGlobal = makeRumGlobal(() => ({
+        ...noopStartRum(),
+        addAction: addActionSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should attach valid objects', () => {
+      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
+      rumGlobal.setUser(user)
+      rumGlobal.addAction('message')
+
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+        email: 'qux',
+        foo: { bar: 'qux' },
+        id: 'foo',
+        name: 'bar',
+      })
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should sanitize predefined properties', () => {
+      // tslint:disable-next-line:no-null-keyword
+      const user = { id: null, name: 2, email: { bar: 'qux' } }
+      rumGlobal.setUser(user as any)
+      rumGlobal.addAction('message')
+
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
+        email: '[object Object]',
+        id: 'null',
+        name: '2',
+      })
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should reject non object input', () => {
+      rumGlobal.setUser(2 as any)
+      // tslint:disable-next-line:no-null-keyword
+      rumGlobal.setUser(null as any)
+      rumGlobal.setUser(undefined as any)
+      expect(errorSpy).toHaveBeenCalledTimes(3)
     })
   })
 })

@@ -163,7 +163,7 @@ export interface InternalContext {
 }
 
 export interface User {
-  id?: number | string
+  id?: string
   email?: string
   name?: string
   [key: string]: unknown

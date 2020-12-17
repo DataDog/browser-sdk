@@ -81,9 +81,6 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
-          if ('id' in commonContext.user) {
-            commonContext.user.id = String(commonContext.user.id)
-          }
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 

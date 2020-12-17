@@ -135,10 +135,32 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     }),
 
     setUser: monitor((newUser: User) => {
-      user = newUser
+      const sanitizedUser = sanitizeUser(newUser)
+      if (sanitizedUser) {
+        user = sanitizedUser
+      } else {
+        console.error('Unsupported user:', newUser)
+      }
     }),
   })
   return rumGlobal
+
+  function sanitizeUser(newUser: unknown) {
+    if (typeof newUser !== 'object' || !newUser) {
+      return
+    }
+    const result = deepClone(newUser as Context)
+    if ('id' in result) {
+      result.id = String(result.id)
+    }
+    if ('name' in result) {
+      result.name = String(result.name)
+    }
+    if ('email' in result) {
+      result.email = String(result.email)
+    }
+    return result
+  }
 
   function canInitRum(userConfiguration: RumUserConfiguration) {
     if (isAlreadyInitialized) {

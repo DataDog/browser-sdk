@@ -86,10 +86,10 @@ describe('error collection', () => {
           source: ErrorSource.CUSTOM,
           startTime: 12,
         },
-        { context: {}, user: { id: 1 } }
+        { context: {}, user: { id: 'foo' } }
       )
       expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
-        id: 1,
+        id: 'foo',
       })
     })
   })
