@@ -1,6 +1,6 @@
 import { ErrorSource, Observable, RawError } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {

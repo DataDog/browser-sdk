@@ -8,7 +8,7 @@ import {
   RawError,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
-import { RumErrorEvent, RumEventType } from '../../../types'
+import { RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
@@ -49,7 +49,7 @@ function computeRawError(error: unknown, startTime: number, source: ProvidedSour
 }
 
 function processError(error: RawError) {
-  const rawRumEvent: RumErrorEvent = {
+  const rawRumEvent: RawRumErrorEvent = {
     date: getTimestamp(error.startTime),
     error: {
       message: error.message,

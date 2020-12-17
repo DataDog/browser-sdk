@@ -1,7 +1,6 @@
 import { createTest, html } from '../../lib/framework'
 import { browserExecute, sendXhr } from '../../lib/helpers/browser'
 import { expireSession, flushEvents, renewSession } from '../../lib/helpers/sdk'
-import { ServerRumViewLoadingType } from '../../lib/types/serverEvents'
 
 describe('rum views', () => {
   createTest('send performance timings along the view events')
@@ -72,7 +71,7 @@ describe('rum views', () => {
         const viewEvents = events.rumViews
 
         expect(viewEvents.length).toBe(1)
-        expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
+        expect(viewEvents[0].view.loading_type).toBe('initial_load')
       })
 
     createTest('create a new view on hash change')
@@ -86,8 +85,8 @@ describe('rum views', () => {
         const viewEvents = events.rumViews
 
         expect(viewEvents.length).toBe(2)
-        expect(viewEvents[0].view.loading_type).toBe(ServerRumViewLoadingType.INITIAL_LOAD)
-        expect(viewEvents[1].view.loading_type).toBe(ServerRumViewLoadingType.ROUTE_CHANGE)
+        expect(viewEvents[0].view.loading_type).toBe('initial_load')
+        expect(viewEvents[1].view.loading_type).toBe('route_change')
       })
   })
 })

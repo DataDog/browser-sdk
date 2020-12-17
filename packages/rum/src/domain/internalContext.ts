@@ -1,5 +1,5 @@
 import { combine, withSnakeCaseKeys } from '@datadog/browser-core'
-import { InternalContext } from '../types'
+import { InternalContext } from '../rawRumEvent.types'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
 

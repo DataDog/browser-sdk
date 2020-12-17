@@ -49,6 +49,7 @@ export interface UserConfiguration {
   silentMultipleInit?: boolean
   trackInteractions?: boolean
   proxyHost?: string
+  beforeSend?: (event: any) => void
 
   service?: string
   env?: string
@@ -77,6 +78,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   proxyHost?: string
 
   service?: string
+  beforeSend?: (event: any) => void
 
   isEnabled: (feature: string) => boolean
   isIntakeUrl: (url: string) => boolean
@@ -140,6 +142,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   const intakeType: IntakeType = userConfiguration.useAlternateIntakeDomains ? 'alternate' : 'classic'
   const intakeUrls = getIntakeUrls(intakeType, transportConfiguration, userConfiguration.replica !== undefined)
   const configuration: Configuration = {
+    beforeSend: userConfiguration.beforeSend,
     cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => {
       return includes(enableExperimentalFeatures, feature)

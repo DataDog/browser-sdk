@@ -1,7 +1,7 @@
 import { RequestType, ResourceType } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType, RumResourceEvent } from '../../../types'
+import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { TraceIdentifier } from '../../tracing/tracer'
@@ -195,7 +195,7 @@ describe('resourceCollection', () => {
         })
       )
 
-      const traceInfo = (rawRumEvents[0].rawRumEvent as RumResourceEvent)._dd!
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.traceId).toBe('1234')
     })
@@ -210,7 +210,7 @@ describe('resourceCollection', () => {
         })
       )
 
-      const traceInfo = (rawRumEvents[0].rawRumEvent as RumResourceEvent)._dd!
+      const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.traceId).toBeDefined()
       expect(traceInfo.spanId).toBeDefined()

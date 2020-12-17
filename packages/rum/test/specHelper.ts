@@ -12,7 +12,7 @@ import {
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
-import { RawRumEvent, RumContext, ViewContext } from '../src/types'
+import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
