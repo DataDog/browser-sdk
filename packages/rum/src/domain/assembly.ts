@@ -14,6 +14,7 @@ import {
   RawRumResourceEvent,
   RumContext,
   RumEventType,
+  User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -80,7 +81,10 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
-          serverRumEvent.user = commonContext.user as Context
+          if ('id' in commonContext.user) {
+            commonContext.user.id = String(commonContext.user.id)
+          }
+          ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 
         if (configuration.beforeSend) {

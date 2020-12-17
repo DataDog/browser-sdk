@@ -198,13 +198,23 @@ describe('rum assembly', () => {
 
   describe('rum user', () => {
     it('should be included in event attributes', () => {
+      user = { id: 'foo' }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].usr!.id).toEqual('foo')
+    })
+
+    it('should send number id as string', () => {
       user = { id: 1 }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user!.id).toEqual(1)
+      expect(serverRumEvents[0].usr!.id).toEqual('1')
     })
 
     it('should not be included if empty', () => {
@@ -214,7 +224,7 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user).toBe(undefined)
+      expect(serverRumEvents[0].usr).toBe(undefined)
     })
 
     it('should not be automatically snake cased', () => {
@@ -224,7 +234,7 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user!.fooBar).toEqual('foo')
+      expect(serverRumEvents[0].usr!.fooBar).toEqual('foo')
     })
 
     it('should ignore the current user when a saved common context user is provided', () => {
@@ -239,8 +249,8 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].user!.replacedAttribute).toEqual('a')
-      expect(serverRumEvents[0].user!.addedAttribute).toEqual(undefined)
+      expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
+      expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
     })
   })
 
