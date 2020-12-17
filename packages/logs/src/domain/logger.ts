@@ -1,13 +1,15 @@
 import { combine, Context, ContextValue, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
 
-export enum StatusType {
-  debug = 'debug',
-  info = 'info',
-  warn = 'warn',
-  error = 'error',
-}
+export const StatusType = {
+  debug: 'debug',
+  error: 'error',
+  info: 'info',
+  warn: 'warn',
+} as const
 
-export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
+export type StatusType = typeof StatusType[keyof typeof StatusType]
+
+const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.debug]: 0,
   [StatusType.info]: 1,
   [StatusType.warn]: 2,
@@ -22,26 +24,28 @@ export interface LogsMessage {
   [key: string]: ContextValue
 }
 
-export enum HandlerType {
-  http = 'http',
-  console = 'console',
-  silent = 'silent',
-}
+export const HandlerType = {
+  console: 'console',
+  http: 'http',
+  silent: 'silent',
+} as const
+
+export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 
 export class Logger {
   private contextManager = createContextManager()
 
   constructor(
     private sendLog: (message: LogsMessage) => void,
-    private handlerType = HandlerType.http,
-    private level = StatusType.debug,
+    private handlerType: HandlerType = HandlerType.http,
+    private level: StatusType = StatusType.debug,
     loggerContext: Context = {}
   ) {
     this.contextManager.set(loggerContext)
   }
 
   @monitored
-  log(message: string, messageContext?: Context, status = StatusType.info) {
+  log(message: string, messageContext?: Context, status: StatusType = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:

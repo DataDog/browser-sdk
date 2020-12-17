@@ -1,13 +1,21 @@
-import { combine, Configuration, Context, isEmptyObject, withSnakeCaseKeys } from '@datadog/browser-core'
+import {
+  combine,
+  Configuration,
+  Context,
+  isEmptyObject,
+  limitModification,
+  withSnakeCaseKeys,
+} from '@datadog/browser-core'
 import {
   CommonContext,
+  RawRumErrorEvent,
   RawRumEvent,
+  RawRumLongTaskEvent,
+  RawRumResourceEvent,
   RumContext,
-  RumErrorEvent,
   RumEventType,
-  RumLongTaskEvent,
-  RumResourceEvent,
-} from '../types'
+} from '../rawRumEvent.types'
+import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -20,6 +28,16 @@ enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
 }
+
+const FIELDS_WITH_SENSITIVE_DATA = [
+  'view.url',
+  'view.referrer',
+  'action.target.name',
+  'error.message',
+  'error.stack',
+  'error.resource.url',
+  'resource.url',
+]
 
 export function startRumAssembly(
   applicationId: string,
@@ -50,10 +68,10 @@ export function startRumAssembly(
             type: getSessionType(),
           },
         }
-        const rumEvent = needToAssembleWithAction(rawRumEvent)
+        const assembledRumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(rumEvent)
+        const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
         const commonContext = savedCommonContext || getCommonContext()
 
         const context = combine(commonContext.context, customerContext)
@@ -65,13 +83,18 @@ export function startRumAssembly(
           serverRumEvent.user = commonContext.user as Context
         }
 
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
+        if (configuration.beforeSend) {
+          limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
+        }
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { assembledRumEvent, serverRumEvent })
       }
     }
   )
 }
 
-function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
+function needToAssembleWithAction(
+  event: RawRumEvent
+): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 

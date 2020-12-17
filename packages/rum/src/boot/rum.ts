@@ -12,8 +12,8 @@ import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
+import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-import { CommonContext } from '../types'
 
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rum.entry'

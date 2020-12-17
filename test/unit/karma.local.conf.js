@@ -1,7 +1,7 @@
 const path = require('path')
 const karmaBaseConf = require('./karma.base.conf')
 
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
     ...karmaBaseConf,
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],

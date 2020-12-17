@@ -4,37 +4,20 @@ import { RumPerformanceNavigationTiming } from '../browser/performanceCollection
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
+import { RumEvent } from '../rumEvent.types'
 import { startRumEventCollection } from './rum'
 
-interface ServerRumEvent {
-  application_id: string
-  date: number
-  type: string
-  evt: {
-    category: string
-  }
-  session_id: string
-  session: {
-    id: string
-  }
-  view: {
-    id: string
-    referrer: string
-    url: string
-  }
-}
-
 function collectServerEvents(lifeCycle: LifeCycle) {
-  const serverRumEvents: ServerRumEvent[] = []
+  const serverRumEvents: RumEvent[] = []
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) => {
-    serverRumEvents.push(serverRumEvent as any)
+    serverRumEvents.push(serverRumEvent)
   })
   return serverRumEvents
 }
 
 describe('rum session', () => {
   let setupBuilder: TestSetupBuilder
-  let serverRumEvents: ServerRumEvent[]
+  let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
     if (isIE()) {
@@ -83,7 +66,7 @@ describe('rum session', () => {
 describe('rum session keep alive', () => {
   let isSessionTracked: boolean
   let setupBuilder: TestSetupBuilder
-  let serverRumEvents: ServerRumEvent[]
+  let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
     if (isIE()) {
@@ -157,7 +140,7 @@ describe('rum view url', () => {
   const VIEW_DURATION = 1000
 
   let setupBuilder: TestSetupBuilder
-  let serverRumEvents: ServerRumEvent[]
+  let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
@@ -186,10 +169,7 @@ describe('rum view url', () => {
   })
 
   it('should keep the same URL when updating an ended view', () => {
-    const { lifeCycle, clock } = setupBuilder
-      .withFakeClock()
-      .withFakeLocation('http://foo.com/')
-      .build()
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().withFakeLocation('http://foo.com/').build()
 
     clock.tick(VIEW_DURATION)
 

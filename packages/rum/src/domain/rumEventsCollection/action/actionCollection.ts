@@ -1,5 +1,5 @@
 import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { CommonContext, RumActionEvent, RumEventType } from '../../../types'
+import { CommonContext, RawRumActionEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
 
@@ -41,7 +41,7 @@ function processAction(action: AutoAction | CustomAction) {
       }
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent: RumActionEvent = combine(
+  const actionEvent: RawRumActionEvent = combine(
     {
       action: {
         target: {

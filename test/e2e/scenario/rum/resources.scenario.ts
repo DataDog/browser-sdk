@@ -1,7 +1,7 @@
+import { RumResourceEvent } from '@datadog/browser-rum'
 import { createTest, html } from '../../lib/framework'
 import { sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
-import { ServerRumResourceEvent } from '../../lib/types/serverEvents'
 
 const REQUEST_DURATION = 200
 
@@ -59,11 +59,7 @@ describe('rum resources', () => {
 
   createTest('retrieve early requests timings')
     .withRum()
-    .withHead(
-      html`
-        <link rel="stylesheet" href="/empty.css" />
-      `
-    )
+    .withHead(html` <link rel="stylesheet" href="/empty.css" /> `)
     .run(async ({ events }) => {
       await flushEvents()
       const resourceEvent = events.rumResources.find((event) => event.resource.url.includes('empty.css'))
@@ -82,7 +78,7 @@ describe('rum resources', () => {
     })
 })
 
-function expectToHaveValidTimings(resourceEvent: ServerRumResourceEvent) {
+function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
   expect(resourceEvent.date).toBeGreaterThan(0)
   expect(resourceEvent.resource.duration).toBeGreaterThan(0)
   const download = resourceEvent.resource.download

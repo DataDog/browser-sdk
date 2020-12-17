@@ -12,7 +12,7 @@ import {
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
-import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/types'
+import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -27,7 +27,7 @@ export interface TestSetupBuilder {
   build: () => TestIO
 }
 
-type BeforeBuildCallback = (buildContext: BuildContext) => void | ({ stop?(): void })
+type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop?(): void }
 interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>
