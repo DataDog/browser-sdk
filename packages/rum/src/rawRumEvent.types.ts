@@ -66,6 +66,7 @@ export interface RawRumViewEvent {
     loadEvent?: number
     loadingTime?: number
     timeSpent: number
+    isActive: boolean
     error: Count
     action: Count
     longTask: Count

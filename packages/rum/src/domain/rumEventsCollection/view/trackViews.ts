@@ -15,6 +15,7 @@ export interface View {
   documentVersion: number
   startTime: number
   duration: number
+  isActive: boolean
   loadingTime?: number | undefined
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
@@ -51,8 +52,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   function onLocationChange() {
     if (currentView.isDifferentView(location)) {
       // Renew view on location changes
-      currentView.triggerUpdate()
       currentView.end()
+      currentView.triggerUpdate()
       currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
     } else {
       currentView.updateLocation(location)
@@ -69,8 +70,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    currentView.triggerUpdate()
     currentView.end()
+    currentView.triggerUpdate()
   })
 
   // Session keep alive
@@ -163,6 +164,7 @@ function newView(
       startTime,
       timings,
       duration: (endTime === undefined ? performance.now() : endTime) - startTime,
+      isActive: endTime === undefined,
     })
   }
 
