@@ -1,6 +1,7 @@
 import { Context } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { RawRumEvent, RumEvent } from '../types'
+import { AssembledRumEvent, CommonContext, RawRumEvent } from '../rawRumEvent.types'
+import { RumEvent } from '../rumEvent.types'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
@@ -47,11 +48,14 @@ export class LifeCycle {
     data: {
       startTime: number
       rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
+      savedCommonContext?: CommonContext
       customerContext?: Context
     }
   ): void
-  notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: { rumEvent: RumEvent; serverRumEvent: Context }): void
+  notify(
+    eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
+    data: { assembledRumEvent: AssembledRumEvent; serverRumEvent: RumEvent & Context }
+  ): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
     if (eventCallbacks) {
@@ -88,13 +92,13 @@ export class LifeCycle {
     callback: (data: {
       startTime: number
       rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
+      savedCommonContext?: CommonContext
       customerContext?: Context
     }) => void
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
-    callback: (data: { rumEvent: RumEvent; serverRumEvent: Context }) => void
+    callback: (data: { assembledRumEvent: AssembledRumEvent; serverRumEvent: RumEvent & Context }) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType, callback: (data?: any) => void) {
     if (!this.callbacks[eventType]) {

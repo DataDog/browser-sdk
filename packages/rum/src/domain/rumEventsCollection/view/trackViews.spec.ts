@@ -5,7 +5,7 @@ import {
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import {
   PAGE_ACTIVITY_END_DELAY,

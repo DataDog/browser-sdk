@@ -1,5 +1,5 @@
 import { objectValues } from '@datadog/browser-core'
-import { RawRumEvent, RumEventType } from '../types'
+import { RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { EventCounts, trackEventCounts } from './trackEventCounts'
 

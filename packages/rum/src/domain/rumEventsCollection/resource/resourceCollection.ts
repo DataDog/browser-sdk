@@ -8,7 +8,7 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RumEventType, RumResourceEvent } from '../../../types'
+import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
@@ -59,7 +59,7 @@ function processRequest(request: RequestCompleteEvent) {
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime, rawRumEvent: resourceEvent as RumResourceEvent }
+  return { startTime, rawRumEvent: resourceEvent as RawRumResourceEvent }
 }
 
 function processResourceEntry(entry: RumPerformanceResourceTiming) {
@@ -79,7 +79,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
     tracingInfo,
     entryMetrics
   )
-  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RumResourceEvent }
+  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RawRumResourceEvent }
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {

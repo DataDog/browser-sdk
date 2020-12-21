@@ -12,10 +12,12 @@ import {
   UserConfiguration,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
+import { LogsEvent } from '../logsEvent.types'
 import { startLogs } from './logs'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
+  beforeSend?: (event: LogsEvent) => void
 }
 
 export interface LoggerConfiguration {
@@ -45,7 +47,6 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
     beforeInitSendLog.add([message, currentContext])
   }
-
   const logger = new Logger(sendLog)
 
   return makeGlobal({

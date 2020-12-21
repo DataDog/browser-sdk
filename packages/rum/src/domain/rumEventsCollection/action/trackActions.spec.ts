@@ -1,7 +1,7 @@
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
 import { ActionType, AutoAction, trackActions } from './trackActions'

@@ -208,6 +208,17 @@ Error: foo
           testLineNo
         )
       })
+
+      it('should handle object message passed through onerror', (done) => {
+        subscriptionHandler = (stack, _, error) => {
+          expect(stack.message).toBeUndefined()
+          expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
+          report.unsubscribe(subscriptionHandler!)
+          done()
+        }
+        report.subscribe(subscriptionHandler)
+        report.traceKitWindowOnError({ foo: 'bar' } as any)
+      })
     })
 
     function testErrorNotification(callOnError: boolean, numReports: number, done: DoneFn) {

@@ -1,4 +1,4 @@
-import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, ContextValue, ErrorSource, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -11,7 +11,7 @@ export enum RumEventType {
   RESOURCE = 'resource',
 }
 
-export interface RumResourceEvent {
+export interface RawRumResourceEvent {
   date: number
   type: RumEventType.RESOURCE
   resource: {
@@ -35,7 +35,7 @@ export interface RumResourceEvent {
   }
 }
 
-export interface RumErrorEvent {
+export interface RawRumErrorEvent {
   date: number
   type: RumEventType.ERROR
   error: {
@@ -51,7 +51,7 @@ export interface RumErrorEvent {
   }
 }
 
-export interface RumViewEvent {
+export interface RawRumViewEvent {
   date: number
   type: RumEventType.VIEW
   view: {
@@ -81,7 +81,7 @@ interface Count {
   count: number
 }
 
-export interface RumLongTaskEvent {
+export interface RawRumLongTaskEvent {
   date: number
   type: RumEventType.LONG_TASK
   longTask: {
@@ -89,7 +89,7 @@ export interface RumLongTaskEvent {
   }
 }
 
-export interface RumActionEvent {
+export interface RawRumActionEvent {
   date?: number
   type: RumEventType.ACTION
   action: {
@@ -105,7 +105,12 @@ export interface RumActionEvent {
   }
 }
 
-export type RawRumEvent = RumErrorEvent | RumResourceEvent | RumViewEvent | RumLongTaskEvent | RumActionEvent
+export type RawRumEvent =
+  | RawRumErrorEvent
+  | RawRumResourceEvent
+  | RawRumViewEvent
+  | RawRumLongTaskEvent
+  | RawRumActionEvent
 
 export interface RumContext {
   date: number
@@ -138,12 +143,12 @@ export interface ActionContext extends Context {
   }
 }
 
-export type RumEvent =
-  | (RumErrorEvent & ActionContext & ViewContext & RumContext)
-  | (RumResourceEvent & ActionContext & ViewContext & RumContext)
-  | (RumViewEvent & ViewContext & RumContext)
-  | (RumLongTaskEvent & ActionContext & ViewContext & RumContext)
-  | (RumActionEvent & ViewContext & RumContext)
+export type AssembledRumEvent =
+  | (RawRumErrorEvent & ActionContext & ViewContext & RumContext)
+  | (RawRumResourceEvent & ActionContext & ViewContext & RumContext)
+  | (RawRumViewEvent & ViewContext & RumContext)
+  | (RawRumLongTaskEvent & ActionContext & ViewContext & RumContext)
+  | (RawRumActionEvent & ViewContext & RumContext)
 
 export interface InternalContext {
   application_id: string
@@ -156,4 +161,16 @@ export interface InternalContext {
   user_action?: {
     id: string
   }
+}
+
+export interface User {
+  id?: string
+  email?: string
+  name?: string
+  [key: string]: unknown
+}
+
+export interface CommonContext {
+  user: User
+  context: Context
 }
