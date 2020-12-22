@@ -157,7 +157,7 @@ datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 #### CDN async
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 })
 ```
@@ -249,9 +249,10 @@ The placeholders in the examples above are described below:
 ## Advanced usage
 
 ### Scrub sensitive data from your Browser logs
+
 If your Browser logs data contains sensitive information that need redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
 
-This callback function gives you access to every event collected by the Browser SDK before they get sent to Datadog. 
+This callback function gives you access to every event collected by the Browser SDK before they get sent to Datadog.
 
 For example, redact email addresses from your web application URLs:
 
@@ -284,6 +285,7 @@ DD_LOGS.onReady(function() {
     })
 })
 ```
+
 #### CDN Sync
 
 ```javascript
@@ -300,13 +302,13 @@ window.DD_LOGS &&
 
 You can update the following event properties:
 
-|   Attribute           |   Type    |   Description                                                                                       |
-|-----------------------|-----------|-----------------------------------------------------------------------------------------------------|
-|   `view.url`            |   String  |   The URL of the active web page.                                                                   |
-|   `view.referrer`       |   String  |   The URL of the previous web page from which a link to the currently requested page was followed.  |
-|   `message`       |   String  |   The content of the log.                                 |
-|   `error.stack `        |   String  |   The stack trace or complementary information about the error.                                     |
-|   `http.url`        |   String  |   The HTTP URL.                                                                                 |
+| Attribute       | Type   | Description                                                                                      |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| `view.url`      | String | The URL of the active web page.                                                                  |
+| `view.referrer` | String | The URL of the previous web page from which a link to the currently requested page was followed. |
+| `message`       | String | The content of the log.                                                                          |
+| `error.stack`   | String | The stack trace or complementary information about the error.                                    |
+| `http.url`      | String | The HTTP URL.                                                                                    |
 
 **Note**: The Browser SDK will ignore modifications made to event properties not listed above. Find out about all event properties on the [Browser SDK repository][5].
 
@@ -360,7 +362,7 @@ signupLogger.info('Test sign up completed')
 For example, assume there is a `signupLogger`, defined with all the other loggers:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
 })
 ```
@@ -368,7 +370,7 @@ DD_LOGS.onReady(function () {
 It can now be used in a different part of the code with:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   const signupLogger = DD_LOGS.getLogger('signupLogger')
   signupLogger.info('Test sign up completed')
 })
@@ -426,15 +428,15 @@ const context = datadogLogs.getLoggerGlobalContext() // => {env: 'staging', refe
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 })
 
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 })
 
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   var context = DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 })
 ```
@@ -479,11 +481,11 @@ datadogLogs.addContext('referrer', document.referrer)
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.setContext("{'env': 'staging'}")
 })
 
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.addContext('referrer', document.referrer)
 })
 ```
@@ -527,7 +529,7 @@ datadogLogs.logger.setLevel('<LEVEL>')
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.logger.setLevel('<LEVEL>')
 })
 ```
@@ -567,7 +569,7 @@ datadogLogs.logger.setHandler('<HANDLER>')
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function () {
+DD_LOGS.onReady(function() {
   DD_LOGS.logger.setHandler('<HANDLER>')
 })
 ```
