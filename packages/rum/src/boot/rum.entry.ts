@@ -101,10 +101,10 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       return getInternalContextStrategy(startTime)
     }),
 
-    addAction: monitor((name: string, context?: Context) => {
+    addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
         name,
-        context: deepClone(context),
+        context: deepClone(context as Context),
         startTime: performance.now(),
         type: ActionType.CUSTOM,
       })
@@ -114,11 +114,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
      * @deprecated
      * @see addAction
      */
-    addUserAction: (name: string, context?: Context) => {
-      rumGlobal.addAction(name, context)
+    addUserAction: (name: string, context?: object) => {
+      rumGlobal.addAction(name, context as Context)
     },
 
-    addError: monitor((error: unknown, context?: Context, source: ProvidedSource = ErrorSource.CUSTOM) => {
+    addError: monitor((error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
       let checkedSource: ProvidedSource
       if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
         checkedSource = source
@@ -128,7 +128,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       }
       addErrorStrategy({
         error,
-        context: deepClone(context),
+        context: deepClone(context as Context),
         source: checkedSource,
         startTime: performance.now(),
       })

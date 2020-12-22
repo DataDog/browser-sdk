@@ -23,7 +23,7 @@ export interface LogsUserConfiguration extends UserConfiguration {
 export interface LoggerConfiguration {
   level?: StatusType
   handler?: HandlerType
-  context?: Context
+  context?: object
 }
 
 export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
