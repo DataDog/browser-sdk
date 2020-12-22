@@ -248,6 +248,68 @@ The placeholders in the examples above are described below:
 
 ## Advanced usage
 
+### Scrub sensitive data from your RUM data
+If your Browser logs data contains sensitive information that need redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
+
+This callback function gives you access to every event collected by the Browser SDK before they get sent to Datadog. 
+
+For example, redact email addresses from your web application URLs:
+
+#### NPM
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.init({
+    ...,
+    beforeSend: (event) => {
+        // remove email from view url
+        event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+    },
+    ...
+});
+```
+
+#### CDN Async
+
+```javascript
+DD_LOGS.onReady(function() {
+    DD_LOGS.init({
+        ...,
+        beforeSend: (event) => {
+            // remove email from view url
+            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+        },
+        ...
+    })
+})
+```
+#### CDN Sync
+
+```javascript
+window.DD_LOGS &&
+    window.DD_LOGS.init({
+        ...,
+        beforeSend: (event) => {
+            // remove email from view url
+            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+        },
+        ...
+    });
+```
+
+You can update the following event properties:
+
+|   Attribute           |   Type    |   Description                                                                                       |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------|
+|   `view.url`            |   String  |   The URL of the active web page.                                                                   |
+|   `view.referrer`       |   String  |   The URL of the previous web page from which a link to the currently requested page was followed.  |
+|   `message`       |   String  |   The content of the log.                                 |
+|   `error.stack `        |   String  |   The stack trace or complementary information about the error.                                     |
+|   `http.url`        |   String  |   The HTTP URL.                                                                                 |
+
+**Note**: The Browser SDK will ignore modifications made to event properties not listed above. Find out about all event properties on the [Browser SDK repository][5].
+
 ### Define multiple loggers
 
 The Datadog browser logs SDK contains a default logger, but it is possible to define different loggers.
@@ -526,3 +588,4 @@ window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
 [2]: /account_management/api-app-keys/#client-tokens
 [3]: https://www.npmjs.com/package/@datadog/browser-logs
 [4]: https://github.com/DataDog/browser-sdk/blob/master/packages/logs/BROWSER_SUPPORT.md
+[5]: https://github.com/DataDog/browser-sdk/blob/master/packages/logs/src/logsEvent.types.ts
