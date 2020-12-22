@@ -157,7 +157,7 @@ datadogLogs.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 #### CDN async
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.logger.info('Button clicked', { name: 'buttonName', id: 123 })
 })
 ```
@@ -362,7 +362,7 @@ signupLogger.info('Test sign up completed')
 For example, assume there is a `signupLogger`, defined with all the other loggers:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   const signupLogger = DD_LOGS.createLogger('signupLogger', 'info', 'http', { env: 'staging' })
 })
 ```
@@ -370,7 +370,7 @@ DD_LOGS.onReady(function() {
 It can now be used in a different part of the code with:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   const signupLogger = DD_LOGS.getLogger('signupLogger')
   signupLogger.info('Test sign up completed')
 })
@@ -428,15 +428,15 @@ const context = datadogLogs.getLoggerGlobalContext() // => {env: 'staging', refe
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.setLoggerGlobalContext({ env: 'staging' })
 })
 
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.addLoggerGlobalContext('referrer', document.referrer)
 })
 
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   var context = DD_LOGS.getLoggerGlobalContext() // => {env: 'staging', referrer: ...}
 })
 ```
@@ -481,11 +481,11 @@ datadogLogs.addContext('referrer', document.referrer)
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.setContext("{'env': 'staging'}")
 })
 
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.addContext('referrer', document.referrer)
 })
 ```
@@ -529,7 +529,7 @@ datadogLogs.logger.setLevel('<LEVEL>')
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.logger.setLevel('<LEVEL>')
 })
 ```
@@ -569,7 +569,7 @@ datadogLogs.logger.setHandler('<HANDLER>')
 For CDN async, use:
 
 ```javascript
-DD_LOGS.onReady(function() {
+DD_LOGS.onReady(function () {
   DD_LOGS.logger.setHandler('<HANDLER>')
 })
 ```
