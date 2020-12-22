@@ -248,7 +248,7 @@ The placeholders in the examples above are described below:
 
 ## Advanced usage
 
-### Scrub sensitive data from your RUM data
+### Scrub sensitive data from your Browser logs
 If your Browser logs data contains sensitive information that need redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
 
 This callback function gives you access to every event collected by the Browser SDK before they get sent to Datadog. 
