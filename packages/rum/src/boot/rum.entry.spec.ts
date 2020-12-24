@@ -6,6 +6,7 @@ import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from './rum.
 const noopStartRum = () => ({
   addAction: () => undefined,
   addError: () => undefined,
+  addTiming: () => undefined,
   getInternalContext: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }

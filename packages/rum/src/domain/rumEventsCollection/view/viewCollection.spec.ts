@@ -25,6 +25,7 @@ describe('viewCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const view = {
       cumulativeLayoutShift: 1,
+      customTimings: {},
       documentVersion: 3,
       duration: 100,
       eventCounts: {
@@ -64,6 +65,7 @@ describe('viewCollection', () => {
           count: 10,
         },
         cumulativeLayoutShift: 1,
+        customTimings: {},
         domComplete: 10 * 1e6,
         domContentLoaded: 10 * 1e6,
         domInteractive: 10 * 1e6,

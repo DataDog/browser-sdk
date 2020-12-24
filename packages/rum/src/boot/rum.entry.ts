@@ -56,6 +56,11 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     beforeInitAddError.add([providedError, clonedCommonContext()])
   }
 
+  const beforeInitAddTiming = new BoundedBuffer<{ name: string; inInitialView: boolean; time: number }>()
+  let addTimingStrategy = (name: string, inInitialView = false, time = performance.now()) => {
+    beforeInitAddTiming.add({ name, inInitialView, time })
+  }
+
   function clonedCommonContext(): CommonContext {
     return deepClone({
       context: globalContextManager.get(),
@@ -79,6 +84,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       ;({
         addAction: addActionStrategy,
         addError: addErrorStrategy,
+        addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, () => ({
         user,
@@ -86,6 +92,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
+      beforeInitAddTiming.drain(({ name, inInitialView, time }) => addTimingStrategy(name, inInitialView, time))
 
       isAlreadyInitialized = true
     }),
@@ -133,6 +140,8 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         startTime: performance.now(),
       })
     }),
+
+    addTiming: monitor(addTimingStrategy),
 
     setUser: monitor((newUser: User) => {
       const sanitizedUser = sanitizeUser(newUser)

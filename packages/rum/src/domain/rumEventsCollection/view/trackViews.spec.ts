@@ -829,3 +829,88 @@ describe('rum view measures', () => {
     })
   })
 })
+
+describe('rum track custom timings', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+  let setCustomTiming: (name: string, inInitialView?: boolean, time?: number) => void
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        ;({ setCustomTiming } = trackViews(location, lifeCycle))
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should add custom timing to current view', () => {
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    const currentViewId = getViewEvent(2).id
+    const now = performance.now()
+    setCustomTiming('foo', false, now)
+
+    const event = getViewEvent(3)
+    expect(event.id).toEqual(currentViewId)
+    expect(event.customTimings).toEqual({ foo: now - event.startTime })
+  })
+
+  it('should add custom timing to initial view', () => {
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    const initialViewId = getViewEvent(0).id
+    const now = performance.now()
+    setCustomTiming('foo', true, now)
+
+    const event = getViewEvent(3)
+    expect(event.id).toEqual(initialViewId)
+    expect(event.customTimings).toEqual({ foo: now - event.startTime })
+  })
+
+  it('should add multiple custom timings', () => {
+    setupBuilder.build()
+    const time1 = performance.now()
+    setCustomTiming('foo', false, time1)
+
+    const time2 = performance.now()
+    setCustomTiming('bar', false, time2)
+
+    const event = getViewEvent(2)
+    expect(event.customTimings).toEqual({
+      bar: time2 - event.startTime,
+      foo: time1 - event.startTime,
+    })
+  })
+
+  it('should update custom timing', () => {
+    setupBuilder.build()
+    const time1 = performance.now()
+    setCustomTiming('foo', false, time1)
+
+    const time2 = performance.now()
+    setCustomTiming('bar', false, time2)
+
+    let event = getViewEvent(2)
+    expect(event.customTimings).toEqual({
+      bar: time2 - event.startTime,
+      foo: time1 - event.startTime,
+    })
+
+    const time3 = performance.now()
+    setCustomTiming('foo', false, time3)
+
+    event = getViewEvent(3)
+    expect(event.customTimings).toEqual({
+      bar: time2 - event.startTime,
+      foo: time3 - event.startTime,
+    })
+  })
+})

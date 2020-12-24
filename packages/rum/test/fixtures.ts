@@ -66,6 +66,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           date: 0,
           view: {
             action: { count: 0 },
+            customTimings: {},
             error: { count: 0 },
             isActive: true,
             loadingType: ViewLoadingType.INITIAL_LOAD,

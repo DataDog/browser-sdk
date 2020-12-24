@@ -23,6 +23,7 @@ function processViewUpdate(view: View) {
         count: view.eventCounts.userActionCount,
       },
       cumulativeLayoutShift: view.cumulativeLayoutShift,
+      customTimings: view.customTimings,
       domComplete: msToNs(view.timings.domComplete),
       domContentLoaded: msToNs(view.timings.domContentLoaded),
       domInteractive: msToNs(view.timings.domInteractive),

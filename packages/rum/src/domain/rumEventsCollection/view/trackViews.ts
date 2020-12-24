@@ -11,6 +11,7 @@ export interface View {
   location: Location
   referrer: string
   timings: Timings
+  customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
   startTime: number
@@ -31,6 +32,10 @@ export interface ViewCreatedEvent {
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
+}
+
+export interface ViewCustomTimings {
+  [key: string]: number
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -83,6 +88,11 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   return {
+    setCustomTiming(name: string, inInitialView = false, time = performance.now()) {
+      const view = inInitialView ? initialView : currentView
+      view.setCustomTiming(name, time)
+      view.triggerUpdate()
+    },
     stop() {
       stopTimingsTracking()
       currentView.end()
@@ -107,6 +117,7 @@ function newView(
     userActionCount: 0,
   }
   let timings: Timings = {}
+  const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let cumulativeLayoutShift: number | undefined
   let loadingTime: number | undefined
@@ -154,6 +165,7 @@ function newView(
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       cumulativeLayoutShift,
+      customTimings,
       documentVersion,
       eventCounts,
       id,
@@ -192,6 +204,9 @@ function newView(
       if (newTimings.loadEvent !== undefined) {
         setLoadEvent(newTimings.loadEvent)
       }
+    },
+    setCustomTiming(name: string, time: number) {
+      customTimings[name] = time - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
