@@ -1,5 +1,5 @@
 import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import { ActionContext, ViewContext } from '../types'
+import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'

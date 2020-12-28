@@ -1,5 +1,5 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { View, ViewLoadingType } from './trackViews'
 import { startViewCollection } from './viewCollection'
@@ -34,6 +34,7 @@ describe('viewCollection', () => {
         userActionCount: 10,
       },
       id: 'xxx',
+      isActive: false,
       loadingTime: 20,
       loadingType: ViewLoadingType.INITIAL_LOAD,
       location: {},
@@ -71,6 +72,7 @@ describe('viewCollection', () => {
         },
         firstContentfulPaint: 10 * 1e6,
         firstInputDelay: 12 * 1e6,
+        isActive: false,
         largestContentfulPaint: 10 * 1e6,
         loadEvent: 10 * 1e6,
         loadingTime: 20 * 1e6,

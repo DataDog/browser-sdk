@@ -5,7 +5,7 @@ import {
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import {
   PAGE_ACTIVITY_END_DELAY,
@@ -353,6 +353,45 @@ describe('rum track loading type', () => {
 
     expect(getViewEvent(2).location.pathname).toEqual('/bar')
     expect(getViewEvent(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
+  })
+})
+
+describe('rum track view is active', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should set initial view as active', () => {
+    setupBuilder.build()
+    expect(getViewEvent(0).isActive).toBe(true)
+  })
+
+  it('should set old view as inactive and new one as active after a route change', () => {
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    expect(getViewEvent(1).isActive).toBe(false)
+    expect(getViewEvent(2).isActive).toBe(true)
+  })
+
+  it('should keep view as active after a search change', () => {
+    setupBuilder.build()
+    history.pushState({}, '', '/foo?bar=qux')
+    expect(getViewEvent(1).isActive).toBe(true)
   })
 })
 

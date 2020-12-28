@@ -1,5 +1,22 @@
-import { combine, Configuration, Context, withSnakeCaseKeys } from '@datadog/browser-core'
-import { RawRumEvent, RumContext, RumErrorEvent, RumEventType, RumLongTaskEvent, RumResourceEvent } from '../types'
+import {
+  combine,
+  Configuration,
+  Context,
+  isEmptyObject,
+  limitModification,
+  withSnakeCaseKeys,
+} from '@datadog/browser-core'
+import {
+  CommonContext,
+  RawRumErrorEvent,
+  RawRumEvent,
+  RawRumLongTaskEvent,
+  RawRumResourceEvent,
+  RumContext,
+  RumEventType,
+  User,
+} from '../rawRumEvent.types'
+import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -13,27 +30,27 @@ enum SessionType {
   USER = 'user',
 }
 
+const FIELDS_WITH_SENSITIVE_DATA = [
+  'view.url',
+  'view.referrer',
+  'action.target.name',
+  'error.message',
+  'error.stack',
+  'error.resource.url',
+  'resource.url',
+]
+
 export function startRumAssembly(
   applicationId: string,
   configuration: Configuration,
   lifeCycle: LifeCycle,
   session: RumSession,
   parentContexts: ParentContexts,
-  getGlobalContext: () => Context
+  getCommonContext: () => CommonContext
 ) {
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({
-      startTime,
-      rawRumEvent,
-      savedGlobalContext,
-      customerContext,
-    }: {
-      startTime: number
-      rawRumEvent: RawRumEvent
-      savedGlobalContext?: Context
-      customerContext?: Context
-    }) => {
+    ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
@@ -52,18 +69,33 @@ export function startRumAssembly(
             type: getSessionType(),
           },
         }
-        const rumEvent = needToAssembleWithAction(rawRumEvent)
+        const assembledRumEvent = needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(rumEvent)
-        serverRumEvent.context = combine(savedGlobalContext || getGlobalContext(), customerContext)
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { rumEvent, serverRumEvent })
+        const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
+        const commonContext = savedCommonContext || getCommonContext()
+
+        const context = combine(commonContext.context, customerContext)
+        if (!isEmptyObject(context)) {
+          serverRumEvent.context = context
+        }
+
+        if (!isEmptyObject(commonContext.user)) {
+          ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
+        }
+
+        if (configuration.beforeSend) {
+          limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
+        }
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { assembledRumEvent, serverRumEvent })
       }
     }
   )
 }
 
-function needToAssembleWithAction(event: RawRumEvent): event is RumErrorEvent | RumResourceEvent | RumLongTaskEvent {
+function needToAssembleWithAction(
+  event: RawRumEvent
+): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
 }
 

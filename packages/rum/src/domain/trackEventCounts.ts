@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import { RumEventType } from '../types'
+import { RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export interface EventCounts {

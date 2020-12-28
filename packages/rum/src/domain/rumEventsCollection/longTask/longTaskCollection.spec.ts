@@ -1,6 +1,6 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceEntry } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../types'
+import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
 

@@ -1,52 +1,36 @@
-import { Context } from '@datadog/browser-core'
+import { Context, DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumEventType } from '../types'
+import { RumEventType, User } from '../rawRumEvent.types'
+import { RumActionEvent, RumEvent, RumLongTaskEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-
-interface ServerRumEvents {
-  application: {
-    id: string
-  }
-  action: {
-    id: string
-  }
-  context: any
-  date: number
-  type: string
-  session: {
-    id: string
-  }
-  view: {
-    id: string
-    referrer: string
-    url: string
-  }
-  long_task?: {
-    duration: number
-  }
-  _dd: {
-    format_version: 2
-  }
-}
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
   let globalContext: Context
-  let serverRumEvents: ServerRumEvents[]
+  let user: User
+  let serverRumEvents: RumEvent[]
   let isTracked: boolean
   let viewSessionId: string | undefined
+  let beforeSend: (event: RumEvent) => void
 
   beforeEach(() => {
     isTracked = true
     viewSessionId = '1234'
+    globalContext = {}
+    user = {}
+    beforeSend = noop
     setupBuilder = setup()
       .withSession({
         getId: () => '1234',
         isTracked: () => isTracked,
         isTrackedWithResource: () => true,
+      })
+      .withConfiguration({
+        ...DEFAULT_CONFIGURATION,
+        beforeSend: (x: RumEvent) => beforeSend(x),
       })
       .withParentContexts({
         findAction: () => ({
@@ -66,13 +50,16 @@ describe('rum assembly', () => {
         }),
       })
       .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
-        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => globalContext)
+        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => ({
+          user,
+          context: globalContext,
+        }))
       })
     ;({ lifeCycle } = setupBuilder.build())
 
     serverRumEvents = []
     lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
-      serverRumEvents.push((serverRumEvent as unknown) as ServerRumEvents)
+      serverRumEvents.push(serverRumEvent)
     )
   })
 
@@ -87,7 +74,31 @@ describe('rum assembly', () => {
         startTime: 0,
       })
 
-      expect(serverRumEvents[0].long_task!.duration).toBe(2)
+      expect((serverRumEvents[0] as RumLongTaskEvent).long_task.duration).toBe(2)
+    })
+
+    it('should allow modification on sensitive field', () => {
+      beforeSend = (event: RumEvent) => (event.view.url = 'modified')
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].view.url).toBe('modified')
+    })
+
+    it('should reject modification on non sensitive field', () => {
+      beforeSend = (event: RumEvent) => ((event.view as any).id = 'modified')
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
   })
 
@@ -132,8 +143,18 @@ describe('rum assembly', () => {
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
     })
 
+    it('should not be included if empty', () => {
+      globalContext = {}
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].context).toBe(undefined)
+    })
+
     it('should ignore subsequent context mutation', () => {
-      globalContext = { bar: 'foo' }
+      globalContext = { bar: 'foo', baz: 'foz' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -163,12 +184,63 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        savedGlobalContext: { replacedContext: 'a' },
+        savedCommonContext: {
+          context: { replacedContext: 'a' },
+          user: {},
+        },
         startTime: 0,
       })
 
       expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
       expect((serverRumEvents[0].context as any).addedContext).toEqual(undefined)
+    })
+  })
+
+  describe('rum user', () => {
+    it('should be included in event attributes', () => {
+      user = { id: 'foo' }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].usr!.id).toEqual('foo')
+    })
+
+    it('should not be included if empty', () => {
+      user = {}
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].usr).toBe(undefined)
+    })
+
+    it('should not be automatically snake cased', () => {
+      user = { fooBar: 'foo' }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].usr!.fooBar).toEqual('foo')
+    })
+
+    it('should ignore the current user when a saved common context user is provided', () => {
+      user = { replacedAttribute: 'b', addedAttribute: 'x' }
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        savedCommonContext: {
+          context: {},
+          user: { replacedAttribute: 'a' },
+        },
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
+      expect(serverRumEvents[0].usr!.addedAttribute).toEqual(undefined)
     })
   })
 
@@ -216,7 +288,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 0,
       })
-      expect(serverRumEvents[0].action.id).not.toBeDefined()
+      expect((serverRumEvents[0] as RumActionEvent).action.id).not.toBeDefined()
       serverRumEvents = []
     })
   })

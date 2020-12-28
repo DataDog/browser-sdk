@@ -14,6 +14,28 @@
 
 ---
 
+## v2.1.1
+
+- 🐛 [CDN cache] remove stale-while-revalidate ([#665](https://github.com/DataDog/browser-sdk/pull/665))
+- ✨ [RUMF-794] Add isActive attribute to view events ([#648](https://github.com/DataDog/browser-sdk/pull/648))
+
+## v2.1.0
+
+- ✨ [RUMF-787] implement the User API ([#638](https://github.com/DataDog/browser-sdk/pull/638))
+- ✨ [RUMF-772] add beforeSend API ([#644](https://github.com/DataDog/browser-sdk/pull/644))
+
+## v2.0.3
+
+- 🐛 handle direct onerror calls with objects ([#659](https://github.com/DataDog/browser-sdk/pull/659))
+
+## v2.0.2
+
+- 🐛 sanitize error properties even when there is a valid stack ([#655](https://github.com/DataDog/browser-sdk/pull/655))
+
+## v2.0.1
+
+- 🐛 fix tracekit handling of exotic errors ([#651](https://github.com/DataDog/browser-sdk/pull/651))
+
 ## v2.0.0
 
 - 💥 [RUMF-730] prefer object and type alias over enum in APIs ([#630](https://github.com/DataDog/browser-sdk/pull/630))

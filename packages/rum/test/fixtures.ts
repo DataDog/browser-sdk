@@ -2,7 +2,7 @@ import { combine, Context, ErrorSource, ResourceType } from '@datadog/browser-co
 import { RumPerformanceResourceTiming } from '../src/browser/performanceCollection'
 import { ActionType } from '../src/domain/rumEventsCollection/action/trackActions'
 import { ViewLoadingType } from '../src/domain/rumEventsCollection/view/trackViews'
-import { RawRumEvent, RumEventType } from '../src/types'
+import { RawRumEvent, RumEventType } from '../src/rawRumEvent.types'
 
 export function createRawRumEvent(type: RumEventType, overrides?: Context): RawRumEvent {
   switch (type) {
@@ -67,6 +67,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           view: {
             action: { count: 0 },
             error: { count: 0 },
+            isActive: true,
             loadingType: ViewLoadingType.INITIAL_LOAD,
             longTask: { count: 0 },
             resource: { count: 0 },
