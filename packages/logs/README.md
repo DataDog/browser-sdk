@@ -250,11 +250,11 @@ The placeholders in the examples above are described below:
 
 ### Scrub sensitive data from your Browser logs
 
-If your Browser logs data contains sensitive information that need redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
+If your Browser logs contain sensitive information that needs redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
 
-This callback function gives you access to every event collected by the Browser SDK before they get sent to Datadog.
+The `beforeSend` callback function gives you access to each event collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
 
-For example, redact email addresses from your web application URLs:
+For example, to redact email addresses from your web application URLs:
 
 #### NPM
 
@@ -310,7 +310,7 @@ You can update the following event properties:
 | `error.stack`   | String | The stack trace or complementary information about the error.                                    |
 | `http.url`      | String | The HTTP URL.                                                                                    |
 
-**Note**: The Browser SDK will ignore modifications made to event properties not listed above. Find out about all event properties on the [Browser SDK repository][5].
+**Note**: The Browser SDK will ignore modifications made to event properties not listed above. For more information about event properties, see the [Browser SDK repository][5].
 
 ### Define multiple loggers
 
