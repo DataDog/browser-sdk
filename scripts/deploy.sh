@@ -41,7 +41,7 @@ case "${datacenter}" in
     ;;
 esac
 
-CACHE_CONTROL='max-age=900, s-maxage=60, stale-while-revalidate=31536000'
+CACHE_CONTROL='max-age=900, s-maxage=60'
 LOGS_BUNDLE_PATH="packages/logs/bundle"
 RUM_BUNDLE_PATH="packages/rum/bundle"
 declare -A paths
