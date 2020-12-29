@@ -45,7 +45,7 @@ export class Logger {
   }
 
   @monitored
-  log(message: string, messageContext?: Context, status: StatusType = StatusType.info) {
+  log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
       switch (this.handlerType) {
         case HandlerType.http:
@@ -64,19 +64,19 @@ export class Logger {
     }
   }
 
-  debug(message: string, messageContext?: Context) {
+  debug(message: string, messageContext?: object) {
     this.log(message, messageContext, StatusType.debug)
   }
 
-  info(message: string, messageContext?: Context) {
+  info(message: string, messageContext?: object) {
     this.log(message, messageContext, StatusType.info)
   }
 
-  warn(message: string, messageContext?: Context) {
+  warn(message: string, messageContext?: object) {
     this.log(message, messageContext, StatusType.warn)
   }
 
-  error(message: string, messageContext?: Context) {
+  error(message: string, messageContext?: object) {
     const errorOrigin = {
       error: {
         origin: ErrorSource.LOGGER,
@@ -85,11 +85,11 @@ export class Logger {
     this.log(message, combine(errorOrigin, messageContext), StatusType.error)
   }
 
-  setContext(context: Context) {
+  setContext(context: object) {
     this.contextManager.set(context)
   }
 
-  addContext(key: string, value: ContextValue) {
+  addContext(key: string, value: any) {
     this.contextManager.add(key, value)
   }
 

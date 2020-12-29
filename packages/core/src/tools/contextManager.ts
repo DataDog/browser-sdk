@@ -8,16 +8,16 @@ export function createContextManager() {
       return context
     },
 
-    add(key: string, value: ContextValue) {
-      context[key] = value
+    add(key: string, value: any) {
+      context[key] = value as ContextValue
     },
 
     remove(key: string) {
       delete context[key]
     },
 
-    set(newContext: Context) {
-      context = newContext
+    set(newContext: object) {
+      context = newContext as Context
     },
   }
 }
