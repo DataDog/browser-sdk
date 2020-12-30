@@ -10,3 +10,4 @@ export {
   RumLongTaskEvent,
 } from './rumEvent.types'
 export { startRum } from './boot/rum'
+export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
