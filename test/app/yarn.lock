@@ -23,12 +23,12 @@
   version "2.1.2"
   dependencies:
     "@datadog/browser-core" "2.1.2"
-    "@datadog/browser-rum" "2.1.2"
+    "@datadog/browser-rum-core" "2.1.2"
     "@types/css-font-loading-module" "0.0.4"
     rrweb-snapshot "1.0.1"
     tslib "^1.10.0"
 
-"@datadog/browser-rum@2.1.2", "@datadog/browser-rum@file:../../packages/rum":
+"@datadog/browser-rum@file:../../packages/rum":
   version "2.1.2"
   dependencies:
     "@datadog/browser-core" "2.1.2"

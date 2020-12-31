@@ -5,14 +5,16 @@ import {
   isRumResourceEvent,
   isRumUserActionEvent,
   isRumViewEvent,
+  SerssionReplayCall,
   ServerInternalMonitoringMessage,
 } from '../types/serverEvents'
 
-type IntakeType = 'logs' | 'rum' | 'internalMonitoring'
+type IntakeType = 'logs' | 'rum' | 'internalMonitoring' | 'sessionReplay'
 
 export class EventRegistry {
   readonly rum: RumEvent[] = []
   readonly logs: LogsEvent[] = []
+  readonly sessionReplay: SerssionReplayCall[] = []
   readonly internalMonitoring: ServerInternalMonitoringMessage[] = []
 
   push(type: IntakeType, event: any) {
@@ -21,7 +23,7 @@ export class EventRegistry {
   }
 
   get count() {
-    return this.logs.length + this.rum.length + this.internalMonitoring.length
+    return this.logs.length + this.rum.length + this.internalMonitoring.length + this.sessionReplay.length
   }
 
   get rumActions() {

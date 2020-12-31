@@ -30,6 +30,7 @@ describe('configuration', () => {
       expect(configuration.rumEndpoint).toEqual('<<< E2E RUM ENDPOINT >>>')
       expect(configuration.logsEndpoint).toEqual('<<< E2E LOGS ENDPOINT >>>')
       expect(configuration.internalMonitoringEndpoint).toEqual('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
+      expect(configuration.sessionReplayEndpoint).toEqual('<<< E2E SESSION REPLAY ENDPOINT >>>')
     })
   })
 

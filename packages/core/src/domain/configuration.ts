@@ -190,6 +190,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
     configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
     configuration.rumEndpoint = '<<< E2E RUM ENDPOINT >>>'
+    configuration.sessionReplayEndpoint = '<<< E2E SESSION REPLAY ENDPOINT >>>'
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {

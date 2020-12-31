@@ -1,4 +1,5 @@
 import { RumActionEvent, RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '@datadog/browser-rum'
+import { internal_Segment as Segment } from '@datadog/browser-rum-recorder'
 
 export interface ServerInternalMonitoringMessage {
   message: string
@@ -22,4 +23,16 @@ export function isRumViewEvent(event: RumEvent): event is RumViewEvent {
 
 export function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {
   return event.type === 'error'
+}
+
+export interface SegmentFile {
+  filename: string
+  encoding: string
+  mimetype: string
+  data: Segment
+}
+
+export interface SerssionReplayCall {
+  segment: SegmentFile
+  meta: { [key: string]: string }
 }
