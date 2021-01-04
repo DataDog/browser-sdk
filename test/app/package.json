@@ -8,10 +8,11 @@
   },
   "dependencies": {
     "@datadog/browser-logs": "file:../../packages/logs",
-    "@datadog/browser-rum": "file:../../packages/rum"
+    "@datadog/browser-rum-recorder": "file:../../packages/rum-recorder"
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../packages/core"
+    "@datadog/browser-core": "file:../../packages/core",
+    "@datadog/browser-rum": "file:../../packages/rum"
   },
   "devDependencies": {
     "ts-loader": "6.2.1",
