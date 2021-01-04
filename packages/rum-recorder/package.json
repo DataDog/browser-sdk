@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-recorder",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -13,8 +13,8 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "2.1.1",
-    "@datadog/browser-rum": "2.1.1",
+    "@datadog/browser-core": "2.1.2",
+    "@datadog/browser-rum": "2.1.2",
     "tslib": "^1.10.0"
   },
   "repository": {
