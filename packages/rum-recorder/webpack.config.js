@@ -8,7 +8,7 @@ module.exports = (env, argv) => ({
   },
   ...webpackBase(argv.mode),
   output: {
-    filename: `datadog-rum-recorder.js`,
+    filename: 'datadog-rum-recorder.js',
     path: path.resolve(__dirname, 'bundle'),
   },
 })
