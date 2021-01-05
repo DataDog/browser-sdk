@@ -5,8 +5,7 @@
     "outDir": "./bundle/",
     "module": "es6",
     "paths": {
-      "@datadog/browser-core": ["../core/src"],
-      "@datadog/browser-rum-core": ["../rum-core/src"]
+      "@datadog/browser-core": ["../core/src"]
     }
   },
   "include": ["src", "test"]

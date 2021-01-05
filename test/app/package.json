@@ -12,6 +12,7 @@
   },
   "resolutions": {
     "@datadog/browser-core": "file:../../packages/core",
+    "@datadog/browser-rum-core": "file:../../packages/rum-core",
     "@datadog/browser-rum": "file:../../packages/rum"
   },
   "devDependencies": {
