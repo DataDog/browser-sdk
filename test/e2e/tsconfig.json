@@ -15,6 +15,7 @@
     "paths": {
       "@datadog/browser-logs": ["../../packages/logs/src"],
       "@datadog/browser-rum": ["../../packages/rum/src"],
+      "@datadog/browser-rum-recorder": ["../../packages/rum-recorder/src"],
       "@datadog/browser-core": ["../../packages/core/src"]
     }
   },
