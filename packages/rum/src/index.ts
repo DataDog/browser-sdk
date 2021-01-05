@@ -2,7 +2,7 @@ export { datadogRum } from './boot/rum.entry'
 export {
   CommonProperties,
   ProvidedSource,
-  RumGlobal,
+  RumPublicApi as RumGlobal,
   RumUserConfiguration,
   // Events
   RumEvent,

@@ -8,7 +8,7 @@ import {
   deepClone,
   ErrorSource,
   isPercentage,
-  makeGlobal,
+  makePublicApi,
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
@@ -23,11 +23,11 @@ export interface RumUserConfiguration extends UserConfiguration {
   beforeSend?: (event: RumEvent) => void
 }
 
-export type RumGlobal = ReturnType<typeof makeRumGlobal>
+export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
 export type StartRum = typeof startRum
 
-export function makeRumGlobal(startRumImpl: StartRum) {
+export function makeRumPublicApi(startRumImpl: StartRum) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
@@ -54,7 +54,7 @@ export function makeRumGlobal(startRumImpl: StartRum) {
     })
   }
 
-  const rumGlobal = makeGlobal({
+  const rumGlobal = makePublicApi({
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
