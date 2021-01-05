@@ -841,6 +841,7 @@ describe('rum track custom timings', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
+      .withFakeClock()
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         ;({ addTiming } = trackViews(location, lifeCycle))
@@ -852,65 +853,67 @@ describe('rum track custom timings', () => {
   })
 
   it('should add custom timing to current view', () => {
-    setupBuilder.build()
+    const { clock } = setupBuilder.build()
     history.pushState({}, '', '/bar')
     const currentViewId = getViewEvent(2).id
-    const now = performance.now()
-    addTiming('foo', false, now)
+    clock.tick(20)
+    addTiming('foo', false)
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
-    expect(event.customTimings).toEqual({ foo: now - event.startTime })
+    expect(event.customTimings).toEqual({ foo: 20 })
   })
 
   it('should add custom timing to initial view', () => {
-    setupBuilder.build()
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
     history.pushState({}, '', '/bar')
     const initialViewId = getViewEvent(0).id
-    const now = performance.now()
-    addTiming('foo', true, now)
+
+    clock.tick(20)
+    addTiming('foo', true)
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(initialViewId)
-    expect(event.customTimings).toEqual({ foo: now - event.startTime })
+    expect(event.customTimings).toEqual({ foo: 40 })
   })
 
   it('should add multiple custom timings', () => {
-    setupBuilder.build()
-    const time1 = performance.now()
-    addTiming('foo', false, time1)
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
+    addTiming('foo', false)
 
-    const time2 = performance.now()
-    addTiming('bar', false, time2)
+    clock.tick(10)
+    addTiming('bar', false)
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: time2 - event.startTime,
-      foo: time1 - event.startTime,
+      bar: 30,
+      foo: 20,
     })
   })
 
   it('should update custom timing', () => {
-    setupBuilder.build()
-    const time1 = performance.now()
-    addTiming('foo', false, time1)
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
+    addTiming('foo', false)
 
-    const time2 = performance.now()
-    addTiming('bar', false, time2)
+    clock.tick(10)
+    addTiming('bar', false)
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: time2 - event.startTime,
-      foo: time1 - event.startTime,
+      bar: 30,
+      foo: 20,
     })
 
-    const time3 = performance.now()
-    addTiming('foo', false, time3)
+    clock.tick(20)
+    addTiming('foo', false)
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
-      bar: time2 - event.startTime,
-      foo: time3 - event.startTime,
+      bar: 30,
+      foo: 50,
     })
   })
 })
