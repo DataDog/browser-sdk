@@ -88,9 +88,9 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   return {
-    setCustomTiming(name: string, inInitialView = false, time = performance.now()) {
+    addTiming(name: string, inInitialView = false, time = performance.now()) {
       const view = inInitialView ? initialView : currentView
-      view.setCustomTiming(name, time)
+      view.addTiming(name, time)
       view.triggerUpdate()
     },
     stop() {
@@ -205,7 +205,7 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    setCustomTiming(name: string, time: number) {
+    addTiming(name: string, time: number) {
       customTimings[name] = time - startTime
     },
     updateLocation(newLocation: Location) {

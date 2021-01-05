@@ -834,7 +834,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let setCustomTiming: (name: string, inInitialView?: boolean, time?: number) => void
+  let addTiming: (name: string, inInitialView?: boolean, time?: number) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -843,7 +843,7 @@ describe('rum track custom timings', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        ;({ setCustomTiming } = trackViews(location, lifeCycle))
+        ;({ addTiming } = trackViews(location, lifeCycle))
       })
   })
 
@@ -856,7 +856,7 @@ describe('rum track custom timings', () => {
     history.pushState({}, '', '/bar')
     const currentViewId = getViewEvent(2).id
     const now = performance.now()
-    setCustomTiming('foo', false, now)
+    addTiming('foo', false, now)
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
@@ -868,7 +868,7 @@ describe('rum track custom timings', () => {
     history.pushState({}, '', '/bar')
     const initialViewId = getViewEvent(0).id
     const now = performance.now()
-    setCustomTiming('foo', true, now)
+    addTiming('foo', true, now)
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(initialViewId)
@@ -878,10 +878,10 @@ describe('rum track custom timings', () => {
   it('should add multiple custom timings', () => {
     setupBuilder.build()
     const time1 = performance.now()
-    setCustomTiming('foo', false, time1)
+    addTiming('foo', false, time1)
 
     const time2 = performance.now()
-    setCustomTiming('bar', false, time2)
+    addTiming('bar', false, time2)
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -893,10 +893,10 @@ describe('rum track custom timings', () => {
   it('should update custom timing', () => {
     setupBuilder.build()
     const time1 = performance.now()
-    setCustomTiming('foo', false, time1)
+    addTiming('foo', false, time1)
 
     const time2 = performance.now()
-    setCustomTiming('bar', false, time2)
+    addTiming('bar', false, time2)
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -905,7 +905,7 @@ describe('rum track custom timings', () => {
     })
 
     const time3 = performance.now()
-    setCustomTiming('foo', false, time3)
+    addTiming('foo', false, time3)
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
