@@ -1,4 +1,4 @@
-import { createNewEvent } from '@datadog/browser-core'
+import { createNewEvent, isIE } from '@datadog/browser-core'
 import { record } from './record'
 import { Event, EventType } from './types'
 
@@ -7,6 +7,10 @@ describe('record', () => {
   let stop: (() => void) | undefined
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
     input = document.createElement('input')
     document.body.appendChild(input)
   })
