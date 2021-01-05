@@ -141,7 +141,9 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })
     }),
 
-    addTiming: monitor(addTimingStrategy),
+    addTiming: monitor((name: string, inInitialView = false, time = performance.now()) =>
+      addTimingStrategy(name, inInitialView, time)
+    ),
 
     setUser: monitor((newUser: User) => {
       const sanitizedUser = sanitizeUser(newUser)
