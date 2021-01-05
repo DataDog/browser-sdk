@@ -1,4 +1,13 @@
-import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  generateUUID,
+  monitor,
+  msToNs,
+  noop,
+  ONE_MINUTE,
+  throttle,
+} from '@datadog/browser-core'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -206,7 +215,7 @@ function newView(
       }
     },
     addTiming(name: string, time: number) {
-      customTimings[name] = time - startTime
+      customTimings[name] = msToNs(time - startTime)
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
