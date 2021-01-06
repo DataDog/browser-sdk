@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
+import { Configuration, ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
 import { makeRumGlobal, RumGlobal, RumUserConfiguration, StartRum } from './rum.entry'
@@ -7,6 +7,9 @@ const noopStartRum = () => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
+  configuration: ({
+    isEnabled: () => true,
+  } as any) as Configuration,
   getInternalContext: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }

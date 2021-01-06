@@ -53,6 +53,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addAction,
     addError,
     addTiming,
+    configuration,
     getInternalContext: internalContext.get,
   }
 }

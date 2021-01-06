@@ -3,6 +3,7 @@ import {
   buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
+  Configuration,
   Context,
   createContextManager,
   deepClone,
@@ -25,7 +26,7 @@ export interface RumUserConfiguration extends UserConfiguration {
   beforeSend?: (event: RumEvent) => void
 }
 
-export type RumGlobal = ReturnType<typeof makeRumGlobal>
+export type RumGlobal = ReturnType<typeof makeRumGlobal> & { addTiming?: AddTiming }
 
 export const datadogRum = makeRumGlobal(startRum)
 
@@ -35,6 +36,7 @@ interface BrowserWindow extends Window {
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
 
 export type StartRum = typeof startRum
+type AddTiming = ReturnType<StartRum>['addTiming']
 
 export function makeRumGlobal(startRumImpl: StartRum) {
   let isAlreadyInitialized = false
@@ -54,11 +56,6 @@ export function makeRumGlobal(startRumImpl: StartRum) {
   const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
   let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
     beforeInitAddError.add([providedError, clonedCommonContext()])
-  }
-
-  const beforeInitAddTiming = new BoundedBuffer<{ name: string; inInitialView: boolean; time: number }>()
-  let addTimingStrategy = (name: string, inInitialView = false, time = performance.now()) => {
-    beforeInitAddTiming.add({ name, inInitialView, time })
   }
 
   function clonedCommonContext(): CommonContext {
@@ -81,10 +78,13 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
+      let configuration: Configuration
+      let addTiming: AddTiming
       ;({
+        addTiming,
+        configuration,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
-        addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, () => ({
         user,
@@ -92,7 +92,10 @@ export function makeRumGlobal(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(({ name, inInitialView, time }) => addTimingStrategy(name, inInitialView, time))
+
+      if (configuration.isEnabled('custom-timings')) {
+        ;(rumGlobal as RumGlobal).addTiming = monitor(addTiming)
+      }
 
       isAlreadyInitialized = true
     }),
@@ -140,10 +143,6 @@ export function makeRumGlobal(startRumImpl: StartRum) {
         startTime: performance.now(),
       })
     }),
-
-    addTiming: monitor((name: string, inInitialView = false, time = performance.now()) =>
-      addTimingStrategy(name, inInitialView, time)
-    ),
 
     setUser: monitor((newUser: User) => {
       const sanitizedUser = sanitizeUser(newUser)
