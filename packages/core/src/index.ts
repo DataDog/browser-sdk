@@ -6,7 +6,7 @@ export {
   BuildMode,
   Datacenter,
   defineGlobal,
-  makeGlobal,
+  makePublicApi,
   commonInit,
   checkCookiesAuthorized,
   checkIsNotLocalFile,

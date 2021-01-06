@@ -7,7 +7,7 @@ import {
   defineGlobal,
   getGlobalObject,
   isPercentage,
-  makeGlobal,
+  makePublicApi,
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
@@ -26,18 +26,18 @@ export interface LoggerConfiguration {
   context?: object
 }
 
-export type LogsGlobal = ReturnType<typeof makeLogsGlobal>
+export type LogsPublicApi = ReturnType<typeof makeLogsPublicApi>
 
-export const datadogLogs = makeLogsGlobal(startLogs)
+export const datadogLogs = makeLogsPublicApi(startLogs)
 
 interface BrowserWindow extends Window {
-  DD_LOGS?: LogsGlobal
+  DD_LOGS?: LogsPublicApi
 }
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
 
 export type StartLogs = typeof startLogs
 
-export function makeLogsGlobal(startLogsImpl: StartLogs) {
+export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
@@ -49,7 +49,7 @@ export function makeLogsGlobal(startLogsImpl: StartLogs) {
   }
   const logger = new Logger(sendLog)
 
-  return makeGlobal({
+  return makePublicApi({
     logger,
 
     init: monitor((userConfiguration: LogsUserConfiguration) => {

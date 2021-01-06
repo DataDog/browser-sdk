@@ -1,7 +1,7 @@
 import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
-import { LogsGlobal, makeLogsGlobal, StartLogs } from './logs.entry'
+import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logs.entry'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -28,17 +28,17 @@ describe('logs entry', () => {
     startLogsGetGlobalContext = undefined
   })
 
-  it('should set global with init', () => {
-    const LOGS = makeLogsGlobal(startLogs)
+  it('should define the public API with init', () => {
+    const LOGS = makeLogsPublicApi(startLogs)
     expect(!!LOGS).toEqual(true)
     expect(!!LOGS.init).toEqual(true)
   })
 
   describe('configuration validation', () => {
-    let LOGS: LogsGlobal
+    let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal(startLogs)
+      LOGS = makeLogsPublicApi(startLogs)
     })
 
     it('init should log an error with no public api key', () => {
@@ -123,10 +123,10 @@ describe('logs entry', () => {
   })
 
   describe('pre-init API usages', () => {
-    let LOGS: LogsGlobal
+    let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal(startLogs)
+      LOGS = makeLogsPublicApi(startLogs)
       jasmine.clock().install()
       jasmine.clock().mockDate()
     })
@@ -196,10 +196,10 @@ describe('logs entry', () => {
   })
 
   describe('post-init API usages', () => {
-    let LOGS: LogsGlobal
+    let LOGS: LogsPublicApi
 
     beforeEach(() => {
-      LOGS = makeLogsGlobal(startLogs)
+      LOGS = makeLogsPublicApi(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
     })
 

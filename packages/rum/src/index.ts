@@ -1,11 +1,14 @@
-export { RumUserConfiguration, RumGlobal, datadogRum } from './boot/rum.entry'
-export { ProvidedSource } from './domain/rumEventsCollection/error/errorCollection'
+export { datadogRum } from './boot/rum.entry'
 export {
+  CommonProperties,
+  ProvidedSource,
+  RumPublicApi as RumGlobal,
+  RumUserConfiguration,
+  // Events
   RumEvent,
   RumActionEvent,
-  CommonProperties,
   RumErrorEvent,
-  RumViewEvent,
-  RumResourceEvent,
   RumLongTaskEvent,
-} from './rumEvent.types'
+  RumResourceEvent,
+  RumViewEvent,
+} from '@datadog/browser-rum-core'

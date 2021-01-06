@@ -1,25 +1,26 @@
 {
-  "name": "@datadog/browser-rum",
+  "name": "@datadog/browser-rum-core",
   "version": "2.1.2",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
   "scripts": {
-    "build": "run-p build:cjs build:esm build:bundle",
-    "build:bundle": "rm -rf bundle && webpack --config webpack.config.js --mode=production && yarn replace-build-env bundle",
-    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json",
+    "build": "run-p build:cjs build:esm",
+    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json && yarn replace-build-env cjs",
+    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json && yarn replace-build-env esm",
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
     "@datadog/browser-core": "2.1.2",
-    "@datadog/browser-rum-core": "2.1.2",
     "tslib": "^1.10.0"
+  },
+  "devDependencies": {
+    "ajv": "6.12.6"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum"
+    "directory": "packages/rum-core"
   }
 }
