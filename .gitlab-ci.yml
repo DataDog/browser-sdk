@@ -56,6 +56,14 @@ build:
     - scripts/cli lint test/app
     - scripts/cli typecheck test/app
 
+build-bundle:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn build:bundle
+
 compatibility:
   stage: test
   tags: ['runner:main', 'size:large']
