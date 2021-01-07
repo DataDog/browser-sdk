@@ -99,7 +99,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   return {
     addTiming(name: string, inInitialView = false) {
       const view = inInitialView ? initialView : currentView
-      view.addTiming(name, performance.now())
+      view.addTiming(name)
       view.triggerUpdate()
     },
     stop() {
