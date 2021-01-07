@@ -8,7 +8,7 @@ const noopStartRum = () => ({
   addError: () => undefined,
   addTiming: () => undefined,
   configuration: ({
-    isEnabled: () => true,
+    isEnabled: () => false,
   } as any) as Configuration,
   getInternalContext: () => undefined,
 })
@@ -387,6 +387,37 @@ describe('rum entry', () => {
       publicApi.setUser(null as any)
       publicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('addTiming', () => {
+    let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
+    let errorSpy: jasmine.Spy<() => void>
+    let rumGlobal: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addTimingSpy = jasmine.createSpy()
+      errorSpy = spyOn(console, 'error')
+      rumGlobal = makeRumPublicApi(() => ({
+        ...noopStartRum(),
+        configuration: ({
+          isEnabled: () => true,
+        } as any) as Configuration,
+        addTiming: addTimingSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should add custom timings', () => {
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      ;(rumGlobal as any).addTiming('foo')
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(errorSpy).not.toHaveBeenCalled()
     })
   })
 })
