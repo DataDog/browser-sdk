@@ -26,8 +26,8 @@ describe('viewCollection', () => {
     const view = {
       cumulativeLayoutShift: 1,
       customTimings: {
-        foo: 10,
         bar: 20,
+        foo: 10,
       },
       documentVersion: 3,
       duration: 100,
@@ -69,8 +69,8 @@ describe('viewCollection', () => {
         },
         cumulativeLayoutShift: 1,
         customTimings: {
-          foo: 10 * 1e6,
           bar: 20 * 1e6,
+          foo: 10 * 1e6,
         },
         domComplete: 10 * 1e6,
         domContentLoaded: 10 * 1e6,

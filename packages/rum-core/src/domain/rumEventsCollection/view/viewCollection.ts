@@ -1,4 +1,4 @@
-import { Configuration, getTimestamp, msToNs, mapObject } from '@datadog/browser-core'
+import { Configuration, getTimestamp, mapObject, msToNs } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'

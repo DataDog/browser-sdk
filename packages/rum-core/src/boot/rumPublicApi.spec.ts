@@ -401,10 +401,10 @@ describe('rum entry', () => {
       errorSpy = spyOn(console, 'error')
       rumGlobal = makeRumPublicApi(() => ({
         ...noopStartRum(),
+        addTiming: addTimingSpy,
         configuration: ({
           isEnabled: () => true,
         } as any) as Configuration,
-        addTiming: addTimingSpy,
       }))
       setupBuilder = setup()
     })
@@ -415,7 +415,7 @@ describe('rum entry', () => {
 
     it('should add custom timings', () => {
       rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      ;(rumGlobal as any).addTiming('foo')
+      ;(rumGlobal as any).addTiming('foo') // tslint:disable-line
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(errorSpy).not.toHaveBeenCalled()
     })
