@@ -861,7 +861,7 @@ describe('rum track custom timings', () => {
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
-    expect(event.customTimings).toEqual({ foo: 20 * 1e6 })
+    expect(event.customTimings).toEqual({ foo: 20 })
   })
 
   it('should add custom timing to initial view', () => {
@@ -875,7 +875,7 @@ describe('rum track custom timings', () => {
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(initialViewId)
-    expect(event.customTimings).toEqual({ foo: 40 * 1e6 })
+    expect(event.customTimings).toEqual({ foo: 40 })
   })
 
   it('should add multiple custom timings', () => {
@@ -888,8 +888,8 @@ describe('rum track custom timings', () => {
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: 30 * 1e6,
-      foo: 20 * 1e6,
+      bar: 30,
+      foo: 20,
     })
   })
 
@@ -903,8 +903,8 @@ describe('rum track custom timings', () => {
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: 30 * 1e6,
-      foo: 20 * 1e6,
+      bar: 30,
+      foo: 20,
     })
 
     clock.tick(20)
@@ -912,8 +912,8 @@ describe('rum track custom timings', () => {
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
-      bar: 30 * 1e6,
-      foo: 50 * 1e6,
+      bar: 30,
+      foo: 50,
     })
   })
 })

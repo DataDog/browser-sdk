@@ -215,7 +215,7 @@ function newView(
       }
     },
     addTiming(name: string, time: number) {
-      customTimings[name] = msToNs(time - startTime)
+      customTimings[name] = time - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
