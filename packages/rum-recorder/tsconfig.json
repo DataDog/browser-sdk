@@ -3,11 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./bundle/",
-    "module": "es6",
-    "paths": {
-      "@datadog/browser-core": ["../core/src"],
-      "@datadog/browser-rum": ["../rum/src"]
-    }
+    "module": "es6"
   },
   "include": ["src", "test"]
 }
