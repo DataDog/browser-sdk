@@ -52,6 +52,9 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   return {
     addAction,
     addError,
+    configuration,
+    lifeCycle,
+    parentContexts,
     getInternalContext: internalContext.get,
   }
 }

@@ -173,4 +173,5 @@ export interface User {
 export interface CommonContext {
   user: User
   context: Context
+  hasReplay?: boolean
 }

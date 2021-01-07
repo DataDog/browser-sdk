@@ -3,10 +3,13 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
 
-const noopStartRum = () => ({
+const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
+  configuration: {} as any,
   getInternalContext: () => undefined,
+  lifeCycle: {} as any,
+  parentContexts: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
