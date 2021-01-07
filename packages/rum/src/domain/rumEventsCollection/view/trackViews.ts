@@ -214,8 +214,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, time: number) {
-      customTimings[name] = time - startTime
+    addTiming(name: string) {
+      customTimings[name] = performance.now() - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
