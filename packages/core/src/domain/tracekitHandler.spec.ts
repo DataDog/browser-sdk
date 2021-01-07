@@ -1,4 +1,4 @@
-// tslint:disable no-unsafe-any
+// eslint-disable  
 
 import { report, StackFrame, wrap } from './tracekit'
 

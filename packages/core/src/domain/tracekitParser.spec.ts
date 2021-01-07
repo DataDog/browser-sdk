@@ -1,4 +1,4 @@
-// tslint:disable no-unsafe-any
+// eslint-disable  
 
 import * as CapturedExceptions from '../../test/capturedExceptions'
 import { isSafari } from '../tools/specHelper'
@@ -1120,7 +1120,7 @@ describe('Parser', () => {
       func: 'this',
       line: 74,
       url:
-        // tslint:disable-next-line max-line-length
+        // eslint-disable-next-line  max-len
         '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
     })
   })

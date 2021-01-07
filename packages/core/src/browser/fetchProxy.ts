@@ -69,7 +69,7 @@ function proxyFetch() {
 
   originalFetch = window.fetch
 
-  // tslint:disable promise-function-async
+  // eslint-disable  @typescript-eslint/promise-function-async
   window.fetch = monitor(function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))

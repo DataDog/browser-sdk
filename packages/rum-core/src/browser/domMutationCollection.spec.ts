@@ -95,7 +95,7 @@ describe('domMutationCollection', () => {
     'collects DOM mutation when an element is moved',
     domMutationSpec(
       (root) => {
-        // tslint:disable-next-line: no-null-keyword
+        // eslint-disable-next-line no-null/no-null
         root.insertBefore(root.childNodes[0], null)
       },
       { expectedMutations: 1 }

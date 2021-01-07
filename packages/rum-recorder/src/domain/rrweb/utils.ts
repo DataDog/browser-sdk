@@ -18,7 +18,7 @@ export const mirror: Mirror = {
     return n.__sn.id
   },
   getNode(id) {
-    // tslint:disable-next-line: no-null-keyword
+    // eslint-disable-next-line no-null/no-null
     return mirror.map[id] || null
   },
   // TODO: use a weakmap to get rid of manually memory management
@@ -84,7 +84,7 @@ export function hookSetter<T>(
   }
 }
 
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 // copy from https://github.com/getsentry/sentry-javascript/blob/b2109071975af8bf0316d3b5b38f519bdaf5dc15/packages/utils/src/object.ts
 export function patch(
   source: { [key: string]: any },

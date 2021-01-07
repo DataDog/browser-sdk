@@ -1,4 +1,4 @@
-// tslint:disable no-unsafe-any
+// eslint-disable 
 
 import { computeStackTrace, Handler, report } from './tracekit'
 
@@ -112,7 +112,7 @@ Error: foo
       expect(computeStackTrace(2).message).toBeUndefined()
       expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
       expect(computeStackTrace(undefined).message).toBeUndefined()
-      // tslint:disable-next-line:no-null-keyword
+      // eslint-disable-next-line no-null/no-null
       expect(computeStackTrace(null).message).toBeUndefined()
     })
   })

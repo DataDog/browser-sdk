@@ -154,7 +154,7 @@ function truncate(s: string) {
 function getElementById(refElement: Element, id: string) {
   // Use the element ownerDocument here, because tests are executed in an iframe, so
   // document.getElementById won't work.
-  // tslint:disable-next-line: no-null-keyword
+  // eslint-disable-next-line no-null/no-null
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
@@ -169,7 +169,7 @@ function getTextualContent(element: Element | HTMLElement) {
       // remove the inner text of SCRIPT and STYLES from the result. This is a bit dirty, but should
       // be relatively fast and work in most cases.
       const elementsTextToRemove: NodeListOf<HTMLElement> = element.querySelectorAll('script, style')
-      // tslint:disable-next-line: prefer-for-of
+      // eslint-disable-next-line @typescript-eslint/prefer-for-of
       for (let i = 0; i < elementsTextToRemove.length; i += 1) {
         const innerText = elementsTextToRemove[i].innerText
         if (innerText.trim().length > 0) {

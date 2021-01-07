@@ -32,7 +32,7 @@ describe('internal monitoring', () => {
 
       @monitored
       monitoredStringErrorThrowing() {
-        // tslint:disable-next-line: no-string-throw
+        // eslint-disable-next-line no-throw-literal
         throw 'string error'
       }
 

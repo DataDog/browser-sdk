@@ -1,4 +1,4 @@
-// tslint:disable-next-line: no-implicit-dependencies
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { FontFaceDescriptors } from 'css-font-loading-module'
 import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
 

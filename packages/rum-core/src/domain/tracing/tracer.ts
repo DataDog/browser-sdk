@@ -96,7 +96,7 @@ function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier): 
   }
 }
 
-/* tslint:disable:no-bitwise */
+/* eslint-disable no-bitwise */
 export class TraceIdentifier {
   private buffer: Uint8Array = new Uint8Array(8)
 
@@ -141,4 +141,4 @@ export class TraceIdentifier {
     )
   }
 }
-/* tslint:enable:no-bitwise */
+/* eslint-enable no-bitwise */

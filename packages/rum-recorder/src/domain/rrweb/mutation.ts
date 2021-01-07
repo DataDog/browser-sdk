@@ -1,4 +1,4 @@
-/* tslint:disable:no-null-keyword */
+/* eslint-disable no-null/no-null */
 import {
   IGNORED_NODE,
   INode,

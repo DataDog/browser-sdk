@@ -11,7 +11,7 @@ if (testReportDirectory) {
     'junit',
     {
       outputDir: testReportDirectory,
-      outputFileFormat: function (options) {
+      outputFileFormat(options) {
         return `results-${options.cid}.${options.capabilities.browserName}.xml`
       },
     },
@@ -35,7 +35,7 @@ module.exports = {
     defaultTimeoutInterval: 60000,
     requires: [path.resolve(__dirname, './ts-node')],
   },
-  onPrepare: function () {
+  onPrepare() {
     if (testReportDirectory) {
       try {
         mkdirSync(testReportDirectory, { recursive: true })

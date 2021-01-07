@@ -1,4 +1,4 @@
-// tslint:disable ban-types
+// eslint-disable  @typescript-eslint/ban-types
 import { combine, Context } from '../tools/context'
 import { toStackTraceString } from '../tools/error'
 import * as utils from '../tools/utils'

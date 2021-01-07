@@ -1,3 +1,4 @@
+/* eslint-disable  max-len */
 export const OPERA_854 = {
   message: `Statement on line 44: Type mismatch (usually a non-object value used where an object is required)
 Backtrace:
@@ -323,7 +324,7 @@ export const IE_9 = {
 export const IE_10 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
-  number: -2146823281,
+  number: -2146823281, // eslint-disable-line id-blacklist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:48:13)
    at foo (http://path/to/file.js:46:9)
@@ -334,7 +335,7 @@ export const IE_11 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
   name: 'TypeError',
-  number: -2146823281,
+  number: -2146823281, // eslint-disable-line id-blacklist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:47:21)
    at foo (http://path/to/file.js:45:13)
@@ -345,7 +346,7 @@ export const IE_11_EVAL = {
   description: "'getExceptionProps' is undefined",
   message: "'getExceptionProps' is undefined",
   name: 'ReferenceError',
-  number: -2146823279,
+  number: -2146823279, // eslint-disable-line id-blacklist
   stack: `ReferenceError: 'getExceptionProps' is undefined
    at eval code (eval code:1:1)
    at foo (http://path/to/file.js:58:17)
@@ -383,7 +384,7 @@ export const PHANTOMJS_1_19 = {
     at http://path/to/file.js:4287`,
 }
 
-// tslint:disable max-line-length
+// eslint-disable  max-len
 export const ANDROID_REACT_NATIVE = {
   message: 'Error: test',
   name: 'Error',
@@ -397,7 +398,7 @@ at child(/home/username/sample-workspace/sampleapp.collect.react/node_modules/re
 at children(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactMultiChild.js:264:10)
 at this(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js:74:41)\n`,
 }
-// tslint:enable max-line-length
+// eslint-enable  max-len
 
 export const ANDROID_REACT_NATIVE_PROD = {
   message: 'Error: test',

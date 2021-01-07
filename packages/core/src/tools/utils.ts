@@ -101,7 +101,7 @@ export function assign(target: Assignable, ...toAssign: Assignable[]) {
  */
 export function generateUUID(placeholder?: string): string {
   return placeholder
-    ? // tslint:disable-next-line no-bitwise
+    ? // eslint-disable-next-line  no-bitwise
       (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
@@ -125,7 +125,7 @@ export function msToNs<T>(duration: number | T): number | T {
   return round(duration * 1e6, 0)
 }
 
-// tslint:disable-next-line:no-empty
+// eslint-disable-next-line no-empty,@typescript-eslint/no-empty-function
 export function noop() {}
 
 interface ObjectWithToJSON {
@@ -188,7 +188,7 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
 export function includes(candidate: string, search: string): boolean
 export function includes<T>(candidate: T[], search: T): boolean
 export function includes(candidate: string | unknown[], search: any) {
-  // tslint:disable-next-line: no-unsafe-any
+  // eslint-disable-next-line 
   return candidate.indexOf(search) !== -1
 }
 

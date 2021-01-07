@@ -1,4 +1,4 @@
-// tslint:disable no-unsafe-any
+// eslint-disable  
 
 import { monitor } from './internalMonitoring'
 
@@ -53,7 +53,7 @@ export interface StackTrace {
 const UNKNOWN_FUNCTION = '?'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-// tslint:disable-next-line max-line-length
+// eslint-disable-next-line  max-len
 const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/
 
 /**
@@ -87,7 +87,7 @@ function isUndefined(what: any) {
  * @return {Function} The wrapped func
  * @memberof TraceKit
  */
-// tslint:disable-next-line ban-types
+// eslint-disable-next-line  @typescript-eslint/ban-types
 export function wrap(func: Function) {
   function wrapped(this: any) {
     try {
@@ -499,11 +499,11 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
       return
     }
 
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i
 
     // Used to additionally parse URL/line/column from eval frames
@@ -605,7 +605,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     const opera10Regex = / line (\d+).*script (?:in )?(\S+)(?:: in function (\S+))?$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\))? in (.*):\s*$/i
     const lines = stacktrace.split('\n')
     const stack = []

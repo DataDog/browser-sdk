@@ -245,7 +245,7 @@ describe('utils', () => {
 
     it('should jsonStringify edge cases', () => {
       expect(jsonStringify(undefined)).toEqual(undefined)
-      // tslint:disable-next-line:no-null-keyword
+      // eslint-disable-next-line no-null/no-null
       expect(jsonStringify(null)).toEqual('null')
       expect(jsonStringify(1)).toEqual('1')
       expect(jsonStringify(true)).toEqual('true')

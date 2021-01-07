@@ -1,6 +1,6 @@
-/* tslint:disable:no-null-keyword */
+/* eslint-disable no-null/no-null */
 import { noop } from '@datadog/browser-core'
-// tslint:disable-next-line: no-implicit-dependencies
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { FontFaceDescriptors, FontFaceSet } from 'css-font-loading-module'
 import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
 import { MutationBuffer } from './mutation'
@@ -386,7 +386,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   const fontMap = new WeakMap<FontFace, FontParam>()
 
   const originalFontFace = FontFace
-  // tslint:disable-next-line: no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(window as any).FontFace = function FontFace(
     family: string,
     source: string | ArrayBufferView,
@@ -400,7 +400,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
       fontSource:
         typeof source === 'string'
           ? source
-          : // tslint:disable-next-line: no-any
+          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
             JSON.stringify(Array.from(new Uint8Array(source as any))),
     })
     return fontFace
@@ -420,7 +420,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   })
 
   handlers.push(() => {
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).FonFace = originalFontFace
   })
   handlers.push(restoreHandler)

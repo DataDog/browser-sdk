@@ -1,4 +1,4 @@
-/* tslint:disable:no-null-keyword */
+/* eslint-disable no-null/no-null */
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
 import { initObservers, mutationBuffer } from './observer'
 import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordOptions } from './types'
@@ -50,7 +50,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): ListenerHand
           'datetime-local': true,
           email: true,
           month: true,
-          number: true,
+          number: true, // eslint-disable-line id-blacklist
           range: true,
           search: true,
           select: true,

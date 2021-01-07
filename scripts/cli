@@ -28,7 +28,7 @@ cmd_typecheck () {
 
 cmd_lint () {
   local project_path="${1}"
-  tslint -p "$project_path" -c ./tslint.json
+  eslint "$project_path"
 }
 
 cmd_update_submodule () {
