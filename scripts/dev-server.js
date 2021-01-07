@@ -5,13 +5,15 @@ const path = require('path')
 
 const logsConfig = require('../packages/logs/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
+const rumRecorderConfig = require('../packages/rum-recorder/webpack.config')
 const buildEnv = require('./build-env')
 
 const app = express()
 
 app.use(express.static(path.join(__dirname, '../sandbox')))
-app.use(middleware(webpack(withBuildEnv(rumConfig(null, { mode: 'development' })))))
-app.use(middleware(webpack(withBuildEnv(logsConfig(null, { mode: 'development' })))))
+for (const config of [rumConfig, logsConfig, rumRecorderConfig]) {
+  app.use(middleware(webpack(withBuildEnv(config(null, { mode: 'development' })))))
+}
 
 const port = 8080
 app.listen(port, () => console.log(`server listening on port ${port}.`))

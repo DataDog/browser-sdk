@@ -2,8 +2,8 @@ import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 
-export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): void } {
-  const global = {
+export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
+  const publicApi = {
     ...stub,
 
     // This API method is intentionally not monitored, since the only thing executed is the
@@ -16,14 +16,14 @@ export function makeGlobal<T>(stub: T): T & { onReady(callback: () => void): voi
 
   // Add an "hidden" property to set debug mode. We define it that way to hide it
   // as much as possible but of course it's not a real protection.
-  Object.defineProperty(global, '_setDebug', {
+  Object.defineProperty(publicApi, '_setDebug', {
     get() {
       return setDebugMode
     },
     enumerable: false,
   })
 
-  return global
+  return publicApi
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
