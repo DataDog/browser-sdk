@@ -1,5 +1,3 @@
-// tslint:disable-next-line: no-implicit-dependencies
-import { FontFaceDescriptors } from 'css-font-loading-module'
 import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
 
 export enum EventType {
@@ -335,6 +333,15 @@ export interface CanvasMutationParam {
   property: string
   args: unknown[]
   setter?: true
+}
+
+export interface FontFaceDescriptors {
+  style?: string
+  weight?: string
+  stretch?: string
+  unicodeRange?: string
+  variant?: string
+  featureSettings?: string
 }
 
 export interface FontParam {
