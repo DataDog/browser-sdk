@@ -1,8 +1,5 @@
+// This tsconfig is only used for tooling (ex: typecheck in code editors)
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "module": "es6"
-  },
   "include": ["./packages/**/src/**/*.ts", "./packages/**/test/**/*.ts"]
 }

@@ -9,15 +9,18 @@
     "strict": true,
     "target": "es5",
     "sourceMap": true,
+
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }
     ],
+
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
       "@datadog/browser-rum-core": ["./packages/rum-core/src"],
-      "@datadog/browser-rum": ["./packages/rum/src"]
+      "@datadog/browser-rum": ["./packages/rum/src"],
+      "@datadog/browser-rum-recorder": ["./packages/rum-recorder/src"]
     }
   }
 }
