@@ -25,7 +25,10 @@ describe('viewCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const view = {
       cumulativeLayoutShift: 1,
-      customTimings: {},
+      customTimings: {
+        foo: 10,
+        bar: 20,
+      },
       documentVersion: 3,
       duration: 100,
       eventCounts: {
@@ -51,7 +54,7 @@ describe('viewCollection', () => {
         loadEvent: 10,
       },
     }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, (view as any) as View)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
@@ -65,7 +68,10 @@ describe('viewCollection', () => {
           count: 10,
         },
         cumulativeLayoutShift: 1,
-        customTimings: {},
+        customTimings: {
+          foo: 10 * 1e6,
+          bar: 20 * 1e6,
+        },
         domComplete: 10 * 1e6,
         domContentLoaded: 10 * 1e6,
         domInteractive: 10 * 1e6,
