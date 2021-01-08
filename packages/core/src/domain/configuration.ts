@@ -139,7 +139,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     ? userConfiguration.enableExperimentalFeatures
     : []
 
-  const intakeType: IntakeType = userConfiguration.useAlternateIntakeDomains ? 'alternate' : 'classic'
+  const intakeType: IntakeType = getIntakeType(transportConfiguration.site, userConfiguration)
   const intakeUrls = getIntakeUrls(intakeType, transportConfiguration, userConfiguration.replica !== undefined)
   const configuration: Configuration = {
     beforeSend: userConfiguration.beforeSend,
@@ -254,6 +254,11 @@ function getHost(intakeType: IntakeType, endpointType: EndpointType, site: strin
   const extension = domainParts.pop()
   const suffix = `${domainParts.join('-')}.${extension}`
   return `${endpoint}.browser-intake-${suffix}`
+}
+
+function getIntakeType(site: string, userConfiguration: UserConfiguration) {
+  // TODO when new intake will be available for gov, only allow classic intake for us and eu
+  return userConfiguration.useAlternateIntakeDomains || site === 'us3.datadoghq.com' ? 'alternate' : 'classic'
 }
 
 function getIntakeUrls(intakeType: IntakeType, conf: TransportConfiguration, withReplica: boolean) {
