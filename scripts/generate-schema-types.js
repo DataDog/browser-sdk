@@ -5,7 +5,7 @@ const prettier = require('prettier')
 
 const workingDirectory = path.join(__dirname, '../rum-events-format')
 const schemaPath = path.join(workingDirectory, 'rum-events-format.json')
-const compiledTypesPath = path.join(__dirname, '../packages/rum/src/rumEvent.types.ts')
+const compiledTypesPath = path.join(__dirname, '../packages/rum-core/src/rumEvent.types.ts')
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')
 
 async function main() {

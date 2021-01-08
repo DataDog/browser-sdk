@@ -31,6 +31,7 @@ function processViewUpdate(view: View) {
       },
       firstContentfulPaint: msToNs(view.timings.firstContentfulPaint),
       firstInputDelay: msToNs(view.timings.firstInputDelay),
+      firstInputTime: msToNs(view.timings.firstInputTime),
       isActive: view.isActive,
       largestContentfulPaint: msToNs(view.timings.largestContentfulPaint),
       loadEvent: msToNs(view.timings.loadEvent),

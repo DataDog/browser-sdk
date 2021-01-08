@@ -10,6 +10,7 @@ export interface Timings {
   loadEvent?: number
   largestContentfulPaint?: number
   firstInputDelay?: number
+  firstInputTime?: number
 }
 
 export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
@@ -28,9 +29,10 @@ export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) 
       largestContentfulPaint,
     })
   })
-  const { stop: stopFIDTracking } = trackFirstInputDelay(lifeCycle, (firstInputDelay) => {
+  const { stop: stopFIDTracking } = trackFirstInputTimings(lifeCycle, ({ firstInputDelay, firstInputTime }) => {
     setTimings({
       firstInputDelay,
+      firstInputTime,
     })
   })
 
@@ -74,7 +76,7 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
 }
 
 /**
- * Track the largest contentful paint (LCP) occuring during the initial View.  This can yield
+ * Track the largest contentful paint (LCP) occurring during the initial View.  This can yield
  * multiple values, only the most recent one should be used.
  * Documentation: https://web.dev/lcp/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
@@ -121,17 +123,25 @@ export function trackLargestContentfulPaint(
 }
 
 /**
- * Track the first input delay (FID) occuring during the initial View.  This yields at most one
- * value.
+ * Track the first input occurring during the initial View to return:
+ * - First Input Delay
+ * - First Input Time
+ * Callback is called at most one time.
  * Documentation: https://web.dev/fid/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getFID.ts
  */
-export function trackFirstInputDelay(lifeCycle: LifeCycle, callback: (value: number) => void) {
+export function trackFirstInputTimings(
+  lifeCycle: LifeCycle,
+  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: number; firstInputTime: number }) => void
+) {
   const firstHidden = trackFirstHidden()
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
-      callback(entry.processingStart - entry.startTime)
+      callback({
+        firstInputDelay: entry.processingStart - entry.startTime,
+        firstInputTime: entry.startTime,
+      })
     }
   })
 

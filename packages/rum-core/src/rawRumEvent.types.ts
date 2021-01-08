@@ -1,4 +1,4 @@
-import { Context, ContextValue, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
 import { ActionType } from './domain/rumEventsCollection/action/trackActions'
 import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
 import { ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
@@ -58,6 +58,7 @@ export interface RawRumViewEvent {
     loadingType: ViewLoadingType
     firstContentfulPaint?: number
     firstInputDelay?: number
+    firstInputTime?: number
     cumulativeLayoutShift?: number
     largestContentfulPaint?: number
     domInteractive?: number

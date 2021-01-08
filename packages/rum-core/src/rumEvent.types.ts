@@ -436,6 +436,10 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly first_input_delay?: number
     /**
+     * Duration in ns to the first input
+     */
+    readonly first_input_time?: number
+    /**
      * Total layout shift score that occured on the view
      */
     readonly cumulative_layout_shift?: number
