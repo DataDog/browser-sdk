@@ -23,7 +23,9 @@ describe('viewCollection', () => {
 
   it('should create view from view update', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const location: Partial<Location> = {}
     const view = {
+      location,
       cumulativeLayoutShift: 1,
       customTimings: {
         bar: 20,
@@ -41,7 +43,6 @@ describe('viewCollection', () => {
       isActive: false,
       loadingTime: 20,
       loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: window.location,
       referrer: '',
       startTime: 1234,
       timings: {
