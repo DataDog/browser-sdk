@@ -415,7 +415,8 @@ describe('rum entry', () => {
 
     it('should add custom timings', () => {
       rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      ;(rumGlobal as any).addTiming('foo') // tslint:disable-line
+      // tslint:disable-next-line: no-unsafe-any
+      ;(rumGlobal as any).addTiming('foo')
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(errorSpy).not.toHaveBeenCalled()
     })
