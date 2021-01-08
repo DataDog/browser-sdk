@@ -1,4 +1,4 @@
-import { Configuration, getTimestamp, mapObject, msToNs } from '@datadog/browser-core'
+import { Configuration, getTimestamp, isEmptyObject, mapObject, msToNs } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
@@ -23,7 +23,6 @@ function processViewUpdate(view: View) {
         count: view.eventCounts.userActionCount,
       },
       cumulativeLayoutShift: view.cumulativeLayoutShift,
-      customTimings: mapObject(view.customTimings, msToNs),
       domComplete: msToNs(view.timings.domComplete),
       domContentLoaded: msToNs(view.timings.domContentLoaded),
       domInteractive: msToNs(view.timings.domInteractive),
@@ -45,6 +44,9 @@ function processViewUpdate(view: View) {
       },
       timeSpent: msToNs(view.duration),
     },
+  }
+  if (!isEmptyObject(view.customTimings)) {
+    viewEvent.view.customTimings = mapObject(view.customTimings, msToNs)
   }
   return {
     rawRumEvent: viewEvent,

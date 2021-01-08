@@ -59,7 +59,7 @@ export interface RawRumViewEvent {
     firstContentfulPaint?: number
     firstInputDelay?: number
     cumulativeLayoutShift?: number
-    customTimings: ViewCustomTimings
+    customTimings?: ViewCustomTimings
     largestContentfulPaint?: number
     domInteractive?: number
     domContentLoaded?: number
