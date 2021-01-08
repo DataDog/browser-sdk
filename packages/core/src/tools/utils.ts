@@ -252,7 +252,7 @@ export function isEmptyObject(object: object) {
   return Object.keys(object).length === 0
 }
 
-export function mapObject<A, B>(object: { [key: string]: A }, fn: (arg: A) => B) {
+export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B) {
   const newObject: { [key: string]: B } = {}
   for (const key of Object.keys(object)) {
     newObject[key] = fn(object[key])
