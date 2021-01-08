@@ -41,7 +41,7 @@ describe('viewCollection', () => {
       isActive: false,
       loadingTime: 20,
       loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: {} as Partial<Location>,
+      location: window.location,
       referrer: '',
       startTime: 1234,
       timings: {
