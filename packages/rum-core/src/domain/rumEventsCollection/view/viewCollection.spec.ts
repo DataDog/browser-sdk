@@ -41,7 +41,7 @@ describe('viewCollection', () => {
       isActive: false,
       loadingTime: 20,
       loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: {},
+      location: {} as Partial<Location>,
       referrer: '',
       startTime: 1234,
       timings: {
@@ -54,7 +54,7 @@ describe('viewCollection', () => {
         loadEvent: 10,
       },
     }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, (view as any) as View)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
