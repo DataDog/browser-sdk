@@ -1,5 +1,5 @@
 *
-!/bundle/**/*
+!/bundle/datadog-logs.js
 !/cjs/**/*
 !/esm/**/*
 !/src/**/*
