@@ -2,18 +2,10 @@ const path = require('path')
 
 const webpackBase = require('../../webpack.base')
 
-const datacenter = process.env.TARGET_DATACENTER || 'us'
-const withSuffix = process.env.WITH_SUFFIX || false
+const entry = path.resolve(__dirname, 'src/boot/rum.entry.ts')
 
-const suffix = withSuffix ? `-${datacenter}` : ''
-
-module.exports = (env, argv) => ({
-  entry: {
-    rum: path.resolve(__dirname, 'src/boot/rum.entry.ts'),
-  },
-  ...webpackBase(argv.mode),
-  output: {
-    filename: `datadog-rum${suffix}.js`,
-    path: path.resolve(__dirname, 'bundle'),
-  },
-})
+module.exports = (env, argv) => [
+  webpackBase({ mode: argv.mode, entry, datacenter: 'us', filename: 'datadog-rum.js' }),
+  webpackBase({ mode: argv.mode, entry, datacenter: 'us', filename: 'datadog-rum-us.js' }),
+  webpackBase({ mode: argv.mode, entry, datacenter: 'eu', filename: 'datadog-rum-eu.js' }),
+]
