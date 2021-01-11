@@ -11,8 +11,18 @@
 > ⚡️ - Performance improvement.
 >
 > 📝 - Documentation.
+>
+> ⚗ - Experimental.
 
 ---
+
+## v2.2.0
+
+- 🐛 [RUMF-810] force alternate intake for us3 ([#677](https://github.com/DataDog/browser-sdk/pull/677))
+- ✨ [RUMF-783] collect view.first_input_time ([#676](https://github.com/DataDog/browser-sdk/pull/676))
+- ⚗ Create a rum-core package ([#673](https://github.com/DataDog/browser-sdk/pull/673))
+- ⚗ [RUMF-803] import RRWeb ([#658](https://github.com/DataDog/browser-sdk/pull/658))
+- ⚗ [RUMF-801] create a new package for rum-recorder ([#657](https://github.com/DataDog/browser-sdk/pull/657))
 
 ## v2.1.2
 
