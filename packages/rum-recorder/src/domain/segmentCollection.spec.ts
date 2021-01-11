@@ -132,7 +132,7 @@ describe('Segment', () => {
     ])
   })
 
-  it('flushes the mousemove records batch after a max number of records', () => {
+  it('writes the mousemove records batch after a max number of records', () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init')
     for (let i = 0; i < MAX_MOUSE_MOVE_BATCH + 2; i += 1) {
