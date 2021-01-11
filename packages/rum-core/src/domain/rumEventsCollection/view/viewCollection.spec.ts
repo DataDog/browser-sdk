@@ -25,7 +25,7 @@ describe('viewCollection', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     const location: Partial<Location> = {}
     const view = {
-      location,
+      location: location as Location,
       cumulativeLayoutShift: 1,
       customTimings: {
         bar: 20,
@@ -56,7 +56,7 @@ describe('viewCollection', () => {
         loadEvent: 10,
       },
     }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({

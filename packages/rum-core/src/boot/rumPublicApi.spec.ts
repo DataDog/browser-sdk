@@ -3,13 +3,14 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
 
+const configuration: Partial<Configuration> = {
+  isEnabled: () => false,
+}
 const noopStartRum = () => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
-  configuration: ({
-    isEnabled: () => false,
-  } as any) as Configuration,
+  configuration: configuration as Configuration,
   getInternalContext: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
