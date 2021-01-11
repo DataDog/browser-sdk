@@ -1,6 +1,9 @@
 import { makeMouseMoveRecord } from '../../test/utils'
 import { IncrementalSource, MouseMoveRecord, Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import {
+  getRecordStartEnd,
+  groupMouseMoves,
+  isMouseMoveRecord,
   MAX_MOUSE_MOVE_BATCH,
   MAX_SEGMENT_DURATION,
   RecordsIncrementalState,
@@ -23,6 +26,17 @@ class StringWriter implements SegmentWriter {
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.Load, timestamp: 10, data: {} }
+
+const INPUT_RECORD: Record = {
+  data: {
+    id: 123,
+    isChecked: true,
+    source: IncrementalSource.Input,
+    text: '123',
+  },
+  timestamp: 123,
+  type: RecordType.IncrementalSnapshot,
+}
 
 describe('startSegmentCollection', () => {
   let writer: StringWriter
@@ -207,5 +221,52 @@ describe('RecordsIncrementalState', () => {
     })
     expect(state.start).toBe(9)
     expect(state.end).toBe(11)
+  })
+})
+
+describe('isMouseMoveRecord', () => {
+  it('returns false for non-MouseMove records', () => {
+    expect(isMouseMoveRecord(RECORD)).toBe(false)
+    expect(isMouseMoveRecord(INPUT_RECORD)).toBe(false)
+  })
+
+  it('returns true for MouseMove records', () => {
+    expect(isMouseMoveRecord(makeMouseMoveRecord(100, []))).toBe(true)
+  })
+})
+
+describe('groupMouseMoves', () => {
+  it('returns the same event if a single event is provided', () => {
+    const event = makeMouseMoveRecord(10, [{ id: 0 }])
+    expect(groupMouseMoves([event])).toEqual(event)
+  })
+
+  it('groups mouse events in a single mouse event', () => {
+    expect(
+      groupMouseMoves([
+        makeMouseMoveRecord(10, [{ id: 0 }]),
+        makeMouseMoveRecord(14, [{ id: 1 }]),
+        makeMouseMoveRecord(20, [{ id: 2 }]),
+      ])
+    ).toEqual(
+      makeMouseMoveRecord(20, [
+        { id: 0, timeOffset: -10 },
+        { id: 1, timeOffset: -6 },
+        { id: 2, timeOffset: 0 },
+      ])
+    )
+  })
+})
+
+describe('getRecordStartEnd', () => {
+  it("returns the timestamp as 'start' and 'end' for non-MouseMove records", () => {
+    expect(getRecordStartEnd(RECORD)).toEqual([10, 10])
+    expect(getRecordStartEnd(INPUT_RECORD)).toEqual([123, 123])
+  })
+
+  it("returns the time from the first mouse position as 'start' for MouseMove records", () => {
+    expect(
+      getRecordStartEnd(makeMouseMoveRecord(150, [{ timeOffset: -50 }, { timeOffset: -30 }, { timeOffset: 0 }]))
+    ).toEqual([100, 150])
   })
 })
