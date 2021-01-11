@@ -35,7 +35,7 @@ describe('startSegmentCollection', () => {
     jasmine.clock().uninstall()
   })
 
-  it('immediatly starts a new segment', () => {
+  it('immediately starts a new segment', () => {
     const { addRecord } = startSegmentCollection(() => CONTEXT, writer)
     expect(writer.output).toBe('')
     addRecord(RECORD)
@@ -43,14 +43,14 @@ describe('startSegmentCollection', () => {
     expect(writer.completed.length).toBe(0)
   })
 
-  it('writes a segment when renewing it', () => {
+  it('completes a segment when renewing it', () => {
     const { renewSegment, addRecord } = startSegmentCollection(() => CONTEXT, writer)
     addRecord(RECORD)
     renewSegment('before_unload')
     expect(writer.completed.length).toBe(1)
   })
 
-  it('writes a segment after MAX_SEGMENT_DURATION', () => {
+  it('completes a segment after MAX_SEGMENT_DURATION', () => {
     jasmine.clock().install()
     const { addRecord } = startSegmentCollection(() => CONTEXT, writer)
     addRecord(RECORD)
@@ -58,7 +58,7 @@ describe('startSegmentCollection', () => {
     expect(writer.completed.length).toBe(1)
   })
 
-  it('does not write a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+  it('does not complete a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
     jasmine.clock().install()
     const { renewSegment, addRecord } = startSegmentCollection(() => CONTEXT, writer)
     addRecord(RECORD)
@@ -177,13 +177,13 @@ describe('RecordsIncrementalState', () => {
     expect(state.hasFullSnapshot).toBe(false)
   })
 
-  it("doesn't set hasFullSnapshot to true if a FullSnapshot is not directly preceeded by a Meta record", () => {
+  it("doesn't set hasFullSnapshot to true if a FullSnapshot is not directly preceded by a Meta record", () => {
     const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
     state.addRecord({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })
     expect(state.hasFullSnapshot).toBe(false)
   })
 
-  it('sets hasFullSnapshot to true if a FullSnapshot is preceeded by a Meta record', () => {
+  it('sets hasFullSnapshot to true if a FullSnapshot is preceded by a Meta record', () => {
     const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
     state.addRecord({ type: RecordType.Meta, timestamp: 10, data: {} as any })
     state.addRecord({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })

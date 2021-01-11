@@ -1,7 +1,7 @@
 import { createDeflateWorker, DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
 
 describe('deflateWorker', () => {
-  it('responds with the deflated size when pushing some data', (done) => {
+  it('buffers data and responds with the buffer deflated size when writing', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 3, (events) => {
       expect(events).toEqual([
@@ -32,7 +32,7 @@ describe('deflateWorker', () => {
     deflateWorker.postMessage({ id: 1, action: 'complete' })
   })
 
-  it('pushes the remaining data specified by "complete"', (done) => {
+  it('writes the remaining data specified by "complete"', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 1, (events) => {
       expect(events).toEqual([

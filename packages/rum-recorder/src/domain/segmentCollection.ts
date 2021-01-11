@@ -128,7 +128,7 @@ export class RecordsIncrementalState {
     this.end = Math.max(this.end, end)
     if (!this.hasFullSnapshot) {
       // Note: to be exploitable by the replay, this field should be true only if the FullSnapshot
-      // is preceeded by a Meta record. Because rrweb is emiting both records synchronously and
+      // is preceded by a Meta record. Because rrweb is emitting both records synchronously and
       // contiguously, it should always be the case, but check it nonetheless.
       this.hasFullSnapshot = record.type === RecordType.FullSnapshot && this.lastRecordType === RecordType.Meta
     }
