@@ -46,6 +46,35 @@ describe('deflateWorker', () => {
     deflateWorker.postMessage({ id: 0, action: 'complete', data: 'foo' })
   })
 
+  it('completes several deflates one after the other', (done) => {
+    const deflateWorker = createDeflateWorker()
+    listen(deflateWorker, 4, (events) => {
+      expect(events).toEqual([
+        {
+          id: 0,
+          size: 11,
+        },
+        {
+          id: 1,
+          result: new Uint8Array([120, 156, 74, 203, 207, 7, 0, 0, 0, 255, 255, 3, 0, 2, 130, 1, 69]),
+        },
+        {
+          id: 2,
+          size: 11,
+        },
+        {
+          id: 3,
+          result: new Uint8Array([120, 156, 74, 74, 44, 2, 0, 0, 0, 255, 255, 3, 0, 2, 93, 1, 54]),
+        },
+      ])
+      done()
+    })
+    deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
+    deflateWorker.postMessage({ id: 1, action: 'complete' })
+    deflateWorker.postMessage({ id: 2, action: 'write', data: 'bar' })
+    deflateWorker.postMessage({ id: 3, action: 'complete' })
+  })
+
   function listen(
     deflateWorker: DeflateWorker,
     expectedResponseCount: number,
