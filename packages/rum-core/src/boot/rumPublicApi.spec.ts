@@ -400,13 +400,13 @@ describe('rum entry', () => {
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       errorSpy = spyOn(console, 'error')
-      const configuration: Partial<Configuration> = {
+      const otherConfiguration: Partial<Configuration> = {
         isEnabled: () => true,
       }
       rumGlobal = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addTiming: addTimingSpy,
-        configuration: configuration as Configuration,
+        configuration: otherConfiguration as Configuration,
       }))
       setupBuilder = setup()
     })
