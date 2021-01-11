@@ -14,6 +14,11 @@
 
 ---
 
+## v2.1.2
+
+- [RUMF-807] Broaden context types in APIs ([#663](https://github.com/DataDog/browser-sdk/pull/663))
+- [RUMF-807] Export types used in API ([#662](https://github.com/DataDog/browser-sdk/pull/662))
+
 ## v2.1.1
 
 - 🐛 [CDN cache] remove stale-while-revalidate ([#665](https://github.com/DataDog/browser-sdk/pull/665))

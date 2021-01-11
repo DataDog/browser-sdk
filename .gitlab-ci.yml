@@ -56,6 +56,14 @@ build:
     - scripts/cli lint test/app
     - scripts/cli typecheck test/app
 
+build-bundle:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - yarn build:bundle
+
 compatibility:
   stage: test
   tags: ['runner:main', 'size:large']
@@ -142,11 +150,7 @@ deploy-staging:
   image: $CI_IMAGE
   script:
     - yarn
-    - WITH_SUFFIX=true TARGET_DATACENTER=eu BUILD_MODE=staging yarn build:bundle
-    - ./scripts/deploy.sh staging eu
-    - WITH_SUFFIX=true TARGET_DATACENTER=us BUILD_MODE=staging yarn build:bundle
-    - ./scripts/deploy.sh staging us
-    - TARGET_DATACENTER=us BUILD_MODE=staging yarn build:bundle
+    - BUILD_MODE=staging yarn build:bundle
     - ./scripts/deploy.sh staging
 
 deploy-release:
@@ -160,11 +164,7 @@ deploy-release:
   image: $CI_IMAGE
   script:
     - yarn
-    - WITH_SUFFIX=true TARGET_DATACENTER=us BUILD_MODE=release yarn build:bundle
-    - ./scripts/deploy.sh prod us
-    - WITH_SUFFIX=true TARGET_DATACENTER=eu BUILD_MODE=release yarn build:bundle
-    - ./scripts/deploy.sh prod eu
-    - TARGET_DATACENTER=us BUILD_MODE=release yarn build:bundle
+    - BUILD_MODE=release yarn build:bundle
     - ./scripts/deploy.sh prod
 
 ########################################################################################################################

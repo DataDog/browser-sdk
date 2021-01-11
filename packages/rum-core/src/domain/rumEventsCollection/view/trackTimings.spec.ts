@@ -11,7 +11,7 @@ import { resetFirstHidden } from './trackFirstHidden'
 import {
   Timings,
   trackFirstContentfulPaint,
-  trackFirstInputDelay,
+  trackFirstInputTimings,
   trackLargestContentfulPaint,
   trackNavigationTimings,
   trackTimings,
@@ -71,6 +71,7 @@ describe('trackTimings', () => {
       domInteractive: 234,
       firstContentfulPaint: 123,
       firstInputDelay: 100,
+      firstInputTime: 1000,
       loadEvent: 567,
     })
   })
@@ -188,14 +189,16 @@ describe('largestContentfulPaint', () => {
   })
 })
 
-describe('firstInputDelay', () => {
+describe('firstInputTimings', () => {
   let setupBuilder: TestSetupBuilder
-  let fidCallback: jasmine.Spy<(value: number) => void>
+  let fitCallback: jasmine.Spy<
+    ({ firstInputDelay, firstInputTime }: { firstInputDelay: number; firstInputTime: number }) => void
+  >
 
   beforeEach(() => {
-    fidCallback = jasmine.createSpy()
+    fitCallback = jasmine.createSpy()
     setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackFirstInputDelay(lifeCycle, fidCallback)
+      return trackFirstInputTimings(lifeCycle, fitCallback)
     })
     resetFirstHidden()
   })
@@ -206,12 +209,12 @@ describe('firstInputDelay', () => {
     resetFirstHidden()
   })
 
-  it('should provide the first input delay', () => {
+  it('should provide the first input timings', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
-    expect(fidCallback).toHaveBeenCalledTimes(1)
-    expect(fidCallback).toHaveBeenCalledWith(100)
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 100, firstInputTime: 1000 })
   })
 
   it('should not be present if the page is hidden', () => {
@@ -220,6 +223,6 @@ describe('firstInputDelay', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_FIRST_INPUT_ENTRY)
 
-    expect(fidCallback).not.toHaveBeenCalled()
+    expect(fitCallback).not.toHaveBeenCalled()
   })
 })

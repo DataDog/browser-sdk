@@ -3,7 +3,6 @@
 set -ex
 
 env=$1
-datacenter=$2
 
 case "${env}" in
 "prod")
@@ -17,36 +16,22 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod [eu|us]"
+    echo "Usage: ./deploy.sh staging|prod"
     exit 1
     ;;
 esac
 
-case "${datacenter}" in
-"eu")
-    LOGS_FILE_NAME="datadog-logs-eu.js"
-    RUM_FILE_NAME="datadog-rum-eu.js"
-    ;;
-"us")
-    LOGS_FILE_NAME="datadog-logs-us.js"
-    RUM_FILE_NAME="datadog-rum-us.js"
-    ;;
-"")
-    LOGS_FILE_NAME="datadog-logs.js"
-    RUM_FILE_NAME="datadog-rum.js"
-    ;;
-* )
-    echo "Usage: ./deploy.sh staging|prod [eu|us]"
-    exit 1
-    ;;
-esac
+FILE_PATHS=(
+  "packages/logs/bundle/datadog-logs-eu.js"
+  "packages/logs/bundle/datadog-logs-us.js"
+  "packages/logs/bundle/datadog-logs.js"
+  "packages/rum-recorder/bundle/datadog-rum-recorder.js"
+  "packages/rum/bundle/datadog-rum-eu.js"
+  "packages/rum/bundle/datadog-rum-us.js"
+  "packages/rum/bundle/datadog-rum.js"
+)
 
 CACHE_CONTROL='max-age=900, s-maxage=60'
-LOGS_BUNDLE_PATH="packages/logs/bundle"
-RUM_BUNDLE_PATH="packages/rum/bundle"
-declare -A paths
-paths[${LOGS_FILE_NAME}]="${LOGS_BUNDLE_PATH}/${LOGS_FILE_NAME}"
-paths[${RUM_FILE_NAME}]="${RUM_BUNDLE_PATH}/${RUM_FILE_NAME}"
 
 main() {
   in-isolation upload-to-s3
@@ -55,16 +40,21 @@ main() {
 
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
-    for file_name in ${LOGS_FILE_NAME} ${RUM_FILE_NAME}; do
+    for file_path in "${FILE_PATHS[@]}"; do
+      local file_name=$(basename "$file_path")
       echo "Upload ${file_name}"
-      aws s3 cp --cache-control "$CACHE_CONTROL" ${paths[${file_name}]} s3://${BUCKET_NAME}/${file_name};
+      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name};
     done
 }
 
 invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
-    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths /${LOGS_FILE_NAME} /${RUM_FILE_NAME}
+    local -a paths_to_invalidate
+    for file_path in "${FILE_PATHS[@]}"; do
+      paths_to_invalidate+=("/$(basename "$file_path")")
+    done
+    aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "${paths_to_invalidate[@]}"
 }
 
 in-isolation() {

@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -15,8 +15,8 @@
     "tslib": "^1.10.0"
   },
   "devDependencies": {
-    "@types/sinon": "7.0.13",
-    "sinon": "7.3.2"
+    "@types/sinon": "9.0.10",
+    "sinon": "9.2.2"
   },
   "repository": {
     "type": "git",

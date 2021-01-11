@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": true,
@@ -8,13 +9,17 @@
     "strict": true,
     "target": "es5",
     "sourceMap": true,
+
     "plugins": [
       {
         "name": "typescript-tslint-plugin"
       }
     ],
+
     "paths": {
-      "@datadog/browser-core": ["./packages/core/src"]
+      "@datadog/browser-core": ["./packages/core/src"],
+      "@datadog/browser-rum-core": ["./packages/rum-core/src"],
+      "@datadog/browser-rum": ["./packages/rum/src"]
     }
   }
 }
