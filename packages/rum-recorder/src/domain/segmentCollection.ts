@@ -1,3 +1,4 @@
+import { monitor } from '@datadog/browser-core'
 import { CreationReason, MouseMoveRecord, Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { getRecordStartEnd, groupMouseMoves, isMouseMoveRecord } from './recordUtils'
 
@@ -28,11 +29,14 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
     const localSegment = (currentSegment = new Segment(writer, context, creationReason))
 
     // Replace the newly created segment after MAX_SEGMENT_DURATION
-    setTimeout(() => {
-      if (currentSegment === localSegment) {
-        renewSegment('max_duration')
-      }
-    }, MAX_SEGMENT_DURATION)
+    setTimeout(
+      monitor(() => {
+        if (currentSegment === localSegment) {
+          renewSegment('max_duration')
+        }
+      }),
+      MAX_SEGMENT_DURATION
+    )
   }
 
   return {
