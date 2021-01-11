@@ -133,17 +133,27 @@ describe('configuration', () => {
     })
 
     it('should handle sites with subdomains and classic intake', () => {
-      const configuration = buildConfiguration({ clientToken, site: 'us3.datadoghq.com' }, usEnv)
-      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.us3.datadoghq.com/v1/input/xxx')).toBe(
+      const configuration = buildConfiguration({ clientToken, site: 'foo.datadoghq.com' }, usEnv)
+      expect(configuration.isIntakeUrl('https://rum-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(
         true
       )
     })
 
     it('should handle sites with subdomains and alternate intake', () => {
       const configuration = buildConfiguration(
-        { clientToken, site: 'us3.datadoghq.com', useAlternateIntakeDomains: true },
+        { clientToken, site: 'foo.datadoghq.com', useAlternateIntakeDomains: true },
+        usEnv
+      )
+      expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://trace.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
+    })
+
+    it('should force alternate intake for us3', () => {
+      const configuration = buildConfiguration(
+        { clientToken, site: 'us3.datadoghq.com', useAlternateIntakeDomains: false },
         usEnv
       )
       expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
