@@ -10,6 +10,30 @@ export interface SegmentWriter {
   complete(data: string, meta: SegmentMeta): void
 }
 
+// Segments are the main data structure for session replays.  They contain context information used
+// for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
+// namings).  They are stored without any processing from the intake, and fetched one after the
+// other while a session is being replayed.  Their encoding (deflate) are carefully crafted to allow
+// concatenating multiple segments together.  Their approximative size limits how often they are
+// created have an impact on the replay.
+//
+// When the recording starts, a segment is initially created.  The segment is renewed (finalized,
+// sent and replaced by a new one) based on various events (non-exhaustive list):
+//
+// * the page visibility change or becomes to unload
+// * the segment duration reaches a limit
+// * the encoded segment size reaches a limit
+// * ...
+//
+// A segment cannot be created without its context.  If the RUM session ends and no session id is
+// available when creating a new segment, records will be ignored, until the session is renewed and
+// a new session id is available.
+//
+// Empty segments (segments with no record) aren't useful and should be ignored.
+//
+// To help investigate session replays issues, each segment is created with a "creation reason",
+// indicating why the session has been created.
+
 export function startSegmentCollection(getSegmentContext: () => SegmentContext | undefined, writer: SegmentWriter) {
   let currentSegment: Segment | undefined
 
@@ -53,6 +77,15 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
 
 export class Segment {
   private state?: RecordsIncrementalState
+
+  // Mouse positions are being generated quite quickly (up to 1 every 50ms by default).  Using a
+  // separate record for each position can add a consequent overhead to the segment encoded size.
+  // To avoid this, we batch Mouse Move records coming from RRWeb and regroup them in a single
+  // record.
+  //
+  // Note: the original RRWeb library does this internally, without exposing a way to control this.
+  // To make sure mouse positions are correctly stored inside the Segment active when they occured,
+  // we removed RRWeb batching strategy and recreated it at the Segment level.
   private batchedMouseMove: MouseMoveRecord[] = []
 
   constructor(
