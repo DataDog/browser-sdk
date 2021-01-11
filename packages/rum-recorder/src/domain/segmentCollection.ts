@@ -17,7 +17,7 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
 
   function renewSegment(creationReason: CreationReason) {
     if (currentSegment) {
-      currentSegment.finish()
+      currentSegment.complete()
       currentSegment = undefined
     }
 
@@ -71,7 +71,7 @@ export class Segment {
     }
   }
 
-  finish() {
+  complete() {
     this.writeMouseMoves()
 
     if (!this.state) {

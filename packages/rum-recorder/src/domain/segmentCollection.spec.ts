@@ -84,7 +84,7 @@ describe('Segment', () => {
     segment.addRecord({ type: RecordType.Load, timestamp: 10, data: {} })
     expect(writer.output).toEqual('{"records":[{"type":1,"timestamp":10,"data":{}}')
     expect(writer.completed).toEqual([])
-    segment.finish()
+    segment.complete()
 
     expect(writer.completed).toEqual([
       {
@@ -121,7 +121,7 @@ describe('Segment', () => {
     segment.addRecord(makeMouseMoveRecord(10, [{ id: 0 }]))
     segment.addRecord(makeMouseMoveRecord(20, [{ id: 1 }]))
     segment.addRecord(makeMouseMoveRecord(30, [{ id: 2 }]))
-    segment.finish()
+    segment.complete()
 
     expect(writer.completed[0].segment.records).toEqual([
       makeMouseMoveRecord(30, [
@@ -138,7 +138,7 @@ describe('Segment', () => {
     for (let i = 0; i < MAX_MOUSE_MOVE_BATCH + 2; i += 1) {
       segment.addRecord(makeMouseMoveRecord(10, [{ id: 0 }]))
     }
-    segment.finish()
+    segment.complete()
 
     const records = writer.completed[0].segment.records as MouseMoveRecord[]
     expect(records.length).toBe(2)
@@ -146,10 +146,10 @@ describe('Segment', () => {
     expect(records[1].data.positions.length).toBe(2)
   })
 
-  it('ignores the "finish" call if no record have been added', () => {
+  it('ignores the "complete" call if no record have been added', () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init')
-    segment.finish()
+    segment.complete()
     expect(writer.completed).toEqual([])
   })
 })
