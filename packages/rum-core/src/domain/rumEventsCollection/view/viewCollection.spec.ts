@@ -23,8 +23,13 @@ describe('viewCollection', () => {
 
   it('should create view from view update', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const location: Partial<Location> = {}
     const view = {
       cumulativeLayoutShift: 1,
+      customTimings: {
+        bar: 20,
+        foo: 10,
+      },
       documentVersion: 3,
       duration: 100,
       eventCounts: {
@@ -37,7 +42,7 @@ describe('viewCollection', () => {
       isActive: false,
       loadingTime: 20,
       loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: {},
+      location: location as Location,
       referrer: '',
       startTime: 1234,
       timings: {
@@ -51,7 +56,7 @@ describe('viewCollection', () => {
         loadEvent: 10,
       },
     }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view as View)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
@@ -65,6 +70,10 @@ describe('viewCollection', () => {
           count: 10,
         },
         cumulativeLayoutShift: 1,
+        customTimings: {
+          bar: 20 * 1e6,
+          foo: 10 * 1e6,
+        },
         domComplete: 10 * 1e6,
         domContentLoaded: 10 * 1e6,
         domInteractive: 10 * 1e6,

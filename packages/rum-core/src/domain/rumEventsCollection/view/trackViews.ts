@@ -1,4 +1,13 @@
-import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  generateUUID,
+  monitor,
+  msToNs,
+  noop,
+  ONE_MINUTE,
+  throttle,
+} from '@datadog/browser-core'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -11,6 +20,7 @@ export interface View {
   location: Location
   referrer: string
   timings: Timings
+  customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
   startTime: number
@@ -31,6 +41,10 @@ export interface ViewCreatedEvent {
 export enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
+}
+
+export interface ViewCustomTimings {
+  [key: string]: number
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -83,6 +97,11 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   return {
+    addTiming(name: string, inInitialView = false) {
+      const view = inInitialView ? initialView : currentView
+      view.addTiming(name)
+      view.triggerUpdate()
+    },
     stop() {
       stopTimingsTracking()
       currentView.end()
@@ -107,6 +126,7 @@ function newView(
     userActionCount: 0,
   }
   let timings: Timings = {}
+  const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let cumulativeLayoutShift: number | undefined
   let loadingTime: number | undefined
@@ -154,6 +174,7 @@ function newView(
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       cumulativeLayoutShift,
+      customTimings,
       documentVersion,
       eventCounts,
       id,
@@ -192,6 +213,9 @@ function newView(
       if (newTimings.loadEvent !== undefined) {
         setLoadEvent(newTimings.loadEvent)
       }
+    },
+    addTiming(name: string) {
+      customTimings[name] = performance.now() - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }

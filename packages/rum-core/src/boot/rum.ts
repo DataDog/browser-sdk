@@ -34,7 +34,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     )
   })
 
-  const { parentContexts, addError, addAction } = startRumEventCollection(
+  const { parentContexts, addError, addAction, addTiming } = startRumEventCollection(
     userConfiguration.applicationId,
     location,
     lifeCycle,
@@ -52,6 +52,8 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   return {
     addAction,
     addError,
+    addTiming,
+    configuration,
     getInternalContext: internalContext.get,
   }
 }
@@ -69,7 +71,7 @@ export function startRumEventCollection(
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle, configuration)
   startResourceCollection(lifeCycle, configuration, session)
-  startViewCollection(lifeCycle, configuration, location)
+  const { addTiming } = startViewCollection(lifeCycle, configuration, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
@@ -77,6 +79,8 @@ export function startRumEventCollection(
     addAction,
     addError,
     parentContexts,
+
+    addTiming,
 
     stop() {
       // prevent batch from previous tests to keep running and send unwanted requests

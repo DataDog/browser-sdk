@@ -252,6 +252,14 @@ export function isEmptyObject(object: object) {
   return Object.keys(object).length === 0
 }
 
+export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B) {
+  const newObject: { [key: string]: B } = {}
+  for (const key of Object.keys(object)) {
+    newObject[key] = fn(object[key])
+  }
+  return newObject
+}
+
 /**
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
