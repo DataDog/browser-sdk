@@ -460,6 +460,12 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly load_event?: number
     /**
+     * User custom timings of the view
+     */
+    readonly custom_timings?: {
+      [k: string]: number
+    }
+    /**
      * Whether the View corresponding to this event is considered active
      */
     readonly is_active?: boolean
