@@ -143,7 +143,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(
         true
       )
-      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(
         true
       )
     })
@@ -156,6 +156,9 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
     })
 
     it('should force alternate intake for us3', () => {
@@ -166,6 +169,9 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
     })
 
     it('should detect proxy intake request', () => {
