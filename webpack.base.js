@@ -17,7 +17,7 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.(ts|js)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {

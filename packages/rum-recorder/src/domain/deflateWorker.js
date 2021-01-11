@@ -1,42 +1,37 @@
-// Warning: this file is *not* transpiled. It should use a syntax supported by our supported
-// browsers.
-
 let workerURL
 
 export function createDeflateWorker() {
   // Lazily compute the worker URL to allow importing the SDK in NodeJS
   if (!workerURL) {
-    workerURL = URL.createObjectURL(new Blob(['(' + workerCodeFn + ')(self)']))
+    workerURL = URL.createObjectURL(new Blob([`(${workerCodeFn})(self)`]))
   }
   return new Worker(workerURL)
 }
 
 function workerCodeFn() {
-  const pako = makePakoDeflate()
+  const { Deflate, constants } = makePakoDeflate()
 
-  let deflate = new pako.Deflate()
-  self.addEventListener('message', function (event) {
+  let deflate = new Deflate()
+  self.addEventListener('message', (event) => {
     const data = event.data
     switch (data.action) {
       case 'write':
-        deflate.push(data.data, pako.constants.Z_SYNC_FLUSH)
+        deflate.push(data.data, constants.Z_SYNC_FLUSH)
         self.postMessage({
           id: data.id,
-          size: deflate.chunks.reduce(function (total, chunk) {
-            return total + chunk.length
-          }, 0),
+          size: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
         })
         break
       case 'complete':
         if (data.data) {
-          deflate.push(data.data, pako.constants.Z_SYNC_FLUSH)
+          deflate.push(data.data, constants.Z_SYNC_FLUSH)
         }
-        deflate.push('', pako.constants.Z_FINISH)
+        deflate.push('', constants.Z_FINISH)
         self.postMessage({
           id: data.id,
           result: deflate.result,
         })
-        deflate = new pako.Deflate()
+        deflate = new Deflate()
         break
     }
   })
