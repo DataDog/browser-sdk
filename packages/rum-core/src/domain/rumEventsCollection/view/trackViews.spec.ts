@@ -829,3 +829,91 @@ describe('rum view measures', () => {
     })
   })
 })
+
+describe('rum track custom timings', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+  let addTiming: (name: string, inInitialView?: boolean, time?: number) => void
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .withFakeClock()
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        ;({ addTiming } = trackViews(location, lifeCycle))
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should add custom timing to current view', () => {
+    const { clock } = setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    const currentViewId = getViewEvent(2).id
+    clock.tick(20)
+    addTiming('foo', false)
+
+    const event = getViewEvent(3)
+    expect(event.id).toEqual(currentViewId)
+    expect(event.customTimings).toEqual({ foo: 20 })
+  })
+
+  it('should add custom timing to initial view', () => {
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
+    history.pushState({}, '', '/bar')
+    const initialViewId = getViewEvent(0).id
+
+    clock.tick(20)
+    addTiming('foo', true)
+
+    const event = getViewEvent(3)
+    expect(event.id).toEqual(initialViewId)
+    expect(event.customTimings).toEqual({ foo: 40 })
+  })
+
+  it('should add multiple custom timings', () => {
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
+    addTiming('foo', false)
+
+    clock.tick(10)
+    addTiming('bar', false)
+
+    const event = getViewEvent(2)
+    expect(event.customTimings).toEqual({
+      bar: 30,
+      foo: 20,
+    })
+  })
+
+  it('should update custom timing', () => {
+    const { clock } = setupBuilder.build()
+    clock.tick(20)
+    addTiming('foo', false)
+
+    clock.tick(10)
+    addTiming('bar', false)
+
+    let event = getViewEvent(2)
+    expect(event.customTimings).toEqual({
+      bar: 30,
+      foo: 20,
+    })
+
+    clock.tick(20)
+    addTiming('foo', false)
+
+    event = getViewEvent(3)
+    expect(event.customTimings).toEqual({
+      bar: 30,
+      foo: 50,
+    })
+  })
+})

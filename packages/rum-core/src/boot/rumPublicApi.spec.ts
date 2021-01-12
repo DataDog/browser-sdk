@@ -1,11 +1,16 @@
-import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
+import { Configuration, ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
 
+const configuration: Partial<Configuration> = {
+  isEnabled: () => false,
+}
 const noopStartRum = () => ({
   addAction: () => undefined,
   addError: () => undefined,
+  addTiming: () => undefined,
+  configuration: configuration as Configuration,
   getInternalContext: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -383,6 +388,39 @@ describe('rum entry', () => {
       publicApi.setUser(null as any)
       publicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('addTiming', () => {
+    let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
+    let errorSpy: jasmine.Spy<() => void>
+    let rumGlobal: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      addTimingSpy = jasmine.createSpy()
+      errorSpy = spyOn(console, 'error')
+      const otherConfiguration: Partial<Configuration> = {
+        isEnabled: () => true,
+      }
+      rumGlobal = makeRumPublicApi(() => ({
+        ...noopStartRum(),
+        addTiming: addTimingSpy,
+        configuration: otherConfiguration as Configuration,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should add custom timings', () => {
+      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      // tslint:disable-next-line: no-unsafe-any
+      ;(rumGlobal as any).addTiming('foo')
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(errorSpy).not.toHaveBeenCalled()
     })
   })
 })

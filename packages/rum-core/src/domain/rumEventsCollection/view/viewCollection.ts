@@ -1,4 +1,4 @@
-import { Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
+import { Configuration, getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
@@ -45,6 +45,9 @@ function processViewUpdate(view: View) {
       },
       timeSpent: msToNs(view.duration),
     },
+  }
+  if (!isEmptyObject(view.customTimings)) {
+    viewEvent.view.customTimings = mapValues(view.customTimings, msToNs)
   }
   return {
     rawRumEvent: viewEvent,
