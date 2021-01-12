@@ -9,6 +9,7 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ events }) => {
       await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -35,6 +36,7 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ events }) => {
       await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
