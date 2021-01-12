@@ -83,9 +83,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       return customLoggers[name]!
     }),
 
-    getLogger: monitor((name: string) => {
-      return customLoggers[name]
-    }),
+    getLogger: monitor((name: string) => customLoggers[name]),
   })
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {

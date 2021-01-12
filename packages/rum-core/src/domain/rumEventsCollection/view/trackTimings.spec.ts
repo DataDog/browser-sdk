@@ -48,9 +48,7 @@ describe('trackTimings', () => {
 
   beforeEach(() => {
     timingsCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackTimings(lifeCycle, timingsCallback)
-    })
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackTimings(lifeCycle, timingsCallback))
   })
 
   afterEach(() => {
@@ -83,9 +81,7 @@ describe('trackNavigationTimings', () => {
 
   beforeEach(() => {
     navigationTimingsCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackNavigationTimings(lifeCycle, navigationTimingsCallback)
-    })
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackNavigationTimings(lifeCycle, navigationTimingsCallback))
   })
 
   afterEach(() => {
@@ -113,9 +109,7 @@ describe('trackFirstContentfulPaint', () => {
 
   beforeEach(() => {
     fcpCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackFirstContentfulPaint(lifeCycle, fcpCallback)
-    })
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstContentfulPaint(lifeCycle, fcpCallback))
     resetFirstHidden()
   })
 
@@ -150,9 +144,7 @@ describe('largestContentfulPaint', () => {
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
     emitter = document.createElement('div')
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackLargestContentfulPaint(lifeCycle, emitter, lcpCallback)
-    })
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackLargestContentfulPaint(lifeCycle, emitter, lcpCallback))
     resetFirstHidden()
   })
 
@@ -197,9 +189,7 @@ describe('firstInputTimings', () => {
 
   beforeEach(() => {
     fitCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => {
-      return trackFirstInputTimings(lifeCycle, fitCallback)
-    })
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstInputTimings(lifeCycle, fitCallback))
     resetFirstHidden()
   })
 

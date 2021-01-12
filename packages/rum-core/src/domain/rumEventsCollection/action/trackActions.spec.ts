@@ -148,9 +148,7 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle }) => {
-        return trackActions(lifeCycle)
-      })
+      .beforeBuild(({ lifeCycle }) => trackActions(lifeCycle))
   })
 
   afterEach(() => {

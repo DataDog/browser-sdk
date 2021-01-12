@@ -144,9 +144,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
   const configuration: Configuration = {
     beforeSend: userConfiguration.beforeSend,
     cookieOptions: buildCookieOptions(userConfiguration),
-    isEnabled: (feature: string) => {
-      return includes(enableExperimentalFeatures, feature)
-    },
+    isEnabled: (feature: string) => includes(enableExperimentalFeatures, feature),
     logsEndpoint: getEndpoint(intakeType, 'logs', transportConfiguration),
     proxyHost: userConfiguration.proxyHost,
     rumEndpoint: getEndpoint(intakeType, 'rum', transportConfiguration),

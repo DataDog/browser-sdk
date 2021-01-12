@@ -104,9 +104,7 @@ const priorityStrategies: NameStrategy[] = [
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element) => {
-    return getTextualContent(element)
-  },
+  (element) => getTextualContent(element),
 ]
 
 /**

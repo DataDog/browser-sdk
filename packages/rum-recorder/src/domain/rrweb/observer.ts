@@ -126,8 +126,7 @@ function initMouseInteractionObserver(
     sampling.mouseInteraction === true || sampling.mouseInteraction === undefined ? {} : sampling.mouseInteraction
 
   const handlers: ListenerHandler[] = []
-  const getHandler = (eventKey: keyof typeof MouseInteractions) => {
-    return (event: MouseEvent | TouchEvent) => {
+  const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
       if (isBlocked(event.target as Node, blockClass)) {
         return
       }
@@ -140,7 +139,6 @@ function initMouseInteractionObserver(
         y: clientY,
       })
     }
-  }
   ;(Object.keys(MouseInteractions) as Array<keyof typeof MouseInteractions>)
     .filter((key) => Number.isNaN(Number(key)) && !key.endsWith('_Departed') && disableMap[key] !== false)
     .forEach((eventKey: keyof typeof MouseInteractions) => {
@@ -339,8 +337,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
       const restoreHandler = patch(
         CanvasRenderingContext2D.prototype,
         prop,
-        (original: (...args: unknown[]) => unknown) => {
-          return function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+        (original: (...args: unknown[]) => unknown) => function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             if (!isBlocked(this.canvas, blockClass)) {
               setTimeout(() => {
                 const recordArgs = [...args]
@@ -358,7 +355,6 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
             }
             return original.apply(this, args)
           }
-        }
       )
       handlers.push(restoreHandler)
     } catch {
@@ -407,7 +403,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   }
 
   const restoreHandler = patch(document.fonts, 'add', (original: (fontFace: FontFace) => unknown) => {
-    return function (this: FontFaceSet, fontFace: FontFace) {
+    function fn(this: FontFaceSet, fontFace: FontFace) {
       setTimeout(() => {
         const p = fontMap.get(fontFace)
         if (p) {
@@ -417,6 +413,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
       }, 0)
       return original.apply(this, [fontFace])
     }
+    return fn
   })
 
   handlers.push(() => {

@@ -24,15 +24,13 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
 
-  internalMonitoring.setExternalContextProvider(() => {
-    return combine(
+  internalMonitoring.setExternalContextProvider(() => combine(
       {
         application_id: userConfiguration.applicationId,
       },
       parentContexts.findView(),
       getCommonContext().context
-    )
-  })
+    ))
 
   const { parentContexts, addError, addAction, addTiming } = startRumEventCollection(
     userConfiguration.applicationId,
