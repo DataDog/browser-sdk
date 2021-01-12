@@ -20,7 +20,7 @@ export function send(endpointUrl: string, data: Uint8Array, meta: SegmentMeta): 
   request.send(formData, data.byteLength)
 }
 
-function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
+export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
   objectEntries(input as { [key: string]: unknown }).forEach(([key, value]) => {
     if (typeof value === 'object' && value !== null) {
       toFormEntries(value, onEntry, `${prefix}${key}.`)
