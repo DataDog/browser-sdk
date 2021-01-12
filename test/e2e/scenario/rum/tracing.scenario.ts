@@ -28,7 +28,7 @@ describe('tracing', () => {
     })
 
   function checkRequestHeaders(rawHeaders: string) {
-    const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
+    const headers: { [key: string]: string } = JSON.parse(rawHeaders) 
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['x-foo']).toBe('bar, baz')
@@ -39,8 +39,8 @@ describe('tracing', () => {
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)
-    expect(requests[0]._dd!.trace_id).toMatch(/\d+/)
-    expect(requests[0]._dd!.span_id).toMatch(/\d+/)
+    expect(requests[0]._dd.trace_id).toMatch(/\d+/)
+    expect(requests[0]._dd.span_id).toMatch(/\d+/)
     expect(requests[0].resource.id).toBeDefined()
   }
 })

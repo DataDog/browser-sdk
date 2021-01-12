@@ -72,7 +72,7 @@ export function hookSetter<T>(
     set(this: T, value) {
       // put hooked setter into event loop to avoid of set latency
       setTimeout(() => {
-        d.set!.call(this, value)
+        d.set.call(this, value)
       }, 0)
       if (original && original.set) {
         original.set.call(this, value)
@@ -165,7 +165,7 @@ export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
 
 export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
-    return (n as INode).__sn.id === IGNORED_NODE
+    return (n ).__sn.id === IGNORED_NODE
   }
   // The main part of the slimDOM check happens in
   // rrweb-snapshot::serializeNodeWithId

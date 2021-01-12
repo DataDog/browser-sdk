@@ -83,7 +83,7 @@ function proxyFetch() {
     }
 
     const reportFetch = async (response: Response | Error) => {
-      context.duration = performance.now() - context.startTime!
+      context.duration = performance.now() - context.startTime
 
       if ('stack' in response || response instanceof Error) {
         context.status = 0

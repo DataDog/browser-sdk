@@ -103,7 +103,7 @@ function proxyXhr() {
         }
         hasBeenReported = true
 
-        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime!
+        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime
         this._datadog_xhr.response = this.response as string | undefined
         this._datadog_xhr.status = this.status
 

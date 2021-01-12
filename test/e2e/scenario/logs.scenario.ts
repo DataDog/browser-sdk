@@ -66,15 +66,15 @@ describe('logs', () => {
 
       expect(events.logs.length).toEqual(2)
 
-      const unreachableRequest = events.logs.find((log) => log.http!.url.includes('/unreachable'))!
-      const throwRequest = events.logs.find((log) => log.http!.url.includes('/throw'))!
+      const unreachableRequest = events.logs.find((log) => log.http.url.includes('/unreachable'))!
+      const throwRequest = events.logs.find((log) => log.http.url.includes('/throw'))!
 
       expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
-      expect(throwRequest.http!.status_code).toEqual(500)
+      expect(throwRequest.http.status_code).toEqual(500)
       expect(throwRequest.error!.stack).toMatch(/Server error/)
 
       expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(unreachableRequest.http!.status_code).toEqual(0)
+      expect(unreachableRequest.http.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
 })

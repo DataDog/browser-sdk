@@ -81,6 +81,7 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 

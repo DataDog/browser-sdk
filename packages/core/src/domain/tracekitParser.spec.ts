@@ -25,7 +25,7 @@ describe('Parser', () => {
     const expected = ['baz', 'bar', 'foo']
 
     for (let i = 1; i <= 3; i += 1) {
-      expect(trace.stack![i].func).toEqual(expected[i - 1])
+      expect(trace.stack[i].func).toEqual(expected[i - 1])
     }
   })
 

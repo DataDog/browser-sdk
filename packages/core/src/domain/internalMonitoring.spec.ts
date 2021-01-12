@@ -217,13 +217,13 @@ describe('internal monitoring', () => {
       monitor(() => {
         throw new Error('message')
       })()
-      expect((JSON.parse(server.requests[0].requestBody) as any).foo).toEqual('bar')
+      expect((JSON.parse(server.requests[0].requestBody) ).foo).toEqual('bar')
 
       internalMonitoring.setExternalContextProvider(() => ({}))
       monitor(() => {
         throw new Error('message')
       })()
-      expect((JSON.parse(server.requests[1].requestBody) as any).foo).not.toBeDefined()
+      expect((JSON.parse(server.requests[1].requestBody) ).foo).not.toBeDefined()
     })
   })
 })

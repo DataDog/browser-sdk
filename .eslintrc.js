@@ -58,7 +58,6 @@ module.exports = {
     '@typescript-eslint/restrict-plus-operands': 0,
     '@typescript-eslint/no-unsafe-member-access': 0,
     '@typescript-eslint/restrict-template-expressions': 0,
-    '@typescript-eslint/no-unnecessary-type-assertion': 0,
     '@typescript-eslint/explicit-module-boundary-types': 0,
     '@typescript-eslint/ban-types': [
       0,
@@ -92,6 +91,7 @@ module.exports = {
     'import/order': 'error',
     'arrow-body-style': 'error',
     '@typescript-eslint/dot-notation': 'error',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'error',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'error',

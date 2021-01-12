@@ -87,7 +87,7 @@ export function setup(): TestSetupBuilder {
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl, location.href)
       spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-        assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
+        assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
       })
 
       function hashchangeCallBack() {
