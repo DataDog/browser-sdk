@@ -16,6 +16,10 @@
 
 ---
 
+## v2.2.1
+
+- ⚗ Implement addTiming ([#668](https://github.com/DataDog/browser-sdk/pull/668))
+
 ## v2.2.0
 
 - 🐛 [RUMF-810] force alternate intake for us3 ([#677](https://github.com/DataDog/browser-sdk/pull/677))
