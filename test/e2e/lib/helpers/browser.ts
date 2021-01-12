@@ -1,6 +1,6 @@
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
 export async function browserExecute(fn: any) {
-  return browser.execute(fn )
+  return browser.execute(fn)
 }
 
 export async function browserExecuteAsync<R, A, B>(

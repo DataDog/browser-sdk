@@ -9,7 +9,7 @@ export function createIntakeServerApp(events: EventRegistry) {
   app.post('/v1/input/:endpoint', (req, res) => {
     const endpoint = req.params.endpoint
     if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'internalMonitoring') {
-      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent) ))
+      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent)))
     }
     res.end()
   })

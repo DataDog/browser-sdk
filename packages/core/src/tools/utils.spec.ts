@@ -253,7 +253,7 @@ describe('utils', () => {
 
     it('should not crash on serialization error', () => {
       const circularReference: any = { otherData: 123 }
-      ;(circularReference ).myself = circularReference
+      circularReference.myself = circularReference
 
       expect(jsonStringify(circularReference)).toEqual('<error: unable to serialize object>')
     })

@@ -127,18 +127,18 @@ function initMouseInteractionObserver(
 
   const handlers: ListenerHandler[] = []
   const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
-      if (isBlocked(event.target as Node, blockClass)) {
-        return
-      }
-      const id = mirror.getId(event.target as INode)
-      const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-      cb({
-        id,
-        type: MouseInteractions[eventKey],
-        x: clientX,
-        y: clientY,
-      })
+    if (isBlocked(event.target as Node, blockClass)) {
+      return
     }
+    const id = mirror.getId(event.target as INode)
+    const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+    cb({
+      id,
+      type: MouseInteractions[eventKey],
+      x: clientX,
+      y: clientY,
+    })
+  }
   ;(Object.keys(MouseInteractions) as Array<keyof typeof MouseInteractions>)
     .filter((key) => Number.isNaN(Number(key)) && !key.endsWith('_Departed') && disableMap[key] !== false)
     .forEach((eventKey: keyof typeof MouseInteractions) => {
@@ -337,7 +337,8 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
       const restoreHandler = patch(
         CanvasRenderingContext2D.prototype,
         prop,
-        (original: (...args: unknown[]) => unknown) => function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+        (original: (...args: unknown[]) => unknown) =>
+          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             if (!isBlocked(this.canvas, blockClass)) {
               setTimeout(() => {
                 const recordArgs = [...args]

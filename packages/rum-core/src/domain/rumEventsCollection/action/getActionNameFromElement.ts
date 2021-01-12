@@ -103,9 +103,7 @@ const priorityStrategies: NameStrategy[] = [
   },
 ]
 
-const fallbackStrategies: NameStrategy[] = [
-  (element) => getTextualContent(element),
-]
+const fallbackStrategies: NameStrategy[] = [(element) => getTextualContent(element)]
 
 /**
  * Iterates over the target element and its parent, using the strategies list to get an action name.

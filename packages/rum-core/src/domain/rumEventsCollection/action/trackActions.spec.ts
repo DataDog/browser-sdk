@@ -191,7 +191,7 @@ describe('newAction', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, collectedRawRumEvent)
 
     expect(events.length).toBe(1)
-    const action = events[0] 
+    const action = events[0]
     expect(action.counts).toEqual({
       errorCount: 2,
       longTaskCount: 0,

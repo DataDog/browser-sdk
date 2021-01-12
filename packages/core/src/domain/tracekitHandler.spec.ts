@@ -1,4 +1,4 @@
-// eslint-disable  
+// eslint-disable
 
 import { report, StackFrame, wrap } from './tracekit'
 

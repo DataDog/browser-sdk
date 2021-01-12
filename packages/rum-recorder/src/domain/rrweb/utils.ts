@@ -165,7 +165,7 @@ export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
 
 export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
-    return (n ).__sn.id === IGNORED_NODE
+    return n.__sn.id === IGNORED_NODE
   }
   // The main part of the slimDOM check happens in
   // rrweb-snapshot::serializeNodeWithId

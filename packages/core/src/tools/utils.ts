@@ -188,7 +188,7 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
 export function includes(candidate: string, search: string): boolean
 export function includes<T>(candidate: T[], search: T): boolean
 export function includes(candidate: string | unknown[], search: any) {
-  // eslint-disable-next-line 
+  // eslint-disable-next-line
   return candidate.indexOf(search) !== -1
 }
 

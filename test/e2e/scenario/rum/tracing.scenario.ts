@@ -28,7 +28,7 @@ describe('tracing', () => {
     })
 
   function checkRequestHeaders(rawHeaders: string) {
-    const headers: { [key: string]: string } = JSON.parse(rawHeaders) 
+    const headers: { [key: string]: string } = JSON.parse(rawHeaders)
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['x-foo']).toBe('bar, baz')

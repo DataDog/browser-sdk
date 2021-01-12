@@ -62,7 +62,7 @@ describe('logs entry', () => {
     })
 
     it('should add a `_setDebug` that works', () => {
-      const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug 
+      const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
       spyOn(console, 'warn')

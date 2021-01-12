@@ -8,10 +8,10 @@ export interface ContextArray extends Array<ContextValue> {}
 
 export function withSnakeCaseKeys(candidate: Context): Context {
   const result: Context = {}
-  Object.keys(candidate ).forEach((key: string) => {
+  Object.keys(candidate).forEach((key: string) => {
     result[toSnakeCase(key)] = deepSnakeCase(candidate[key])
   })
-  return result 
+  return result
 }
 
 export function deepSnakeCase(candidate: ContextValue): ContextValue {
