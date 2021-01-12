@@ -1,6 +1,6 @@
 const path = require('path')
-const getTestReportDirectory = require('../getTestReportDirectory')
 const { unlinkSync, mkdirSync } = require('fs')
+const getTestReportDirectory = require('../getTestReportDirectory')
 
 const reporters = ['spec']
 let logsPath

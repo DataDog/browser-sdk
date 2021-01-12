@@ -1,10 +1,10 @@
 'use strict'
 
-const replace = require('replace-in-file')
 const util = require('util')
-const exec = util.promisify(require('child_process').exec)
-const readFile = util.promisify(require('fs').readFile)
 const spawn = require('child_process').spawn
+const readFile = util.promisify(require('fs').readFile)
+const exec = util.promisify(require('child_process').exec)
+const replace = require('replace-in-file')
 
 const emojiNameMap = require('emoji-name-map')
 

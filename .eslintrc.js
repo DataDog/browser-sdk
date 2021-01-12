@@ -24,7 +24,6 @@ module.exports = {
   ],
   rules: {
     'no-shadow': 0,
-    'import/order': 0,
     'no-redeclare': 0,
     'no-null/no-null': 0,
     'arrow-body-style': 0,
@@ -92,6 +91,7 @@ module.exports = {
       },
     ],
 
+    'import/order': 'error',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'error',

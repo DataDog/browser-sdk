@@ -1,6 +1,6 @@
+import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import * as url from 'url'
 import { buildLogs, buildNpm, buildRum, Endpoints } from '../sdkBuilds'
 
 export function createMockServerApp(endpoints: Endpoints, setup: string) {
