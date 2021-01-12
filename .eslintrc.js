@@ -34,7 +34,6 @@ module.exports = {
     '@typescript-eslint/indent': 0,
     'import/no-internal-modules': 0,
     '@typescript-eslint/array-type': 0,
-    '@typescript-eslint/dot-notation': 0,
     'jsdoc/newline-after-description': 0,
     '@typescript-eslint/no-extra-semi': 0,
     '@typescript-eslint/require-await': 0,
@@ -92,6 +91,7 @@ module.exports = {
 
     'import/order': 'error',
     'arrow-body-style': 'error',
+    '@typescript-eslint/dot-notation': 'error',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'error',
