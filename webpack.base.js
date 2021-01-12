@@ -17,6 +17,18 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
   module: {
     rules: [
       {
+        test: /\.ts$/,
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            { search: '<<< TARGET_DATACENTER >>>', replace: datacenter || 'us' },
+            { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
+            { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
+          ],
+        },
+      },
+
+      {
         test: /\.(ts|js)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
@@ -26,18 +38,6 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
           compilerOptions: {
             module: 'es6',
           },
-        },
-      },
-
-      {
-        test: /\.ts$/,
-        loader: 'string-replace-loader',
-        options: {
-          multiple: [
-            { search: '<<< TARGET_DATACENTER >>>', replace: datacenter || 'us' },
-            { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
-            { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
-          ],
         },
       },
     ],

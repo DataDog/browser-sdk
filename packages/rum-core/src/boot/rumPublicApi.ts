@@ -3,6 +3,7 @@ import {
   buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
+  Configuration,
   Context,
   createContextManager,
   deepClone,
@@ -67,7 +68,11 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
+      let configuration: Configuration
+      let addTiming: ReturnType<StartRum>['addTiming']
       ;({
+        addTiming,
+        configuration,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         getInternalContext: getInternalContextStrategy,
@@ -77,6 +82,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
+
+      if (configuration.isEnabled('custom-timings')) {
+        ;(rumGlobal as any).addTiming = addTiming
+      }
 
       isAlreadyInitialized = true
     }),
