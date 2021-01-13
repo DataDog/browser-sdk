@@ -37,6 +37,7 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
           onlyCompileBundledFiles: true,
           compilerOptions: {
             module: 'es6',
+            allowJs: true,
           },
         },
       },
