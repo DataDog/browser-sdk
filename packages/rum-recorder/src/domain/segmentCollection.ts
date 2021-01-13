@@ -17,11 +17,11 @@ export interface SegmentWriter {
   complete(data: string, meta: SegmentMeta): void
 }
 
-// Segments are the main data structure for session replays.  They contain context information used
+// Segments are the main data structure for session replays. They contain context information used
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
-// namings).  They are stored without any processing from the intake, and fetched one after the
-// other while a session is being replayed.  Their encoding (deflate) are carefully crafted to allow
-// concatenating multiple segments together.  Their approximative size limits how often they are
+// namings). They are stored without any processing from the intake, and fetched one after the
+// other while a session is being replayed. Their encoding (deflate) are carefully crafted to allow
+// concatenating multiple segments together. Their approximative size limits how often they are
 // created have an impact on the replay.
 //
 // When the recording starts, a segment is initially created.  The segment is renewed (finalized,
