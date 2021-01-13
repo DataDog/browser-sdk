@@ -1,8 +1,4 @@
-import {
-  internal_CreationReason as CreationReason,
-  internal_IncrementalSource as IncrementalSource,
-  internal_RecordType as RecordType,
-} from '@datadog/browser-rum-recorder'
+import { CreationReason, IncrementalSource, RecordType } from '../../../packages/rum-recorder/src/types'
 
 import { createTest } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
