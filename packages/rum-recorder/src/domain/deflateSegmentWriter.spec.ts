@@ -1,8 +1,8 @@
 import { noop } from '@datadog/browser-core'
 
+import { MockWorker } from '../../test/utils'
 import { SegmentMeta } from '../types'
 import { DeflateSegmentWriter } from './deflateSegmentWriter'
-import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from './deflateWorker'
 
 describe('DeflateWriter', () => {
   let worker: MockWorker
@@ -39,51 +39,3 @@ describe('DeflateWriter', () => {
     expect(onCompletedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
   })
 })
-
-class MockWorker implements DeflateWorker {
-  private listener: DeflateWorkerListener | undefined
-  private messages: DeflateWorkerAction[] = []
-  private pendingDataSize = 0
-
-  addEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    if (this.listener) {
-      throw new Error('MockWorker supports only one listener')
-    }
-    this.listener = listener
-  }
-
-  removeEventListener(): void {
-    this.listener = undefined
-  }
-
-  postMessage(message: DeflateWorkerAction): void {
-    this.messages.push(message)
-  }
-
-  terminate(): void {
-    // do nothing
-  }
-
-  process(ignoreMessageWithId?: number): void {
-    if (this.listener) {
-      for (const message of this.messages) {
-        if (ignoreMessageWithId === message.id) {
-          continue
-        }
-        switch (message.action) {
-          case 'write':
-            this.pendingDataSize += message.data.length
-            this.listener({ data: { id: message.id, size: this.pendingDataSize } })
-            break
-          case 'complete':
-            if (message.data) {
-              this.pendingDataSize += message.data.length
-            }
-            this.listener({ data: { id: message.id, result: new Uint8Array(this.pendingDataSize) } })
-            this.pendingDataSize = 0
-        }
-      }
-    }
-    this.messages.length = 0
-  }
-}

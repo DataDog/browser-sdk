@@ -1,274 +1,177 @@
-import { makeMouseMoveRecord } from '../../test/utils'
-import { IncrementalSource, MouseMoveRecord, Record, RecordType, SegmentContext, SegmentMeta } from '../types'
-import {
-  getRecordStartEnd,
-  groupMouseMoves,
-  isMouseMoveRecord,
-  MAX_MOUSE_MOVE_BATCH,
-  MAX_SEGMENT_DURATION,
-  RecordsIncrementalState,
-  Segment,
-  SegmentWriter,
-  startSegmentCollection,
-} from './segmentCollection'
+import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, ViewContext } from '@datadog/browser-rum-core'
+import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
+import { Segment } from './segment'
+import { doGetSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
-class StringWriter implements SegmentWriter {
-  output = ''
-  completed: Array<{ meta: SegmentMeta; segment: SegmentMeta & { records: Record[] } }> = []
-  write(data: string) {
-    this.output += data
-  }
-  complete(data: string, meta: SegmentMeta) {
-    this.completed.push({ meta, segment: JSON.parse(this.output + data) as any })
-    this.output = ''
-  }
-}
+import { MockWorker } from '../../test/utils'
+import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.Load, timestamp: 10, data: {} }
 
-const INPUT_RECORD: Record = {
-  data: {
-    id: 123,
-    isChecked: true,
-    source: IncrementalSource.Input,
-    text: '123',
-  },
-  timestamp: 123,
-  type: RecordType.IncrementalSnapshot,
-}
-
 const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
 
 describe('startSegmentCollection', () => {
-  let writer: StringWriter
-  let segmentCompleteSpy: jasmine.Spy<() => void>
+  let stopErrorCollection: () => void
 
-  beforeEach(() => {
-    writer = new StringWriter()
-    segmentCompleteSpy = spyOn(Segment.prototype, 'complete').and.callThrough()
-  })
+  function startSegmentCollection(context: SegmentContext | undefined) {
+    const lifeCycle = new LifeCycle()
+    const worker = new MockWorker()
+    const eventEmitter = document.createElement('div')
+    const sendSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+
+    const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
+    stopErrorCollection = stop
+    const segmentCompleteSpy = spyOn(Segment.prototype, 'complete').and.callThrough()
+    return {
+      addRecord,
+      eventEmitter,
+      lifeCycle,
+      segmentCompleteSpy,
+      worker,
+      sendCurrentSegment() {
+        // Make sure the segment is not empty
+        addRecord(RECORD)
+        // Renew segment
+        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        worker.process()
+        return sendSpy.calls.mostRecent().args[1]
+      },
+    }
+  }
 
   afterEach(() => {
     jasmine.clock().uninstall()
+    stopErrorCollection()
   })
 
   it('immediately starts a new segment', () => {
-    const { addRecord } = startSegmentCollection(() => CONTEXT, writer)
-    expect(writer.output).toBe('')
+    const { addRecord, worker, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+    expect(worker.pendingData).toBe('')
     addRecord(RECORD)
-    expect(writer.output).toBe('{"records":[{"type":1,"timestamp":10,"data":{}}')
+    expect(worker.pendingData).toBe('{"records":[{"type":1,"timestamp":10,"data":{}}')
     expect(segmentCompleteSpy).not.toHaveBeenCalled()
+    expect(sendCurrentSegment().creation_reason).toBe('init')
   })
 
   it('completes a segment when renewing it', () => {
-    const { renewSegment } = startSegmentCollection(() => CONTEXT, writer)
-    renewSegment('before_unload')
-    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('completes a segment after MAX_SEGMENT_DURATION', () => {
-    jasmine.clock().install()
-    startSegmentCollection(() => CONTEXT, writer)
-    jasmine.clock().tick(MAX_SEGMENT_DURATION)
-    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not complete a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
-    jasmine.clock().install()
-    const { renewSegment } = startSegmentCollection(() => CONTEXT, writer)
-    jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
-    renewSegment('before_unload')
-    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
-    jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+    const { lifeCycle, segmentCompleteSpy } = startSegmentCollection(CONTEXT)
+    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
     expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
   })
 
   it("ignores calls to addRecord if context can't be get", () => {
-    const { renewSegment, addRecord } = startSegmentCollection(() => undefined, writer)
+    const { worker, lifeCycle, addRecord, segmentCompleteSpy } = startSegmentCollection(undefined)
     addRecord(RECORD)
-    renewSegment('before_unload')
-    expect(writer.output).toBe('')
+    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+    expect(worker.pendingData).toBe('')
     expect(segmentCompleteSpy).not.toHaveBeenCalled()
   })
-})
 
-describe('Segment', () => {
-  it('writes a segment', () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init')
-    segment.addRecord({ type: RecordType.Load, timestamp: 10, data: {} })
-    expect(writer.output).toEqual('{"records":[{"type":1,"timestamp":10,"data":{}}')
-    expect(writer.completed).toEqual([])
-    segment.complete()
-
-    expect(writer.completed).toEqual([
-      {
-        meta: {
-          creation_reason: 'init' as const,
-          end: 10,
-          has_full_snapshot: false,
-          records_count: 1,
-          start: 10,
-          ...CONTEXT,
-        },
-        segment: {
-          creation_reason: 'init' as const,
-          end: 10,
-          has_full_snapshot: false,
-          records: [
-            {
-              data: {},
-              timestamp: 10,
-              type: RecordType.Load,
-            },
-          ],
-          records_count: 1,
-          start: 10,
-          ...CONTEXT,
-        },
-      },
-    ])
-  })
-
-  it('batches mousemove records', () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init')
-    segment.addRecord(makeMouseMoveRecord(10, [{ id: 0 }]))
-    segment.addRecord(makeMouseMoveRecord(20, [{ id: 1 }]))
-    segment.addRecord(makeMouseMoveRecord(30, [{ id: 2 }]))
-    segment.complete()
-
-    expect(writer.completed[0].segment.records).toEqual([
-      makeMouseMoveRecord(30, [
-        { id: 0, timeOffset: -20 },
-        { id: 1, timeOffset: -10 },
-        { id: 2, timeOffset: 0 },
-      ]),
-    ])
-  })
-
-  it('writes the mousemove records batch after a max number of records', () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init')
-    for (let i = 0; i < MAX_MOUSE_MOVE_BATCH + 2; i += 1) {
-      segment.addRecord(makeMouseMoveRecord(10, [{ id: 0 }]))
-    }
-    segment.complete()
-
-    const records = writer.completed[0].segment.records as MouseMoveRecord[]
-    expect(records.length).toBe(2)
-    expect(records[0].data.positions.length).toBe(MAX_MOUSE_MOVE_BATCH)
-    expect(records[1].data.positions.length).toBe(2)
-  })
-
-  it('ignores the "complete" call if no record have been added', () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init')
-    segment.complete()
-    expect(writer.completed).toEqual([])
-  })
-})
-
-describe('RecordsIncrementalState', () => {
-  it('initializes with the data of the first record', () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    expect(state.start).toBe(10)
-    expect(state.end).toBe(10)
-    expect(state.hasFullSnapshot).toBe(false)
-    expect(state.recordsCount).toBe(1)
-  })
-
-  it('adjusts the state when adding a record', () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    state.addRecord({ type: RecordType.DomContentLoaded, timestamp: 15, data: {} })
-    expect(state.start).toBe(10)
-    expect(state.end).toBe(15)
-    expect(state.hasFullSnapshot).toBe(false)
-    expect(state.recordsCount).toBe(2)
-  })
-
-  it("doesn't set hasFullSnapshot to true if a FullSnapshot is the first record", () => {
-    const state = new RecordsIncrementalState({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })
-    expect(state.hasFullSnapshot).toBe(false)
-  })
-
-  it("doesn't set hasFullSnapshot to true if a FullSnapshot is not directly preceded by a Meta record", () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    state.addRecord({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })
-    expect(state.hasFullSnapshot).toBe(false)
-  })
-
-  it('sets hasFullSnapshot to true if a FullSnapshot is preceded by a Meta record', () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    state.addRecord({ type: RecordType.Meta, timestamp: 10, data: {} as any })
-    state.addRecord({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })
-    expect(state.hasFullSnapshot).toBe(true)
-  })
-
-  it("doesn't overrides hasFullSnapshot to false once it has been set to true", () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    state.addRecord({ type: RecordType.Meta, timestamp: 10, data: {} as any })
-    state.addRecord({ type: RecordType.FullSnapshot, timestamp: 10, data: {} as any })
-    state.addRecord({ type: RecordType.DomContentLoaded, timestamp: 10, data: {} as any })
-    expect(state.hasFullSnapshot).toBe(true)
-  })
-
-  it('use records start/end for mouse moves', () => {
-    const state = new RecordsIncrementalState({ type: RecordType.Load, timestamp: 10, data: {} })
-    state.addRecord({
-      data: { source: IncrementalSource.MouseMove, positions: [{ timeOffset: -2, x: 0, y: 0, id: 0 }] },
-      timestamp: 11,
-      type: RecordType.IncrementalSnapshot,
+  describe('segment renewal', () => {
+    afterEach(() => {
+      restorePageVisibility()
     })
-    expect(state.start).toBe(9)
-    expect(state.end).toBe(11)
+
+    it('renews segment on unload', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      expect(sendCurrentSegment().creation_reason).toBe('before_unload')
+    })
+
+    it('renews segment on view change', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+      expect(sendCurrentSegment().creation_reason).toBe('view_change')
+    })
+
+    it('renews segment on session renew', () => {
+      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      expect(sendCurrentSegment().creation_reason).toBe('session_renewed')
+    })
+
+    it('renews segment when the page become hidden', () => {
+      setPageVisibility('hidden')
+      const { eventEmitter, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
+      expect(sendCurrentSegment().creation_reason).toBe('visibility_change')
+    })
+
+    it('does not renew segment when the page become visible', () => {
+      setPageVisibility('visible')
+      const { eventEmitter, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
+      expect(segmentCompleteSpy).not.toHaveBeenCalled()
+      expect(sendCurrentSegment().creation_reason).not.toBe('visibility_change')
+    })
+
+    it('renews segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
+      const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
+      addRecord(RECORD)
+      worker.process()
+
+      expect(sendCurrentSegment().creation_reason).toBe('max_size')
+    })
+
+    it('renews a segment after MAX_SEGMENT_DURATION', () => {
+      jasmine.clock().install()
+      const { segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      jasmine.clock().tick(MAX_SEGMENT_DURATION)
+      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      expect(sendCurrentSegment().creation_reason).toBe('max_duration')
+    })
+
+    it('does not renew a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+      jasmine.clock().install()
+      const { lifeCycle, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
+    })
   })
 })
 
-describe('isMouseMoveRecord', () => {
-  it('returns false for non-MouseMove records', () => {
-    expect(isMouseMoveRecord(RECORD)).toBe(false)
-    expect(isMouseMoveRecord(INPUT_RECORD)).toBe(false)
+describe('getSegmentContext', () => {
+  const DEFAULT_VIEW_CONTEXT: ViewContext = {
+    session: { id: '456' },
+    view: { id: '123', url: 'http://foo.com', referrer: 'http://bar.com' },
+  }
+
+  it('returns a segment context', () => {
+    expect(doGetSegmentContext('appid', mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
+      application: { id: 'appid' },
+      session: { id: '456' },
+      view: { id: '123' },
+    })
   })
 
-  it('returns true for MouseMove records', () => {
-    expect(isMouseMoveRecord(makeMouseMoveRecord(100, []))).toBe(true)
-  })
-})
-
-describe('groupMouseMoves', () => {
-  it('returns the same event if a single event is provided', () => {
-    const event = makeMouseMoveRecord(10, [{ id: 0 }])
-    expect(groupMouseMoves([event])).toEqual(event)
+  it('returns undefined if there is no current view', () => {
+    expect(doGetSegmentContext('appid', mockParentContexts(undefined))).toBeUndefined()
   })
 
-  it('groups mouse events in a single mouse event', () => {
+  it('returns undefined if there is no session id', () => {
     expect(
-      groupMouseMoves([
-        makeMouseMoveRecord(10, [{ id: 0 }]),
-        makeMouseMoveRecord(14, [{ id: 1 }]),
-        makeMouseMoveRecord(20, [{ id: 2 }]),
-      ])
-    ).toEqual(
-      makeMouseMoveRecord(20, [
-        { id: 0, timeOffset: -10 },
-        { id: 1, timeOffset: -6 },
-        { id: 2, timeOffset: 0 },
-      ])
-    )
-  })
-})
-
-describe('getRecordStartEnd', () => {
-  it("returns the timestamp as 'start' and 'end' for non-MouseMove records", () => {
-    expect(getRecordStartEnd(RECORD)).toEqual([10, 10])
-    expect(getRecordStartEnd(INPUT_RECORD)).toEqual([123, 123])
+      doGetSegmentContext(
+        'appid',
+        mockParentContexts({
+          ...DEFAULT_VIEW_CONTEXT,
+          session: { id: undefined },
+        })
+      )
+    ).toBeUndefined()
   })
 
-  it("returns the time from the first mouse position as 'start' for MouseMove records", () => {
-    expect(
-      getRecordStartEnd(makeMouseMoveRecord(150, [{ timeOffset: -50 }, { timeOffset: -30 }, { timeOffset: 0 }]))
-    ).toEqual([100, 150])
-  })
+  function mockParentContexts(view: ViewContext | undefined): ParentContexts {
+    return {
+      findView() {
+        return view
+      },
+    } as any
+  }
 })

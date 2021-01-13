@@ -1,21 +1,12 @@
-import { monitor } from '@datadog/browser-core'
-import {
-  CreationReason,
-  IncrementalSource,
-  MouseMoveRecord,
-  Record,
-  RecordType,
-  SegmentContext,
-  SegmentMeta,
-} from '../types'
+import { addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts } from '@datadog/browser-rum-core'
+import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
+import { CreationReason, Record, SegmentContext, SegmentMeta } from '../types'
+import { DeflateSegmentWriter } from './deflateSegmentWriter'
+import { createDeflateWorker, DeflateWorker } from './deflateWorker'
+import { Segment } from './segment'
 
 export const MAX_SEGMENT_DURATION = 30_000
-export const MAX_MOUSE_MOVE_BATCH = 100
-
-export interface SegmentWriter {
-  write(data: string): void
-  complete(data: string, meta: SegmentMeta): void
-}
 
 // Segments are the main data structure for session replays. They contain context information used
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
@@ -41,11 +32,66 @@ export interface SegmentWriter {
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
-export function startSegmentCollection(getSegmentContext: () => SegmentContext | undefined, writer: SegmentWriter) {
+export function startSegmentCollection(
+  lifeCycle: LifeCycle,
+  applicationId: string,
+  parentContexts: ParentContexts,
+  send: (data: Uint8Array, meta: SegmentMeta) => void
+) {
+  const worker = createDeflateWorker()
+  return doStartSegmentCollection(lifeCycle, () => doGetSegmentContext(applicationId, parentContexts), send, worker)
+}
+
+export function doStartSegmentCollection(
+  lifeCycle: LifeCycle,
+  getSegmentContext: () => SegmentContext | undefined,
+  send: (data: Uint8Array, meta: SegmentMeta) => void,
+  worker: DeflateWorker,
+  emitter: EventEmitter = window
+) {
   let currentSegment: Segment | undefined
   let currentSegmentExpirationTimeoutId: ReturnType<typeof setTimeout>
 
+  const writer = new DeflateSegmentWriter(
+    worker,
+    (size) => {
+      if (size > SEND_BEACON_BYTE_LENGTH_LIMIT) {
+        renewSegment('max_size')
+      }
+    },
+    (data, meta) => {
+      send(data, meta)
+    }
+  )
+
   renewSegment('init')
+
+  // Renew when the RUM view changes
+  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
+    renewSegment('view_change')
+  })
+
+  // Renew when the session is renewed
+  const { unsubscribe: unsubscribeSessionRenewed } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    renewSegment('session_renewed')
+  })
+
+  // Renew when leaving the page
+  const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
+    renewSegment('before_unload')
+  })
+
+  // Renew when visibility changes
+  const { stop: unsubscribeVisibilityChange } = addEventListener(
+    emitter,
+    DOM_EVENT.VISIBILITY_CHANGE,
+    () => {
+      if (document.visibilityState === 'hidden') {
+        renewSegment('visibility_change')
+      }
+    },
+    { capture: true }
+  )
 
   function renewSegment(creationReason: CreationReason) {
     if (currentSegment) {
@@ -71,7 +117,6 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
   }
 
   return {
-    renewSegment,
     addRecord(record: Record) {
       if (!currentSegment) {
         return
@@ -79,135 +124,30 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
 
       currentSegment.addRecord(record)
     },
-  }
-}
-
-export class Segment {
-  private state?: RecordsIncrementalState
-
-  // Mouse positions are being generated quite quickly (up to 1 every 50ms by default).  Using a
-  // separate record for each position can add a consequent overhead to the segment encoded size.
-  // To avoid this, we batch Mouse Move records coming from RRWeb and regroup them in a single
-  // record.
-  //
-  // Note: the original RRWeb library does this internally, without exposing a way to control this.
-  // To make sure mouse positions are correctly stored inside the Segment active when they occurred,
-  // we removed RRWeb batching strategy and recreated it at the Segment level.
-  private batchedMouseMove: MouseMoveRecord[] = []
-
-  constructor(
-    private writer: SegmentWriter,
-    readonly context: SegmentContext,
-    private creationReason: CreationReason
-  ) {}
-
-  addRecord(record: Record): void {
-    if (isMouseMoveRecord(record)) {
-      if (this.batchedMouseMove.push(record) === MAX_MOUSE_MOVE_BATCH) {
-        this.writeMouseMoves()
-      }
-    } else {
-      this.writeRecord(record)
-    }
-  }
-
-  complete() {
-    this.writeMouseMoves()
-
-    if (!this.state) {
-      return
-    }
-
-    const meta: SegmentMeta = {
-      creation_reason: this.creationReason,
-      end: this.state.end,
-      has_full_snapshot: this.state.hasFullSnapshot,
-      records_count: this.state.recordsCount,
-      start: this.state.start,
-      ...this.context,
-    }
-    this.writer.complete(`],${JSON.stringify(meta).slice(1)}\n`, meta)
-  }
-
-  private writeMouseMoves() {
-    if (this.batchedMouseMove.length === 0) {
-      return
-    }
-
-    this.writeRecord(groupMouseMoves(this.batchedMouseMove))
-
-    this.batchedMouseMove.length = 0
-  }
-
-  private writeRecord(record: Record): void {
-    if (!this.state) {
-      this.writer.write(`{"records":[${JSON.stringify(record)}`)
-      this.state = new RecordsIncrementalState(record)
-    } else {
-      this.writer.write(`,${JSON.stringify(record)}`)
-      this.state.addRecord(record)
-    }
-  }
-}
-
-export class RecordsIncrementalState {
-  start: number
-  end: number
-  recordsCount: number
-  hasFullSnapshot: boolean
-  private lastRecordType: RecordType
-
-  constructor(initialRecord: Record) {
-    const [start, end] = getRecordStartEnd(initialRecord)
-    this.start = start
-    this.end = end
-    this.lastRecordType = initialRecord.type
-    this.hasFullSnapshot = false
-    this.recordsCount = 1
-  }
-
-  addRecord(record: Record) {
-    const [start, end] = getRecordStartEnd(record)
-    this.start = Math.min(this.start, start)
-    this.end = Math.max(this.end, end)
-    if (!this.hasFullSnapshot) {
-      // Note: to be exploitable by the replay, this field should be true only if the FullSnapshot
-      // is preceded by a Meta record. Because rrweb is emitting both records synchronously and
-      // contiguously, it should always be the case, but check it nonetheless.
-      this.hasFullSnapshot = record.type === RecordType.FullSnapshot && this.lastRecordType === RecordType.Meta
-    }
-    this.lastRecordType = record.type
-    this.recordsCount += 1
-  }
-}
-
-export function isMouseMoveRecord(record: Record): record is MouseMoveRecord {
-  return (
-    record.type === RecordType.IncrementalSnapshot &&
-    (record.data.source === IncrementalSource.MouseMove || record.data.source === IncrementalSource.TouchMove)
-  )
-}
-
-export function groupMouseMoves(records: MouseMoveRecord[]): MouseMoveRecord {
-  const mostRecentTimestamp = records[records.length - 1]!.timestamp
-  return {
-    data: {
-      // Because we disabled mouse move batching from RRWeb, there will be only one position in each
-      // record, and its timeOffset will be 0.
-      positions: records.map(({ timestamp, data: { positions: [position] } }) => ({
-        ...position,
-        timeOffset: timestamp - mostRecentTimestamp,
-      })),
-      source: records[0]!.data.source,
+    stop() {
+      unsubscribeViewCreated()
+      unsubscribeBeforeUnload()
+      unsubscribeVisibilityChange()
+      unsubscribeSessionRenewed()
+      worker.terminate()
     },
-    timestamp: mostRecentTimestamp,
-    type: RecordType.IncrementalSnapshot,
   }
 }
 
-export function getRecordStartEnd(record: Record): [number, number] {
-  if (isMouseMoveRecord(record)) {
-    return [record.timestamp + record.data.positions[0]!.timeOffset, record.timestamp]
+export function doGetSegmentContext(applicationId: string, parentContexts: ParentContexts) {
+  const viewContext = parentContexts.findView()
+  if (!viewContext?.session.id) {
+    return undefined
   }
-  return [record.timestamp, record.timestamp]
+  return {
+    application: {
+      id: applicationId,
+    },
+    session: {
+      id: viewContext.session.id,
+    },
+    view: {
+      id: viewContext.view.id,
+    },
+  }
 }

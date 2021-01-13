@@ -1,4 +1,4 @@
-import { createNewEvent, HttpRequest, isIE, throttle } from '@datadog/browser-core'
+import { createNewEvent, HttpRequest, isIE } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'

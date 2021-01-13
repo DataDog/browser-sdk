@@ -1,6 +1,6 @@
 import { SegmentMeta } from '../types'
 import { DeflateWorker } from './deflateWorker'
-import { SegmentWriter } from './segmentCollection'
+import { SegmentWriter } from './segment'
 
 export class DeflateSegmentWriter implements SegmentWriter {
   private nextId = 0
