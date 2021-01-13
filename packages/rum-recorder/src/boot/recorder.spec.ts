@@ -127,10 +127,13 @@ function formDataAsObject(data: FormData) {
 
 function waitRequests(callback: (requests: Array<{ data: FormData; size: number }>) => void) {
   const requests: Array<{ data: FormData; size: number }> = []
-  // Throttle the callback, so it is called only after the last request being sent
-  const { throttled: throttledCallback } = throttle(() => callback(requests), 300, { leading: false })
+  let isWaiting = false
   spyOn(HttpRequest.prototype, 'send').and.callFake((data: FormData, size) => {
     requests.push({ data, size })
-    throttledCallback()
+    if (!isWaiting) {
+      isWaiting = true
+      // Delay the callback, so it is called only after the last request being sent
+      setTimeout(() => callback(requests), 300)
+    }
   })
 }
