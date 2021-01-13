@@ -43,6 +43,7 @@ export interface SegmentWriter {
 
 export function startSegmentCollection(getSegmentContext: () => SegmentContext | undefined, writer: SegmentWriter) {
   let currentSegment: Segment | undefined
+  let currentSegmentExpirationTimeoutId: ReturnType<typeof setTimeout>
 
   renewSegment('init')
 
@@ -50,6 +51,7 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
     if (currentSegment) {
       currentSegment.complete()
       currentSegment = undefined
+      clearTimeout(currentSegmentExpirationTimeoutId)
     }
 
     const context = getSegmentContext()
@@ -57,14 +59,12 @@ export function startSegmentCollection(getSegmentContext: () => SegmentContext |
       return
     }
 
-    const localSegment = (currentSegment = new Segment(writer, context, creationReason))
+    currentSegment = new Segment(writer, context, creationReason)
 
     // Replace the newly created segment after MAX_SEGMENT_DURATION
-    setTimeout(
+    currentSegmentExpirationTimeoutId = setTimeout(
       monitor(() => {
-        if (currentSegment === localSegment) {
-          renewSegment('max_duration')
-        }
+        renewSegment('max_duration')
       }),
       MAX_SEGMENT_DURATION
     )
