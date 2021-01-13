@@ -91,7 +91,7 @@ export class Segment {
   // record.
   //
   // Note: the original RRWeb library does this internally, without exposing a way to control this.
-  // To make sure mouse positions are correctly stored inside the Segment active when they occured,
+  // To make sure mouse positions are correctly stored inside the Segment active when they occurred,
   // we removed RRWeb batching strategy and recreated it at the Segment level.
   private batchedMouseMove: MouseMoveRecord[] = []
 
