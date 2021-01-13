@@ -38,11 +38,15 @@ const INPUT_RECORD: Record = {
   type: RecordType.IncrementalSnapshot,
 }
 
+const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
+
 describe('startSegmentCollection', () => {
   let writer: StringWriter
+  let segmentCompleteSpy: jasmine.Spy<() => void>
 
   beforeEach(() => {
     writer = new StringWriter()
+    segmentCompleteSpy = spyOn(Segment.prototype, 'complete').and.callThrough()
   })
 
   afterEach(() => {
@@ -54,32 +58,30 @@ describe('startSegmentCollection', () => {
     expect(writer.output).toBe('')
     addRecord(RECORD)
     expect(writer.output).toBe('{"records":[{"type":1,"timestamp":10,"data":{}}')
-    expect(writer.completed.length).toBe(0)
+    expect(segmentCompleteSpy).not.toHaveBeenCalled()
   })
 
   it('completes a segment when renewing it', () => {
-    const { renewSegment, addRecord } = startSegmentCollection(() => CONTEXT, writer)
-    addRecord(RECORD)
+    const { renewSegment } = startSegmentCollection(() => CONTEXT, writer)
     renewSegment('before_unload')
-    expect(writer.completed.length).toBe(1)
+    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
   })
 
   it('completes a segment after MAX_SEGMENT_DURATION', () => {
     jasmine.clock().install()
-    const { addRecord } = startSegmentCollection(() => CONTEXT, writer)
-    addRecord(RECORD)
+    startSegmentCollection(() => CONTEXT, writer)
     jasmine.clock().tick(MAX_SEGMENT_DURATION)
-    expect(writer.completed.length).toBe(1)
+    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
   })
 
   it('does not complete a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
     jasmine.clock().install()
-    const { renewSegment, addRecord } = startSegmentCollection(() => CONTEXT, writer)
-    addRecord(RECORD)
+    const { renewSegment } = startSegmentCollection(() => CONTEXT, writer)
+    jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
     renewSegment('before_unload')
-    expect(writer.completed.length).toBe(1)
-    jasmine.clock().tick(MAX_SEGMENT_DURATION)
-    expect(writer.completed.length).toBe(1)
+    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+    jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
   })
 
   it("ignores calls to addRecord if context can't be get", () => {
@@ -87,7 +89,7 @@ describe('startSegmentCollection', () => {
     addRecord(RECORD)
     renewSegment('before_unload')
     expect(writer.output).toBe('')
-    expect(writer.completed.length).toBe(0)
+    expect(segmentCompleteSpy).not.toHaveBeenCalled()
   })
 })
 
