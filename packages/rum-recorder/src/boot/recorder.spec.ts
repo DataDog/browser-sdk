@@ -29,8 +29,8 @@ describe('startRecording', () => {
           }
         },
       })
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts }) => {
-        return startRecording(lifeCycle, applicationId, configuration, parentContexts)
+      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
+        return startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
       })
   })
 

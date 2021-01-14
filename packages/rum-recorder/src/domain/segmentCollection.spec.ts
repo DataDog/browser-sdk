@@ -1,5 +1,5 @@
 import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, ViewContext } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext } from '@datadog/browser-rum-core'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { Segment } from './segment'
 import { doGetSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
@@ -143,8 +143,14 @@ describe('getSegmentContext', () => {
     view: { id: '123', url: 'http://foo.com', referrer: 'http://bar.com' },
   }
 
+  const DEFAULT_SESSION: RumSession = {
+    getId: () => 'session-id',
+    isTracked: () => true,
+    isTrackedWithResource: () => true,
+  }
+
   it('returns a segment context', () => {
-    expect(doGetSegmentContext('appid', mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
+    expect(doGetSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
       application: { id: 'appid' },
       session: { id: '456' },
       view: { id: '123' },
@@ -152,17 +158,31 @@ describe('getSegmentContext', () => {
   })
 
   it('returns undefined if there is no current view', () => {
-    expect(doGetSegmentContext('appid', mockParentContexts(undefined))).toBeUndefined()
+    expect(doGetSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
   })
 
   it('returns undefined if there is no session id', () => {
     expect(
       doGetSegmentContext(
         'appid',
+        DEFAULT_SESSION,
         mockParentContexts({
           ...DEFAULT_VIEW_CONTEXT,
           session: { id: undefined },
         })
+      )
+    ).toBeUndefined()
+  })
+
+  it('returns undefined if the session is not tracked', () => {
+    expect(
+      doGetSegmentContext(
+        'appid',
+        {
+          ...DEFAULT_SESSION,
+          isTracked: () => false,
+        },
+        mockParentContexts(DEFAULT_VIEW_CONTEXT)
       )
     ).toBeUndefined()
   })

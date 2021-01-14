@@ -14,6 +14,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
+  session: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 

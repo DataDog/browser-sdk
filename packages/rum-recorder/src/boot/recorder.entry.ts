@@ -15,8 +15,8 @@ function startRumAndRecording(userConfiguration: RumUserConfiguration, getCommon
     hasReplay: true,
   }))
 
-  const { lifeCycle, parentContexts, configuration } = startRumResult
-  startRecording(lifeCycle, userConfiguration.applicationId, configuration, parentContexts)
+  const { lifeCycle, parentContexts, configuration, session } = startRumResult
+  startRecording(lifeCycle, userConfiguration.applicationId, configuration, session, parentContexts)
 
   return startRumResult
 }
