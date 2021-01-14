@@ -12,8 +12,9 @@ export const MAX_SEGMENT_DURATION = 30_000
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
 // namings). They are stored without any processing from the intake, and fetched one after the
 // other while a session is being replayed. Their encoding (deflate) are carefully crafted to allow
-// concatenating multiple segments together. Their approximative size limits how often they are
-// created have an impact on the replay.
+// concatenating multiple segments together. Segments have a size overhead (meta), so our goal is to
+// build segments containing as much records as possible while complying with the various flush
+// strategies to guarantee a good replay quality.
 //
 // When the recording starts, a segment is initially created.  The segment is flushed (finalized and
 // sent) based on various events (non-exhaustive list):
