@@ -57,6 +57,7 @@ export function doStartSegmentCollection(
 ) {
   let currentSegment: Segment | undefined
   let currentSegmentExpirationTimeoutId: ReturnType<typeof setTimeout>
+  let nextSegmentCreationReason: CreationReason = 'init'
 
   const writer = new DeflateSegmentWriter(
     worker,
@@ -69,8 +70,6 @@ export function doStartSegmentCollection(
       send(data, meta)
     }
   )
-
-  renewSegment('init')
 
   // Renew when the RUM view changes
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
@@ -106,29 +105,28 @@ export function doStartSegmentCollection(
       clearTimeout(currentSegmentExpirationTimeoutId)
     }
 
-    const context = getSegmentContext()
-    if (!context) {
-      return
-    }
-
-    currentSegment = new Segment(writer, context, creationReason)
-
-    // Replace the newly created segment after MAX_SEGMENT_DURATION
-    currentSegmentExpirationTimeoutId = setTimeout(
-      monitor(() => {
-        renewSegment('max_duration')
-      }),
-      MAX_SEGMENT_DURATION
-    )
+    nextSegmentCreationReason = creationReason
   }
 
   return {
     addRecord(record: Record) {
       if (!currentSegment) {
-        return
-      }
+        const context = getSegmentContext()
+        if (!context) {
+          return
+        }
 
-      currentSegment.addRecord(record)
+        currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
+        // Replace the newly created segment after MAX_SEGMENT_DURATION
+        currentSegmentExpirationTimeoutId = setTimeout(
+          monitor(() => {
+            renewSegment('max_duration')
+          }),
+          MAX_SEGMENT_DURATION
+        )
+      } else {
+        currentSegment.addRecord(record)
+      }
     },
     stop() {
       unsubscribeViewCreated()

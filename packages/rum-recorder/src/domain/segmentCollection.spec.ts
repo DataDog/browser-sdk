@@ -56,8 +56,10 @@ describe('startSegmentCollection', () => {
   })
 
   it('completes a segment when renewing it', () => {
-    const { lifeCycle, segmentCompleteSpy } = startSegmentCollection(CONTEXT)
+    const { lifeCycle, segmentCompleteSpy, addRecord } = startSegmentCollection(CONTEXT)
+    addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+
     expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
   })
 
@@ -118,19 +120,23 @@ describe('startSegmentCollection', () => {
 
     it('renews a segment after MAX_SEGMENT_DURATION', () => {
       jasmine.clock().install()
-      const { segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      const { segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+      addRecord(RECORD)
       jasmine.clock().tick(MAX_SEGMENT_DURATION)
+
       expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).toBe('max_duration')
     })
 
     it('does not renew a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
       jasmine.clock().install()
-      const { lifeCycle, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      const { lifeCycle, segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+      addRecord(RECORD)
       jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
       lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      addRecord(RECORD)
       jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+
       expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
     })
