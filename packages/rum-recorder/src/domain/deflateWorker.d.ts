@@ -17,7 +17,7 @@ export type DeflateWorkerAction =
     }
   | {
       id: number
-      action: 'complete'
+      action: 'flush'
       data?: string
     }
 

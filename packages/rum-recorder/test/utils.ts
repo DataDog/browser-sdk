@@ -39,7 +39,7 @@ export class MockWorker implements DeflateWorker {
             this.deflatedSize += message.data.length
             this.listener({ data: { id: message.id, size: this.deflatedSize } })
             break
-          case 'complete':
+          case 'flush':
             if (message.data) {
               this.deflatedSize += message.data.length
             }

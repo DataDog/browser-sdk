@@ -23,12 +23,12 @@ describe('startSegmentCollection', () => {
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
     stopErrorCollection = stop
-    const segmentCompleteSpy = spyOn(Segment.prototype, 'complete').and.callThrough()
+    const segmentFlushSpy = spyOn(Segment.prototype, 'flush').and.callThrough()
     return {
       addRecord,
       eventEmitter,
       lifeCycle,
-      segmentCompleteSpy,
+      segmentFlushSpy,
       worker,
       sendCurrentSegment() {
         // Make sure the segment is not empty
@@ -47,28 +47,28 @@ describe('startSegmentCollection', () => {
   })
 
   it('immediately starts a new segment', () => {
-    const { addRecord, worker, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+    const { addRecord, worker, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
     expect(worker.pendingData).toBe('')
     addRecord(RECORD)
     expect(worker.pendingData).toBe('{"records":[{"type":1,"timestamp":10,"data":{}}')
-    expect(segmentCompleteSpy).not.toHaveBeenCalled()
+    expect(segmentFlushSpy).not.toHaveBeenCalled()
     expect(sendCurrentSegment().creation_reason).toBe('init')
   })
 
-  it('completes a segment when flushing it', () => {
-    const { lifeCycle, segmentCompleteSpy, addRecord } = startSegmentCollection(CONTEXT)
+  it('flushes a segment', () => {
+    const { lifeCycle, segmentFlushSpy, addRecord } = startSegmentCollection(CONTEXT)
     addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
 
-    expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+    expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
   })
 
   it("ignores calls to addRecord if context can't be get", () => {
-    const { worker, lifeCycle, addRecord, segmentCompleteSpy } = startSegmentCollection(undefined)
+    const { worker, lifeCycle, addRecord, segmentFlushSpy } = startSegmentCollection(undefined)
     addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
     expect(worker.pendingData).toBe('')
-    expect(segmentCompleteSpy).not.toHaveBeenCalled()
+    expect(segmentFlushSpy).not.toHaveBeenCalled()
   })
 
   describe('segment flush strategy', () => {
@@ -103,9 +103,9 @@ describe('startSegmentCollection', () => {
 
     it('does not flush segment when the page become visible', () => {
       setPageVisibility('visible')
-      const { eventEmitter, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      const { eventEmitter, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-      expect(segmentCompleteSpy).not.toHaveBeenCalled()
+      expect(segmentFlushSpy).not.toHaveBeenCalled()
       expect(sendCurrentSegment().creation_reason).not.toBe('visibility_change')
     })
 
@@ -120,24 +120,24 @@ describe('startSegmentCollection', () => {
 
     it('flushes a segment after MAX_SEGMENT_DURATION', () => {
       jasmine.clock().install()
-      const { segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+      const { segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
       addRecord(RECORD)
       jasmine.clock().tick(MAX_SEGMENT_DURATION)
 
-      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).toBe('max_duration')
     })
 
     it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
       jasmine.clock().install()
-      const { lifeCycle, segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+      const { lifeCycle, segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
       addRecord(RECORD)
       jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
       lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
       addRecord(RECORD)
       jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
 
-      expect(segmentCompleteSpy).toHaveBeenCalledTimes(1)
+      expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
     })
   })

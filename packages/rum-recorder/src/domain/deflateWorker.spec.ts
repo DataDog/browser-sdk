@@ -29,10 +29,10 @@ describe('deflateWorker', () => {
       done()
     })
     deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ id: 1, action: 'complete' })
+    deflateWorker.postMessage({ id: 1, action: 'flush' })
   })
 
-  it('writes the remaining data specified by "complete"', (done) => {
+  it('writes the remaining data specified by "flush"', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 1, (events) => {
       expect(events).toEqual([
@@ -43,10 +43,10 @@ describe('deflateWorker', () => {
       ])
       done()
     })
-    deflateWorker.postMessage({ id: 0, action: 'complete', data: 'foo' })
+    deflateWorker.postMessage({ id: 0, action: 'flush', data: 'foo' })
   })
 
-  it('completes several deflates one after the other', (done) => {
+  it('flushes several deflates one after the other', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 4, (events) => {
       expect(events).toEqual([
@@ -70,22 +70,22 @@ describe('deflateWorker', () => {
       done()
     })
     deflateWorker.postMessage({ id: 0, action: 'write', data: 'foo' })
-    deflateWorker.postMessage({ id: 1, action: 'complete' })
+    deflateWorker.postMessage({ id: 1, action: 'flush' })
     deflateWorker.postMessage({ id: 2, action: 'write', data: 'bar' })
-    deflateWorker.postMessage({ id: 3, action: 'complete' })
+    deflateWorker.postMessage({ id: 3, action: 'flush' })
   })
 
   function listen(
     deflateWorker: DeflateWorker,
     expectedResponseCount: number,
-    onComplete: (responses: DeflateWorkerResponse[]) => void
+    onDone: (responses: DeflateWorkerResponse[]) => void
   ) {
     const responses: DeflateWorkerResponse[] = []
     const listener = (event: { data: DeflateWorkerResponse }) => {
       const responsesCount = responses.push(event.data)
       if (responsesCount === expectedResponseCount) {
         deflateWorker.removeEventListener('message', listener)
-        onComplete(responses)
+        onDone(responses)
       }
     }
     deflateWorker.addEventListener('message', listener)

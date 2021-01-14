@@ -9,7 +9,7 @@ export class DeflateSegmentWriter implements SegmentWriter {
   constructor(
     private worker: DeflateWorker,
     private onWrote: (size: number) => void,
-    private onCompleted: (data: Uint8Array, meta: SegmentMeta) => void
+    private onFlushed: (data: Uint8Array, meta: SegmentMeta) => void
   ) {
     worker.addEventListener('message', ({ data }) => {
       if ('result' in data) {
@@ -17,7 +17,7 @@ export class DeflateSegmentWriter implements SegmentWriter {
         do {
           pendingMeta = this.pendingMeta.shift()!
         } while (pendingMeta.id < data.id)
-        this.onCompleted(data.result, pendingMeta.meta)
+        this.onFlushed(data.result, pendingMeta.meta)
       } else {
         this.onWrote(data.size)
       }
@@ -29,8 +29,8 @@ export class DeflateSegmentWriter implements SegmentWriter {
     this.nextId += 1
   }
 
-  complete(data: string | undefined, meta: SegmentMeta): void {
-    this.worker.postMessage({ data, id: this.nextId, action: 'complete' })
+  flush(data: string | undefined, meta: SegmentMeta): void {
+    this.worker.postMessage({ data, id: this.nextId, action: 'flush' })
     this.pendingMeta.push({ meta, id: this.nextId })
     this.nextId += 1
   }

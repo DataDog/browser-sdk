@@ -22,7 +22,7 @@ function workerCodeFn() {
           size: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
         })
         break
-      case 'complete':
+      case 'flush':
         if (data.data) {
           deflate.push(data.data, constants.Z_SYNC_FLUSH)
         }

@@ -100,7 +100,7 @@ export function doStartSegmentCollection(
 
   function flushSegment(creationReason: CreationReason) {
     if (currentSegment) {
-      currentSegment.complete()
+      currentSegment.flush()
       currentSegment = undefined
       clearTimeout(currentSegmentExpirationTimeoutId)
     }

@@ -2,7 +2,7 @@ import { CreationReason, Record, RecordType, SegmentContext, SegmentMeta } from 
 
 export interface SegmentWriter {
   write(data: string): void
-  complete(data: string, meta: SegmentMeta): void
+  flush(data: string, meta: SegmentMeta): void
 }
 
 export class Segment {
@@ -39,7 +39,7 @@ export class Segment {
     this.writer.write(`,${JSON.stringify(record)}`)
   }
 
-  complete() {
+  flush() {
     const meta: SegmentMeta = {
       creation_reason: this.creationReason,
       end: this.end,
@@ -48,6 +48,6 @@ export class Segment {
       start: this.start,
       ...this.context,
     }
-    this.writer.complete(`],${JSON.stringify(meta).slice(1)}\n`, meta)
+    this.writer.flush(`],${JSON.stringify(meta).slice(1)}\n`, meta)
   }
 }

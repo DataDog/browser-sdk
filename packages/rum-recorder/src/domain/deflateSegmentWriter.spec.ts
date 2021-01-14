@@ -19,23 +19,23 @@ describe('DeflateWriter', () => {
     expect(onWroteSpy.calls.allArgs()).toEqual([[3]])
   })
 
-  it('calls the onCompleted callback when data is complete', () => {
-    const onCompletedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
-    const writer = new DeflateSegmentWriter(worker, noop, onCompletedSpy)
+  it('calls the onFlushed callback when data is flush', () => {
+    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+    const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
     const meta: SegmentMeta = { start: 12 } as any
-    writer.complete(undefined, meta)
+    writer.flush(undefined, meta)
     worker.process()
-    expect(onCompletedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta]])
+    expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta]])
   })
 
-  it('calls the onCompleted callback with the correct meta even if a previous action failed somehow', () => {
-    const onCompletedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
-    const writer = new DeflateSegmentWriter(worker, noop, onCompletedSpy)
+  it('calls the onFlushed callback with the correct meta even if a previous action failed somehow', () => {
+    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+    const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
     const meta1: SegmentMeta = { start: 12 } as any
     const meta2: SegmentMeta = { start: 13 } as any
-    writer.complete(undefined, meta1)
-    writer.complete(undefined, meta2)
+    writer.flush(undefined, meta1)
+    writer.flush(undefined, meta2)
     worker.process(0)
-    expect(onCompletedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
+    expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
   })
 })
