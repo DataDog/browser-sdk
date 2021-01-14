@@ -1,5 +1,3 @@
-// eslint-disable
-
 import { computeStackTrace, Handler, report } from './tracekit'
 
 describe('TraceKit', () => {
