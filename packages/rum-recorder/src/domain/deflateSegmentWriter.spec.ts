@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop, setDebugMode } from '@datadog/browser-core'
 
 import { MockWorker } from '../../test/utils'
 import { SegmentMeta } from '../types'
@@ -9,6 +9,11 @@ describe('DeflateWriter', () => {
 
   beforeEach(() => {
     worker = new MockWorker()
+    setDebugMode(true)
+  })
+
+  afterEach(() => {
+    setDebugMode(false)
   })
 
   it('calls the onWrote callback when data is written', () => {
@@ -29,6 +34,7 @@ describe('DeflateWriter', () => {
   })
 
   it('calls the onFlushed callback with the correct meta even if a previous action failed somehow', () => {
+    const consoleSpy = spyOn(console, 'log')
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
     const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
     const meta1: SegmentMeta = { start: 12 } as any
@@ -37,5 +43,6 @@ describe('DeflateWriter', () => {
     writer.flush(undefined, meta2)
     worker.process(0)
     expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
+    expect(consoleSpy).toHaveBeenCalledWith('[MONITORING MESSAGE]', '1 deflate worker responses have been lost')
   })
 })
