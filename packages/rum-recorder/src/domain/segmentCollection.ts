@@ -15,8 +15,8 @@ export const MAX_SEGMENT_DURATION = 30_000
 // concatenating multiple segments together. Their approximative size limits how often they are
 // created have an impact on the replay.
 //
-// When the recording starts, a segment is initially created.  The segment is renewed (finalized,
-// sent and replaced by a new one) based on various events (non-exhaustive list):
+// When the recording starts, a segment is initially created.  The segment is flushed (finalized and
+// sent) based on various events (non-exhaustive list):
 //
 // * the page visibility change or becomes to unload
 // * the segment duration reaches a limit
@@ -63,7 +63,7 @@ export function doStartSegmentCollection(
     worker,
     (size) => {
       if (size > SEND_BEACON_BYTE_LENGTH_LIMIT) {
-        renewSegment('max_size')
+        flushSegment('max_size')
       }
     },
     (data, meta) => {
@@ -71,34 +71,34 @@ export function doStartSegmentCollection(
     }
   )
 
-  // Renew when the RUM view changes
+  // Flush when the RUM view changes
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
-    renewSegment('view_change')
+    flushSegment('view_change')
   })
 
-  // Renew when the session is renewed
+  // Flush when the session is renewed
   const { unsubscribe: unsubscribeSessionRenewed } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    renewSegment('session_renewed')
+    flushSegment('session_renewed')
   })
 
-  // Renew when leaving the page
+  // Flush when leaving the page
   const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    renewSegment('before_unload')
+    flushSegment('before_unload')
   })
 
-  // Renew when visibility changes
+  // Flush when visibility changes
   const { stop: unsubscribeVisibilityChange } = addEventListener(
     emitter,
     DOM_EVENT.VISIBILITY_CHANGE,
     () => {
       if (document.visibilityState === 'hidden') {
-        renewSegment('visibility_change')
+        flushSegment('visibility_change')
       }
     },
     { capture: true }
   )
 
-  function renewSegment(creationReason: CreationReason) {
+  function flushSegment(creationReason: CreationReason) {
     if (currentSegment) {
       currentSegment.complete()
       currentSegment = undefined
@@ -120,7 +120,7 @@ export function doStartSegmentCollection(
         // Replace the newly created segment after MAX_SEGMENT_DURATION
         currentSegmentExpirationTimeoutId = setTimeout(
           monitor(() => {
-            renewSegment('max_duration')
+            flushSegment('max_duration')
           }),
           MAX_SEGMENT_DURATION
         )

@@ -33,7 +33,7 @@ describe('startSegmentCollection', () => {
       sendCurrentSegment() {
         // Make sure the segment is not empty
         addRecord(RECORD)
-        // Renew segment
+        // Flush segment
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
         worker.process()
         return sendSpy.calls.mostRecent().args[1]
@@ -55,7 +55,7 @@ describe('startSegmentCollection', () => {
     expect(sendCurrentSegment().creation_reason).toBe('init')
   })
 
-  it('completes a segment when renewing it', () => {
+  it('completes a segment when flushing it', () => {
     const { lifeCycle, segmentCompleteSpy, addRecord } = startSegmentCollection(CONTEXT)
     addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
@@ -71,37 +71,37 @@ describe('startSegmentCollection', () => {
     expect(segmentCompleteSpy).not.toHaveBeenCalled()
   })
 
-  describe('segment renewal', () => {
+  describe('segment flush strategy', () => {
     afterEach(() => {
       restorePageVisibility()
     })
 
-    it('renews segment on unload', () => {
+    it('flushes segment on unload', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
       expect(sendCurrentSegment().creation_reason).toBe('before_unload')
     })
 
-    it('renews segment on view change', () => {
+    it('flushes segment on view change', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
       expect(sendCurrentSegment().creation_reason).toBe('view_change')
     })
 
-    it('renews segment on session renew', () => {
+    it('flushes segment on session renew', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
       expect(sendCurrentSegment().creation_reason).toBe('session_renewed')
     })
 
-    it('renews segment when the page become hidden', () => {
+    it('flushes segment when the page become hidden', () => {
       setPageVisibility('hidden')
       const { eventEmitter, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
       expect(sendCurrentSegment().creation_reason).toBe('visibility_change')
     })
 
-    it('does not renew segment when the page become visible', () => {
+    it('does not flush segment when the page become visible', () => {
       setPageVisibility('visible')
       const { eventEmitter, segmentCompleteSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
@@ -109,7 +109,7 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).not.toBe('visibility_change')
     })
 
-    it('renews segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
+    it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
       const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
       addRecord(RECORD)
@@ -118,7 +118,7 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).toBe('max_size')
     })
 
-    it('renews a segment after MAX_SEGMENT_DURATION', () => {
+    it('flushes a segment after MAX_SEGMENT_DURATION', () => {
       jasmine.clock().install()
       const { segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
       addRecord(RECORD)
@@ -128,7 +128,7 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).toBe('max_duration')
     })
 
-    it('does not renew a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+    it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
       jasmine.clock().install()
       const { lifeCycle, segmentCompleteSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
       addRecord(RECORD)

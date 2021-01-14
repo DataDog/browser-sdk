@@ -56,10 +56,10 @@ describe('startRecording', () => {
     })
 
     const { lifeCycle } = setupBuilder.build()
-    renewSegment(lifeCycle)
+    flushSegment(lifeCycle)
   })
 
-  it('renews the segment when its compressed data is getting too large', (done) => {
+  it('flushes the segment when its compressed data is getting too large', (done) => {
     const clickCount = 10_000
     waitRequests((requests) => {
       expect(requests.length).toBe(1)
@@ -86,10 +86,10 @@ describe('startRecording', () => {
     document.body.dispatchEvent(createNewEvent('click'))
 
     sessionId = undefined
-    renewSegment(lifeCycle)
+    flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 
-    renewSegment(lifeCycle)
+    flushSegment(lifeCycle)
   })
 
   it('restarts sending segments when the session is renewed', (done) => {
@@ -106,14 +106,14 @@ describe('startRecording', () => {
     document.body.dispatchEvent(createNewEvent('click'))
 
     sessionId = 'new-session-id'
-    renewSegment(lifeCycle)
+    flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 
-    renewSegment(lifeCycle)
+    flushSegment(lifeCycle)
   })
 })
 
-function renewSegment(lifeCycle: LifeCycle) {
+function flushSegment(lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
 }
 
