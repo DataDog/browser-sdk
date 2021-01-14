@@ -15,5 +15,5 @@
       "@datadog/browser-core": ["../../packages/core/src"]
     }
   },
-  "include": ["./scenario/**/*.ts", "./lib/**/*.ts", "./*.d.ts"]
+  "include": ["./*.js", "./**/*.js", "./scenario/**/*.ts", "./lib/**/*.ts", "./*.d.ts"]
 }
