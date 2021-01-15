@@ -22,7 +22,6 @@ import {
   MouseInteractionCallBack,
   MouseInteractions,
   MousemoveCallBack,
-  MousePosition,
   MutationCallBack,
   ObserverParam,
   SamplingStrategy,
@@ -74,34 +73,17 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
 
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
-  let positions: MousePosition[] = []
-  let timeBaseline: number | null
-  const wrappedCb = throttle((isTouch: boolean) => {
-    const totalOffset = Date.now() - timeBaseline!
-    cb(
-      positions.map((p) => {
-        p.timeOffset -= totalOffset
-        return p
-      }),
-      isTouch ? IncrementalSource.TouchMove : IncrementalSource.MouseMove
-    )
-    positions = []
-    timeBaseline = null
-  }, 500)
   const updatePosition = throttle<MouseEvent | TouchEvent>(
     (evt) => {
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
-      if (!timeBaseline) {
-        timeBaseline = Date.now()
-      }
-      positions.push({
+      const position = {
         id: mirror.getId(target as INode),
-        timeOffset: Date.now() - timeBaseline,
+        timeOffset: 0,
         x: clientX,
         y: clientY,
-      })
-      wrappedCb(isTouchEvent(evt))
+      }
+      cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     },
     threshold,
     {
