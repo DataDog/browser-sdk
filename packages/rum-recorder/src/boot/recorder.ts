@@ -20,7 +20,7 @@ export function startRecording(
     (data, meta) => send(configuration.sessionReplayEndpoint, data, meta)
   )
 
-  const stopRecording = record({
+  const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRecord,
   })!
 
