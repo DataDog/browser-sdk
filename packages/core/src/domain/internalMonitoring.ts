@@ -111,8 +111,8 @@ export function monitor<T extends Function>(fn: T): T {
       logErrorIfDebug(e)
       try {
         addErrorToMonitoringBatch(e)
-      } catch (e) {
-        logErrorIfDebug(e)
+      } catch (err) {
+        logErrorIfDebug(err)
       }
     }
   } as unknown) as T // consider output type has input type

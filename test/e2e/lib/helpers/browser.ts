@@ -10,7 +10,7 @@ export async function browserExecuteAsync<R, A, B>(
 ): Promise<R>
 export async function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
 export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
-export async function browserExecuteAsync<A extends any[]>(fn: (...args: A) => any, ...args: A) {
+export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
   return browser.executeAsync(fn as any, ...args)
 }
 
@@ -53,7 +53,7 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   type State = { state: 'success'; response: string } | { state: 'error' }
 
   const result: State = await browserExecuteAsync(
-    // tslint:disable-next-line: no-shadowed-variable
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     (url, headers, done) => {
       const xhr = new XMLHttpRequest()
       xhr.addEventListener('load', () => done({ state: 'success', response: xhr.response as string }))
@@ -74,7 +74,7 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
 
 export async function sendFetch(url: string, headers: string[][] = []): Promise<string> {
   return browserExecuteAsync(
-    // tslint:disable-next-line: no-shadowed-variable
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     (url, headers, done) => {
       window
         .fetch(url, { headers })
