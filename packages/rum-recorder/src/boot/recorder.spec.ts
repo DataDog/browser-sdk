@@ -135,6 +135,35 @@ describe('startRecording', () => {
       expectNoExtraRequest(done)
     })
   })
+
+  it('takes a full snapshot when the view changes', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+
+    flushSegment(lifeCycle)
+
+    waitRequests(2, (requests) => {
+      expect(requests[0].data.get('has_full_snapshot')).toBe('true')
+      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
+      expectNoExtraRequest(done)
+    })
+  })
+
+  it('takes a full snapshot when the session is renewed', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    flushSegment(lifeCycle)
+
+    waitRequests(2, (requests) => {
+      expect(requests.length).toBe(2)
+      expect(requests[0].data.get('has_full_snapshot')).toBe('true')
+      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
+      expectNoExtraRequest(done)
+    })
+  })
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
