@@ -33,7 +33,7 @@ module.exports = {
   reporters,
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
-    requires: [path.resolve(__dirname, './ts-node')],
+    requires: [path.resolve(__dirname, './tsNode')],
   },
   onPrepare() {
     if (testReportDirectory) {

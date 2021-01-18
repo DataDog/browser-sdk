@@ -72,8 +72,8 @@ module.exports = {
     'prefer-rest-params': 'off',
     'jsdoc/check-indentation': 'off',
     'jsdoc/newline-after-description': 'off',
-    'unicorn/filename-case': 'off',
 
+    'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'arrow-body-style': 'error',
     'no-redeclare': 'off',
     'no-shadow': 'off',
@@ -226,4 +226,12 @@ module.exports = {
     'use-isnan': 'error',
     'valid-typeof': 'off',
   },
+  overrides: [
+    {
+      files: ['scripts/*.js'],
+      rules: {
+        'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      },
+    },
+  ],
 }
