@@ -38,7 +38,7 @@ export const Datacenter = {
   EU: 'eu',
   US: 'us',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
 
 export const INTAKE_SITE = {

@@ -68,7 +68,6 @@ module.exports = {
         },
       },
     ],
-    'no-redeclare': 'off',
     'no-throw-literal': 'off',
     'no-underscore-dangle': 'off',
     'prefer-rest-params': 'off',
@@ -77,7 +76,9 @@ module.exports = {
     'unicorn/filename-case': 'off',
 
     'arrow-body-style': 'error',
+    'no-redeclare': 'off',
     'no-shadow': 'off',
+    '@typescript-eslint/no-redeclare': 'error',
     '@typescript-eslint/no-shadow': 'error',
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/adjacent-overload-signatures': 'error',

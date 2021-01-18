@@ -6,7 +6,7 @@ export const StatusType = {
   info: 'info',
   warn: 'warn',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type StatusType = typeof StatusType[keyof typeof StatusType]
 
 const STATUS_PRIORITIES: { [key in StatusType]: number } = {
@@ -29,7 +29,7 @@ export const HandlerType = {
   http: 'http',
   silent: 'silent',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 
 export class Logger {

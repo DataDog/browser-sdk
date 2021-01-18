@@ -22,7 +22,7 @@ export const ErrorSource = {
   NETWORK: 'network',
   SOURCE: 'source',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
 export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
