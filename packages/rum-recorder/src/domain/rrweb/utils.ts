@@ -37,7 +37,7 @@ export const mirror: Mirror = {
 export function throttle<T>(func: (arg: T) => void, wait: number, options: ThrottleOptions = {}) {
   let timeout: number | undefined
   let previous = 0
-  return function (this: unknown, _: T) {
+  return function (this: unknown) {
     const now = Date.now()
     if (!previous && options.leading === false) {
       previous = now

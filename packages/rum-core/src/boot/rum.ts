@@ -1,4 +1,4 @@
-import { combine, commonInit, Configuration, Context } from '@datadog/browser-core'
+import { combine, commonInit, Configuration } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -69,7 +69,7 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
-  startLongTaskCollection(lifeCycle, configuration)
+  startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, configuration, session)
   const { addTiming } = startViewCollection(lifeCycle, configuration, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)

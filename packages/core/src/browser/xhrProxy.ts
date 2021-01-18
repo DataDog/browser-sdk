@@ -80,7 +80,7 @@ function proxyXhr() {
     return originalXhrOpen.apply(this, arguments as any)
   })
 
-  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR, body: unknown) {
+  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR) {
     if (this._datadog_xhr) {
       this._datadog_xhr.startTime = performance.now()
 

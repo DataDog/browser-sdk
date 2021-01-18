@@ -226,7 +226,7 @@ export const report = (function reportModuleWrapper() {
     let stack: StackTrace
 
     if (lastExceptionStack) {
-      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, `${message}`)
+      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo)
       processLastException()
     } else if (errorObj) {
       stack = computeStackTrace(errorObj)
@@ -768,12 +768,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * augmented.
    * @memberof computeStackTrace
    */
-  function augmentStackTraceWithInitialElement(
-    stackInfo: StackTrace,
-    url?: string,
-    lineNo?: string | number,
-    message?: string
-  ) {
+  function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
     const initial: StackFrame = {
       url,
       line: lineNo ? +lineNo : undefined,
@@ -869,8 +864,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     augmentStackTraceWithInitialElement(
       result,
       tryToGetString(ex, 'sourceURL') || tryToGetString(ex, 'fileName'),
-      tryToGetString(ex, 'line') || tryToGetString(ex, 'lineNumber'),
-      tryToGetString(ex, 'message') || tryToGetString(ex, 'description')
+      tryToGetString(ex, 'line') || tryToGetString(ex, 'lineNumber')
     )
     return result
   }

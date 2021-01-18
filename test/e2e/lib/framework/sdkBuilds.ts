@@ -44,7 +44,7 @@ function bufferReplace(buffer: Buffer, replacements: { [placeholder: string]: st
   const parts = []
   let lastIndex = 0
   for (let index = 0; index < buffer.length; index += 1) {
-    const found = replacementsArray.find(([placeholder, _]) =>
+    const found = replacementsArray.find(([placeholder]) =>
       buffer.slice(index, index + placeholder.length).equals(placeholder)
     )
     if (found) {

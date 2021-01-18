@@ -100,7 +100,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
         x: clientX,
         y: clientY,
       })
-      wrappedCb(isTouchEvent(evt))
+      wrappedCb()
     },
     threshold,
     {

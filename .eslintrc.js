@@ -24,7 +24,6 @@ module.exports = {
     // Temporary disabled rules
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/member-ordering': 'off',
@@ -85,6 +84,7 @@ module.exports = {
     '@typescript-eslint/consistent-type-definitions': 'error',
     '@typescript-eslint/no-extra-semi': 'off',
     '@typescript-eslint/dot-notation': 'error',
+    '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/explicit-member-accessibility': [
       'off',
       {

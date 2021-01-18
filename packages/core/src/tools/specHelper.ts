@@ -122,10 +122,10 @@ class StubXhr {
     this.fakeEventTarget = document.createElement('div')
   }
 
-  /* eslint-disable no-empty,@typescript-eslint/no-empty-function */
+  /* eslint-disable no-empty,@typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
   open(method: string, url: string) {}
   send() {}
-  /* eslint-enable no-empty, @typescript-eslint/no-empty-function */
+  /* eslint-enable no-empty,@typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
   abort() {
     this.status = 0

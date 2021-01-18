@@ -1,13 +1,4 @@
-import {
-  addEventListener,
-  DOM_EVENT,
-  generateUUID,
-  monitor,
-  msToNs,
-  noop,
-  ONE_MINUTE,
-  throttle,
-} from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'

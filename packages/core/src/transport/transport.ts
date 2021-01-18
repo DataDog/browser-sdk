@@ -1,4 +1,3 @@
-import { monitor } from '../domain/internalMonitoring'
 import { Context } from '../tools/context'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 
