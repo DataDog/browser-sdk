@@ -2,4 +2,5 @@ bundle
 cjs
 esm
 test/app/dist
-./sandbox
+sandbox
+coverage
