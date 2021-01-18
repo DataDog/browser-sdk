@@ -38,6 +38,7 @@ describe('internal monitoring', () => {
 
       @monitored
       monitoredObjectErrorThrowing() {
+        // eslint-disable-next-line no-throw-literal
         throw { foo: 'bar' }
       }
 
