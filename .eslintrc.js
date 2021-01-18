@@ -23,7 +23,6 @@ module.exports = {
   rules: {
     // Temporary disabled rules
     '@typescript-eslint/require-await': 'off',
-    '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/member-ordering': 'off',
@@ -75,6 +74,15 @@ module.exports = {
     'no-redeclare': 'off',
     'no-shadow': 'off',
     'no-throw-literal': 'error',
+    '@typescript-eslint/ban-ts-comment': [
+      'error',
+      {
+        'ts-expect-error': 'allow-with-description',
+        'ts-ignore': 'allow-with-description',
+        'ts-nocheck': 'allow-with-description',
+        'ts-check': 'allow-with-description',
+      },
+    ],
     '@typescript-eslint/no-redeclare': 'error',
     '@typescript-eslint/no-shadow': 'error',
     '@typescript-eslint/await-thenable': 'error',

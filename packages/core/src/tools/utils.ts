@@ -272,9 +272,9 @@ export function getGlobalObject<T>(): T {
     },
     configurable: true,
   })
-  // @ts-ignore
+  // @ts-ignore _dd_temp is defined using defineProperty
   let globalObject: unknown = _dd_temp_
-  // @ts-ignore
+  // @ts-ignore _dd_temp is defined using defineProperty
   delete Object.prototype._dd_temp_
   if (typeof globalObject !== 'object') {
     // on safari _dd_temp_ is available on window but not globally

@@ -141,19 +141,19 @@ export class MutationBuffer {
   private movedSet = new Set<Node>()
   private droppedSet = new Set<Node>()
 
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private emissionCallback: MutationCallBack
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private blockClass: BlockClass
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private blockSelector: string | null
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private inlineStylesheet: boolean
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private maskInputOptions: MaskInputOptions
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private recordCanvas: boolean
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private slimDOMOptions: SlimDOMOptions
 
   public init(
