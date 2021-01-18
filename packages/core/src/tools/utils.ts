@@ -344,8 +344,8 @@ interface AddEventListenerOptions {
  * a few conveniences compared to using `element.addEventListener` directly:
  *
  * * supports IE11 by:
- *   * using an option object only if needed
- *   * emulating the `once` option
+ * - using an option object only if needed
+ * - emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
@@ -365,15 +365,14 @@ export function addEventListener(
  * a few conveniences compared to using `element.addEventListener` directly:
  *
  * * supports IE11 by:
- *   * using an option object only if needed
- *   * emulating the `once` option
+ * - using an option object only if needed
+ * - emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
  * * returns a `stop` function to remove the listener
  *
- * * with `once: true`, the listener will be called at most once, even if different events are
- *   listened
+ * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners(
   emitter: EventEmitter,

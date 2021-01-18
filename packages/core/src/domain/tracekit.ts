@@ -384,10 +384,10 @@ export const report = (function reportModuleWrapper() {
  * computeStackTrace: cross-browser stack traces in JavaScript
  *
  * Syntax:
- *   ```js
- *   s = computeStackTrace.ofCaller([depth])
- *   s = computeStackTrace(exception) // consider using report instead (see below)
- *   ```
+ * ```js
+ * s = computeStackTrace.ofCaller([depth])
+ * s = computeStackTrace(exception) // consider using report instead (see below)
+ * ```
  *
  * Supports:
  *   - Firefox:  full stack trace with line numbers and unreliable column
@@ -426,7 +426,7 @@ export const report = (function reportModuleWrapper() {
  * inner function that actually caused the exception).
  *
  * Tracing example:
- *  ```js
+ * ```js
  *     function trace(message) {
  *         let stackInfo = computeStackTrace.ofCaller();
  *         let data = message + "\n";

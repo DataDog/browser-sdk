@@ -70,10 +70,10 @@ module.exports = {
     ],
     'no-underscore-dangle': 'off',
     'prefer-rest-params': 'off',
-    'jsdoc/check-indentation': 'off',
     'jsdoc/newline-after-description': 'off',
 
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
+    'jsdoc/check-indentation': 'error',
     'arrow-body-style': 'error',
     'no-redeclare': 'off',
     'no-shadow': 'off',
