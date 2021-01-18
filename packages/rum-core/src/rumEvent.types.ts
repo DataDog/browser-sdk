@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/array-type */
 /**
  * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.
  */

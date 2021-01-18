@@ -140,7 +140,7 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 }
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
-export function html(parts: ReadonlyArray<string>, ...vars: string[]) {
+export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 

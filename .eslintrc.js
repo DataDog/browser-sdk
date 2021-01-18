@@ -22,7 +22,6 @@ module.exports = {
   ],
   rules: {
     // Temporary disabled rules
-    '@typescript-eslint/array-type': 'off',
     '@typescript-eslint/no-extra-semi': 'off',
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/await-thenable': 'off',
@@ -39,7 +38,6 @@ module.exports = {
     '@typescript-eslint/prefer-regexp-exec': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-floating-promises': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/restrict-plus-operands': 'off',
     '@typescript-eslint/restrict-template-expressions': 'off',
     '@typescript-eslint/ban-types': [
@@ -79,6 +77,7 @@ module.exports = {
     'jsdoc/newline-after-description': 'off',
     'unicorn/filename-case': 'off',
 
+    '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     'arrow-body-style': 'error',
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/consistent-type-assertions': 'error',
@@ -113,6 +112,7 @@ module.exports = {
     '@typescript-eslint/no-misused-promises': 'error',
     '@typescript-eslint/no-namespace': 'error',
     '@typescript-eslint/no-non-null-asserted-optional-chain': 'error',
+    '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-parameter-properties': 'off',
     '@typescript-eslint/no-this-alias': 'error',
     '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
