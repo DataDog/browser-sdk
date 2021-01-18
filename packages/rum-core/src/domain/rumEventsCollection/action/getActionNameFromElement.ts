@@ -150,7 +150,6 @@ function truncate(s: string) {
 function getElementById(refElement: Element, id: string) {
   // Use the element ownerDocument here, because tests are executed in an iframe, so
   // document.getElementById won't work.
-  // eslint-disable-next-line no-null/no-null
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 

@@ -1,6 +1,5 @@
 import { limitModification } from './limitModification'
 
-/* eslint-disable  */
 describe('limitModification', () => {
   it('should allow modifications on modifiable field', () => {
     const object = { foo: { bar: 'bar' }, qux: 'qux' }

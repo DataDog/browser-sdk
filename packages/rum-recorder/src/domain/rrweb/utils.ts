@@ -18,7 +18,6 @@ export const mirror: Mirror = {
     return n.__sn.id
   },
   getNode(id) {
-    // eslint-disable-next-line no-null/no-null
     return mirror.map[id] || null
   },
   // TODO: use a weakmap to get rid of manually memory management

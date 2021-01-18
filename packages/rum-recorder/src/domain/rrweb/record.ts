@@ -1,4 +1,3 @@
-/* eslint-disable no-null/no-null */
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
 import { initObservers, mutationBuffer } from './observer'
 import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordOptions } from './types'

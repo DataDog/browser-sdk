@@ -1,5 +1,3 @@
-// eslint-disable
-
 import { report, StackFrame, wrap } from './tracekit'
 
 describe('Handler', () => {

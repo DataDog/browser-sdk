@@ -20,12 +20,10 @@ describe('context', () => {
     })
 
     it('should replace a sub-value with null', () => {
-      // eslint-disable-next-line no-null/no-null
       expect(combine({ a: {} }, { a: null as any })).toEqual({ a: null })
     })
 
     it('should ignore null arguments', () => {
-      // eslint-disable-next-line no-null/no-null
       expect(combine({ a: 1 }, null)).toEqual({ a: 1 })
     })
 
@@ -169,13 +167,13 @@ describe('context', () => {
         withSnakeCaseKeys({
           camelCase: 1,
           nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
-          // eslint-disable-next-line no-null/no-null
+
           nullValue: null,
         })
       ).toEqual({
         camel_case: 1,
         nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
-        // eslint-disable-next-line no-null/no-null
+
         null_value: null,
       })
     })

@@ -1,5 +1,3 @@
-// eslint-disable
-
 import { monitor } from './internalMonitoring'
 
 export interface BrowserError extends Error {
@@ -87,7 +85,6 @@ function isUndefined(what: any) {
  * @return {Function} The wrapped func
  * @memberof TraceKit
  */
-// eslint-disable-next-line  @typescript-eslint/ban-types
 export function wrap(func: Function) {
   function wrapped(this: any) {
     try {

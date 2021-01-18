@@ -1,4 +1,3 @@
-/* eslint-disable no-null/no-null */
 import { noop } from '@datadog/browser-core'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { FontFaceDescriptors, FontFaceSet } from 'css-font-loading-module'

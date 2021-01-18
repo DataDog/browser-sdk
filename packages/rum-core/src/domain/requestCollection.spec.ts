@@ -57,7 +57,6 @@ describe('collect fetch', () => {
   afterEach(() => {
     fetchStubManager.reset()
     resetFetchProxy()
-    // eslint-disable-next-line no-null/no-null
     window.onunhandledrejection = null
   })
 

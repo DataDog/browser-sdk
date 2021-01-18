@@ -20,7 +20,6 @@ describe('TraceKit', () => {
       expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
       expect(stackFrames.stack[0].line).toEqual(63)
       expect(stackFrames.stack[0].column).toEqual(1)
-
       expect(stackFrames.stack[1].func).toEqual('namedFunc0')
       expect(stackFrames.stack[1].url).toEqual('http://example.com/js/script.js')
       expect(stackFrames.stack[1].line).toEqual(10)
@@ -110,7 +109,6 @@ Error: foo
       expect(computeStackTrace(2).message).toBeUndefined()
       expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
       expect(computeStackTrace(undefined).message).toBeUndefined()
-      // eslint-disable-next-line no-null/no-null
       expect(computeStackTrace(null).message).toBeUndefined()
     })
   })

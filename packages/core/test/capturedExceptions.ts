@@ -1,4 +1,4 @@
-/* eslint-disable  max-len */
+/* eslint-disable max-len */
 export const OPERA_854 = {
   message: `Statement on line 44: Type mismatch (usually a non-object value used where an object is required)
 Backtrace:
@@ -384,7 +384,6 @@ export const PHANTOMJS_1_19 = {
     at http://path/to/file.js:4287`,
 }
 
-// eslint-disable  max-len
 export const ANDROID_REACT_NATIVE = {
   message: 'Error: test',
   name: 'Error',
@@ -398,7 +397,6 @@ at child(/home/username/sample-workspace/sampleapp.collect.react/node_modules/re
 at children(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactMultiChild.js:264:10)
 at this(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js:74:41)\n`,
 }
-// eslint-enable  max-len
 
 export const ANDROID_REACT_NATIVE_PROD = {
   message: 'Error: test',
