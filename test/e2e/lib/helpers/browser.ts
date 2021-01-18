@@ -27,7 +27,7 @@ export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
   // https://github.com/webdriverio/webdriverio/issues/4275
   if (browser.getLogs) {
     const logs = (await browser.getLogs('browser')) as BrowserLog[]
-    await fn(logs)
+    fn(logs)
   }
 }
 

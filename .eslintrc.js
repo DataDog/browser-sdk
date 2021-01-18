@@ -22,9 +22,7 @@ module.exports = {
   ],
   rules: {
     // Temporary disabled rules
-    '@typescript-eslint/no-extra-semi': 'off',
     '@typescript-eslint/require-await': 'off',
-    '@typescript-eslint/await-thenable': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
@@ -80,10 +78,12 @@ module.exports = {
     'no-throw-literal': 'error',
     '@typescript-eslint/no-redeclare': 'error',
     '@typescript-eslint/no-shadow': 'error',
+    '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'error',
+    '@typescript-eslint/no-extra-semi': 'off',
     '@typescript-eslint/dot-notation': 'error',
     '@typescript-eslint/explicit-member-accessibility': [
       'off',
@@ -105,6 +105,7 @@ module.exports = {
         },
       },
     ],
+    '@typescript-eslint/indent': 'off',
     '@typescript-eslint/no-array-constructor': 'error',
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-explicit-any': 'off',

@@ -18,7 +18,7 @@ async function main() {
     style: prettierConfig,
   })
   console.log(`writing ${compiledTypesPath}`)
-  await fs.writeFileSync(compiledTypesPath, compiledTypes)
+  fs.writeFileSync(compiledTypesPath, compiledTypes)
   console.log('done')
 }
 
