@@ -37,14 +37,9 @@ describe('startRecording', () => {
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
 
     waitRequests = (callback) => {
-      if (requestSendSpy.calls.first()) {
-        waitForLastRequest()
-      } else {
-        requestSendSpy.and.callFake(waitForLastRequest)
-      }
-
       let isWaiting = false
-      function waitForLastRequest() {
+
+      requestSendSpy.and.callFake(() => {
         if (isWaiting) {
           return
         }
@@ -52,7 +47,7 @@ describe('startRecording', () => {
         setTimeout(() => {
           callback(requestSendSpy.calls.allArgs().map(([data, size]) => ({ size, data: data as FormData })))
         }, 300)
-      }
+      })
     }
   })
 
@@ -83,15 +78,19 @@ describe('startRecording', () => {
 
   it('flushes the segment when its compressed data is getting too large', (done) => {
     setupBuilder.build()
-    const clickCount = 10_000
-    const click = createNewEvent('click')
-    for (let i = 0; i < clickCount; i += 1) {
-      document.body.dispatchEvent(click)
+    const inputCount = 150
+    const textField = document.createElement('input')
+    const inputEvent = createNewEvent('input', { target: textField })
+    for (let i = 0; i < inputCount; i += 1) {
+      // Create a random value harder to deflate, so we don't have to send too many events to reach
+      // the limit.
+      textField.value = createRandomString(1000)
+      document.body.dispatchEvent(inputEvent)
     }
 
     waitRequests((requests) => {
       expect(requests.length).toBe(1)
-      expect(requests[0].data.get('records_count')).toBe(String(clickCount + 2))
+      expect(requests[0].data.get('records_count')).toBe(String(inputCount + 2))
       done()
     })
   })
@@ -144,5 +143,13 @@ function formDataAsObject(data: FormData) {
   data.forEach((value, key) => {
     result[key] = value
   })
+  return result
+}
+
+function createRandomString(minLength: number) {
+  let result = ''
+  while (result.length < minLength) {
+    result += Math.random().toString(36)
+  }
   return result
 }
