@@ -15,7 +15,7 @@ describe('logs entry', () => {
   let startLogsGetGlobalContext: (() => Context) | undefined
   const startLogs: StartLogs = (configuration, logger, getGlobalContext) => {
     startLogsGetGlobalContext = getGlobalContext
-    return sendLogsSpy as any
+    return (sendLogsSpy as any) as ReturnType<StartLogs>
   }
 
   function getLoggedMessage(index: number) {

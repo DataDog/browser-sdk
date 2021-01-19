@@ -85,10 +85,10 @@ function isUndefined(what: any) {
  * @return {Function} The wrapped func
  * @memberof TraceKit
  */
-export function wrap(func: Function) {
-  function wrapped(this: any) {
+export function wrap<Args extends any[], R>(func: (...args: Args) => R) {
+  function wrapped(this: any, ...args: Args) {
     try {
-      return func.apply(this, arguments)
+      return func.apply(this, args)
     } catch (e) {
       report(e)
       throw e
@@ -255,6 +255,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     if (oldOnerrorHandler) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return oldOnerrorHandler.apply(this, arguments as any)
     }
 
@@ -979,8 +980,10 @@ export function extendToAsynchronousCallbacks() {
       // also only supports 2 argument and doesn't care what "this" is, so we
       // can just call the original function directly.
       if (originalFn.apply) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return originalFn.apply(this, args)
       }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return originalFn(args[0], args[1])
     }
   }

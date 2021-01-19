@@ -105,7 +105,9 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   }
   if ((window as BrowserWindow).PerformanceObserver) {
     const observer = new PerformanceObserver(
-      monitor((entries) => handlePerformanceEntries(lifeCycle, configuration, entries.getEntries()))
+      monitor((entries: PerformanceObserverEntryList) =>
+        handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())
+      )
     )
     const entryTypes = [
       'resource',

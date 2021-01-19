@@ -120,7 +120,7 @@ function declareTest(title: string, setup: string, runner: TestRunner) {
 
 function getBrowserName() {
   const capabilities = browser.options.capabilities
-  return capabilities && (capabilities.browserName || (capabilities as any).browser)
+  return capabilities && ((capabilities.browserName || (capabilities as any).browser) as string)
 }
 
 function createTestContext(servers: Servers): TestContext {

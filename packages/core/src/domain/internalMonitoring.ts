@@ -95,18 +95,22 @@ export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
 }
 
-export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value
-  descriptor.value = function () {
-    const decorated = (monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod) as Function
-    return decorated.apply(this, arguments)
-  }
+export function monitored<T extends (...params: any[]) => unknown>(
+  _: any,
+  __: string,
+  descriptor: TypedPropertyDescriptor<T>
+) {
+  const originalMethod = descriptor.value!
+  descriptor.value = (function (this: any, ...args: Parameters<T>) {
+    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
+    return decorated.apply(this, args) as ReturnType<T>
+  } as any) as T
 }
 
-export function monitor<T extends Function>(fn: T): T {
-  return (function (this: any) {
+export function monitor<R>(fn: (...args: any[]) => R) {
+  return (function (this: any, ...args: any[]) {
     try {
-      return fn.apply(this, arguments)
+      return fn.apply(this, args)
     } catch (e) {
       logErrorIfDebug(e)
       try {
@@ -115,7 +119,7 @@ export function monitor<T extends Function>(fn: T): T {
         logErrorIfDebug(err)
       }
     }
-  } as unknown) as T // consider output type has input type
+  } as unknown) as (...args: any[]) => R // consider output type has input type
 }
 
 export function addMonitoringMessage(message: string, context?: Context) {

@@ -52,7 +52,7 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
 }
 
 function mockGetElementById() {
-  const fakeGetElementById = (elementId: string) => (elementId === ('testHashValue' as unknown)) as any
+  const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
   return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
 }
 

@@ -13,7 +13,7 @@ describe('Handler', () => {
     }
 
     report.subscribe(handler)
-    expect(() => wrap(throwException)()).toThrowError()
+    expect((): void => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
       report.unsubscribe(handler)

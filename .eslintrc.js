@@ -25,7 +25,7 @@ module.exports = {
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/no-var-requires': 'error',
-    '@typescript-eslint/no-unsafe-return': 'off',
+    '@typescript-eslint/no-unsafe-return': 'error',
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/prefer-regexp-exec': 'off',
@@ -293,6 +293,7 @@ module.exports = {
       files: ['**/*.js'],
       rules: {
         '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-var-requires': 'off',
       },
     },

@@ -268,7 +268,7 @@ export function getGlobalObject<T>(): T {
   }
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
-      return this
+      return this as object
     },
     configurable: true,
   })
