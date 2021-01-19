@@ -43,7 +43,7 @@ export function startSegmentCollection(
   const worker = createDeflateWorker()
   return doStartSegmentCollection(
     lifeCycle,
-    () => doGetSegmentContext(applicationId, session, parentContexts),
+    () => computeSegmentContext(applicationId, session, parentContexts),
     send,
     worker
   )
@@ -72,22 +72,18 @@ export function doStartSegmentCollection(
     }
   )
 
-  // Flush when the RUM view changes
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     flushSegment('view_change')
   })
 
-  // Flush when the session is renewed
   const { unsubscribe: unsubscribeSessionRenewed } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     flushSegment('session_renewed')
   })
 
-  // Flush when leaving the page
   const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
     flushSegment('before_unload')
   })
 
-  // Flush when visibility changes
   const { stop: unsubscribeVisibilityChange } = addEventListener(
     emitter,
     DOM_EVENT.VISIBILITY_CHANGE,
@@ -118,7 +114,6 @@ export function doStartSegmentCollection(
         }
 
         currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
-        // Replace the newly created segment after MAX_SEGMENT_DURATION
         currentSegmentExpirationTimeoutId = window.setTimeout(
           monitor(() => {
             flushSegment('max_duration')
