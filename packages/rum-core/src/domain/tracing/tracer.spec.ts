@@ -189,6 +189,30 @@ describe('tracer', () => {
       ])
     })
 
+    it('should preserve original headers contained in a Request instance', () => {
+      const request = new Request(document.location.origin, {
+        headers: {
+          foo: 'bar',
+        },
+      })
+
+      const context: Partial<RumFetchCompleteContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: request,
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      tracer.traceFetch(context)
+
+      expect(context.init).not.toBe(request)
+      expect(headersAsArray((context.init as Request).headers)).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+      ])
+
+      expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
+    })
+
     it('should not trace request on disallowed domain', () => {
       const context: Partial<RumFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
@@ -277,5 +301,13 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
 }
 
 function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
-  return objectEntries(tracingHeadersFor(traceId, spanId)) as string[][]
+  return objectEntries(tracingHeadersFor(traceId, spanId)) as Array<[string, string]>
+}
+
+function headersAsArray(headers: Headers) {
+  const result: Array<[string, string]> = []
+  headers.forEach((value, key) => {
+    result.push([key, value])
+  })
+  return result
 }

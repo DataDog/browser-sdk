@@ -28,22 +28,29 @@ export function startTracer(configuration: Configuration): Tracer {
     clearTracingIfCancelled,
     traceFetch: (context) =>
       injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
-        context.init = { ...context.init }
-        const headers: string[][] = []
-        if (context.init.headers instanceof Headers) {
-          context.init.headers.forEach((value, key) => {
-            headers.push([key, value])
+        if (context.init instanceof Request) {
+          context.init = context.init.clone()
+          Object.keys(tracingHeaders).forEach((name) => {
+            ;(context.init as Request).headers.append(name, tracingHeaders[name])
           })
-        } else if (Array.isArray(context.init.headers)) {
-          context.init.headers.forEach((header) => {
-            headers.push(header)
-          })
-        } else if (context.init.headers) {
-          Object.keys(context.init.headers).forEach((key) => {
-            headers.push([key, (context.init!.headers as Record<string, string>)[key]])
-          })
+        } else {
+          context.init = { ...context.init }
+          const headers: string[][] = []
+          if (context.init.headers instanceof Headers) {
+            context.init.headers.forEach((value, key) => {
+              headers.push([key, value])
+            })
+          } else if (Array.isArray(context.init!.headers)) {
+            context.init.headers.forEach((header) => {
+              headers.push(header)
+            })
+          } else if (context.init.headers) {
+            Object.keys(context.init.headers).forEach((key) => {
+              headers.push([key, (context.init!.headers as Record<string, string>)[key]])
+            })
+          }
+          context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
         }
-        context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
       }),
     traceXhr: (context, xhr) =>
       injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
