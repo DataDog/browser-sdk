@@ -139,7 +139,7 @@ export function doStartSegmentCollection(
   }
 }
 
-export function doGetSegmentContext(applicationId: string, session: RumSession, parentContexts: ParentContexts) {
+export function computeSegmentContext(applicationId: string, session: RumSession, parentContexts: ParentContexts) {
   if (!session.isTracked()) {
     return undefined
   }

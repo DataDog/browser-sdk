@@ -2,7 +2,7 @@ import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } f
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext } from '@datadog/browser-rum-core'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { Segment } from './segment'
-import { doGetSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
+import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 import { MockWorker } from '../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
@@ -143,7 +143,7 @@ describe('startSegmentCollection', () => {
   })
 })
 
-describe('getSegmentContext', () => {
+describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewContext = {
     session: { id: '456' },
     view: { id: '123', url: 'http://foo.com', referrer: 'http://bar.com' },
@@ -156,7 +156,7 @@ describe('getSegmentContext', () => {
   }
 
   it('returns a segment context', () => {
-    expect(doGetSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
+    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
       application: { id: 'appid' },
       session: { id: '456' },
       view: { id: '123' },
@@ -164,12 +164,12 @@ describe('getSegmentContext', () => {
   })
 
   it('returns undefined if there is no current view', () => {
-    expect(doGetSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
+    expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(undefined))).toBeUndefined()
   })
 
   it('returns undefined if there is no session id', () => {
     expect(
-      doGetSegmentContext(
+      computeSegmentContext(
         'appid',
         DEFAULT_SESSION,
         mockParentContexts({
@@ -182,7 +182,7 @@ describe('getSegmentContext', () => {
 
   it('returns undefined if the session is not tracked', () => {
     expect(
-      doGetSegmentContext(
+      computeSegmentContext(
         'appid',
         {
           ...DEFAULT_SESSION,
