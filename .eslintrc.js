@@ -24,7 +24,7 @@ module.exports = {
     // Temporary disabled rules
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/unbound-method': 'off',
-    '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/no-unsafe-return': 'off',
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
@@ -293,6 +293,7 @@ module.exports = {
       files: ['**/*.js'],
       rules: {
         '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-var-requires': 'off',
       },
     },
   ],
