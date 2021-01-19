@@ -189,6 +189,48 @@ describe('tracer', () => {
       ])
     })
 
+    it('should preserve original headers contained in a Request instance', () => {
+      const request = new Request(document.location.origin, {
+        headers: {
+          foo: 'bar',
+        },
+      })
+
+      const context: Partial<RumFetchCompleteContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        input: request,
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      tracer.traceFetch(context)
+
+      expect(context.init!.headers).toEqual([
+        ['foo', 'bar'],
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+      ])
+
+      expect(context.input).toBe(request)
+      expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
+    })
+
+    it('should ignore headers from a Request instance if other headers are set', () => {
+      const context: Partial<RumFetchCompleteContext> = {
+        ...ALLOWED_DOMAIN_CONTEXT,
+        init: { headers: { 'x-init-header': 'baz' } },
+        input: new Request(document.location.origin, {
+          headers: { 'x-request-header': 'bar' },
+        }),
+      }
+
+      const tracer = startTracer(configuration as Configuration)
+      tracer.traceFetch(context)
+
+      expect(context.init!.headers).toEqual([
+        ['x-init-header', 'baz'],
+        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
+      ])
+    })
+
     it('should not trace request on disallowed domain', () => {
       const context: Partial<RumFetchCompleteContext> = { ...DISALLOWED_DOMAIN_CONTEXT }
 
@@ -278,4 +320,12 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
 
 function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
   return objectEntries(tracingHeadersFor(traceId, spanId)) as string[][]
+}
+
+function headersAsArray(headers: Headers) {
+  const result: Array<[string, string]> = []
+  headers.forEach((value, key) => {
+    result.push([key, value])
+  })
+  return result
 }

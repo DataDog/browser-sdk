@@ -14,6 +14,7 @@ export interface FetchProxy<
 export interface FetchStartContext {
   method: string
   startTime: number
+  input: RequestInfo
   init?: RequestInit
   url: string
 
@@ -77,6 +78,7 @@ function proxyFetch() {
 
     const context: FetchStartContext = {
       init,
+      input,
       method,
       startTime,
       url,

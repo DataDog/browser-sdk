@@ -42,6 +42,10 @@ export function startTracer(configuration: Configuration): Tracer {
           Object.keys(context.init.headers).forEach((key) => {
             headers.push([key, (context.init!.headers as Record<string, string>)[key]])
           })
+        } else if (context.input instanceof Request) {
+          context.input.headers.forEach((value, key) => {
+            headers.push([key, value])
+          })
         }
         context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
       }),
