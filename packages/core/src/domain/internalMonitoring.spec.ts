@@ -21,10 +21,6 @@ const configuration: Partial<Configuration> = {
 describe('internal monitoring', () => {
   describe('decorator', () => {
     class Candidate {
-      notMonitoredThrowing() {
-        throw new Error('not monitored')
-      }
-
       @monitored
       monitoredThrowing() {
         throw new Error('monitored')
@@ -45,6 +41,10 @@ describe('internal monitoring', () => {
       @monitored
       monitoredNotThrowing() {
         return 1
+      }
+
+      notMonitoredThrowing() {
+        throw new Error('not monitored')
       }
     }
 

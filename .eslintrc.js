@@ -24,7 +24,6 @@ module.exports = {
     // Temporary disabled rules
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/unbound-method': 'off',
-    '@typescript-eslint/member-ordering': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-unsafe-return': 'off',
     '@typescript-eslint/naming-convention': 'off',
@@ -80,6 +79,54 @@ module.exports = {
         'ts-ignore': 'allow-with-description',
         'ts-nocheck': 'allow-with-description',
         'ts-check': 'allow-with-description',
+      },
+    ],
+    '@typescript-eslint/member-ordering': [
+      'error',
+      {
+        default: {
+          memberTypes: [
+            // Index signature
+            'signature',
+
+            // Static Fields
+            'public-static-field',
+            'protected-static-field',
+            'private-static-field',
+            // Instance Fields
+            'public-decorated-field',
+            'public-instance-field',
+            'public-abstract-field',
+            'protected-decorated-field',
+            'protected-instance-field',
+            'protected-abstract-field',
+            'private-decorated-field',
+            'private-instance-field',
+            'private-abstract-field',
+
+            // Constructors
+            'public-constructor',
+            'protected-constructor',
+            'private-constructor',
+
+            // Static Methods
+            'public-static-method',
+            'protected-static-method',
+            'private-static-method',
+
+            // Instance Methods
+            'public-decorated-method',
+            'public-instance-method',
+            'public-abstract-method',
+            'protected-decorated-method',
+            'protected-instance-method',
+            'protected-abstract-method',
+            'private-decorated-method',
+            'private-instance-method',
+            'private-abstract-method',
+          ],
+          order: 'as-written',
+        },
       },
     ],
     '@typescript-eslint/no-redeclare': 'error',
