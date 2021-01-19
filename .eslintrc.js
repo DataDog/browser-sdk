@@ -23,7 +23,6 @@ module.exports = {
   rules: {
     // Temporary disabled rules
     '@typescript-eslint/require-await': 'off',
-    '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/member-ordering': 'off',
     '@typescript-eslint/no-for-in-array': 'off',
@@ -74,6 +73,7 @@ module.exports = {
     'no-redeclare': 'off',
     'no-shadow': 'off',
     'no-throw-literal': 'error',
+    '@typescript-eslint/no-unsafe-call': 'error',
     '@typescript-eslint/ban-ts-comment': [
       'error',
       {
@@ -240,6 +240,12 @@ module.exports = {
       files: ['scripts/*.js'],
       rules: {
         'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      },
+    },
+    {
+      files: ['**/*.js'],
+      rules: {
+        '@typescript-eslint/no-unsafe-call': 'off',
       },
     },
   ],

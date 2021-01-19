@@ -16,7 +16,7 @@ const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
-export const STATUSES = Object.keys(StatusType)
+export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export interface LogsMessage {
   message: string

@@ -970,7 +970,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
  */
 export function extendToAsynchronousCallbacks() {
   function helper(fnName: any) {
-    const originalFn = (window as any)[fnName]
+    const originalFn = (window as any)[fnName] as (...args: any[]) => any
     ;(window as any)[fnName] = function traceKitAsyncExtension() {
       // Make a copy of the arguments
       const args: any[] = [].slice.call(arguments)
