@@ -98,7 +98,7 @@ describe('startSegmentCollection', () => {
       setPageVisibility('hidden')
       const { eventEmitter, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-      expect(sendCurrentSegment().creation_reason).toBe('visibility_change')
+      expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     it('does not flush segment when the page become visible', () => {
@@ -106,7 +106,7 @@ describe('startSegmentCollection', () => {
       const { eventEmitter, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
       expect(segmentFlushSpy).not.toHaveBeenCalled()
-      expect(sendCurrentSegment().creation_reason).not.toBe('visibility_change')
+      expect(sendCurrentSegment().creation_reason).not.toBe('visibility_hidden')
     })
 
     it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {

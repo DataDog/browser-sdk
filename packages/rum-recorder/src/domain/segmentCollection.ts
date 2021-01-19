@@ -89,7 +89,7 @@ export function doStartSegmentCollection(
     DOM_EVENT.VISIBILITY_CHANGE,
     () => {
       if (document.visibilityState === 'hidden') {
-        flushSegment('visibility_change')
+        flushSegment('visibility_hidden')
       }
     },
     { capture: true }

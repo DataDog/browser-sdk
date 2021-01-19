@@ -42,4 +42,4 @@ export type CreationReason =
   | 'view_change'
   | 'session_renewed'
   | 'before_unload'
-  | 'visibility_change'
+  | 'visibility_hidden'
