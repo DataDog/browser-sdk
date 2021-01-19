@@ -60,7 +60,7 @@ describe('startRecording', () => {
     setupBuilder.cleanup()
   })
 
-  it('starts recording', (done) => {
+  it('sends recorded segments with valid context', (done) => {
     const { lifeCycle } = setupBuilder.build()
     flushSegment(lifeCycle)
 
