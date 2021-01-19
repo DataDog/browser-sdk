@@ -16,6 +16,8 @@ To set up Datadog RUM browser monitoring:
 
 **Note**: Your application shows up on the application list page as "pending" until Datadog starts receiving data.
 
+**Supported browsers**: The RUM SDK supports all modern desktop and mobile browsers including IE11. See the [browser support][8] table.
+
 ### Choose the right installation method
 
 | Installation method        | Use case                                                                                                                                                                                                                                                                                                                                                           |
@@ -178,3 +180,4 @@ init(configuration: {
 [5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
 [6]: https://docs.datadoghq.com/real_user_monitoring/data_collected/user_action/#automatic-collection-of-user-actions
 [7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
+[8]: https://github.com/DataDog/browser-sdk/blob/master/packages/rum/BROWSER_SUPPORT.md
