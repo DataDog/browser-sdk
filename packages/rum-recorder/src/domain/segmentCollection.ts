@@ -57,7 +57,7 @@ export function doStartSegmentCollection(
   emitter: EventEmitter = window
 ) {
   let currentSegment: Segment | undefined
-  let currentSegmentExpirationTimeoutId: ReturnType<typeof setTimeout>
+  let currentSegmentExpirationTimeoutId: number
   let nextSegmentCreationReason: CreationReason = 'init'
 
   const writer = new DeflateSegmentWriter(
@@ -119,7 +119,7 @@ export function doStartSegmentCollection(
 
         currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
         // Replace the newly created segment after MAX_SEGMENT_DURATION
-        currentSegmentExpirationTimeoutId = setTimeout(
+        currentSegmentExpirationTimeoutId = window.setTimeout(
           monitor(() => {
             flushSegment('max_duration')
           }),
