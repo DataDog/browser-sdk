@@ -185,16 +185,13 @@ export const report = (function reportModuleWrapper() {
    */
   function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: any) {
     let exception
-    for (const i in handlers) {
-      if (has(handlers, i)) {
-        try {
-          handlers[i](stack, isWindowError, error)
-        } catch (inner) {
-          exception = inner
-        }
+    handlers.forEach((handler) => {
+      try {
+        handler(stack, isWindowError, error)
+      } catch (inner) {
+        exception = inner
       }
-    }
-
+    })
     if (exception) {
       throw exception
     }
