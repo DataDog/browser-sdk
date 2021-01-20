@@ -11,7 +11,7 @@
     "build:bundle": "lerna run build:bundle --stream",
     "format": "prettier --check .",
     "lint": "scripts/cli lint . && scripts/cli lint test/e2e",
-    "typecheck": "scripts/cli typecheck . && scripts/cli typecheck test/e2e",
+    "typecheck": "scripts/cli typecheck",
     "dev": "node scripts/dev-server.js",
     "release": "lerna version --exact",
     "version": "node ./scripts/generate-changelog.js",

@@ -3,11 +3,17 @@ require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin 
 file,rrweb,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb/graphs/contributors) and SmartX Inc.
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
+prod,bumbag,MIT,Copyright (c) 2020 Bumbag Enterprises
+prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
+prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
+dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
+dev,@types/react,MIT,Copyright Microsoft Corporation
+dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@types/sinon,MIT,Copyright Microsoft Corporation
 dev,@wdio/browserstack-service,MIT,Copyright JS Foundation and other contributors
 dev,@wdio/cli,MIT,Copyright JS Foundation and other contributors
@@ -21,9 +27,11 @@ dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,codecov,MIT,Copyright 2014 Gregg Caines
 dev,connect-busboy,MIT,Copyright Brian White
+dev,copy-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
+dev,html-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contributors
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
@@ -56,3 +64,4 @@ dev,webdriverio,MIT,Copyright JS Foundation and other contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
+dev,webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)

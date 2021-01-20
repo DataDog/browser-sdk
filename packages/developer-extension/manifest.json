@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Datadog Browser SDK developer extension",
+  "permissions": ["<all_urls>", "tabs", "webRequest", "webRequestBlocking", "storage"],
+  "icons": {
+    "256": "icon.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_title": "Browser SDK extension",
+    "default_popup": "popup.html"
+  }
+}

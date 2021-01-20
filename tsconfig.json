@@ -1,5 +1,6 @@
 // This tsconfig is only used for tooling (ex: typecheck in code editors)
 {
   "extends": "./tsconfig.base.json",
-  "include": ["./packages/**/src/**/*.ts", "./packages/**/test/**/*.ts"]
+  "include": ["./packages/**/src", "./packages/**/test"],
+  "exclude": ["./packages/developer-extension"]
 }

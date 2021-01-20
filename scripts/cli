@@ -22,8 +22,9 @@ cmd_help () {
 }
 
 cmd_typecheck () {
-  local project_path="${1}"
-  tsc -p "$project_path" --noEmit true
+  tsc -p . --noEmit true
+  tsc -p test/e2e --noEmit true
+  tsc -p packages/developer-extension --noEmit true
 }
 
 cmd_lint () {

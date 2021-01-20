@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ES6",
+    "jsx": "react",
+
+    // See https://github.com/bumbag/bumbag-ui/issues/97
+    "strictNullChecks": false
+  },
+
+  "include": ["src"]
+}
