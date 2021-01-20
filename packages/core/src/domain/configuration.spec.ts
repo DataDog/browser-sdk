@@ -83,6 +83,13 @@ describe('configuration', () => {
     })
   })
 
+  describe('tags', () => {
+    it('should be encoded', () => {
+      const configuration = buildConfiguration({ clientToken, service: 'bar+foo' }, usEnv)
+      expect(configuration.rumEndpoint).toContain(`ddtags=sdk_version%3Asome_version%2Cservice%3Abar%2Bfoo`)
+    })
+  })
+
   describe('cookie options', () => {
     it('should not be secure nor crossSite by default', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
