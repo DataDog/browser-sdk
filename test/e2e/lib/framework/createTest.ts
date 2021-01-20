@@ -35,8 +35,8 @@ type TestRunner = (testContext: TestContext) => Promise<void>
 class TestBuilder {
   private rumOptions: RumSetupOptions | undefined = undefined
   private logsOptions: LogsSetupOptions | undefined = undefined
-  private head: string = ''
-  private body: string = ''
+  private head = ''
+  private body = ''
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}

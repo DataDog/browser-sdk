@@ -28,7 +28,7 @@ module.exports = {
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-empty-interface': 'error',
     '@typescript-eslint/prefer-regexp-exec': 'error',
-    '@typescript-eslint/no-inferrable-types': 'off',
+    '@typescript-eslint/no-inferrable-types': 'error',
     '@typescript-eslint/no-floating-promises': 'off',
     '@typescript-eslint/restrict-plus-operands': 'off',
     '@typescript-eslint/restrict-template-expressions': 'off',

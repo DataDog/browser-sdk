@@ -91,7 +91,7 @@ export function trackLargestContentfulPaint(
   // Ignore entries that come after the first user interaction.  According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
-  let firstInteractionTimestamp: number = Infinity
+  let firstInteractionTimestamp = Infinity
   const { stop: stopEventListener } = addEventListeners(
     emitter,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],

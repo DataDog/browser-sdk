@@ -115,7 +115,7 @@ function isINode(n: Node | INode): n is INode {
  * controls behaviour of a MutationObserver
  */
 export class MutationBuffer {
-  private frozen: boolean = false
+  private frozen = false
 
   private texts: TextCursor[] = []
   private attributes: AttributeCursor[] = []
