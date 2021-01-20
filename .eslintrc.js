@@ -27,7 +27,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-return': 'error',
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-empty-interface': 'error',
-    '@typescript-eslint/prefer-regexp-exec': 'off',
+    '@typescript-eslint/prefer-regexp-exec': 'error',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-floating-promises': 'off',
     '@typescript-eslint/restrict-plus-operands': 'off',

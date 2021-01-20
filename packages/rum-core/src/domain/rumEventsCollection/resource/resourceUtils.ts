@@ -31,18 +31,18 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
-  [ResourceType.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
-  [ResourceType.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
+  [ResourceType.CSS, (_: string, path: string) => /\.css$/i.exec(path) !== null],
+  [ResourceType.JS, (_: string, path: string) => /\.js$/i.exec(path) !== null],
   [
     ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
-      includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i) !== null,
+      includes(['image', 'img', 'icon'], initiatorType) || /\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i.exec(path) !== null,
   ],
-  [ResourceType.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [ResourceType.FONT, (_: string, path: string) => /\.(woff|eot|woff2|ttf)$/i.exec(path) !== null],
   [
     ResourceType.MEDIA,
     (initiatorType: string, path: string) =>
-      includes(['audio', 'video'], initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
+      includes(['audio', 'video'], initiatorType) || /\.(mp3|mp4)$/i.exec(path) !== null,
   ],
 ]
 

@@ -307,7 +307,8 @@ export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL
 }
 
 export function findCommaSeparatedValue(rawString: string, name: string) {
-  const matches = rawString.match(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
+  const regex = new RegExp(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
+  const matches = regex.exec(rawString)
   return matches ? matches[1] : undefined
 }
 

@@ -238,7 +238,7 @@ export const report = (function reportModuleWrapper() {
       let name
       let msg = message
       if ({}.toString.call(message) === '[object String]') {
-        const groups = (msg as string).match(ERROR_TYPES_RE)
+        const groups = ERROR_TYPES_RE.exec(msg as string)
         if (groups) {
           name = groups[1]
           msg = groups[2]

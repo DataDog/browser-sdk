@@ -81,7 +81,7 @@ export function findTraceComment(document: Document): string | undefined {
 
 function getTraceCommentFromNode(node: Node | null) {
   if (node && isCommentNode(node)) {
-    const match = node.data.match(/^\s*DATADOG;(.*?)\s*$/)
+    const match = /^\s*DATADOG;(.*?)\s*$/.exec(node.data)
     if (match) {
       return match[1]
     }
