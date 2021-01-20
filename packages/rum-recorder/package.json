@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-recorder",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -12,8 +12,8 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "2.2.0",
-    "@datadog/browser-rum-core": "2.2.0",
+    "@datadog/browser-core": "2.2.1",
+    "@datadog/browser-rum-core": "2.2.1",
     "rrweb-snapshot": "1.0.1",
     "tslib": "^1.10.0"
   },

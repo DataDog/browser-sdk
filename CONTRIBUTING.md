@@ -43,6 +43,8 @@ label our Commit messages and Pull Request titles:
 
 📝 - Documentation.
 
+⚗ - Experimental.
+
 ### Internal changes
 
 👷 - Updating project setup (continuous integration, build system, package dependencies...).

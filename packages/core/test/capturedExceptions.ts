@@ -440,3 +440,8 @@ value@index.android.bundle:29:2417
 value@index.android.bundle:29:927
 [native code]`,
 }
+
+export const IOS_CAPACITOR = {
+  stack: `capacitor://localhost/media/dist/bundle.js:34:99546
+r@capacitor://localhost/media/dist/bundle.js:34:47950`,
+}
