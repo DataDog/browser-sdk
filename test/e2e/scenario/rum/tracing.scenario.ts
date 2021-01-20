@@ -12,7 +12,7 @@ describe('tracing', () => {
       ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      await checkTraceAssociatedToRumEvent(events)
+      checkTraceAssociatedToRumEvent(events)
     })
 
   createTest('trace fetch')
@@ -24,7 +24,7 @@ describe('tracing', () => {
       ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      await checkTraceAssociatedToRumEvent(events)
+      checkTraceAssociatedToRumEvent(events)
     })
 
   function checkRequestHeaders(rawHeaders: string) {
@@ -34,7 +34,7 @@ describe('tracing', () => {
     expect(headers['x-foo']).toBe('bar, baz')
   }
 
-  async function checkTraceAssociatedToRumEvent(events: EventRegistry) {
+  function checkTraceAssociatedToRumEvent(events: EventRegistry) {
     const requests = events.rumResources.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )

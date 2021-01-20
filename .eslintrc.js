@@ -22,7 +22,6 @@ module.exports = {
   ],
   rules: {
     // Temporary disabled rules
-    '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/no-unsafe-return': 'error',
@@ -62,6 +61,7 @@ module.exports = {
       },
     ],
 
+    '@typescript-eslint/require-await': 'error',
     'no-underscore-dangle': 'error',
     'prefer-rest-params': 'off',
     'jsdoc/newline-after-description': 'off',

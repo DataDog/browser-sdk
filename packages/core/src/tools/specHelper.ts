@@ -66,11 +66,11 @@ export function stubFetch(): FetchStubManager {
         ...response,
         clone: () => {
           const cloned = {
-            text: async () => {
+            text: () => {
               if (response.responseTextError) {
-                throw response.responseTextError
+                return Promise.reject(response.responseTextError)
               }
-              return response.responseText
+              return Promise.resolve(response.responseText)
             },
           }
           return cloned as Response

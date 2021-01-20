@@ -69,7 +69,7 @@ async function getChangesList() {
 
   const commits = await executeCommand(`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:"- %s"`)
 
-  const changesWithEmojis = await emojiNameToUnicode(commits)
+  const changesWithEmojis = emojiNameToUnicode(commits)
 
   const changesWithPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
@@ -96,7 +96,7 @@ function spawnCommand(command, args) {
   })
 }
 
-async function emojiNameToUnicode(changes) {
+function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
