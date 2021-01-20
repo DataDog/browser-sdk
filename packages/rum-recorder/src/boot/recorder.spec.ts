@@ -8,7 +8,11 @@ import { startRecording } from './recorder'
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionId: string | undefined
-  let waitRequests: (callback: (requests: ReadonlyArray<{ data: FormData; size: number }>) => void) => void
+  let waitRequests: (
+    expectedRequestCount: number,
+    callback: (requests: ReadonlyArray<{ data: FormData; size: number }>) => void
+  ) => void
+  let expectNoExtraRequest: (callback: () => void) => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -36,18 +40,20 @@ describe('startRecording', () => {
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
 
-    waitRequests = (callback) => {
-      let isWaiting = false
-
-      requestSendSpy.and.callFake(() => {
-        if (isWaiting) {
-          return
+    waitRequests = (expectedRequestCount, callback) => {
+      const requests: Array<{ data: FormData; size: number }> = []
+      requestSendSpy.and.callFake((data, size) => {
+        if (requests.push({ size, data: data as FormData }) === expectedRequestCount) {
+          callback(requests)
         }
-        isWaiting = true
-        setTimeout(() => {
-          callback(requestSendSpy.calls.allArgs().map(([data, size]) => ({ size, data: data as FormData })))
-        }, 300)
       })
+    }
+
+    expectNoExtraRequest = (done) => {
+      requestSendSpy.and.callFake(() => {
+        fail('Unexpected request received')
+      })
+      setTimeout(done, 300)
     }
   })
 
@@ -59,7 +65,7 @@ describe('startRecording', () => {
     const { lifeCycle } = setupBuilder.build()
     flushSegment(lifeCycle)
 
-    waitRequests((requests) => {
+    waitRequests(1, (requests) => {
       expect(requests).toEqual([{ data: jasmine.any(FormData), size: jasmine.any(Number) }])
       expect(formDataAsObject(requests[0].data)).toEqual({
         'application.id': 'appId',
@@ -72,7 +78,7 @@ describe('startRecording', () => {
         start: jasmine.stringMatching(/^\d{13}$/),
         'view.id': 'view-id',
       })
-      done()
+      expectNoExtraRequest(done)
     })
   })
 
@@ -88,10 +94,9 @@ describe('startRecording', () => {
       document.body.dispatchEvent(inputEvent)
     }
 
-    waitRequests((requests) => {
-      expect(requests.length).toBe(1)
+    waitRequests(1, (requests) => {
       expect(requests[0].data.get('records_count')).toBe(String(inputCount + 2))
-      done()
+      expectNoExtraRequest(done)
     })
   })
 
@@ -106,10 +111,9 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests((requests) => {
-      expect(requests.length).toBe(1)
+    waitRequests(1, (requests) => {
       expect(requests[0].data.get('records_count')).toBe('3')
-      done()
+      expectNoExtraRequest(done)
     })
   })
 
@@ -125,11 +129,10 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests((requests) => {
-      expect(requests.length).toBe(1)
+    waitRequests(1, (requests) => {
       expect(requests[0].data.get('records_count')).toBe('1')
       expect(requests[0].data.get('session.id')).toBe('new-session-id')
-      done()
+      expectNoExtraRequest(done)
     })
   })
 })
