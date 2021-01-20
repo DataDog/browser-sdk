@@ -54,6 +54,9 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addError,
     addTiming,
     configuration,
+    lifeCycle,
+    parentContexts,
+    session,
     getInternalContext: internalContext.get,
   }
 }

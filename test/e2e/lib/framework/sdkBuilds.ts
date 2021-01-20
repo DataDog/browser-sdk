@@ -7,16 +7,22 @@ const readFile = promisify(fs.readFile)
 const ROOT = path.join(__dirname, '../../../..')
 const RUM_BUNDLE = path.join(ROOT, 'packages/rum/bundle/datadog-rum.js')
 const LOGS_BUNDLE = path.join(ROOT, 'packages/logs/bundle/datadog-logs.js')
+const RUM_RECORDER_BUNDLE = path.join(ROOT, 'packages/rum-recorder/bundle/datadog-rum-recorder.js')
 const NPM_BUNDLE = path.join(ROOT, 'test/app/dist/app.js')
 
 export interface Endpoints {
   rum: string
   logs: string
   internalMonitoring: string
+  sessionReplay: string
 }
 
 export async function buildRum(endpoints: Endpoints) {
   return replaceEndpoints(await readFile(RUM_BUNDLE), endpoints)
+}
+
+export async function buildRumRecorder(endpoints: Endpoints) {
+  return replaceEndpoints(await readFile(RUM_RECORDER_BUNDLE), endpoints)
 }
 
 export async function buildLogs(endpoints: Endpoints) {
@@ -32,6 +38,7 @@ function replaceEndpoints(content: Buffer, endpoints: Endpoints) {
     '<<< E2E INTERNAL MONITORING ENDPOINT >>>': endpoints.internalMonitoring,
     '<<< E2E LOGS ENDPOINT >>>': endpoints.logs,
     '<<< E2E RUM ENDPOINT >>>': endpoints.rum,
+    '<<< E2E SESSION REPLAY ENDPOINT >>>': endpoints.sessionReplay,
   })
 }
 

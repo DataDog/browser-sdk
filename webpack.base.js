@@ -29,7 +29,7 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
       },
 
       {
-        test: /\.ts$/,
+        test: /\.(ts|js)$/,
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {
@@ -37,6 +37,7 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
           onlyCompileBundledFiles: true,
           compilerOptions: {
             module: 'es6',
+            allowJs: true,
           },
         },
       },
