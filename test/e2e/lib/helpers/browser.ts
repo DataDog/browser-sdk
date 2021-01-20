@@ -71,17 +71,3 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   }
   return result.response
 }
-
-export async function sendFetch(url: string, headers: string[][] = []): Promise<string> {
-  return browserExecuteAsync(
-    // tslint:disable-next-line: no-shadowed-variable
-    (url, headers, done) => {
-      window
-        .fetch(url, { headers })
-        .then((response) => response.text())
-        .then(done)
-    },
-    url,
-    headers
-  )
-}
