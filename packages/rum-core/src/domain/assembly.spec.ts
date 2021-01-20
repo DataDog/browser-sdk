@@ -118,7 +118,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
         startTime: 0,
       })
-
+      // eslint-disable-next-line no-underscore-dangle
       expect(serverRumEvents[0]._dd.format_version).toBe(2)
     })
 

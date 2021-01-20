@@ -12,17 +12,18 @@ export const mirror: Mirror = {
   map: {},
   getId(n) {
     // if n is not a serialized INode, use -1 as its id.
+    // eslint-disable-next-line no-underscore-dangle
     if (!n.__sn) {
       return -1
     }
-    return n.__sn.id
+    return n.__sn.id // eslint-disable-line no-underscore-dangle
   },
   getNode(id) {
     return mirror.map[id] || null
   },
   // TODO: use a weakmap to get rid of manually memory management
   removeNodeFromMap(n) {
-    const id = n.__sn && n.__sn.id
+    const id = n.__sn && n.__sn.id // eslint-disable-line no-underscore-dangle
     delete mirror.map[id]
     if (n.childNodes) {
       n.childNodes.forEach((child) => mirror.removeNodeFromMap((child as Node) as INode))
@@ -164,7 +165,7 @@ export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
 
 export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
-    return n.__sn.id === IGNORED_NODE
+    return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle
   }
   // The main part of the slimDOM check happens in
   // rrweb-snapshot::serializeNodeWithId

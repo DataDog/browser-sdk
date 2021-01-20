@@ -61,10 +61,10 @@ module.exports = {
         },
       },
     ],
-    'no-underscore-dangle': 'off',
+
+    'no-underscore-dangle': 'error',
     'prefer-rest-params': 'off',
     'jsdoc/newline-after-description': 'off',
-
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'jsdoc/check-indentation': 'error',
     'arrow-body-style': 'error',
