@@ -246,7 +246,9 @@ function getEndpoint(
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
-  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
+  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${
+    source || 'browser'
+  }&ddtags=${encodeURIComponent(tags)}`
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }

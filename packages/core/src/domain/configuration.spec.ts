@@ -62,22 +62,22 @@ describe('configuration', () => {
   describe('sdk_version, env, version and service', () => {
     it('should not modify the logs and rum endpoints tags when not defined', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(configuration.rumEndpoint).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion}`)
+      expect(decodeURIComponent(configuration.rumEndpoint)).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion}`)
 
-      expect(configuration.rumEndpoint).not.toContain(',env:')
-      expect(configuration.rumEndpoint).not.toContain(',service:')
-      expect(configuration.rumEndpoint).not.toContain(',version:')
-      expect(configuration.logsEndpoint).not.toContain(',env:')
-      expect(configuration.logsEndpoint).not.toContain(',service:')
-      expect(configuration.logsEndpoint).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',service:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',service:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',version:')
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = buildConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' }, usEnv)
-      expect(configuration.rumEndpoint).toContain(
+      expect(decodeURIComponent(configuration.rumEndpoint)).toContain(
         `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
       )
-      expect(configuration.logsEndpoint).toContain(
+      expect(decodeURIComponent(configuration.logsEndpoint)).toContain(
         `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
       )
     })
