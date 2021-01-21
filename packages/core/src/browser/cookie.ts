@@ -88,9 +88,9 @@ export function getCurrentSite() {
     const testCookieValue = 'test'
 
     const domainLevels = window.location.hostname.split('.')
-    let candidateDomain = domainLevels.pop()
+    let candidateDomain = domainLevels.pop()!
     while (domainLevels.length && !getCookie(testCookieName)) {
-      candidateDomain = `${domainLevels.pop()}.${candidateDomain}`
+      candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
       setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
     }
     getCurrentSiteCache = candidateDomain

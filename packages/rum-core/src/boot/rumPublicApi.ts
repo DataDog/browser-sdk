@@ -119,7 +119,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
         checkedSource = source
       } else {
-        console.error(`DD_RUM.addError: Invalid source '${source}'`)
+        console.error(`DD_RUM.addError: Invalid source '${(source as any) as string}'`)
         checkedSource = ErrorSource.CUSTOM
       }
       addErrorStrategy({

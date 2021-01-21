@@ -256,7 +256,7 @@ Error: foo
     ;[false, true].forEach((callOnError) => {
       ;[1, 2].forEach((numReports) => {
         let title = 'it should receive arguments from report() when'
-        title += ` callOnError is ${callOnError}`
+        title += ` callOnError is ${callOnError ? 'true' : 'false'}`
         title += ` and numReports is ${numReports}`
         it(
           title,

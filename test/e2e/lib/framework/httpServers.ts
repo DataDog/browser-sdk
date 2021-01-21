@@ -54,8 +54,8 @@ async function createServer(): Promise<Server> {
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
     res.on('close', () => {
-      const requestUrl = `${req.headers.host}${req.url}`
-      log(`${req.method} ${requestUrl} ${res.statusCode}`)
+      const requestUrl = `${req.headers.host!}${req.url!}`
+      log(`${req.method!} ${requestUrl} ${res.statusCode}`)
     })
   })
 

@@ -31,7 +31,7 @@ module.exports = {
     '@typescript-eslint/no-inferrable-types': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/restrict-plus-operands': 'error',
-    '@typescript-eslint/restrict-template-expressions': 'off',
+    '@typescript-eslint/restrict-template-expressions': 'error',
     '@typescript-eslint/ban-types': [
       'off',
       {
@@ -296,6 +296,7 @@ module.exports = {
         '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/restrict-template-expressions': 'off',
       },
     },
   ],

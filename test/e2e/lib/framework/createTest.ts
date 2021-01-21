@@ -98,7 +98,7 @@ declare function it(expectation: string, assertion?: jasmine.ImplementationCallb
 
 function declareTest(title: string, setup: string, runner: TestRunner) {
   const spec = it(title, async () => {
-    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
+    log(`Start '${spec.getFullName()}' in ${getBrowserName()!}`)
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)

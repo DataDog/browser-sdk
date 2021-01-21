@@ -24,7 +24,7 @@ export function validateFormat(events: RumEvent[]) {
       .validate('rum-events-format.json', event)
 
     if (instance.errors) {
-      instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message}`))
+      instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message!}`))
     }
   })
 }

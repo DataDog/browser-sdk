@@ -125,7 +125,7 @@ export function persistSession(session: SessionState, cookie: CookieCache) {
   session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
   const cookieString = utils
     .objectEntries(session)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}=${value as string}`)
     .join(SESSION_ENTRY_SEPARATOR)
   cookie.set(cookieString, SESSION_EXPIRATION_DELAY)
 }

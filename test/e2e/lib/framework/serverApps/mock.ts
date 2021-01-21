@@ -39,7 +39,7 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
 
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
-    res.redirect(`ok${redirectUri.search}`)
+    res.redirect(`ok${redirectUri.search!}`)
   })
 
   app.get('/headers', (req, res) => {

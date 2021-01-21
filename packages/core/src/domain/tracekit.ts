@@ -841,10 +841,10 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
         item.func = parts ? parts.input.substring(0, parts.input.indexOf('{')) : undefined
       }
 
-      if (funcs[`${curr}`]) {
+      if (funcs[curr.toString()]) {
         recursion = true
       } else {
-        funcs[`${curr}`] = true
+        funcs[curr.toString()] = true
       }
 
       stack.push(item)

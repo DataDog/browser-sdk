@@ -249,7 +249,7 @@ function getHost(intakeType: IntakeType, endpointType: EndpointType, site: strin
     return `${endpoint}-http-intake.logs.${site}`
   }
   const domainParts = site.split('.')
-  const extension = domainParts.pop()
+  const extension = domainParts.pop()!
   const suffix = `${domainParts.join('-')}.${extension}`
   return `${endpoint}.browser-intake-${suffix}`
 }

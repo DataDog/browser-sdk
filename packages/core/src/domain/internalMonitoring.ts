@@ -164,7 +164,7 @@ function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${utils.jsonStringify(e)}`,
+    message: `Uncaught ${utils.jsonStringify(e)!}`,
   }
 }
 

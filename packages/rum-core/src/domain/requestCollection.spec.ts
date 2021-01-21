@@ -48,7 +48,7 @@ describe('collect fetch', () => {
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
-      throw new Error(`unhandled rejected promise \n    ${ev.reason}`)
+      throw new Error(`unhandled rejected promise \n    ${ev.reason as string}`)
     }
   })
 

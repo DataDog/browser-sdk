@@ -94,7 +94,7 @@ function proxyFetch() {
         try {
           text = await response.clone().text()
         } catch (e) {
-          text = `Unable to retrieve response: ${e}`
+          text = `Unable to retrieve response: ${e as string}`
         }
         context.response = text
         context.responseType = response.type
