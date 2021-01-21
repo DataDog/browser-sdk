@@ -144,7 +144,6 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequests(2, (requests) => {
-      expect(requests[0].data.get('has_full_snapshot')).toBe('true')
       expect(requests[1].data.get('has_full_snapshot')).toBe('true')
       expectNoExtraRequest(done)
     })
@@ -158,8 +157,6 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequests(2, (requests) => {
-      expect(requests.length).toBe(2)
-      expect(requests[0].data.get('has_full_snapshot')).toBe('true')
       expect(requests[1].data.get('has_full_snapshot')).toBe('true')
       expectNoExtraRequest(done)
     })
