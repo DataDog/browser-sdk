@@ -16,6 +16,13 @@
 
 ---
 
+## v2.3.0
+
+- ✨[RUMF-802] add support for capacitor app stack traces ([#685](https://github.com/DataDog/browser-sdk/pull/685))
+- 🐛[RUMF-824] support Request instances in tracing ([#684](https://github.com/DataDog/browser-sdk/pull/684))
+- 🐛[RUMF-809] URL encode tags in intake requests ([#689](https://github.com/DataDog/browser-sdk/pull/689))
+- ⚗[RUMF-804] implement a minimal version of the recorder ([#670](https://github.com/DataDog/browser-sdk/pull/670))
+
 ## v2.2.1
 
 - ⚗ Implement addTiming ([#668](https://github.com/DataDog/browser-sdk/pull/668))
