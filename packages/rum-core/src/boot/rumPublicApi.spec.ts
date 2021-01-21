@@ -6,12 +6,15 @@ import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from '
 const configuration: Partial<Configuration> = {
   isEnabled: () => false,
 }
-const noopStartRum = () => ({
+const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
   configuration: configuration as Configuration,
   getInternalContext: () => undefined,
+  lifeCycle: {} as any,
+  parentContexts: {} as any,
+  session: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 

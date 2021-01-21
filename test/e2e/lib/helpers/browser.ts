@@ -72,17 +72,3 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   }
   return result.response
 }
-
-export async function sendFetch(url: string, headers: string[][] = []): Promise<string> {
-  return browserExecuteAsync(
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    (url, headers, done) => {
-      void window
-        .fetch(url, { headers })
-        .then((response) => response.text())
-        .then(done)
-    },
-    url,
-    headers
-  )
-}

@@ -14,6 +14,7 @@ export interface FetchProxy<
 export interface FetchStartContext {
   method: string
   startTime: number
+  input: RequestInfo
   init?: RequestInit
   url: string
 
@@ -76,6 +77,7 @@ function proxyFetch() {
 
     const context: FetchStartContext = {
       init,
+      input,
       method,
       startTime,
       url,
@@ -105,7 +107,7 @@ function proxyFetch() {
     }
     beforeSendCallbacks.forEach((callback) => callback(context))
 
-    const responsePromise = originalFetch.call(this, input, context.init)
+    const responsePromise = originalFetch.call(this, context.input, context.init)
     responsePromise.then(monitor(reportFetch), monitor(reportFetch))
     return responsePromise
   })

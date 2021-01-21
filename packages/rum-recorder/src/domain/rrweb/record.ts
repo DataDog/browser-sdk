@@ -1,6 +1,6 @@
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
 import { initObservers, mutationBuffer } from './observer'
-import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordOptions } from './types'
+import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
 function wrapEvent(e: Event): EventWithTime {
@@ -12,7 +12,7 @@ function wrapEvent(e: Event): EventWithTime {
 
 let wrappedEmit!: (e: EventWithTime, isCheckout?: boolean) => void
 
-function record<T = EventWithTime>(options: RecordOptions<T> = {}): ListenerHandler | undefined {
+function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -114,7 +114,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): ListenerHand
     }
   }
 
-  function takeFullSnapshot(isCheckout = false) {
+  const takeFullSnapshot = (isCheckout = false) => {
     wrappedEmit(
       wrapEvent({
         data: {
@@ -325,8 +325,11 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): ListenerHand
         )
       )
     }
-    return () => {
-      handlers.forEach((h) => h())
+    return {
+      stop: () => {
+        handlers.forEach((h) => h())
+      },
+      takeFullSnapshot,
     }
   } catch (error) {
     // TODO: handle internal error

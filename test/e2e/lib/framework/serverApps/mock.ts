@@ -1,7 +1,7 @@
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import { buildLogs, buildNpm, buildRum, Endpoints } from '../sdkBuilds'
+import { buildLogs, buildNpm, buildRum, buildRumRecorder, Endpoints } from '../sdkBuilds'
 
 export function createMockServerApp(endpoints: Endpoints, setup: string) {
   const app = express()
@@ -57,6 +57,10 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
 
   app.get('/datadog-rum.js', async (req, res) => {
     res.header('content-type', 'application/javascript').send(await buildRum(endpoints))
+  })
+
+  app.get('/datadog-rum-recorder.js', async (req, res) => {
+    res.header('content-type', 'application/javascript').send(await buildRumRecorder(endpoints))
   })
 
   app.get('/app.js', async (req, res) => {

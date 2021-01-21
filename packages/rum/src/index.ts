@@ -1,3 +1,4 @@
+// Keep the following in sync with packages/rum-recorder/src/index.ts
 export { datadogRum } from './boot/rum.entry'
 export {
   CommonProperties,

@@ -15,7 +15,7 @@ const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
-  send(data: string, size: number) {
+  send(data: string | FormData, size: number) {
     const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
     if (navigator.sendBeacon && size < this.bytesLimit) {
       const isQueued = navigator.sendBeacon(url, data)

@@ -122,6 +122,7 @@ export interface RumContext {
   service?: string
   session: {
     type: string
+    has_replay?: boolean
   }
   _dd: {
     formatVersion: 2
@@ -175,4 +176,5 @@ export interface User {
 export interface CommonContext {
   user: User
   context: Context
+  hasReplay?: boolean
 }

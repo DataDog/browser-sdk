@@ -34,6 +34,7 @@ type TestRunner = (testContext: TestContext) => Promise<void>
 
 class TestBuilder {
   private rumOptions: RumSetupOptions | undefined = undefined
+  private rumRecorderOptions: RumSetupOptions | undefined = undefined
   private logsOptions: LogsSetupOptions | undefined = undefined
   private head = ''
   private body = ''
@@ -43,6 +44,11 @@ class TestBuilder {
 
   withRum(rumOptions?: RumSetupOptions) {
     this.rumOptions = { ...DEFAULT_RUM_OPTIONS, ...rumOptions }
+    return this
+  }
+
+  withRumRecorder(rumRecorderOptions?: RumSetupOptions) {
+    this.rumRecorderOptions = { ...DEFAULT_RUM_OPTIONS, ...rumRecorderOptions }
     return this
   }
 
@@ -77,6 +83,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsOptions,
       rum: this.rumOptions,
+      rumRecorder: this.rumRecorderOptions,
     }
 
     if (setups.length > 1) {
@@ -131,6 +138,7 @@ function createTestContext(servers: Servers): TestContext {
       internalMonitoring: `${servers.intake.url}/v1/input/internalMonitoring`,
       logs: `${servers.intake.url}/v1/input/logs`,
       rum: `${servers.intake.url}/v1/input/rum`,
+      sessionReplay: `${servers.intake.url}/v1/input/sessionReplay`,
     },
     events: new EventRegistry(),
   }

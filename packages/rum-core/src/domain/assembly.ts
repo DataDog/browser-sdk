@@ -54,6 +54,7 @@ export function startRumAssembly(
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
+        const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
             formatVersion: 2,
@@ -64,6 +65,7 @@ export function startRumAssembly(
           date: new Date().getTime(),
           service: configuration.service,
           session: {
+            has_replay: commonContext.hasReplay,
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
             // cf https://github.com/puppeteer/puppeteer/issues/3667
             type: getSessionType(),
@@ -73,7 +75,6 @@ export function startRumAssembly(
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)
         const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
-        const commonContext = savedCommonContext || getCommonContext()
 
         const context = combine(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {

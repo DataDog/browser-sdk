@@ -62,8 +62,8 @@ export function stubFetch(): FetchStubManager {
       resolve = res
       reject = rej
     })
-    ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) => {
-      const resolved = resolve({
+    ;(promise as FetchStubPromise).resolveWith = (response: ResponseStub) => {
+      resolve({
         ...response,
         clone: () => {
           const cloned = {
@@ -76,14 +76,12 @@ export function stubFetch(): FetchStubManager {
           }
           return cloned as Response
         },
-      }) as Promise<ResponseStub>
+      })
       onRequestEnd()
-      return resolved
     }
-    ;(promise as FetchStubPromise).rejectWith = async (error: Error) => {
-      const rejected = reject(error) as Promise<Error>
+    ;(promise as FetchStubPromise).rejectWith = (error: Error) => {
+      reject(error)
       onRequestEnd()
-      return rejected
     }
     return promise
   }) as typeof window.fetch
@@ -107,8 +105,8 @@ export interface ResponseStub extends Partial<Response> {
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStub) => Promise<ResponseStub>
-  rejectWith: (error: Error) => Promise<Error>
+  resolveWith: (response: ResponseStub) => void
+  rejectWith: (error: Error) => void
 }
 
 class StubXhr {

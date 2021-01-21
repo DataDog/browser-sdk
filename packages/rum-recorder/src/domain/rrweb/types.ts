@@ -1,5 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { FontFaceDescriptors } from 'css-font-loading-module'
 import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
 
 export enum EventType {
@@ -179,6 +177,11 @@ export interface RecordOptions<T> {
   mousemoveWait?: number
 }
 
+export interface RecordAPI {
+  stop: ListenerHandler
+  takeFullSnapshot: () => void
+}
+
 export interface ObserverParam {
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -335,6 +338,15 @@ export interface CanvasMutationParam {
   property: string
   args: unknown[]
   setter?: true
+}
+
+export interface FontFaceDescriptors {
+  style?: string
+  weight?: string
+  stretch?: string
+  unicodeRange?: string
+  variant?: string
+  featureSettings?: string
 }
 
 export interface FontParam {
