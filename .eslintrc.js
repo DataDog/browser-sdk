@@ -30,7 +30,7 @@ module.exports = {
     '@typescript-eslint/prefer-regexp-exec': 'error',
     '@typescript-eslint/no-inferrable-types': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/restrict-plus-operands': 'off',
+    '@typescript-eslint/restrict-plus-operands': 'error',
     '@typescript-eslint/restrict-template-expressions': 'off',
     '@typescript-eslint/ban-types': [
       'off',
@@ -135,6 +135,7 @@ module.exports = {
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/no-for-in-array': 'error',
+    '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'error',
     '@typescript-eslint/no-extra-semi': 'off',

@@ -553,7 +553,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
           // Also note, Firefox's column number is 0-based and everything else expects 1-based,
           // so adding 1
           // NOTE: this hack doesn't work if top-most frame is eval
-          stack[0].column = (ex as any).columnNumber + 1
+          stack[0].column = ((ex as any).columnNumber as number) + 1
         }
         element = {
           args: parts[2] ? parts[2].split(',') : [],
