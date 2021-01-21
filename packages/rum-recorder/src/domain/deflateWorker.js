@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise,max-len,no-underscore-dangle,jsdoc/check-indentation */
 let workerURL
 
 export function createDeflateWorker() {
@@ -334,7 +335,8 @@ function workerCodeFn() {
       var h
       /* heap index */
 
-      var n; var m
+      var n
+      var m
       /* iterate over the tree elements */
 
       var bits
@@ -887,7 +889,8 @@ function workerCodeFn() {
       var stree = desc.stat_desc.static_tree
       var has_stree = desc.stat_desc.has_stree
       var elems = desc.stat_desc.elems
-      var n; var m
+      var n
+      var m
       /* iterate over heap elements */
 
       var max_code = -1
@@ -1390,7 +1393,8 @@ function workerCodeFn() {
       stored_len,
       last // DeflateState *s; //charf *buf;       /* input block, or NULL if too old */ //ulg stored_len;   /* length of input block */ //int last;         /* one if this is the last block for a file */
     ) {
-      var opt_lenb; var static_lenb
+      var opt_lenb
+      var static_lenb
       /* opt_len and static_len in bytes */
 
       var max_blindex = 0
@@ -1561,9 +1565,9 @@ function workerCodeFn() {
     // 3. This notice may not be removed or altered from any source distribution.
 
     var adler32 = function adler32(adler, buf, len, pos) {
-      var s1 = (adler & 0xffff) | 0;
-        var s2 = ((adler >>> 16) & 0xffff) | 0;
-        var n = 0
+      var s1 = (adler & 0xffff) | 0
+      var s2 = ((adler >>> 16) & 0xffff) | 0
+      var n = 0
 
       while (len !== 0) {
         // Set limit ~ twice less than 5552, to keep
@@ -1609,8 +1613,8 @@ function workerCodeFn() {
     // Use ordinary array, since untyped makes no boost here
 
     var makeTable = function makeTable() {
-      var c;
-        var table = []
+      var c
+      var table = []
 
       for (var n = 0; n < 256; n++) {
         c = n
@@ -1768,33 +1772,33 @@ function workerCodeFn() {
     //   misrepresented as being the original software.
     // 3. This notice may not be removed or altered from any source distribution.
 
-    var _tr_init$1 = trees._tr_init;
-      var _tr_stored_block$1 = trees._tr_stored_block;
-      var _tr_flush_block$1 = trees._tr_flush_block;
-      var _tr_tally$1 = trees._tr_tally;
-      var _tr_align$1 = trees._tr_align
+    var _tr_init$1 = trees._tr_init
+    var _tr_stored_block$1 = trees._tr_stored_block
+    var _tr_flush_block$1 = trees._tr_flush_block
+    var _tr_tally$1 = trees._tr_tally
+    var _tr_align$1 = trees._tr_align
     /* Public constants ==========================================================*/
 
     /* ===========================================================================*/
 
-    var Z_NO_FLUSH = constants.Z_NO_FLUSH;
-      var Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH;
-      var Z_FULL_FLUSH = constants.Z_FULL_FLUSH;
-      var Z_FINISH = constants.Z_FINISH;
-      var Z_BLOCK = constants.Z_BLOCK;
-      var Z_OK = constants.Z_OK;
-      var Z_STREAM_END = constants.Z_STREAM_END;
-      var Z_STREAM_ERROR = constants.Z_STREAM_ERROR;
-      var Z_DATA_ERROR = constants.Z_DATA_ERROR;
-      var Z_BUF_ERROR = constants.Z_BUF_ERROR;
-      var Z_DEFAULT_COMPRESSION = constants.Z_DEFAULT_COMPRESSION;
-      var Z_FILTERED = constants.Z_FILTERED;
-      var Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY;
-      var Z_RLE = constants.Z_RLE;
-      var Z_FIXED$1 = constants.Z_FIXED;
-      var Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY;
-      var Z_UNKNOWN$1 = constants.Z_UNKNOWN;
-      var Z_DEFLATED = constants.Z_DEFLATED
+    var Z_NO_FLUSH = constants.Z_NO_FLUSH
+    var Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH
+    var Z_FULL_FLUSH = constants.Z_FULL_FLUSH
+    var Z_FINISH = constants.Z_FINISH
+    var Z_BLOCK = constants.Z_BLOCK
+    var Z_OK = constants.Z_OK
+    var Z_STREAM_END = constants.Z_STREAM_END
+    var Z_STREAM_ERROR = constants.Z_STREAM_ERROR
+    var Z_DATA_ERROR = constants.Z_DATA_ERROR
+    var Z_BUF_ERROR = constants.Z_BUF_ERROR
+    var Z_DEFAULT_COMPRESSION = constants.Z_DEFAULT_COMPRESSION
+    var Z_FILTERED = constants.Z_FILTERED
+    var Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY
+    var Z_RLE = constants.Z_RLE
+    var Z_FIXED$1 = constants.Z_FIXED
+    var Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY
+    var Z_UNKNOWN$1 = constants.Z_UNKNOWN
+    var Z_DEFLATED = constants.Z_DEFLATED
     /* ============================================================================*/
 
     var MAX_MEM_LEVEL = 9
@@ -2105,7 +2109,11 @@ function workerCodeFn() {
 
     var fill_window = function fill_window(s) {
       var _w_size = s.w_size
-      var p; var n; var m; var more; var str // Assert(s->lookahead < MIN_LOOKAHEAD, "already enough lookahead");
+      var p
+      var n
+      var m
+      var more
+      var str // Assert(s->lookahead < MIN_LOOKAHEAD, "already enough lookahead");
 
       do {
         more = s.window_size - s.lookahead - s.strstart // JS ints have 32 bit, block below not needed
@@ -2712,7 +2720,8 @@ function workerCodeFn() {
       var prev
       /* byte at distance one to match */
 
-      var scan; var strend
+      var scan
+      var strend
       /* scan goes up to strend for length of run */
 
       var _win = s.window
@@ -3346,7 +3355,8 @@ function workerCodeFn() {
     }
 
     var deflate = function deflate(strm, flush) {
-      var beg; var val // for gzip header write only
+      var beg
+      var val // for gzip header write only
 
       if (!strm || !strm.state || flush > Z_BLOCK || flush < 0) {
         return strm ? err(strm, Z_STREAM_ERROR) : Z_STREAM_ERROR
@@ -3912,7 +3922,7 @@ function workerCodeFn() {
         }
 
         if (_typeof(source) !== 'object') {
-          throw new TypeError(`${source  }must be non-object`)
+          throw new TypeError(`${source}must be non-object`)
         }
 
         for (var p in source) {
@@ -3975,13 +3985,13 @@ function workerCodeFn() {
     // convert string to array (typed, when possible)
 
     var string2buf = function string2buf(str) {
-      var buf;
-        var c;
-        var c2;
-        var m_pos;
-        var i;
-        var str_len = str.length;
-        var buf_len = 0 // count binary size
+      var buf
+      var c
+      var c2
+      var m_pos
+      var i
+      var str_len = str.length
+      var buf_len = 0 // count binary size
 
       for (m_pos = 0; m_pos < str_len; m_pos++) {
         c = str.charCodeAt(m_pos)
@@ -4056,7 +4066,8 @@ function workerCodeFn() {
     } // convert array to string
 
     var buf2string = function buf2string(buf, max) {
-      var i; var out
+      var i
+      var out
       var len = max || buf.length // Reserve max possible length (2 words per char)
       // NB: by unknown reasons, Array is significantly faster for
       //     String.fromCharCode.apply than Uint16Array.
@@ -4198,20 +4209,21 @@ function workerCodeFn() {
 
     var zstream = ZStream
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     var toString = Object.prototype.toString
     /* Public constants ==========================================================*/
 
     /* ===========================================================================*/
 
-    var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH;
-      var Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH;
-      var Z_FULL_FLUSH$1 = constants.Z_FULL_FLUSH;
-      var Z_FINISH$1 = constants.Z_FINISH;
-      var Z_OK$1 = constants.Z_OK;
-      var Z_STREAM_END$1 = constants.Z_STREAM_END;
-      var Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION;
-      var Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY;
-      var Z_DEFLATED$1 = constants.Z_DEFLATED
+    var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH
+    var Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH
+    var Z_FULL_FLUSH$1 = constants.Z_FULL_FLUSH
+    var Z_FINISH$1 = constants.Z_FINISH
+    var Z_OK$1 = constants.Z_OK
+    var Z_STREAM_END$1 = constants.Z_STREAM_END
+    var Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION
+    var Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY
+    var Z_DEFLATED$1 = constants.Z_DEFLATED
     /* ===========================================================================*/
 
     /**
@@ -4387,14 +4399,18 @@ function workerCodeFn() {
       var strm = this.strm
       var chunkSize = this.options.chunkSize
 
-      var status; var _flush_mode
+      var status
+      var _flush_mode
 
       if (this.ended) {
         return false
       }
 
-      if (flush_mode === ~~flush_mode) {_flush_mode = flush_mode}
-      else {_flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1} // Convert data if needed
+      if (flush_mode === ~~flush_mode) {
+        _flush_mode = flush_mode
+      } else {
+        _flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1
+      } // Convert data if needed
 
       if (typeof data === 'string') {
         // If we need to compress text, change encoding to utf8.
@@ -4445,7 +4461,9 @@ function workerCodeFn() {
           continue
         }
 
-        if (strm.avail_in === 0) {break}
+        if (strm.avail_in === 0) {
+          break
+        }
       }
 
       return true
@@ -4533,6 +4551,7 @@ function workerCodeFn() {
      * (header and adler32 crc).
      **/
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function deflateRaw(input, options) {
       options = options || {}
       options.raw = true
@@ -4546,7 +4565,7 @@ function workerCodeFn() {
      * The same as [[deflate]], but create gzip wrapper instead of
      * deflate one.
      **/
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function gzip(input, options) {
       options = options || {}
       options.gzip = true

@@ -19,7 +19,7 @@ describe('tracing', () => {
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
       const rawHeaders = await browserExecuteAsync<string>((done) => {
-        window
+        void window
           .fetch('/headers', {
             headers: [
               ['x-foo', 'bar'],
@@ -31,6 +31,7 @@ describe('tracing', () => {
       })
       checkRequestHeaders(rawHeaders)
       await flushEvents()
+      // eslint-disable-next-line @typescript-eslint/await-thenable
       await checkTraceAssociatedToRumEvent(events)
     })
 
@@ -38,7 +39,7 @@ describe('tracing', () => {
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
       const rawHeaders = await browserExecuteAsync<string>((done) => {
-        window
+        void window
           .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
           .then((response) => response.text())
           .then(done)

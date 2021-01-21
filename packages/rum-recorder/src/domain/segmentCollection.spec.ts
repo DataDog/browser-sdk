@@ -6,7 +6,6 @@ import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
 import { Segment } from './segment'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
-
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.Load, timestamp: 10, data: {} }
 
@@ -30,7 +29,7 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       segmentFlushSpy,
       worker,
-      sendCurrentSegment() {
+      sendCurrentSegment: () => {
         // Make sure the segment is not empty
         addRecord(RECORD)
         // Flush segment
@@ -194,6 +193,7 @@ describe('computeSegmentContext', () => {
   })
 
   function mockParentContexts(view: ViewContext | undefined): ParentContexts {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       findView() {
         return view

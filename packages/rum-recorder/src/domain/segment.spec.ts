@@ -102,7 +102,7 @@ class StringWriter implements SegmentWriter {
     this.output += data
   }
   flush(data: string, meta: SegmentMeta) {
-    this.flushed.push({ meta, segment: JSON.parse(this.output + data)  })
+    this.flushed.push({ meta, segment: JSON.parse(this.output + data) })
     this.output = ''
   }
 }

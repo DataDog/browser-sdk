@@ -400,7 +400,8 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   const restoreHandler = patch(
     (document as DocumentWithFonts).fonts,
     'add',
-    (original: (fontFace: FontFace) => unknown) => function (this: unknown, fontFace: FontFace) {
+    (original: (fontFace: FontFace) => unknown) =>
+      function (this: unknown, fontFace: FontFace) {
         setTimeout(() => {
           const p = fontMap.get(fontFace)
           if (p) {

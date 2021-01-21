@@ -49,13 +49,8 @@ async function readSessionReplay(req: express.Request): Promise<SerssionReplayCa
       meta[key] = value
     })
 
-    req.busboy.on('finish', async () => {
-      try {
-        const segment = await segmentPromise
-        resolve({ meta, segment })
-      } catch (e) {
-        reject(e)
-      }
+    req.busboy.on('finish', () => {
+      segmentPromise.then((segment) => resolve({ meta, segment })).catch((e) => reject(e))
     })
   })
 }
