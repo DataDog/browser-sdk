@@ -24,7 +24,6 @@ describe('toFormEntries', () => {
   })
 
   it('converts values to string', () => {
-    // tslint:disable-next-line: no-null-keyword
     toFormEntries({ foo: 42, bar: null }, callbackSpy)
     expect(callbackSpy.calls.allArgs()).toEqual([
       ['foo', '42'],

@@ -1,5 +1,3 @@
-// eslint-disable
-
 import * as CapturedExceptions from '../../test/capturedExceptions'
 import { isSafari } from '../tools/specHelper'
 import { BrowserError, computeStackTrace } from './tracekit'
