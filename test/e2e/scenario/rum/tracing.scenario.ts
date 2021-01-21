@@ -1,5 +1,5 @@
 import { createTest, EventRegistry } from '../../lib/framework'
-import { sendFetch, sendXhr } from '../../lib/helpers/browser'
+import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('tracing', () => {
@@ -18,10 +18,31 @@ describe('tracing', () => {
   createTest('trace fetch')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await sendFetch(`/headers`, [
-        ['x-foo', 'bar'],
-        ['x-foo', 'baz'],
-      ])
+      const rawHeaders = await browserExecuteAsync<string>((done) => {
+        window
+          .fetch('/headers', {
+            headers: [
+              ['x-foo', 'bar'],
+              ['x-foo', 'baz'],
+            ],
+          })
+          .then((response) => response.text())
+          .then(done)
+      })
+      checkRequestHeaders(rawHeaders)
+      await flushEvents()
+      await checkTraceAssociatedToRumEvent(events)
+    })
+
+  createTest('trace fetch with Request argument')
+    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .run(async ({ events }) => {
+      const rawHeaders = await browserExecuteAsync<string>((done) => {
+        window
+          .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
+          .then((response) => response.text())
+          .then(done)
+      })
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       await checkTraceAssociatedToRumEvent(events)
