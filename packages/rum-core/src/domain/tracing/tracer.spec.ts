@@ -204,12 +204,12 @@ describe('tracer', () => {
       const tracer = startTracer(configuration as Configuration)
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toEqual([
+      expect(context.init).toBe(undefined)
+      expect(context.input).not.toBe(request)
+      expect(headersAsArray((context.input as Request).headers)).toEqual([
         ['foo', 'bar'],
         ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!),
       ])
-
-      expect(context.input).toBe(request)
       expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
     })
 
@@ -319,7 +319,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
 }
 
 function tracingHeadersAsArrayFor(traceId: TraceIdentifier, spanId: TraceIdentifier) {
-  return objectEntries(tracingHeadersFor(traceId, spanId)) as string[][]
+  return objectEntries(tracingHeadersFor(traceId, spanId)) as Array<[string, string]>
 }
 
 function headersAsArray(headers: Headers) {
