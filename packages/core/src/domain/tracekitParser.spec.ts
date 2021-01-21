@@ -1151,4 +1151,24 @@ describe('Parser', () => {
       url: '[native code]',
     })
   })
+
+  it('should parse iOS capacitor', () => {
+    const stackFrames = computeStackTrace(CapturedExceptions.IOS_CAPACITOR)
+
+    expect(stackFrames.stack.length).toEqual(2)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 99546,
+      func: '?',
+      line: 34,
+      url: 'capacitor://localhost/media/dist/bundle.js',
+    })
+    expect(stackFrames.stack[1]).toEqual({
+      args: [],
+      column: 47950,
+      func: 'r',
+      line: 34,
+      url: 'capacitor://localhost/media/dist/bundle.js',
+    })
+  })
 })

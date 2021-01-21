@@ -15,6 +15,7 @@ export interface LogsSetupOptions {
 
 export interface SetupOptions {
   rum?: RumSetupOptions
+  rumRecorder?: RumSetupOptions
   logs?: LogsSetupOptions
   head?: string
   body?: string
@@ -56,12 +57,13 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     `
   }
 
-  if (options.rum) {
+  const rumOptions = options.rumRecorder || options.rum
+  if (rumOptions) {
     body += html`
       <script type="text/javascript">
-        ${formatSnippet('./datadog-rum.js', 'DD_RUM')}
+        ${formatSnippet(options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
-          DD_RUM.init(${formatRumOptions(options.rum)})
+          DD_RUM.init(${formatRumOptions(rumOptions)})
         })
       </script>
     `
@@ -84,11 +86,16 @@ export function bundleSetup(options: SetupOptions) {
       </script>
     `
   }
-  if (options.rum) {
+
+  const rumOptions = options.rumRecorder || options.rum
+  if (rumOptions) {
     header += html`
-      <script type="text/javascript" src="./datadog-rum.js"></script>
+      <script
+        type="text/javascript"
+        src="${options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js'}"
+      ></script>
       <script type="text/javascript">
-        DD_RUM.init(${formatRumOptions(options.rum)})
+        DD_RUM.init(${formatRumOptions(rumOptions)})
       </script>
     `
   }
@@ -109,10 +116,12 @@ export function npmSetup(options: SetupOptions) {
       </script>
     `
   }
-  if (options.rum) {
+
+  const rumOptions = options.rumRecorder || options.rum
+  if (rumOptions) {
     header += html`
       <script type="text/javascript">
-        window.RUM_CONFIG = ${formatRumOptions(options.rum)}
+        window.RUM_CONFIG = ${formatRumOptions(rumOptions)}
       </script>
     `
   }
@@ -147,6 +156,7 @@ export function html(parts: ReadonlyArray<string>, ...vars: string[]) {
 function formatLogsOptions(options: LogsSetupOptions) {
   return JSON.stringify(options)
 }
+
 function formatRumOptions(options: RumSetupOptions) {
   return JSON.stringify(options).replace('"LOCATION_ORIGIN"', 'location.origin')
 }

@@ -1,7 +1,5 @@
 /* tslint:disable:no-null-keyword */
 import { noop } from '@datadog/browser-core'
-// tslint:disable-next-line: no-implicit-dependencies
-import { FontFaceDescriptors, FontFaceSet } from 'css-font-loading-module'
 import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import {
@@ -9,6 +7,7 @@ import {
   BlockClass,
   CanvasMutationCallback,
   FontCallback,
+  FontFaceDescriptors,
   FontParam,
   HookResetter,
   HooksParam,
@@ -22,7 +21,6 @@ import {
   MouseInteractionCallBack,
   MouseInteractions,
   MousemoveCallBack,
-  MousePosition,
   MutationCallBack,
   ObserverParam,
   SamplingStrategy,
@@ -74,34 +72,17 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
 
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
-  let positions: MousePosition[] = []
-  let timeBaseline: number | null
-  const wrappedCb = throttle((isTouch: boolean) => {
-    const totalOffset = Date.now() - timeBaseline!
-    cb(
-      positions.map((p) => {
-        p.timeOffset -= totalOffset
-        return p
-      }),
-      isTouch ? IncrementalSource.TouchMove : IncrementalSource.MouseMove
-    )
-    positions = []
-    timeBaseline = null
-  }, 500)
   const updatePosition = throttle<MouseEvent | TouchEvent>(
     (evt) => {
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
-      if (!timeBaseline) {
-        timeBaseline = Date.now()
-      }
-      positions.push({
+      const position = {
         id: mirror.getId(target as INode),
-        timeOffset: Date.now() - timeBaseline,
+        timeOffset: 0,
         x: clientX,
         y: clientY,
-      })
-      wrappedCb(isTouchEvent(evt))
+      }
+      cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     },
     threshold,
     {
@@ -380,18 +361,31 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
   }
 }
 
+declare class FontFace {
+  constructor(family: string, source: string | ArrayBufferView, descriptors?: FontFaceDescriptors)
+}
+
+type WindowWithFontFace = typeof window & {
+  FontFace: typeof FontFace
+}
+
+type DocumentWithFonts = Document & {
+  fonts: { add(fontFace: FontFace): void }
+}
+
 function initFontObserver(cb: FontCallback): ListenerHandler {
   const handlers: ListenerHandler[] = []
 
-  const fontMap = new WeakMap<FontFace, FontParam>()
+  const fontMap = new WeakMap<object, FontParam>()
 
-  const originalFontFace = FontFace
-  // tslint:disable-next-line: no-any
-  ;(window as any).FontFace = function FontFace(
+  const originalFontFace = (window as WindowWithFontFace).FontFace
+
+  // tslint:disable-next-line: no-shadowed-variable
+  ;(window as WindowWithFontFace).FontFace = (function FontFace(
     family: string,
     source: string | ArrayBufferView,
     descriptors?: FontFaceDescriptors
-  ) {
+  ): FontFace {
     const fontFace = new originalFontFace(family, source, descriptors)
     fontMap.set(fontFace, {
       descriptors,
@@ -404,20 +398,24 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
             JSON.stringify(Array.from(new Uint8Array(source as any))),
     })
     return fontFace
-  }
+  } as unknown) as typeof FontFace
 
-  const restoreHandler = patch(document.fonts, 'add', (original: (fontFace: FontFace) => unknown) => {
-    return function (this: FontFaceSet, fontFace: FontFace) {
-      setTimeout(() => {
-        const p = fontMap.get(fontFace)
-        if (p) {
-          cb(p)
-          fontMap.delete(fontFace)
-        }
-      }, 0)
-      return original.apply(this, [fontFace])
+  const restoreHandler = patch(
+    (document as DocumentWithFonts).fonts,
+    'add',
+    (original: (fontFace: FontFace) => unknown) => {
+      return function (this: unknown, fontFace: FontFace) {
+        setTimeout(() => {
+          const p = fontMap.get(fontFace)
+          if (p) {
+            cb(p)
+            fontMap.delete(fontFace)
+          }
+        }, 0)
+        return original.apply(this, [fontFace])
+      }
     }
-  })
+  )
 
   handlers.push(() => {
     // tslint:disable-next-line: no-any

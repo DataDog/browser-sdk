@@ -74,6 +74,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION & {
   logsEndpoint: string
   rumEndpoint: string
   traceEndpoint: string
+  sessionReplayEndpoint: string
   internalMonitoringEndpoint?: string
   proxyHost?: string
 
@@ -111,11 +112,14 @@ const ENDPOINTS = {
   alternate: {
     logs: 'logs',
     rum: 'rum',
+    sessionReplay: 'session-replay',
     trace: 'trace',
   },
   classic: {
     logs: 'browser',
     rum: 'rum',
+    // session-replay has no classic endpoint
+    sessionReplay: undefined,
     trace: 'public-trace',
   },
 }
@@ -151,6 +155,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     proxyHost: userConfiguration.proxyHost,
     rumEndpoint: getEndpoint(intakeType, 'rum', transportConfiguration),
     service: userConfiguration.service,
+    sessionReplayEndpoint: getEndpoint(intakeType, 'sessionReplay', transportConfiguration),
     traceEndpoint: getEndpoint(intakeType, 'trace', transportConfiguration),
 
     isIntakeUrl: (url) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
@@ -185,6 +190,7 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
     configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
     configuration.rumEndpoint = '<<< E2E RUM ENDPOINT >>>'
+    configuration.sessionReplayEndpoint = '<<< E2E SESSION REPLAY ENDPOINT >>>'
   }
 
   if (transportConfiguration.buildMode === BuildMode.STAGING) {
@@ -240,16 +246,24 @@ function getEndpoint(
   const host = conf.proxyHost ? conf.proxyHost : datadogHost
   const proxyParameter = conf.proxyHost ? `ddhost=${datadogHost}&` : ''
   const applicationIdParameter = conf.applicationId ? `_dd.application_id=${conf.applicationId}&` : ''
-  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${source || 'browser'}&ddtags=${tags}`
+  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${
+    source || 'browser'
+  }&ddtags=${encodeURIComponent(tags)}`
 
   return `https://${host}/v1/input/${conf.clientToken}?${parameters}`
 }
 
 function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
-  const endpoint = ENDPOINTS[intakeType][endpointType]
-  if (intakeType === 'classic') {
-    return `${endpoint}-http-intake.logs.${site}`
-  }
+  return (intakeType === 'classic' && getClassicHost(endpointType, site)) || getAlternateHost(endpointType, site)
+}
+
+function getClassicHost(endpointType: EndpointType, site: string): string | undefined {
+  const endpoint = ENDPOINTS.classic[endpointType]
+  return endpoint && `${endpoint}-http-intake.logs.${site}`
+}
+
+function getAlternateHost(endpointType: EndpointType, site: string): string {
+  const endpoint = ENDPOINTS.alternate[endpointType]
   const domainParts = site.split('.')
   const extension = domainParts.pop()
   const suffix = `${domainParts.join('-')}.${extension}`

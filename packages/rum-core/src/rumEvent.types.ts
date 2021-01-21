@@ -568,6 +568,10 @@ export interface CommonProperties {
      * Type of the session
      */
     readonly type: 'user' | 'synthetics'
+    /**
+     * Whether this session has a replay
+     */
+    readonly has_replay?: boolean
     [k: string]: unknown
   }
   /**

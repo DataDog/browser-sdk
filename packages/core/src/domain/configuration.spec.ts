@@ -30,6 +30,7 @@ describe('configuration', () => {
       expect(configuration.rumEndpoint).toEqual('<<< E2E RUM ENDPOINT >>>')
       expect(configuration.logsEndpoint).toEqual('<<< E2E LOGS ENDPOINT >>>')
       expect(configuration.internalMonitoringEndpoint).toEqual('<<< E2E INTERNAL MONITORING ENDPOINT >>>')
+      expect(configuration.sessionReplayEndpoint).toEqual('<<< E2E SESSION REPLAY ENDPOINT >>>')
     })
   })
 
@@ -61,24 +62,31 @@ describe('configuration', () => {
   describe('sdk_version, env, version and service', () => {
     it('should not modify the logs and rum endpoints tags when not defined', () => {
       const configuration = buildConfiguration({ clientToken }, usEnv)
-      expect(configuration.rumEndpoint).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion}`)
+      expect(decodeURIComponent(configuration.rumEndpoint)).toContain(`&ddtags=sdk_version:${usEnv.sdkVersion}`)
 
-      expect(configuration.rumEndpoint).not.toContain(',env:')
-      expect(configuration.rumEndpoint).not.toContain(',service:')
-      expect(configuration.rumEndpoint).not.toContain(',version:')
-      expect(configuration.logsEndpoint).not.toContain(',env:')
-      expect(configuration.logsEndpoint).not.toContain(',service:')
-      expect(configuration.logsEndpoint).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',service:')
+      expect(decodeURIComponent(configuration.rumEndpoint)).not.toContain(',version:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',env:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',service:')
+      expect(decodeURIComponent(configuration.logsEndpoint)).not.toContain(',version:')
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
       const configuration = buildConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' }, usEnv)
-      expect(configuration.rumEndpoint).toContain(
+      expect(decodeURIComponent(configuration.rumEndpoint)).toContain(
         `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
       )
-      expect(configuration.logsEndpoint).toContain(
+      expect(decodeURIComponent(configuration.logsEndpoint)).toContain(
         `&ddtags=sdk_version:${usEnv.sdkVersion},env:foo,service:bar,version:baz`
       )
+    })
+  })
+
+  describe('tags', () => {
+    it('should be encoded', () => {
+      const configuration = buildConfiguration({ clientToken, service: 'bar+foo' }, usEnv)
+      expect(configuration.rumEndpoint).toContain(`ddtags=sdk_version%3Asome_version%2Cservice%3Abar%2Bfoo`)
     })
   })
 
@@ -115,6 +123,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.eu/v1/input/xxx')).toBe(true)
     })
 
     it('should detect intake request for US site', () => {
@@ -123,6 +132,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
     it('should detect alternate intake domains for US site', () => {
@@ -130,6 +140,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
     it('should handle sites with subdomains and classic intake', () => {
@@ -137,6 +148,9 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(
         true
       )
     })
@@ -149,6 +163,9 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
     })
 
     it('should force alternate intake for us3', () => {
@@ -159,6 +176,9 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-us3-datadoghq.com/v1/input/xxx')).toBe(
+        true
+      )
     })
 
     it('should detect proxy intake request', () => {
@@ -186,6 +206,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo.com/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
@@ -199,6 +220,7 @@ describe('configuration', () => {
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://trace.browser-intake-foo.com/v1/input/xxx')).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo.com/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)

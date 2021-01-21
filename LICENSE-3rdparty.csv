@@ -1,9 +1,10 @@
 Component,Origin,License,Copyright
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
+file,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin 
 file,rrweb,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb/graphs/contributors) and SmartX Inc.
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
-prod,@types/css-font-loading-module,MIT,Copyright Microsoft Corporation
 prod,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
+dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
@@ -19,6 +20,7 @@ dev,@wdio/sync,MIT,Copyright JS Foundation and other contributors
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,codecov,MIT,Copyright 2014 Gregg Caines
+dev,connect-busboy,MIT,Copyright Brian White
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,express,MIT,Copyright 2009-2014 TJ Holowaychuk 2013-2014 Roman Shtylman 2014-2015 Douglas Christopher Wilson
