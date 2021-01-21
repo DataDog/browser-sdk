@@ -23,7 +23,7 @@ export enum LifeCycleEventType {
 }
 
 export interface Subscription {
-  unsubscribe(): void
+  unsubscribe: () => void
 }
 
 export class LifeCycle {

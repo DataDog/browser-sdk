@@ -37,7 +37,7 @@ export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) 
   })
 
   return {
-    stop() {
+    stop: () => {
       stopNavigationTracking()
       stopFCPTracking()
       stopLCPTracking()
@@ -115,7 +115,7 @@ export function trackLargestContentfulPaint(
   )
 
   return {
-    stop() {
+    stop: () => {
       stopEventListener()
       unsubcribeLifeCycle()
     },

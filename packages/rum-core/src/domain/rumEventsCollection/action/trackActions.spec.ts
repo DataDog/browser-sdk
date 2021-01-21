@@ -20,7 +20,7 @@ function eventsCollector<T>() {
   })
   return {
     events,
-    pushEvent(event: T) {
+    pushEvent: (event: T) => {
       events.push(event)
     },
   }

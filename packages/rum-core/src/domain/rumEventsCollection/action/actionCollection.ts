@@ -13,7 +13,7 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
   }
 
   return {
-    addAction(action: CustomAction, savedCommonContext?: CommonContext) {
+    addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedCommonContext,
         ...processAction(action),

@@ -193,10 +193,12 @@ export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEven
 
 export function polyfill(win = window) {
   if ('NodeList' in win && !win.NodeList.prototype.forEach) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     win.NodeList.prototype.forEach = (Array.prototype.forEach as unknown) as NodeList['forEach']
   }
 
   if ('DOMTokenList' in win && !win.DOMTokenList.prototype.forEach) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     win.DOMTokenList.prototype.forEach = (Array.prototype.forEach as unknown) as DOMTokenList['forEach']
   }
 }

@@ -22,7 +22,7 @@ module.exports = {
   ],
   rules: {
     // Temporary disabled rules
-    '@typescript-eslint/unbound-method': 'off',
+    '@typescript-eslint/unbound-method': 'error',
     '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/no-unsafe-return': 'error',
     '@typescript-eslint/naming-convention': 'off',

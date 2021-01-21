@@ -31,6 +31,7 @@ describe('request', () => {
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(navigator.sendBeacon).toHaveBeenCalled()
   })
 
@@ -49,6 +50,7 @@ describe('request', () => {
 
     request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(navigator.sendBeacon).toHaveBeenCalled()
     expect(server.requests.length).toEqual(1)
   })
@@ -73,6 +75,7 @@ describe('batch', () => {
 
     batch.flush()
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith('{"message":"hello"}', jasmine.any(Number))
   })
 
@@ -80,9 +83,11 @@ describe('batch', () => {
     batch.add({ message: 'hello' })
 
     batch.flush()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     ;(transport.send as jasmine.Spy).calls.reset()
     batch.flush()
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).not.toHaveBeenCalled()
   })
 
@@ -98,6 +103,7 @@ describe('batch', () => {
     batch.add({ message: '1' })
     batch.add({ message: '2' })
     batch.add({ message: '3' })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"1"}\n{"message":"2"}\n{"message":"3"}',
       jasmine.any(Number)
@@ -106,12 +112,15 @@ describe('batch', () => {
 
   it('should flush when new message will overflow bytes limit', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).not.toHaveBeenCalled()
 
     batch.add({ message: '60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith('{"message":"50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx"}', 50)
 
     batch.flush()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith('{"message":"60 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}', 60)
   })
 
@@ -120,12 +129,14 @@ describe('batch', () => {
     batch.add({ message: '30 bytes - xxxxx' }) // batch: 60 sep: 1
     batch.add({ message: '39 bytes - xxxxxxxxxxxxxx' }) // batch: 99 sep: 2
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith('{"message":"30 bytes - xxxxx"}\n{"message":"30 bytes - xxxxx"}', 61)
   })
 
   it('should call send one time when the size is too high and the batch is empty', () => {
     const message = '101 bytes - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
     batch.add({ message })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith(`{"message":"${message}"}`, 101)
   })
 
@@ -134,6 +145,7 @@ describe('batch', () => {
 
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     batch.add({ message })
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledTimes(2)
   })
 
@@ -143,6 +155,7 @@ describe('batch', () => {
     batch.add({ message: '50 bytes - xxxxxxxxxxxxxxxxxxxxxxxxx' })
     clock.tick(100)
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalled()
 
     clock.restore()
@@ -153,6 +166,7 @@ describe('batch', () => {
     batch = new Batch(transport, MAX_SIZE, BATCH_BYTES_LIMIT, 50, FLUSH_TIMEOUT)
     batch.add({ message: '50 bytes - xxxxxxxxxxxxx' })
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).not.toHaveBeenCalled()
     warnStub.restore()
   })
@@ -163,6 +177,7 @@ describe('batch', () => {
     batch.upsert({ message: '3' }, 'b')
     batch.upsert({ message: '4' }, 'c')
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
       jasmine.any(Number)
@@ -172,6 +187,7 @@ describe('batch', () => {
     batch.upsert({ message: '6' }, 'b')
     batch.upsert({ message: '7' }, 'a')
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith(
       '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
       jasmine.any(Number)
@@ -183,6 +199,7 @@ describe('batch', () => {
     batch.upsert({ message: '11' }, 'b')
     batch.flush()
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(transport.send).toHaveBeenCalledWith('{"message":"10"}\n{"message":"11"}', jasmine.any(Number))
   })
 })

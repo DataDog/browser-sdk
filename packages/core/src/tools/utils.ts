@@ -42,11 +42,7 @@ export enum RequestType {
 }
 
 // use lodash API
-export function throttle(
-  fn: () => void,
-  wait: number,
-  options?: { leading?: boolean; trailing?: boolean }
-): { throttled: () => void; cancel: () => void } {
+export function throttle(fn: () => void, wait: number, options?: { leading?: boolean; trailing?: boolean }) {
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
@@ -54,26 +50,26 @@ export function throttle(
   let pendingTimeoutId: number
 
   return {
-    throttled(this: any) {
+    throttled: () => {
       if (inWaitPeriod) {
         hasPendingExecution = true
         return
       }
       if (needLeadingExecution) {
-        fn.apply(this)
+        fn()
       } else {
         hasPendingExecution = true
       }
       inWaitPeriod = true
       pendingTimeoutId = window.setTimeout(() => {
         if (needTrailingExecution && hasPendingExecution) {
-          fn.apply(this)
+          fn()
         }
         inWaitPeriod = false
         hasPendingExecution = false
       }, wait)
     },
-    cancel() {
+    cancel: () => {
       window.clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
       hasPendingExecution = false
@@ -380,7 +376,7 @@ export function addEventListeners(
   events: DOM_EVENT[],
   listener: (event: Event) => void,
   { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
-): { stop(): void } {
+) {
   const wrapedListener = monitor(
     once
       ? (event: Event) => {

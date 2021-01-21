@@ -65,7 +65,9 @@ export function resetXhrProxy() {
 }
 
 function proxyXhr() {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrOpen = XMLHttpRequest.prototype.open
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
   /* eslint-disable no-underscore-dangle */
   XMLHttpRequest.prototype.open = monitor(function (this: BrowserXHR, method: string, url: string) {

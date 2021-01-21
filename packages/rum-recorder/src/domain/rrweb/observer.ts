@@ -275,6 +275,7 @@ function initInputObserver(
 }
 
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number) {
     const id = mirror.getId(this.ownerNode as INode)
@@ -287,6 +288,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
     return insertRule.call(this, rule, index)
   }
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (index: number) {
     const id = mirror.getId(this.ownerNode as INode)
