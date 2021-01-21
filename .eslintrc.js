@@ -253,7 +253,7 @@ module.exports = {
     'no-multiple-empty-lines': 'off',
     'no-new-func': 'error',
     'no-new-wrappers': 'error',
-    'no-param-reassign': 'error',
+    'no-param-reassign': 'off',
     'no-return-await': 'error',
     'no-sequences': 'error',
     'no-sparse-arrays': 'error',
