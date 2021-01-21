@@ -13,12 +13,12 @@ export enum EventType {
 
 export interface DomContentLoadedEvent {
   type: EventType.DomContentLoaded
-  data: {}
+  data: object
 }
 
 export interface LoadedEvent {
   type: EventType.Load
-  data: {}
+  data: object
 }
 
 export interface FullSnapshotEvent {

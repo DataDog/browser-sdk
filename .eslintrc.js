@@ -33,12 +33,13 @@ module.exports = {
     '@typescript-eslint/restrict-plus-operands': 'error',
     '@typescript-eslint/restrict-template-expressions': 'error',
     '@typescript-eslint/ban-types': [
-      'off',
+      'error',
       {
         types: {
           Object: {
             message: 'Avoid using the `Object` type. Did you mean `object`?',
           },
+          object: false,
           Function: {
             message: 'Avoid using the `Function` type. Prefer a specific function type, like `() => void`.',
           },
