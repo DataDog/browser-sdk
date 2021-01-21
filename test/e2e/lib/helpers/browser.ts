@@ -77,7 +77,7 @@ export async function sendFetch(url: string, headers: string[][] = []): Promise<
   return browserExecuteAsync(
     // eslint-disable-next-line @typescript-eslint/no-shadow
     (url, headers, done) => {
-      window
+      void window
         .fetch(url, { headers })
         .then((response) => response.text())
         .then(done)

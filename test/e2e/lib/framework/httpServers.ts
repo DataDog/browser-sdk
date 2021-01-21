@@ -127,7 +127,7 @@ function createIdleWaiter() {
       clearTimeout(waitTimeoutId)
 
       pendingActivities.add(activity)
-      activity.then(() => {
+      void activity.then(() => {
         pendingActivities.delete(activity)
 
         if (pendingActivities.size === 0) {
