@@ -24,7 +24,7 @@ describe('record', () => {
 
   it('will only have one full snapshot without checkout config', () => {
     const emit = jasmine.createSpy<(event: Event) => void>()
-    stop = record<Event>({ emit })
+    stop = record<Event>({ emit })?.stop
 
     const count = 30
     for (let i = 0; i < count; i += 1) {

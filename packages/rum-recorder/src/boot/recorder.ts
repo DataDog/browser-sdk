@@ -1,5 +1,5 @@
 import { Configuration } from '@datadog/browser-core'
-import { LifeCycle, ParentContexts, RumSession } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/rrweb'
 import { startSegmentCollection } from '../domain/segmentCollection'
@@ -20,9 +20,12 @@ export function startRecording(
     (data, meta) => send(configuration.sessionReplayEndpoint, data, meta)
   )
 
-  const stopRecording = record({
+  const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRecord,
   })!
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, takeFullSnapshot)
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
 
   return {
     stop() {
