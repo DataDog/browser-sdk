@@ -51,7 +51,7 @@
     "jasmine-core": "3.5.0",
     "js-polyfills": "0.1.42",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
-    "karma": "6.0.1",
+    "karma": "5.2.3",
     "karma-browserstack-launcher": "1.6.0",
     "karma-chrome-launcher": "3.1.0",
     "karma-coverage-istanbul-reporter": "2.1.1",
@@ -79,5 +79,8 @@
     "webpack": "4.42.1",
     "webpack-cli": "3.3.11",
     "webpack-dev-middleware": "3.7.2"
+  },
+  "resolutions": {
+    "socket.io": "2.4.1"
   }
 }
