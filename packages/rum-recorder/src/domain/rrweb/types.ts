@@ -1,4 +1,4 @@
-import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
+import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot'
 import type { RawRecord } from '../../types'
 
 export enum IncrementalSource {
