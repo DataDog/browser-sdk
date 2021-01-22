@@ -14,7 +14,7 @@
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck test/e2e",
     "dev": "node scripts/dev-server.js",
     "release": "lerna version --exact",
-    "version": "node ./scripts/generate-changelog.js",
+    "version": "scripts/cli version",
     "publish:npm": "TARGET_DATACENTER=us BUILD_MODE=release yarn build && lerna publish from-package",
     "fail": "./scripts/fail.sh",
     "test": "yarn test:unit",
