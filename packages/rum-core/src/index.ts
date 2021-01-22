@@ -1,4 +1,4 @@
-export { RumUserConfiguration, RumPublicApi, makeRumPublicApi } from './boot/rumPublicApi'
+export { RumUserConfiguration, RumPublicApi, makeRumPublicApi, StartRum } from './boot/rumPublicApi'
 export { ProvidedSource } from './domain/rumEventsCollection/error/errorCollection'
 export {
   RumEvent,
