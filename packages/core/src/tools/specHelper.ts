@@ -27,8 +27,8 @@ export function isFirefox() {
 }
 
 export function isIE() {
-  const hasIEAgent = /Trident.*rv\:11\./.exec(navigator.userAgent)
-  return navigator.userAgent.indexOf('MSIE ') > 0 || !!hasIEAgent
+  const hasIEAgent = /Trident.*rv\:11\./.test(navigator.userAgent)
+  return navigator.userAgent.indexOf('MSIE ') > 0 || hasIEAgent
 }
 
 export function clearAllCookies() {

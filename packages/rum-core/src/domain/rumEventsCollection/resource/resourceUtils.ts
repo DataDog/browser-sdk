@@ -31,8 +31,8 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
-  [ResourceType.CSS, (_: string, path: string) => /\.css$/i.exec(path) !== null],
-  [ResourceType.JS, (_: string, path: string) => /\.js$/i.exec(path) !== null],
+  [ResourceType.CSS, (_: string, path: string) => /\.css$/i.test(path)],
+  [ResourceType.JS, (_: string, path: string) => /\.js$/i.test(path)],
   [
     ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
