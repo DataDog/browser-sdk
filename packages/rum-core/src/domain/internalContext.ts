@@ -20,11 +20,7 @@ export function startInternalContext(applicationId: string, session: RumSession,
                 id: actionContext.action.id,
               }
             : undefined,
-          view: {
-            id: viewContext.view.id,
-            referrer: viewContext.view.referrer,
-            url: viewContext.view.url,
-          },
+          view: viewContext.view,
         }
       }
     },
