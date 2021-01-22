@@ -50,10 +50,16 @@ describe('logs', () => {
     .run(async ({ events, baseUrl }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         let count = 0
-        void fetch(`/throw`).then(() => (count += 1))
-        void fetch(`/unknown`).then(() => (count += 1))
+        fetch(`/throw`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
+        fetch(`/unknown`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
         fetch(unreachableUrl).catch(() => (count += 1))
-        void fetch(`/ok`).then(() => (count += 1))
+        fetch(`/ok`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
 
         const interval = setInterval(() => {
           if (count === 4) {
