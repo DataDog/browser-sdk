@@ -2,36 +2,36 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@2.1.2", "@datadog/browser-core@file:../../packages/core":
-  version "2.1.2"
+"@datadog/browser-core@2.3.1", "@datadog/browser-core@file:../../packages/core":
+  version "2.3.1"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "2.1.2"
+  version "2.3.1"
   dependencies:
-    "@datadog/browser-core" "2.1.2"
+    "@datadog/browser-core" "2.3.1"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@2.1.2", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "2.1.2"
+"@datadog/browser-rum-core@2.3.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "2.3.1"
   dependencies:
-    "@datadog/browser-core" "2.1.2"
+    "@datadog/browser-core" "2.3.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum-recorder@file:../../packages/rum-recorder":
-  version "2.1.2"
+  version "2.3.1"
   dependencies:
-    "@datadog/browser-core" "2.1.2"
-    "@datadog/browser-rum-core" "2.1.2"
+    "@datadog/browser-core" "2.3.1"
+    "@datadog/browser-rum-core" "2.3.1"
     rrweb-snapshot "1.0.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "2.1.2"
+  version "2.3.1"
   dependencies:
-    "@datadog/browser-core" "2.1.2"
-    "@datadog/browser-rum-core" "2.1.2"
+    "@datadog/browser-core" "2.3.1"
+    "@datadog/browser-rum-core" "2.3.1"
     tslib "^1.10.0"
 
 "@webassemblyjs/ast@1.8.5":
