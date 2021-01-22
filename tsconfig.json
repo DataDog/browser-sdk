@@ -1,13 +1,6 @@
 // This tsconfig is only used for tooling (ex: typecheck in code editors)
 {
   "extends": "./tsconfig.base.json",
-  "include": [
-    "./*.js",
-    "./packages/**/*.js",
-    "./packages/**/*.ts",
-    "./scripts/**/*.js",
-    "./test/*.js",
-    "./test/unit/*.js",
-    "./.eslintrc.js"
-  ]
+  "include": [".", ".eslintrc.js"],
+  "exclude": ["./test/e2e"]
 }

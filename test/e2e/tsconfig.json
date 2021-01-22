@@ -14,6 +14,5 @@
       "@datadog/browser-rum-recorder": ["../../packages/rum-recorder/src"],
       "@datadog/browser-core": ["../../packages/core/src"]
     }
-  },
-  "include": ["./*.js", "./**/*.js", "./scenario/**/*.ts", "./lib/**/*.ts", "./*.d.ts"]
+  }
 }
