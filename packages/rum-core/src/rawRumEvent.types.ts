@@ -146,13 +146,6 @@ export interface ActionContext extends Context {
   }
 }
 
-export type AssembledRumEvent =
-  | (RawRumErrorEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumResourceEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumViewEvent & ViewContext & RumContext)
-  | (RawRumLongTaskEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumActionEvent & ViewContext & RumContext)
-
 export interface InternalContext {
   application_id: string
   session_id: string | undefined

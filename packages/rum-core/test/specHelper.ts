@@ -7,7 +7,6 @@ import {
   DEFAULT_CONFIGURATION,
   noop,
   SPEC_ENDPOINTS,
-  withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
@@ -190,5 +189,5 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       url: 'fake url',
     },
   }
-  validateFormat(withSnakeCaseKeys(combine(fakeContext, rawRumEvent)))
+  validateFormat(combine(fakeContext, rawRumEvent))
 }

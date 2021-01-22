@@ -1,4 +1,3 @@
-import { combine, withSnakeCaseKeys } from '@datadog/browser-core'
 import { InternalContext } from '../rawRumEvent.types'
 import { ParentContexts } from './parentContexts'
 import { RumSession } from './rumSession'
@@ -9,17 +8,24 @@ import { RumSession } from './rumSession'
  */
 export function startInternalContext(applicationId: string, session: RumSession, parentContexts: ParentContexts) {
   return {
-    get: (startTime?: number) => {
+    get: (startTime?: number): InternalContext | undefined => {
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
-        return (withSnakeCaseKeys(
-          combine(
-            { applicationId },
-            { sessionId: viewContext.session.id, view: viewContext.view },
-            actionContext ? { userAction: { id: actionContext.action.id } } : undefined
-          )
-        ) as unknown) as InternalContext
+        return {
+          application_id: applicationId,
+          session_id: viewContext.session.id,
+          user_action: actionContext
+            ? {
+                id: actionContext.action.id,
+              }
+            : undefined,
+          view: {
+            id: viewContext.view.id,
+            referrer: viewContext.view.referrer,
+            url: viewContext.view.url,
+          },
+        }
       }
     },
   }
