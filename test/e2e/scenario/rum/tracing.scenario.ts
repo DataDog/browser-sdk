@@ -19,7 +19,7 @@ describe('tracing', () => {
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
       const rawHeaders = await browserExecuteAsync<string>((done) => {
-        void window
+        window
           .fetch('/headers', {
             headers: [
               ['x-foo', 'bar'],
@@ -28,6 +28,7 @@ describe('tracing', () => {
           })
           .then((response) => response.text())
           .then(done)
+          .catch(() => done('{}'))
       })
       checkRequestHeaders(rawHeaders)
       await flushEvents()
@@ -38,10 +39,11 @@ describe('tracing', () => {
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
       const rawHeaders = await browserExecuteAsync<string>((done) => {
-        void window
+        window
           .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
           .then((response) => response.text())
           .then(done)
+          .catch(() => done('{}'))
       })
       checkRequestHeaders(rawHeaders)
       await flushEvents()
