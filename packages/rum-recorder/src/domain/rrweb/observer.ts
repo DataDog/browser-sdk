@@ -388,11 +388,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
       descriptors,
       family,
       buffer: typeof source !== 'string',
-      fontSource:
-        typeof source === 'string'
-          ? source
-          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            JSON.stringify(Array.from(new Uint8Array(source as any))),
+      fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
     })
     return fontFace
   } as unknown) as typeof FontFace
