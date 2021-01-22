@@ -834,7 +834,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let addTiming: (name: string, inInitialView?: boolean, time?: number) => void
+  let addTiming: (name: string) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -857,34 +857,20 @@ describe('rum track custom timings', () => {
     history.pushState({}, '', '/bar')
     const currentViewId = getViewEvent(2).id
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
     expect(event.customTimings).toEqual({ foo: 20 })
   })
 
-  it('should add custom timing to initial view', () => {
-    const { clock } = setupBuilder.build()
-    clock.tick(20)
-    history.pushState({}, '', '/bar')
-    const initialViewId = getViewEvent(0).id
-
-    clock.tick(20)
-    addTiming('foo', true)
-
-    const event = getViewEvent(3)
-    expect(event.id).toEqual(initialViewId)
-    expect(event.customTimings).toEqual({ foo: 40 })
-  })
-
   it('should add multiple custom timings', () => {
     const { clock } = setupBuilder.build()
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     clock.tick(10)
-    addTiming('bar', false)
+    addTiming('bar')
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -896,10 +882,10 @@ describe('rum track custom timings', () => {
   it('should update custom timing', () => {
     const { clock } = setupBuilder.build()
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     clock.tick(10)
-    addTiming('bar', false)
+    addTiming('bar')
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -908,7 +894,7 @@ describe('rum track custom timings', () => {
     })
 
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
