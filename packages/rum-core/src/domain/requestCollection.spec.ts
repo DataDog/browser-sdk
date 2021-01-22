@@ -59,7 +59,7 @@ describe('collect fetch', () => {
   })
 
   it('should notify on request start', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).toHaveBeenCalledWith({ requestIndex: (jasmine.any(Number) as unknown) as number })
@@ -68,7 +68,7 @@ describe('collect fetch', () => {
   })
 
   it('should notify on request complete', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
@@ -83,7 +83,7 @@ describe('collect fetch', () => {
   })
 
   it('should not trace cancelled requests', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
+    fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
 
     fetchStubManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
@@ -95,7 +95,7 @@ describe('collect fetch', () => {
   })
 
   it('should assign a request id', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+    fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     fetchStubManager.whenAllComplete(() => {
       const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
@@ -107,7 +107,7 @@ describe('collect fetch', () => {
   })
 
   it('should ignore intake requests', (done) => {
-    void fetchStub(SPEC_ENDPOINTS.rumEndpoint!).resolveWith({ status: 200, responseText: 'foo' })
+    fetchStub(SPEC_ENDPOINTS.rumEndpoint!).resolveWith({ status: 200, responseText: 'foo' })
 
     fetchStubManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()

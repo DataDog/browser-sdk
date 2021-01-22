@@ -153,7 +153,7 @@ describe('network error tracker', () => {
   })
 
   it('should track server error', (done) => {
-    void fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+    fetchStub(FAKE_URL).resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalledWith({
@@ -172,7 +172,7 @@ describe('network error tracker', () => {
   })
 
   it('should not track intake error', (done) => {
-    void fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
+    fetchStub('https://logs-intake.com/v1/input/send?foo=bar').resolveWith(DEFAULT_REQUEST)
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).not.toHaveBeenCalled()
@@ -181,7 +181,7 @@ describe('network error tracker', () => {
   })
 
   it('should track refused request', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
@@ -190,7 +190,7 @@ describe('network error tracker', () => {
   })
 
   it('should not track client error', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).not.toHaveBeenCalled()
@@ -199,7 +199,7 @@ describe('network error tracker', () => {
   })
 
   it('should not track successful request', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).not.toHaveBeenCalled()
@@ -208,7 +208,7 @@ describe('network error tracker', () => {
   })
 
   it('should add a default error response', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
+    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
@@ -219,7 +219,7 @@ describe('network error tracker', () => {
   })
 
   it('should truncate error response', (done) => {
-    void fetchStub(FAKE_URL).resolveWith({
+    fetchStub(FAKE_URL).resolveWith({
       ...DEFAULT_REQUEST,
       responseText: 'Lorem ipsum dolor sit amet orci aliquam.',
     })
