@@ -41,7 +41,6 @@ describe('tracer', () => {
         setRequestHeader(this: XhrStub, name: string, value: string) {
           this.headers[name] = value
         },
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         headers: {} as XhrStub['headers'],
       }
     })

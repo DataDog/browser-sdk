@@ -103,7 +103,7 @@ describe('trackPagePageActivities', () => {
 
   describe('requests', () => {
     function makeFakeRequestCompleteEvent(requestIndex: number) {
-      return ({ requestIndex } as any) as RequestCompleteEvent
+      return { requestIndex } as RequestCompleteEvent
     }
     it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()

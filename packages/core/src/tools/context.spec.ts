@@ -167,13 +167,11 @@ describe('context', () => {
         withSnakeCaseKeys({
           camelCase: 1,
           nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
-
           nullValue: null,
         })
       ).toEqual({
         camel_case: 1,
         nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
-
         null_value: null,
       })
     })

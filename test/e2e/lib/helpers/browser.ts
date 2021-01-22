@@ -54,7 +54,6 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   type State = { state: 'success'; response: string } | { state: 'error' }
 
   const result: State = await browserExecuteAsync(
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     (url, headers, done) => {
       const xhr = new XMLHttpRequest()
       xhr.addEventListener('load', () => done({ state: 'success', response: xhr.response as string }))

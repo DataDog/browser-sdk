@@ -414,7 +414,6 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   )
 
   handlers.push(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).FonFace = originalFontFace
   })
   handlers.push(restoreHandler)

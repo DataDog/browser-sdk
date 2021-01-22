@@ -31,8 +31,7 @@ describe('tracing', () => {
       })
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      // eslint-disable-next-line @typescript-eslint/await-thenable
-      await checkTraceAssociatedToRumEvent(events)
+      checkTraceAssociatedToRumEvent(events)
     })
 
   createTest('trace fetch with Request argument')
