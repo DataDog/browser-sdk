@@ -70,7 +70,7 @@ describe('makeRumRecorderPublicApi', () => {
     it('if enabled, commonContext.hasReplay should be true only if startSessionRecord is called', () => {
       enabledFlags = ['postpone_start_recording']
       rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      expect(getCommonContext().hasReplay).toBe(false)
+      expect(getCommonContext().hasReplay).toBeUndefined()
       rumGlobal.startSessionRecord!()
       expect(getCommonContext().hasReplay).toBe(true)
     })
