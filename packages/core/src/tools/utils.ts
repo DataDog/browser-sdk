@@ -340,9 +340,7 @@ interface AddEventListenerOptions {
  * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
- * * supports IE11 by:
- * - using an option object only if needed
- * - emulating the `once` option
+ * * supports IE11 by: using an option object only if needed and emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
@@ -361,9 +359,7 @@ export function addEventListener(
  * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
- * * supports IE11 by:
- * - using an option object only if needed
- * - emulating the `once` option
+ * * supports IE11 by: using an option object only if needed and emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
