@@ -3,7 +3,6 @@ import {
   buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
-  Configuration,
   Context,
   createContextManager,
   deepClone,
@@ -11,6 +10,7 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
+  noop,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
@@ -37,6 +37,8 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
     return undefined
   }
+
+  let addTimingStrategy: ReturnType<StartRum>['addTiming'] = noop
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
@@ -68,13 +70,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
-      let configuration: Configuration
-      let addTiming: ReturnType<StartRum>['addTiming']
       ;({
-        addTiming,
-        configuration,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
+        addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, () => ({
         user,
@@ -82,10 +81,6 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-
-      if (configuration.isEnabled('custom-timings')) {
-        ;(rumGlobal as any).addTiming = addTiming
-      }
 
       isAlreadyInitialized = true
     }),
@@ -111,8 +106,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     }),
 
     /**
-     * @deprecated
-     * @see addAction
+     * @deprecated use addAction instead
      */
     addUserAction: (name: string, context?: object) => {
       rumGlobal.addAction(name, context as Context)
@@ -132,6 +126,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         source: checkedSource,
         startTime: performance.now(),
       })
+    }),
+
+    addTiming: monitor((name: string) => {
+      addTimingStrategy(name)
     }),
 
     setUser: monitor((newUser: User) => {

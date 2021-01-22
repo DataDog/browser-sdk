@@ -1,4 +1,4 @@
-import { combine, commonInit, Configuration, Context } from '@datadog/browser-core'
+import { combine, commonInit, Configuration } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
