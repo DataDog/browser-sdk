@@ -101,10 +101,10 @@ export function monitored<T extends (...params: any[]) => unknown>(
   descriptor: TypedPropertyDescriptor<T>
 ) {
   const originalMethod = descriptor.value!
-  descriptor.value = (function (this: any, ...args: Parameters<T>) {
+  descriptor.value = function (this: any, ...args: Parameters<T>) {
     const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
-  } as any) as T
+  } as T
 }
 
 export function monitor<R>(fn: (...args: any[]) => R) {
