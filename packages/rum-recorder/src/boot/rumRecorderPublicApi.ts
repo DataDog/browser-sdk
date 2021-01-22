@@ -7,7 +7,7 @@ export type StartRecording = typeof startRecording
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
   const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
-    let isRecording = false
+    let isRecording: true | undefined
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
