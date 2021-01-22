@@ -2,8 +2,8 @@ Component,Origin,License,Copyright
 require,tslib,Apache-2.0,Copyright Microsoft Corporation
 file,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin 
 file,rrweb,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb/graphs/contributors) and SmartX Inc.
+file,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
 file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
-prod,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
