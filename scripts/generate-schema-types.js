@@ -14,7 +14,7 @@ async function main() {
   const compiledTypes = await compileFromFile(schemaPath, {
     cwd: workingDirectory,
     bannerComment:
-      '/* eslint disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
+      '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
     style: prettierConfig,
   })
   console.log(`writing ${compiledTypesPath}`)
