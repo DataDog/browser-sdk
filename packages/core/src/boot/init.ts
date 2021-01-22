@@ -1,6 +1,7 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
+import { Datacenter } from '../domain/transportConfiguration'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
@@ -32,18 +33,6 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => fn())
   }
-}
-
-export const Datacenter = {
-  EU: 'eu',
-  US: 'us',
-} as const
-
-export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
-
-export const INTAKE_SITE = {
-  [Datacenter.EU]: 'datadoghq.eu',
-  [Datacenter.US]: 'datadoghq.com',
 }
 
 export enum BuildMode {
