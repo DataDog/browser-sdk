@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { monitor } from '../domain/internalMonitoring'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
@@ -69,7 +70,6 @@ function proxyXhr() {
   originalXhrOpen = XMLHttpRequest.prototype.open
   // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
-  /* eslint-disable no-underscore-dangle */
   XMLHttpRequest.prototype.open = monitor(function (this: BrowserXHR, method: string, url: string) {
     // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
     // and can be used by different code versions depending on customer setup
@@ -119,5 +119,4 @@ function proxyXhr() {
 
     return originalXhrSend.apply(this, arguments as any)
   })
-  /* eslint-enable no-underscore-dangle */
 }
