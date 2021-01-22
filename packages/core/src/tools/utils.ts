@@ -121,7 +121,7 @@ export function msToNs<T>(duration: number | T): number | T {
   return round(duration * 1e6, 0)
 }
 
-// eslint-disable-next-line no-empty,@typescript-eslint/no-empty-function
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
 interface ObjectWithToJSON {
