@@ -960,34 +960,3 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
 
   return doComputeStackTrace
 })()
-
-/**
- * Extends support for global error handling for asynchronous browser
- * functions. Adopted from Closure Library's errorhandler.js
- * @memberof TraceKit
- */
-export function extendToAsynchronousCallbacks() {
-  function helper(fnName: any) {
-    const originalFn = (window as any)[fnName] as (...args: any[]) => any
-    ;(window as any)[fnName] = function traceKitAsyncExtension() {
-      // Make a copy of the arguments
-      const args: any[] = [].slice.call(arguments)
-      const originalCallback = args[0]
-      if (typeof originalCallback === 'function') {
-        args[0] = wrap(originalCallback)
-      }
-      // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
-      // also only supports 2 argument and doesn't care what "this" is, so we
-      // can just call the original function directly.
-      if (originalFn.apply) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return originalFn.apply(this, args)
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return originalFn(args[0], args[1])
-    }
-  }
-
-  helper('setTimeout')
-  helper('setInterval')
-}
