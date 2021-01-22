@@ -96,7 +96,7 @@ describe('computePerformanceResourceDetails', () => {
       connect: { start: 5e6, duration: 2e6 },
       dns: { start: 3e6, duration: 1e6 },
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 1e6 },
       ssl: { start: 6e6, duration: 1e6 },
     })
@@ -115,7 +115,7 @@ describe('computePerformanceResourceDetails', () => {
       connect: { start: 5e6, duration: 2e6 },
       dns: { start: 3e6, duration: 1e6 },
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       ssl: { start: 6e6, duration: 1e6 },
     })
   })
@@ -132,7 +132,7 @@ describe('computePerformanceResourceDetails', () => {
     ).toEqual({
       connect: { start: 5e6, duration: 2e6 },
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 1e6 },
       ssl: { start: 6e6, duration: 1e6 },
     })
@@ -149,7 +149,7 @@ describe('computePerformanceResourceDetails', () => {
       connect: { start: 5e6, duration: 2e6 },
       dns: { start: 3e6, duration: 1e6 },
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 1e6 },
     })
   })
@@ -168,7 +168,7 @@ describe('computePerformanceResourceDetails', () => {
       )
     ).toEqual({
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 1e6 },
     })
   })
@@ -187,7 +187,7 @@ describe('computePerformanceResourceDetails', () => {
       )
     ).toEqual({
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 1e6 },
     })
   })
@@ -253,7 +253,7 @@ describe('computePerformanceResourceDetails', () => {
       )
     ).toEqual({
       download: { start: 30e6, duration: 10e6 },
-      firstByte: { start: 0, duration: 30e6 },
+      first_byte: { start: 0, duration: 30e6 },
     })
   })
 
@@ -269,7 +269,7 @@ describe('computePerformanceResourceDetails', () => {
       connect: { start: 5e6, duration: 2e6 },
       dns: { start: 3e6, duration: 1e6 },
       download: { start: 40e6, duration: 10e6 },
-      firstByte: { start: 10e6, duration: 30e6 },
+      first_byte: { start: 10e6, duration: 30e6 },
       redirect: { start: 0, duration: 2e6 },
       ssl: { start: 6e6, duration: 1e6 },
     })

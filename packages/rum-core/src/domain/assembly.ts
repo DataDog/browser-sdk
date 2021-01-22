@@ -57,7 +57,7 @@ export function startRumAssembly(
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
-            formatVersion: 2,
+            format_version: 2,
           },
           application: {
             id: applicationId,

@@ -24,21 +24,22 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
 
 function processAction(action: AutoAction | CustomAction) {
   const autoActionProperties = isAutoAction(action)
-    ? {
+    ? // tslint:disable-next-line: no-object-literal-type-assertion
+      ({
         action: {
           error: {
             count: action.counts.errorCount,
           },
           id: action.id,
-          loadingTime: msToNs(action.duration),
-          longTask: {
+          loading_time: msToNs(action.duration),
+          long_task: {
             count: action.counts.longTaskCount,
           },
           resource: {
             count: action.counts.resourceCount,
           },
         },
-      }
+      } as Partial<RawRumActionEvent>)
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
   const actionEvent: RawRumActionEvent = combine(

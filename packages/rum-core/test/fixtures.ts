@@ -25,7 +25,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         {
           type,
           date: 0,
-          longTask: {
+          long_task: {
             duration: 0,
           },
         },
@@ -61,17 +61,17 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         {
           type,
           _dd: {
-            documentVersion: 0,
+            document_version: 0,
           },
           date: 0,
           view: {
             action: { count: 0 },
             error: { count: 0 },
-            isActive: true,
-            loadingType: ViewLoadingType.INITIAL_LOAD,
-            longTask: { count: 0 },
+            is_active: true,
+            loading_type: ViewLoadingType.INITIAL_LOAD,
+            long_task: { count: 0 },
             resource: { count: 0 },
-            timeSpent: 0,
+            time_spent: 0,
           },
         },
         overrides
