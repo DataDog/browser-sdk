@@ -51,10 +51,10 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
 
   plugins: [
     new BannerPlugin({
-      banner({ filename: fileName }) {
-        const env = fileName.match(SUFFIX_REGEXP)[1]
-        const newFileName = fileName.replace(SUFFIX_REGEXP, '')
-        return `\n${fileName} IS DEPRECATED, USE ${newFileName} WITH { site: 'datadoghq.${
+      banner({ filename }) {
+        const env = filename.match(SUFFIX_REGEXP)[1]
+        const newFileName = filename.replace(SUFFIX_REGEXP, '')
+        return `\n${filename} IS DEPRECATED, USE ${newFileName} WITH { site: 'datadoghq.${
           env === 'eu' ? 'eu' : 'com'
         }' } INIT CONFIGURATION INSTEAD\n`
       },
