@@ -107,19 +107,20 @@ export function monitored<T extends (...params: any[]) => unknown>(
   } as T
 }
 
-export function monitor<R>(fn: (...args: any[]) => R) {
-  return (function (this: any, ...args: any[]) {
+export function monitor<T extends (...args: any[]) => any>(fn: T): T {
+  return (function (this: any) {
     try {
-      return fn.apply(this, args)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return fn.apply(this, arguments as any)
     } catch (e) {
       logErrorIfDebug(e)
       try {
         addErrorToMonitoringBatch(e)
-      } catch (err) {
-        logErrorIfDebug(err)
+      } catch (e) {
+        logErrorIfDebug(e)
       }
     }
-  } as unknown) as (...args: any[]) => R // consider output type has input type
+  } as unknown) as T // consider output type has input type
 }
 
 export function addMonitoringMessage(message: string, context?: Context) {
