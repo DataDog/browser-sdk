@@ -180,7 +180,18 @@ module.exports = {
     'require-await': 'off',
     'space-before-function-paren': 'off',
     'space-in-parens': ['off', 'never'],
-    'spaced-comment': ['error', 'always', { markers: ['/'] }],
+    'spaced-comment': [
+      'error',
+      'always',
+      {
+        line: {
+          markers: ['/'],
+        },
+        block: {
+          balanced: true,
+        },
+      },
+    ],
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'use-isnan': 'error',
     'valid-typeof': 'off',

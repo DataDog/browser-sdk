@@ -86,7 +86,7 @@ function isUndefined(what: any) {
  * @memberof TraceKit
  */
 export function wrap<Args extends any[], R>(func: (...args: Args) => R) {
-  function wrapped(this: any, ...args: Args) {
+  function wrapped(this: unknown, ...args: Args) {
     try {
       return func.apply(this, args)
     } catch (e) {

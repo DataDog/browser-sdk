@@ -12,7 +12,7 @@ export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 export interface Session<T> {
   renewObservable: Observable<void>
   getId: () => string | undefined
-  getTrackingType(): T | undefined
+  getTrackingType: () => T | undefined
 }
 
 export interface SessionState {
@@ -64,10 +64,7 @@ export function startSessionManagement<TrackingType extends string>(
 
   return {
     getId: () => retrieveActiveSession(sessionCookie).id,
-
-    getTrackingType() {
-      return retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined
-    },
+    getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
     renewObservable,
   }
 }

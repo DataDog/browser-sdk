@@ -59,9 +59,9 @@ function workerCodeFn() {
 
     /* eslint-disable space-unary-ops */
 
-    /* Public constants ==========================================================*/
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
+    /* =========================================================================== */
     // const Z_FILTERED          = 1;
     // const Z_HUFFMAN_ONLY      = 2;
     // const Z_RLE               = 3;
@@ -74,7 +74,7 @@ function workerCodeFn() {
     var Z_TEXT = 1 // const Z_ASCII             = 1; // = Z_TEXT
 
     var Z_UNKNOWN = 2
-    /* ============================================================================*/
+    /* ============================================================================ */
 
     function zero(buf) {
       var len = buf.length
@@ -273,9 +273,9 @@ function workerCodeFn() {
       send_bits(
         s,
         tree[c * 2],
-        /* .Code*/
+        /* .Code */
         tree[c * 2 + 1]
-        /* .Len*/
+        /* .Len */
       )
     }
     /* ===========================================================================
@@ -359,7 +359,7 @@ function workerCodeFn() {
        */
 
       tree[s.heap[s.heap_max] * 2 + 1] =
-        /* .Len*/
+        /* .Len */
         0
       /* root of the heap */
 
@@ -368,11 +368,11 @@ function workerCodeFn() {
         bits =
           tree[
             tree[n * 2 + 1] *
-              /* .Dad*/
+              /* .Dad */
               2 +
               1
           ] +
-          /* .Len*/
+          /* .Len */
           1
 
         if (bits > max_length) {
@@ -381,7 +381,7 @@ function workerCodeFn() {
         }
 
         tree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           bits
         /* We overwrite tree[n].Dad which is no longer needed */
 
@@ -398,14 +398,14 @@ function workerCodeFn() {
         }
 
         f = tree[n * 2]
-        /* .Freq*/
+        /* .Freq */
         s.opt_len += f * (bits + xbits)
 
         if (has_stree) {
           s.static_len +=
             f *
             (stree[n * 2 + 1] +
-              /* .Len*/
+              /* .Len */
               xbits)
         }
       }
@@ -456,17 +456,17 @@ function workerCodeFn() {
 
           if (
             tree[m * 2 + 1] !==
-            /* .Len*/
+            /* .Len */
             bits
           ) {
             // Trace((stderr,"code %d bits %d->%d\n", m, tree[m].Len, bits));
             s.opt_len +=
               (bits - tree[m * 2 + 1]) *
-              /* .Len*/
+              /* .Len */
               tree[m * 2]
-            /* .Freq*/
+            /* .Freq */
             tree[m * 2 + 1] =
-              /* .Len*/
+              /* .Len */
               bits
           }
 
@@ -516,14 +516,14 @@ function workerCodeFn() {
 
       for (n = 0; n <= max_code; n++) {
         var len = tree[n * 2 + 1]
-        /* .Len*/
+        /* .Len */
         if (len === 0) {
           continue
         }
         /* Now reverse the bits */
 
         tree[n * 2] =
-          /* .Code*/
+          /* .Code */
           bi_reverse(next_code[len]++, len) // Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
         //     n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
       }
@@ -561,7 +561,7 @@ function workerCodeFn() {
       static_d_desc.static_tree = static_dtree;
       static_d_desc.extra_bits = extra_dbits;
       static_bl_desc.extra_bits = extra_blbits;
-    #endif*/
+    #endif */
 
       /* Initialize the mapping length (0..255) -> length code (0..28) */
 
@@ -614,7 +614,7 @@ function workerCodeFn() {
 
       while (n <= 143) {
         static_ltree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           8
         n++
         bl_count[8]++
@@ -622,7 +622,7 @@ function workerCodeFn() {
 
       while (n <= 255) {
         static_ltree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           9
         n++
         bl_count[9]++
@@ -630,7 +630,7 @@ function workerCodeFn() {
 
       while (n <= 279) {
         static_ltree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           7
         n++
         bl_count[7]++
@@ -638,7 +638,7 @@ function workerCodeFn() {
 
       while (n <= 287) {
         static_ltree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           8
         n++
         bl_count[8]++
@@ -653,10 +653,10 @@ function workerCodeFn() {
 
       for (n = 0; n < D_CODES; n++) {
         static_dtree[n * 2 + 1] =
-          /* .Len*/
+          /* .Len */
           5
         static_dtree[n * 2] =
-          /* .Code*/
+          /* .Code */
           bi_reverse(n, 5)
       } // Now data ready and we can init static trees
 
@@ -676,24 +676,24 @@ function workerCodeFn() {
 
       for (n = 0; n < L_CODES; n++) {
         s.dyn_ltree[n * 2] =
-          /* .Freq*/
+          /* .Freq */
           0
       }
 
       for (n = 0; n < D_CODES; n++) {
         s.dyn_dtree[n * 2] =
-          /* .Freq*/
+          /* .Freq */
           0
       }
 
       for (n = 0; n < BL_CODES; n++) {
         s.bl_tree[n * 2] =
-          /* .Freq*/
+          /* .Freq */
           0
       }
 
       s.dyn_ltree[END_BLOCK * 2] =
-        /* .Freq*/
+        /* .Freq */
         1
       s.opt_len = s.static_len = 0
       s.last_lit = s.matches = 0
@@ -749,13 +749,13 @@ function workerCodeFn() {
 
       return (
         tree[_n2] <
-          /* .Freq*/
+          /* .Freq */
           tree[_m2] ||
-        /* .Freq*/
+        /* .Freq */
         (tree[_n2] ===
-          /* .Freq*/
+          /* .Freq */
           tree[_m2] &&
-          /* .Freq*/
+          /* .Freq */
           depth[n] <= depth[m])
       )
     }
@@ -910,14 +910,14 @@ function workerCodeFn() {
       for (n = 0; n < elems; n++) {
         if (
           tree[n * 2] !==
-          /* .Freq*/
+          /* .Freq */
           0
         ) {
           s.heap[++s.heap_len] = max_code = n
           s.depth[n] = 0
         } else {
           tree[n * 2 + 1] =
-            /* .Len*/
+            /* .Len */
             0
         }
       }
@@ -930,14 +930,14 @@ function workerCodeFn() {
       while (s.heap_len < 2) {
         node = s.heap[++s.heap_len] = max_code < 2 ? ++max_code : 0
         tree[node * 2] =
-          /* .Freq*/
+          /* .Freq */
           1
         s.depth[node] = 0
         s.opt_len--
 
         if (has_stree) {
           s.static_len -= stree[node * 2 + 1]
-          /* .Len*/
+          /* .Len */
         }
         /* node is 0 or 1 so it does not have extra bits */
       }
@@ -949,7 +949,7 @@ function workerCodeFn() {
 
       for (
         n = s.heap_len >> 1;
-        /* int /2*/
+        /* int /2 */
         n >= 1;
         n--
       ) {
@@ -965,21 +965,21 @@ function workerCodeFn() {
       do {
         // pqremove(s, tree, n);  /* n = node of least frequency */
 
-        /** * pqremove ***/
+        /** * pqremove ** */
         n = s.heap[1]
-        /* SMALLEST*/
+        /* SMALLEST */
         s.heap[1] = s.heap[s.heap_len--]
-        /* SMALLEST*/
+        /* SMALLEST */
         pqdownheap(
           s,
           tree,
           1
-          /* SMALLEST*/
+          /* SMALLEST */
         )
         /***/
 
         m = s.heap[1]
-        /* SMALLEST*/
+        /* SMALLEST */
         /* m = node of next least frequency */
 
         s.heap[--s.heap_max] = n
@@ -989,31 +989,31 @@ function workerCodeFn() {
         /* Create a new node father of n and m */
 
         tree[node * 2] =
-          /* .Freq*/
+          /* .Freq */
           tree[n * 2] +
-          /* .Freq*/
+          /* .Freq */
           tree[m * 2]
-        /* .Freq*/
+        /* .Freq */
         s.depth[node] = (s.depth[n] >= s.depth[m] ? s.depth[n] : s.depth[m]) + 1
         tree[n * 2 + 1] =
-          /* .Dad*/
+          /* .Dad */
           tree[m * 2 + 1] =
-            /* .Dad*/
+            /* .Dad */
             node
         /* and insert the new node in the heap */
 
         s.heap[1] = node++
-        /* SMALLEST*/
+        /* SMALLEST */
         pqdownheap(
           s,
           tree,
           1
-          /* SMALLEST*/
+          /* SMALLEST */
         )
       } while (s.heap_len >= 2)
 
       s.heap[--s.heap_max] = s.heap[1]
-      /* SMALLEST*/
+      /* SMALLEST */
       /* At this point, the fields freq and dad are set. We can now
        * generate the bit lengths.
        */
@@ -1043,7 +1043,7 @@ function workerCodeFn() {
       /* length of current code */
 
       var nextlen = tree[0 * 2 + 1]
-      /* .Len*/
+      /* .Len */
       /* length of next code */
 
       var count = 0
@@ -1061,31 +1061,31 @@ function workerCodeFn() {
       }
 
       tree[(max_code + 1) * 2 + 1] =
-        /* .Len*/
+        /* .Len */
         0xffff
       /* guard */
 
       for (n = 0; n <= max_code; n++) {
         curlen = nextlen
         nextlen = tree[(n + 1) * 2 + 1]
-        /* .Len*/
+        /* .Len */
 
         if (++count < max_count && curlen === nextlen) {
           continue
         } else if (count < min_count) {
           s.bl_tree[curlen * 2] +=
-            /* .Freq*/
+            /* .Freq */
             count
         } else if (curlen !== 0) {
           if (curlen !== prevlen) {
-            s.bl_tree[curlen * 2] /* .Freq*/++
+            s.bl_tree[curlen * 2] /* .Freq */++
           }
 
-          s.bl_tree[REP_3_6 * 2] /* .Freq*/++
+          s.bl_tree[REP_3_6 * 2] /* .Freq */++
         } else if (count <= 10) {
-          s.bl_tree[REPZ_3_10 * 2] /* .Freq*/++
+          s.bl_tree[REPZ_3_10 * 2] /* .Freq */++
         } else {
-          s.bl_tree[REPZ_11_138 * 2] /* .Freq*/++
+          s.bl_tree[REPZ_11_138 * 2] /* .Freq */++
         }
 
         count = 0
@@ -1123,7 +1123,7 @@ function workerCodeFn() {
       /* length of current code */
 
       var nextlen = tree[0 * 2 + 1]
-      /* .Len*/
+      /* .Len */
       /* length of next code */
 
       var count = 0
@@ -1147,7 +1147,7 @@ function workerCodeFn() {
       for (n = 0; n <= max_code; n++) {
         curlen = nextlen
         nextlen = tree[(n + 1) * 2 + 1]
-        /* .Len*/
+        /* .Len */
 
         if (++count < max_count && curlen === nextlen) {
           continue
@@ -1214,7 +1214,7 @@ function workerCodeFn() {
       for (max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex--) {
         if (
           s.bl_tree[bl_order[max_blindex] * 2 + 1] !==
-          /* .Len*/
+          /* .Len */
           0
         ) {
           break
@@ -1258,7 +1258,7 @@ function workerCodeFn() {
         send_bits(
           s,
           s.bl_tree[bl_order[rank] * 2 + 1],
-          /* .Len*/
+          /* .Len */
           3
         )
       } // Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
@@ -1298,7 +1298,7 @@ function workerCodeFn() {
         if (
           black_mask & 1 &&
           s.dyn_ltree[n * 2] !==
-            /* .Freq*/
+            /* .Freq */
             0
         ) {
           return Z_BINARY
@@ -1308,13 +1308,13 @@ function workerCodeFn() {
 
       if (
         s.dyn_ltree[9 * 2] !==
-          /* .Freq*/
+          /* .Freq */
           0 ||
         s.dyn_ltree[10 * 2] !==
-          /* .Freq*/
+          /* .Freq */
           0 ||
         s.dyn_ltree[13 * 2] !==
-          /* .Freq*/
+          /* .Freq */
           0
       ) {
         return Z_TEXT
@@ -1323,7 +1323,7 @@ function workerCodeFn() {
       for (n = 32; n < LITERALS; n++) {
         if (
           s.dyn_ltree[n * 2] !==
-          /* .Freq*/
+          /* .Freq */
           0
         ) {
           return Z_TEXT
@@ -1488,7 +1488,7 @@ function workerCodeFn() {
 
       if (dist === 0) {
         /* lc is the unmatched char */
-        s.dyn_ltree[lc * 2] /* .Freq*/++
+        s.dyn_ltree[lc * 2] /* .Freq */++
       } else {
         s.matches++
         /* Here, lc is the match length - MIN_MATCH */
@@ -1499,8 +1499,8 @@ function workerCodeFn() {
         //       (ush)lc <= (ush)(MAX_MATCH-MIN_MATCH) &&
         //       (ush)d_code(dist) < (ush)D_CODES,  "_tr_tally: bad match");
 
-        s.dyn_ltree[(_length_code[lc] + LITERALS + 1) * 2] /* .Freq*/++
-        s.dyn_dtree[d_code(dist) * 2] /* .Freq*/++
+        s.dyn_ltree[(_length_code[lc] + LITERALS + 1) * 2] /* .Freq */++
+        s.dyn_dtree[d_code(dist) * 2] /* .Freq */++
       } // (!) This block is disabled in zlib defaults,
       // don't enable it for binary compatibility
       // #ifdef TRUNCATE_BLOCK
@@ -1777,9 +1777,9 @@ function workerCodeFn() {
     var _tr_flush_block$1 = trees._tr_flush_block
     var _tr_tally$1 = trees._tr_tally
     var _tr_align$1 = trees._tr_align
-    /* Public constants ==========================================================*/
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
+    /* =========================================================================== */
 
     var Z_NO_FLUSH = constants.Z_NO_FLUSH
     var Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH
@@ -1799,7 +1799,7 @@ function workerCodeFn() {
     var Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY
     var Z_UNKNOWN$1 = constants.Z_UNKNOWN
     var Z_DEFLATED = constants.Z_DEFLATED
-    /* ============================================================================*/
+    /* ============================================================================ */
 
     var MAX_MEM_LEVEL = 9
     /* Maximum value for memLevel in deflateInit2 */
@@ -1996,7 +1996,7 @@ function workerCodeFn() {
       /* stop if match long enough */
 
       var limit = s.strstart > s.w_size - MIN_LOOKAHEAD ? s.strstart - (s.w_size - MIN_LOOKAHEAD) : 0
-      /* NIL*/
+      /* NIL */
       var _win = s.window // shortcut
 
       var wmask = s.w_mask
@@ -2061,7 +2061,7 @@ function workerCodeFn() {
          */
 
         do {
-          /* jshint noempty:false*/
+          /* jshint noempty:false */
         } while (
           _win[++scan] === _win[++match] &&
           _win[++scan] === _win[++match] &&
@@ -2307,7 +2307,7 @@ function workerCodeFn() {
           /* strstart == 0 is possible when wraparound on 16-bit machine */
           s.lookahead = s.strstart - max_start
           s.strstart = max_start
-          /** * FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
 
           flush_block_only(s, false)
 
@@ -2321,7 +2321,7 @@ function workerCodeFn() {
          */
 
         if (s.strstart - s.block_start >= s.w_size - MIN_LOOKAHEAD) {
-          /** * FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2334,7 +2334,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /** * FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2346,7 +2346,7 @@ function workerCodeFn() {
       }
 
       if (s.strstart > s.block_start) {
-        /** * FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2395,10 +2395,10 @@ function workerCodeFn() {
          */
 
         hash_head = 0
-        /* NIL*/
+        /* NIL */
 
         if (s.lookahead >= MIN_MATCH$1) {
-          /** * INSERT_STRING(s, s.strstart, hash_head); ***/
+          /** * INSERT_STRING(s, s.strstart, hash_head); ** */
           s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
           hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
           s.head[s.ins_h] = s.strstart
@@ -2410,7 +2410,7 @@ function workerCodeFn() {
 
         if (
           hash_head !== 0 &&
-          /* NIL*/
+          /* NIL */
           s.strstart - hash_head <= s.w_size - MIN_LOOKAHEAD
         ) {
           /* To simplify the code, we prevent matches with the string
@@ -2425,7 +2425,7 @@ function workerCodeFn() {
           // check_match(s, s.strstart, s.match_start, s.match_length); // for debug only
 
           /** * _tr_tally_dist(s, s.strstart - s.match_start,
-                       s.match_length - MIN_MATCH, bflush); ***/
+                       s.match_length - MIN_MATCH, bflush); ** */
           bflush = _tr_tally$1(s, s.strstart - s.match_start, s.match_length - MIN_MATCH$1)
           s.lookahead -= s.match_length
           /* Insert new strings in the hash table only if the match length
@@ -2434,7 +2434,7 @@ function workerCodeFn() {
 
           if (
             s.match_length <= s.max_lazy_match &&
-            /* max_insert_length*/
+            /* max_insert_length */
             s.lookahead >= MIN_MATCH$1
           ) {
             s.match_length--
@@ -2442,7 +2442,7 @@ function workerCodeFn() {
 
             do {
               s.strstart++
-              /** * INSERT_STRING(s, s.strstart, hash_head); ***/
+              /** * INSERT_STRING(s, s.strstart, hash_head); ** */
 
               s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
               hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
@@ -2473,14 +2473,14 @@ function workerCodeFn() {
           /* No match, output a literal byte */
           // Tracevv((stderr,"%c", s.window[s.strstart]));
 
-          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart])
           s.lookahead--
           s.strstart++
         }
 
         if (bflush) {
-          /** * FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2493,7 +2493,7 @@ function workerCodeFn() {
       s.insert = s.strstart < MIN_MATCH$1 - 1 ? s.strstart : MIN_MATCH$1 - 1
 
       if (flush === Z_FINISH) {
-        /** * FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2505,7 +2505,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /** * FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2555,10 +2555,10 @@ function workerCodeFn() {
          */
 
         hash_head = 0
-        /* NIL*/
+        /* NIL */
 
         if (s.lookahead >= MIN_MATCH$1) {
-          /** * INSERT_STRING(s, s.strstart, hash_head); ***/
+          /** * INSERT_STRING(s, s.strstart, hash_head); ** */
           s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
           hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
           s.head[s.ins_h] = s.strstart
@@ -2573,10 +2573,10 @@ function workerCodeFn() {
 
         if (
           hash_head !== 0 &&
-          /* NIL*/
+          /* NIL */
           s.prev_length < s.max_lazy_match &&
           s.strstart - hash_head <= s.w_size - MIN_LOOKAHEAD
-          /* MAX_DIST(s)*/
+          /* MAX_DIST(s) */
         ) {
           /* To simplify the code, we prevent matches with the string
            * of window index 0 (in particular we have to avoid a match
@@ -2588,7 +2588,7 @@ function workerCodeFn() {
           if (
             s.match_length <= 5 &&
             (s.strategy === Z_FILTERED || (s.match_length === MIN_MATCH$1 && s.strstart - s.match_start > 4096))
-            /* TOO_FAR*/
+            /* TOO_FAR */
           ) {
             /* If prev_match is also MIN_MATCH, match_start is garbage
              * but we will ignore the current match anyway.
@@ -2606,7 +2606,7 @@ function workerCodeFn() {
           // check_match(s, s.strstart-1, s.prev_match, s.prev_length);
 
           /** *_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
-                       s.prev_length - MIN_MATCH, bflush);***/
+                       s.prev_length - MIN_MATCH, bflush);** */
 
           bflush = _tr_tally$1(s, s.strstart - 1 - s.prev_match, s.prev_length - MIN_MATCH$1)
           /* Insert in hash table all strings up to the end of the match.
@@ -2620,7 +2620,7 @@ function workerCodeFn() {
 
           do {
             if (++s.strstart <= max_insert) {
-              /** * INSERT_STRING(s, s.strstart, hash_head); ***/
+              /** * INSERT_STRING(s, s.strstart, hash_head); ** */
               s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
               hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
               s.head[s.ins_h] = s.strstart
@@ -2633,7 +2633,7 @@ function workerCodeFn() {
           s.strstart++
 
           if (bflush) {
-            /** * FLUSH_BLOCK(s, 0); ***/
+            /** * FLUSH_BLOCK(s, 0); ** */
             flush_block_only(s, false)
 
             if (s.strm.avail_out === 0) {
@@ -2648,11 +2648,11 @@ function workerCodeFn() {
            */
           // Tracevv((stderr,"%c", s->window[s->strstart-1]));
 
-          /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart - 1])
 
           if (bflush) {
-            /** * FLUSH_BLOCK_ONLY(s, 0) ***/
+            /** * FLUSH_BLOCK_ONLY(s, 0) ** */
             flush_block_only(s, false)
             /***/
           }
@@ -2676,7 +2676,7 @@ function workerCodeFn() {
       if (s.match_available) {
         // Tracevv((stderr,"%c", s->window[s->strstart-1]));
 
-        /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+        /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ** */
         bflush = _tr_tally$1(s, 0, s.window[s.strstart - 1])
         s.match_available = 0
       }
@@ -2684,7 +2684,7 @@ function workerCodeFn() {
       s.insert = s.strstart < MIN_MATCH$1 - 1 ? s.strstart : MIN_MATCH$1 - 1
 
       if (flush === Z_FINISH) {
-        /** * FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2696,7 +2696,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /** * FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2755,7 +2755,7 @@ function workerCodeFn() {
             strend = s.strstart + MAX_MATCH$1
 
             do {
-              /* jshint noempty:false*/
+              /* jshint noempty:false */
             } while (
               prev === _win[++scan] &&
               prev === _win[++scan] &&
@@ -2780,7 +2780,7 @@ function workerCodeFn() {
         if (s.match_length >= MIN_MATCH$1) {
           // check_match(s, s.strstart, s.strstart - 1, s.match_length);
 
-          /** * _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ***/
+          /** * _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ** */
           bflush = _tr_tally$1(s, 1, s.match_length - MIN_MATCH$1)
           s.lookahead -= s.match_length
           s.strstart += s.match_length
@@ -2789,14 +2789,14 @@ function workerCodeFn() {
           /* No match, output a literal byte */
           // Tracevv((stderr,"%c", s->window[s->strstart]));
 
-          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart])
           s.lookahead--
           s.strstart++
         }
 
         if (bflush) {
-          /** * FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2809,7 +2809,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /** * FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2821,7 +2821,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /** * FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2859,14 +2859,14 @@ function workerCodeFn() {
 
         s.match_length = 0 // Tracevv((stderr,"%c", s->window[s->strstart]));
 
-        /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+        /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
 
         bflush = _tr_tally$1(s, 0, s.window[s.strstart])
         s.lookahead--
         s.strstart++
 
         if (bflush) {
-          /** * FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2879,7 +2879,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /** * FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2891,7 +2891,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /** * FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2945,7 +2945,7 @@ function workerCodeFn() {
 
     var lm_init = function lm_init(s) {
       s.window_size = 2 * s.w_size
-      /** * CLEAR_HASH(s); ***/
+      /** * CLEAR_HASH(s); ** */
 
       zero$1(s.head) // Fill with NIL (= 0);
 
@@ -3100,7 +3100,7 @@ function workerCodeFn() {
       /* compression level (1..9) */
 
       this.strategy = 0
-      /* favor or force Huffman coding*/
+      /* favor or force Huffman coding */
 
       this.good_match = 0
       /* Use a faster search when the previous match is longer than this */
@@ -3460,7 +3460,7 @@ function workerCodeFn() {
       if (s.status === EXTRA_STATE) {
         if (
           s.gzhead.extra
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
@@ -3499,7 +3499,7 @@ function workerCodeFn() {
       if (s.status === NAME_STATE) {
         if (
           s.gzhead.name
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
@@ -3545,7 +3545,7 @@ function workerCodeFn() {
       if (s.status === COMMENT_STATE) {
         if (
           s.gzhead.comment
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
@@ -3674,7 +3674,7 @@ function workerCodeFn() {
              */
 
             if (flush === Z_FULL_FLUSH) {
-              /** * CLEAR_HASH(s); ***/
+              /** * CLEAR_HASH(s); ** */
 
               /* forget history */
               zero$1(s.head) // Fill with NIL (= 0);
@@ -3738,9 +3738,9 @@ function workerCodeFn() {
     var deflateEnd = function deflateEnd(strm) {
       if (
         !strm ||
-        /* == Z_NULL*/
+        /* == Z_NULL */
         !strm.state
-        /* == Z_NULL*/
+        /* == Z_NULL */
       ) {
         return Z_STREAM_ERROR
       }
@@ -3772,9 +3772,9 @@ function workerCodeFn() {
 
       if (
         !strm ||
-        /* == Z_NULL*/
+        /* == Z_NULL */
         !strm.state
-        /* == Z_NULL*/
+        /* == Z_NULL */
       ) {
         return Z_STREAM_ERROR
       }
@@ -3801,7 +3801,7 @@ function workerCodeFn() {
         if (wrap === 0) {
           /* already empty otherwise */
 
-          /** * CLEAR_HASH(s); ***/
+          /** * CLEAR_HASH(s); ** */
           zero$1(s.head) // Fill with NIL (= 0);
 
           s.strstart = 0
@@ -3910,7 +3910,7 @@ function workerCodeFn() {
 
     var assign = function assign(
       obj
-      /* from1, from2, from3, ...*/
+      /* from1, from2, from3, ... */
     ) {
       var sources = Array.prototype.slice.call(arguments, 1)
 
@@ -4194,14 +4194,14 @@ function workerCodeFn() {
       /* last error message, NULL if no error */
 
       this.msg = ''
-      /* Z_NULL*/
+      /* Z_NULL */
       /* not visible by applications */
 
       this.state = null
       /* best guess about the data type: binary or text */
 
       this.data_type = 2
-      /* Z_UNKNOWN*/
+      /* Z_UNKNOWN */
       /* adler32 value of the uncompressed data */
 
       this.adler = 0
@@ -4211,9 +4211,9 @@ function workerCodeFn() {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     var toString = Object.prototype.toString
-    /* Public constants ==========================================================*/
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
+    /* =========================================================================== */
 
     var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH
     var Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH
@@ -4224,7 +4224,7 @@ function workerCodeFn() {
     var Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION
     var Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY
     var Z_DEFLATED$1 = constants.Z_DEFLATED
-    /* ===========================================================================*/
+    /* =========================================================================== */
 
     /**
      * class Deflate
@@ -4232,13 +4232,13 @@ function workerCodeFn() {
      * Generic JS-style wrapper for zlib calls. If you don't need
      * streaming behaviour - use more simple functions: [[deflate]],
      * [[deflateRaw]] and [[gzip]].
-     **/
+     * */
 
     /* internal
      * Deflate.chunks -> Array
      *
      * Chunks of output data, if [[Deflate#onData]] not overridden.
-     **/
+     * */
 
     /**
      * Deflate.result -> Uint8Array
@@ -4246,7 +4246,7 @@ function workerCodeFn() {
      * Compressed result, generated by default [[Deflate#onData]]
      * and [[Deflate#onEnd]] handlers. Filled after you push last chunk
      * (call [[Deflate#push]] with `Z_FINISH` / `true` param).
-     **/
+     * */
 
     /**
      * Deflate.err -> Number
@@ -4255,13 +4255,13 @@ function workerCodeFn() {
      * You will not need it in real life, because deflate errors
      * are possible only on wrong options or bad `onData` / `onEnd`
      * custom handlers.
-     **/
+     * */
 
     /**
      * Deflate.msg -> String
      *
      * Error message, if [[Deflate.err]] != 0
-     **/
+     * */
 
     /**
      * new Deflate(options)
@@ -4309,7 +4309,7 @@ function workerCodeFn() {
      *
      * console.log(deflate.result);
      * ```
-     **/
+     * */
 
     function Deflate(options) {
       this.options = common.assign(
@@ -4393,7 +4393,7 @@ function workerCodeFn() {
      * ...
      * push(chunk, true);  // push last chunk
      * ```
-     **/
+     * */
 
     Deflate.prototype.push = function (data, flush_mode) {
       var strm = this.strm
@@ -4474,7 +4474,7 @@ function workerCodeFn() {
      *
      * By default, stores data blocks in `chunks[]` property and glue
      * those in `onEnd`. Override this handler, if you need another behaviour.
-     **/
+     * */
 
     Deflate.prototype.onData = function (chunk) {
       this.chunks.push(chunk)
@@ -4487,7 +4487,7 @@ function workerCodeFn() {
      * Called once after you tell deflate that the input stream is
      * complete (Z_FINISH). By default - join collected chunks,
      * free memory and fill `results` / `err` properties.
-     **/
+     * */
 
     Deflate.prototype.onEnd = function (status) {
       // On success - join
@@ -4530,7 +4530,7 @@ function workerCodeFn() {
      *
      * console.log(pako.deflate(data));
      * ```
-     **/
+     * */
 
     function deflate$1(input, options) {
       var deflator = new Deflate(options)
@@ -4549,7 +4549,7 @@ function workerCodeFn() {
      *
      * The same as [[deflate]], but creates raw data, without wrapper
      * (header and adler32 crc).
-     **/
+     * */
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function deflateRaw(input, options) {
@@ -4564,7 +4564,7 @@ function workerCodeFn() {
      *
      * The same as [[deflate]], but create gzip wrapper instead of
      * deflate one.
-     **/
+     * */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function gzip(input, options) {
       options = options || {}
