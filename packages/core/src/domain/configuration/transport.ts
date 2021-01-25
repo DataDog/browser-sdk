@@ -1,5 +1,5 @@
-import { BuildEnv, BuildMode } from '../boot/init'
-import { includes } from '../tools/utils'
+import { BuildEnv, BuildMode } from '../../boot/init'
+import { includes } from '../../tools/utils'
 import { TransportConfiguration, UserConfiguration } from './configuration'
 
 const ENDPOINTS = {

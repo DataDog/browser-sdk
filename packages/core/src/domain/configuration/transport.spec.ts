@@ -1,5 +1,5 @@
 import { BuildEnv, BuildMode, Datacenter } from '@datadog/browser-core'
-import { computeTransportConfiguration } from './transportConfiguration'
+import { computeTransportConfiguration } from './transport'
 
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'

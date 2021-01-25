@@ -1,7 +1,7 @@
-import { BuildEnv } from '../boot/init'
-import { CookieOptions, getCurrentSite } from '../browser/cookie'
-import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
-import { computeTransportConfiguration, Datacenter } from './transportConfiguration'
+import { BuildEnv } from '../../boot/init'
+import { CookieOptions, getCurrentSite } from '../../browser/cookie'
+import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { computeTransportConfiguration, Datacenter } from './transport'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,

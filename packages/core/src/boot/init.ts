@@ -1,7 +1,6 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
-import { buildConfiguration, UserConfiguration } from '../domain/configuration'
+import { buildConfiguration, UserConfiguration, Datacenter } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
-import { Datacenter } from '../domain/transportConfiguration'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
