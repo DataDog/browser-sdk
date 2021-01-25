@@ -6,33 +6,6 @@ export type ContextValue = string | number | boolean | Context | ContextArray | 
 
 export interface ContextArray extends Array<ContextValue> {}
 
-export function withSnakeCaseKeys(candidate: Context): Context {
-  const result: Context = {}
-  Object.keys(candidate as Context).forEach((key: string) => {
-    result[toSnakeCase(key)] = deepSnakeCase(candidate[key])
-  })
-  return result as Context
-}
-
-export function deepSnakeCase(candidate: ContextValue): ContextValue {
-  if (Array.isArray(candidate)) {
-    return candidate.map((value: ContextValue) => deepSnakeCase(value))
-  }
-  if (typeof candidate === 'object' && candidate !== null) {
-    return withSnakeCaseKeys(candidate)
-  }
-  return candidate
-}
-
-export function toSnakeCase(word: string) {
-  return word
-    .replace(
-      /[A-Z]/g,
-      (uppercaseLetter: string, index: number) => `${index !== 0 ? '_' : ''}${uppercaseLetter.toLowerCase()}`
-    )
-    .replace(/-/g, '_')
-}
-
 const isContextArray = (value: ContextValue): value is ContextArray => Array.isArray(value)
 const isContext = (value: ContextValue): value is Context =>
   !Array.isArray(value) && typeof value === 'object' && value !== null

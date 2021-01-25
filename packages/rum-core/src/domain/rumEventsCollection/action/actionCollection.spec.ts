@@ -43,8 +43,8 @@ describe('actionCollection', () => {
           count: 10,
         },
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-        loadingTime: 100 * 1e6,
-        longTask: {
+        loading_time: 100 * 1e6,
+        long_task: {
           count: 10,
         },
         resource: {

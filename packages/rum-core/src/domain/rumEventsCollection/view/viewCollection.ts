@@ -14,7 +14,7 @@ export function startViewCollection(lifeCycle: LifeCycle, configuration: Configu
 function processViewUpdate(view: View) {
   const viewEvent: RawRumViewEvent = {
     _dd: {
-      documentVersion: view.documentVersion,
+      document_version: view.documentVersion,
     },
     date: getTimestamp(view.startTime),
     type: RumEventType.VIEW,
@@ -22,32 +22,32 @@ function processViewUpdate(view: View) {
       action: {
         count: view.eventCounts.userActionCount,
       },
-      cumulativeLayoutShift: view.cumulativeLayoutShift,
-      domComplete: msToNs(view.timings.domComplete),
-      domContentLoaded: msToNs(view.timings.domContentLoaded),
-      domInteractive: msToNs(view.timings.domInteractive),
+      cumulative_layout_shift: view.cumulativeLayoutShift,
+      dom_complete: msToNs(view.timings.domComplete),
+      dom_content_loaded: msToNs(view.timings.domContentLoaded),
+      dom_interactive: msToNs(view.timings.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
-      firstContentfulPaint: msToNs(view.timings.firstContentfulPaint),
-      firstInputDelay: msToNs(view.timings.firstInputDelay),
-      firstInputTime: msToNs(view.timings.firstInputTime),
-      isActive: view.isActive,
-      largestContentfulPaint: msToNs(view.timings.largestContentfulPaint),
-      loadEvent: msToNs(view.timings.loadEvent),
-      loadingTime: msToNs(view.loadingTime),
-      loadingType: view.loadingType,
-      longTask: {
+      first_contentful_paint: msToNs(view.timings.firstContentfulPaint),
+      first_input_delay: msToNs(view.timings.firstInputDelay),
+      first_input_time: msToNs(view.timings.firstInputTime),
+      is_active: view.isActive,
+      largest_contentful_paint: msToNs(view.timings.largestContentfulPaint),
+      load_event: msToNs(view.timings.loadEvent),
+      loading_time: msToNs(view.loadingTime),
+      loading_type: view.loadingType,
+      long_task: {
         count: view.eventCounts.longTaskCount,
       },
       resource: {
         count: view.eventCounts.resourceCount,
       },
-      timeSpent: msToNs(view.duration),
+      time_spent: msToNs(view.duration),
     },
   }
   if (!isEmptyObject(view.customTimings)) {
-    viewEvent.view.customTimings = mapValues(view.customTimings, msToNs)
+    viewEvent.view.custom_timings = mapValues(view.customTimings, msToNs)
   }
   return {
     rawRumEvent: viewEvent,

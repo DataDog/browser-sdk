@@ -51,7 +51,7 @@ function processRequest(request: RequestCompleteEvent) {
         type,
         duration: msToNs(request.duration),
         method: request.method,
-        statusCode: request.status,
+        status_code: request.status,
         url: request.url,
       },
       type: RumEventType.RESOURCE,
@@ -99,13 +99,13 @@ function computeRequestTracingInfo(request: RequestCompleteEvent) {
   }
   return {
     _dd: {
-      spanId: request.spanId!.toDecimalString(),
-      traceId: request.traceId!.toDecimalString(),
+      span_id: request.spanId!.toDecimalString(),
+      trace_id: request.traceId!.toDecimalString(),
     },
     resource: { id: generateUUID() },
   }
 }
 
 function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
-  return entry.traceId ? { _dd: { traceId: entry.traceId } } : undefined
+  return entry.traceId ? { _dd: { trace_id: entry.traceId } } : undefined
 }

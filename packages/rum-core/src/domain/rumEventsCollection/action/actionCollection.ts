@@ -30,8 +30,8 @@ function processAction(action: AutoAction | CustomAction) {
             count: action.counts.errorCount,
           },
           id: action.id,
-          loadingTime: msToNs(action.duration),
-          longTask: {
+          loading_time: msToNs(action.duration),
+          long_task: {
             count: action.counts.longTaskCount,
           },
           resource: {
@@ -41,7 +41,7 @@ function processAction(action: AutoAction | CustomAction) {
       }
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent: RawRumActionEvent = combine(
+  const actionEvent = combine(
     {
       action: {
         target: {
