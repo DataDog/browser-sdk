@@ -1,4 +1,4 @@
-/* eslint-disable no-bitwise,max-len,no-underscore-dangle,jsdoc/check-indentation */
+/* eslint-disable */
 let workerURL
 
 export function createDeflateWorker() {
