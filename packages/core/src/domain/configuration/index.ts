@@ -1,8 +1,3 @@
-export { Datacenter } from './transport'
-export {
-  UserConfiguration,
-  buildConfiguration,
-  Configuration,
-  buildCookieOptions,
-  DEFAULT_CONFIGURATION,
-} from './configuration'
+export { UserConfiguration, Datacenter } from './userConfiguration.types'
+export { BuildEnv, BuildMode } from './transport'
+export { buildConfiguration, Configuration, DEFAULT_CONFIGURATION, buildCookieOptions } from './configuration'

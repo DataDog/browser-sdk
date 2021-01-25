@@ -1,5 +1,5 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
-import { buildConfiguration, UserConfiguration, Datacenter } from '../domain/configuration'
+import { buildConfiguration, UserConfiguration, BuildEnv } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
@@ -32,18 +32,6 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   if (existingGlobalVariable && existingGlobalVariable.q) {
     existingGlobalVariable.q.forEach((fn) => fn())
   }
-}
-
-export enum BuildMode {
-  RELEASE = 'release',
-  STAGING = 'staging',
-  E2E_TEST = 'e2e-test',
-}
-
-export interface BuildEnv {
-  datacenter: Datacenter
-  buildMode: BuildMode
-  sdkVersion: string
 }
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {

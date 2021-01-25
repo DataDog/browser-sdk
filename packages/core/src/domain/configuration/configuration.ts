@@ -1,7 +1,7 @@
-import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
-import { computeTransportConfiguration, Datacenter } from './transport'
+import { computeTransportConfiguration, TransportConfiguration, BuildEnv } from './transport'
+import { UserConfiguration } from './userConfiguration.types'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
@@ -36,40 +36,6 @@ export const DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
-export interface UserConfiguration {
-  publicApiKey?: string // deprecated
-  clientToken: string
-  applicationId?: string
-  internalMonitoringApiKey?: string
-  allowedTracingOrigins?: Array<string | RegExp>
-  sampleRate?: number
-  resourceSampleRate?: number
-  datacenter?: Datacenter // deprecated
-  site?: string
-  enableExperimentalFeatures?: string[]
-  silentMultipleInit?: boolean
-  trackInteractions?: boolean
-  proxyHost?: string
-  beforeSend?: (event: any) => void
-
-  service?: string
-  env?: string
-  version?: string
-
-  useAlternateIntakeDomains?: boolean
-  useCrossSiteSessionCookie?: boolean
-  useSecureSessionCookie?: boolean
-  trackSessionAcrossSubdomains?: boolean
-
-  // only on staging build mode
-  replica?: ReplicaUserConfiguration
-}
-
-interface ReplicaUserConfiguration {
-  applicationId?: string
-  clientToken: string
-}
-
 export type Configuration = typeof DEFAULT_CONFIGURATION &
   TransportConfiguration & {
     cookieOptions: CookieOptions
@@ -79,25 +45,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     isEnabled: (feature: string) => boolean
   }
-
-export interface TransportConfiguration {
-  logsEndpoint: string
-  rumEndpoint: string
-  traceEndpoint: string
-  sessionReplayEndpoint: string
-  internalMonitoringEndpoint?: string
-  isIntakeUrl: (url: string) => boolean
-
-  // only on staging build mode
-  replica?: ReplicaConfiguration
-}
-
-interface ReplicaConfiguration {
-  applicationId?: string
-  logsEndpoint: string
-  rumEndpoint: string
-  internalMonitoringEndpoint: string
-}
 
 export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
   const enableExperimentalFeatures = Array.isArray(userConfiguration.enableExperimentalFeatures)

@@ -1,6 +1,6 @@
-import { BuildEnv, BuildMode } from '../../boot/init'
 import { buildConfiguration } from './configuration'
-import { Datacenter } from './transport'
+import { BuildEnv, BuildMode } from './transport'
+import { Datacenter } from './userConfiguration.types'
 
 describe('configuration', () => {
   const clientToken = 'some_client_token'

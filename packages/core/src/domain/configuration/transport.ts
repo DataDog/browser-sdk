@@ -1,6 +1,5 @@
-import { BuildEnv, BuildMode } from '../../boot/init'
 import { includes } from '../../tools/utils'
-import { TransportConfiguration, UserConfiguration } from './configuration'
+import { UserConfiguration, Datacenter } from './userConfiguration.types'
 
 const ENDPOINTS = {
   alternate: {
@@ -18,16 +17,40 @@ const ENDPOINTS = {
   },
 }
 
-export const Datacenter = {
-  EU: 'eu',
-  US: 'us',
-} as const
-
-export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
-
 export const INTAKE_SITE = {
   [Datacenter.EU]: 'datadoghq.eu',
   [Datacenter.US]: 'datadoghq.com',
+}
+
+export interface TransportConfiguration {
+  logsEndpoint: string
+  rumEndpoint: string
+  traceEndpoint: string
+  sessionReplayEndpoint: string
+  internalMonitoringEndpoint?: string
+  isIntakeUrl: (url: string) => boolean
+
+  // only on staging build mode
+  replica?: ReplicaConfiguration
+}
+
+interface ReplicaConfiguration {
+  applicationId?: string
+  logsEndpoint: string
+  rumEndpoint: string
+  internalMonitoringEndpoint: string
+}
+
+export enum BuildMode {
+  RELEASE = 'release',
+  STAGING = 'staging',
+  E2E_TEST = 'e2e-test',
+}
+
+export interface BuildEnv {
+  datacenter: Datacenter
+  buildMode: BuildMode
+  sdkVersion: string
 }
 
 const CLASSIC_ALLOWED_SITES = [INTAKE_SITE[Datacenter.US], INTAKE_SITE[Datacenter.EU]]

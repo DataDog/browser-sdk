@@ -1,15 +1,15 @@
-export { DEFAULT_CONFIGURATION, Configuration, UserConfiguration, buildCookieOptions } from './domain/configuration'
-export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
-export { computeStackTrace } from './domain/tracekit'
 export {
+  DEFAULT_CONFIGURATION,
+  Configuration,
+  UserConfiguration,
+  buildCookieOptions,
   BuildEnv,
   BuildMode,
-  defineGlobal,
-  makePublicApi,
-  commonInit,
-  checkCookiesAuthorized,
-  checkIsNotLocalFile,
-} from './boot/init'
+  Datacenter,
+} from './domain/configuration'
+export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
+export { computeStackTrace } from './domain/tracekit'
+export { defineGlobal, makePublicApi, commonInit, checkCookiesAuthorized, checkIsNotLocalFile } from './boot/init'
 export {
   InternalMonitoring,
   MonitoringMessage,
@@ -47,4 +47,3 @@ export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 
 export * from './tools/specHelper'
-export { Datacenter } from './domain/configuration'
