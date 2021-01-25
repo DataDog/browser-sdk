@@ -79,8 +79,5 @@
     "webpack": "4.42.1",
     "webpack-cli": "3.3.11",
     "webpack-dev-middleware": "3.7.2"
-  },
-  "resolutions": {
-    "socket.io": "2.4.1"
   }
 }
