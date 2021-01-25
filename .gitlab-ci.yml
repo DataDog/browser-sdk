@@ -30,14 +30,6 @@ format:
     - yarn
     - yarn format
 
-lint:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn lint
-
 typecheck:
   stage: test
   tags: ['runner:main', 'size:large']
@@ -46,14 +38,14 @@ typecheck:
     - yarn
     - yarn typecheck
 
-build:
+build-and-lint:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   script:
     - yarn
     - yarn build
-    - scripts/cli lint test/app
+    - yarn lint
     - scripts/cli typecheck test/app
 
 build-bundle:
