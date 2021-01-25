@@ -6,6 +6,7 @@ module.exports = {
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:import/typescript',
     'prettier',
     'prettier/@typescript-eslint',
   ],
@@ -136,6 +137,8 @@ module.exports = {
     'id-match': 'error',
     'import/no-default-export': 'error',
     'import/order': 'error',
+    'import/no-cycle': 'error',
+    'import/no-unresolved': 'error',
     'jasmine/no-focused-tests': 'error',
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
