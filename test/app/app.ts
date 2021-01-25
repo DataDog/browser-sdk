@@ -8,9 +8,6 @@ declare global {
   }
 }
 
-// ESLint cannot infer typing for datadogLogs and datadogRum
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 if (typeof window !== 'undefined') {
   if (window.LOGS_CONFIG) {
     datadogLogs.init(window.LOGS_CONFIG)
