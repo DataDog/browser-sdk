@@ -1,11 +1,4 @@
-import {
-  combine,
-  Configuration,
-  Context,
-  isEmptyObject,
-  limitModification,
-  withSnakeCaseKeys,
-} from '@datadog/browser-core'
+import { combine, Configuration, Context, isEmptyObject, limitModification } from '@datadog/browser-core'
 import {
   CommonContext,
   RawRumErrorEvent,
@@ -57,7 +50,7 @@ export function startRumAssembly(
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
-            formatVersion: 2,
+            format_version: 2,
           },
           application: {
             id: applicationId,
@@ -71,10 +64,9 @@ export function startRumAssembly(
             type: getSessionType(),
           },
         }
-        const assembledRumEvent = needToAssembleWithAction(rawRumEvent)
+        const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
-          : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
+          : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
 
         const context = combine(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
@@ -89,7 +81,7 @@ export function startRumAssembly(
         if (configuration.beforeSend) {
           limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
         }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { assembledRumEvent, serverRumEvent })
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }
   )

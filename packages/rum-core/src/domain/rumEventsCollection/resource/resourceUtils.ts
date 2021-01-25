@@ -20,7 +20,7 @@ export interface PerformanceResourceDetails {
   dns?: PerformanceResourceDetailsElement
   connect?: PerformanceResourceDetailsElement
   ssl?: PerformanceResourceDetailsElement
-  firstByte: PerformanceResourceDetailsElement
+  first_byte: PerformanceResourceDetailsElement
   download: PerformanceResourceDetailsElement
 }
 
@@ -110,7 +110,7 @@ export function computePerformanceResourceDetails(
 
   const details: PerformanceResourceDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
-    firstByte: formatTiming(startTime, requestStart, responseStart),
+    first_byte: formatTiming(startTime, requestStart, responseStart),
   }
 
   // Make sure a connection occurred

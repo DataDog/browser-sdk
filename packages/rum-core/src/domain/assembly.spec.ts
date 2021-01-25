@@ -2,7 +2,7 @@ import { DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { CommonContext, RumEventType } from '../rawRumEvent.types'
-import { RumActionEvent, RumEvent, RumLongTaskEvent } from '../rumEvent.types'
+import { RumActionEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -56,7 +56,7 @@ describe('rum assembly', () => {
     ;({ lifeCycle } = setupBuilder.build())
 
     serverRumEvents = []
-    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
+    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
       serverRumEvents.push(serverRumEvent)
     )
   })
@@ -66,15 +66,6 @@ describe('rum assembly', () => {
   })
 
   describe('events', () => {
-    it('should have snake cased attributes', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { longTask: { duration: 2 } }),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0] as RumLongTaskEvent).long_task.duration).toBe(2)
-    })
-
     it('should allow modification on sensitive field', () => {
       beforeSend = (event: RumEvent) => (event.view.url = 'modified')
 
@@ -109,15 +100,6 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].view.id).toBeDefined()
       expect(serverRumEvents[0].date).toBeDefined()
-    })
-
-    it('should be snake cased', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
-        startTime: 0,
-      })
-      // eslint-disable-next-line no-underscore-dangle
-      expect(serverRumEvents[0]._dd.format_version).toBe(2)
     })
 
     it('should be overwritten by event attributes', () => {
@@ -167,16 +149,6 @@ describe('rum assembly', () => {
       expect((serverRumEvents[1].context as any).bar).toBeUndefined()
     })
 
-    it('should not be automatically snake cased', () => {
-      commonContext.context = { fooBar: 'foo' }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
-    })
-
     it('should ignore the current global context when a saved global context is provided', () => {
       commonContext.context = { replacedContext: 'b', addedContext: 'x' }
 
@@ -215,16 +187,6 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr).toBe(undefined)
     })
 
-    it('should not be automatically snake cased', () => {
-      commonContext.user = { fooBar: 'foo' }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect(serverRumEvents[0].usr!.fooBar).toEqual('foo')
-    })
-
     it('should ignore the current user when a saved common context user is provided', () => {
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
 
@@ -251,16 +213,6 @@ describe('rum assembly', () => {
       })
 
       expect((serverRumEvents[0].context as any).foo).toEqual('bar')
-    })
-
-    it('should not be automatically snake cased', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        customerContext: { fooBar: 'foo' },
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
     })
   })
 

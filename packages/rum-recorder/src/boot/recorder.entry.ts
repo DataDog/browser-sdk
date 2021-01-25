@@ -1,27 +1,10 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import {
-  CommonContext,
-  makeRumPublicApi,
-  RumPublicApi,
-  RumUserConfiguration,
-  startRum,
-} from '@datadog/browser-rum-core'
+import { RumPublicApi, startRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
+import { makeRumRecorderPublicApi } from './rumRecorderPublicApi'
 
-function startRumAndRecording(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
-  const startRumResult = startRum(userConfiguration, () => ({
-    ...getCommonContext(),
-    hasReplay: true,
-  }))
-
-  const { lifeCycle, parentContexts, configuration, session } = startRumResult
-  startRecording(lifeCycle, userConfiguration.applicationId, configuration, session, parentContexts)
-
-  return startRumResult
-}
-
-export const datadogRum = makeRumPublicApi(startRumAndRecording)
+export const datadogRum = makeRumRecorderPublicApi(startRum, startRecording)
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi

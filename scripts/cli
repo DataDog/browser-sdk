@@ -50,4 +50,12 @@ cmd_build_json2type () {
   set -e
 }
 
+cmd_version () {
+  node ./scripts/generate-changelog.js
+  # keep test app lockfile up to date
+  cd test/app
+  yarn
+  git add yarn.lock
+}
+
 main "$@"

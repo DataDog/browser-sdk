@@ -1,4 +1,5 @@
-import { BuildEnv, BuildMode, Datacenter, INTAKE_SITE } from '../boot/init'
+import { BuildEnv, BuildMode } from '../boot/init'
+import { includes } from '../tools/utils'
 import { TransportConfiguration, UserConfiguration } from './configuration'
 
 const ENDPOINTS = {
@@ -16,6 +17,21 @@ const ENDPOINTS = {
     trace: 'public-trace',
   },
 }
+
+export const Datacenter = {
+  EU: 'eu',
+  US: 'us',
+} as const
+
+export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
+
+export const INTAKE_SITE = {
+  [Datacenter.EU]: 'datadoghq.eu',
+  [Datacenter.US]: 'datadoghq.com',
+}
+
+const CLASSIC_ALLOWED_SITES = [INTAKE_SITE[Datacenter.US], INTAKE_SITE[Datacenter.EU]]
+
 type IntakeType = keyof typeof ENDPOINTS
 type EndpointType = keyof typeof ENDPOINTS[IntakeType]
 
@@ -98,8 +114,7 @@ export function computeTransportConfiguration(userConfiguration: UserConfigurati
 }
 
 function getIntakeType(site: string, userConfiguration: UserConfiguration) {
-  // TODO when new intake will be available for gov, only allow classic intake for us and eu
-  return userConfiguration.useAlternateIntakeDomains || site === 'us3.datadoghq.com' ? 'alternate' : 'classic'
+  return !userConfiguration.useAlternateIntakeDomains && includes(CLASSIC_ALLOWED_SITES, site) ? 'classic' : 'alternate'
 }
 
 function getIntakeUrls(intakeType: IntakeType, settings: TransportSettings, withReplica: boolean) {

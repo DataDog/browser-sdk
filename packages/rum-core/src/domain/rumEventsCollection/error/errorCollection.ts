@@ -56,7 +56,13 @@ function processError(error: RawError) {
     date: getTimestamp(error.startTime),
     error: {
       message: error.message,
-      resource: error.resource,
+      resource: error.resource
+        ? {
+            method: error.resource.method,
+            status_code: error.resource.statusCode,
+            url: error.resource.url,
+          }
+        : undefined,
       source: error.source,
       stack: error.stack,
       type: error.type,

@@ -9,7 +9,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle) {
     }
     const rawRumEvent: RawRumLongTaskEvent = {
       date: getTimestamp(entry.startTime),
-      longTask: {
+      long_task: {
         duration: msToNs(entry.duration),
       },
       type: RumEventType.LONG_TASK,
