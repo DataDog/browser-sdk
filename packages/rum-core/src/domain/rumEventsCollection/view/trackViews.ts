@@ -97,8 +97,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   return {
-    addTiming(name: string) {
-      currentView.addTiming(name)
+    addTiming(name: string, time = performance.now()) {
+      currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
     stop() {
@@ -213,8 +213,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string) {
-      customTimings[name] = performance.now() - startTime
+    addTiming(name: string, time: number) {
+      customTimings[name] = time - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }

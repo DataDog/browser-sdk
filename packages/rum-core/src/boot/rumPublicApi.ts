@@ -10,7 +10,6 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
-  noop,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
@@ -38,7 +37,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     return undefined
   }
 
-  let addTimingStrategy: ReturnType<StartRum>['addTiming'] = noop
+  const beforeInitAddTiming = new BoundedBuffer<[string, number]>()
+  let addTimingStrategy: ReturnType<StartRum>['addTiming'] = (name) => {
+    beforeInitAddTiming.add([name, performance.now()])
+  }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
@@ -81,6 +83,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
+      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
 
       isAlreadyInitialized = true
     }),

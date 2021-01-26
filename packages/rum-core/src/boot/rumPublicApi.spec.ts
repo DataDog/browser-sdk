@@ -411,12 +411,19 @@ describe('rum entry', () => {
       setupBuilder.cleanup()
     })
 
-    it('should do nothing before init', () => {
+    it('should allow to add custom timing before init', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
+
+      clock.tick(10)
       publicApi.addTiming('foo')
 
+      expect(addTimingSpy).not.toHaveBeenCalled()
+
+      clock.tick(20)
       publicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(addTimingSpy).not.toHaveBeenCalled()
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10)
     })
 
     it('should add custom timings', () => {
@@ -425,6 +432,7 @@ describe('rum entry', () => {
       publicApi.addTiming('foo')
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
       expect(errorSpy).not.toHaveBeenCalled()
     })
   })

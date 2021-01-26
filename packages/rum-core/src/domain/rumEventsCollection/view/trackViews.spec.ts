@@ -834,7 +834,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let addTiming: (name: string) => void
+  let addTiming: (name: string, time?: number) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -900,6 +900,16 @@ describe('rum track custom timings', () => {
     expect(event.customTimings).toEqual({
       bar: 30,
       foo: 50,
+    })
+  })
+
+  it('should add custom timing with a specific time', () => {
+    setupBuilder.build()
+
+    addTiming('foo', 1234)
+
+    expect(getViewEvent(1).customTimings).toEqual({
+      foo: 1234,
     })
   })
 })
