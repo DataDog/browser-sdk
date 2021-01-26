@@ -128,7 +128,7 @@ describe('fetch proxy', () => {
     const fetchStubPromise = fetchStub(FAKE_URL)
     const spy = jasmine.createSpy()
     fetchStubPromise.then(spy).catch(() => {
-      expect(false).toBe(true, 'Should not have thrown an error!')
+      fail('Should not have thrown an error!')
     })
     fetchStubPromise.resolveWith({ status: 500 })
 

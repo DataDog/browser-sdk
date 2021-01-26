@@ -1,3 +1,4 @@
+import { raw } from 'express'
 import { createTest, EventRegistry } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
@@ -18,7 +19,7 @@ describe('tracing', () => {
   createTest('trace fetch')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await browserExecuteAsync<string>((done) => {
+      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
           .fetch('/headers', {
             headers: [
@@ -28,8 +29,11 @@ describe('tracing', () => {
           })
           .then((response) => response.text())
           .then(done)
-          .catch(() => done('{}'))
+          .catch(() => done(new Error('Fetch request failed!')))
       })
+      if (rawHeaders instanceof Error) {
+        return fail(rawHeaders)
+      }
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       checkTraceAssociatedToRumEvent(events)
@@ -38,13 +42,16 @@ describe('tracing', () => {
   createTest('trace fetch with Request argument')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await browserExecuteAsync<string>((done) => {
+      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
         window
           .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
           .then((response) => response.text())
           .then(done)
-          .catch(() => done('{}'))
+          .catch(() => done(new Error('Fetch request failed!')))
       })
+      if (rawHeaders instanceof Error) {
+        return fail(rawHeaders)
+      }
       checkRequestHeaders(rawHeaders)
       await flushEvents()
       checkTraceAssociatedToRumEvent(events)
