@@ -16,6 +16,12 @@
 
 ---
 
+## v2.4.0
+
+- ✨[RUMF-820] expose API to add custom timings to the current view ([#702](https://github.com/DataDog/browser-sdk/pull/702))
+- 👷[RUMF-324] Replace TSLint with ESLint ([#681](https://github.com/DataDog/browser-sdk/pull/681))
+- ♻️ Remove automatic snake case ([#699](https://github.com/DataDog/browser-sdk/pull/699))
+
 ## v2.3.1
 
 - ✨ [RUMF-826] Allow classic intake only for us and eu ([#694](https://github.com/DataDog/browser-sdk/pull/694))
