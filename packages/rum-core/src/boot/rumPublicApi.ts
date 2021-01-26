@@ -33,9 +33,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
   const globalContextManager = createContextManager()
   let user: User = {}
 
-  let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
-    return undefined
-  }
+  let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => undefined
 
   const beforeInitAddTiming = new BoundedBuffer<[string, number]>()
   let addTimingStrategy: ReturnType<StartRum>['addTiming'] = (name) => {
@@ -95,9 +93,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     getRumGlobalContext: monitor(globalContextManager.get),
     setRumGlobalContext: monitor(globalContextManager.set),
 
-    getInternalContext: monitor((startTime?: number) => {
-      return getInternalContextStrategy(startTime)
-    }),
+    getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
@@ -120,7 +116,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
         checkedSource = source
       } else {
-        console.error(`DD_RUM.addError: Invalid source '${source}'`)
+        console.error(`DD_RUM.addError: Invalid source '${source as string}'`)
         checkedSource = ErrorSource.CUSTOM
       }
       addErrorStrategy({

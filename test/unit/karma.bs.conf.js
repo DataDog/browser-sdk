@@ -1,6 +1,6 @@
-const karmaBaseConf = require('./karma.base.conf')
 const browsers = require('../browsers.conf')
 const { getBuildInfos, getIp } = require('../utils')
+const karmaBaseConf = require('./karma.base.conf')
 
 module.exports = function (config) {
   config.set({

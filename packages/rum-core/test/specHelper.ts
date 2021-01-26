@@ -26,7 +26,7 @@ export interface TestSetupBuilder {
   build: () => TestIO
 }
 
-type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop?(): void }
+type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
 interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>
@@ -86,7 +86,7 @@ export function setup(): TestSetupBuilder {
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl, location.href)
       spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-        assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
+        assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
       })
 
       function hashchangeCallBack() {

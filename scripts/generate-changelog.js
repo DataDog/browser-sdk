@@ -1,10 +1,10 @@
 'use strict'
 
-const replace = require('replace-in-file')
 const util = require('util')
-const exec = util.promisify(require('child_process').exec)
-const readFile = util.promisify(require('fs').readFile)
 const spawn = require('child_process').spawn
+const readFile = util.promisify(require('fs').readFile)
+const exec = util.promisify(require('child_process').exec)
+const replace = require('replace-in-file')
 
 const emojiNameMap = require('emoji-name-map')
 
@@ -69,7 +69,7 @@ async function getChangesList() {
 
   const commits = await executeCommand(`git log ${lastTagName.trimEnd()}..HEAD --pretty=format:"- %s"`)
 
-  const changesWithEmojis = await emojiNameToUnicode(commits)
+  const changesWithEmojis = emojiNameToUnicode(commits)
 
   const changesWithPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
@@ -96,7 +96,7 @@ function spawnCommand(command, args) {
   })
 }
 
-async function emojiNameToUnicode(changes) {
+function emojiNameToUnicode(changes) {
   const emojiNameRegex = new RegExp(/:[^:\s]*(?:::[^:\s]*)*:/, 'gm')
   return changes.replace(emojiNameRegex, (emoji) => emojiNameMap.get(emoji) || emoji)
 }

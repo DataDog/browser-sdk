@@ -36,8 +36,8 @@ class TestBuilder {
   private rumOptions: RumSetupOptions | undefined = undefined
   private rumRecorderOptions: RumSetupOptions | undefined = undefined
   private logsOptions: LogsSetupOptions | undefined = undefined
-  private head: string = ''
-  private body: string = ''
+  private head = ''
+  private body = ''
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
@@ -105,7 +105,7 @@ declare function it(expectation: string, assertion?: jasmine.ImplementationCallb
 
 function declareTest(title: string, setup: string, runner: TestRunner) {
   const spec = it(title, async () => {
-    log(`Start '${spec.getFullName()}' in ${getBrowserName()}`)
+    log(`Start '${spec.getFullName()}' in ${getBrowserName()!}`)
     const servers = await getTestServers()
 
     const testContext = createTestContext(servers)
@@ -127,7 +127,7 @@ function declareTest(title: string, setup: string, runner: TestRunner) {
 
 function getBrowserName() {
   const capabilities = browser.options.capabilities
-  return capabilities && (capabilities.browserName || (capabilities as any).browser)
+  return capabilities && ((capabilities.browserName || (capabilities as any).browser) as string)
 }
 
 function createTestContext(servers: Servers): TestContext {

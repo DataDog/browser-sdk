@@ -1,4 +1,3 @@
-/* tslint:disable:no-null-keyword */
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
 import { initObservers, mutationBuffer } from './observer'
 import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
@@ -50,7 +49,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
           'datetime-local': true,
           email: true,
           month: true,
-          number: true,
+          number: true, // eslint-disable-line id-blacklist
           range: true,
           search: true,
           select: true,
@@ -115,7 +114,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
     }
   }
 
-  function takeFullSnapshot(isCheckout = false) {
+  const takeFullSnapshot = (isCheckout = false) => {
     wrappedEmit(
       wrapEvent({
         data: {
@@ -327,7 +326,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
       )
     }
     return {
-      stop() {
+      stop: () => {
         handlers.forEach((h) => h())
       },
       takeFullSnapshot,

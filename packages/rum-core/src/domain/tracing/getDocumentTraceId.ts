@@ -53,7 +53,7 @@ export function findTraceComment(document: Document): string | undefined {
   // 1. Try to find the comment as a direct child of the document
   // Note: TSLint advises to use a 'for of', but TS doesn't allow to use 'for of' if the iterated
   // value is not an array or string (here, a NodeList).
-  // tslint:disable-next-line: prefer-for-of
+  // eslint-disable-next-line @typescript-eslint/prefer-for-of
   for (let i = 0; i < document.childNodes.length; i += 1) {
     const comment = getTraceCommentFromNode(document.childNodes[i])
     if (comment) {
@@ -81,7 +81,7 @@ export function findTraceComment(document: Document): string | undefined {
 
 function getTraceCommentFromNode(node: Node | null) {
   if (node && isCommentNode(node)) {
-    const match = node.data.match(/^\s*DATADOG;(.*?)\s*$/)
+    const match = /^\s*DATADOG;(.*?)\s*$/.exec(node.data)
     if (match) {
       return match[1]
     }

@@ -367,7 +367,6 @@ describe('rum entry', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      // tslint:disable-next-line:no-null-keyword
       const user = { id: null, name: 2, email: { bar: 'qux' } }
       publicApi.setUser(user as any)
       publicApi.addAction('message')
@@ -384,7 +383,6 @@ describe('rum entry', () => {
 
     it('should reject non object input', () => {
       publicApi.setUser(2 as any)
-      // tslint:disable-next-line:no-null-keyword
       publicApi.setUser(null as any)
       publicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)

@@ -1,6 +1,6 @@
+const { getBuildInfos } = require('../utils')
 const baseConf = require('./wdio.base.conf')
 const browsers = require('./browsers.conf')
-const { getBuildInfos } = require('../utils')
 
 exports.config = {
   ...baseConf,

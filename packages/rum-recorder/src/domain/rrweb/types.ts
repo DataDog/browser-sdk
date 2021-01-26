@@ -11,12 +11,12 @@ export enum EventType {
 
 export interface DomContentLoadedEvent {
   type: EventType.DomContentLoaded
-  data: {}
+  data: object
 }
 
 export interface LoadedEvent {
   type: EventType.Load
-  data: {}
+  data: object
 }
 
 export interface FullSnapshotEvent {
@@ -179,7 +179,7 @@ export interface RecordOptions<T> {
 
 export interface RecordAPI {
   stop: ListenerHandler
-  takeFullSnapshot(): void
+  takeFullSnapshot: () => void
 }
 
 export interface ObserverParam {

@@ -131,12 +131,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   }
 
   return {
-    findAction: (startTime) => {
-      return findContext(buildCurrentActionContext, previousActions, currentAction, startTime)
-    },
-    findView: (startTime) => {
-      return findContext(buildCurrentViewContext, previousViews, currentView, startTime)
-    },
+    findAction: (startTime) => findContext(buildCurrentActionContext, previousActions, currentAction, startTime),
+    findView: (startTime) => findContext(buildCurrentViewContext, previousViews, currentView, startTime),
     stop: () => {
       window.clearInterval(clearOldContextsInterval)
     },

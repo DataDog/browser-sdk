@@ -15,7 +15,7 @@ export interface PageActivityEvent {
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   completionCallback: (hadActivity: boolean, endTime: number) => void
-): { stop(): void } {
+) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
@@ -24,7 +24,7 @@ export function waitIdlePageActivity(
     completionCallback
   )
 
-  function stop() {
+  const stop = () => {
     stopWaitPageActivitiesCompletion()
     stopPageActivitiesTracking()
   }
@@ -56,7 +56,9 @@ export function waitIdlePageActivity(
 //
 // Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
 // after MAX_DURATION, it has been validated.
-export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observable<PageActivityEvent>; stop(): void } {
+export function trackPageActivities(
+  lifeCycle: LifeCycle
+): { observable: Observable<PageActivityEvent>; stop: () => void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestIndex: undefined | number
@@ -102,7 +104,7 @@ export function trackPageActivities(lifeCycle: LifeCycle): { observable: Observa
 
   return {
     observable,
-    stop() {
+    stop: () => {
       subscriptions.forEach((s) => s.unsubscribe())
     },
   }
@@ -112,7 +114,7 @@ export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
   completionCallback: (hadActivity: boolean, endTime: number) => void
-): { stop(): void } {
+): { stop: () => void } {
   let idleTimeoutId: ReturnType<typeof setTimeout>
   let hasCompleted = false
 
@@ -137,7 +139,7 @@ export function waitPageActivitiesCompletion(
     }
   })
 
-  function stop() {
+  const stop = () => {
     hasCompleted = true
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)

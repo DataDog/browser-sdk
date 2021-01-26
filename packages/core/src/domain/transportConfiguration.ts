@@ -148,7 +148,7 @@ function getAlternateHost(endpointType: EndpointType, site: string): string {
   const endpoint = ENDPOINTS.alternate[endpointType]
   const domainParts = site.split('.')
   const extension = domainParts.pop()
-  const suffix = `${domainParts.join('-')}.${extension}`
+  const suffix = `${domainParts.join('-')}.${extension!}`
   return `${endpoint}.browser-intake-${suffix}`
 }
 

@@ -27,7 +27,8 @@ export function isFirefox() {
 }
 
 export function isIE() {
-  return navigator.userAgent.indexOf('MSIE ') > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)
+  const hasIEAgent = /Trident.*rv\:11\./.test(navigator.userAgent)
+  return navigator.userAgent.indexOf('MSIE ') > 0 || hasIEAgent
 }
 
 export function clearAllCookies() {
@@ -66,11 +67,11 @@ export function stubFetch(): FetchStubManager {
         ...response,
         clone: () => {
           const cloned = {
-            text: async () => {
+            text: () => {
               if (response.responseTextError) {
-                throw response.responseTextError
+                return Promise.reject(response.responseTextError)
               }
-              return response.responseText
+              return Promise.resolve(response.responseText)
             },
           }
           return cloned as Response
@@ -120,10 +121,10 @@ class StubXhr {
     this.fakeEventTarget = document.createElement('div')
   }
 
-  // tslint:disable:no-empty
+  /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
   open(method: string, url: string) {}
   send() {}
-  // tslint:enable:no-empty
+  /* eslint-enable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
   abort() {
     this.status = 0

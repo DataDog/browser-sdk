@@ -41,7 +41,6 @@ describe('tracer', () => {
         setRequestHeader(this: XhrStub, name: string, value: string) {
           this.headers[name] = value
         },
-        // tslint:disable-next-line: no-object-literal-type-assertion
         headers: {} as XhrStub['headers'],
       }
     })

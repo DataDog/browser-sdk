@@ -6,7 +6,7 @@ export const StatusType = {
   info: 'info',
   warn: 'warn',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type StatusType = typeof StatusType[keyof typeof StatusType]
 
 const STATUS_PRIORITIES: { [key in StatusType]: number } = {
@@ -16,7 +16,7 @@ const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.error]: 3,
 }
 
-export const STATUSES = Object.keys(StatusType)
+export const STATUSES = Object.keys(StatusType) as StatusType[]
 
 export interface LogsMessage {
   message: string
@@ -29,7 +29,7 @@ export const HandlerType = {
   http: 'http',
   silent: 'silent',
 } as const
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type HandlerType = typeof HandlerType[keyof typeof HandlerType]
 
 export class Logger {

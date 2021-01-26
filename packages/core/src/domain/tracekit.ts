@@ -1,5 +1,3 @@
-// tslint:disable no-unsafe-any
-
 import { monitor } from './internalMonitoring'
 
 export interface BrowserError extends Error {
@@ -53,7 +51,7 @@ export interface StackTrace {
 const UNKNOWN_FUNCTION = '?'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-// tslint:disable-next-line max-line-length
+// eslint-disable-next-line  max-len
 const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|Range|Reference|Syntax|Type|URI|)Error): )?(.*)$/
 
 /**
@@ -87,11 +85,10 @@ function isUndefined(what: any) {
  * @return {Function} The wrapped func
  * @memberof TraceKit
  */
-// tslint:disable-next-line ban-types
-export function wrap(func: Function) {
-  function wrapped(this: any) {
+export function wrap<Args extends any[], R>(func: (...args: Args) => R) {
+  function wrapped(this: unknown, ...args: Args) {
     try {
-      return func.apply(this, arguments)
+      return func.apply(this, args)
     } catch (e) {
       report(e)
       throw e
@@ -188,16 +185,13 @@ export const report = (function reportModuleWrapper() {
    */
   function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: any) {
     let exception
-    for (const i in handlers) {
-      if (has(handlers, i)) {
-        try {
-          handlers[i](stack, isWindowError, error)
-        } catch (inner) {
-          exception = inner
-        }
+    handlers.forEach((handler) => {
+      try {
+        handler(stack, isWindowError, error)
+      } catch (inner) {
+        exception = inner
       }
-    }
-
+    })
     if (exception) {
       throw exception
     }
@@ -229,7 +223,7 @@ export const report = (function reportModuleWrapper() {
     let stack: StackTrace
 
     if (lastExceptionStack) {
-      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, `${message}`)
+      computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo)
       processLastException()
     } else if (errorObj) {
       stack = computeStackTrace(errorObj)
@@ -244,7 +238,7 @@ export const report = (function reportModuleWrapper() {
       let name
       let msg = message
       if ({}.toString.call(message) === '[object String]') {
-        const groups = (msg as string).match(ERROR_TYPES_RE)
+        const groups = ERROR_TYPES_RE.exec(msg as string)
         if (groups) {
           name = groups[1]
           msg = groups[2]
@@ -261,6 +255,7 @@ export const report = (function reportModuleWrapper() {
     }
 
     if (oldOnerrorHandler) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return oldOnerrorHandler.apply(this, arguments as any)
     }
 
@@ -387,10 +382,10 @@ export const report = (function reportModuleWrapper() {
  * computeStackTrace: cross-browser stack traces in JavaScript
  *
  * Syntax:
- *   ```js
- *   s = computeStackTrace.ofCaller([depth])
- *   s = computeStackTrace(exception) // consider using report instead (see below)
- *   ```
+ * ```js
+ * s = computeStackTrace.ofCaller([depth])
+ * s = computeStackTrace(exception) // consider using report instead (see below)
+ * ```
  *
  * Supports:
  *   - Firefox:  full stack trace with line numbers and unreliable column
@@ -429,7 +424,7 @@ export const report = (function reportModuleWrapper() {
  * inner function that actually caused the exception).
  *
  * Tracing example:
- *  ```js
+ * ```js
  *     function trace(message) {
  *         let stackInfo = computeStackTrace.ofCaller();
  *         let data = message + "\n";
@@ -499,11 +494,11 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
       return
     }
 
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?|webpack|blob):.*?):(\d+)(?::(\d+))?\)?\s*$/i
 
     // Used to additionally parse URL/line/column from eval frames
@@ -558,7 +553,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
           // Also note, Firefox's column number is 0-based and everything else expects 1-based,
           // so adding 1
           // NOTE: this hack doesn't work if top-most frame is eval
-          stack[0].column = (ex as any).columnNumber + 1
+          stack[0].column = ((ex as any).columnNumber as number) + 1
         }
         element = {
           args: parts[2] ? parts[2].split(',') : [],
@@ -605,7 +600,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     }
 
     const opera10Regex = / line (\d+).*script (?:in )?(\S+)(?:: in function (\S+))?$/i
-    // tslint:disable-next-line max-line-length
+    // eslint-disable-next-line  max-len
     const opera11Regex = / line (\d+), column (\d+)\s*(?:in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\))? in (.*):\s*$/i
     const lines = stacktrace.split('\n')
     const stack = []
@@ -771,12 +766,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
    * augmented.
    * @memberof computeStackTrace
    */
-  function augmentStackTraceWithInitialElement(
-    stackInfo: StackTrace,
-    url?: string,
-    lineNo?: string | number,
-    message?: string
-  ) {
+  function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
     const initial: StackFrame = {
       url,
       line: lineNo ? +lineNo : undefined,
@@ -851,10 +841,10 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
         item.func = parts ? parts.input.substring(0, parts.input.indexOf('{')) : undefined
       }
 
-      if (funcs[`${curr}`]) {
+      if (funcs[curr.toString()]) {
         recursion = true
       } else {
-        funcs[`${curr}`] = true
+        funcs[curr.toString()] = true
       }
 
       stack.push(item)
@@ -872,8 +862,7 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
     augmentStackTraceWithInitialElement(
       result,
       tryToGetString(ex, 'sourceURL') || tryToGetString(ex, 'fileName'),
-      tryToGetString(ex, 'line') || tryToGetString(ex, 'lineNumber'),
-      tryToGetString(ex, 'message') || tryToGetString(ex, 'description')
+      tryToGetString(ex, 'line') || tryToGetString(ex, 'lineNumber')
     )
     return result
   }
@@ -971,32 +960,3 @@ export const computeStackTrace = (function computeStackTraceWrapper() {
 
   return doComputeStackTrace
 })()
-
-/**
- * Extends support for global error handling for asynchronous browser
- * functions. Adopted from Closure Library's errorhandler.js
- * @memberof TraceKit
- */
-export function extendToAsynchronousCallbacks() {
-  function helper(fnName: any) {
-    const originalFn = (window as any)[fnName]
-    ;(window as any)[fnName] = function traceKitAsyncExtension() {
-      // Make a copy of the arguments
-      const args: any[] = [].slice.call(arguments)
-      const originalCallback = args[0]
-      if (typeof originalCallback === 'function') {
-        args[0] = wrap(originalCallback)
-      }
-      // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
-      // also only supports 2 argument and doesn't care what "this" is, so we
-      // can just call the original function directly.
-      if (originalFn.apply) {
-        return originalFn.apply(this, args)
-      }
-      return originalFn(args[0], args[1])
-    }
-  }
-
-  helper('setTimeout')
-  helper('setInterval')
-}

@@ -21,10 +21,6 @@ const configuration: Partial<Configuration> = {
 describe('internal monitoring', () => {
   describe('decorator', () => {
     class Candidate {
-      notMonitoredThrowing() {
-        throw new Error('not monitored')
-      }
-
       @monitored
       monitoredThrowing() {
         throw new Error('monitored')
@@ -32,18 +28,23 @@ describe('internal monitoring', () => {
 
       @monitored
       monitoredStringErrorThrowing() {
-        // tslint:disable-next-line: no-string-throw
+        // eslint-disable-next-line no-throw-literal
         throw 'string error'
       }
 
       @monitored
       monitoredObjectErrorThrowing() {
+        // eslint-disable-next-line no-throw-literal
         throw { foo: 'bar' }
       }
 
       @monitored
       monitoredNotThrowing() {
         return 1
+      }
+
+      notMonitoredThrowing() {
+        throw new Error('not monitored')
       }
     }
 
@@ -217,13 +218,13 @@ describe('internal monitoring', () => {
       monitor(() => {
         throw new Error('message')
       })()
-      expect((JSON.parse(server.requests[0].requestBody) as any).foo).toEqual('bar')
+      expect(JSON.parse(server.requests[0].requestBody).foo).toEqual('bar')
 
       internalMonitoring.setExternalContextProvider(() => ({}))
       monitor(() => {
         throw new Error('message')
       })()
-      expect((JSON.parse(server.requests[1].requestBody) as any).foo).not.toBeDefined()
+      expect(JSON.parse(server.requests[1].requestBody).foo).not.toBeDefined()
     })
   })
 })

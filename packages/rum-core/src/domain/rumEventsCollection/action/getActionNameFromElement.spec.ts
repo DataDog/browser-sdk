@@ -58,11 +58,11 @@ describe('getActionNameFromElement', () => {
   it('limits the name length to a reasonable size', () => {
     expect(
       getActionNameFromElement(
-        // tslint:disable-next-line max-line-length
+        // eslint-disable-next-line  max-len
         element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
       )
     ).toBe(
-      // tslint:disable-next-line max-line-length
+      // eslint-disable-next-line  max-len
       'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
     )
   })

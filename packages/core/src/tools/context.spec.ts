@@ -13,12 +13,10 @@ describe('context', () => {
     })
 
     it('should replace a sub-value with null', () => {
-      // tslint:disable-next-line: no-null-keyword
       expect(combine({ a: {} }, { a: null as any })).toEqual({ a: null })
     })
 
     it('should ignore null arguments', () => {
-      // tslint:disable-next-line: no-null-keyword
       expect(combine({ a: 1 }, null)).toEqual({ a: 1 })
     })
 

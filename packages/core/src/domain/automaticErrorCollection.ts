@@ -110,7 +110,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   }
 
   return {
-    stop() {
+    stop: () => {
       resetXhrProxy()
       resetFetchProxy()
     },

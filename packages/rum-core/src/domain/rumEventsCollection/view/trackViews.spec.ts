@@ -52,9 +52,8 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
 }
 
 function mockGetElementById() {
-  return spyOn(document, 'getElementById').and.callFake((elementId: string) => {
-    return (elementId === ('testHashValue' as unknown)) as any
-  })
+  const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
+  return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
 }
 
 function spyOnViews() {
@@ -774,9 +773,9 @@ describe('rum view measures', () => {
         pending('No PerformanceObserver support')
       }
       isLayoutShiftSupported = true
-      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() => {
-        return isLayoutShiftSupported ? ['layout-shift'] : []
-      })
+      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() =>
+        isLayoutShiftSupported ? ['layout-shift'] : []
+      )
     })
 
     it('should be initialized to 0', () => {

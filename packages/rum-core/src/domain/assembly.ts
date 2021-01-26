@@ -74,6 +74,7 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 
@@ -93,5 +94,6 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
+  // eslint-disable-next-line no-underscore-dangle
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }

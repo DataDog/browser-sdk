@@ -1,3 +1,4 @@
+/* eslint-disable */
 let workerURL
 
 export function createDeflateWorker() {
@@ -58,22 +59,22 @@ function workerCodeFn() {
 
     /* eslint-disable space-unary-ops */
 
-    /* Public constants ==========================================================*/
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
-    //const Z_FILTERED          = 1;
-    //const Z_HUFFMAN_ONLY      = 2;
-    //const Z_RLE               = 3;
+    /* =========================================================================== */
+    // const Z_FILTERED          = 1;
+    // const Z_HUFFMAN_ONLY      = 2;
+    // const Z_RLE               = 3;
 
-    var Z_FIXED = 4 //const Z_DEFAULT_STRATEGY  = 0;
+    var Z_FIXED = 4 // const Z_DEFAULT_STRATEGY  = 0;
 
     /* Possible values of the data_type field (though see inflate()) */
 
     var Z_BINARY = 0
-    var Z_TEXT = 1 //const Z_ASCII             = 1; // = Z_TEXT
+    var Z_TEXT = 1 // const Z_ASCII             = 1; // = Z_TEXT
 
     var Z_UNKNOWN = 2
-    /*============================================================================*/
+    /* ============================================================================ */
 
     function zero(buf) {
       var len = buf.length
@@ -272,9 +273,9 @@ function workerCodeFn() {
       send_bits(
         s,
         tree[c * 2],
-        /*.Code*/
+        /* .Code */
         tree[c * 2 + 1]
-        /*.Len*/
+        /* .Len */
       )
     }
     /* ===========================================================================
@@ -334,7 +335,8 @@ function workerCodeFn() {
       var h
       /* heap index */
 
-      var n, m
+      var n
+      var m
       /* iterate over the tree elements */
 
       var bits
@@ -357,7 +359,7 @@ function workerCodeFn() {
        */
 
       tree[s.heap[s.heap_max] * 2 + 1] =
-        /*.Len*/
+        /* .Len */
         0
       /* root of the heap */
 
@@ -366,11 +368,11 @@ function workerCodeFn() {
         bits =
           tree[
             tree[n * 2 + 1] *
-              /*.Dad*/
+              /* .Dad */
               2 +
               1
           ] +
-          /*.Len*/
+          /* .Len */
           1
 
         if (bits > max_length) {
@@ -379,7 +381,7 @@ function workerCodeFn() {
         }
 
         tree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           bits
         /* We overwrite tree[n].Dad which is no longer needed */
 
@@ -396,14 +398,14 @@ function workerCodeFn() {
         }
 
         f = tree[n * 2]
-        /*.Freq*/
+        /* .Freq */
         s.opt_len += f * (bits + xbits)
 
         if (has_stree) {
           s.static_len +=
             f *
             (stree[n * 2 + 1] +
-              /*.Len*/
+              /* .Len */
               xbits)
         }
       }
@@ -454,17 +456,17 @@ function workerCodeFn() {
 
           if (
             tree[m * 2 + 1] !==
-            /*.Len*/
+            /* .Len */
             bits
           ) {
             // Trace((stderr,"code %d bits %d->%d\n", m, tree[m].Len, bits));
             s.opt_len +=
               (bits - tree[m * 2 + 1]) *
-              /*.Len*/
+              /* .Len */
               tree[m * 2]
-            /*.Freq*/
+            /* .Freq */
             tree[m * 2 + 1] =
-              /*.Len*/
+              /* .Len */
               bits
           }
 
@@ -508,21 +510,21 @@ function workerCodeFn() {
       /* Check that the bit counts in bl_count are consistent. The last code
        * must be all ones.
        */
-      //Assert (code + bl_count[MAX_BITS]-1 == (1<<MAX_BITS)-1,
+      // Assert (code + bl_count[MAX_BITS]-1 == (1<<MAX_BITS)-1,
       //        "inconsistent bit counts");
-      //Tracev((stderr,"\ngen_codes: max_code %d ", max_code));
+      // Tracev((stderr,"\ngen_codes: max_code %d ", max_code));
 
       for (n = 0; n <= max_code; n++) {
         var len = tree[n * 2 + 1]
-        /*.Len*/
+        /* .Len */
         if (len === 0) {
           continue
         }
         /* Now reverse the bits */
 
         tree[n * 2] =
-          /*.Code*/
-          bi_reverse(next_code[len]++, len) //Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
+          /* .Code */
+          bi_reverse(next_code[len]++, len) // Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
         //     n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
       }
     }
@@ -549,17 +551,17 @@ function workerCodeFn() {
       var bl_count = new Array(MAX_BITS + 1)
       /* number of codes at each bit length for an optimal tree */
       // do check in _tr_init()
-      //if (static_init_done) return;
+      // if (static_init_done) return;
 
       /* For some embedded targets, global variables are not initialized: */
 
-      /*#ifdef NO_INIT_GLOBAL_POINTERS
+      /* #ifdef NO_INIT_GLOBAL_POINTERS
       static_l_desc.static_tree = static_ltree;
       static_l_desc.extra_bits = extra_lbits;
       static_d_desc.static_tree = static_dtree;
       static_d_desc.extra_bits = extra_dbits;
       static_bl_desc.extra_bits = extra_blbits;
-    #endif*/
+    #endif */
 
       /* Initialize the mapping length (0..255) -> length code (0..28) */
 
@@ -571,7 +573,7 @@ function workerCodeFn() {
         for (n = 0; n < 1 << extra_lbits[code]; n++) {
           _length_code[length++] = code
         }
-      } //Assert (length == 256, "tr_static_init: length != 256");
+      } // Assert (length == 256, "tr_static_init: length != 256");
 
       /* Note that the length 255 (match length 258) can be represented
        * in two different ways: code 284 + 5 bits or code 285, so we
@@ -589,7 +591,7 @@ function workerCodeFn() {
         for (n = 0; n < 1 << extra_dbits[code]; n++) {
           _dist_code[dist++] = code
         }
-      } //Assert (dist == 256, "tr_static_init: dist != 256");
+      } // Assert (dist == 256, "tr_static_init: dist != 256");
 
       dist >>= 7
       /* from now on, all distances are divided by 128 */
@@ -600,7 +602,7 @@ function workerCodeFn() {
         for (n = 0; n < 1 << (extra_dbits[code] - 7); n++) {
           _dist_code[256 + dist++] = code
         }
-      } //Assert (dist == 256, "tr_static_init: 256+dist != 512");
+      } // Assert (dist == 256, "tr_static_init: 256+dist != 512");
 
       /* Construct the codes of the static literal tree */
 
@@ -612,7 +614,7 @@ function workerCodeFn() {
 
       while (n <= 143) {
         static_ltree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           8
         n++
         bl_count[8]++
@@ -620,7 +622,7 @@ function workerCodeFn() {
 
       while (n <= 255) {
         static_ltree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           9
         n++
         bl_count[9]++
@@ -628,7 +630,7 @@ function workerCodeFn() {
 
       while (n <= 279) {
         static_ltree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           7
         n++
         bl_count[7]++
@@ -636,7 +638,7 @@ function workerCodeFn() {
 
       while (n <= 287) {
         static_ltree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           8
         n++
         bl_count[8]++
@@ -651,16 +653,16 @@ function workerCodeFn() {
 
       for (n = 0; n < D_CODES; n++) {
         static_dtree[n * 2 + 1] =
-          /*.Len*/
+          /* .Len */
           5
         static_dtree[n * 2] =
-          /*.Code*/
+          /* .Code */
           bi_reverse(n, 5)
       } // Now data ready and we can init static trees
 
       static_l_desc = new StaticTreeDesc(static_ltree, extra_lbits, LITERALS + 1, L_CODES, MAX_BITS)
       static_d_desc = new StaticTreeDesc(static_dtree, extra_dbits, 0, D_CODES, MAX_BITS)
-      static_bl_desc = new StaticTreeDesc(new Array(0), extra_blbits, 0, BL_CODES, MAX_BL_BITS) //static_init_done = true;
+      static_bl_desc = new StaticTreeDesc(new Array(0), extra_blbits, 0, BL_CODES, MAX_BL_BITS) // static_init_done = true;
     }
     /* ===========================================================================
      * Initialize a new block.
@@ -674,24 +676,24 @@ function workerCodeFn() {
 
       for (n = 0; n < L_CODES; n++) {
         s.dyn_ltree[n * 2] =
-          /*.Freq*/
+          /* .Freq */
           0
       }
 
       for (n = 0; n < D_CODES; n++) {
         s.dyn_dtree[n * 2] =
-          /*.Freq*/
+          /* .Freq */
           0
       }
 
       for (n = 0; n < BL_CODES; n++) {
         s.bl_tree[n * 2] =
-          /*.Freq*/
+          /* .Freq */
           0
       }
 
       s.dyn_ltree[END_BLOCK * 2] =
-        /*.Freq*/
+        /* .Freq */
         1
       s.opt_len = s.static_len = 0
       s.last_lit = s.matches = 0
@@ -704,7 +706,7 @@ function workerCodeFn() {
       if (s.bi_valid > 8) {
         put_short(s, s.bi_buf)
       } else if (s.bi_valid > 0) {
-        //put_byte(s, (Byte)s->bi_buf);
+        // put_byte(s, (Byte)s->bi_buf);
         s.pending_buf[s.pending++] = s.bi_buf
       }
 
@@ -720,7 +722,7 @@ function workerCodeFn() {
       s,
       buf,
       len,
-      header //DeflateState *s; //charf    *buf;    /* the input data */ //unsigned len;     /* its length */ //int      header;  /* true if block header must be written */
+      header // DeflateState *s; //charf    *buf;    /* the input data */ //unsigned len;     /* its length */ //int      header;  /* true if block header must be written */
     ) {
       bi_windup(s)
       /* align on byte boundary */
@@ -747,13 +749,13 @@ function workerCodeFn() {
 
       return (
         tree[_n2] <
-          /*.Freq*/
+          /* .Freq */
           tree[_m2] ||
-        /*.Freq*/
+        /* .Freq */
         (tree[_n2] ===
-          /*.Freq*/
+          /* .Freq */
           tree[_m2] &&
-          /*.Freq*/
+          /* .Freq */
           depth[n] <= depth[m])
       )
     }
@@ -829,7 +831,7 @@ function workerCodeFn() {
           if (dist === 0) {
             send_code(s, lc, ltree)
             /* send a literal byte */
-            //Tracecv(isgraph(lc), (stderr," '%c' ", lc));
+            // Tracecv(isgraph(lc), (stderr," '%c' ", lc));
           } else {
             /* Here, lc is the match length - MIN_MATCH */
             code = _length_code[lc]
@@ -847,7 +849,7 @@ function workerCodeFn() {
             dist--
             /* dist is now the match distance - 1 */
 
-            code = d_code(dist) //Assert (code < D_CODES, "bad d_code");
+            code = d_code(dist) // Assert (code < D_CODES, "bad d_code");
 
             send_code(s, code, dtree)
             /* send the distance code */
@@ -863,7 +865,7 @@ function workerCodeFn() {
           /* literal or match pair ? */
 
           /* Check that the overlay between pending_buf and d_buf+l_buf is ok: */
-          //Assert((uInt)(s->pending) < s->lit_bufsize + 2*lx,
+          // Assert((uInt)(s->pending) < s->lit_bufsize + 2*lx,
           //       "pendingBuf overflow");
         } while (lx < s.last_lit)
       }
@@ -887,7 +889,8 @@ function workerCodeFn() {
       var stree = desc.stat_desc.static_tree
       var has_stree = desc.stat_desc.has_stree
       var elems = desc.stat_desc.elems
-      var n, m
+      var n
+      var m
       /* iterate over heap elements */
 
       var max_code = -1
@@ -907,14 +910,14 @@ function workerCodeFn() {
       for (n = 0; n < elems; n++) {
         if (
           tree[n * 2] !==
-          /*.Freq*/
+          /* .Freq */
           0
         ) {
           s.heap[++s.heap_len] = max_code = n
           s.depth[n] = 0
         } else {
           tree[n * 2 + 1] =
-            /*.Len*/
+            /* .Len */
             0
         }
       }
@@ -927,14 +930,14 @@ function workerCodeFn() {
       while (s.heap_len < 2) {
         node = s.heap[++s.heap_len] = max_code < 2 ? ++max_code : 0
         tree[node * 2] =
-          /*.Freq*/
+          /* .Freq */
           1
         s.depth[node] = 0
         s.opt_len--
 
         if (has_stree) {
           s.static_len -= stree[node * 2 + 1]
-          /*.Len*/
+          /* .Len */
         }
         /* node is 0 or 1 so it does not have extra bits */
       }
@@ -946,7 +949,7 @@ function workerCodeFn() {
 
       for (
         n = s.heap_len >> 1;
-        /*int /2*/
+        /* int /2 */
         n >= 1;
         n--
       ) {
@@ -960,23 +963,23 @@ function workerCodeFn() {
       /* next internal node of the tree */
 
       do {
-        //pqremove(s, tree, n);  /* n = node of least frequency */
+        // pqremove(s, tree, n);  /* n = node of least frequency */
 
-        /*** pqremove ***/
+        /** * pqremove ** */
         n = s.heap[1]
-        /*SMALLEST*/
+        /* SMALLEST */
         s.heap[1] = s.heap[s.heap_len--]
-        /*SMALLEST*/
+        /* SMALLEST */
         pqdownheap(
           s,
           tree,
           1
-          /*SMALLEST*/
+          /* SMALLEST */
         )
         /***/
 
         m = s.heap[1]
-        /*SMALLEST*/
+        /* SMALLEST */
         /* m = node of next least frequency */
 
         s.heap[--s.heap_max] = n
@@ -986,31 +989,31 @@ function workerCodeFn() {
         /* Create a new node father of n and m */
 
         tree[node * 2] =
-          /*.Freq*/
+          /* .Freq */
           tree[n * 2] +
-          /*.Freq*/
+          /* .Freq */
           tree[m * 2]
-        /*.Freq*/
+        /* .Freq */
         s.depth[node] = (s.depth[n] >= s.depth[m] ? s.depth[n] : s.depth[m]) + 1
         tree[n * 2 + 1] =
-          /*.Dad*/
+          /* .Dad */
           tree[m * 2 + 1] =
-            /*.Dad*/
+            /* .Dad */
             node
         /* and insert the new node in the heap */
 
         s.heap[1] = node++
-        /*SMALLEST*/
+        /* SMALLEST */
         pqdownheap(
           s,
           tree,
           1
-          /*SMALLEST*/
+          /* SMALLEST */
         )
       } while (s.heap_len >= 2)
 
       s.heap[--s.heap_max] = s.heap[1]
-      /*SMALLEST*/
+      /* SMALLEST */
       /* At this point, the fields freq and dad are set. We can now
        * generate the bit lengths.
        */
@@ -1040,7 +1043,7 @@ function workerCodeFn() {
       /* length of current code */
 
       var nextlen = tree[0 * 2 + 1]
-      /*.Len*/
+      /* .Len */
       /* length of next code */
 
       var count = 0
@@ -1058,31 +1061,31 @@ function workerCodeFn() {
       }
 
       tree[(max_code + 1) * 2 + 1] =
-        /*.Len*/
+        /* .Len */
         0xffff
       /* guard */
 
       for (n = 0; n <= max_code; n++) {
         curlen = nextlen
         nextlen = tree[(n + 1) * 2 + 1]
-        /*.Len*/
+        /* .Len */
 
         if (++count < max_count && curlen === nextlen) {
           continue
         } else if (count < min_count) {
           s.bl_tree[curlen * 2] +=
-            /*.Freq*/
+            /* .Freq */
             count
         } else if (curlen !== 0) {
           if (curlen !== prevlen) {
-            s.bl_tree[curlen * 2] /*.Freq*/++
+            s.bl_tree[curlen * 2] /* .Freq */++
           }
 
-          s.bl_tree[REP_3_6 * 2] /*.Freq*/++
+          s.bl_tree[REP_3_6 * 2] /* .Freq */++
         } else if (count <= 10) {
-          s.bl_tree[REPZ_3_10 * 2] /*.Freq*/++
+          s.bl_tree[REPZ_3_10 * 2] /* .Freq */++
         } else {
-          s.bl_tree[REPZ_11_138 * 2] /*.Freq*/++
+          s.bl_tree[REPZ_11_138 * 2] /* .Freq */++
         }
 
         count = 0
@@ -1120,7 +1123,7 @@ function workerCodeFn() {
       /* length of current code */
 
       var nextlen = tree[0 * 2 + 1]
-      /*.Len*/
+      /* .Len */
       /* length of next code */
 
       var count = 0
@@ -1144,7 +1147,7 @@ function workerCodeFn() {
       for (n = 0; n <= max_code; n++) {
         curlen = nextlen
         nextlen = tree[(n + 1) * 2 + 1]
-        /*.Len*/
+        /* .Len */
 
         if (++count < max_count && curlen === nextlen) {
           continue
@@ -1156,7 +1159,7 @@ function workerCodeFn() {
           if (curlen !== prevlen) {
             send_code(s, curlen, s.bl_tree)
             count--
-          } //Assert(count >= 3 && count <= 6, " 3_6?");
+          } // Assert(count >= 3 && count <= 6, " 3_6?");
 
           send_code(s, REP_3_6, s.bl_tree)
           send_bits(s, count - 3, 2)
@@ -1211,7 +1214,7 @@ function workerCodeFn() {
       for (max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex--) {
         if (
           s.bl_tree[bl_order[max_blindex] * 2 + 1] !==
-          /*.Len*/
+          /* .Len */
           0
         ) {
           break
@@ -1219,7 +1222,7 @@ function workerCodeFn() {
       }
       /* Update opt_len to include the bit length tree and counts */
 
-      s.opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4 //Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
+      s.opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4 // Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
       //        s->opt_len, s->static_len));
 
       return max_blindex
@@ -1238,10 +1241,10 @@ function workerCodeFn() {
     ) {
       var rank
       /* index in bl_order */
-      //Assert (lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
-      //Assert (lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
+      // Assert (lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
+      // Assert (lcodes <= L_CODES && dcodes <= D_CODES && blcodes <= BL_CODES,
       //        "too many codes");
-      //Tracev((stderr, "\nbl counts: "));
+      // Tracev((stderr, "\nbl counts: "));
 
       send_bits(s, lcodes - 257, 5)
       /* not +255 as stated in appnote.txt */
@@ -1251,22 +1254,22 @@ function workerCodeFn() {
       /* not -3 as stated in appnote.txt */
 
       for (rank = 0; rank < blcodes; rank++) {
-        //Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
+        // Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
         send_bits(
           s,
           s.bl_tree[bl_order[rank] * 2 + 1],
-          /*.Len*/
+          /* .Len */
           3
         )
-      } //Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
+      } // Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
 
       send_tree(s, s.dyn_ltree, lcodes - 1)
       /* literal tree */
-      //Tracev((stderr, "\nlit tree: sent %ld", s->bits_sent));
+      // Tracev((stderr, "\nlit tree: sent %ld", s->bits_sent));
 
       send_tree(s, s.dyn_dtree, dcodes - 1)
       /* distance tree */
-      //Tracev((stderr, "\ndist tree: sent %ld", s->bits_sent));
+      // Tracev((stderr, "\ndist tree: sent %ld", s->bits_sent));
     }
     /* ===========================================================================
      * Check if the data type is TEXT or BINARY, using the following algorithm:
@@ -1295,7 +1298,7 @@ function workerCodeFn() {
         if (
           black_mask & 1 &&
           s.dyn_ltree[n * 2] !==
-            /*.Freq*/
+            /* .Freq */
             0
         ) {
           return Z_BINARY
@@ -1305,13 +1308,13 @@ function workerCodeFn() {
 
       if (
         s.dyn_ltree[9 * 2] !==
-          /*.Freq*/
+          /* .Freq */
           0 ||
         s.dyn_ltree[10 * 2] !==
-          /*.Freq*/
+          /* .Freq */
           0 ||
         s.dyn_ltree[13 * 2] !==
-          /*.Freq*/
+          /* .Freq */
           0
       ) {
         return Z_TEXT
@@ -1320,7 +1323,7 @@ function workerCodeFn() {
       for (n = 32; n < LITERALS; n++) {
         if (
           s.dyn_ltree[n * 2] !==
-          /*.Freq*/
+          /* .Freq */
           0
         ) {
           return Z_TEXT
@@ -1361,7 +1364,7 @@ function workerCodeFn() {
       s,
       buf,
       stored_len,
-      last //DeflateState *s; //charf *buf;       /* input block */ //ulg stored_len;   /* length of input block */ //int last;         /* one if this is the last block for a file */
+      last // DeflateState *s; //charf *buf;       /* input block */ //ulg stored_len;   /* length of input block */ //int last;         /* one if this is the last block for a file */
     ) {
       send_bits(s, (STORED_BLOCK << 1) + (last ? 1 : 0), 3)
       /* send block type */
@@ -1388,9 +1391,10 @@ function workerCodeFn() {
       s,
       buf,
       stored_len,
-      last //DeflateState *s; //charf *buf;       /* input block, or NULL if too old */ //ulg stored_len;   /* length of input block */ //int last;         /* one if this is the last block for a file */
+      last // DeflateState *s; //charf *buf;       /* input block, or NULL if too old */ //ulg stored_len;   /* length of input block */ //int last;         /* one if this is the last block for a file */
     ) {
-      var opt_lenb, static_lenb
+      var opt_lenb
+      var static_lenb
       /* opt_len and static_len in bytes */
 
       var max_blindex = 0
@@ -1476,7 +1480,7 @@ function workerCodeFn() {
       dist,
       lc //    deflate_state *s; //    unsigned dist;  /* distance of matched string */ //    unsigned lc;    /* match length-MIN_MATCH or unmatched char (if dist==0) */
     ) {
-      //let out_length, in_length, dcode;
+      // let out_length, in_length, dcode;
       s.pending_buf[s.d_buf + s.last_lit * 2] = (dist >>> 8) & 0xff
       s.pending_buf[s.d_buf + s.last_lit * 2 + 1] = dist & 0xff
       s.pending_buf[s.l_buf + s.last_lit] = lc & 0xff
@@ -1484,22 +1488,22 @@ function workerCodeFn() {
 
       if (dist === 0) {
         /* lc is the unmatched char */
-        s.dyn_ltree[lc * 2] /*.Freq*/++
+        s.dyn_ltree[lc * 2] /* .Freq */++
       } else {
         s.matches++
         /* Here, lc is the match length - MIN_MATCH */
 
         dist--
         /* dist = match distance - 1 */
-        //Assert((ush)dist < (ush)MAX_DIST(s) &&
+        // Assert((ush)dist < (ush)MAX_DIST(s) &&
         //       (ush)lc <= (ush)(MAX_MATCH-MIN_MATCH) &&
         //       (ush)d_code(dist) < (ush)D_CODES,  "_tr_tally: bad match");
 
-        s.dyn_ltree[(_length_code[lc] + LITERALS + 1) * 2] /*.Freq*/++
-        s.dyn_dtree[d_code(dist) * 2] /*.Freq*/++
+        s.dyn_ltree[(_length_code[lc] + LITERALS + 1) * 2] /* .Freq */++
+        s.dyn_dtree[d_code(dist) * 2] /* .Freq */++
       } // (!) This block is disabled in zlib defaults,
       // don't enable it for binary compatibility
-      //#ifdef TRUNCATE_BLOCK
+      // #ifdef TRUNCATE_BLOCK
       //  /* Try to guess if it is profitable to stop the current block here */
       //  if ((s.last_lit & 0x1fff) === 0 && s.level > 2) {
       //    /* Compute an upper bound for the compressed length */
@@ -1517,7 +1521,7 @@ function workerCodeFn() {
       //      return true;
       //    }
       //  }
-      //#endif
+      // #endif
 
       return s.last_lit === s.lit_bufsize - 1
       /* We avoid equality with lit_bufsize because of wraparound at 64K
@@ -1561,9 +1565,9 @@ function workerCodeFn() {
     // 3. This notice may not be removed or altered from any source distribution.
 
     var adler32 = function adler32(adler, buf, len, pos) {
-      var s1 = (adler & 0xffff) | 0,
-        s2 = ((adler >>> 16) & 0xffff) | 0,
-        n = 0
+      var s1 = (adler & 0xffff) | 0
+      var s2 = ((adler >>> 16) & 0xffff) | 0
+      var n = 0
 
       while (len !== 0) {
         // Set limit ~ twice less than 5552, to keep
@@ -1609,8 +1613,8 @@ function workerCodeFn() {
     // Use ordinary array, since untyped makes no boost here
 
     var makeTable = function makeTable() {
-      var c,
-        table = []
+      var c
+      var table = []
 
       for (var n = 0; n < 256; n++) {
         c = n
@@ -1727,7 +1731,7 @@ function workerCodeFn() {
       Z_DATA_ERROR: -3,
       Z_MEM_ERROR: -4,
       Z_BUF_ERROR: -5,
-      //Z_VERSION_ERROR: -6,
+      // Z_VERSION_ERROR: -6,
 
       /* compression levels */
       Z_NO_COMPRESSION: 0,
@@ -1743,11 +1747,11 @@ function workerCodeFn() {
       /* Possible values of the data_type field (though see inflate()) */
       Z_BINARY: 0,
       Z_TEXT: 1,
-      //Z_ASCII:                1, // = Z_TEXT (deprecated)
+      // Z_ASCII:                1, // = Z_TEXT (deprecated)
       Z_UNKNOWN: 2,
 
       /* The deflate compression method */
-      Z_DEFLATED: 8, //Z_NULL:                 null // Use -1 or null inline, depending on var type
+      Z_DEFLATED: 8, // Z_NULL:                 null // Use -1 or null inline, depending on var type
     }
 
     // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
@@ -1768,34 +1772,34 @@ function workerCodeFn() {
     //   misrepresented as being the original software.
     // 3. This notice may not be removed or altered from any source distribution.
 
-    var _tr_init$1 = trees._tr_init,
-      _tr_stored_block$1 = trees._tr_stored_block,
-      _tr_flush_block$1 = trees._tr_flush_block,
-      _tr_tally$1 = trees._tr_tally,
-      _tr_align$1 = trees._tr_align
-    /* Public constants ==========================================================*/
+    var _tr_init$1 = trees._tr_init
+    var _tr_stored_block$1 = trees._tr_stored_block
+    var _tr_flush_block$1 = trees._tr_flush_block
+    var _tr_tally$1 = trees._tr_tally
+    var _tr_align$1 = trees._tr_align
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
+    /* =========================================================================== */
 
-    var Z_NO_FLUSH = constants.Z_NO_FLUSH,
-      Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH,
-      Z_FULL_FLUSH = constants.Z_FULL_FLUSH,
-      Z_FINISH = constants.Z_FINISH,
-      Z_BLOCK = constants.Z_BLOCK,
-      Z_OK = constants.Z_OK,
-      Z_STREAM_END = constants.Z_STREAM_END,
-      Z_STREAM_ERROR = constants.Z_STREAM_ERROR,
-      Z_DATA_ERROR = constants.Z_DATA_ERROR,
-      Z_BUF_ERROR = constants.Z_BUF_ERROR,
-      Z_DEFAULT_COMPRESSION = constants.Z_DEFAULT_COMPRESSION,
-      Z_FILTERED = constants.Z_FILTERED,
-      Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY,
-      Z_RLE = constants.Z_RLE,
-      Z_FIXED$1 = constants.Z_FIXED,
-      Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY,
-      Z_UNKNOWN$1 = constants.Z_UNKNOWN,
-      Z_DEFLATED = constants.Z_DEFLATED
-    /*============================================================================*/
+    var Z_NO_FLUSH = constants.Z_NO_FLUSH
+    var Z_PARTIAL_FLUSH = constants.Z_PARTIAL_FLUSH
+    var Z_FULL_FLUSH = constants.Z_FULL_FLUSH
+    var Z_FINISH = constants.Z_FINISH
+    var Z_BLOCK = constants.Z_BLOCK
+    var Z_OK = constants.Z_OK
+    var Z_STREAM_END = constants.Z_STREAM_END
+    var Z_STREAM_ERROR = constants.Z_STREAM_ERROR
+    var Z_DATA_ERROR = constants.Z_DATA_ERROR
+    var Z_BUF_ERROR = constants.Z_BUF_ERROR
+    var Z_DEFAULT_COMPRESSION = constants.Z_DEFAULT_COMPRESSION
+    var Z_FILTERED = constants.Z_FILTERED
+    var Z_HUFFMAN_ONLY = constants.Z_HUFFMAN_ONLY
+    var Z_RLE = constants.Z_RLE
+    var Z_FIXED$1 = constants.Z_FIXED
+    var Z_DEFAULT_STRATEGY = constants.Z_DEFAULT_STRATEGY
+    var Z_UNKNOWN$1 = constants.Z_UNKNOWN
+    var Z_DEFLATED = constants.Z_DEFLATED
+    /* ============================================================================ */
 
     var MAX_MEM_LEVEL = 9
     /* Maximum value for memLevel in deflateInit2 */
@@ -1872,7 +1876,7 @@ function workerCodeFn() {
       return ((prev << s.hash_shift) ^ data) & s.hash_mask
     } // This hash causes less collisions, https://github.com/nodeca/pako/issues/135
     // But breaks binary compatibility
-    //let HASH_FAST = (s, prev, data) => ((prev << 8) + (prev >> 8) + (data << 4)) & s.hash_mask;
+    // let HASH_FAST = (s, prev, data) => ((prev << 8) + (prev >> 8) + (data << 4)) & s.hash_mask;
 
     var HASH = HASH_ZLIB
     /* =========================================================================
@@ -1883,7 +1887,7 @@ function workerCodeFn() {
      */
 
     var flush_pending = function flush_pending(strm) {
-      var s = strm.state //_tr_flush_bits(s);
+      var s = strm.state // _tr_flush_bits(s);
 
       var len = s.pending
 
@@ -1992,7 +1996,7 @@ function workerCodeFn() {
       /* stop if match long enough */
 
       var limit = s.strstart > s.w_size - MIN_LOOKAHEAD ? s.strstart - (s.w_size - MIN_LOOKAHEAD) : 0
-      /*NIL*/
+      /* NIL */
       var _win = s.window // shortcut
 
       var wmask = s.w_mask
@@ -2057,7 +2061,7 @@ function workerCodeFn() {
          */
 
         do {
-          /*jshint noempty:false*/
+          /* jshint noempty:false */
         } while (
           _win[++scan] === _win[++match] &&
           _win[++scan] === _win[++match] &&
@@ -2105,13 +2109,17 @@ function workerCodeFn() {
 
     var fill_window = function fill_window(s) {
       var _w_size = s.w_size
-      var p, n, m, more, str //Assert(s->lookahead < MIN_LOOKAHEAD, "already enough lookahead");
+      var p
+      var n
+      var m
+      var more
+      var str // Assert(s->lookahead < MIN_LOOKAHEAD, "already enough lookahead");
 
       do {
         more = s.window_size - s.lookahead - s.strstart // JS ints have 32 bit, block below not needed
 
         /* Deal with !@#$% 64K limit: */
-        //if (sizeof(int) <= 2) {
+        // if (sizeof(int) <= 2) {
         //    if (more == 0 && s->strstart == 0 && s->lookahead == 0) {
         //        more = wsize;
         //
@@ -2121,7 +2129,7 @@ function workerCodeFn() {
         //         */
         //        more--;
         //    }
-        //}
+        // }
 
         /* If the window is almost full and there is insufficient lookahead,
          * move the upper half to the lower one to make room in the upper half.
@@ -2177,7 +2185,7 @@ function workerCodeFn() {
          * Otherwise, window_size == 2*WSIZE so more >= 2.
          * If there was sliding, more >= WSIZE. So in all cases, more >= 2.
          */
-        //Assert(more >= 2, "more < 2");
+        // Assert(more >= 2, "more < 2");
 
         n = read_buf(s.strm, s.window, s.strstart + s.lookahead, more)
         s.lookahead += n
@@ -2188,9 +2196,9 @@ function workerCodeFn() {
           s.ins_h = s.window[str]
           /* UPDATE_HASH(s, s->ins_h, s->window[str + 1]); */
 
-          s.ins_h = HASH(s, s.ins_h, s.window[str + 1]) //#if MIN_MATCH != 3
+          s.ins_h = HASH(s, s.ins_h, s.window[str + 1]) // #if MIN_MATCH != 3
           //        Call update_hash() MIN_MATCH-3 more times
-          //#endif
+          // #endif
 
           while (s.insert) {
             /* UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]); */
@@ -2270,7 +2278,7 @@ function workerCodeFn() {
       for (;;) {
         /* Fill the window as much as possible: */
         if (s.lookahead <= 1) {
-          //Assert(s->strstart < s->w_size+MAX_DIST(s) ||
+          // Assert(s->strstart < s->w_size+MAX_DIST(s) ||
           //  s->block_start >= (long)s->w_size, "slide too late");
           //      if (!(s.strstart < s.w_size + (s.w_size - MIN_LOOKAHEAD) ||
           //        s.block_start >= s.w_size)) {
@@ -2286,7 +2294,7 @@ function workerCodeFn() {
             break
           }
           /* flush the current block */
-        } //Assert(s->block_start >= 0L, "block gone");
+        } // Assert(s->block_start >= 0L, "block gone");
         //    if (s.block_start < 0) throw new Error("block gone");
 
         s.strstart += s.lookahead
@@ -2299,7 +2307,7 @@ function workerCodeFn() {
           /* strstart == 0 is possible when wraparound on 16-bit machine */
           s.lookahead = s.strstart - max_start
           s.strstart = max_start
-          /*** FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
 
           flush_block_only(s, false)
 
@@ -2313,7 +2321,7 @@ function workerCodeFn() {
          */
 
         if (s.strstart - s.block_start >= s.w_size - MIN_LOOKAHEAD) {
-          /*** FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2326,7 +2334,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /*** FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2338,7 +2346,7 @@ function workerCodeFn() {
       }
 
       if (s.strstart > s.block_start) {
-        /*** FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2387,10 +2395,10 @@ function workerCodeFn() {
          */
 
         hash_head = 0
-        /*NIL*/
+        /* NIL */
 
         if (s.lookahead >= MIN_MATCH$1) {
-          /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+          /** * INSERT_STRING(s, s.strstart, hash_head); ** */
           s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
           hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
           s.head[s.ins_h] = s.strstart
@@ -2402,7 +2410,7 @@ function workerCodeFn() {
 
         if (
           hash_head !== 0 &&
-          /*NIL*/
+          /* NIL */
           s.strstart - hash_head <= s.w_size - MIN_LOOKAHEAD
         ) {
           /* To simplify the code, we prevent matches with the string
@@ -2416,8 +2424,8 @@ function workerCodeFn() {
         if (s.match_length >= MIN_MATCH$1) {
           // check_match(s, s.strstart, s.match_start, s.match_length); // for debug only
 
-          /*** _tr_tally_dist(s, s.strstart - s.match_start,
-                       s.match_length - MIN_MATCH, bflush); ***/
+          /** * _tr_tally_dist(s, s.strstart - s.match_start,
+                       s.match_length - MIN_MATCH, bflush); ** */
           bflush = _tr_tally$1(s, s.strstart - s.match_start, s.match_length - MIN_MATCH$1)
           s.lookahead -= s.match_length
           /* Insert new strings in the hash table only if the match length
@@ -2426,7 +2434,7 @@ function workerCodeFn() {
 
           if (
             s.match_length <= s.max_lazy_match &&
-            /*max_insert_length*/
+            /* max_insert_length */
             s.lookahead >= MIN_MATCH$1
           ) {
             s.match_length--
@@ -2434,7 +2442,7 @@ function workerCodeFn() {
 
             do {
               s.strstart++
-              /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+              /** * INSERT_STRING(s, s.strstart, hash_head); ** */
 
               s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
               hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
@@ -2453,9 +2461,9 @@ function workerCodeFn() {
             s.ins_h = s.window[s.strstart]
             /* UPDATE_HASH(s, s.ins_h, s.window[s.strstart+1]); */
 
-            s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + 1]) //#if MIN_MATCH != 3
+            s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + 1]) // #if MIN_MATCH != 3
             //                Call UPDATE_HASH() MIN_MATCH-3 more times
-            //#endif
+            // #endif
 
             /* If lookahead < MIN_MATCH, ins_h is garbage, but it does not
              * matter since it will be recomputed at next deflate call.
@@ -2463,16 +2471,16 @@ function workerCodeFn() {
           }
         } else {
           /* No match, output a literal byte */
-          //Tracevv((stderr,"%c", s.window[s.strstart]));
+          // Tracevv((stderr,"%c", s.window[s.strstart]));
 
-          /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart])
           s.lookahead--
           s.strstart++
         }
 
         if (bflush) {
-          /*** FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2485,7 +2493,7 @@ function workerCodeFn() {
       s.insert = s.strstart < MIN_MATCH$1 - 1 ? s.strstart : MIN_MATCH$1 - 1
 
       if (flush === Z_FINISH) {
-        /*** FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2497,7 +2505,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /*** FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2547,10 +2555,10 @@ function workerCodeFn() {
          */
 
         hash_head = 0
-        /*NIL*/
+        /* NIL */
 
         if (s.lookahead >= MIN_MATCH$1) {
-          /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+          /** * INSERT_STRING(s, s.strstart, hash_head); ** */
           s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
           hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
           s.head[s.ins_h] = s.strstart
@@ -2565,10 +2573,10 @@ function workerCodeFn() {
 
         if (
           hash_head !== 0 &&
-          /*NIL*/
+          /* NIL */
           s.prev_length < s.max_lazy_match &&
           s.strstart - hash_head <= s.w_size - MIN_LOOKAHEAD
-          /*MAX_DIST(s)*/
+          /* MAX_DIST(s) */
         ) {
           /* To simplify the code, we prevent matches with the string
            * of window index 0 (in particular we have to avoid a match
@@ -2580,7 +2588,7 @@ function workerCodeFn() {
           if (
             s.match_length <= 5 &&
             (s.strategy === Z_FILTERED || (s.match_length === MIN_MATCH$1 && s.strstart - s.match_start > 4096))
-            /*TOO_FAR*/
+            /* TOO_FAR */
           ) {
             /* If prev_match is also MIN_MATCH, match_start is garbage
              * but we will ignore the current match anyway.
@@ -2595,10 +2603,10 @@ function workerCodeFn() {
         if (s.prev_length >= MIN_MATCH$1 && s.match_length <= s.prev_length) {
           max_insert = s.strstart + s.lookahead - MIN_MATCH$1
           /* Do not insert strings in hash table beyond this. */
-          //check_match(s, s.strstart-1, s.prev_match, s.prev_length);
+          // check_match(s, s.strstart-1, s.prev_match, s.prev_length);
 
-          /***_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
-                       s.prev_length - MIN_MATCH, bflush);***/
+          /** *_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
+                       s.prev_length - MIN_MATCH, bflush);** */
 
           bflush = _tr_tally$1(s, s.strstart - 1 - s.prev_match, s.prev_length - MIN_MATCH$1)
           /* Insert in hash table all strings up to the end of the match.
@@ -2612,7 +2620,7 @@ function workerCodeFn() {
 
           do {
             if (++s.strstart <= max_insert) {
-              /*** INSERT_STRING(s, s.strstart, hash_head); ***/
+              /** * INSERT_STRING(s, s.strstart, hash_head); ** */
               s.ins_h = HASH(s, s.ins_h, s.window[s.strstart + MIN_MATCH$1 - 1])
               hash_head = s.prev[s.strstart & s.w_mask] = s.head[s.ins_h]
               s.head[s.ins_h] = s.strstart
@@ -2625,7 +2633,7 @@ function workerCodeFn() {
           s.strstart++
 
           if (bflush) {
-            /*** FLUSH_BLOCK(s, 0); ***/
+            /** * FLUSH_BLOCK(s, 0); ** */
             flush_block_only(s, false)
 
             if (s.strm.avail_out === 0) {
@@ -2638,13 +2646,13 @@ function workerCodeFn() {
            * single literal. If there was a match but the current match
            * is longer, truncate the previous match to a single literal.
            */
-          //Tracevv((stderr,"%c", s->window[s->strstart-1]));
+          // Tracevv((stderr,"%c", s->window[s->strstart-1]));
 
-          /*** _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart - 1])
 
           if (bflush) {
-            /*** FLUSH_BLOCK_ONLY(s, 0) ***/
+            /** * FLUSH_BLOCK_ONLY(s, 0) ** */
             flush_block_only(s, false)
             /***/
           }
@@ -2663,12 +2671,12 @@ function workerCodeFn() {
           s.strstart++
           s.lookahead--
         }
-      } //Assert (flush != Z_NO_FLUSH, "no flush?");
+      } // Assert (flush != Z_NO_FLUSH, "no flush?");
 
       if (s.match_available) {
-        //Tracevv((stderr,"%c", s->window[s->strstart-1]));
+        // Tracevv((stderr,"%c", s->window[s->strstart-1]));
 
-        /*** _tr_tally_lit(s, s.window[s.strstart-1], bflush); ***/
+        /** * _tr_tally_lit(s, s.window[s.strstart-1], bflush); ** */
         bflush = _tr_tally$1(s, 0, s.window[s.strstart - 1])
         s.match_available = 0
       }
@@ -2676,7 +2684,7 @@ function workerCodeFn() {
       s.insert = s.strstart < MIN_MATCH$1 - 1 ? s.strstart : MIN_MATCH$1 - 1
 
       if (flush === Z_FINISH) {
-        /*** FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2688,7 +2696,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /*** FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2712,7 +2720,8 @@ function workerCodeFn() {
       var prev
       /* byte at distance one to match */
 
-      var scan, strend
+      var scan
+      var strend
       /* scan goes up to strend for length of run */
 
       var _win = s.window
@@ -2746,7 +2755,7 @@ function workerCodeFn() {
             strend = s.strstart + MAX_MATCH$1
 
             do {
-              /*jshint noempty:false*/
+              /* jshint noempty:false */
             } while (
               prev === _win[++scan] &&
               prev === _win[++scan] &&
@@ -2764,30 +2773,30 @@ function workerCodeFn() {
             if (s.match_length > s.lookahead) {
               s.match_length = s.lookahead
             }
-          } //Assert(scan <= s->window+(uInt)(s->window_size-1), "wild scan");
+          } // Assert(scan <= s->window+(uInt)(s->window_size-1), "wild scan");
         }
         /* Emit match if have run of MIN_MATCH or longer, else emit literal */
 
         if (s.match_length >= MIN_MATCH$1) {
-          //check_match(s, s.strstart, s.strstart - 1, s.match_length);
+          // check_match(s, s.strstart, s.strstart - 1, s.match_length);
 
-          /*** _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ***/
+          /** * _tr_tally_dist(s, 1, s.match_length - MIN_MATCH, bflush); ** */
           bflush = _tr_tally$1(s, 1, s.match_length - MIN_MATCH$1)
           s.lookahead -= s.match_length
           s.strstart += s.match_length
           s.match_length = 0
         } else {
           /* No match, output a literal byte */
-          //Tracevv((stderr,"%c", s->window[s->strstart]));
+          // Tracevv((stderr,"%c", s->window[s->strstart]));
 
-          /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+          /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
           bflush = _tr_tally$1(s, 0, s.window[s.strstart])
           s.lookahead--
           s.strstart++
         }
 
         if (bflush) {
-          /*** FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2800,7 +2809,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /*** FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2812,7 +2821,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /*** FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2848,16 +2857,16 @@ function workerCodeFn() {
         }
         /* Output a literal byte */
 
-        s.match_length = 0 //Tracevv((stderr,"%c", s->window[s->strstart]));
+        s.match_length = 0 // Tracevv((stderr,"%c", s->window[s->strstart]));
 
-        /*** _tr_tally_lit(s, s.window[s.strstart], bflush); ***/
+        /** * _tr_tally_lit(s, s.window[s.strstart], bflush); ** */
 
         bflush = _tr_tally$1(s, 0, s.window[s.strstart])
         s.lookahead--
         s.strstart++
 
         if (bflush) {
-          /*** FLUSH_BLOCK(s, 0); ***/
+          /** * FLUSH_BLOCK(s, 0); ** */
           flush_block_only(s, false)
 
           if (s.strm.avail_out === 0) {
@@ -2870,7 +2879,7 @@ function workerCodeFn() {
       s.insert = 0
 
       if (flush === Z_FINISH) {
-        /*** FLUSH_BLOCK(s, 1); ***/
+        /** * FLUSH_BLOCK(s, 1); ** */
         flush_block_only(s, true)
 
         if (s.strm.avail_out === 0) {
@@ -2882,7 +2891,7 @@ function workerCodeFn() {
       }
 
       if (s.last_lit) {
-        /*** FLUSH_BLOCK(s, 0); ***/
+        /** * FLUSH_BLOCK(s, 0); ** */
         flush_block_only(s, false)
 
         if (s.strm.avail_out === 0) {
@@ -2936,7 +2945,7 @@ function workerCodeFn() {
 
     var lm_init = function lm_init(s) {
       s.window_size = 2 * s.w_size
-      /*** CLEAR_HASH(s); ***/
+      /** * CLEAR_HASH(s); ** */
 
       zero$1(s.head) // Fill with NIL (= 0);
 
@@ -3080,7 +3089,7 @@ function workerCodeFn() {
        * levels >= 4.
        */
       // That's alias to max_lazy_match, don't use directly
-      //this.max_insert_length = 0;
+      // this.max_insert_length = 0;
 
       /* Insert new strings in the hash table only if the match length is not
        * greater than this length. This saves time but degrades compression.
@@ -3091,7 +3100,7 @@ function workerCodeFn() {
       /* compression level (1..9) */
 
       this.strategy = 0
-      /* favor or force Huffman coding*/
+      /* favor or force Huffman coding */
 
       this.good_match = 0
       /* Use a faster search when the previous match is longer than this */
@@ -3122,11 +3131,11 @@ function workerCodeFn() {
 
       this.bl_desc = null
       /* desc. for bit length tree */
-      //ush bl_count[MAX_BITS+1];
+      // ush bl_count[MAX_BITS+1];
 
       this.bl_count = new Uint16Array(MAX_BITS$1 + 1)
       /* number of codes at each bit length for an optimal tree */
-      //int heap[2*L_CODES+1];      /* heap used to build the Huffman trees */
+      // int heap[2*L_CODES+1];      /* heap used to build the Huffman trees */
 
       this.heap = new Uint16Array(2 * L_CODES$1 + 1)
       /* heap used to build the Huffman trees */
@@ -3142,7 +3151,7 @@ function workerCodeFn() {
        * The same heap array is used to build all trees.
        */
 
-      this.depth = new Uint16Array(2 * L_CODES$1 + 1) //uch depth[2*L_CODES+1];
+      this.depth = new Uint16Array(2 * L_CODES$1 + 1) // uch depth[2*L_CODES+1];
 
       zero$1(this.depth)
       /* Depth of each subtree used as tie breaker for trees of equal frequency
@@ -3203,7 +3212,7 @@ function workerCodeFn() {
        */
       // Used for window memory init. We safely ignore it for JS. That makes
       // sense only for pointers and memory check tools.
-      //this.high_water = 0;
+      // this.high_water = 0;
 
       /* High water mark offset in window for initialized bytes -- bytes above
        * this are set to zero in order to avoid memory check warnings when
@@ -3321,18 +3330,18 @@ function workerCodeFn() {
       s.window = new Uint8Array(s.w_size * 2)
       s.head = new Uint16Array(s.hash_size)
       s.prev = new Uint16Array(s.w_size) // Don't need mem init magic for JS.
-      //s.high_water = 0;  /* nothing written to s->window yet */
+      // s.high_water = 0;  /* nothing written to s->window yet */
 
       s.lit_bufsize = 1 << (memLevel + 6)
       /* 16K elements by default */
 
-      s.pending_buf_size = s.lit_bufsize * 4 //overlay = (ushf *) ZALLOC(strm, s->lit_bufsize, sizeof(ush)+2);
-      //s->pending_buf = (uchf *) overlay;
+      s.pending_buf_size = s.lit_bufsize * 4 // overlay = (ushf *) ZALLOC(strm, s->lit_bufsize, sizeof(ush)+2);
+      // s->pending_buf = (uchf *) overlay;
 
       s.pending_buf = new Uint8Array(s.pending_buf_size) // It is offset from `s.pending_buf` (size is `s.lit_bufsize * 2`)
-      //s->d_buf = overlay + s->lit_bufsize/sizeof(ush);
+      // s->d_buf = overlay + s->lit_bufsize/sizeof(ush);
 
-      s.d_buf = 1 * s.lit_bufsize //s->l_buf = s->pending_buf + (1+sizeof(ush))*s->lit_bufsize;
+      s.d_buf = 1 * s.lit_bufsize // s->l_buf = s->pending_buf + (1+sizeof(ush))*s->lit_bufsize;
 
       s.l_buf = (1 + 2) * s.lit_bufsize
       s.level = level
@@ -3346,7 +3355,8 @@ function workerCodeFn() {
     }
 
     var deflate = function deflate(strm, flush) {
-      var beg, val // for gzip header write only
+      var beg
+      var val // for gzip header write only
 
       if (!strm || !strm.state || flush > Z_BLOCK || flush < 0) {
         return strm ? err(strm, Z_STREAM_ERROR) : Z_STREAM_ERROR
@@ -3368,7 +3378,7 @@ function workerCodeFn() {
       if (s.status === INIT_STATE) {
         if (s.wrap === 2) {
           // GZIP header
-          strm.adler = 0 //crc32(0L, Z_NULL, 0);
+          strm.adler = 0 // crc32(0L, Z_NULL, 0);
 
           put_byte(s, 31)
           put_byte(s, 139)
@@ -3445,12 +3455,12 @@ function workerCodeFn() {
 
           strm.adler = 1 // adler32(0L, Z_NULL, 0);
         }
-      } //#ifdef GZIP
+      } // #ifdef GZIP
 
       if (s.status === EXTRA_STATE) {
         if (
           s.gzhead.extra
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
@@ -3489,11 +3499,11 @@ function workerCodeFn() {
       if (s.status === NAME_STATE) {
         if (
           s.gzhead.name
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
-          //int val;
+          // int val;
 
           do {
             if (s.pending === s.pending_buf_size) {
@@ -3535,11 +3545,11 @@ function workerCodeFn() {
       if (s.status === COMMENT_STATE) {
         if (
           s.gzhead.comment
-          /* != Z_NULL*/
+          /* != Z_NULL */
         ) {
           beg = s.pending
           /* start of bytes to update crc */
-          //int val;
+          // int val;
 
           do {
             if (s.pending === s.pending_buf_size) {
@@ -3586,14 +3596,14 @@ function workerCodeFn() {
           if (s.pending + 2 <= s.pending_buf_size) {
             put_byte(s, strm.adler & 0xff)
             put_byte(s, (strm.adler >> 8) & 0xff)
-            strm.adler = 0 //crc32(0L, Z_NULL, 0);
+            strm.adler = 0 // crc32(0L, Z_NULL, 0);
 
             s.status = BUSY_STATE
           }
         } else {
           s.status = BUSY_STATE
         }
-      } //#endif
+      } // #endif
 
       /* Flush as much pending output as possible */
 
@@ -3664,7 +3674,7 @@ function workerCodeFn() {
              */
 
             if (flush === Z_FULL_FLUSH) {
-              /*** CLEAR_HASH(s); ***/
+              /** * CLEAR_HASH(s); ** */
 
               /* forget history */
               zero$1(s.head) // Fill with NIL (= 0);
@@ -3686,8 +3696,8 @@ function workerCodeFn() {
             return Z_OK
           }
         }
-      } //Assert(strm->avail_out > 0, "bug2");
-      //if (strm.avail_out <= 0) { throw new Error("bug2");}
+      } // Assert(strm->avail_out > 0, "bug2");
+      // if (strm.avail_out <= 0) { throw new Error("bug2");}
 
       if (flush !== Z_FINISH) {
         return Z_OK
@@ -3728,9 +3738,9 @@ function workerCodeFn() {
     var deflateEnd = function deflateEnd(strm) {
       if (
         !strm ||
-        /*== Z_NULL*/
+        /* == Z_NULL */
         !strm.state
-        /*== Z_NULL*/
+        /* == Z_NULL */
       ) {
         return Z_STREAM_ERROR
       }
@@ -3762,9 +3772,9 @@ function workerCodeFn() {
 
       if (
         !strm ||
-        /*== Z_NULL*/
+        /* == Z_NULL */
         !strm.state
-        /*== Z_NULL*/
+        /* == Z_NULL */
       ) {
         return Z_STREAM_ERROR
       }
@@ -3791,7 +3801,7 @@ function workerCodeFn() {
         if (wrap === 0) {
           /* already empty otherwise */
 
-          /*** CLEAR_HASH(s); ***/
+          /** * CLEAR_HASH(s); ** */
           zero$1(s.head) // Fill with NIL (= 0);
 
           s.strstart = 0
@@ -3873,7 +3883,7 @@ function workerCodeFn() {
       deflate: deflate_2,
       deflateEnd: deflateEnd_1,
       deflateSetDictionary: deflateSetDictionary_1,
-      deflateInfo: deflateInfo,
+      deflateInfo,
     }
 
     function _typeof(obj) {
@@ -3900,7 +3910,7 @@ function workerCodeFn() {
 
     var assign = function assign(
       obj
-      /*from1, from2, from3, ...*/
+      /* from1, from2, from3, ... */
     ) {
       var sources = Array.prototype.slice.call(arguments, 1)
 
@@ -3912,7 +3922,7 @@ function workerCodeFn() {
         }
 
         if (_typeof(source) !== 'object') {
-          throw new TypeError(source + 'must be non-object')
+          throw new TypeError(`${source}must be non-object`)
         }
 
         for (var p in source) {
@@ -3945,8 +3955,8 @@ function workerCodeFn() {
     }
 
     var common = {
-      assign: assign,
-      flattenChunks: flattenChunks,
+      assign,
+      flattenChunks,
     }
 
     // String encode/decode helpers
@@ -3975,13 +3985,13 @@ function workerCodeFn() {
     // convert string to array (typed, when possible)
 
     var string2buf = function string2buf(str) {
-      var buf,
-        c,
-        c2,
-        m_pos,
-        i,
-        str_len = str.length,
-        buf_len = 0 // count binary size
+      var buf
+      var c
+      var c2
+      var m_pos
+      var i
+      var str_len = str.length
+      var buf_len = 0 // count binary size
 
       for (m_pos = 0; m_pos < str_len; m_pos++) {
         c = str.charCodeAt(m_pos)
@@ -4056,7 +4066,8 @@ function workerCodeFn() {
     } // convert array to string
 
     var buf2string = function buf2string(buf, max) {
-      var i, out
+      var i
+      var out
       var len = max || buf.length // Reserve max possible length (2 words per char)
       // NB: by unknown reasons, Array is significantly faster for
       //     String.fromCharCode.apply than Uint16Array.
@@ -4135,9 +4146,9 @@ function workerCodeFn() {
     }
 
     var strings = {
-      string2buf: string2buf,
-      buf2string: buf2string,
-      utf8border: utf8border,
+      string2buf,
+      buf2string,
+      utf8border,
     }
 
     // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
@@ -4183,14 +4194,14 @@ function workerCodeFn() {
       /* last error message, NULL if no error */
 
       this.msg = ''
-      /*Z_NULL*/
+      /* Z_NULL */
       /* not visible by applications */
 
       this.state = null
       /* best guess about the data type: binary or text */
 
       this.data_type = 2
-      /*Z_UNKNOWN*/
+      /* Z_UNKNOWN */
       /* adler32 value of the uncompressed data */
 
       this.adler = 0
@@ -4198,21 +4209,22 @@ function workerCodeFn() {
 
     var zstream = ZStream
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     var toString = Object.prototype.toString
-    /* Public constants ==========================================================*/
+    /* Public constants ========================================================== */
 
-    /* ===========================================================================*/
+    /* =========================================================================== */
 
-    var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH,
-      Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH,
-      Z_FULL_FLUSH$1 = constants.Z_FULL_FLUSH,
-      Z_FINISH$1 = constants.Z_FINISH,
-      Z_OK$1 = constants.Z_OK,
-      Z_STREAM_END$1 = constants.Z_STREAM_END,
-      Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION,
-      Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY,
-      Z_DEFLATED$1 = constants.Z_DEFLATED
-    /* ===========================================================================*/
+    var Z_NO_FLUSH$1 = constants.Z_NO_FLUSH
+    var Z_SYNC_FLUSH = constants.Z_SYNC_FLUSH
+    var Z_FULL_FLUSH$1 = constants.Z_FULL_FLUSH
+    var Z_FINISH$1 = constants.Z_FINISH
+    var Z_OK$1 = constants.Z_OK
+    var Z_STREAM_END$1 = constants.Z_STREAM_END
+    var Z_DEFAULT_COMPRESSION$1 = constants.Z_DEFAULT_COMPRESSION
+    var Z_DEFAULT_STRATEGY$1 = constants.Z_DEFAULT_STRATEGY
+    var Z_DEFLATED$1 = constants.Z_DEFLATED
+    /* =========================================================================== */
 
     /**
      * class Deflate
@@ -4220,13 +4232,13 @@ function workerCodeFn() {
      * Generic JS-style wrapper for zlib calls. If you don't need
      * streaming behaviour - use more simple functions: [[deflate]],
      * [[deflateRaw]] and [[gzip]].
-     **/
+     * */
 
     /* internal
      * Deflate.chunks -> Array
      *
      * Chunks of output data, if [[Deflate#onData]] not overridden.
-     **/
+     * */
 
     /**
      * Deflate.result -> Uint8Array
@@ -4234,7 +4246,7 @@ function workerCodeFn() {
      * Compressed result, generated by default [[Deflate#onData]]
      * and [[Deflate#onEnd]] handlers. Filled after you push last chunk
      * (call [[Deflate#push]] with `Z_FINISH` / `true` param).
-     **/
+     * */
 
     /**
      * Deflate.err -> Number
@@ -4243,13 +4255,13 @@ function workerCodeFn() {
      * You will not need it in real life, because deflate errors
      * are possible only on wrong options or bad `onData` / `onEnd`
      * custom handlers.
-     **/
+     * */
 
     /**
      * Deflate.msg -> String
      *
      * Error message, if [[Deflate.err]] != 0
-     **/
+     * */
 
     /**
      * new Deflate(options)
@@ -4297,7 +4309,7 @@ function workerCodeFn() {
      *
      * console.log(deflate.result);
      * ```
-     **/
+     * */
 
     function Deflate(options) {
       this.options = common.assign(
@@ -4381,20 +4393,24 @@ function workerCodeFn() {
      * ...
      * push(chunk, true);  // push last chunk
      * ```
-     **/
+     * */
 
     Deflate.prototype.push = function (data, flush_mode) {
       var strm = this.strm
       var chunkSize = this.options.chunkSize
 
-      var status, _flush_mode
+      var status
+      var _flush_mode
 
       if (this.ended) {
         return false
       }
 
-      if (flush_mode === ~~flush_mode) _flush_mode = flush_mode
-      else _flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1 // Convert data if needed
+      if (flush_mode === ~~flush_mode) {
+        _flush_mode = flush_mode
+      } else {
+        _flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1
+      } // Convert data if needed
 
       if (typeof data === 'string') {
         // If we need to compress text, change encoding to utf8.
@@ -4445,7 +4461,9 @@ function workerCodeFn() {
           continue
         }
 
-        if (strm.avail_in === 0) break
+        if (strm.avail_in === 0) {
+          break
+        }
       }
 
       return true
@@ -4456,7 +4474,7 @@ function workerCodeFn() {
      *
      * By default, stores data blocks in `chunks[]` property and glue
      * those in `onEnd`. Override this handler, if you need another behaviour.
-     **/
+     * */
 
     Deflate.prototype.onData = function (chunk) {
       this.chunks.push(chunk)
@@ -4469,7 +4487,7 @@ function workerCodeFn() {
      * Called once after you tell deflate that the input stream is
      * complete (Z_FINISH). By default - join collected chunks,
      * free memory and fill `results` / `err` properties.
-     **/
+     * */
 
     Deflate.prototype.onEnd = function (status) {
       // On success - join
@@ -4512,7 +4530,7 @@ function workerCodeFn() {
      *
      * console.log(pako.deflate(data));
      * ```
-     **/
+     * */
 
     function deflate$1(input, options) {
       var deflator = new Deflate(options)
@@ -4531,8 +4549,9 @@ function workerCodeFn() {
      *
      * The same as [[deflate]], but creates raw data, without wrapper
      * (header and adler32 crc).
-     **/
+     * */
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function deflateRaw(input, options) {
       options = options || {}
       options.raw = true
@@ -4545,14 +4564,14 @@ function workerCodeFn() {
      *
      * The same as [[deflate]], but create gzip wrapper instead of
      * deflate one.
-     **/
-
+     * */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function gzip(input, options) {
       options = options || {}
       options.gzip = true
       return deflate$1(input, options)
     }
 
-    return { Deflate: Deflate, constants: constants }
+    return { Deflate, constants }
   }
 }

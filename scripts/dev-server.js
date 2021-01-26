@@ -1,7 +1,7 @@
+const path = require('path')
 const express = require('express')
 const middleware = require('webpack-dev-middleware')
 const webpack = require('webpack')
-const path = require('path')
 
 const logsConfig = require('../packages/logs/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')

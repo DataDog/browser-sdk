@@ -70,7 +70,6 @@ function proxyFetch() {
 
   originalFetch = window.fetch
 
-  // tslint:disable promise-function-async
   window.fetch = monitor(function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
     const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
@@ -85,7 +84,7 @@ function proxyFetch() {
     }
 
     const reportFetch = async (response: Response | Error) => {
-      context.duration = performance.now() - context.startTime!
+      context.duration = performance.now() - context.startTime
 
       if ('stack' in response || response instanceof Error) {
         context.status = 0
@@ -97,7 +96,7 @@ function proxyFetch() {
         try {
           text = await response.clone().text()
         } catch (e) {
-          text = `Unable to retrieve response: ${e}`
+          text = `Unable to retrieve response: ${e as string}`
         }
         context.response = text
         context.responseType = response.type

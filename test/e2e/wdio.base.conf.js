@@ -1,6 +1,6 @@
 const path = require('path')
-const getTestReportDirectory = require('../getTestReportDirectory')
 const { unlinkSync, mkdirSync } = require('fs')
+const getTestReportDirectory = require('../getTestReportDirectory')
 
 const reporters = ['spec']
 let logsPath
@@ -11,7 +11,7 @@ if (testReportDirectory) {
     'junit',
     {
       outputDir: testReportDirectory,
-      outputFileFormat: function (options) {
+      outputFileFormat(options) {
         return `results-${options.cid}.${options.capabilities.browserName}.xml`
       },
     },
@@ -33,9 +33,9 @@ module.exports = {
   reporters,
   jasmineNodeOpts: {
     defaultTimeoutInterval: 60000,
-    requires: [path.resolve(__dirname, './ts-node')],
+    requires: [path.resolve(__dirname, './tsNode')],
   },
-  onPrepare: function () {
+  onPrepare() {
     if (testReportDirectory) {
       try {
         mkdirSync(testReportDirectory, { recursive: true })

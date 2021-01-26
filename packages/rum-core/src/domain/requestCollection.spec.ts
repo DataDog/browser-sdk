@@ -1,7 +1,6 @@
 import {
   Configuration,
   DEFAULT_CONFIGURATION,
-  FetchProxy,
   FetchStub,
   FetchStubManager,
   isIE,
@@ -27,7 +26,6 @@ describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
-  let fetchProxy: FetchProxy
   let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
   let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
 
@@ -46,18 +44,17 @@ describe('collect fetch', () => {
       clearTracingIfCancelled,
       traceFetch: () => undefined,
     }
-    fetchProxy = trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
+    trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
 
     fetchStub = window.fetch as FetchStub
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => {
-      throw new Error(`unhandled rejected promise \n    ${ev.reason}`)
+      throw new Error(`unhandled rejected promise \n    ${ev.reason as string}`)
     }
   })
 
   afterEach(() => {
     fetchStubManager.reset()
     resetFetchProxy()
-    // tslint:disable-next-line:no-null-keyword
     window.onunhandledrejection = null
   })
 
