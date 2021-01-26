@@ -1,4 +1,3 @@
-import { raw } from 'express'
 import { createTest, EventRegistry } from '../../lib/framework'
 import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
