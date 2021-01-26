@@ -1,5 +1,6 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
+import { nodeOrAncestorsAreHidden } from '../privacy'
 import { MutationBuffer } from './mutation'
 import {
   Arguments,
@@ -32,7 +33,6 @@ import {
   getWindowHeight,
   getWindowWidth,
   hookSetter,
-  isBlocked,
   isTouchEvent,
   mirror,
   on,
@@ -108,7 +108,7 @@ function initMouseInteractionObserver(
 
   const handlers: ListenerHandler[] = []
   const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
-    if (isBlocked(event.target as Node, blockClass)) {
+    if (nodeOrAncestorsAreHidden(event.target as Node)) {
       return
     }
     const id = mirror.getId(event.target as INode)
@@ -135,7 +135,7 @@ function initMouseInteractionObserver(
 function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
   const updatePosition = throttle<UIEvent>(
     monitor((evt) => {
-      if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
+      if (!evt.target || nodeOrAncestorsAreHidden(evt.target as Node)) {
         return
       }
       const id = mirror.getId(evt.target as INode)
@@ -190,7 +190,7 @@ function initInputObserver(
       !target ||
       !(target as Element).tagName ||
       INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      isBlocked(target as Node, blockClass)
+      nodeOrAncestorsAreHidden(target as Node)
     ) {
       return
     }
@@ -305,7 +305,7 @@ function initMediaInteractionObserver(
 ): ListenerHandler {
   const handler = (type: 'play' | 'pause') => (event: Event) => {
     const { target } = event
-    if (!target || isBlocked(target as Node, blockClass)) {
+    if (!target || nodeOrAncestorsAreHidden(target as Node)) {
       return
     }
     mediaInteractionCb({
@@ -333,7 +333,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         (original: (...args: unknown[]) => unknown) =>
           function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             callMonitored(() => {
-              if (!isBlocked(this.canvas, blockClass)) {
+              if (!nodeOrAncestorsAreHidden(this.canvas)) {
                 setTimeout(
                   monitor(() => {
                     const recordArgs = [...args]

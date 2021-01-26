@@ -140,30 +140,6 @@ export function getWindowWidth(): number {
   )
 }
 
-export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
-  if (!node) {
-    return false
-  }
-  if (node.nodeType === node.ELEMENT_NODE) {
-    let needBlock = false
-    if (typeof blockClass === 'string') {
-      needBlock = (node as HTMLElement).classList.contains(blockClass)
-    } else {
-      forEach((node as HTMLElement).classList, (className: string) => {
-        if (blockClass.test(className)) {
-          needBlock = true
-        }
-      })
-    }
-    return needBlock || isBlocked(node.parentNode, blockClass)
-  }
-  if (node.nodeType === node.TEXT_NODE) {
-    // check parent node since text node do not have class name
-    return isBlocked(node.parentNode, blockClass)
-  }
-  return isBlocked(node.parentNode, blockClass)
-}
-
 export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
     return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle

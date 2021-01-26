@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { forEach } from '../rrweb/utils'
+import { nodeShouldBeHidden } from '../privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -159,29 +159,6 @@ export function transformAttribute(doc: Document, name: string, value: string): 
   return value
 }
 
-export function isBlockedElement(
-  element: HTMLElement,
-  blockClass: string | RegExp,
-  blockSelector: string | null
-): boolean {
-  if (typeof blockClass === 'string') {
-    if (element.classList.contains(blockClass)) {
-      return true
-    }
-  } else {
-    forEach(element.classList, (className: string) => {
-      if (blockClass.test(className)) {
-        return true
-      }
-    })
-  }
-  if (blockSelector) {
-    return element.matches(blockSelector)
-  }
-
-  return false
-}
-
 function serializeNode(
   n: Node,
   options: {
@@ -208,7 +185,7 @@ function serializeNode(
         systemId: (n as DocumentType).systemId,
       }
     case n.ELEMENT_NODE:
-      const needBlock = isBlockedElement(n as HTMLElement, blockClass, blockSelector)
+      const needBlock = nodeIsHidden(n)
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
