@@ -30,6 +30,5 @@ export async function expireSession() {
 
 async function findSessionCookie() {
   const cookies = (await browser.getCookies()) || []
-  // tslint:disable-next-line: no-unsafe-any
   return cookies.find((cookie: any) => cookie.name === '_dd_s')
 }

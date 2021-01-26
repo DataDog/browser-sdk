@@ -127,7 +127,9 @@ describe('fetch proxy', () => {
   it('should keep promise resolved behavior', (done) => {
     const fetchStubPromise = fetchStub(FAKE_URL)
     const spy = jasmine.createSpy()
-    fetchStubPromise.then(spy)
+    fetchStubPromise.then(spy).catch(() => {
+      fail('Should not have thrown an error!')
+    })
     fetchStubPromise.resolveWith({ status: 500 })
 
     setTimeout(() => {

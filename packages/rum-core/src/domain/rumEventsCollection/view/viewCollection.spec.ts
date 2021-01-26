@@ -1,7 +1,7 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { View, ViewLoadingType } from './trackViews'
+import { ViewLoadingType } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
 describe('viewCollection', () => {

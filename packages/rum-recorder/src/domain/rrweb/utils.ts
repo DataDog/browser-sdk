@@ -12,18 +12,18 @@ export const mirror: Mirror = {
   map: {},
   getId(n) {
     // if n is not a serialized INode, use -1 as its id.
+    // eslint-disable-next-line no-underscore-dangle
     if (!n.__sn) {
       return -1
     }
-    return n.__sn.id
+    return n.__sn.id // eslint-disable-line no-underscore-dangle
   },
   getNode(id) {
-    // tslint:disable-next-line: no-null-keyword
     return mirror.map[id] || null
   },
   // TODO: use a weakmap to get rid of manually memory management
   removeNodeFromMap(n) {
-    const id = n.__sn && n.__sn.id
+    const id = n.__sn && n.__sn.id // eslint-disable-line no-underscore-dangle
     delete mirror.map[id]
     if (n.childNodes) {
       n.childNodes.forEach((child) => mirror.removeNodeFromMap((child as Node) as INode))
@@ -38,7 +38,7 @@ export const mirror: Mirror = {
 export function throttle<T>(func: (arg: T) => void, wait: number, options: ThrottleOptions = {}) {
   let timeout: number | undefined
   let previous = 0
-  return function (this: unknown, _: T) {
+  return function (this: unknown) {
     const now = Date.now()
     if (!previous && options.leading === false) {
       previous = now
@@ -72,7 +72,7 @@ export function hookSetter<T>(
     set(this: T, value) {
       // put hooked setter into event loop to avoid of set latency
       setTimeout(() => {
-        d.set!.call(this, value)
+        d.set.call(this, value)
       }, 0)
       if (original && original.set) {
         original.set.call(this, value)
@@ -84,7 +84,7 @@ export function hookSetter<T>(
   }
 }
 
-// tslint:disable-next-line: max-line-length
+// eslint-disable-next-line max-len
 // copy from https://github.com/getsentry/sentry-javascript/blob/b2109071975af8bf0316d3b5b38f519bdaf5dc15/packages/utils/src/object.ts
 export function patch(
   source: { [key: string]: any },
@@ -165,7 +165,7 @@ export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
 
 export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
-    return (n as INode).__sn.id === IGNORED_NODE
+    return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle
   }
   // The main part of the slimDOM check happens in
   // rrweb-snapshot::serializeNodeWithId
@@ -193,10 +193,12 @@ export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEven
 
 export function polyfill(win = window) {
   if ('NodeList' in win && !win.NodeList.prototype.forEach) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     win.NodeList.prototype.forEach = (Array.prototype.forEach as unknown) as NodeList['forEach']
   }
 
   if ('DOMTokenList' in win && !win.DOMTokenList.prototype.forEach) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     win.DOMTokenList.prototype.forEach = (Array.prototype.forEach as unknown) as DOMTokenList['forEach']
   }
 }

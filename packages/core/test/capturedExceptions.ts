@@ -323,7 +323,7 @@ export const IE_9 = {
 export const IE_10 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
-  number: -2146823281,
+  number: -2146823281, // eslint-disable-line id-blacklist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:48:13)
    at foo (http://path/to/file.js:46:9)
@@ -334,7 +334,7 @@ export const IE_11 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
   name: 'TypeError',
-  number: -2146823281,
+  number: -2146823281, // eslint-disable-line id-blacklist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:47:21)
    at foo (http://path/to/file.js:45:13)
@@ -345,7 +345,7 @@ export const IE_11_EVAL = {
   description: "'getExceptionProps' is undefined",
   message: "'getExceptionProps' is undefined",
   name: 'ReferenceError',
-  number: -2146823279,
+  number: -2146823279, // eslint-disable-line id-blacklist
   stack: `ReferenceError: 'getExceptionProps' is undefined
    at eval code (eval code:1:1)
    at foo (http://path/to/file.js:58:17)
@@ -383,21 +383,21 @@ export const PHANTOMJS_1_19 = {
     at http://path/to/file.js:4287`,
 }
 
-// tslint:disable max-line-length
+/* eslint-disable max-len */
 export const ANDROID_REACT_NATIVE = {
   message: 'Error: test',
   name: 'Error',
   stack: `Error: test
-at render(/home/username/sample-workspace/sampleapp.collect.react/src/components/GpsMonitorScene.js:78:24)
-at _renderValidatedComponentWithoutOwnerOrContext(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:1050:29)
-at _renderValidatedComponent(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:1075:15)
-at renderedElement(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:484:29)
-at _currentElement(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:346:40)
-at child(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactReconciler.js:68:25)
-at children(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactMultiChild.js:264:10)
-at this(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js:74:41)\n`,
+  at render(/home/username/sample-workspace/sampleapp.collect.react/src/components/GpsMonitorScene.js:78:24)
+  at _renderValidatedComponentWithoutOwnerOrContext(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:1050:29)
+  at _renderValidatedComponent(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:1075:15)
+  at renderedElement(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:484:29)
+  at _currentElement(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js:346:40)
+  at child(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactReconciler.js:68:25)
+  at children(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/shared/stack/reconciler/ReactMultiChild.js:264:10)
+  at this(/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js:74:41)\n`,
 }
-// tslint:enable max-line-length
+/* eslint-enable max-len */
 
 export const ANDROID_REACT_NATIVE_PROD = {
   message: 'Error: test',

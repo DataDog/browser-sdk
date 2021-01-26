@@ -4,6 +4,7 @@ const exec = require('child_process').exec
 const request = require('request')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
+// eslint-disable-next-line max-len
 const RUNNING_BUILDS_API = `https://${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}@api.browserstack.com/automate/builds.json?status=running`
 const COMMAND = process.argv.slice(2).join(' ')
 const RETRY_DELAY = 30_000

@@ -20,7 +20,7 @@ function eventsCollector<T>() {
   })
   return {
     events,
-    pushEvent(event: T) {
+    pushEvent: (event: T) => {
       events.push(event)
     },
   }
@@ -148,9 +148,7 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle }) => {
-        return trackActions(lifeCycle)
-      })
+      .beforeBuild(({ lifeCycle }) => trackActions(lifeCycle))
   })
 
   afterEach(() => {
@@ -193,7 +191,7 @@ describe('newAction', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, collectedRawRumEvent)
 
     expect(events.length).toBe(1)
-    const action = events[0] as AutoAction
+    const action = events[0]
     expect(action.counts).toEqual({
       errorCount: 2,
       longTaskCount: 0,

@@ -1,6 +1,6 @@
 // typing issue for execute https://github.com/webdriverio/webdriverio/issues/3796
 export async function browserExecute(fn: any) {
-  return browser.execute(fn as any)
+  return browser.execute(fn)
 }
 
 export async function browserExecuteAsync<R, A, B>(
@@ -10,7 +10,8 @@ export async function browserExecuteAsync<R, A, B>(
 ): Promise<R>
 export async function browserExecuteAsync<R, A>(fn: (a: A, done: (result: R) => void) => any, arg: A): Promise<R>
 export async function browserExecuteAsync<R>(fn: (done: (result: R) => void) => any): Promise<R>
-export async function browserExecuteAsync<A extends any[]>(fn: (...args: A) => any, ...args: A) {
+export async function browserExecuteAsync<A extends any[]>(fn: (...params: A) => any, ...args: A) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return browser.executeAsync(fn as any, ...args)
 }
 
@@ -27,7 +28,7 @@ export async function withBrowserLogs(fn: (logs: BrowserLog[]) => void) {
   // https://github.com/webdriverio/webdriverio/issues/4275
   if (browser.getLogs) {
     const logs = (await browser.getLogs('browser')) as BrowserLog[]
-    await fn(logs)
+    fn(logs)
   }
 }
 
@@ -53,7 +54,6 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   type State = { state: 'success'; response: string } | { state: 'error' }
 
   const result: State = await browserExecuteAsync(
-    // tslint:disable-next-line: no-shadowed-variable
     (url, headers, done) => {
       const xhr = new XMLHttpRequest()
       xhr.addEventListener('load', () => done({ state: 'success', response: xhr.response as string }))

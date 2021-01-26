@@ -1,5 +1,3 @@
-// tslint:disable no-unsafe-any
-
 import { report, StackFrame, wrap } from './tracekit'
 
 describe('Handler', () => {

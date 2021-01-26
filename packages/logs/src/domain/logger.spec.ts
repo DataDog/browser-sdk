@@ -22,8 +22,7 @@ describe('Logger', () => {
 
     STATUSES.forEach((status) => {
       it(`'logger.${status}' should have ${status} status`, () => {
-        ;((logger as any)[status] as any)('message')
-
+        logger[status]('message')
         expect(getLoggedMessage(0).status).toEqual(status)
       })
     })

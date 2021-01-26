@@ -42,11 +42,7 @@ export enum RequestType {
 }
 
 // use lodash API
-export function throttle(
-  fn: () => void,
-  wait: number,
-  options?: { leading?: boolean; trailing?: boolean }
-): { throttled: () => void; cancel: () => void } {
+export function throttle(fn: () => void, wait: number, options?: { leading?: boolean; trailing?: boolean }) {
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
@@ -54,26 +50,26 @@ export function throttle(
   let pendingTimeoutId: number
 
   return {
-    throttled(this: any) {
+    throttled: () => {
       if (inWaitPeriod) {
         hasPendingExecution = true
         return
       }
       if (needLeadingExecution) {
-        fn.apply(this)
+        fn()
       } else {
         hasPendingExecution = true
       }
       inWaitPeriod = true
       pendingTimeoutId = window.setTimeout(() => {
         if (needTrailingExecution && hasPendingExecution) {
-          fn.apply(this)
+          fn()
         }
         inWaitPeriod = false
         hasPendingExecution = false
       }, wait)
     },
-    cancel() {
+    cancel: () => {
       window.clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
       hasPendingExecution = false
@@ -101,7 +97,7 @@ export function assign(target: Assignable, ...toAssign: Assignable[]) {
  */
 export function generateUUID(placeholder?: string): string {
   return placeholder
-    ? // tslint:disable-next-line no-bitwise
+    ? // eslint-disable-next-line  no-bitwise
       (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
@@ -125,7 +121,7 @@ export function msToNs<T>(duration: number | T): number | T {
   return round(duration * 1e6, 0)
 }
 
-// tslint:disable-next-line:no-empty
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
 interface ObjectWithToJSON {
@@ -188,7 +184,6 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
 export function includes(candidate: string, search: string): boolean
 export function includes<T>(candidate: T[], search: T): boolean
 export function includes(candidate: string | unknown[], search: any) {
-  // tslint:disable-next-line: no-unsafe-any
   return candidate.indexOf(search) !== -1
 }
 
@@ -269,14 +264,14 @@ export function getGlobalObject<T>(): T {
   }
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
-      return this
+      return this as object
     },
     configurable: true,
   })
-  // @ts-ignore
+  // @ts-ignore _dd_temp is defined using defineProperty
   let globalObject: unknown = _dd_temp_
-  // @ts-ignore
-  delete Object.prototype._dd_temp_
+  // @ts-ignore _dd_temp is defined using defineProperty
+  delete Object.prototype._dd_temp_ // eslint-disable-line no-underscore-dangle
   if (typeof globalObject !== 'object') {
     // on safari _dd_temp_ is available on window but not globally
     // fallback on other browser globals check
@@ -308,7 +303,8 @@ export function getLinkElementOrigin(element: Location | HTMLAnchorElement | URL
 }
 
 export function findCommaSeparatedValue(rawString: string, name: string) {
-  const matches = rawString.match(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
+  const regex = new RegExp(`(?:^|;)\\s*${name}\\s*=\\s*([^;]+)`)
+  const matches = regex.exec(rawString)
   return matches ? matches[1] : undefined
 }
 
@@ -344,9 +340,7 @@ interface AddEventListenerOptions {
  * Add an event listener to an event emitter object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
- * * supports IE11 by:
- *   * using an option object only if needed
- *   * emulating the `once` option
+ * * supports IE11 by: using an option object only if needed and emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
@@ -365,23 +359,20 @@ export function addEventListener(
  * Add event listeners to an event emitter object (Window, Element, mock object...).  This provides
  * a few conveniences compared to using `element.addEventListener` directly:
  *
- * * supports IE11 by:
- *   * using an option object only if needed
- *   * emulating the `once` option
+ * * supports IE11 by: using an option object only if needed and emulating the `once` option
  *
  * * wraps the listener with a `monitor` function
  *
  * * returns a `stop` function to remove the listener
  *
- * * with `once: true`, the listener will be called at most once, even if different events are
- *   listened
+ * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners(
   emitter: EventEmitter,
   events: DOM_EVENT[],
   listener: (event: Event) => void,
   { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
-): { stop(): void } {
+) {
   const wrapedListener = monitor(
     once
       ? (event: Event) => {

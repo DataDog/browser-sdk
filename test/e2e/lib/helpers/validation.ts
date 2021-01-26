@@ -13,7 +13,7 @@ export function validateFormat(events: RumEvent[]) {
     const instance = new ajv({
       allErrors: true,
     })
-    instance
+    void instance
       .addSchema(_commonSchemaJson, 'schemas/_common-schema.json')
       .addSchema(viewSchemaJson, 'schemas/view-schema.json')
       .addSchema(actionSchemaJson, 'schemas/action-schema.json')
@@ -24,7 +24,7 @@ export function validateFormat(events: RumEvent[]) {
       .validate('rum-events-format.json', event)
 
     if (instance.errors) {
-      instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message}`))
+      instance.errors.map((error) => fail(`${error.dataPath || 'event'} ${error.message!}`))
     }
   })
 }

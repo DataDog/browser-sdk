@@ -1,5 +1,3 @@
-// tslint:disable no-unsafe-any
-
 import { computeStackTrace, Handler, report } from './tracekit'
 
 describe('TraceKit', () => {
@@ -22,7 +20,6 @@ describe('TraceKit', () => {
       expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
       expect(stackFrames.stack[0].line).toEqual(63)
       expect(stackFrames.stack[0].column).toEqual(1)
-
       expect(stackFrames.stack[1].func).toEqual('namedFunc0')
       expect(stackFrames.stack[1].url).toEqual('http://example.com/js/script.js')
       expect(stackFrames.stack[1].line).toEqual(10)
@@ -112,7 +109,6 @@ Error: foo
       expect(computeStackTrace(2).message).toBeUndefined()
       expect(computeStackTrace({ foo: 'bar' }).message).toBeUndefined()
       expect(computeStackTrace(undefined).message).toBeUndefined()
-      // tslint:disable-next-line:no-null-keyword
       expect(computeStackTrace(null).message).toBeUndefined()
     })
   })
@@ -260,7 +256,7 @@ Error: foo
     ;[false, true].forEach((callOnError) => {
       ;[1, 2].forEach((numReports) => {
         let title = 'it should receive arguments from report() when'
-        title += ` callOnError is ${callOnError}`
+        title += ` callOnError is ${String(callOnError)}`
         title += ` and numReports is ${numReports}`
         it(
           title,

@@ -12,9 +12,7 @@ describe('recorder', () => {
   createTest('record mouse move')
     .withRumRecorder()
     .run(async ({ events }) => {
-      await browserExecute(() => {
-        return document.documentElement.outerHTML
-      })
+      await browserExecute(() => document.documentElement.outerHTML)
       const html = await $('html')
       await html.click()
       await flushEvents()

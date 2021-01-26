@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Configuration } from '@datadog/browser-core'
 import { RumPublicApi, StartRum } from '@datadog/browser-rum-core'
 import { makeRumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'

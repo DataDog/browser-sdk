@@ -1,13 +1,4 @@
-import {
-  addEventListener,
-  DOM_EVENT,
-  generateUUID,
-  monitor,
-  msToNs,
-  noop,
-  ONE_MINUTE,
-  throttle,
-} from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -97,12 +88,12 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   return {
-    addTiming(name: string, inInitialView = false) {
+    addTiming: (name: string, inInitialView = false) => {
       const view = inInitialView ? initialView : currentView
       view.addTiming(name)
       view.triggerUpdate()
     },
-    stop() {
+    stop: () => {
       stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
@@ -232,11 +223,13 @@ function isHashAnAnchor(hash: string) {
 }
 
 function trackHistory(onHistoryChange: () => void) {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalPushState = history.pushState
   history.pushState = monitor(function (this: History['pushState']) {
     originalPushState.apply(this, arguments as any)
     onHistoryChange()
   })
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalReplaceState = history.replaceState
   history.replaceState = monitor(function (this: History['replaceState']) {
     originalReplaceState.apply(this, arguments as any)
@@ -261,14 +254,14 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: num
   }
 
   return {
-    setLoadEvent(loadEvent: number) {
+    setLoadEvent: (loadEvent: number) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false
         loadingTimeCandidates.push(loadEvent)
         invokeCallbackIfAllCandidatesAreReceived()
       }
     },
-    setActivityLoadingTime(activityLoadingTime: number | undefined) {
+    setActivityLoadingTime: (activityLoadingTime: number | undefined) => {
       if (isWaitingForActivityLoadingTime) {
         isWaitingForActivityLoadingTime = false
         if (activityLoadingTime !== undefined) {

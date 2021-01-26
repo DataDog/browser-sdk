@@ -18,7 +18,6 @@ export class EventRegistry {
   readonly internalMonitoring: ServerInternalMonitoringMessage[] = []
 
   push(type: IntakeType, event: any) {
-    // tslint:disable-next-line: no-unsafe-any
     this[type].push(event)
   }
 

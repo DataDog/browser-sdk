@@ -47,7 +47,7 @@ function eventsCollector<T>() {
   })
   return {
     events,
-    pushEvent(event: T) {
+    pushEvent: (event: T) => {
       events.push(event)
     },
   }
@@ -102,8 +102,8 @@ describe('trackPagePageActivities', () => {
   })
 
   describe('requests', () => {
-    function makeFakeRequestCompleteEvent(requestIndex: number): RequestCompleteEvent {
-      return { requestIndex } as any
+    function makeFakeRequestCompleteEvent(requestIndex: number) {
+      return { requestIndex } as RequestCompleteEvent
     }
     it('emits an activity event when a request starts', () => {
       const lifeCycle = new LifeCycle()

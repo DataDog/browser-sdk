@@ -370,7 +370,6 @@ describe('rum entry', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      // tslint:disable-next-line:no-null-keyword
       const user = { id: null, name: 2, email: { bar: 'qux' } }
       publicApi.setUser(user as any)
       publicApi.addAction('message')
@@ -387,7 +386,6 @@ describe('rum entry', () => {
 
     it('should reject non object input', () => {
       publicApi.setUser(2 as any)
-      // tslint:disable-next-line:no-null-keyword
       publicApi.setUser(null as any)
       publicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)
@@ -420,7 +418,7 @@ describe('rum entry', () => {
 
     it('should add custom timings', () => {
       rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      // tslint:disable-next-line: no-unsafe-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       ;(rumGlobal as any).addTiming('foo')
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(errorSpy).not.toHaveBeenCalled()

@@ -1,4 +1,3 @@
-// tslint:disable ban-types
 import { combine, Context } from '../tools/context'
 import { toStackTraceString } from '../tools/error'
 import * as utils from '../tools/utils'
@@ -96,18 +95,23 @@ export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
 }
 
-export function monitored(_: any, __: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value
-  descriptor.value = function () {
-    const decorated = (monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod) as Function
-    return decorated.apply(this, arguments)
-  }
+export function monitored<T extends (...params: any[]) => unknown>(
+  _: any,
+  __: string,
+  descriptor: TypedPropertyDescriptor<T>
+) {
+  const originalMethod = descriptor.value!
+  descriptor.value = function (this: any, ...args: Parameters<T>) {
+    const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
+    return decorated.apply(this, args) as ReturnType<T>
+  } as T
 }
 
-export function monitor<T extends Function>(fn: T): T {
+export function monitor<T extends (...args: any[]) => any>(fn: T): T {
   return (function (this: any) {
     try {
-      return fn.apply(this, arguments)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return fn.apply(this, arguments as any)
     } catch (e) {
       logErrorIfDebug(e)
       try {
@@ -161,7 +165,7 @@ function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${utils.jsonStringify(e)}`,
+    message: `Uncaught ${utils.jsonStringify(e)!}`,
   }
 }
 

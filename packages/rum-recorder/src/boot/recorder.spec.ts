@@ -34,9 +34,9 @@ describe('startRecording', () => {
           }
         },
       })
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        return startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
-      })
+      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
+        startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
+      )
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
 

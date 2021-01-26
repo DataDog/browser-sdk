@@ -1,0 +1,6 @@
+bundle
+cjs
+esm
+test/app/dist
+sandbox
+coverage
