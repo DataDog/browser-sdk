@@ -1,5 +1,4 @@
 /* eslint-disable no-underscore-dangle */
-/* eslint-disable @typescript-eslint/prefer-regexp-exec */
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -346,7 +345,7 @@ function slimDOMExcluded(sn: SerializedNode, slimDOMOptions: SlimDOMOptions): bo
       slimDOMOptions.headFavicon &&
       ((sn.tagName === 'link' && sn.attributes.rel === 'shortcut icon') ||
         (sn.tagName === 'meta' &&
-          (lowerIfExists(sn.attributes.name).match(/^msapplication-tile(image|color)$/) ||
+          (/^msapplication-tile(image|color)$/.test(lowerIfExists(sn.attributes.name)) ||
             lowerIfExists(sn.attributes.name) === 'application-name' ||
             lowerIfExists(sn.attributes.rel) === 'icon' ||
             lowerIfExists(sn.attributes.rel) === 'apple-touch-icon' ||
@@ -354,12 +353,12 @@ function slimDOMExcluded(sn: SerializedNode, slimDOMOptions: SlimDOMOptions): bo
     ) {
       return true
     } else if (sn.tagName === 'meta') {
-      if (slimDOMOptions.headMetaDescKeywords && lowerIfExists(sn.attributes.name).match(/^description|keywords$/)) {
+      if (slimDOMOptions.headMetaDescKeywords && /^description|keywords$/.test(lowerIfExists(sn.attributes.name))) {
         return true
       } else if (
         slimDOMOptions.headMetaSocial &&
-        (lowerIfExists(sn.attributes.property).match(/^(og|twitter|fb):/) || // og = opengraph (facebook)
-          lowerIfExists(sn.attributes.name).match(/^(og|twitter):/) ||
+        (/^(og|twitter|fb):/.test(lowerIfExists(sn.attributes.property)) || // og = opengraph (facebook)
+          /^(og|twitter):/.test(lowerIfExists(sn.attributes.name)) ||
           lowerIfExists(sn.attributes.name) === 'pinterest')
       ) {
         return true
@@ -381,8 +380,8 @@ function slimDOMExcluded(sn: SerializedNode, slimDOMOptions: SlimDOMOptions): bo
           lowerIfExists(sn.attributes.name) === 'framework' ||
           lowerIfExists(sn.attributes.name) === 'publisher' ||
           lowerIfExists(sn.attributes.name) === 'progid' ||
-          lowerIfExists(sn.attributes.property).match(/^article:/) ||
-          lowerIfExists(sn.attributes.property).match(/^product:/))
+          /^article:/.test(lowerIfExists(sn.attributes.property)) ||
+          /^product:/.test(lowerIfExists(sn.attributes.property)))
       ) {
         return true
       } else if (
