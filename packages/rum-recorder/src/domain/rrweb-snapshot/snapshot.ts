@@ -1,3 +1,5 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable @typescript-eslint/prefer-regexp-exec */
 import {
   serializedNode,
   serializedNodeWithId,
@@ -9,13 +11,18 @@ import {
   SlimDOMOptions,
 } from './types'
 
-let _id = 1
 const tagNameRegex = RegExp('[^a-z1-6-_]')
 
 export const IGNORED_NODE = -2
 
+let nextId = 1
 function genId(): number {
-  return _id++
+  return nextId++
+}
+
+export function cleanupSnapshot() {
+  // allow a new recording to start numbering nodes from scratch
+  nextId = 1
 }
 
 function getValidTagName(tagName: string): string {
@@ -63,35 +70,38 @@ const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
 const RELATIVE_PATH = /^(?!www\.|(?:http|ftp)s?:\/\/|[A-Za-z]:\\|\/\/).*/
 const DATA_URI = /^(data:)([^,]*),(.*)/i
 export function absoluteToStylesheet(cssText: string | null, href: string): string {
-  return (cssText || '').replace(URL_IN_CSS_REF, (origin, quote1, path1, quote2, path2, path3) => {
-    const filePath = path1 || path2 || path3
-    const maybeQuote = quote1 || quote2 || ''
-    if (!filePath) {
-      return origin
-    }
-    if (!RELATIVE_PATH.test(filePath)) {
-      return `url(${maybeQuote}${filePath}${maybeQuote})`
-    }
-    if (DATA_URI.test(filePath)) {
-      return `url(${maybeQuote}${filePath}${maybeQuote})`
-    }
-    if (filePath[0] === '/') {
-      return `url(${maybeQuote}${extractOrigin(href) + filePath}${maybeQuote})`
-    }
-    const stack = href.split('/')
-    const parts = filePath.split('/')
-    stack.pop()
-    for (const part of parts) {
-      if (part === '.') {
-        continue
-      } else if (part === '..') {
-        stack.pop()
-      } else {
-        stack.push(part)
+  return (cssText || '').replace(
+    URL_IN_CSS_REF,
+    (origin: string, quote1: string, path1: string, quote2: string, path2: string, path3: string) => {
+      const filePath = path1 || path2 || path3
+      const maybeQuote = quote1 || quote2 || ''
+      if (!filePath) {
+        return origin
       }
+      if (!RELATIVE_PATH.test(filePath)) {
+        return `url(${maybeQuote}${filePath}${maybeQuote})`
+      }
+      if (DATA_URI.test(filePath)) {
+        return `url(${maybeQuote}${filePath}${maybeQuote})`
+      }
+      if (filePath[0] === '/') {
+        return `url(${maybeQuote}${extractOrigin(href)}${filePath}${maybeQuote})`
+      }
+      const stack = href.split('/')
+      const parts = filePath.split('/')
+      stack.pop()
+      for (const part of parts) {
+        if (part === '.') {
+          continue
+        } else if (part === '..') {
+          stack.pop()
+        } else {
+          stack.push(part)
+        }
+      }
+      return `url(${maybeQuote}${stack.join('/')}${maybeQuote})`
     }
-    return `url(${maybeQuote}${stack.join('/')}${maybeQuote})`
-  })
+  )
 }
 
 function getAbsoluteSrcsetString(doc: Document, attributeValue: string) {
@@ -139,16 +149,17 @@ export function transformAttribute(doc: Document, name: string, value: string): 
   // relative path in attribute
   if (name === 'src' || (name === 'href' && value)) {
     return absoluteToDoc(doc, value)
-  } else if (name === 'srcset' && value) {
-    return getAbsoluteSrcsetString(doc, value)
-  } else if (name === 'style' && value) {
-    return absoluteToStylesheet(value, location.href)
-  } else {
-    return value
   }
+  if (name === 'srcset' && value) {
+    return getAbsoluteSrcsetString(doc, value)
+  }
+  if (name === 'style' && value) {
+    return absoluteToStylesheet(value, location.href)
+  }
+  return value
 }
 
-export function _isBlockedElement(
+export function isBlockedElement(
   element: HTMLElement,
   blockClass: string | RegExp,
   blockSelector: string | null
@@ -197,7 +208,7 @@ function serializeNode(
         systemId: (n as DocumentType).systemId,
       }
     case n.ELEMENT_NODE:
-      const needBlock = _isBlockedElement(n as HTMLElement, blockClass, blockSelector)
+      const needBlock = isBlockedElement(n as HTMLElement, blockClass, blockSelector)
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
@@ -205,9 +216,7 @@ function serializeNode(
       }
       // remote css
       if (tagName === 'link' && inlineStylesheet) {
-        const stylesheet = Array.from(doc.styleSheets).find((s) => {
-          return s.href === (n as HTMLLinkElement).href
-        })
+        const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
         const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
         if (cssText) {
           delete attributes.rel
@@ -318,9 +327,8 @@ function serializeNode(
 function lowerIfExists(maybeAttr: string | number | boolean): string {
   if (maybeAttr === undefined) {
     return ''
-  } else {
-    return (maybeAttr as string).toLowerCase()
   }
+  return (maybeAttr as string).toLowerCase()
 }
 
 function slimDOMExcluded(sn: serializedNode, slimDOMOptions: SlimDOMOptions): boolean {
@@ -492,7 +500,7 @@ export function serializeNodeWithId(
   return serializedNode
 }
 
-function snapshot(
+export function snapshot(
   n: Document,
   options?: {
     blockClass?: string | RegExp
@@ -520,6 +528,7 @@ function snapshot(
           'datetime-local': true,
           email: true,
           month: true,
+          // eslint-disable-next-line id-blacklist
           number: true,
           range: true,
           search: true,
@@ -578,10 +587,3 @@ export function visitSnapshot(node: serializedNodeWithId, onVisit: (node: serial
 
   walk(node)
 }
-
-export function cleanupSnapshot() {
-  // allow a new recording to start numbering nodes from scratch
-  _id = 1
-}
-
-export default snapshot

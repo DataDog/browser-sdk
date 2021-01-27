@@ -1,8 +1,4 @@
-import snapshot, {
-  serializeNodeWithId,
-  transformAttribute,
-  IGNORED_NODE,
-} from './snapshot'
+import { serializeNodeWithId, transformAttribute, IGNORED_NODE, snapshot } from './snapshot'
 export * from './types'
 
 export { snapshot, serializeNodeWithId, transformAttribute, IGNORED_NODE }

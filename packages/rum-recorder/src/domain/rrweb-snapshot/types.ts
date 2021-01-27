@@ -69,6 +69,7 @@ export type MaskInputOptions = Partial<{
   'datetime-local': boolean
   email: boolean
   month: boolean
+  // eslint-disable-next-line id-blacklist
   number: boolean
   range: boolean
   search: boolean
