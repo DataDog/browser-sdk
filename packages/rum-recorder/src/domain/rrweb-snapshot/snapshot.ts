@@ -1,12 +1,12 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/prefer-regexp-exec */
 import {
-  serializedNode,
-  serializedNodeWithId,
+  SerializedNode,
+  SerializedNodeWithId,
   NodeType,
-  attributes,
+  Attributes,
   INode,
-  idNodeMap,
+  IdNodeMap,
   MaskInputOptions,
   SlimDOMOptions,
 } from './types'
@@ -192,7 +192,7 @@ function serializeNode(
     maskInputOptions: MaskInputOptions
     recordCanvas: boolean
   }
-): serializedNode | false {
+): SerializedNode | false {
   const { doc, blockClass, blockSelector, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
@@ -210,7 +210,7 @@ function serializeNode(
     case n.ELEMENT_NODE:
       const needBlock = isBlockedElement(n as HTMLElement, blockClass, blockSelector)
       const tagName = getValidTagName((n as HTMLElement).tagName)
-      let attributes: attributes = {}
+      let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
         attributes[name] = transformAttribute(doc, name, value)
       }
@@ -331,7 +331,7 @@ function lowerIfExists(maybeAttr: string | number | boolean): string {
   return (maybeAttr as string).toLowerCase()
 }
 
-function slimDOMExcluded(sn: serializedNode, slimDOMOptions: SlimDOMOptions): boolean {
+function slimDOMExcluded(sn: SerializedNode, slimDOMOptions: SlimDOMOptions): boolean {
   if (slimDOMOptions.comment && sn.type === NodeType.Comment) {
     // TODO: convert IE conditional comments to real nodes
     return true
@@ -406,7 +406,7 @@ export function serializeNodeWithId(
   n: Node | INode,
   options: {
     doc: Document
-    map: idNodeMap
+    map: IdNodeMap
     blockClass: string | RegExp
     blockSelector: string | null
     skipChild: boolean
@@ -416,7 +416,7 @@ export function serializeNodeWithId(
     recordCanvas?: boolean
     preserveWhiteSpace?: boolean
   }
-): serializedNodeWithId | null {
+): SerializedNodeWithId | null {
   const {
     doc,
     map,
@@ -510,7 +510,7 @@ export function snapshot(
     recordCanvas?: boolean
     blockSelector?: string | null
   }
-): [serializedNodeWithId | null, idNodeMap] {
+): [SerializedNodeWithId | null, IdNodeMap] {
   const {
     blockClass = 'rr-block',
     inlineStylesheet = true,
@@ -519,7 +519,7 @@ export function snapshot(
     maskAllInputs = false,
     slimDOM = false,
   } = options || {}
-  const idNodeMap: idNodeMap = {}
+  const idNodeMap: IdNodeMap = {}
   const maskInputOptions: MaskInputOptions =
     maskAllInputs === true
       ? {
@@ -577,8 +577,8 @@ export function snapshot(
   ]
 }
 
-export function visitSnapshot(node: serializedNodeWithId, onVisit: (node: serializedNodeWithId) => unknown) {
-  function walk(current: serializedNodeWithId) {
+export function visitSnapshot(node: SerializedNodeWithId, onVisit: (node: SerializedNodeWithId) => unknown) {
+  function walk(current: SerializedNodeWithId) {
     onVisit(current)
     if (current.type === NodeType.Document || current.type === NodeType.Element) {
       current.childNodes.forEach(walk)

@@ -1,4 +1,4 @@
-import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot'
+import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot'
 import type { RawRecord } from '../../types'
 
 export enum IncrementalSource {
@@ -197,7 +197,7 @@ export interface AddedNodeMutation {
   // Newly recorded mutations will not have previousId any more, just for compatibility
   previousId?: number | null
   nextId: number | null
-  node: serializedNodeWithId
+  node: SerializedNodeWithId
 }
 
 interface MutationCallbackParam {
@@ -322,7 +322,7 @@ export interface MediaInteractionParam {
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
 export interface Mirror {
-  map: idNodeMap
+  map: IdNodeMap
   getId: (n: INode) => number
   getNode: (id: number) => INode | null
   removeNodeFromMap: (n: INode) => void
