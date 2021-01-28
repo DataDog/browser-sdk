@@ -1,16 +1,5 @@
 import { serializedNodeWithId } from 'rrweb-snapshot'
-import type { IncrementalSource, MousePosition, IncrementalData } from './domain/rrweb/types'
-
-export { IncrementalSource, MousePosition }
-
-export interface MouseMoveRecord {
-  type: RecordType.IncrementalSnapshot
-  timestamp: number
-  data: {
-    source: IncrementalSource.TouchMove | IncrementalSource.MouseMove
-    positions: MousePosition[]
-  }
-}
+import type { IncrementalData } from './domain/rrweb/types'
 
 export interface Segment extends SegmentMeta {
   records: Record[]
