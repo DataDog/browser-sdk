@@ -1,5 +1,5 @@
 import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
-import type { Record } from '../../types'
+import type { RawRecord } from '../../types'
 
 export enum IncrementalSource {
   Mutation,
@@ -106,7 +106,7 @@ export interface RecordOptions<T> {
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
   hooks?: HooksParam
-  packFn?: (record: Record) => Record
+  packFn?: (record: RawRecord) => RawRecord
   sampling?: SamplingStrategy
   recordCanvas?: boolean
   collectFonts?: boolean

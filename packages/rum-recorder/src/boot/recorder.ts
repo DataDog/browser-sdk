@@ -4,6 +4,7 @@ import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@data
 import { record } from '../domain/rrweb'
 import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'
+import { RawRecord } from '../types'
 
 export function startRecording(
   lifeCycle: LifeCycle,
@@ -20,8 +21,12 @@ export function startRecording(
     (data, meta) => send(configuration.sessionReplayEndpoint, data, meta)
   )
 
+  function addRawRecord(rawRecord: RawRecord) {
+    addRecord({ ...rawRecord, timestamp: Date.now() })
+  }
+
   const { stop: stopRecording, takeFullSnapshot } = record({
-    emit: addRecord,
+    emit: addRawRecord,
   })!
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, takeFullSnapshot)
