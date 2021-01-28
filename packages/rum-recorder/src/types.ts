@@ -35,6 +35,7 @@ export type RawRecord =
   | IncrementalSnapshotRecord
   | MetaRecord
   | CustomRecord
+  | FocusRecord
 
 export type Record = RawRecord & {
   timestamp: number
@@ -48,6 +49,7 @@ export enum RecordType {
   IncrementalSnapshot,
   Meta,
   Custom,
+  Focus,
 }
 
 export interface DomContentLoadedRecord {
@@ -90,5 +92,12 @@ export interface CustomRecord<T = unknown> {
   data: {
     tag: string
     payload: T
+  }
+}
+
+export interface FocusRecord {
+  type: RecordType.Focus
+  data: {
+    has_focus: boolean
   }
 }

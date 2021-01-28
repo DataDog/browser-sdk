@@ -3,7 +3,8 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 
-import { startRecording } from './recorder'
+import { Record, RecordType, FocusRecord, RawRecord } from '../types'
+import { startRecording, trackFocusRecords } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -72,7 +73,7 @@ describe('startRecording', () => {
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
         has_full_snapshot: 'true',
-        records_count: '2',
+        records_count: '3',
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
@@ -95,7 +96,7 @@ describe('startRecording', () => {
     }
 
     waitRequests(1, (requests) => {
-      expect(requests[0].data.get('records_count')).toBe(String(inputCount + 2))
+      expect(requests[0].data.get('records_count')).toBe(String(inputCount + 3))
       expectNoExtraRequest(done)
     })
   })
@@ -112,7 +113,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequests(1, (requests) => {
-      expect(requests[0].data.get('records_count')).toBe('3')
+      expect(requests[0].data.get('records_count')).toBe('4')
       expectNoExtraRequest(done)
     })
   })
@@ -160,6 +161,60 @@ describe('startRecording', () => {
       expect(requests[1].data.get('has_full_snapshot')).toBe('true')
       expectNoExtraRequest(done)
     })
+  })
+})
+
+describe('trackFocusRecords', () => {
+  let hasFocus: boolean
+  let addRecordSpy: jasmine.Spy<(rawRecord: RawRecord) => void>
+  let lifeCycle: LifeCycle
+
+  beforeEach(() => {
+    hasFocus = true
+    lifeCycle = new LifeCycle()
+    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
+    addRecordSpy = jasmine.createSpy()
+  })
+
+  it('adds an initial Focus record', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on focus', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    window.dispatchEvent(createNewEvent('focus'))
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on blur', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    window.dispatchEvent(createNewEvent('blur'))
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on new view', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('set has_focus to true if the document has the focus', () => {
+    hasFocus = true
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(true)
+  })
+
+  it("set has_focus to false if the document doesn't have the focus", () => {
+    hasFocus = false
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(false)
   })
 })
 
