@@ -1,18 +1,19 @@
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
+import { Record, RawRecord, RecordType } from '../../types'
 import { initObservers, mutationBuffer } from './observer'
-import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
+import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
-function wrapEvent(e: Event): EventWithTime {
+function wrapRecord(e: RawRecord): Record {
   return {
     ...e,
     timestamp: Date.now(),
   }
 }
 
-let wrappedEmit!: (e: EventWithTime, isCheckout?: boolean) => void
+let wrappedEmit!: (e: Record, isCheckout?: boolean) => void
 
-function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | undefined {
+function record<T = Record>(options: RecordOptions<T> = {}): RecordAPI | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -86,28 +87,28 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
 
   polyfill()
 
-  let lastFullSnapshotEvent: EventWithTime
+  let lastFullSnapshotRecord: Record
   let incrementalSnapshotCount = 0
-  wrappedEmit = (e: EventWithTime, isCheckout?: boolean) => {
+  wrappedEmit = (e: Record, isCheckout?: boolean) => {
     if (
       mutationBuffer.isFrozen() &&
-      e.type !== EventType.FullSnapshot &&
-      !(e.type === EventType.IncrementalSnapshot && e.data.source === IncrementalSource.Mutation)
+      e.type !== RecordType.FullSnapshot &&
+      !(e.type === RecordType.IncrementalSnapshot && e.data.source === IncrementalSource.Mutation)
     ) {
-      // we've got a user initiated event so first we need to apply
+      // we've got a user initiated record so first we need to apply
       // all DOM changes that have been buffering during paused state
       mutationBuffer.emit()
       mutationBuffer.unfreeze()
     }
 
     emit(((packFn ? packFn(e) : e) as unknown) as T, isCheckout)
-    if (e.type === EventType.FullSnapshot) {
-      lastFullSnapshotEvent = e
+    if (e.type === RecordType.FullSnapshot) {
+      lastFullSnapshotRecord = e
       incrementalSnapshotCount = 0
-    } else if (e.type === EventType.IncrementalSnapshot) {
+    } else if (e.type === RecordType.IncrementalSnapshot) {
       incrementalSnapshotCount += 1
       const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
-      const exceedTime = checkoutEveryNms && e.timestamp - lastFullSnapshotEvent.timestamp > checkoutEveryNms
+      const exceedTime = checkoutEveryNms && e.timestamp - lastFullSnapshotRecord.timestamp > checkoutEveryNms
       if (exceedCount || exceedTime) {
         takeFullSnapshot(true)
       }
@@ -116,13 +117,13 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
 
   const takeFullSnapshot = (isCheckout = false) => {
     wrappedEmit(
-      wrapEvent({
+      wrapRecord({
         data: {
           height: getWindowHeight(),
           href: window.location.href,
           width: getWindowWidth(),
         },
-        type: EventType.Meta,
+        type: RecordType.Meta,
       }),
       isCheckout
     )
@@ -144,7 +145,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
 
     mirror.map = idNodeMap
     wrappedEmit(
-      wrapEvent({
+      wrapRecord({
         data: {
           node,
           initialOffset: {
@@ -164,7 +165,7 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
                   0,
           },
         },
-        type: EventType.FullSnapshot,
+        type: RecordType.FullSnapshot,
       })
     )
     if (!wasFrozen) {
@@ -178,9 +179,9 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
     handlers.push(
       on('DOMContentLoaded', () => {
         wrappedEmit(
-          wrapEvent({
+          wrapRecord({
             data: {},
-            type: EventType.DomContentLoaded,
+            type: RecordType.DomContentLoaded,
           })
         )
       })
@@ -203,102 +204,102 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
             slimDOMOptions,
             canvasMutationCb: (p) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.CanvasMutation,
                     ...p,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             fontCb: (p) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.Font,
                     ...p,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             inputCb: (v) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.Input,
                     ...v,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             mediaInteractionCb: (p) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.MediaInteraction,
                     ...p,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             mouseInteractionCb: (d) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.MouseInteraction,
                     ...d,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             mousemoveCb: (positions, source) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     positions,
                     source,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             mutationCb: (m) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.Mutation,
                     ...m,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             scrollCb: (p) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.Scroll,
                     ...p,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             styleSheetRuleCb: (r) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.StyleSheetRule,
                     ...r,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
             viewportResizeCb: (d) =>
               wrappedEmit(
-                wrapEvent({
+                wrapRecord({
                   data: {
                     source: IncrementalSource.ViewportResize,
                     ...d,
                   },
-                  type: EventType.IncrementalSnapshot,
+                  type: RecordType.IncrementalSnapshot,
                 })
               ),
           },
@@ -314,9 +315,9 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
           'load',
           () => {
             wrappedEmit(
-              wrapEvent({
+              wrapRecord({
                 data: {},
-                type: EventType.Load,
+                type: RecordType.Load,
               })
             )
             init()
@@ -337,17 +338,17 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
   }
 }
 
-record.addCustomEvent = <T>(tag: string, payload: T) => {
+record.addCustomRecord = <T>(tag: string, payload: T) => {
   if (!wrappedEmit) {
-    throw new Error('please add custom event after start recording')
+    throw new Error('please add custom record after start recording')
   }
   wrappedEmit(
-    wrapEvent({
+    wrapRecord({
       data: {
         payload,
         tag,
       },
-      type: EventType.Custom,
+      type: RecordType.Custom,
     })
   )
 }
