@@ -911,4 +911,16 @@ describe('rum track custom timings', () => {
       foo: 1234,
     })
   })
+
+  it('should sanitized timing name', () => {
+    setupBuilder.build()
+    const warnSpy = spyOn(console, 'warn')
+
+    addTiming('foo bar-qux.@zip_21%$*€👋', 1234)
+
+    expect(getViewEvent(1).customTimings).toEqual({
+      'foo_bar-qux.@zip_21_$____': 1234,
+    })
+    expect(warnSpy).toHaveBeenCalled()
+  })
 })
