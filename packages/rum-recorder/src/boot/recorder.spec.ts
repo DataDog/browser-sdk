@@ -3,7 +3,7 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 
-import { expectNoExtraCall, waitCalls } from '../../test/utils'
+import { collectAsyncCalls } from '../../test/utils'
 import { startRecording } from './recorder'
 
 describe('startRecording', () => {
@@ -40,8 +40,10 @@ describe('startRecording', () => {
       )
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-    expectNoExtraRequestSendCalls = expectNoExtraCall.bind(null, requestSendSpy)
-    waitRequestSendCalls = waitCalls.bind(null, requestSendSpy)
+    ;({
+      waitAsyncCalls: waitRequestSendCalls,
+      expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
+    } = collectAsyncCalls(requestSendSpy))
   })
 
   afterEach(() => {

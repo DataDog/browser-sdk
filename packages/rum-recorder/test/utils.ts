@@ -52,25 +52,24 @@ export class MockWorker implements DeflateWorker {
   }
 }
 
-export function waitCalls<F extends jasmine.Func>(
-  spy: jasmine.Spy<F>,
-  expectedCallsCount: number,
-  callback: (calls: jasmine.Calls<F>) => void
-) {
-  if (spy.calls.count() === expectedCallsCount) {
-    callback(spy.calls)
-  } else {
-    spy.and.callFake((() => {
+export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
+  return {
+    waitAsyncCalls: (expectedCallsCount: number, callback: (calls: jasmine.Calls<F>) => void) => {
       if (spy.calls.count() === expectedCallsCount) {
         callback(spy.calls)
+      } else {
+        spy.and.callFake((() => {
+          if (spy.calls.count() === expectedCallsCount) {
+            callback(spy.calls)
+          }
+        }) as F)
       }
-    }) as F)
+    },
+    expectNoExtraAsyncCall: (done: () => void) => {
+      spy.and.callFake((() => {
+        fail('Unexpected extra call')
+      }) as F)
+      setTimeout(done, 300)
+    },
   }
-}
-
-export function expectNoExtraCall(spy: jasmine.Spy<any>, done: () => void) {
-  spy.and.callFake(() => {
-    fail('Unexpected extra call')
-  })
-  setTimeout(done, 300)
 }
