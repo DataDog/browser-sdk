@@ -14,7 +14,7 @@ module.exports = {
       './tsconfig.json',
       './test/app/tsconfig.json',
       './test/e2e/tsconfig.json',
-      './packages/developer-extension/tsconfig.json',
+      './developer-extension/tsconfig.json',
     ],
     sourceType: 'module',
   },

@@ -2,5 +2,5 @@
 {
   "extends": "./tsconfig.base.json",
   "include": [".", ".eslintrc.js"],
-  "exclude": ["./test/e2e", "./test/app", "./packages/developer-extension"]
+  "exclude": ["./test/e2e", "./test/app", "./developer-extension"]
 }

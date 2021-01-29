@@ -11,7 +11,7 @@ build the extension manually.
 $ git clone https://github.com/DataDog/browser-sdk
 $ cd browser-sdk
 $ yarn
-$ cd packages/developer-extension
+$ cd developer-extension
 $ yarn build
 ```
 
@@ -19,7 +19,7 @@ Then, in Google Chrome:
 
 - Open the _Extension Management_ page by navigating to [chrome://extensions](chrome://extensions).
 - Enable _Developer Mode_ by clicking the toggle switch next to _Developer mode_.
-- Click the _LOAD UNPACKED_ button and select the `browser-sdk/packages/developer-extension/dist`
+- Click the _LOAD UNPACKED_ button and select the `browser-sdk/developer-extension/dist`
   directory.
 
 ## Features
