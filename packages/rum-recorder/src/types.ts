@@ -1,6 +1,8 @@
 import { serializedNodeWithId } from 'rrweb-snapshot'
 import type { IncrementalData } from './domain/rrweb/types'
 
+export { IncrementalSource } from './domain/rrweb/types'
+
 export interface Segment extends SegmentMeta {
   records: Record[]
 }
