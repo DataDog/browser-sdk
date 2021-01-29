@@ -1,14 +1,14 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useState } from 'react'
 import { Store } from '../common/types'
 import { listenAction, sendAction } from './actions'
 
 let store: Store | undefined
-const storeListeners = new Set<() => void>()
+const storeListeners = new Set<(store: Store) => void>()
 const storeLoadingPromise = new Promise((resolve) => {
   sendAction('getStore', undefined)
   listenAction('newStore', (newStore) => {
     store = newStore
-    storeListeners.forEach((listener) => listener())
+    storeListeners.forEach((listener) => listener(store))
     resolve()
   })
 })
@@ -18,16 +18,16 @@ export function useStore(): [Store, (newState: Partial<Store>) => void] {
     throw storeLoadingPromise
   }
 
-  const forceUpdate = useReducer(() => ({}), {})[1] as () => void
+  const [localStore, setLocalStore] = useState(store)
 
   useEffect(() => {
-    storeListeners.add(forceUpdate)
+    storeListeners.add(setLocalStore)
     return () => {
-      storeListeners.delete(forceUpdate)
+      storeListeners.delete(setLocalStore)
     }
   }, [])
 
-  return [store, setStore]
+  return [localStore, setStore]
 }
 
 function setStore(newStore: Partial<Store>) {
