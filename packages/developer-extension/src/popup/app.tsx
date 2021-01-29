@@ -1,7 +1,7 @@
 import { Provider as BumbagProvider, css, Box } from 'bumbag'
 import React, { Suspense } from 'react'
 
-import { Panel } from './Panel'
+import { Panel } from './panel'
 
 const theme = {
   global: {

@@ -34,7 +34,11 @@ chrome.webRequest.onBeforeRequest.addListener(
   ['blocking']
 )
 
-listenAction('getStore', () => refreshDevServerStatus())
+listenAction('getStore', () => {
+  refreshDevServerStatus().catch((error) =>
+    console.error('Unexpected error while refreshing dev server status:', error)
+  )
+})
 
 async function refreshDevServerStatus() {
   const timeoutId = setTimeout(() => setStore({ devServerStatus: 'checking' }), 500)

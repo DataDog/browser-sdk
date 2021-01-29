@@ -13,7 +13,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 
     const url = new URL(info.url)
 
-    const intake = url.hostname.match(/^\w*/)?.[0]
+    const intake = /^\w*/.exec(url.hostname)?.[0]
     if (!intake) {
       return
     }
@@ -21,7 +21,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       return
     }
 
-    for (const rawBody of info.requestBody.raw!) {
+    for (const rawBody of info.requestBody.raw) {
       if (rawBody.bytes) {
         const decodedBody = decoder.decode(rawBody.bytes)
         for (const rawEvent of decodedBody.split('\n')) {

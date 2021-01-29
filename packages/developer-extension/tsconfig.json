@@ -8,7 +8,5 @@
 
     // See https://github.com/bumbag/bumbag-ui/issues/97
     "strictNullChecks": false
-  },
-
-  "include": ["src"]
+  }
 }
