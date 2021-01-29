@@ -23,7 +23,7 @@ describe('record', () => {
   })
 
   it('will only have one full snapshot without checkout config', () => {
-    const emit = jasmine.createSpy<(event: Record) => void>()
+    const emit = jasmine.createSpy<(record: Record) => void>()
     stop = record<Record>({ emit })?.stop
 
     const count = 30
@@ -32,9 +32,9 @@ describe('record', () => {
       input.dispatchEvent(createNewEvent('input', {}))
     }
 
-    const events = emit.calls.allArgs().map(([event]) => event)
+    const events = emit.calls.allArgs().map(([record]) => record)
     expect(events.length).toEqual(count + 2)
-    expect(events.filter((event) => event.type === RecordType.Meta).length).toEqual(1)
-    expect(events.filter((event) => event.type === RecordType.FullSnapshot).length).toEqual(1)
+    expect(events.filter((record) => record.type === RecordType.Meta).length).toEqual(1)
+    expect(events.filter((record) => record.type === RecordType.FullSnapshot).length).toEqual(1)
   })
 })

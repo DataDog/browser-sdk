@@ -4,7 +4,7 @@ import { initObservers, mutationBuffer } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
-let wrappedEmit!: (e: RawRecord, isCheckout?: boolean) => void
+let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | undefined {
   const {
@@ -82,11 +82,11 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
 
   let lastFullSnapshotRecordTimestamp: number
   let incrementalSnapshotCount = 0
-  wrappedEmit = (e, isCheckout) => {
+  wrappedEmit = (record, isCheckout) => {
     if (
       mutationBuffer.isFrozen() &&
-      e.type !== RecordType.FullSnapshot &&
-      !(e.type === RecordType.IncrementalSnapshot && e.data.source === IncrementalSource.Mutation)
+      record.type !== RecordType.FullSnapshot &&
+      !(record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Mutation)
     ) {
       // we've got a user initiated record so first we need to apply
       // all DOM changes that have been buffering during paused state
@@ -94,11 +94,11 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
       mutationBuffer.unfreeze()
     }
 
-    emit(((packFn ? packFn(e) : e) as unknown) as T, isCheckout)
-    if (e.type === RecordType.FullSnapshot) {
+    emit(((packFn ? packFn(record) : record) as unknown) as T, isCheckout)
+    if (record.type === RecordType.FullSnapshot) {
       lastFullSnapshotRecordTimestamp = Date.now()
       incrementalSnapshotCount = 0
-    } else if (e.type === RecordType.IncrementalSnapshot) {
+    } else if (record.type === RecordType.IncrementalSnapshot) {
       incrementalSnapshotCount += 1
       const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
       const exceedTime = checkoutEveryNms && Date.now() - lastFullSnapshotRecordTimestamp > checkoutEveryNms
