@@ -53,7 +53,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger,
 
     init: monitor((userConfiguration: LogsUserConfiguration) => {
-      if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
+      if (!(userConfiguration.allowLocalFile || checkIsNotLocalFile()) || !canInitLogs(userConfiguration)) {
         return
       }
 

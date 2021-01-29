@@ -61,7 +61,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     init: monitor((userConfiguration: RumUserConfiguration) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
-        !checkIsNotLocalFile() ||
+        !(userConfiguration.allowLocalFile || checkIsNotLocalFile()) ||
         !canInitRum(userConfiguration)
       ) {
         return

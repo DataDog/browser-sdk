@@ -141,6 +141,7 @@ The following parameters are available:
 | `silentMultipleInit`    | Boolean | No       | `false`         | Initialization fails silently if Datadog's RUM is already initialized on the page.                       |
 | `proxyHost`             | String  | No       |                 | Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.       |
 | `allowedTracingOrigins` | List    | No       |                 | A list of request origins used to inject tracing headers.                                                |
+| `allowLocalFile`        | Boolean | No       |                 | Allow initialization even when served from a `file:` url.                                                |
 
 Options that must have matching configuration when also using `logs` SDK:
 
@@ -170,6 +171,7 @@ init(configuration: {
     trackSessionAcrossSubdomains?: boolean,
     useSecureSessionCookie?: boolean,
     useCrossSiteSessionCookie?: boolean,
+    allowLocalFile?: boolean,
 })
 ```
 

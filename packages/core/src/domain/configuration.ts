@@ -51,6 +51,7 @@ export interface UserConfiguration {
   trackInteractions?: boolean
   proxyHost?: string
   beforeSend?: (event: any) => void
+  allowLocalFile?: boolean
 
   service?: string
   env?: string

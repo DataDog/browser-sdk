@@ -127,6 +127,7 @@ The following parameters are available to configure the Datadog browser logs SDK
 | `forwardErrorsToLogs` | Boolean | No       | `true`          | Set to `false` to stop forwarding console.error logs, uncaught exceptions and network errors to Datadog. |
 | `sampleRate`          | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send logs.       |
 | `silentMultipleInit`  | Boolean | No       |                 | Prevent logging errors while having multiple init.                                                       |
+| `allowLocalFile`      | Boolean | No       |                 | Allow initialization even when served from a `file:` url.                                                |
 
 Options that must have a matching configuration when using the `RUM` SDK:
 
