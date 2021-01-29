@@ -74,7 +74,7 @@ describe('resourceCollection', () => {
         resource: {
           duration: 100 * 1e6,
           method: 'GET',
-          statusCode: 200,
+          status_code: 200,
           type: ResourceType.XHR,
           url: 'https://resource.com/valid',
         },
@@ -194,10 +194,10 @@ describe('resourceCollection', () => {
           traceId: '1234',
         })
       )
-
+      // eslint-disable-next-line no-underscore-dangle
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
-      expect(traceInfo.traceId).toBe('1234')
+      expect(traceInfo.trace_id).toBe('1234')
     })
 
     it('should be processed from completed request', () => {
@@ -209,11 +209,11 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
-
+      // eslint-disable-next-line no-underscore-dangle
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
-      expect(traceInfo.traceId).toBeDefined()
-      expect(traceInfo.spanId).toBeDefined()
+      expect(traceInfo.trace_id).toBeDefined()
+      expect(traceInfo.span_id).toBeDefined()
     })
   })
 })

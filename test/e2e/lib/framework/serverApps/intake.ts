@@ -1,6 +1,6 @@
+import { createInflate } from 'zlib'
 import connectBusboy from 'connect-busboy'
 import express from 'express'
-import { createInflate } from 'zlib'
 
 import { SegmentFile, SerssionReplayCall } from '../../types/serverEvents'
 import { EventRegistry } from '../eventsRegistry'
@@ -14,7 +14,7 @@ export function createIntakeServerApp(events: EventRegistry) {
   app.post('/v1/input/:endpoint', async (req, res) => {
     const endpoint = req.params.endpoint
     if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'internalMonitoring') {
-      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent) as any))
+      ;(req.body as string).split('\n').map((rawEvent) => events.push(endpoint, JSON.parse(rawEvent)))
     }
 
     if (endpoint === 'sessionReplay' && req.busboy) {
@@ -49,13 +49,8 @@ async function readSessionReplay(req: express.Request): Promise<SerssionReplayCa
       meta[key] = value
     })
 
-    req.busboy.on('finish', async () => {
-      try {
-        const segment = await segmentPromise
-        resolve({ meta, segment })
-      } catch (e) {
-        reject(e)
-      }
+    req.busboy.on('finish', () => {
+      segmentPromise.then((segment) => resolve({ meta, segment })).catch((e) => reject(e))
     })
   })
 }

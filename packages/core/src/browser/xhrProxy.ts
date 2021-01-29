@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { monitor } from '../domain/internalMonitoring'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
@@ -65,9 +66,10 @@ export function resetXhrProxy() {
 }
 
 function proxyXhr() {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrOpen = XMLHttpRequest.prototype.open
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
-
   XMLHttpRequest.prototype.open = monitor(function (this: BrowserXHR, method: string, url: string) {
     // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
     // and can be used by different code versions depending on customer setup
@@ -80,7 +82,7 @@ function proxyXhr() {
     return originalXhrOpen.apply(this, arguments as any)
   })
 
-  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR, body: unknown) {
+  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR) {
     if (this._datadog_xhr) {
       this._datadog_xhr.startTime = performance.now()
 
@@ -103,7 +105,7 @@ function proxyXhr() {
         }
         hasBeenReported = true
 
-        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime!
+        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime
         this._datadog_xhr.response = this.response as string | undefined
         this._datadog_xhr.status = this.status
 

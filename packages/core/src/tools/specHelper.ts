@@ -27,7 +27,8 @@ export function isFirefox() {
 }
 
 export function isIE() {
-  return navigator.userAgent.indexOf('MSIE ') > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)
+  const hasIEAgent = /Trident.*rv\:11\./.test(navigator.userAgent)
+  return navigator.userAgent.indexOf('MSIE ') > 0 || hasIEAgent
 }
 
 export function clearAllCookies() {
@@ -61,28 +62,26 @@ export function stubFetch(): FetchStubManager {
       resolve = res
       reject = rej
     })
-    ;(promise as FetchStubPromise).resolveWith = async (response: ResponseStub) => {
-      const resolved = resolve({
+    ;(promise as FetchStubPromise).resolveWith = (response: ResponseStub) => {
+      resolve({
         ...response,
         clone: () => {
           const cloned = {
-            text: async () => {
+            text: () => {
               if (response.responseTextError) {
-                throw response.responseTextError
+                return Promise.reject(response.responseTextError)
               }
-              return response.responseText
+              return Promise.resolve(response.responseText)
             },
           }
           return cloned as Response
         },
-      }) as Promise<ResponseStub>
+      })
       onRequestEnd()
-      return resolved
     }
-    ;(promise as FetchStubPromise).rejectWith = async (error: Error) => {
-      const rejected = reject(error) as Promise<Error>
+    ;(promise as FetchStubPromise).rejectWith = (error: Error) => {
+      reject(error)
       onRequestEnd()
-      return rejected
     }
     return promise
   }) as typeof window.fetch
@@ -106,8 +105,8 @@ export interface ResponseStub extends Partial<Response> {
 export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPromise
 
 export interface FetchStubPromise extends Promise<Response> {
-  resolveWith: (response: ResponseStub) => Promise<ResponseStub>
-  rejectWith: (error: Error) => Promise<Error>
+  resolveWith: (response: ResponseStub) => void
+  rejectWith: (error: Error) => void
 }
 
 class StubXhr {
@@ -122,10 +121,10 @@ class StubXhr {
     this.fakeEventTarget = document.createElement('div')
   }
 
-  // tslint:disable:no-empty
+  /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
   open(method: string, url: string) {}
   send() {}
-  // tslint:enable:no-empty
+  /* eslint-enable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
   abort() {
     this.status = 0

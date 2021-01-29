@@ -16,6 +16,25 @@
 
 ---
 
+## v2.4.0
+
+- ✨[RUMF-820] expose API to add custom timings to the current view ([#702](https://github.com/DataDog/browser-sdk/pull/702))
+- 👷[RUMF-324] Replace TSLint with ESLint ([#681](https://github.com/DataDog/browser-sdk/pull/681))
+- ♻️ Remove automatic snake case ([#699](https://github.com/DataDog/browser-sdk/pull/699))
+
+## v2.3.1
+
+- ✨ [RUMF-826] Allow classic intake only for us and eu ([#694](https://github.com/DataDog/browser-sdk/pull/694))
+- [recorder] set 'hasReplay' to undefined by defaultb ([#697](https://github.com/DataDog/browser-sdk/pull/697))
+- [RUMF-819] postpone start recording ([#688](https://github.com/DataDog/browser-sdk/pull/688))
+
+## v2.3.0
+
+- ✨[RUMF-802] add support for capacitor app stack traces ([#685](https://github.com/DataDog/browser-sdk/pull/685))
+- 🐛[RUMF-824] support Request instances in tracing ([#684](https://github.com/DataDog/browser-sdk/pull/684))
+- 🐛[RUMF-809] URL encode tags in intake requests ([#689](https://github.com/DataDog/browser-sdk/pull/689))
+- ⚗[RUMF-804] implement a minimal version of the recorder ([#670](https://github.com/DataDog/browser-sdk/pull/670))
+
 ## v2.2.1
 
 - ⚗ Implement addTiming ([#668](https://github.com/DataDog/browser-sdk/pull/668))

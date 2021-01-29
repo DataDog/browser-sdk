@@ -1,5 +1,3 @@
-// tslint:disable no-unsafe-any
-
 import * as CapturedExceptions from '../../test/capturedExceptions'
 import { isSafari } from '../tools/specHelper'
 import { BrowserError, computeStackTrace } from './tracekit'
@@ -25,7 +23,7 @@ describe('Parser', () => {
     const expected = ['baz', 'bar', 'foo']
 
     for (let i = 1; i <= 3; i += 1) {
-      expect(trace.stack![i].func).toEqual(expected[i - 1])
+      expect(trace.stack[i].func).toEqual(expected[i - 1])
     }
   })
 
@@ -1120,7 +1118,7 @@ describe('Parser', () => {
       func: 'this',
       line: 74,
       url:
-        // tslint:disable-next-line max-line-length
+        // eslint-disable-next-line  max-len
         '/home/username/sample-workspace/sampleapp.collect.react/node_modules/react-native/Libraries/Renderer/src/renderers/native/ReactNativeBaseComponent.js',
     })
   })

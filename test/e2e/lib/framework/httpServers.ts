@@ -54,8 +54,8 @@ async function createServer(): Promise<Server> {
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
     res.on('close', () => {
-      const requestUrl = `${req.headers.host}${req.url}`
-      log(`${req.method} ${requestUrl} ${res.statusCode}`)
+      const requestUrl = `${req.headers.host!}${req.url!}`
+      log(`${req.method!} ${requestUrl} ${res.statusCode}`)
     })
   })
 
@@ -75,7 +75,7 @@ async function instantiateServer(): Promise<http.Server> {
     try {
       return await instantiateServerOnPort(port)
     } catch (error) {
-      if ((error as any).code === 'EADDRINUSE') {
+      if (error.code === 'EADDRINUSE') {
         continue
       }
       throw error
@@ -127,7 +127,7 @@ function createIdleWaiter() {
       clearTimeout(waitTimeoutId)
 
       pendingActivities.add(activity)
-      activity.then(() => {
+      void activity.then(() => {
         pendingActivities.delete(activity)
 
         if (pendingActivities.size === 0) {

@@ -3,7 +3,6 @@ import {
   buildCookieOptions,
   checkCookiesAuthorized,
   checkIsNotLocalFile,
-  Configuration,
   Context,
   createContextManager,
   deepClone,
@@ -34,8 +33,11 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
   const globalContextManager = createContextManager()
   let user: User = {}
 
-  let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => {
-    return undefined
+  let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => undefined
+
+  const beforeInitAddTiming = new BoundedBuffer<[string, number]>()
+  let addTimingStrategy: ReturnType<StartRum>['addTiming'] = (name) => {
+    beforeInitAddTiming.add([name, performance.now()])
   }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
@@ -68,13 +70,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
-      let configuration: Configuration
-      let addTiming: ReturnType<StartRum>['addTiming']
       ;({
-        addTiming,
-        configuration,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
+        addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
       } = startRumImpl(userConfiguration, () => ({
         user,
@@ -82,10 +81,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-
-      if (configuration.isEnabled('custom-timings')) {
-        ;(rumGlobal as any).addTiming = addTiming
-      }
+      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
 
       isAlreadyInitialized = true
     }),
@@ -97,9 +93,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     getRumGlobalContext: monitor(globalContextManager.get),
     setRumGlobalContext: monitor(globalContextManager.set),
 
-    getInternalContext: monitor((startTime?: number) => {
-      return getInternalContextStrategy(startTime)
-    }),
+    getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
@@ -111,8 +105,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     }),
 
     /**
-     * @deprecated
-     * @see addAction
+     * @deprecated use addAction instead
      */
     addUserAction: (name: string, context?: object) => {
       rumGlobal.addAction(name, context as Context)
@@ -123,7 +116,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
         checkedSource = source
       } else {
-        console.error(`DD_RUM.addError: Invalid source '${source}'`)
+        console.error(`DD_RUM.addError: Invalid source '${source as string}'`)
         checkedSource = ErrorSource.CUSTOM
       }
       addErrorStrategy({
@@ -132,6 +125,10 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         source: checkedSource,
         startTime: performance.now(),
       })
+    }),
+
+    addTiming: monitor((name: string) => {
+      addTimingStrategy(name)
     }),
 
     setUser: monitor((newUser: User) => {

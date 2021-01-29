@@ -7,7 +7,6 @@ import {
   DEFAULT_CONFIGURATION,
   noop,
   SPEC_ENDPOINTS,
-  withSnakeCaseKeys,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
@@ -27,7 +26,7 @@ export interface TestSetupBuilder {
   build: () => TestIO
 }
 
-type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop?(): void }
+type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
 interface BuildContext {
   lifeCycle: LifeCycle
   configuration: Readonly<Configuration>
@@ -87,7 +86,7 @@ export function setup(): TestSetupBuilder {
     withFakeLocation(initialUrl: string) {
       fakeLocation = buildLocation(initialUrl, location.href)
       spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-        assign(fakeLocation, buildLocation(pathname, fakeLocation.href!))
+        assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
       })
 
       function hashchangeCallBack() {
@@ -174,7 +173,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: RumContext & ViewContext = {
     _dd: {
-      formatVersion: 2,
+      format_version: 2,
     },
     application: {
       id: fakeId,
@@ -190,5 +189,5 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       url: 'fake url',
     },
   }
-  validateFormat(withSnakeCaseKeys(combine(fakeContext, rawRumEvent)))
+  validateFormat(combine(fakeContext, rawRumEvent))
 }

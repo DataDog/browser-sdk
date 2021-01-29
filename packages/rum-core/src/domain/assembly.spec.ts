@@ -1,16 +1,15 @@
-import { Context, DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, noop } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { RumEventType, User } from '../rawRumEvent.types'
-import { RumActionEvent, RumEvent, RumLongTaskEvent } from '../rumEvent.types'
+import { CommonContext, RumEventType } from '../rawRumEvent.types'
+import { RumActionEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
   let lifeCycle: LifeCycle
-  let globalContext: Context
-  let user: User
+  let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
   let isTracked: boolean
   let viewSessionId: string | undefined
@@ -19,8 +18,10 @@ describe('rum assembly', () => {
   beforeEach(() => {
     isTracked = true
     viewSessionId = '1234'
-    globalContext = {}
-    user = {}
+    commonContext = {
+      context: {},
+      user: {},
+    }
     beforeSend = noop
     setupBuilder = setup()
       .withSession({
@@ -50,15 +51,12 @@ describe('rum assembly', () => {
         }),
       })
       .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
-        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => ({
-          user,
-          context: globalContext,
-        }))
+        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => commonContext)
       })
     ;({ lifeCycle } = setupBuilder.build())
 
     serverRumEvents = []
-    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ serverRumEvent }) =>
+    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
       serverRumEvents.push(serverRumEvent)
     )
   })
@@ -68,15 +66,6 @@ describe('rum assembly', () => {
   })
 
   describe('events', () => {
-    it('should have snake cased attributes', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { longTask: { duration: 2 } }),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0] as RumLongTaskEvent).long_task.duration).toBe(2)
-    })
-
     it('should allow modification on sensitive field', () => {
       beforeSend = (event: RumEvent) => (event.view.url = 'modified')
 
@@ -113,15 +102,6 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].date).toBeDefined()
     })
 
-    it('should be snake cased', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
-        startTime: 0,
-      })
-
-      expect(serverRumEvents[0]._dd.format_version).toBe(2)
-    })
-
     it('should be overwritten by event attributes', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, { date: 10 }),
@@ -134,7 +114,7 @@ describe('rum assembly', () => {
 
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
-      globalContext = { bar: 'foo' }
+      commonContext.context = { bar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -144,7 +124,7 @@ describe('rum assembly', () => {
     })
 
     it('should not be included if empty', () => {
-      globalContext = {}
+      commonContext.context = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -154,12 +134,12 @@ describe('rum assembly', () => {
     })
 
     it('should ignore subsequent context mutation', () => {
-      globalContext = { bar: 'foo', baz: 'foz' }
+      commonContext.context = { bar: 'foo', baz: 'foz' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
       })
-      delete globalContext.bar
+      delete commonContext.context.bar
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -169,18 +149,8 @@ describe('rum assembly', () => {
       expect((serverRumEvents[1].context as any).bar).toBeUndefined()
     })
 
-    it('should not be automatically snake cased', () => {
-      globalContext = { fooBar: 'foo' }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
-    })
-
     it('should ignore the current global context when a saved global context is provided', () => {
-      globalContext = { replacedContext: 'b', addedContext: 'x' }
+      commonContext.context = { replacedContext: 'b', addedContext: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -198,7 +168,7 @@ describe('rum assembly', () => {
 
   describe('rum user', () => {
     it('should be included in event attributes', () => {
-      user = { id: 'foo' }
+      commonContext.user = { id: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -208,7 +178,7 @@ describe('rum assembly', () => {
     })
 
     it('should not be included if empty', () => {
-      user = {}
+      commonContext.user = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0,
@@ -217,18 +187,8 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].usr).toBe(undefined)
     })
 
-    it('should not be automatically snake cased', () => {
-      user = { fooBar: 'foo' }
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect(serverRumEvents[0].usr!.fooBar).toEqual('foo')
-    })
-
     it('should ignore the current user when a saved common context user is provided', () => {
-      user = { replacedAttribute: 'b', addedAttribute: 'x' }
+      commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -253,16 +213,6 @@ describe('rum assembly', () => {
       })
 
       expect((serverRumEvents[0].context as any).foo).toEqual('bar')
-    })
-
-    it('should not be automatically snake cased', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        customerContext: { fooBar: 'foo' },
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0,
-      })
-
-      expect((serverRumEvents[0].context as any).fooBar).toEqual('foo')
     })
   })
 
@@ -308,7 +258,7 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('session', () => {
+  describe('event generation condition', () => {
     it('when tracked, it should generate event', () => {
       isTracked = true
 
@@ -347,6 +297,30 @@ describe('rum assembly', () => {
         startTime: 0,
       })
       expect(serverRumEvents.length).toBe(0)
+    })
+  })
+
+  describe('session context', () => {
+    it('should include the session type and id', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+      expect(serverRumEvents[0].session).toEqual({
+        has_replay: undefined,
+        id: '1234',
+        type: 'user',
+      })
+    })
+
+    it('should set the session.has_replay attribute if it is defined in the common context', () => {
+      commonContext.hasReplay = true
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0,
+      })
+      expect(serverRumEvents[0].session.has_replay).toBe(true)
     })
   })
 })

@@ -11,8 +11,8 @@ export const VISIBILITY_CHECK_DELAY = utils.ONE_MINUTE
 
 export interface Session<T> {
   renewObservable: Observable<void>
-  getId(): string | undefined
-  getTrackingType(): T | undefined
+  getId: () => string | undefined
+  getTrackingType: () => T | undefined
 }
 
 export interface SessionState {
@@ -63,12 +63,8 @@ export function startSessionManagement<TrackingType extends string>(
   trackVisibility(expandSession)
 
   return {
-    getId() {
-      return retrieveActiveSession(sessionCookie).id
-    },
-    getTrackingType() {
-      return retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined
-    },
+    getId: () => retrieveActiveSession(sessionCookie).id,
+    getTrackingType: () => retrieveActiveSession(sessionCookie)[productKey] as TrackingType | undefined,
     renewObservable,
   }
 }
@@ -125,7 +121,7 @@ export function persistSession(session: SessionState, cookie: CookieCache) {
   session.expire = String(Date.now() + SESSION_EXPIRATION_DELAY)
   const cookieString = utils
     .objectEntries(session)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}=${value as string}`)
     .join(SESSION_ENTRY_SEPARATOR)
   cookie.set(cookieString, SESSION_EXPIRATION_DELAY)
 }

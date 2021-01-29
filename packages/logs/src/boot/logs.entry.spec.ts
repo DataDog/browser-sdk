@@ -15,7 +15,7 @@ describe('logs entry', () => {
   let startLogsGetGlobalContext: (() => Context) | undefined
   const startLogs: StartLogs = (configuration, logger, getGlobalContext) => {
     startLogsGetGlobalContext = getGlobalContext
-    return sendLogsSpy as any
+    return (sendLogsSpy as any) as ReturnType<StartLogs>
   }
 
   function getLoggedMessage(index: number) {
@@ -62,7 +62,8 @@ describe('logs entry', () => {
     })
 
     it('should add a `_setDebug` that works', () => {
-      const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug as any
+      // eslint-disable-next-line no-underscore-dangle
+      const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
       spyOn(console, 'warn')
@@ -170,7 +171,7 @@ describe('logs entry', () => {
         location.href = `#tata${Math.random()}`
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(getLoggedMessage(0).context.view!.url).toEqual(initialLocation)
+        expect(getLoggedMessage(0).context.view.url).toEqual(initialLocation)
       })
 
       it('stores a deep copy of the global context', () => {

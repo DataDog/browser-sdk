@@ -28,22 +28,29 @@ export function startTracer(configuration: Configuration): Tracer {
     clearTracingIfCancelled,
     traceFetch: (context) =>
       injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
-        context.init = { ...context.init }
-        const headers: string[][] = []
-        if (context.init.headers instanceof Headers) {
-          context.init.headers.forEach((value, key) => {
-            headers.push([key, value])
+        if (context.input instanceof Request && !context.init?.headers) {
+          context.input = new Request(context.input)
+          Object.keys(tracingHeaders).forEach((key) => {
+            ;(context.input as Request).headers.append(key, tracingHeaders[key])
           })
-        } else if (Array.isArray(context.init.headers)) {
-          context.init.headers.forEach((header) => {
-            headers.push(header)
-          })
-        } else if (context.init.headers) {
-          Object.keys(context.init.headers).forEach((key) => {
-            headers.push([key, (context.init!.headers as Record<string, string>)[key]])
-          })
+        } else {
+          context.init = { ...context.init }
+          const headers: string[][] = []
+          if (context.init.headers instanceof Headers) {
+            context.init.headers.forEach((value, key) => {
+              headers.push([key, value])
+            })
+          } else if (Array.isArray(context.init.headers)) {
+            context.init.headers.forEach((header) => {
+              headers.push(header)
+            })
+          } else if (context.init.headers) {
+            Object.keys(context.init.headers).forEach((key) => {
+              headers.push([key, (context.init!.headers as Record<string, string>)[key]])
+            })
+          }
+          context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
         }
-        context.init.headers = headers.concat(objectEntries(tracingHeaders) as string[][])
       }),
     traceXhr: (context, xhr) =>
       injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
@@ -96,7 +103,7 @@ function makeTracingHeaders(traceId: TraceIdentifier, spanId: TraceIdentifier): 
   }
 }
 
-/* tslint:disable:no-bitwise */
+/* eslint-disable no-bitwise */
 export class TraceIdentifier {
   private buffer: Uint8Array = new Uint8Array(8)
 
@@ -141,4 +148,4 @@ export class TraceIdentifier {
     )
   }
 }
-/* tslint:enable:no-bitwise */
+/* eslint-enable no-bitwise */

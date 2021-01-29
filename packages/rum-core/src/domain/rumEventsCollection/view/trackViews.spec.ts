@@ -52,9 +52,8 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
 }
 
 function mockGetElementById() {
-  return spyOn(document, 'getElementById').and.callFake((elementId: string) => {
-    return (elementId === ('testHashValue' as unknown)) as any
-  })
+  const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
+  return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
 }
 
 function spyOnViews() {
@@ -774,9 +773,9 @@ describe('rum view measures', () => {
         pending('No PerformanceObserver support')
       }
       isLayoutShiftSupported = true
-      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() => {
-        return isLayoutShiftSupported ? ['layout-shift'] : []
-      })
+      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() =>
+        isLayoutShiftSupported ? ['layout-shift'] : []
+      )
     })
 
     it('should be initialized to 0', () => {
@@ -834,7 +833,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let addTiming: (name: string, inInitialView?: boolean, time?: number) => void
+  let addTiming: (name: string, time?: number) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -857,34 +856,20 @@ describe('rum track custom timings', () => {
     history.pushState({}, '', '/bar')
     const currentViewId = getViewEvent(2).id
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
     expect(event.customTimings).toEqual({ foo: 20 })
   })
 
-  it('should add custom timing to initial view', () => {
-    const { clock } = setupBuilder.build()
-    clock.tick(20)
-    history.pushState({}, '', '/bar')
-    const initialViewId = getViewEvent(0).id
-
-    clock.tick(20)
-    addTiming('foo', true)
-
-    const event = getViewEvent(3)
-    expect(event.id).toEqual(initialViewId)
-    expect(event.customTimings).toEqual({ foo: 40 })
-  })
-
   it('should add multiple custom timings', () => {
     const { clock } = setupBuilder.build()
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     clock.tick(10)
-    addTiming('bar', false)
+    addTiming('bar')
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -896,10 +881,10 @@ describe('rum track custom timings', () => {
   it('should update custom timing', () => {
     const { clock } = setupBuilder.build()
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     clock.tick(10)
-    addTiming('bar', false)
+    addTiming('bar')
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
@@ -908,12 +893,22 @@ describe('rum track custom timings', () => {
     })
 
     clock.tick(20)
-    addTiming('foo', false)
+    addTiming('foo')
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
       bar: 30,
       foo: 50,
+    })
+  })
+
+  it('should add custom timing with a specific time', () => {
+    setupBuilder.build()
+
+    addTiming('foo', 1234)
+
+    expect(getViewEvent(1).customTimings).toEqual({
+      foo: 1234,
     })
   })
 })

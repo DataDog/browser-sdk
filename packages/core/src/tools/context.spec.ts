@@ -1,11 +1,4 @@
-import {
-  combine,
-  createCircularReferenceChecker,
-  deepClone,
-  mergeInto,
-  toSnakeCase,
-  withSnakeCaseKeys,
-} from './context'
+import { combine, createCircularReferenceChecker, deepClone, mergeInto } from './context'
 
 describe('context', () => {
   describe('combine', () => {
@@ -20,12 +13,10 @@ describe('context', () => {
     })
 
     it('should replace a sub-value with null', () => {
-      // tslint:disable-next-line: no-null-keyword
       expect(combine({ a: {} }, { a: null as any })).toEqual({ a: null })
     })
 
     it('should ignore null arguments', () => {
-      // tslint:disable-next-line: no-null-keyword
       expect(combine({ a: 1 }, null)).toEqual({ a: 1 })
     })
 
@@ -154,30 +145,6 @@ describe('context', () => {
       const circularReferenceChecker = createCircularReferenceChecker()
       circularReferenceChecker.hasAlreadyBeenSeen(source)
       expect(mergeInto({}, source, circularReferenceChecker)).toBe(undefined)
-    })
-  })
-
-  describe('format', () => {
-    it('should format a string to snake case', () => {
-      expect(toSnakeCase('camelCaseWord')).toEqual('camel_case_word')
-      expect(toSnakeCase('PascalCase')).toEqual('pascal_case')
-      expect(toSnakeCase('kebab-case')).toEqual('kebab_case')
-    })
-
-    it('should format object keys in snake case', () => {
-      expect(
-        withSnakeCaseKeys({
-          camelCase: 1,
-          nestedKey: { 'kebab-case': 'helloWorld', array: [{ camelCase: 1 }, { camelCase: 2 }] },
-          // tslint:disable-next-line: no-null-keyword
-          nullValue: null,
-        })
-      ).toEqual({
-        camel_case: 1,
-        nested_key: { kebab_case: 'helloWorld', array: [{ camel_case: 1 }, { camel_case: 2 }] },
-        // tslint:disable-next-line: no-null-keyword
-        null_value: null,
-      })
     })
   })
 })

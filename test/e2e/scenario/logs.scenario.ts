@@ -9,6 +9,7 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ events }) => {
       await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -35,6 +36,7 @@ describe('logs', () => {
     .withLogs()
     .run(async ({ events }) => {
       await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         window.DD_LOGS!.logger.log('hello')
       })
       await flushEvents()
@@ -48,10 +50,16 @@ describe('logs', () => {
     .run(async ({ events, baseUrl }) => {
       await browserExecuteAsync((unreachableUrl, done) => {
         let count = 0
-        fetch(`/throw`).then(() => (count += 1))
-        fetch(`/unknown`).then(() => (count += 1))
+        fetch(`/throw`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
+        fetch(`/unknown`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
         fetch(unreachableUrl).catch(() => (count += 1))
-        fetch(`/ok`).then(() => (count += 1))
+        fetch(`/ok`)
+          .then(() => (count += 1))
+          .catch((err) => console.error(err))
 
         const interval = setInterval(() => {
           if (count === 4) {
@@ -66,15 +74,15 @@ describe('logs', () => {
 
       expect(events.logs.length).toEqual(2)
 
-      const unreachableRequest = events.logs.find((log) => log.http!.url.includes('/unreachable'))!
-      const throwRequest = events.logs.find((log) => log.http!.url.includes('/throw'))!
+      const unreachableRequest = events.logs.find((log) => log.http.url.includes('/unreachable'))!
+      const throwRequest = events.logs.find((log) => log.http.url.includes('/throw'))!
 
       expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
-      expect(throwRequest.http!.status_code).toEqual(500)
+      expect(throwRequest.http.status_code).toEqual(500)
       expect(throwRequest.error!.stack).toMatch(/Server error/)
 
       expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
-      expect(unreachableRequest.http!.status_code).toEqual(0)
+      expect(unreachableRequest.http.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
 })

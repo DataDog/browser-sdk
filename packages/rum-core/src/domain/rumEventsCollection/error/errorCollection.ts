@@ -32,10 +32,10 @@ export function doStartErrorCollection(
   observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {
-    addError(
+    addError: (
       { error, startTime, context: customerContext, source }: ProvidedError,
       savedCommonContext?: CommonContext
-    ) {
+    ) => {
       const rawError = computeRawError(error, startTime, source)
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
@@ -56,7 +56,13 @@ function processError(error: RawError) {
     date: getTimestamp(error.startTime),
     error: {
       message: error.message,
-      resource: error.resource,
+      resource: error.resource
+        ? {
+            method: error.resource.method,
+            status_code: error.resource.statusCode,
+            url: error.resource.url,
+          }
+        : undefined,
       source: error.source,
       stack: error.stack,
       type: error.type,

@@ -245,7 +245,6 @@ describe('utils', () => {
 
     it('should jsonStringify edge cases', () => {
       expect(jsonStringify(undefined)).toEqual(undefined)
-      // tslint:disable-next-line:no-null-keyword
       expect(jsonStringify(null)).toEqual('null')
       expect(jsonStringify(1)).toEqual('1')
       expect(jsonStringify(true)).toEqual('true')
@@ -253,7 +252,7 @@ describe('utils', () => {
 
     it('should not crash on serialization error', () => {
       const circularReference: any = { otherData: 123 }
-      ;(circularReference as any).myself = circularReference
+      circularReference.myself = circularReference
 
       expect(jsonStringify(circularReference)).toEqual('<error: unable to serialize object>')
     })

@@ -1,6 +1,6 @@
+import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import * as url from 'url'
 import { buildLogs, buildNpm, buildRum, buildRumRecorder, Endpoints } from '../sdkBuilds'
 
 export function createMockServerApp(endpoints: Endpoints, setup: string) {
@@ -39,7 +39,7 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
 
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
-    res.redirect(`ok${redirectUri.search}`)
+    res.redirect(`ok${redirectUri.search!}`)
   })
 
   app.get('/headers', (req, res) => {

@@ -1,4 +1,3 @@
-/* tslint:disable:no-null-keyword */
 import { noop } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
 import { MutationBuffer } from './mutation'
@@ -107,20 +106,18 @@ function initMouseInteractionObserver(
     sampling.mouseInteraction === true || sampling.mouseInteraction === undefined ? {} : sampling.mouseInteraction
 
   const handlers: ListenerHandler[] = []
-  const getHandler = (eventKey: keyof typeof MouseInteractions) => {
-    return (event: MouseEvent | TouchEvent) => {
-      if (isBlocked(event.target as Node, blockClass)) {
-        return
-      }
-      const id = mirror.getId(event.target as INode)
-      const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
-      cb({
-        id,
-        type: MouseInteractions[eventKey],
-        x: clientX,
-        y: clientY,
-      })
+  const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
+    if (isBlocked(event.target as Node, blockClass)) {
+      return
     }
+    const id = mirror.getId(event.target as INode)
+    const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+    cb({
+      id,
+      type: MouseInteractions[eventKey],
+      x: clientX,
+      y: clientY,
+    })
   }
   ;(Object.keys(MouseInteractions) as Array<keyof typeof MouseInteractions>)
     .filter((key) => Number.isNaN(Number(key)) && !key.endsWith('_Departed') && disableMap[key] !== false)
@@ -259,6 +256,7 @@ function initInputObserver(
 }
 
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number) {
     const id = mirror.getId(this.ownerNode as INode)
@@ -271,6 +269,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
     return insertRule.call(this, rule, index)
   }
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (index: number) {
     const id = mirror.getId(this.ownerNode as INode)
@@ -320,8 +319,8 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
       const restoreHandler = patch(
         CanvasRenderingContext2D.prototype,
         prop,
-        (original: (...args: unknown[]) => unknown) => {
-          return function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+        (original: (...args: unknown[]) => unknown) =>
+          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             if (!isBlocked(this.canvas, blockClass)) {
               setTimeout(() => {
                 const recordArgs = [...args]
@@ -339,7 +338,6 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
             }
             return original.apply(this, args)
           }
-        }
       )
       handlers.push(restoreHandler)
     } catch {
@@ -380,7 +378,6 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
 
   const originalFontFace = (window as WindowWithFontFace).FontFace
 
-  // tslint:disable-next-line: no-shadowed-variable
   ;(window as WindowWithFontFace).FontFace = (function FontFace(
     family: string,
     source: string | ArrayBufferView,
@@ -391,11 +388,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
       descriptors,
       family,
       buffer: typeof source !== 'string',
-      fontSource:
-        typeof source === 'string'
-          ? source
-          : // tslint:disable-next-line: no-any
-            JSON.stringify(Array.from(new Uint8Array(source as any))),
+      fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
     })
     return fontFace
   } as unknown) as typeof FontFace
@@ -403,8 +396,8 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   const restoreHandler = patch(
     (document as DocumentWithFonts).fonts,
     'add',
-    (original: (fontFace: FontFace) => unknown) => {
-      return function (this: unknown, fontFace: FontFace) {
+    (original: (fontFace: FontFace) => unknown) =>
+      function (this: unknown, fontFace: FontFace) {
         setTimeout(() => {
           const p = fontMap.get(fontFace)
           if (p) {
@@ -414,11 +407,9 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
         }, 0)
         return original.apply(this, [fontFace])
       }
-    }
   )
 
   handlers.push(() => {
-    // tslint:disable-next-line: no-any
     ;(window as any).FonFace = originalFontFace
   })
   handlers.push(restoreHandler)

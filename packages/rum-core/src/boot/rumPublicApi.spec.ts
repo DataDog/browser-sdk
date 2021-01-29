@@ -1,16 +1,13 @@
-import { Configuration, ErrorSource, ONE_SECOND } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
 
-const configuration: Partial<Configuration> = {
-  isEnabled: () => false,
-}
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
-  configuration: configuration as Configuration,
+  configuration: {} as any,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
@@ -370,7 +367,6 @@ describe('rum entry', () => {
     })
 
     it('should sanitize predefined properties', () => {
-      // tslint:disable-next-line:no-null-keyword
       const user = { id: null, name: 2, email: { bar: 'qux' } }
       publicApi.setUser(user as any)
       publicApi.addAction('message')
@@ -387,7 +383,6 @@ describe('rum entry', () => {
 
     it('should reject non object input', () => {
       publicApi.setUser(2 as any)
-      // tslint:disable-next-line:no-null-keyword
       publicApi.setUser(null as any)
       publicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)
@@ -397,19 +392,15 @@ describe('rum entry', () => {
   describe('addTiming', () => {
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let errorSpy: jasmine.Spy<() => void>
-    let rumGlobal: RumPublicApi
+    let publicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       errorSpy = spyOn(console, 'error')
-      const otherConfiguration: Partial<Configuration> = {
-        isEnabled: () => true,
-      }
-      rumGlobal = makeRumPublicApi(() => ({
+      publicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addTiming: addTimingSpy,
-        configuration: otherConfiguration as Configuration,
       }))
       setupBuilder = setup()
     })
@@ -418,11 +409,28 @@ describe('rum entry', () => {
       setupBuilder.cleanup()
     })
 
-    it('should add custom timings', () => {
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      // tslint:disable-next-line: no-unsafe-any
-      ;(rumGlobal as any).addTiming('foo')
+    it('should allow to add custom timing before init', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
+
+      clock.tick(10)
+      publicApi.addTiming('foo')
+
+      expect(addTimingSpy).not.toHaveBeenCalled()
+
+      clock.tick(20)
+      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10)
+    })
+
+    it('should add custom timings', () => {
+      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      publicApi.addTiming('foo')
+
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
       expect(errorSpy).not.toHaveBeenCalled()
     })
   })

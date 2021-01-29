@@ -12,8 +12,8 @@ describe('long task collection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        startLongTaskCollection(lifeCycle, configuration)
+      .beforeBuild(({ lifeCycle }) => {
+        startLongTaskCollection(lifeCycle)
       })
   })
 
@@ -45,7 +45,7 @@ describe('long task collection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
-      longTask: {
+      long_task: {
         duration: 100 * 1e6,
       },
       type: RumEventType.LONG_TASK,

@@ -20,18 +20,18 @@ export interface RawRumResourceEvent {
     duration: number
     url: string
     method?: string
-    statusCode?: number
+    status_code?: number
     size?: number
     redirect?: PerformanceResourceDetailsElement
     dns?: PerformanceResourceDetailsElement
     connect?: PerformanceResourceDetailsElement
     ssl?: PerformanceResourceDetailsElement
-    firstByte?: PerformanceResourceDetailsElement
+    first_byte?: PerformanceResourceDetailsElement
     download?: PerformanceResourceDetailsElement
   }
   _dd?: {
-    traceId: string
-    spanId?: string // not available for initial document tracing
+    trace_id: string
+    span_id?: string // not available for initial document tracing
   }
 }
 
@@ -41,7 +41,7 @@ export interface RawRumErrorEvent {
   error: {
     resource?: {
       url: string
-      statusCode: number
+      status_code: number
       method: string
     }
     type?: string
@@ -55,27 +55,27 @@ export interface RawRumViewEvent {
   date: number
   type: RumEventType.VIEW
   view: {
-    loadingType: ViewLoadingType
-    firstContentfulPaint?: number
-    firstInputDelay?: number
-    firstInputTime?: number
-    cumulativeLayoutShift?: number
-    customTimings?: ViewCustomTimings
-    largestContentfulPaint?: number
-    domInteractive?: number
-    domContentLoaded?: number
-    domComplete?: number
-    loadEvent?: number
-    loadingTime?: number
-    timeSpent: number
-    isActive: boolean
+    loading_type: ViewLoadingType
+    first_contentful_paint?: number
+    first_input_delay?: number
+    first_input_time?: number
+    cumulative_layout_shift?: number
+    custom_timings?: ViewCustomTimings
+    largest_contentful_paint?: number
+    dom_interactive?: number
+    dom_content_loaded?: number
+    dom_complete?: number
+    load_event?: number
+    loading_time?: number
+    time_spent: number
+    is_active: boolean
     error: Count
     action: Count
-    longTask: Count
+    long_task: Count
     resource: Count
   }
   _dd: {
-    documentVersion: number
+    document_version: number
   }
 }
 
@@ -86,7 +86,7 @@ interface Count {
 export interface RawRumLongTaskEvent {
   date: number
   type: RumEventType.LONG_TASK
-  longTask: {
+  long_task: {
     duration: number
   }
 }
@@ -97,9 +97,9 @@ export interface RawRumActionEvent {
   action: {
     id?: string
     type: ActionType
-    loadingTime?: number
+    loading_time?: number
     error?: Count
-    longTask?: Count
+    long_task?: Count
     resource?: Count
     target: {
       name: string
@@ -122,9 +122,10 @@ export interface RumContext {
   service?: string
   session: {
     type: string
+    has_replay?: boolean
   }
   _dd: {
-    formatVersion: 2
+    format_version: 2
   }
 }
 
@@ -144,13 +145,6 @@ export interface ActionContext extends Context {
     id: string
   }
 }
-
-export type AssembledRumEvent =
-  | (RawRumErrorEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumResourceEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumViewEvent & ViewContext & RumContext)
-  | (RawRumLongTaskEvent & ActionContext & ViewContext & RumContext)
-  | (RawRumActionEvent & ViewContext & RumContext)
 
 export interface InternalContext {
   application_id: string
@@ -175,5 +169,5 @@ export interface User {
 export interface CommonContext {
   user: User
   context: Context
-  hasReplay?: boolean
+  hasReplay?: true
 }

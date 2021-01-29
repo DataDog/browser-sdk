@@ -106,7 +106,7 @@ export function doStartSegmentCollection(
   }
 
   return {
-    addRecord(record: Record) {
+    addRecord: (record: Record) => {
       if (!currentSegment) {
         const context = getSegmentContext()
         if (!context) {
@@ -124,7 +124,7 @@ export function doStartSegmentCollection(
         currentSegment.addRecord(record)
       }
     },
-    stop() {
+    stop: () => {
       unsubscribeViewCreated()
       unsubscribeBeforeUnload()
       unsubscribeVisibilityChange()

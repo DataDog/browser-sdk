@@ -1,4 +1,3 @@
-/* tslint:disable:no-null-keyword */
 import {
   IGNORED_NODE,
   INode,
@@ -52,6 +51,7 @@ class DoubleLinkedList {
       previous: null,
       value: n as NodeInLinkedList,
     }
+    /* eslint-disable no-underscore-dangle */
     ;(n as NodeInLinkedList).__ln = node
     if (n.previousSibling && isNodeInLinkedList(n.previousSibling)) {
       const current = n.previousSibling.__ln.next
@@ -66,6 +66,7 @@ class DoubleLinkedList {
       node.previous = current
       node.next = n.nextSibling.__ln
       n.nextSibling.__ln.previous = node
+      /* eslint-enable no-underscore-dangle */
       if (current) {
         current.next = node
       }
@@ -80,7 +81,7 @@ class DoubleLinkedList {
   }
 
   public removeNode(n: NodeInLinkedList) {
-    const current = n.__ln
+    const current = n.__ln // eslint-disable-line no-underscore-dangle
     if (!this.head) {
       return
     }
@@ -96,9 +97,11 @@ class DoubleLinkedList {
         current.next.previous = current.previous
       }
     }
+    /* eslint-disable no-underscore-dangle */
     if (n.__ln) {
       delete n.__ln
     }
+    /* eslint-enable no-underscore-dangle */
     this.length -= 1
   }
 }
@@ -112,7 +115,7 @@ function isINode(n: Node | INode): n is INode {
  * controls behaviour of a MutationObserver
  */
 export class MutationBuffer {
-  private frozen: boolean = false
+  private frozen = false
 
   private texts: TextCursor[] = []
   private attributes: AttributeCursor[] = []
@@ -142,19 +145,19 @@ export class MutationBuffer {
   private movedSet = new Set<Node>()
   private droppedSet = new Set<Node>()
 
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private emissionCallback: MutationCallBack
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private blockClass: BlockClass
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private blockSelector: string | null
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private inlineStylesheet: boolean
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private maskInputOptions: MaskInputOptions
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private recordCanvas: boolean
-  // @ts-ignore
+  // @ts-ignore Allows creating an instance without initializing all fields
   private slimDOMOptions: SlimDOMOptions
 
   public init(
@@ -423,9 +426,10 @@ export class MutationBuffer {
       this.movedSet.add(n)
       let targetId: number | null = null
       if (target && isINode(target)) {
-        targetId = target.__sn.id
+        targetId = target.__sn.id // eslint-disable-line no-underscore-dangle
       }
       if (targetId) {
+        // eslint-disable-next-line no-underscore-dangle
         this.movedMap[moveKey(n.__sn.id, targetId)] = true
       }
     } else {

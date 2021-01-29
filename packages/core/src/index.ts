@@ -4,7 +4,6 @@ export { computeStackTrace } from './domain/tracekit'
 export {
   BuildEnv,
   BuildMode,
-  Datacenter,
   defineGlobal,
   makePublicApi,
   commonInit,
@@ -31,7 +30,7 @@ export { HttpRequest, Batch } from './transport/transport'
 export * from './tools/urlPolyfill'
 export * from './tools/utils'
 export { ErrorSource, formatUnknownError, RawError } from './tools/error'
-export { combine, Context, ContextArray, ContextValue, deepClone, withSnakeCaseKeys } from './tools/context'
+export { combine, Context, ContextArray, ContextValue, deepClone } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'
 export {
@@ -46,3 +45,4 @@ export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 
 export * from './tools/specHelper'
+export { Datacenter } from './domain/transportConfiguration'

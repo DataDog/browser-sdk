@@ -39,7 +39,7 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
   })
 
   return {
-    stop() {
+    stop: () => {
       subscription.unsubscribe()
     },
     eventCounts,

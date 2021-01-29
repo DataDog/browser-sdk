@@ -20,7 +20,7 @@ export interface PerformanceResourceDetails {
   dns?: PerformanceResourceDetailsElement
   connect?: PerformanceResourceDetailsElement
   ssl?: PerformanceResourceDetailsElement
-  firstByte: PerformanceResourceDetailsElement
+  first_byte: PerformanceResourceDetailsElement
   download: PerformanceResourceDetailsElement
 }
 
@@ -31,18 +31,18 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
-  [ResourceType.CSS, (_: string, path: string) => path.match(/\.css$/i) !== null],
-  [ResourceType.JS, (_: string, path: string) => path.match(/\.js$/i) !== null],
+  [ResourceType.CSS, (_: string, path: string) => /\.css$/i.test(path)],
+  [ResourceType.JS, (_: string, path: string) => /\.js$/i.test(path)],
   [
     ResourceType.IMAGE,
     (initiatorType: string, path: string) =>
-      includes(['image', 'img', 'icon'], initiatorType) || path.match(/\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i) !== null,
+      includes(['image', 'img', 'icon'], initiatorType) || /\.(gif|jpg|jpeg|tiff|png|svg|ico)$/i.exec(path) !== null,
   ],
-  [ResourceType.FONT, (_: string, path: string) => path.match(/\.(woff|eot|woff2|ttf)$/i) !== null],
+  [ResourceType.FONT, (_: string, path: string) => /\.(woff|eot|woff2|ttf)$/i.exec(path) !== null],
   [
     ResourceType.MEDIA,
     (initiatorType: string, path: string) =>
-      includes(['audio', 'video'], initiatorType) || path.match(/\.(mp3|mp4)$/i) !== null,
+      includes(['audio', 'video'], initiatorType) || /\.(mp3|mp4)$/i.exec(path) !== null,
   ],
 ]
 
@@ -110,7 +110,7 @@ export function computePerformanceResourceDetails(
 
   const details: PerformanceResourceDetails = {
     download: formatTiming(startTime, responseStart, responseEnd),
-    firstByte: formatTiming(startTime, requestStart, responseStart),
+    first_byte: formatTiming(startTime, requestStart, responseStart),
   }
 
   // Make sure a connection occurred

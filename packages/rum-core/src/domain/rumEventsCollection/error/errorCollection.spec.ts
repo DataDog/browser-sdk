@@ -117,7 +117,7 @@ describe('error collection', () => {
           message: 'hello',
           resource: {
             method: 'GET',
-            statusCode: 500,
+            status_code: 500,
             url: 'url',
           },
           source: ErrorSource.NETWORK,

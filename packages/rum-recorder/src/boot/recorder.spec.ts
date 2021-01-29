@@ -34,9 +34,9 @@ describe('startRecording', () => {
           }
         },
       })
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
-        return startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
-      })
+      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
+        startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
+      )
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
 
@@ -132,6 +132,32 @@ describe('startRecording', () => {
     waitRequests(1, (requests) => {
       expect(requests[0].data.get('records_count')).toBe('1')
       expect(requests[0].data.get('session.id')).toBe('new-session-id')
+      expectNoExtraRequest(done)
+    })
+  })
+
+  it('takes a full snapshot when the view changes', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+
+    flushSegment(lifeCycle)
+
+    waitRequests(2, (requests) => {
+      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
+      expectNoExtraRequest(done)
+    })
+  })
+
+  it('takes a full snapshot when the session is renewed', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    flushSegment(lifeCycle)
+
+    waitRequests(2, (requests) => {
+      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
       expectNoExtraRequest(done)
     })
   })

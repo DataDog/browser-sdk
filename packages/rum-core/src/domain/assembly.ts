@@ -1,11 +1,4 @@
-import {
-  combine,
-  Configuration,
-  Context,
-  isEmptyObject,
-  limitModification,
-  withSnakeCaseKeys,
-} from '@datadog/browser-core'
+import { combine, Configuration, Context, isEmptyObject, limitModification } from '@datadog/browser-core'
 import {
   CommonContext,
   RawRumErrorEvent,
@@ -54,9 +47,10 @@ export function startRumAssembly(
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id) {
         const actionContext = parentContexts.findAction(startTime)
+        const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
-            formatVersion: 2,
+            format_version: 2,
           },
           application: {
             id: applicationId,
@@ -64,16 +58,15 @@ export function startRumAssembly(
           date: new Date().getTime(),
           service: configuration.service,
           session: {
+            has_replay: commonContext.hasReplay,
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
             // cf https://github.com/puppeteer/puppeteer/issues/3667
             type: getSessionType(),
           },
         }
-        const assembledRumEvent = needToAssembleWithAction(rawRumEvent)
+        const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
-          : combine(rumContext, viewContext, rawRumEvent)
-        const serverRumEvent = withSnakeCaseKeys(assembledRumEvent) as RumEvent & Context
-        const commonContext = savedCommonContext || getCommonContext()
+          : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
 
         const context = combine(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
@@ -81,13 +74,14 @@ export function startRumAssembly(
         }
 
         if (!isEmptyObject(commonContext.user)) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 
         if (configuration.beforeSend) {
           limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
         }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { assembledRumEvent, serverRumEvent })
+        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }
   )
@@ -100,5 +94,6 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
+  // eslint-disable-next-line no-underscore-dangle
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }

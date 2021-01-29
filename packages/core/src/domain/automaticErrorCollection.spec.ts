@@ -219,7 +219,10 @@ describe('network error tracker', () => {
   })
 
   it('should truncate error response', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: 'Lorem ipsum dolor sit amet orci aliquam.' })
+    fetchStub(FAKE_URL).resolveWith({
+      ...DEFAULT_REQUEST,
+      responseText: 'Lorem ipsum dolor sit amet orci aliquam.',
+    })
 
     fetchStubManager.whenAllComplete(() => {
       const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack

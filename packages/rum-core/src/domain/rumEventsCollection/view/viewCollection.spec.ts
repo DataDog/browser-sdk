@@ -1,7 +1,7 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { View, ViewLoadingType } from './trackViews'
+import { ViewLoadingType } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
 describe('viewCollection', () => {
@@ -61,7 +61,7 @@ describe('viewCollection', () => {
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
-        documentVersion: 3,
+        document_version: 3,
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
@@ -69,32 +69,32 @@ describe('viewCollection', () => {
         action: {
           count: 10,
         },
-        cumulativeLayoutShift: 1,
-        customTimings: {
+        cumulative_layout_shift: 1,
+        custom_timings: {
           bar: 20 * 1e6,
           foo: 10 * 1e6,
         },
-        domComplete: 10 * 1e6,
-        domContentLoaded: 10 * 1e6,
-        domInteractive: 10 * 1e6,
+        dom_complete: 10 * 1e6,
+        dom_content_loaded: 10 * 1e6,
+        dom_interactive: 10 * 1e6,
         error: {
           count: 10,
         },
-        firstContentfulPaint: 10 * 1e6,
-        firstInputDelay: 12 * 1e6,
-        firstInputTime: 10 * 1e6,
-        isActive: false,
-        largestContentfulPaint: 10 * 1e6,
-        loadEvent: 10 * 1e6,
-        loadingTime: 20 * 1e6,
-        loadingType: ViewLoadingType.INITIAL_LOAD,
-        longTask: {
+        first_contentful_paint: 10 * 1e6,
+        first_input_delay: 12 * 1e6,
+        first_input_time: 10 * 1e6,
+        is_active: false,
+        largest_contentful_paint: 10 * 1e6,
+        load_event: 10 * 1e6,
+        loading_time: 20 * 1e6,
+        loading_type: ViewLoadingType.INITIAL_LOAD,
+        long_task: {
           count: 10,
         },
         resource: {
           count: 10,
         },
-        timeSpent: 100 * 1e6,
+        time_spent: 100 * 1e6,
       },
     })
   })

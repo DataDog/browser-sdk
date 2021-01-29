@@ -1,5 +1,5 @@
 import { createTest, EventRegistry } from '../../lib/framework'
-import { sendFetch, sendXhr } from '../../lib/helpers/browser'
+import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('tracing', () => {
@@ -12,35 +12,64 @@ describe('tracing', () => {
       ])
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      await checkTraceAssociatedToRumEvent(events)
+      checkTraceAssociatedToRumEvent(events)
     })
 
   createTest('trace fetch')
     .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
     .run(async ({ events }) => {
-      const rawHeaders = await sendFetch(`/headers`, [
-        ['x-foo', 'bar'],
-        ['x-foo', 'baz'],
-      ])
+      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+        window
+          .fetch('/headers', {
+            headers: [
+              ['x-foo', 'bar'],
+              ['x-foo', 'baz'],
+            ],
+          })
+          .then((response) => response.text())
+          .then(done)
+          .catch(() => done(new Error('Fetch request failed!')))
+      })
+      if (rawHeaders instanceof Error) {
+        return fail(rawHeaders)
+      }
       checkRequestHeaders(rawHeaders)
       await flushEvents()
-      await checkTraceAssociatedToRumEvent(events)
+      checkTraceAssociatedToRumEvent(events)
+    })
+
+  createTest('trace fetch with Request argument')
+    .withRum({ service: 'Service', allowedTracingOrigins: ['LOCATION_ORIGIN'] })
+    .run(async ({ events }) => {
+      const rawHeaders = await browserExecuteAsync<string | Error>((done) => {
+        window
+          .fetch(new Request('/headers', { headers: { 'x-foo': 'bar, baz' } }))
+          .then((response) => response.text())
+          .then(done)
+          .catch(() => done(new Error('Fetch request failed!')))
+      })
+      if (rawHeaders instanceof Error) {
+        return fail(rawHeaders)
+      }
+      checkRequestHeaders(rawHeaders)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(events)
     })
 
   function checkRequestHeaders(rawHeaders: string) {
-    const headers: { [key: string]: string } = JSON.parse(rawHeaders) as any
+    const headers: { [key: string]: string } = JSON.parse(rawHeaders)
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['x-foo']).toBe('bar, baz')
   }
 
-  async function checkTraceAssociatedToRumEvent(events: EventRegistry) {
+  function checkTraceAssociatedToRumEvent(events: EventRegistry) {
     const requests = events.rumResources.filter(
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)
-    expect(requests[0]._dd!.trace_id).toMatch(/\d+/)
-    expect(requests[0]._dd!.span_id).toMatch(/\d+/)
+    expect(requests[0]._dd.trace_id).toMatch(/\d+/) // eslint-disable-line no-underscore-dangle
+    expect(requests[0]._dd.span_id).toMatch(/\d+/) // eslint-disable-line no-underscore-dangle
     expect(requests[0].resource.id).toBeDefined()
   }
 })
