@@ -115,7 +115,7 @@ export function waitPageActivitiesCompletion(
   stopPageActivitiesTracking: () => void,
   completionCallback: (hadActivity: boolean, endTime: number) => void
 ): { stop: () => void } {
-  let idleTimeoutId: ReturnType<typeof setTimeout>
+  let idleTimeoutId: number
   let hasCompleted = false
 
   const validationTimeoutId = setTimeout(

@@ -75,7 +75,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     currentAction = undefined
   })
 
-  const clearOldContextsInterval = window.setInterval(
+  const clearOldContextsInterval = setInterval(
     monitor(() => {
       clearOldContexts(previousViews, VIEW_CONTEXT_TIME_OUT_DELAY)
       clearOldContexts(previousActions, ACTION_CONTEXT_TIME_OUT_DELAY)
@@ -134,7 +134,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     findAction: (startTime) => findContext(buildCurrentActionContext, previousActions, currentAction, startTime),
     findView: (startTime) => findContext(buildCurrentViewContext, previousViews, currentView, startTime),
     stop: () => {
-      window.clearInterval(clearOldContextsInterval)
+      clearInterval(clearOldContextsInterval)
     },
   }
 }

@@ -61,7 +61,7 @@ export function throttle(fn: () => void, wait: number, options?: { leading?: boo
         hasPendingExecution = true
       }
       inWaitPeriod = true
-      pendingTimeoutId = window.setTimeout(() => {
+      pendingTimeoutId = setTimeout(() => {
         if (needTrailingExecution && hasPendingExecution) {
           fn()
         }
@@ -70,7 +70,7 @@ export function throttle(fn: () => void, wait: number, options?: { leading?: boo
       }, wait)
     },
     cancel: () => {
-      window.clearTimeout(pendingTimeoutId)
+      clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
       hasPendingExecution = false
     },

@@ -114,7 +114,7 @@ export function doStartSegmentCollection(
         }
 
         currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
-        currentSegmentExpirationTimeoutId = window.setTimeout(
+        currentSegmentExpirationTimeoutId = setTimeout(
           monitor(() => {
             flushSegment('max_duration')
           }),
