@@ -1,4 +1,4 @@
-export function evaluateCodeInActiveTab(code: string) {
+export function evaluateCodeInActiveTab(code: () => void) {
   chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
     for (const tab of tabs) {
       if (tab.id) {
@@ -8,12 +8,12 @@ export function evaluateCodeInActiveTab(code: string) {
   })
 }
 
-function evaluateCodeInline(tabId: number, code: string) {
+function evaluateCodeInline(tabId: number, code: () => void) {
   chrome.tabs.executeScript(tabId, {
     code: `{
       const script = document.createElement('script')
       script.setAttribute("type", "module")
-      script.textContent = ${JSON.stringify(code)}
+      script.textContent = ${JSON.stringify(`(${String(code)})()`)}
       document.body.appendChild(script)
       script.remove()
     }`,
