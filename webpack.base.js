@@ -6,7 +6,7 @@ const buildEnv = require('./scripts/build-env')
 const tsconfigPath = path.join(__dirname, 'tsconfig.base.json')
 const SUFFIX_REGEXP = /-(us|eu)/
 
-module.exports = ({ entry, mode, filename, datacenter }) => ({
+module.exports = ({ entry, mode, filename, datacenter, types }) => ({
   entry,
   mode,
   output: {
@@ -38,6 +38,7 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
           compilerOptions: {
             module: 'es6',
             allowJs: true,
+            types: types || [],
           },
         },
       },
