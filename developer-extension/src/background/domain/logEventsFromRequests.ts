@@ -36,14 +36,24 @@ chrome.webRequest.onBeforeRequest.addListener(
   {
     urls: [
       // TODO: implement a configuration page to add more URLs in this list.
-      'https://*.logs.datadoghq.com/*',
       'https://*.browser-intake-datadoghq.com/*',
-      'https://*.logs.datadoghq.eu/*',
       'https://*.browser-intake-datadoghq.eu/*',
+      'https://*.browser-intake-ddog-gov.com/*',
+      'https://*.browser-intake-us3-datadoghq.com/*',
+      ...classicIntakesUrlsForSite('datadoghq.com'),
+      ...classicIntakesUrlsForSite('datadoghq.eu'),
     ],
   },
   ['requestBody']
 )
+
+function classicIntakesUrlsForSite(site: string) {
+  return [
+    `https://public-trace-http-intake.logs.${site}/*`,
+    `https://rum-http-intake.logs.${site}/*`,
+    `https://browser-http-intake.logs.${site}/*`,
+  ]
+}
 
 function sortProperties<T extends unknown>(event: T): T {
   if (Array.isArray(event)) {
