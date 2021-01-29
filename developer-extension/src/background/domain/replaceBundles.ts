@@ -40,6 +40,12 @@ listenAction('getStore', () => {
   )
 })
 
+listenAction('setStore', (newStore) => {
+  if ('useDevBundles' in newStore || 'useRumRecorder' in newStore) {
+    chrome.browsingData.removeCache({})
+  }
+})
+
 async function refreshDevServerStatus() {
   const timeoutId = setTimeout(() => setStore({ devServerStatus: 'checking' }), 500)
   let isAvailable = false
