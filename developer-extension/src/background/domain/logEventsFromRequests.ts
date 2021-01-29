@@ -3,7 +3,7 @@ import { store } from '../store'
 const decoder = new TextDecoder('utf-8')
 chrome.webRequest.onBeforeRequest.addListener(
   (info) => {
-    if (!store.logEvents) {
+    if (!store.logEventsFromRequests) {
       return
     }
     if (info.tabId < 0) {

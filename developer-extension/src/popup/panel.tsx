@@ -4,7 +4,7 @@ import { sendAction } from './actions'
 import { useStore } from './useStore'
 
 export function Panel() {
-  const [{ useDevBundles, useRumRecorder, logEvents, devServerStatus: devStatus }, setStore] = useStore()
+  const [{ useDevBundles, useRumRecorder, logEventsFromRequests, devServerStatus }, setStore] = useStore()
   return (
     <Stack alignY="top" padding="major-2" spacing="major-2">
       <Stack orientation="horizontal" verticalBelow="0" spacing="major-2" alignX="left" alignY="center">
@@ -13,7 +13,9 @@ export function Panel() {
           checked={useDevBundles}
           onChange={(e) => setStore({ useDevBundles: isChecked(e.target) })}
         />
-        <Badge palette={devStatus === 'available' ? 'success' : devStatus === 'checking' ? 'warning' : 'danger'} />
+        <Badge
+          palette={devServerStatus === 'available' ? 'success' : devServerStatus === 'checking' ? 'warning' : 'danger'}
+        />
       </Stack>
 
       <Checkbox
@@ -22,7 +24,11 @@ export function Panel() {
         onChange={(e) => setStore({ useRumRecorder: isChecked(e.target) })}
       />
 
-      <Checkbox label="Log events" checked={logEvents} onChange={(e) => setStore({ logEvents: isChecked(e.target) })} />
+      <Checkbox
+        label="Log events"
+        checked={logEventsFromRequests}
+        onChange={(e) => setStore({ logEventsFromRequests: isChecked(e.target) })}
+      />
 
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
 

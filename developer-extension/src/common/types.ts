@@ -13,5 +13,5 @@ export interface Store {
   devServerStatus: 'unavailable' | 'checking' | 'available'
   useDevBundles: boolean
   useRumRecorder: boolean
-  logEvents: boolean
+  logEventsFromRequests: boolean
 }

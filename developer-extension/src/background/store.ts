@@ -3,7 +3,7 @@ import { listenAction, sendAction } from './actions'
 
 export const store: Store = {
   devServerStatus: 'checking',
-  logEvents: true,
+  logEventsFromRequests: true,
   useDevBundles: false,
   useRumRecorder: false,
 }
