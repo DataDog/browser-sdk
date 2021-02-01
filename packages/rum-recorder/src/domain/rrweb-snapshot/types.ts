@@ -51,10 +51,6 @@ export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | Tex
 
 export type SerializedNodeWithId = SerializedNode & { id: number }
 
-export type tagMap = {
-  [key: string]: string
-}
-
 export interface INode extends Node {
   __sn: SerializedNodeWithId
 }
