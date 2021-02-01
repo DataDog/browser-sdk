@@ -1,56 +1,6 @@
 import { idNodeMap, INode, MaskInputOptions, serializedNodeWithId, SlimDOMOptions } from 'rrweb-snapshot'
+import type { RawRecord } from '../../types'
 
-export enum EventType {
-  DomContentLoaded,
-  Load,
-  FullSnapshot,
-  IncrementalSnapshot,
-  Meta,
-  Custom,
-}
-
-export interface DomContentLoadedEvent {
-  type: EventType.DomContentLoaded
-  data: object
-}
-
-export interface LoadedEvent {
-  type: EventType.Load
-  data: object
-}
-
-export interface FullSnapshotEvent {
-  type: EventType.FullSnapshot
-  data: {
-    node: serializedNodeWithId
-    initialOffset: {
-      top: number
-      left: number
-    }
-  }
-}
-
-export interface IncrementalSnapshotEvent {
-  type: EventType.IncrementalSnapshot
-  data: IncrementalData
-}
-
-export interface MetaEvent {
-  type: EventType.Meta
-  data: {
-    href: string
-    width: number
-    height: number
-  }
-}
-
-export interface CustomEvent<T = unknown> {
-  type: EventType.Custom
-  data: {
-    tag: string
-    payload: T
-  }
-}
 export enum IncrementalSource {
   Mutation,
   MouseMove,
@@ -119,19 +69,6 @@ export type IncrementalData =
   | CanvasMutationData
   | FontData
 
-export type Event =
-  | DomContentLoadedEvent
-  | LoadedEvent
-  | FullSnapshotEvent
-  | IncrementalSnapshotEvent
-  | MetaEvent
-  | CustomEvent
-
-export type EventWithTime = Event & {
-  timestamp: number
-  delay?: number
-}
-
 export type BlockClass = string | RegExp
 
 export type SamplingStrategy = Partial<{
@@ -144,7 +81,7 @@ export type SamplingStrategy = Partial<{
    * false means not to record mouse interaction events
    * can also specify record some kinds of mouse interactions
    */
-  mouseInteraction: boolean | Record<string, boolean | undefined>
+  mouseInteraction: boolean | { [key: string]: boolean | undefined }
   /**
    * number is the throttle threshold of recording scroll
    */
@@ -169,7 +106,7 @@ export interface RecordOptions<T> {
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
   hooks?: HooksParam
-  packFn?: (event: Event) => Event
+  packFn?: (record: RawRecord) => RawRecord
   sampling?: SamplingStrategy
   recordCanvas?: boolean
   collectFonts?: boolean

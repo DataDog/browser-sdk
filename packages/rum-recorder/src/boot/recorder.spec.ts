@@ -2,9 +2,10 @@ import { createNewEvent, HttpRequest, isIE } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-
 import { collectAsyncCalls } from '../../test/utils'
-import { startRecording } from './recorder'
+
+import { FocusRecord, RawRecord } from '../types'
+import { startRecording, trackFocusRecords } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -61,7 +62,7 @@ describe('startRecording', () => {
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
         has_full_snapshot: 'true',
-        records_count: '2',
+        records_count: '3',
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
@@ -84,7 +85,7 @@ describe('startRecording', () => {
     }
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 2))
+      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 3))
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -101,7 +102,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(1, (calls) => {
-      expect(getRequestData(calls.first()).records_count).toBe('3')
+      expect(getRequestData(calls.first()).records_count).toBe('4')
       expectNoExtraRequestSendCalls(done)
     })
   })
@@ -150,6 +151,60 @@ describe('startRecording', () => {
       expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
       expectNoExtraRequestSendCalls(done)
     })
+  })
+})
+
+describe('trackFocusRecords', () => {
+  let hasFocus: boolean
+  let addRecordSpy: jasmine.Spy<(rawRecord: RawRecord) => void>
+  let lifeCycle: LifeCycle
+
+  beforeEach(() => {
+    hasFocus = true
+    lifeCycle = new LifeCycle()
+    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
+    addRecordSpy = jasmine.createSpy()
+  })
+
+  it('adds an initial Focus record', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on focus', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    window.dispatchEvent(createNewEvent('focus'))
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on blur', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    window.dispatchEvent(createNewEvent('blur'))
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('adds a Focus record on new view', () => {
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    addRecordSpy.calls.reset()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    expect(addRecordSpy).toHaveBeenCalled()
+  })
+
+  it('set has_focus to true if the document has the focus', () => {
+    hasFocus = true
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(true)
+  })
+
+  it("set has_focus to false if the document doesn't have the focus", () => {
+    hasFocus = false
+    trackFocusRecords(lifeCycle, addRecordSpy)
+    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(false)
   })
 })
 
