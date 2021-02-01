@@ -3,16 +3,17 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 
+import { collectAsyncCalls } from '../../test/utils'
 import { startRecording } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionId: string | undefined
-  let waitRequests: (
-    expectedRequestCount: number,
-    callback: (requests: ReadonlyArray<{ data: FormData; size: number }>) => void
+  let waitRequestSendCalls: (
+    expectedCallsCount: number,
+    callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
   ) => void
-  let expectNoExtraRequest: (callback: () => void) => void
+  let expectNoExtraRequestSendCalls: (done: () => void) => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -39,22 +40,10 @@ describe('startRecording', () => {
       )
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
-
-    waitRequests = (expectedRequestCount, callback) => {
-      const requests: Array<{ data: FormData; size: number }> = []
-      requestSendSpy.and.callFake((data, size) => {
-        if (requests.push({ size, data: data as FormData }) === expectedRequestCount) {
-          callback(requests)
-        }
-      })
-    }
-
-    expectNoExtraRequest = (done) => {
-      requestSendSpy.and.callFake(() => {
-        fail('Unexpected request received')
-      })
-      setTimeout(done, 300)
-    }
+    ;({
+      waitAsyncCalls: waitRequestSendCalls,
+      expectNoExtraAsyncCall: expectNoExtraRequestSendCalls,
+    } = collectAsyncCalls(requestSendSpy))
   })
 
   afterEach(() => {
@@ -65,9 +54,9 @@ describe('startRecording', () => {
     const { lifeCycle } = setupBuilder.build()
     flushSegment(lifeCycle)
 
-    waitRequests(1, (requests) => {
-      expect(requests).toEqual([{ data: jasmine.any(FormData), size: jasmine.any(Number) }])
-      expect(formDataAsObject(requests[0].data)).toEqual({
+    waitRequestSendCalls(1, (calls) => {
+      expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number)])
+      expect(getRequestData(calls.first())).toEqual({
         'application.id': 'appId',
         creation_reason: 'init',
         end: jasmine.stringMatching(/^\d{13}$/),
@@ -78,7 +67,7 @@ describe('startRecording', () => {
         start: jasmine.stringMatching(/^\d{13}$/),
         'view.id': 'view-id',
       })
-      expectNoExtraRequest(done)
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
@@ -94,9 +83,9 @@ describe('startRecording', () => {
       document.body.dispatchEvent(inputEvent)
     }
 
-    waitRequests(1, (requests) => {
-      expect(requests[0].data.get('records_count')).toBe(String(inputCount + 2))
-      expectNoExtraRequest(done)
+    waitRequestSendCalls(1, (calls) => {
+      expect(getRequestData(calls.first()).records_count).toBe(String(inputCount + 2))
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
@@ -111,9 +100,9 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests(1, (requests) => {
-      expect(requests[0].data.get('records_count')).toBe('3')
-      expectNoExtraRequest(done)
+    waitRequestSendCalls(1, (calls) => {
+      expect(getRequestData(calls.first()).records_count).toBe('3')
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
@@ -129,10 +118,11 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests(1, (requests) => {
-      expect(requests[0].data.get('records_count')).toBe('1')
-      expect(requests[0].data.get('session.id')).toBe('new-session-id')
-      expectNoExtraRequest(done)
+    waitRequestSendCalls(1, (calls) => {
+      const data = getRequestData(calls.first())
+      expect(data.records_count).toBe('1')
+      expect(data['session.id']).toBe('new-session-id')
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
@@ -143,9 +133,9 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests(2, (requests) => {
-      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
-      expectNoExtraRequest(done)
+    waitRequestSendCalls(2, (calls) => {
+      expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
+      expectNoExtraRequestSendCalls(done)
     })
   })
 
@@ -156,9 +146,9 @@ describe('startRecording', () => {
 
     flushSegment(lifeCycle)
 
-    waitRequests(2, (requests) => {
-      expect(requests[1].data.get('has_full_snapshot')).toBe('true')
-      expectNoExtraRequest(done)
+    waitRequestSendCalls(2, (calls) => {
+      expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
+      expectNoExtraRequestSendCalls(done)
     })
   })
 })
@@ -167,9 +157,11 @@ function flushSegment(lifeCycle: LifeCycle) {
   lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
 }
 
-function formDataAsObject(data: FormData) {
+function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
+  const data = call.args[0]
+  expect(data).toEqual(jasmine.any(FormData))
   const result: { [key: string]: unknown } = {}
-  data.forEach((value, key) => {
+  ;(data as FormData).forEach((value, key) => {
     result[key] = value
   })
   return result
