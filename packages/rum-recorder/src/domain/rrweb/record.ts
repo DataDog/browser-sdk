@@ -1,4 +1,4 @@
-import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
+import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers, mutationBuffer } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'

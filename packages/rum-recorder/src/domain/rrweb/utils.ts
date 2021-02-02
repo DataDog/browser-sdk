@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import { IGNORED_NODE, INode } from 'rrweb-snapshot'
+import { IGNORED_NODE, INode } from '../rrweb-snapshot'
 import { BlockClass, HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
 
 export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
