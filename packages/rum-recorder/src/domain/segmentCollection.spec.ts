@@ -87,12 +87,6 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).toBe('view_change')
     })
 
-    it('flushes segment on session renew', () => {
-      const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-      expect(sendCurrentSegment().creation_reason).toBe('session_renewed')
-    })
-
     it('flushes segment when the page become hidden', () => {
       setPageVisibility('hidden')
       const { eventEmitter, sendCurrentSegment } = startSegmentCollection(CONTEXT)

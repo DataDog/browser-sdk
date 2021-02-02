@@ -29,7 +29,6 @@ export function startRecording(
     emit: addRawRecord,
   })!
 
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, takeFullSnapshot)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   const { stop: stopTrackingFocusRecords } = trackFocusRecords(lifeCycle, addRawRecord)
 

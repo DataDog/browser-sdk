@@ -139,19 +139,6 @@ describe('startRecording', () => {
       expectNoExtraRequestSendCalls(done)
     })
   })
-
-  it('takes a full snapshot when the session is renewed', (done) => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-    flushSegment(lifeCycle)
-
-    waitRequestSendCalls(2, (calls) => {
-      expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
-      expectNoExtraRequestSendCalls(done)
-    })
-  })
 })
 
 describe('trackFocusRecords', () => {

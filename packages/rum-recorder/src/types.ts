@@ -26,7 +26,6 @@ export type CreationReason =
   | 'max_duration'
   | 'max_size'
   | 'view_change'
-  | 'session_renewed'
   | 'before_unload'
   | 'visibility_hidden'
 
