@@ -38,6 +38,7 @@ export type RawRecord =
   | MetaRecord
   | CustomRecord
   | FocusRecord
+  | ViewEndRecord
 
 export type Record = RawRecord & {
   timestamp: number
@@ -52,6 +53,7 @@ export enum RecordType {
   Meta,
   Custom,
   Focus,
+  ViewEnd,
 }
 
 export interface DomContentLoadedRecord {
@@ -102,4 +104,8 @@ export interface FocusRecord {
   data: {
     has_focus: boolean
   }
+}
+
+export interface ViewEndRecord {
+  type: RecordType.ViewEnd
 }
