@@ -1,18 +1,12 @@
 import { MaskInputOptions, SlimDOMOptions, snapshot } from 'rrweb-snapshot'
+import { RawRecord, RecordType } from '../../types'
 import { initObservers, mutationBuffer } from './observer'
-import { Event, EventType, EventWithTime, IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
+import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
-function wrapEvent(e: Event): EventWithTime {
-  return {
-    ...e,
-    timestamp: Date.now(),
-  }
-}
+let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-let wrappedEmit!: (e: EventWithTime, isCheckout?: boolean) => void
-
-function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | undefined {
+function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -86,28 +80,28 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
 
   polyfill()
 
-  let lastFullSnapshotEvent: EventWithTime
+  let lastFullSnapshotRecordTimestamp: number
   let incrementalSnapshotCount = 0
-  wrappedEmit = (e: EventWithTime, isCheckout?: boolean) => {
+  wrappedEmit = (record, isCheckout) => {
     if (
       mutationBuffer.isFrozen() &&
-      e.type !== EventType.FullSnapshot &&
-      !(e.type === EventType.IncrementalSnapshot && e.data.source === IncrementalSource.Mutation)
+      record.type !== RecordType.FullSnapshot &&
+      !(record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Mutation)
     ) {
-      // we've got a user initiated event so first we need to apply
+      // we've got a user initiated record so first we need to apply
       // all DOM changes that have been buffering during paused state
       mutationBuffer.emit()
       mutationBuffer.unfreeze()
     }
 
-    emit(((packFn ? packFn(e) : e) as unknown) as T, isCheckout)
-    if (e.type === EventType.FullSnapshot) {
-      lastFullSnapshotEvent = e
+    emit(((packFn ? packFn(record) : record) as unknown) as T, isCheckout)
+    if (record.type === RecordType.FullSnapshot) {
+      lastFullSnapshotRecordTimestamp = Date.now()
       incrementalSnapshotCount = 0
-    } else if (e.type === EventType.IncrementalSnapshot) {
+    } else if (record.type === RecordType.IncrementalSnapshot) {
       incrementalSnapshotCount += 1
       const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
-      const exceedTime = checkoutEveryNms && e.timestamp - lastFullSnapshotEvent.timestamp > checkoutEveryNms
+      const exceedTime = checkoutEveryNms && Date.now() - lastFullSnapshotRecordTimestamp > checkoutEveryNms
       if (exceedCount || exceedTime) {
         takeFullSnapshot(true)
       }
@@ -116,14 +110,14 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
 
   const takeFullSnapshot = (isCheckout = false) => {
     wrappedEmit(
-      wrapEvent({
+      {
         data: {
           height: getWindowHeight(),
           href: window.location.href,
           width: getWindowWidth(),
         },
-        type: EventType.Meta,
-      }),
+        type: RecordType.Meta,
+      },
       isCheckout
     )
 
@@ -143,30 +137,28 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
     }
 
     mirror.map = idNodeMap
-    wrappedEmit(
-      wrapEvent({
-        data: {
-          node,
-          initialOffset: {
-            left:
-              window.pageXOffset !== undefined
-                ? window.pageXOffset
-                : document?.documentElement.scrollLeft ||
-                  document?.body?.parentElement?.scrollLeft ||
-                  document?.body.scrollLeft ||
-                  0,
-            top:
-              window.pageYOffset !== undefined
-                ? window.pageYOffset
-                : document?.documentElement.scrollTop ||
-                  document?.body?.parentElement?.scrollTop ||
-                  document?.body.scrollTop ||
-                  0,
-          },
+    wrappedEmit({
+      data: {
+        node,
+        initialOffset: {
+          left:
+            window.pageXOffset !== undefined
+              ? window.pageXOffset
+              : document?.documentElement.scrollLeft ||
+                document?.body?.parentElement?.scrollLeft ||
+                document?.body.scrollLeft ||
+                0,
+          top:
+            window.pageYOffset !== undefined
+              ? window.pageYOffset
+              : document?.documentElement.scrollTop ||
+                document?.body?.parentElement?.scrollTop ||
+                document?.body.scrollTop ||
+                0,
         },
-        type: EventType.FullSnapshot,
-      })
-    )
+      },
+      type: RecordType.FullSnapshot,
+    })
     if (!wasFrozen) {
       mutationBuffer.emit() // emit anything queued up now
       mutationBuffer.unfreeze()
@@ -177,12 +169,10 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
     const handlers: ListenerHandler[] = []
     handlers.push(
       on('DOMContentLoaded', () => {
-        wrappedEmit(
-          wrapEvent({
-            data: {},
-            type: EventType.DomContentLoaded,
-          })
-        )
+        wrappedEmit({
+          data: {},
+          type: RecordType.DomContentLoaded,
+        })
       })
     )
     const init = () => {
@@ -202,105 +192,85 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
             sampling,
             slimDOMOptions,
             canvasMutationCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.CanvasMutation,
-                    ...p,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.CanvasMutation,
+                  ...p,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             fontCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.Font,
-                    ...p,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.Font,
+                  ...p,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             inputCb: (v) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.Input,
-                    ...v,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.Input,
+                  ...v,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             mediaInteractionCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.MediaInteraction,
-                    ...p,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.MediaInteraction,
+                  ...p,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             mouseInteractionCb: (d) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.MouseInteraction,
-                    ...d,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.MouseInteraction,
+                  ...d,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             mousemoveCb: (positions, source) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    positions,
-                    source,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  positions,
+                  source,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             mutationCb: (m) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.Mutation,
-                    ...m,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.Mutation,
+                  ...m,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             scrollCb: (p) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.Scroll,
-                    ...p,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.Scroll,
+                  ...p,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             styleSheetRuleCb: (r) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.StyleSheetRule,
-                    ...r,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.StyleSheetRule,
+                  ...r,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
             viewportResizeCb: (d) =>
-              wrappedEmit(
-                wrapEvent({
-                  data: {
-                    source: IncrementalSource.ViewportResize,
-                    ...d,
-                  },
-                  type: EventType.IncrementalSnapshot,
-                })
-              ),
+              wrappedEmit({
+                data: {
+                  source: IncrementalSource.ViewportResize,
+                  ...d,
+                },
+                type: RecordType.IncrementalSnapshot,
+              }),
           },
           hooks
         )
@@ -313,12 +283,10 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
         on(
           'load',
           () => {
-            wrappedEmit(
-              wrapEvent({
-                data: {},
-                type: EventType.Load,
-              })
-            )
+            wrappedEmit({
+              data: {},
+              type: RecordType.Load,
+            })
             init()
           },
           window
@@ -337,19 +305,17 @@ function record<T = EventWithTime>(options: RecordOptions<T> = {}): RecordAPI | 
   }
 }
 
-record.addCustomEvent = <T>(tag: string, payload: T) => {
+record.addCustomRecord = <T>(tag: string, payload: T) => {
   if (!wrappedEmit) {
-    throw new Error('please add custom event after start recording')
+    throw new Error('please add custom record after start recording')
   }
-  wrappedEmit(
-    wrapEvent({
-      data: {
-        payload,
-        tag,
-      },
-      type: EventType.Custom,
-    })
-  )
+  wrappedEmit({
+    data: {
+      payload,
+      tag,
+    },
+    type: RecordType.Custom,
+  })
 }
 
 record.freezePage = () => {
