@@ -40,11 +40,11 @@ describe('record', () => {
   it('will only have one full snapshot without checkout config', () => {
     stop = record<Record>({ emit: emitSpy })?.stop
 
-    const typeEventCount = 30
-    type(typeEventCount)
+    const inputEventCount = 30
+    dispatchInputEvents(inputEventCount)
 
     const records = getEmittedRecords()
-    expect(records.length).toEqual(typeEventCount + RECORDS_PER_FULL_SNAPSHOTS)
+    expect(records.length).toEqual(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS)
     expect(records.filter((record) => record.type === RecordType.Meta).length).toEqual(1)
     expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toEqual(1)
   })
@@ -55,11 +55,11 @@ describe('record', () => {
       checkoutEveryNth: 10,
     })?.stop
 
-    const typeEventCount = 30
-    type(typeEventCount)
+    const inputEventCount = 30
+    dispatchInputEvents(inputEventCount)
 
     const records = getEmittedRecords()
-    expect(records.length).toBe(typeEventCount + RECORDS_PER_FULL_SNAPSHOTS * 4)
+    expect(records.length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS * 4)
     expect(records.filter((record) => record.type === RecordType.Meta).length).toBe(4)
     expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toBe(4)
     expect(records[1].type).toBe(RecordType.FullSnapshot)
@@ -74,18 +74,18 @@ describe('record', () => {
     const checkoutDelay = 500
     stop = record<Record>({ emit: emitSpy, checkoutEveryNms: checkoutDelay })?.stop
 
-    let typeEventCount = 30
-    type(typeEventCount)
+    let inputEventCount = 30
+    dispatchInputEvents(inputEventCount)
     jasmine.clock().tick(checkoutDelay)
 
-    expect(getEmittedRecords().length).toBe(typeEventCount + RECORDS_PER_FULL_SNAPSHOTS)
+    expect(getEmittedRecords().length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS)
 
     jasmine.clock().tick(1)
-    typeEventCount += 1
-    type(1)
+    inputEventCount += 1
+    dispatchInputEvents(1)
 
     const records = getEmittedRecords()
-    expect(records.length).toBe(typeEventCount + RECORDS_PER_FULL_SNAPSHOTS * 2)
+    expect(records.length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS * 2)
     expect(records.filter((record) => record.type === RecordType.Meta).length).toBe(2)
     expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toBe(2)
     expect(records[1].type).toBe(RecordType.FullSnapshot)
@@ -270,7 +270,7 @@ describe('record', () => {
     return emitSpy.calls.allArgs().map(([record]) => record)
   }
 
-  function type(count: number) {
+  function dispatchInputEvents(count: number) {
     for (let i = 0; i < count; i += 1) {
       input.value += 'a'
       input.dispatchEvent(createNewEvent('input', {}))
