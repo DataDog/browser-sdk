@@ -22,11 +22,7 @@ describe('record', () => {
 
     emitSpy = jasmine.createSpy()
     ;({ waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(emitSpy))
-    sandbox = document.createElement('div')
-    sandbox.id = 'sandbox'
-    input = document.createElement('input')
-    sandbox.appendChild(input)
-    document.body.appendChild(sandbox)
+    ;({ sandbox, input } = createDOMSandbox())
   })
 
   afterEach(() => {
@@ -277,6 +273,15 @@ describe('record', () => {
     }
   }
 })
+
+function createDOMSandbox() {
+  const sandbox = document.createElement('div')
+  sandbox.id = 'sandbox'
+  const input = document.createElement('input')
+  sandbox.appendChild(input)
+  document.body.appendChild(sandbox)
+  return { sandbox, input }
+}
 
 function findNode(
   root: serializedNodeWithId,
