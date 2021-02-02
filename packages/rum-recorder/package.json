@@ -14,7 +14,6 @@
   "dependencies": {
     "@datadog/browser-core": "2.4.0",
     "@datadog/browser-rum-core": "2.4.0",
-    "rrweb-snapshot": "1.0.1",
     "tslib": "^1.10.0"
   },
   "repository": {
