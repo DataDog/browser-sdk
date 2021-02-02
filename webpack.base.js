@@ -47,6 +47,10 @@ module.exports = ({ entry, mode, filename, datacenter }) => ({
   resolve: {
     extensions: ['.ts', '.js'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
+    alias: {
+      // The default "pako.esm.js" build is not transpiled to es5
+      pako: 'pako/dist/pako.es5.js',
+    },
   },
 
   plugins: [
