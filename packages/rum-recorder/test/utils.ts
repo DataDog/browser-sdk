@@ -69,6 +69,8 @@ export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
       spy.and.callFake((() => {
         fail('Unexpected extra call')
       }) as F)
+      // make sure the "setTimeout" is not mocked
+      jasmine.clock().uninstall()
       setTimeout(done, 300)
     },
   }

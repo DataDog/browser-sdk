@@ -5,6 +5,7 @@ import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
 
 import { FocusRecord, RawRecord } from '../types'
+import { MAX_SEGMENT_DURATION } from '../domain/segmentCollection'
 import { startRecording, trackFocusRecords } from './recorder'
 
 describe('startRecording', () => {
@@ -22,6 +23,7 @@ describe('startRecording', () => {
     }
     sessionId = 'session-id'
     setupBuilder = setup()
+      .withFakeClock()
       .withParentContexts({
         findView() {
           return {
@@ -52,8 +54,8 @@ describe('startRecording', () => {
   })
 
   it('sends recorded segments with valid context', (done) => {
-    const { lifeCycle } = setupBuilder.build()
-    flushSegment(lifeCycle)
+    setupBuilder.build()
+    flushSegment()
 
     waitRequestSendCalls(1, (calls) => {
       expect(calls.first().args).toEqual([jasmine.any(FormData), jasmine.any(Number)])
@@ -91,15 +93,15 @@ describe('startRecording', () => {
   })
 
   it('stops sending new segment when the session is expired', (done) => {
-    const { lifeCycle } = setupBuilder.build()
+    setupBuilder.build()
 
     document.body.dispatchEvent(createNewEvent('click'))
 
     sessionId = undefined
-    flushSegment(lifeCycle)
+    flushSegment()
     document.body.dispatchEvent(createNewEvent('click'))
 
-    flushSegment(lifeCycle)
+    flushSegment()
 
     waitRequestSendCalls(1, (calls) => {
       expect(getRequestData(calls.first()).records_count).toBe('4')
@@ -109,15 +111,15 @@ describe('startRecording', () => {
 
   it('restarts sending segments when the session is renewed', (done) => {
     sessionId = undefined
-    const { lifeCycle } = setupBuilder.build()
+    setupBuilder.build()
 
     document.body.dispatchEvent(createNewEvent('click'))
 
     sessionId = 'new-session-id'
-    flushSegment(lifeCycle)
+    flushSegment()
     document.body.dispatchEvent(createNewEvent('click'))
 
-    flushSegment(lifeCycle)
+    flushSegment()
 
     waitRequestSendCalls(1, (calls) => {
       const data = getRequestData(calls.first())
@@ -132,7 +134,7 @@ describe('startRecording', () => {
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
 
-    flushSegment(lifeCycle)
+    flushSegment()
 
     waitRequestSendCalls(2, (calls) => {
       expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
@@ -145,7 +147,7 @@ describe('startRecording', () => {
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-    flushSegment(lifeCycle)
+    flushSegment()
 
     waitRequestSendCalls(2, (calls) => {
       expect(getRequestData(calls.mostRecent()).has_full_snapshot).toBe('true')
@@ -208,8 +210,8 @@ describe('trackFocusRecords', () => {
   })
 })
 
-function flushSegment(lifeCycle: LifeCycle) {
-  lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+function flushSegment() {
+  jasmine.clock().tick(MAX_SEGMENT_DURATION)
 }
 
 function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
