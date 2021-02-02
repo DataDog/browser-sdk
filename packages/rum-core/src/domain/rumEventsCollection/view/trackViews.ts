@@ -186,6 +186,7 @@ function newView(
       stopEventCountsTracking()
       stopActivityLoadingTimeTracking()
       stopCLSTracking()
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
     isDifferentView(otherLocation: Location) {
       return (

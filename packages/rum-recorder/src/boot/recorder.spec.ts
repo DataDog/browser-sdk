@@ -12,6 +12,7 @@ import { startRecording, trackFocusRecords } from './recorder'
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionId: string | undefined
+  let viewId: string
   let waitRequestSendCalls: (
     expectedCallsCount: number,
     callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
@@ -23,6 +24,7 @@ describe('startRecording', () => {
       pending('IE not supported')
     }
     sessionId = 'session-id'
+    viewId = 'view-id'
     setupBuilder = setup()
       .withFakeClock()
       .withParentContexts({
@@ -32,7 +34,7 @@ describe('startRecording', () => {
               id: sessionId,
             },
             view: {
-              id: 'view-id',
+              id: viewId,
               referrer: '',
               url: 'http://example.org',
             },
@@ -156,25 +158,16 @@ describe('startRecording', () => {
     })
   })
 
-  it('adds a ViewEnd snapshot when the view changes', (done) => {
+  it('adds a ViewEnd snapshot when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+    viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    flushSegment()
 
-    waitRequestSendCalls(1, (calls) => {
-      readRequestSegment(calls.first(), (segment) => {
-        expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
-        expectNoExtraRequestSendCalls(done)
-      })
-    })
-  })
-
-  it('adds a ViewEnd snapshot before unload', (done) => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-
-    waitRequestSendCalls(1, (calls) => {
+    waitRequestSendCalls(2, (calls) => {
+      expect(getRequestData(calls.first())['view.id']).toBe('view-id')
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
         expectNoExtraRequestSendCalls(done)

@@ -13,10 +13,6 @@ export function startRecording(
   session: RumSession,
   parentContexts: ParentContexts
 ) {
-  // This needs to be invoked before startSegmentCollection so lifeCycle events are subscribed
-  // first, and ViewEnd records gets added before the segment is flushed.
-  trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
-
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
     applicationId,
@@ -36,6 +32,7 @@ export function startRecording(
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, takeFullSnapshot)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   const { stop: stopTrackingFocusRecords } = trackFocusRecords(lifeCycle, addRawRecord)
+  trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
 
   return {
     stop() {
@@ -61,11 +58,9 @@ export function trackFocusRecords(lifeCycle: LifeCycle, addRawRecord: (record: R
 }
 
 export function trackViewEndRecord(lifeCycle: LifeCycle, addRawRecord: (record: RawRecord) => void) {
-  function addViewEndRecord() {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
     addRawRecord({
       type: RecordType.ViewEnd,
     })
-  }
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, addViewEndRecord)
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, addViewEndRecord)
+  })
 }
