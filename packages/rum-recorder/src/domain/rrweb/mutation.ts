@@ -5,7 +5,7 @@ import {
   serializeNodeWithId,
   SlimDOMOptions,
   transformAttribute,
-} from 'rrweb-snapshot'
+} from '../rrweb-snapshot'
 import {
   AddedNodeMutation,
   AttributeCursor,

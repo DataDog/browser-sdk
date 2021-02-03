@@ -206,7 +206,7 @@ function newView(
       }
     },
     addTiming(name: string, time: number) {
-      customTimings[name] = time - startTime
+      customTimings[sanitizeTiming(name)] = time - startTime
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
@@ -312,4 +312,15 @@ function trackLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) 
  */
 function isLayoutShiftSupported() {
   return supportPerformanceTimingEvent('layout-shift')
+}
+
+/**
+ * Timing name is used as facet path that must contain only letters, digits, or the characters - _ . @ $
+ */
+function sanitizeTiming(name: string) {
+  const sanitized = name.replace(/[^a-zA-Z0-9-_.@$]/g, '_')
+  if (sanitized !== name) {
+    console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
+  }
+  return sanitized
 }

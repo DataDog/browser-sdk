@@ -1,4 +1,4 @@
-import { serializedNodeWithId } from 'rrweb-snapshot'
+import { SerializedNodeWithId } from './domain/rrweb-snapshot'
 import type { IncrementalData } from './domain/rrweb/types'
 
 export { IncrementalSource } from './domain/rrweb/types'
@@ -69,7 +69,7 @@ export interface LoadedRecord {
 export interface FullSnapshotRecord {
   type: RecordType.FullSnapshot
   data: {
-    node: serializedNodeWithId
+    node: SerializedNodeWithId
     initialOffset: {
       top: number
       left: number
