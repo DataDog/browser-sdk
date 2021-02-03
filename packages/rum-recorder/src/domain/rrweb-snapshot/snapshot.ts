@@ -114,7 +114,7 @@ function getAbsoluteSrcsetString(doc: Document, attributeValue: string) {
   const resultingSrcsetString = srcsetValues
     .map((srcItem) => {
       // removing all but middle spaces
-      const trimmedSrcItem = srcItem.trimLeft().trimRight()
+      const trimmedSrcItem = srcItem.replace(/^\s+/, '').replace(/\s+$/, '')
       const urlAndSize = trimmedSrcItem.split(' ')
       // this means we have both 0:url and 1:size
       if (urlAndSize.length === 2) {
