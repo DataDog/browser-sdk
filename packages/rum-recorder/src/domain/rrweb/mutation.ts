@@ -281,7 +281,7 @@ export class MutationBuffer {
         }
       }
       if (!node) {
-        for (let index = addList.length - 1; index >= 0; index += 1) {
+        for (let index = addList.length - 1; index >= 0; index -= 1) {
           const nodeCandidate = addList.get(index)!
           const parentId = mirror.getId((nodeCandidate.value.parentNode as Node) as INode)
           const nextId = getNextId(nodeCandidate.value)
