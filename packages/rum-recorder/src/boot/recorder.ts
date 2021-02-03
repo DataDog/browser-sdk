@@ -31,6 +31,7 @@ export function startRecording(
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   const { stop: stopTrackingFocusRecords } = trackFocusRecords(lifeCycle, addRawRecord)
+  trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
 
   return {
     stop() {
@@ -53,4 +54,12 @@ export function trackFocusRecords(lifeCycle: LifeCycle, addRawRecord: (record: R
   addFocusRecord()
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, addFocusRecord)
   return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], addFocusRecord)
+}
+
+export function trackViewEndRecord(lifeCycle: LifeCycle, addRawRecord: (record: RawRecord) => void) {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+    addRawRecord({
+      type: RecordType.ViewEnd,
+    })
+  })
 }
