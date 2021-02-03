@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import { INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot'
+import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import {
   Arguments,

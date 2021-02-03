@@ -21,6 +21,8 @@ export enum DOM_EVENT {
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
   MOUSE_DOWN = 'mousedown',
+  FOCUS = 'focus',
+  BLUR = 'blur',
 }
 
 export enum ResourceType {
