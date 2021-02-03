@@ -157,7 +157,7 @@ function trackVisibility(expandSession: () => void) {
   const { stop } = utils.addEventListener(document, utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
 
-  const visibilityCheckInterval = window.setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
+  const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
   stopCallbacks.push(() => {
     clearInterval(visibilityCheckInterval)
   })

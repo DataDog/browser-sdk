@@ -1,5 +1,5 @@
 const webpack = require('webpack')
-const webpackConfig = require('../../webpack.base')('development')
+const webpackConfig = require('../../webpack.base')({ mode: 'development', types: ['jasmine'] })
 const getTestReportDirectory = require('../getTestReportDirectory')
 const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
 

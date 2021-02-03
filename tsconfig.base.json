@@ -10,6 +10,9 @@
     "target": "es5",
     "sourceMap": true,
 
+    "types": [],
+    "lib": ["ES2016", "DOM"],
+
     "plugins": [
       {
         "name": "typescript-tslint-plugin"

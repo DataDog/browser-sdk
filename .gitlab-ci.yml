@@ -47,6 +47,7 @@ build-and-lint:
     - yarn build
     - yarn lint
     - scripts/cli typecheck test/app
+    - scripts/cli typecheck test/e2e
 
 build-bundle:
   stage: test
