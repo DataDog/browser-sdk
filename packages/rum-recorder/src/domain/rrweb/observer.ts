@@ -1,6 +1,6 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
-import { nodeOrAncestorsAreHidden } from '../privacy'
+import { nodeOrAncestorsAreHidden, nodeOrAncestorsHaveInputIngnored } from '../privacy'
 import { MutationBuffer } from './mutation'
 import {
   Arguments,
@@ -186,20 +186,21 @@ function initInputObserver(
 ): ListenerHandler {
   function eventHandler(event: Event) {
     const { target } = event
+
     if (
       !target ||
       !(target as Element).tagName ||
       INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      nodeOrAncestorsAreHidden(target as Node)
+      nodeOrAncestorsAreHidden(target as Node) ||
+      nodeOrAncestorsHaveInputIngnored(target as Node)
     ) {
       return
     }
+
     const type: string | undefined = (target as HTMLInputElement).type
-    if (type === 'password' || (target as HTMLElement).classList.contains(ignoreClass)) {
-      return
-    }
     let text = (target as HTMLInputElement).value
     let isChecked = false
+
     if (type === 'radio' || type === 'checkbox') {
       isChecked = (target as HTMLInputElement).checked
     } else if (
@@ -208,7 +209,9 @@ function initInputObserver(
     ) {
       text = maskInputFn ? maskInputFn(text) : '*'.repeat(text.length)
     }
+
     cbWithDedup(target, { text, isChecked })
+
     // if a radio was checked
     // the other radios with the same name attribute will be unchecked.
     const name: string | undefined = (target as HTMLInputElement).name
@@ -223,6 +226,7 @@ function initInputObserver(
       })
     }
   }
+
   function cbWithDedup(target: EventTarget, v: InputValue) {
     const lastInputValue = lastInputValueMap.get(target)
     if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
@@ -234,6 +238,7 @@ function initInputObserver(
       })
     }
   }
+
   const events = sampling.input === 'last' ? ['change'] : ['input', 'change']
   const handlers: Array<ListenerHandler | HookResetter> = events.map((eventName) => on(eventName, eventHandler))
   const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
@@ -245,6 +250,7 @@ function initInputObserver(
     // Some UI library use selectedIndex to set select value
     [HTMLSelectElement.prototype, 'selectedIndex'],
   ]
+
   if (propertyDescriptor && propertyDescriptor.set) {
     handlers.push(
       ...hookProperties.map((p) =>
@@ -257,6 +263,7 @@ function initInputObserver(
       )
     )
   }
+
   return () => {
     handlers.forEach((h) => h())
   }
