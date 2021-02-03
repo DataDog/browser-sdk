@@ -20,5 +20,9 @@
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/rum-recorder"
+  },
+  "devDependencies": {
+    "@types/pako": "1.0.1",
+    "pako": "2.0.3"
   }
 }

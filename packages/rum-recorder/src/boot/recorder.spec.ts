@@ -1,15 +1,17 @@
 import { createNewEvent, HttpRequest, isIE } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { inflate } from 'pako'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
 
-import { FocusRecord, RawRecord } from '../types'
+import { FocusRecord, RawRecord, Segment, RecordType } from '../types'
 import { startRecording, trackFocusRecords } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
   let sessionId: string | undefined
+  let viewId: string
   let waitRequestSendCalls: (
     expectedCallsCount: number,
     callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
@@ -21,6 +23,7 @@ describe('startRecording', () => {
       pending('IE not supported')
     }
     sessionId = 'session-id'
+    viewId = 'view-id'
     setupBuilder = setup()
       .withParentContexts({
         findView() {
@@ -29,7 +32,7 @@ describe('startRecording', () => {
               id: sessionId,
             },
             view: {
-              id: 'view-id',
+              id: viewId,
               referrer: '',
               url: 'http://example.org',
             },
@@ -152,6 +155,23 @@ describe('startRecording', () => {
       expectNoExtraRequestSendCalls(done)
     })
   })
+
+  it('adds a ViewEnd snapshot when the view ends', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+    viewId = 'view-id-2'
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    flushSegment(lifeCycle)
+
+    waitRequestSendCalls(2, (calls) => {
+      expect(getRequestData(calls.first())['view.id']).toBe('view-id')
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
+        expectNoExtraRequestSendCalls(done)
+      })
+    })
+  })
 })
 
 describe('trackFocusRecords', () => {
@@ -213,13 +233,28 @@ function flushSegment(lifeCycle: LifeCycle) {
 }
 
 function getRequestData(call: jasmine.CallInfo<HttpRequest['send']>) {
-  const data = call.args[0]
-  expect(data).toEqual(jasmine.any(FormData))
   const result: { [key: string]: unknown } = {}
-  ;(data as FormData).forEach((value, key) => {
+  getRequestFormData(call).forEach((value, key) => {
     result[key] = value
   })
   return result
+}
+
+function readRequestSegment(call: jasmine.CallInfo<HttpRequest['send']>, callback: (segment: Segment) => void) {
+  const encodedSegment = getRequestFormData(call).get('segment')
+  expect(encodedSegment).toBeInstanceOf(Blob)
+  const reader = new FileReader()
+  reader.addEventListener('loadend', () => {
+    const textDecoder = new TextDecoder()
+    callback(JSON.parse(textDecoder.decode(inflate(reader.result as Uint8Array))))
+  })
+  reader.readAsArrayBuffer(encodedSegment as Blob)
+}
+
+function getRequestFormData(call: jasmine.CallInfo<HttpRequest['send']>) {
+  const data = call.args[0]
+  expect(data).toEqual(jasmine.any(FormData))
+  return data as FormData
 }
 
 function createRandomString(minLength: number) {
