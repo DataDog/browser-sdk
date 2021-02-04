@@ -93,8 +93,8 @@ export type SamplingStrategy = Partial<{
   input: 'all' | 'last'
 }>
 
-export interface RecordOptions<T> {
-  emit?: (e: T, isCheckout?: boolean) => void
+export interface RecordOptions {
+  emit?: (record: RawRecord, isCheckout?: boolean) => void
   checkoutEveryNth?: number
   checkoutEveryNms?: number
   blockClass?: BlockClass

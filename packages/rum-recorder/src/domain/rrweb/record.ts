@@ -6,7 +6,7 @@ import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | undefined {
+function record(options: RecordOptions = {}): RecordAPI | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -94,7 +94,7 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
       mutationBuffer.unfreeze()
     }
 
-    emit(((packFn ? packFn(record) : record) as unknown) as T, isCheckout)
+    emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
     if (record.type === RecordType.FullSnapshot) {
       lastFullSnapshotRecordTimestamp = Date.now()
       incrementalSnapshotCount = 0
@@ -167,14 +167,6 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
 
   try {
     const handlers: ListenerHandler[] = []
-    handlers.push(
-      on('DOMContentLoaded', () => {
-        wrappedEmit({
-          data: {},
-          type: RecordType.DomContentLoaded,
-        })
-      })
-    )
     const init = () => {
       takeFullSnapshot()
 
@@ -279,19 +271,7 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
     if (document.readyState === 'interactive' || document.readyState === 'complete') {
       init()
     } else {
-      handlers.push(
-        on(
-          'load',
-          () => {
-            wrappedEmit({
-              data: {},
-              type: RecordType.Load,
-            })
-            init()
-          },
-          window
-        )
-      )
+      handlers.push(on('load', init, window))
     }
     return {
       stop: () => {
@@ -303,19 +283,6 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
     // TODO: handle internal error
     console.warn(error)
   }
-}
-
-record.addCustomRecord = <T>(tag: string, payload: T) => {
-  if (!wrappedEmit) {
-    throw new Error('please add custom record after start recording')
-  }
-  wrappedEmit({
-    data: {
-      payload,
-      tag,
-    },
-    type: RecordType.Custom,
-  })
 }
 
 record.freezePage = () => {

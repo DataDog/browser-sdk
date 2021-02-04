@@ -29,15 +29,7 @@ export type CreationReason =
   | 'before_unload'
   | 'visibility_hidden'
 
-export type RawRecord =
-  | DomContentLoadedRecord
-  | LoadedRecord
-  | FullSnapshotRecord
-  | IncrementalSnapshotRecord
-  | MetaRecord
-  | CustomRecord
-  | FocusRecord
-  | ViewEndRecord
+export type RawRecord = FullSnapshotRecord | IncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord
 
 export type Record = RawRecord & {
   timestamp: number
@@ -45,24 +37,11 @@ export type Record = RawRecord & {
 }
 
 export enum RecordType {
-  DomContentLoaded,
-  Load,
-  FullSnapshot,
-  IncrementalSnapshot,
-  Meta,
-  Custom,
-  Focus,
-  ViewEnd,
-}
-
-export interface DomContentLoadedRecord {
-  type: RecordType.DomContentLoaded
-  data: object
-}
-
-export interface LoadedRecord {
-  type: RecordType.Load
-  data: object
+  FullSnapshot = 2,
+  IncrementalSnapshot = 3,
+  Meta = 4,
+  Focus = 6,
+  ViewEnd = 7,
 }
 
 export interface FullSnapshotRecord {
@@ -87,14 +66,6 @@ export interface MetaRecord {
     href: string
     width: number
     height: number
-  }
-}
-
-export interface CustomRecord<T = unknown> {
-  type: RecordType.Custom
-  data: {
-    tag: string
-    payload: T
   }
 }
 

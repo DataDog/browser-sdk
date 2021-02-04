@@ -7,7 +7,7 @@ import { Segment } from './segment'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: Record = { type: RecordType.Load, timestamp: 10, data: {} }
+const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
 
 const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
 
@@ -49,7 +49,7 @@ describe('startSegmentCollection', () => {
     const { addRecord, worker, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
     expect(worker.pendingData).toBe('')
     addRecord(RECORD)
-    expect(worker.pendingData).toBe('{"records":[{"type":1,"timestamp":10,"data":{}}')
+    expect(worker.pendingData).toBe('{"records":[{"type":7,"timestamp":10}')
     expect(segmentFlushSpy).not.toHaveBeenCalled()
     expect(sendCurrentSegment().creation_reason).toBe('init')
   })
