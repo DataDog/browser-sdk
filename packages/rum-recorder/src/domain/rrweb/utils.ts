@@ -1,11 +1,12 @@
-import { noop } from '@datadog/browser-core'
+import { noop, monitor } from '@datadog/browser-core'
 import { IGNORED_NODE, INode } from '../rrweb-snapshot'
 import { BlockClass, HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
 
 export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
+  const monitoredFn = monitor(fn)
   const options = { capture: true, passive: true }
-  target.addEventListener(type, fn, options)
-  return () => target.removeEventListener(type, fn, options)
+  target.addEventListener(type, monitoredFn, options)
+  return () => target.removeEventListener(type, monitoredFn, options)
 }
 
 export const mirror: Mirror = {
