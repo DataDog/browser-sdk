@@ -264,7 +264,7 @@ function initInputObserver(
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const insertRule = CSSStyleSheet.prototype.insertRule
-  CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number) {
+  CSSStyleSheet.prototype.insertRule = monitor(function (this: CSSStyleSheet, rule: string, index?: number) {
     const id = mirror.getId(this.ownerNode as INode)
     if (id !== -1) {
       cb({
@@ -273,11 +273,11 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
       })
     }
     return insertRule.call(this, rule, index)
-  }
+  })
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const deleteRule = CSSStyleSheet.prototype.deleteRule
-  CSSStyleSheet.prototype.deleteRule = function (index: number) {
+  CSSStyleSheet.prototype.deleteRule = monitor(function (this: CSSStyleSheet, index: number) {
     const id = mirror.getId(this.ownerNode as INode)
     if (id !== -1) {
       cb({
@@ -286,7 +286,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
       })
     }
     return deleteRule.call(this, index)
-  }
+  })
 
   return () => {
     CSSStyleSheet.prototype.insertRule = insertRule
@@ -326,7 +326,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         CanvasRenderingContext2D.prototype,
         prop,
         (original: (...args: unknown[]) => unknown) =>
-          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+          monitor(function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             if (!isBlocked(this.canvas, blockClass)) {
               setTimeout(
                 monitor(() => {
@@ -346,7 +346,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
               )
             }
             return original.apply(this, args)
-          }
+          })
       )
       handlers.push(restoreHandler)
     } catch {
@@ -406,7 +406,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     (document as DocumentWithFonts).fonts,
     'add',
     (original: (fontFace: FontFace) => unknown) =>
-      function (this: unknown, fontFace: FontFace) {
+      monitor(function (this: unknown, fontFace: FontFace) {
         setTimeout(
           monitor(() => {
             const p = fontMap.get(fontFace)
@@ -418,7 +418,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
           0
         )
         return original.apply(this, [fontFace])
-      }
+      })
   )
 
   handlers.push(() => {
