@@ -24,7 +24,7 @@ describe('record', () => {
 
   it('will only have one full snapshot without checkout config', () => {
     const emit = jasmine.createSpy<(record: RawRecord) => void>()
-    stop = record({ emit })?.stop
+    stop = record({ emit }).stop
 
     const count = 30
     for (let i = 0; i < count; i += 1) {

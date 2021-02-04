@@ -6,7 +6,7 @@ import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-function record(options: RecordOptions = {}): RecordAPI | undefined {
+function record(options: RecordOptions = {}): RecordAPI {
   const {
     emit,
     checkoutEveryNms,
@@ -165,123 +165,118 @@ function record(options: RecordOptions = {}): RecordAPI | undefined {
     }
   }
 
-  try {
-    const handlers: ListenerHandler[] = []
-    const init = () => {
-      takeFullSnapshot()
+  const handlers: ListenerHandler[] = []
+  const init = () => {
+    takeFullSnapshot()
 
-      handlers.push(
-        initObservers(
-          {
-            blockClass,
-            blockSelector,
-            collectFonts,
-            ignoreClass,
-            inlineStylesheet,
-            maskInputFn,
-            maskInputOptions,
-            recordCanvas,
-            sampling,
-            slimDOMOptions,
-            canvasMutationCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.CanvasMutation,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            fontCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Font,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            inputCb: (v) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Input,
-                  ...v,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mediaInteractionCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.MediaInteraction,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mouseInteractionCb: (d) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.MouseInteraction,
-                  ...d,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mousemoveCb: (positions, source) =>
-              wrappedEmit({
-                data: {
-                  positions,
-                  source,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mutationCb: (m) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Mutation,
-                  ...m,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            scrollCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Scroll,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            styleSheetRuleCb: (r) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.StyleSheetRule,
-                  ...r,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            viewportResizeCb: (d) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.ViewportResize,
-                  ...d,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-          },
-          hooks
-        )
+    handlers.push(
+      initObservers(
+        {
+          blockClass,
+          blockSelector,
+          collectFonts,
+          ignoreClass,
+          inlineStylesheet,
+          maskInputFn,
+          maskInputOptions,
+          recordCanvas,
+          sampling,
+          slimDOMOptions,
+          canvasMutationCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.CanvasMutation,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          fontCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Font,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          inputCb: (v) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Input,
+                ...v,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mediaInteractionCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.MediaInteraction,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mouseInteractionCb: (d) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.MouseInteraction,
+                ...d,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mousemoveCb: (positions, source) =>
+            wrappedEmit({
+              data: {
+                positions,
+                source,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mutationCb: (m) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Mutation,
+                ...m,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          scrollCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Scroll,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          styleSheetRuleCb: (r) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.StyleSheetRule,
+                ...r,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          viewportResizeCb: (d) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.ViewportResize,
+                ...d,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+        },
+        hooks
       )
-    }
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-      init()
-    } else {
-      handlers.push(on('load', init, window))
-    }
-    return {
-      stop: () => {
-        handlers.forEach((h) => h())
-      },
-      takeFullSnapshot,
-    }
-  } catch (error) {
-    // TODO: handle internal error
-    console.warn(error)
+    )
+  }
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    init()
+  } else {
+    handlers.push(on('load', init, window))
+  }
+  return {
+    stop: () => {
+      handlers.forEach((h) => h())
+    },
+    takeFullSnapshot,
   }
 }
 
