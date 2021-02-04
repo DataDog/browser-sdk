@@ -2,7 +2,7 @@ import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers, mutationBuffer } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
-import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
+import { getWindowHeight, getWindowWidth, mirror, on } from './utils'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
@@ -77,8 +77,6 @@ function record(options: RecordOptions = {}): RecordAPI | undefined {
       : slimDOMOptionsArg
       ? slimDOMOptionsArg
       : {}
-
-  polyfill()
 
   let lastFullSnapshotRecordTimestamp: number
   let incrementalSnapshotCount = 0

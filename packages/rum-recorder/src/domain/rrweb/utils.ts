@@ -26,7 +26,7 @@ export const mirror: Mirror = {
     const id = n.__sn && n.__sn.id // eslint-disable-line no-underscore-dangle
     delete mirror.map[id]
     if (n.childNodes) {
-      n.childNodes.forEach((child) => mirror.removeNodeFromMap((child as Node) as INode))
+      forEach(n.childNodes, (child: ChildNode) => mirror.removeNodeFromMap((child as Node) as INode))
     }
   },
   has(id) {
@@ -148,7 +148,7 @@ export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
     if (typeof blockClass === 'string') {
       needBlock = (node as HTMLElement).classList.contains(blockClass)
     } else {
-      ;(node as HTMLElement).classList.forEach((className) => {
+      forEach((node as HTMLElement).classList, (className: string) => {
         if (blockClass.test(className)) {
           needBlock = true
         }
@@ -191,14 +191,6 @@ export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEven
   return Boolean((event as TouchEvent).changedTouches)
 }
 
-export function polyfill(win = window) {
-  if ('NodeList' in win && !win.NodeList.prototype.forEach) {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    win.NodeList.prototype.forEach = (Array.prototype.forEach as unknown) as NodeList['forEach']
-  }
-
-  if ('DOMTokenList' in win && !win.DOMTokenList.prototype.forEach) {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    win.DOMTokenList.prototype.forEach = (Array.prototype.forEach as unknown) as DOMTokenList['forEach']
-  }
+export function forEach<List, Element>(list: List, callback: (value: Element, index: number, parent: List) => void) {
+  Array.prototype.forEach.call(list, (callback as unknown) as (value: any, index: number, parent: any[]) => void)
 }

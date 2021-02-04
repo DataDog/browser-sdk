@@ -28,6 +28,7 @@ import {
   ViewportResizeCallback,
 } from './types'
 import {
+  forEach,
   getWindowHeight,
   getWindowWidth,
   hookSetter,
@@ -206,7 +207,7 @@ function initInputObserver(
     // the other radios with the same name attribute will be unchecked.
     const name: string | undefined = (target as HTMLInputElement).name
     if (type === 'radio' && name && isChecked) {
-      document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach((el) => {
+      forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
           cbWithDedup(el, {
             isChecked: !isChecked,
