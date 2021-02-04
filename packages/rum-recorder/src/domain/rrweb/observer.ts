@@ -248,10 +248,10 @@ function initInputObserver(
     handlers.push(
       ...hookProperties.map((p) =>
         hookSetter<HTMLElement>(p[0], p[1], {
-          set() {
+          set: monitor(function () {
             // mock to a normal event
             eventHandler(({ target: this } as unknown) as Event)
-          },
+          }),
         })
       )
     )
@@ -348,14 +348,14 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
       handlers.push(restoreHandler)
     } catch {
       const hookHandler = hookSetter<CanvasRenderingContext2D>(CanvasRenderingContext2D.prototype, prop, {
-        set(v) {
+        set: monitor(function (v) {
           cb({
             args: [v],
             id: mirror.getId((this.canvas as unknown) as INode),
             property: prop,
             setter: true,
           })
-        },
+        }),
       })
       handlers.push(hookHandler)
     }
