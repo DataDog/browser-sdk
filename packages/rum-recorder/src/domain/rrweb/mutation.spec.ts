@@ -1,3 +1,4 @@
+import { isIE } from '@datadog/browser-core'
 import { serializeNodeWithId, SerializedNodeWithId, IdNodeMap } from '../rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import { MutationCallBack } from './types'
@@ -18,6 +19,10 @@ describe('MutationBuffer', () => {
   let mutationCallbackSpy: jasmine.Spy<MutationCallBack>
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
     sandbox = document.createElement('div')
     sandbox.appendChild(document.createElement('div'))
     mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
