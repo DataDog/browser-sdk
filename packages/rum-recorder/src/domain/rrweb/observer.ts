@@ -52,7 +52,7 @@ function initMutationObserver(
 ): MutationObserver {
   // see mutation.ts for details
   mutationBuffer.init(cb, blockClass, blockSelector, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
-  const observer = new MutationObserver(mutationBuffer.processMutations)
+  const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
   observer.observe(document, {
     attributeOldValue: true,
     attributes: true,
