@@ -15,7 +15,7 @@ import {
   RemovedNodeMutation,
   TextCursor,
 } from './types'
-import { isAncestorRemoved, isBlocked, isIgnored, mirror } from './utils'
+import { forEach, isAncestorRemoved, isBlocked, isIgnored, mirror } from './utils'
 
 interface DoubleLinkedListNode {
   previous: DoubleLinkedListNode | null
@@ -372,8 +372,8 @@ export class MutationBuffer {
         break
       }
       case 'childList': {
-        m.addedNodes.forEach((n) => this.genAdds(n, m.target))
-        m.removedNodes.forEach((n) => {
+        forEach(m.addedNodes, (n: Node) => this.genAdds(n, m.target))
+        forEach(m.removedNodes, (n: Node) => {
           const nodeId = mirror.getId(n as INode)
           const parentId = mirror.getId(m.target as INode)
           if (isBlocked(n, this.blockClass) || isBlocked(m.target, this.blockClass) || isIgnored(n)) {
@@ -436,7 +436,7 @@ export class MutationBuffer {
       this.addedSet.add(n)
       this.droppedSet.delete(n)
     }
-    n.childNodes.forEach((childN) => this.genAdds(childN))
+    forEach(n.childNodes, (childN: ChildNode) => this.genAdds(childN))
   }
 }
 
@@ -448,7 +448,7 @@ export class MutationBuffer {
  */
 function deepDelete(addsSet: Set<Node>, n: Node) {
   addsSet.delete(n)
-  n.childNodes.forEach((childN) => deepDelete(addsSet, childN))
+  forEach(n.childNodes, (childN: ChildNode) => deepDelete(addsSet, childN))
 }
 
 function isParentRemoved(removes: RemovedNodeMutation[], n: Node): boolean {
