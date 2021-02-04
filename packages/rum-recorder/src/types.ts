@@ -37,14 +37,11 @@ export type Record = RawRecord & {
 }
 
 export enum RecordType {
-  _0, // previously DomContentLoaded
-  _1, // previously Load
-  FullSnapshot,
-  IncrementalSnapshot,
-  Meta,
-  _2, // previously Custom
-  Focus,
-  ViewEnd,
+  FullSnapshot = 2,
+  IncrementalSnapshot = 3,
+  Meta = 4,
+  Focus = 6,
+  ViewEnd = 7,
 }
 
 export interface FullSnapshotRecord {
