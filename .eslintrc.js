@@ -1,6 +1,7 @@
 module.exports = {
   env: {
     browser: true,
+    jasmine: true,
   },
   extends: [
     'plugin:@typescript-eslint/recommended',
@@ -15,6 +16,7 @@ module.exports = {
   },
   plugins: [
     'eslint-plugin-import',
+    'jasmine',
     'eslint-plugin-jsdoc',
     'eslint-plugin-prefer-arrow',
     'eslint-plugin-unicorn',
@@ -96,6 +98,7 @@ module.exports = {
     '@typescript-eslint/no-parameter-properties': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/quotes': 'off',
@@ -127,6 +130,7 @@ module.exports = {
     'id-match': 'error',
     'import/no-default-export': 'error',
     'import/order': 'error',
+    'jasmine/no-focused-tests': 'error',
     'jsdoc/check-alignment': 'error',
     'jsdoc/check-indentation': 'error',
     'jsdoc/newline-after-description': 'off',

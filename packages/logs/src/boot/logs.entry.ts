@@ -1,6 +1,5 @@
 import {
   BoundedBuffer,
-  checkIsNotLocalFile,
   combine,
   Context,
   createContextManager,
