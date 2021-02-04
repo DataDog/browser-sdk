@@ -328,19 +328,22 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         (original: (...args: unknown[]) => unknown) =>
           function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             if (!isBlocked(this.canvas, blockClass)) {
-              setTimeout(() => {
-                const recordArgs = [...args]
-                if (prop === 'drawImage') {
-                  if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                    recordArgs[0] = recordArgs[0].toDataURL()
+              setTimeout(
+                monitor(() => {
+                  const recordArgs = [...args]
+                  if (prop === 'drawImage') {
+                    if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
+                      recordArgs[0] = recordArgs[0].toDataURL()
+                    }
                   }
-                }
-                cb({
-                  args: recordArgs,
-                  id: mirror.getId((this.canvas as unknown) as INode),
-                  property: prop,
-                })
-              }, 0)
+                  cb({
+                    args: recordArgs,
+                    id: mirror.getId((this.canvas as unknown) as INode),
+                    property: prop,
+                  })
+                }),
+                0
+              )
             }
             return original.apply(this, args)
           }
@@ -404,13 +407,16 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     'add',
     (original: (fontFace: FontFace) => unknown) =>
       function (this: unknown, fontFace: FontFace) {
-        setTimeout(() => {
-          const p = fontMap.get(fontFace)
-          if (p) {
-            cb(p)
-            fontMap.delete(fontFace)
-          }
-        }, 0)
+        setTimeout(
+          monitor(() => {
+            const p = fontMap.get(fontFace)
+            if (p) {
+              cb(p)
+              fontMap.delete(fontFace)
+            }
+          }),
+          0
+        )
         return original.apply(this, [fontFace])
       }
   )
