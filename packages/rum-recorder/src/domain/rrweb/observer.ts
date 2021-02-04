@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop, monitor } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import {
@@ -72,7 +72,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
   const updatePosition = throttle<MouseEvent | TouchEvent>(
-    (evt) => {
+    monitor((evt) => {
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
       const position = {
@@ -82,7 +82,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
         y: clientY,
       }
       cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
-    },
+    }),
     threshold,
     {
       trailing: false,
@@ -132,38 +132,44 @@ function initMouseInteractionObserver(
 }
 
 function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
-  const updatePosition = throttle<UIEvent>((evt) => {
-    if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
-      return
-    }
-    const id = mirror.getId(evt.target as INode)
-    if (evt.target === document) {
-      const scrollEl = (document.scrollingElement || document.documentElement)!
-      cb({
-        id,
-        x: scrollEl.scrollLeft,
-        y: scrollEl.scrollTop,
-      })
-    } else {
-      cb({
-        id,
-        x: (evt.target as HTMLElement).scrollLeft,
-        y: (evt.target as HTMLElement).scrollTop,
-      })
-    }
-  }, sampling.scroll || 100)
+  const updatePosition = throttle<UIEvent>(
+    monitor((evt) => {
+      if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
+        return
+      }
+      const id = mirror.getId(evt.target as INode)
+      if (evt.target === document) {
+        const scrollEl = (document.scrollingElement || document.documentElement)!
+        cb({
+          id,
+          x: scrollEl.scrollLeft,
+          y: scrollEl.scrollTop,
+        })
+      } else {
+        cb({
+          id,
+          x: (evt.target as HTMLElement).scrollLeft,
+          y: (evt.target as HTMLElement).scrollTop,
+        })
+      }
+    }),
+    sampling.scroll || 100
+  )
   return on('scroll', updatePosition)
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
-  const updateDimension = throttle(() => {
-    const height = getWindowHeight()
-    const width = getWindowWidth()
-    cb({
-      height: Number(height),
-      width: Number(width),
-    })
-  }, 200)
+  const updateDimension = throttle(
+    monitor(() => {
+      const height = getWindowHeight()
+      const width = getWindowWidth()
+      cb({
+        height: Number(height),
+        width: Number(width),
+      })
+    }),
+    200
+  )
   return on('resize', updateDimension, window)
 }
 
