@@ -6,7 +6,7 @@ import { getWindowHeight, getWindowWidth, mirror, on, polyfill } from './utils'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | undefined {
+function record(options: RecordOptions = {}): RecordAPI | undefined {
   const {
     emit,
     checkoutEveryNms,
@@ -94,7 +94,7 @@ function record<T = RawRecord>(options: RecordOptions<T> = {}): RecordAPI | unde
       mutationBuffer.unfreeze()
     }
 
-    emit(((packFn ? packFn(record) : record) as unknown) as T, isCheckout)
+    emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
     if (record.type === RecordType.FullSnapshot) {
       lastFullSnapshotRecordTimestamp = Date.now()
       incrementalSnapshotCount = 0
