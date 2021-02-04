@@ -2,36 +2,35 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@2.4.0", "@datadog/browser-core@file:../../packages/core":
-  version "2.4.0"
+"@datadog/browser-core@2.5.1", "@datadog/browser-core@file:../../packages/core":
+  version "2.5.1"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "2.4.0"
+  version "2.5.1"
   dependencies:
-    "@datadog/browser-core" "2.4.0"
+    "@datadog/browser-core" "2.5.1"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@2.4.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "2.4.0"
+"@datadog/browser-rum-core@2.5.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "2.5.1"
   dependencies:
-    "@datadog/browser-core" "2.4.0"
+    "@datadog/browser-core" "2.5.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum-recorder@file:../../packages/rum-recorder":
-  version "2.4.0"
+  version "2.5.1"
   dependencies:
-    "@datadog/browser-core" "2.4.0"
-    "@datadog/browser-rum-core" "2.4.0"
-    rrweb-snapshot "1.0.1"
+    "@datadog/browser-core" "2.5.1"
+    "@datadog/browser-rum-core" "2.5.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "2.4.0"
+  version "2.5.1"
   dependencies:
-    "@datadog/browser-core" "2.4.0"
-    "@datadog/browser-rum-core" "2.4.0"
+    "@datadog/browser-core" "2.5.1"
+    "@datadog/browser-rum-core" "2.5.1"
     tslib "^1.10.0"
 
 "@webassemblyjs/ast@1.8.5":
@@ -1852,11 +1851,6 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
   dependencies:
     hash-base "^3.0.0"
     inherits "^2.0.1"
-
-rrweb-snapshot@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/rrweb-snapshot/-/rrweb-snapshot-1.0.1.tgz#f3800f4deb434da02b6086533c5c38e23e7e796b"
-  integrity sha512-HKbfbTTDSTy4T0h/w9SubI1E5kL/qLiK08pJZRLA0MmGtqJ5nCTMtpEZXgCKMUncH3lb1rbiu+sDIoxKD+Anng==
 
 run-queue@^1.0.0, run-queue@^1.0.3:
   version "1.0.3"
