@@ -191,6 +191,9 @@ export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEven
   return Boolean((event as TouchEvent).changedTouches)
 }
 
-export function forEach<List, Element>(list: List, callback: (value: Element, index: number, parent: List) => void) {
-  Array.prototype.forEach.call(list, (callback as unknown) as (value: any, index: number, parent: any[]) => void)
+export function forEach<List extends { [index: number]: any }>(
+  list: List,
+  callback: (value: List[number], index: number, parent: List) => void
+) {
+  Array.prototype.forEach.call(list, callback as any)
 }
