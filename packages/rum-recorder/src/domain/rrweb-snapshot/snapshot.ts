@@ -163,14 +163,12 @@ function serializeNode(
   n: Node,
   options: {
     doc: Document
-    blockClass: string | RegExp
-    blockSelector: string | null
     inlineStylesheet: boolean
     maskInputOptions: MaskInputOptions
     recordCanvas: boolean
   }
 ): SerializedNode | false {
-  const { doc, blockClass, blockSelector, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
+  const { doc, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -384,8 +382,6 @@ export function serializeNodeWithId(
   options: {
     doc: Document
     map: IdNodeMap
-    blockClass: string | RegExp
-    blockSelector: string | null
     skipChild: boolean
     inlineStylesheet: boolean
     maskInputOptions?: MaskInputOptions
@@ -397,8 +393,6 @@ export function serializeNodeWithId(
   const {
     doc,
     map,
-    blockClass,
-    blockSelector,
     skipChild = false,
     inlineStylesheet = true,
     maskInputOptions = {},
@@ -408,8 +402,6 @@ export function serializeNodeWithId(
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
-    blockClass,
-    blockSelector,
     inlineStylesheet,
     maskInputOptions,
     recordCanvas,
@@ -460,8 +452,6 @@ export function serializeNodeWithId(
       const serializedChildNode = serializeNodeWithId(childN, {
         doc,
         map,
-        blockClass,
-        blockSelector,
         skipChild,
         inlineStylesheet,
         maskInputOptions,
@@ -480,22 +470,13 @@ export function serializeNodeWithId(
 export function snapshot(
   n: Document,
   options?: {
-    blockClass?: string | RegExp
     inlineStylesheet?: boolean
     maskAllInputs?: boolean | MaskInputOptions
     slimDOM?: boolean | SlimDOMOptions
     recordCanvas?: boolean
-    blockSelector?: string | null
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const {
-    blockClass = 'rr-block',
-    inlineStylesheet = true,
-    recordCanvas = false,
-    blockSelector = null,
-    maskAllInputs = false,
-    slimDOM = false,
-  } = options || {}
+  const { inlineStylesheet = true, recordCanvas = false, maskAllInputs = false, slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
   const maskInputOptions: MaskInputOptions =
     maskAllInputs === true
@@ -542,8 +523,6 @@ export function snapshot(
     serializeNodeWithId(n, {
       doc: n,
       map: idNodeMap,
-      blockClass,
-      blockSelector,
       skipChild: false,
       inlineStylesheet,
       maskInputOptions,

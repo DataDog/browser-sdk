@@ -10,7 +10,6 @@ import { nodeOrAncestorsAreHidden } from '../privacy'
 import {
   AddedNodeMutation,
   AttributeCursor,
-  BlockClass,
   MutationCallBack,
   MutationRecord,
   RemovedNodeMutation,
@@ -149,10 +148,6 @@ export class MutationBuffer {
   // @ts-ignore Allows creating an instance without initializing all fields
   private emissionCallback: MutationCallBack
   // @ts-ignore Allows creating an instance without initializing all fields
-  private blockClass: BlockClass
-  // @ts-ignore Allows creating an instance without initializing all fields
-  private blockSelector: string | null
-  // @ts-ignore Allows creating an instance without initializing all fields
   private inlineStylesheet: boolean
   // @ts-ignore Allows creating an instance without initializing all fields
   private maskInputOptions: MaskInputOptions
@@ -163,15 +158,11 @@ export class MutationBuffer {
 
   public init(
     cb: MutationCallBack,
-    blockClass: BlockClass,
-    blockSelector: string | null,
     inlineStylesheet: boolean,
     maskInputOptions: MaskInputOptions,
     recordCanvas: boolean,
     slimDOMOptions: SlimDOMOptions
   ) {
-    this.blockClass = blockClass
-    this.blockSelector = blockSelector
     this.inlineStylesheet = inlineStylesheet
     this.maskInputOptions = maskInputOptions
     this.recordCanvas = recordCanvas
@@ -231,8 +222,6 @@ export class MutationBuffer {
         return addList.addNode(n)
       }
       const sn = serializeNodeWithId(n, {
-        blockClass: this.blockClass,
-        blockSelector: this.blockSelector,
         doc: document,
         inlineStylesheet: this.inlineStylesheet,
         map: mirror.map,

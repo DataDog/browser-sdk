@@ -4,7 +4,6 @@ import { nodeOrAncestorsAreHidden, nodeOrAncestorsHaveInputIngnored } from '../p
 import { MutationBuffer } from './mutation'
 import {
   Arguments,
-  BlockClass,
   CanvasMutationCallback,
   FontCallback,
   FontFaceDescriptors,
@@ -44,15 +43,13 @@ export const mutationBuffer = new MutationBuffer()
 
 function initMutationObserver(
   cb: MutationCallBack,
-  blockClass: BlockClass,
-  blockSelector: string | null,
   inlineStylesheet: boolean,
   maskInputOptions: MaskInputOptions,
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ): MutationObserver {
   // see mutation.ts for details
-  mutationBuffer.init(cb, blockClass, blockSelector, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
+  mutationBuffer.init(cb, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
   const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
   observer.observe(document, {
     attributeOldValue: true,
@@ -95,11 +92,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
   }
 }
 
-function initMouseInteractionObserver(
-  cb: MouseInteractionCallBack,
-  blockClass: BlockClass,
-  sampling: SamplingStrategy
-): ListenerHandler {
+function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: SamplingStrategy): ListenerHandler {
   if (sampling.mouseInteraction === false) {
     return noop
   }
@@ -132,7 +125,7 @@ function initMouseInteractionObserver(
   }
 }
 
-function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
+function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
   const updatePosition = throttle<UIEvent>(
     monitor((evt) => {
       if (!evt.target || nodeOrAncestorsAreHidden(evt.target as Node)) {
@@ -178,8 +171,6 @@ export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(
   cb: InputCallback,
-  blockClass: BlockClass,
-  ignoreClass: string,
   maskInputOptions: MaskInputOptions,
   maskInputFn: MaskInputFn | undefined,
   sampling: SamplingStrategy
@@ -306,10 +297,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   }
 }
 
-function initMediaInteractionObserver(
-  mediaInteractionCb: MediaInteractionCallback,
-  blockClass: BlockClass
-): ListenerHandler {
+function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (type: 'play' | 'pause') => (event: Event) => {
     const { target } = event
     if (!target || nodeOrAncestorsAreHidden(target as Node)) {
@@ -326,7 +314,7 @@ function initMediaInteractionObserver(
   }
 }
 
-function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: BlockClass): ListenerHandler {
+function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler {
   const props = Object.getOwnPropertyNames(CanvasRenderingContext2D.prototype)
   const handlers: ListenerHandler[] = []
   for (const prop of props) {
@@ -526,28 +514,19 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
   mergeHooks(o, hooks)
   const mutationObserver = initMutationObserver(
     o.mutationCb,
-    o.blockClass,
-    o.blockSelector,
     o.inlineStylesheet,
     o.maskInputOptions,
     o.recordCanvas,
     o.slimDOMOptions
   )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.blockClass, o.sampling)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.blockClass, o.sampling)
+  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.sampling)
+  const scrollHandler = initScrollObserver(o.scrollCb, o.sampling)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(
-    o.inputCb,
-    o.blockClass,
-    o.ignoreClass,
-    o.maskInputOptions,
-    o.maskInputFn,
-    o.sampling
-  )
-  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.blockClass)
+  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
+  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb, o.blockClass) : noop
+  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb) : noop
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {

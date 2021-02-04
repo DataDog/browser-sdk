@@ -29,8 +29,6 @@ describe('MutationBuffer', () => {
     mutationBuffer = new MutationBuffer()
     mutationBuffer.init(
       mutationCallbackSpy,
-      DEFAULT_OPTIONS.blockClass,
-      DEFAULT_OPTIONS.blockSelector,
       DEFAULT_OPTIONS.inlineStylesheet,
       DEFAULT_OPTIONS.maskInputOptions,
       DEFAULT_OPTIONS.recordCanvas,
