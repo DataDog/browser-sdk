@@ -1,7 +1,14 @@
 import { createNewEvent, isIE } from '@datadog/browser-core'
-import { serializedNodeWithId, NodeType } from 'rrweb-snapshot'
 import { collectAsyncCalls } from '../../../test/utils'
-import { Record, RecordType, IncrementalSource, MutationData, FullSnapshotRecord } from '../../types'
+import {
+  RecordType,
+  IncrementalSource,
+  MutationData,
+  FullSnapshotRecord,
+  RawRecord,
+  IncrementalSnapshotRecord,
+} from '../../types'
+import { SerializedNodeWithId, NodeType } from '../rrweb-snapshot/types'
 import { record } from './record'
 
 // Each full snapshot is generating two records, a Meta record and a FullSnapshot record
@@ -11,7 +18,7 @@ describe('record', () => {
   let sandbox: HTMLElement
   let input: HTMLInputElement
   let stop: (() => void) | undefined
-  let emitSpy: jasmine.Spy<(record: Record) => void>
+  let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
 
@@ -34,7 +41,7 @@ describe('record', () => {
   })
 
   it('will only have one full snapshot without checkout config', () => {
-    stop = record<Record>({ emit: emitSpy })?.stop
+    stop = record({ emit: emitSpy })?.stop
 
     const inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -68,7 +75,7 @@ describe('record', () => {
     jasmine.clock().install()
     jasmine.clock().mockDate()
     const checkoutDelay = 500
-    stop = record<Record>({ emit: emitSpy, checkoutEveryNms: checkoutDelay })?.stop
+    stop = record({ emit: emitSpy, checkoutEveryNms: checkoutDelay })?.stop
 
     let inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -119,15 +126,15 @@ describe('record', () => {
         (node) => node.type === NodeType.Element && node.attributes.id === 'sandbox'
       )!
       const inputId = findNode(sandboxNode, (node) => node.type === NodeType.Element && node.tagName === 'input')!.id
-      const paragraphId = (records[2].data as MutationData).adds[0].node.id
-      const spanId = (records[2].data as MutationData).adds[1].node.id
+      const paragraphId = ((records[2] as IncrementalSnapshotRecord).data as MutationData).adds[0].node.id
+      const spanId = ((records[2] as IncrementalSnapshotRecord).data as MutationData).adds[1].node.id
 
       expect(records[0].type).toBe(RecordType.Meta)
 
       expect(records[1].type).toBe(RecordType.FullSnapshot)
 
       expect(records[2].type).toBe(RecordType.IncrementalSnapshot)
-      expect(records[2].data).toEqual(
+      expect((records[2] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -145,7 +152,7 @@ describe('record', () => {
       )
 
       expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
-      expect(records[3].data).toEqual(
+      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -165,7 +172,7 @@ describe('record', () => {
       expect(records[5].type).toBe(RecordType.FullSnapshot)
 
       expect(records[6].type).toBe(RecordType.IncrementalSnapshot)
-      expect(records[6].data).toEqual(
+      expect((records[6] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -188,23 +195,6 @@ describe('record', () => {
       )
       expectNoExtraEmitCalls(done)
     })
-  })
-
-  it('can add custom record', () => {
-    stop = record({
-      emit: emitSpy,
-    })?.stop
-    record.addCustomRecord('tag1', 1)
-    record.addCustomRecord('tag2', {
-      a: 'b',
-    })
-    const records = getEmittedRecords()
-    expect(records[0].type).toEqual(RecordType.Meta)
-    expect(records[1].type).toEqual(RecordType.FullSnapshot)
-    expect(records[2].type).toEqual(RecordType.Custom)
-    expect(records[2].data).toEqual({ tag: 'tag1', payload: 1 })
-    expect(records[3].type).toEqual(RecordType.Custom)
-    expect(records[3].data).toEqual({ tag: 'tag2', payload: { a: 'b' } })
   })
 
   it('captures stylesheet rules', (done) => {
@@ -235,23 +225,25 @@ describe('record', () => {
       expect(records[0].type).toEqual(RecordType.Meta)
       expect(records[1].type).toEqual(RecordType.FullSnapshot)
       expect(records[2].type).toEqual(RecordType.IncrementalSnapshot)
-      expect(records[2].data).toEqual(jasmine.objectContaining({ source: IncrementalSource.Mutation }))
+      expect((records[2] as IncrementalSnapshotRecord).data).toEqual(
+        jasmine.objectContaining({ source: IncrementalSource.Mutation })
+      )
       expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
-      expect(records[3].data).toEqual(
+      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #fff; }', index: undefined }],
         })
       )
       expect(records[4].type).toEqual(RecordType.IncrementalSnapshot)
-      expect(records[4].data).toEqual(
+      expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           removes: [{ index: 0 }],
         })
       )
       expect(records[5].type).toEqual(RecordType.IncrementalSnapshot)
-      expect(records[5].data).toEqual(
+      expect((records[5] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
@@ -284,9 +276,9 @@ function createDOMSandbox() {
 }
 
 function findNode(
-  root: serializedNodeWithId,
-  predicate: (node: serializedNodeWithId) => boolean
-): serializedNodeWithId | undefined {
+  root: SerializedNodeWithId,
+  predicate: (node: SerializedNodeWithId) => boolean
+): SerializedNodeWithId | undefined {
   if (predicate(root)) {
     return root
   }

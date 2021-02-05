@@ -1,4 +1,4 @@
-import { serializedNodeWithId } from 'rrweb-snapshot'
+import { SerializedNodeWithId } from './domain/rrweb-snapshot'
 import type { IncrementalData } from './domain/rrweb/types'
 
 export { IncrementalSource, MutationData } from './domain/rrweb/types'
@@ -26,18 +26,10 @@ export type CreationReason =
   | 'max_duration'
   | 'max_size'
   | 'view_change'
-  | 'session_renewed'
   | 'before_unload'
   | 'visibility_hidden'
 
-export type RawRecord =
-  | DomContentLoadedRecord
-  | LoadedRecord
-  | FullSnapshotRecord
-  | IncrementalSnapshotRecord
-  | MetaRecord
-  | CustomRecord
-  | FocusRecord
+export type RawRecord = FullSnapshotRecord | IncrementalSnapshotRecord | MetaRecord | FocusRecord | ViewEndRecord
 
 export type Record = RawRecord & {
   timestamp: number
@@ -45,29 +37,17 @@ export type Record = RawRecord & {
 }
 
 export enum RecordType {
-  DomContentLoaded,
-  Load,
-  FullSnapshot,
-  IncrementalSnapshot,
-  Meta,
-  Custom,
-  Focus,
-}
-
-export interface DomContentLoadedRecord {
-  type: RecordType.DomContentLoaded
-  data: object
-}
-
-export interface LoadedRecord {
-  type: RecordType.Load
-  data: object
+  FullSnapshot = 2,
+  IncrementalSnapshot = 3,
+  Meta = 4,
+  Focus = 6,
+  ViewEnd = 7,
 }
 
 export interface FullSnapshotRecord {
   type: RecordType.FullSnapshot
   data: {
-    node: serializedNodeWithId
+    node: SerializedNodeWithId
     initialOffset: {
       top: number
       left: number
@@ -89,17 +69,13 @@ export interface MetaRecord {
   }
 }
 
-export interface CustomRecord<T = unknown> {
-  type: RecordType.Custom
-  data: {
-    tag: string
-    payload: T
-  }
-}
-
 export interface FocusRecord {
   type: RecordType.Focus
   data: {
     has_focus: boolean
   }
+}
+
+export interface ViewEndRecord {
+  type: RecordType.ViewEnd
 }

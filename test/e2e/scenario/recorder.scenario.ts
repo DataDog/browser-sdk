@@ -1,4 +1,4 @@
-import { CreationReason, IncrementalSource, RecordType } from '../../../packages/rum-recorder/src/types'
+import { CreationReason, IncrementalSource, RecordType } from '@datadog/browser-rum-recorder/cjs/types'
 
 import { createTest } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'

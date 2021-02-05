@@ -16,6 +16,20 @@
 
 ---
 
+## v2.5.1
+
+- ⚗ [RUMF-821] remove unused record types ([#717](https://github.com/DataDog/browser-sdk/pull/717))
+- ⚗🐛 [RUMF-834] fix loop direction ([#714](https://github.com/DataDog/browser-sdk/pull/714))
+- ⚗⚡️ [RUMF-841] remove session renew support in rum recorder ([#713](https://github.com/DataDog/browser-sdk/pull/713))
+- ⚗✨ [REPLAY-149] implement ViewEnd record ([#711](https://github.com/DataDog/browser-sdk/pull/711))
+
+## v2.5.0
+
+- ✨ Allow logs collection on file:// URL ([#709](https://github.com/DataDog/browser-sdk/pull/709))
+- 🐛[RUMF-836] sanitize unsupported characters in timing name ([#706](https://github.com/DataDog/browser-sdk/pull/706))
+- rum-recorder: import rrweb-snapshot code ([#700](https://github.com/DataDog/browser-sdk/pull/700))
+- [REPLAY-164] track Focus records ([#707](https://github.com/DataDog/browser-sdk/pull/707))
+
 ## v2.4.0
 
 - ✨[RUMF-820] expose API to add custom timings to the current view ([#702](https://github.com/DataDog/browser-sdk/pull/702))

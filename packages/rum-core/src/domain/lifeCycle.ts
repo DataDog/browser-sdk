@@ -13,6 +13,7 @@ export enum LifeCycleEventType {
   AUTO_ACTION_DISCARDED,
   VIEW_CREATED,
   VIEW_UPDATED,
+  VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
@@ -42,6 +43,7 @@ export class LifeCycle {
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
+      | LifeCycleEventType.VIEW_ENDED
   ): void
   notify(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -81,7 +83,8 @@ export class LifeCycle {
       | LifeCycleEventType.SESSION_RENEWED
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
-      | LifeCycleEventType.AUTO_ACTION_DISCARDED,
+      | LifeCycleEventType.AUTO_ACTION_DISCARDED
+      | LifeCycleEventType.VIEW_ENDED,
     callback: () => void
   ): Subscription
   subscribe(
