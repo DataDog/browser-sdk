@@ -147,7 +147,7 @@ export function addMonitoringMessage(message: string, context?: Context) {
   })
 }
 
-function addErrorToMonitoringBatch(e: unknown) {
+export function addErrorToMonitoringBatch(e: unknown) {
   addToMonitoringBatch({
     ...formatError(e),
     status: StatusType.error,

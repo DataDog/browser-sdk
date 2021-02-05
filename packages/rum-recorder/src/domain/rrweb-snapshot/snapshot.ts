@@ -1,4 +1,5 @@
 /* eslint-disable no-underscore-dangle */
+import { forEach } from '../rrweb/utils'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -168,7 +169,7 @@ export function isBlockedElement(
       return true
     }
   } else {
-    element.classList.forEach((className) => {
+    forEach(element.classList, (className: string) => {
       if (blockClass.test(className)) {
         return true
       }
@@ -574,15 +575,4 @@ export function snapshot(
     }),
     idNodeMap,
   ]
-}
-
-export function visitSnapshot(node: SerializedNodeWithId, onVisit: (node: SerializedNodeWithId) => unknown) {
-  function walk(current: SerializedNodeWithId) {
-    onVisit(current)
-    if (current.type === NodeType.Document || current.type === NodeType.Element) {
-      current.childNodes.forEach(walk)
-    }
-  }
-
-  walk(node)
 }

@@ -17,6 +17,7 @@ export {
   monitor,
   callMonitored,
   addMonitoringMessage,
+  addErrorToMonitoringBatch,
   setDebugMode,
 } from './domain/internalMonitoring'
 export { Observable } from './tools/observable'

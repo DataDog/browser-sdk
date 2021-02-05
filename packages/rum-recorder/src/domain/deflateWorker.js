@@ -10,32 +10,52 @@ export function createDeflateWorker() {
 }
 
 function workerCodeFn() {
-  const { Deflate, constants } = makePakoDeflate()
+  monitor(function () {
+    const { Deflate, constants } = makePakoDeflate()
 
-  let deflate = new Deflate()
-  self.addEventListener('message', (event) => {
-    const data = event.data
-    switch (data.action) {
-      case 'write':
-        deflate.push(data.data, constants.Z_SYNC_FLUSH)
-        self.postMessage({
-          id: data.id,
-          size: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
-        })
-        break
-      case 'flush':
-        if (data.data) {
-          deflate.push(data.data, constants.Z_SYNC_FLUSH)
+    let deflate = new Deflate()
+    self.addEventListener(
+      'message',
+      monitor((event) => {
+        const data = event.data
+        switch (data.action) {
+          case 'write':
+            deflate.push(data.data, constants.Z_SYNC_FLUSH)
+            self.postMessage({
+              id: data.id,
+              size: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
+            })
+            break
+          case 'flush':
+            if (data.data) {
+              deflate.push(data.data, constants.Z_SYNC_FLUSH)
+            }
+            deflate.push('', constants.Z_FINISH)
+            self.postMessage({
+              id: data.id,
+              result: deflate.result,
+            })
+            deflate = new Deflate()
+            break
         }
-        deflate.push('', constants.Z_FINISH)
-        self.postMessage({
-          id: data.id,
-          result: deflate.result,
-        })
-        deflate = new Deflate()
-        break
+      })
+    )
+  })()
+
+  function monitor(fn) {
+    return function () {
+      try {
+        return fn.apply(this, arguments)
+      } catch (e) {
+        try {
+          self.postMessage({ error: e })
+        } catch (_) {
+          // DATA_CLONE_ERR, cf https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
+          self.postMessage({ error: '' + e })
+        }
+      }
     }
-  })
+  }
 
   // https://github.com/nodeca/pako/blob/034669ba0f1a4c0590e45f7c2820128200f972b3/dist/pako_deflate.es5.js
   function makePakoDeflate() {
