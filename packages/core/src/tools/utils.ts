@@ -165,7 +165,7 @@ export function jsonStringify(
 
   let result: string
   try {
-    result = JSON.stringify(value, undefined, space)
+    result = JSON.stringify(value, replacer, space)
   } catch {
     result = '<error: unable to serialize object>'
   } finally {

@@ -73,7 +73,7 @@ async function getChangesList() {
 
   const changesWithPullRequestLinks = changesWithEmojis.replace(
     /\(#(\d+)\)/gm,
-    (match, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
+    (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`
   )
 
   return changesWithPullRequestLinks
