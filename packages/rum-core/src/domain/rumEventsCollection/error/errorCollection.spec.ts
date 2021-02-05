@@ -13,8 +13,8 @@ describe('error collection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, configuration, errorObservable))
+      .beforeBuild(({ lifeCycle }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, errorObservable))
       })
   })
 

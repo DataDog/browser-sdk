@@ -1,12 +1,4 @@
-import {
-  combine,
-  Configuration,
-  generateUUID,
-  getTimestamp,
-  msToNs,
-  RequestType,
-  ResourceType,
-} from '@datadog/browser-core'
+import { combine, generateUUID, getTimestamp, msToNs, RequestType, ResourceType } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -21,7 +13,7 @@ import {
   isRequestKind,
 } from './resourceUtils'
 
-export function startResourceCollection(lifeCycle: LifeCycle, configuration: Configuration, session: RumSession) {
+export function startResourceCollection(lifeCycle: LifeCycle, session: RumSession) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
     if (session.isTrackedWithResource()) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))

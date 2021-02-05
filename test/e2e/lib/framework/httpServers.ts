@@ -98,7 +98,7 @@ async function instantiateServerOnPort(port: number): Promise<http.Server> {
 function createServerIdleWaiter(server: http.Server) {
   const idleWaiter = createIdleWaiter()
 
-  server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
+  server.on('request', (_, res: http.ServerResponse) => {
     idleWaiter.pushActivity(new Promise((resolve) => res.on('close', resolve)))
   })
 

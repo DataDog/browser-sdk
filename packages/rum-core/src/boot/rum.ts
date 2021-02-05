@@ -73,8 +73,8 @@ export function startRumEventCollection(
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle)
-  startResourceCollection(lifeCycle, configuration, session)
-  const { addTiming } = startViewCollection(lifeCycle, configuration, location)
+  startResourceCollection(lifeCycle, session)
+  const { addTiming } = startViewCollection(lifeCycle, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
