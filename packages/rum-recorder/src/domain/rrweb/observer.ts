@@ -1,4 +1,4 @@
-import { noop, monitor } from '@datadog/browser-core'
+import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import {
@@ -264,29 +264,33 @@ function initInputObserver(
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const insertRule = CSSStyleSheet.prototype.insertRule
-  CSSStyleSheet.prototype.insertRule = monitor(function (this: CSSStyleSheet, rule: string, index?: number) {
-    const id = mirror.getId(this.ownerNode as INode)
-    if (id !== -1) {
-      cb({
-        id,
-        adds: [{ rule, index }],
-      })
-    }
+  CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
+    callMonitored(() => {
+      const id = mirror.getId(this.ownerNode as INode)
+      if (id !== -1) {
+        cb({
+          id,
+          adds: [{ rule, index }],
+        })
+      }
+    })
     return insertRule.call(this, rule, index)
-  })
+  }
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const deleteRule = CSSStyleSheet.prototype.deleteRule
-  CSSStyleSheet.prototype.deleteRule = monitor(function (this: CSSStyleSheet, index: number) {
-    const id = mirror.getId(this.ownerNode as INode)
-    if (id !== -1) {
-      cb({
-        id,
-        removes: [{ index }],
-      })
-    }
+  CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
+    callMonitored(() => {
+      const id = mirror.getId(this.ownerNode as INode)
+      if (id !== -1) {
+        cb({
+          id,
+          removes: [{ index }],
+        })
+      }
+    })
     return deleteRule.call(this, index)
-  })
+  }
 
   return () => {
     CSSStyleSheet.prototype.insertRule = insertRule
@@ -326,27 +330,29 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         CanvasRenderingContext2D.prototype,
         prop,
         (original: (...args: unknown[]) => unknown) =>
-          monitor(function (this: CanvasRenderingContext2D, ...args: unknown[]) {
-            if (!isBlocked(this.canvas, blockClass)) {
-              setTimeout(
-                monitor(() => {
-                  const recordArgs = [...args]
-                  if (prop === 'drawImage') {
-                    if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                      recordArgs[0] = recordArgs[0].toDataURL()
+          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+            callMonitored(() => {
+              if (!isBlocked(this.canvas, blockClass)) {
+                setTimeout(
+                  monitor(() => {
+                    const recordArgs = [...args]
+                    if (prop === 'drawImage') {
+                      if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
+                        recordArgs[0] = recordArgs[0].toDataURL()
+                      }
                     }
-                  }
-                  cb({
-                    args: recordArgs,
-                    id: mirror.getId((this.canvas as unknown) as INode),
-                    property: prop,
-                  })
-                }),
-                0
-              )
-            }
+                    cb({
+                      args: recordArgs,
+                      id: mirror.getId((this.canvas as unknown) as INode),
+                      property: prop,
+                    })
+                  }),
+                  0
+                )
+              }
+            })
             return original.apply(this, args)
-          })
+          }
       )
       handlers.push(restoreHandler)
     } catch {
@@ -406,7 +412,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     (document as DocumentWithFonts).fonts,
     'add',
     (original: (fontFace: FontFace) => unknown) =>
-      monitor(function (this: unknown, fontFace: FontFace) {
+      function (this: unknown, fontFace: FontFace) {
         setTimeout(
           monitor(() => {
             const p = fontMap.get(fontFace)
@@ -418,7 +424,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
           0
         )
         return original.apply(this, [fontFace])
-      })
+      }
   )
 
   handlers.push(() => {
