@@ -5,6 +5,8 @@
     "baseUrl": ".",
     "module": "ES6",
     "jsx": "react",
+    "lib": ["ES2019", "DOM"],
+    "types": ["chrome", "react", "react-dom"],
 
     // See https://github.com/bumbag/bumbag-ui/issues/97
     "strictNullChecks": false
