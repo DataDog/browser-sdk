@@ -35,23 +35,26 @@ export function startSessionManagement<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveActiveSession(sessionCookie).id
 
-  const { throttled: expandOrRenewSession } = utils.throttle(() => {
-    const session = retrieveActiveSession(sessionCookie)
-    const { trackingType, isTracked } = computeSessionState(session[productKey])
-    session[productKey] = trackingType
-    if (isTracked && !session.id) {
-      session.id = utils.generateUUID()
-      session.created = String(Date.now())
-    }
-    // save changes and expand session duration
-    persistSession(session, sessionCookie)
+  const { throttled: expandOrRenewSession } = utils.throttle(
+    monitor(() => {
+      const session = retrieveActiveSession(sessionCookie)
+      const { trackingType, isTracked } = computeSessionState(session[productKey])
+      session[productKey] = trackingType
+      if (isTracked && !session.id) {
+        session.id = utils.generateUUID()
+        session.created = String(Date.now())
+      }
+      // save changes and expand session duration
+      persistSession(session, sessionCookie)
 
-    // If the session id has changed, notify that the session has been renewed
-    if (isTracked && currentSessionId !== session.id) {
-      currentSessionId = session.id
-      renewObservable.notify()
-    }
-  }, COOKIE_ACCESS_DELAY)
+      // If the session id has changed, notify that the session has been renewed
+      if (isTracked && currentSessionId !== session.id) {
+        currentSessionId = session.id
+        renewObservable.notify()
+      }
+    }),
+    COOKIE_ACCESS_DELAY
+  )
 
   const expandSession = () => {
     const session = retrieveActiveSession(sessionCookie)

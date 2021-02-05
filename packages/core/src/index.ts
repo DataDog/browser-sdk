@@ -15,6 +15,7 @@ export {
   MonitoringMessage,
   monitored,
   monitor,
+  callMonitored,
   addMonitoringMessage,
   addErrorToMonitoringBatch,
   setDebugMode,

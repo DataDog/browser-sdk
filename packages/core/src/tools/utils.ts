@@ -392,3 +392,9 @@ export function addEventListeners(
     stop,
   }
 }
+
+// Define those types for TS 3.0 compatibility
+// https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
+export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown
+// https://www.typescriptlang.org/docs/handbook/utility-types.html#parameterstype
+export type Parameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? P : never

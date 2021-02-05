@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { monitor } from '../domain/internalMonitoring'
+import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -70,53 +70,57 @@ function proxyXhr() {
   originalXhrOpen = XMLHttpRequest.prototype.open
   // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
-  XMLHttpRequest.prototype.open = monitor(function (this: BrowserXHR, method: string, url: string) {
-    // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
-    // and can be used by different code versions depending on customer setup
-    // so it should stay compatible with older versions
-    this._datadog_xhr = {
-      method,
-      startTime: -1, // computed in send call
-      url: normalizeUrl(url),
-    }
+  XMLHttpRequest.prototype.open = function (this: BrowserXHR, method: string, url: string) {
+    callMonitored(() => {
+      // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
+      // and can be used by different code versions depending on customer setup
+      // so it should stay compatible with older versions
+      this._datadog_xhr = {
+        method,
+        startTime: -1, // computed in send call
+        url: normalizeUrl(url),
+      }
+    })
     return originalXhrOpen.apply(this, arguments as any)
-  })
+  }
 
-  XMLHttpRequest.prototype.send = monitor(function (this: BrowserXHR) {
-    if (this._datadog_xhr) {
-      this._datadog_xhr.startTime = performance.now()
+  XMLHttpRequest.prototype.send = function (this: BrowserXHR) {
+    callMonitored(() => {
+      if (this._datadog_xhr) {
+        this._datadog_xhr.startTime = performance.now()
 
-      const originalOnreadystatechange = this.onreadystatechange
+        const originalOnreadystatechange = this.onreadystatechange
 
-      this.onreadystatechange = function () {
-        if (this.readyState === XMLHttpRequest.DONE) {
-          monitor(reportXhr)()
+        this.onreadystatechange = function () {
+          if (this.readyState === XMLHttpRequest.DONE) {
+            callMonitored(reportXhr)
+          }
+
+          if (originalOnreadystatechange) {
+            originalOnreadystatechange.apply(this, arguments as any)
+          }
         }
 
-        if (originalOnreadystatechange) {
-          originalOnreadystatechange.apply(this, arguments as any)
+        let hasBeenReported = false
+        const reportXhr = () => {
+          if (hasBeenReported) {
+            return
+          }
+          hasBeenReported = true
+
+          this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime
+          this._datadog_xhr.response = this.response as string | undefined
+          this._datadog_xhr.status = this.status
+
+          onRequestCompleteCallbacks.forEach((callback) => callback(this._datadog_xhr as XhrCompleteContext))
         }
+
+        this.addEventListener('loadend', monitor(reportXhr))
+
+        beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
       }
-
-      let hasBeenReported = false
-      const reportXhr = () => {
-        if (hasBeenReported) {
-          return
-        }
-        hasBeenReported = true
-
-        this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime
-        this._datadog_xhr.response = this.response as string | undefined
-        this._datadog_xhr.status = this.status
-
-        onRequestCompleteCallbacks.forEach((callback) => callback(this._datadog_xhr as XhrCompleteContext))
-      }
-
-      this.addEventListener('loadend', monitor(reportXhr))
-
-      beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
-    }
+    })
 
     return originalXhrSend.apply(this, arguments as any)
-  })
+  }
 }
