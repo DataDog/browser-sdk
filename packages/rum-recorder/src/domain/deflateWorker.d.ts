@@ -30,3 +30,4 @@ export type DeflateWorkerResponse =
       id: number
       result: Uint8Array
     }
+  | { error: Error | string }
