@@ -21,8 +21,8 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild(({ lifeCycle, configuration, session }) => {
-          startResourceCollection(lifeCycle, configuration, session)
+        .beforeBuild(({ lifeCycle, session }) => {
+          startResourceCollection(lifeCycle, session)
         })
     })
 
@@ -94,8 +94,8 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild(({ lifeCycle, configuration, session }) => {
-          startResourceCollection(lifeCycle, configuration, session)
+        .beforeBuild(({ lifeCycle, session }) => {
+          startResourceCollection(lifeCycle, session)
         })
     })
 
@@ -131,8 +131,8 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild(({ lifeCycle, configuration, session }) => {
-          startResourceCollection(lifeCycle, configuration, session)
+        .beforeBuild(({ lifeCycle, session }) => {
+          startResourceCollection(lifeCycle, session)
         })
     })
 
@@ -177,8 +177,8 @@ describe('resourceCollection', () => {
         .withConfiguration({
           isEnabled: () => true,
         })
-        .beforeBuild(({ lifeCycle, configuration, session }) => {
-          startResourceCollection(lifeCycle, configuration, session)
+        .beforeBuild(({ lifeCycle, session }) => {
+          startResourceCollection(lifeCycle, session)
         })
     })
 

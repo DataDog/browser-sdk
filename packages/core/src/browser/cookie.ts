@@ -20,8 +20,8 @@ export function cacheCookieAccess(name: string, options: CookieOptions): CookieC
 
   const cacheAccess = () => {
     hasCache = true
-    window.clearTimeout(timeout)
-    timeout = window.setTimeout(() => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
       hasCache = false
     }, COOKIE_ACCESS_DELAY)
   }

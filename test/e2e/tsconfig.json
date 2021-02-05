@@ -6,13 +6,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "target": "es5",
-    "types": ["node", "webdriverio", "jasmine", "ajv"],
-    "paths": {
-      "@datadog/browser-logs": ["../../packages/logs/src"],
-      "@datadog/browser-rum-core": ["../../packages/rum-core/src"],
-      "@datadog/browser-rum": ["../../packages/rum/src"],
-      "@datadog/browser-rum-recorder": ["../../packages/rum-recorder/src"],
-      "@datadog/browser-core": ["../../packages/core/src"]
-    }
+    "types": ["node", "webdriverio", "jasmine", "ajv"]
   }
 }

@@ -76,10 +76,6 @@ export function doStartSegmentCollection(
     flushSegment('view_change')
   })
 
-  const { unsubscribe: unsubscribeSessionRenewed } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    flushSegment('session_renewed')
-  })
-
   const { unsubscribe: unsubscribeBeforeUnload } = lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
     flushSegment('before_unload')
   })
@@ -114,7 +110,7 @@ export function doStartSegmentCollection(
         }
 
         currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
-        currentSegmentExpirationTimeoutId = window.setTimeout(
+        currentSegmentExpirationTimeoutId = setTimeout(
           monitor(() => {
             flushSegment('max_duration')
           }),
@@ -128,7 +124,6 @@ export function doStartSegmentCollection(
       unsubscribeViewCreated()
       unsubscribeBeforeUnload()
       unsubscribeVisibilityChange()
-      unsubscribeSessionRenewed()
       worker.terminate()
     },
   }

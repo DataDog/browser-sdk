@@ -21,6 +21,8 @@ export enum DOM_EVENT {
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
   MOUSE_DOWN = 'mousedown',
+  FOCUS = 'focus',
+  BLUR = 'blur',
 }
 
 export enum ResourceType {
@@ -61,7 +63,7 @@ export function throttle(fn: () => void, wait: number, options?: { leading?: boo
         hasPendingExecution = true
       }
       inWaitPeriod = true
-      pendingTimeoutId = window.setTimeout(() => {
+      pendingTimeoutId = setTimeout(() => {
         if (needTrailingExecution && hasPendingExecution) {
           fn()
         }
@@ -70,7 +72,7 @@ export function throttle(fn: () => void, wait: number, options?: { leading?: boo
       }, wait)
     },
     cancel: () => {
-      window.clearTimeout(pendingTimeoutId)
+      clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
       hasPendingExecution = false
     },
@@ -163,7 +165,7 @@ export function jsonStringify(
 
   let result: string
   try {
-    result = JSON.stringify(value, undefined, space)
+    result = JSON.stringify(value, replacer, space)
   } catch {
     result = '<error: unable to serialize object>'
   } finally {

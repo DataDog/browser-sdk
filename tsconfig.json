@@ -1,6 +1,9 @@
-// This tsconfig is only used for tooling (ex: typecheck in code editors)
+// This tsconfig is only used for tooling (ex: typecheck in code editors / lint)
 {
   "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["jasmine"]
+  },
   "include": [".", ".eslintrc.js"],
-  "exclude": ["./test/e2e", "./test/app", "./developer-extension"]
+  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/app", "developer-extension"]
 }

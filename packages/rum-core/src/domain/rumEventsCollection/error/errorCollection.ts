@@ -21,14 +21,10 @@ export interface ProvidedError {
 export type ProvidedSource = 'custom' | 'network' | 'source'
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  return doStartErrorCollection(lifeCycle, configuration, startAutomaticErrorCollection(configuration))
+  return doStartErrorCollection(lifeCycle, startAutomaticErrorCollection(configuration))
 }
 
-export function doStartErrorCollection(
-  lifeCycle: LifeCycle,
-  configuration: Configuration,
-  observable: Observable<RawError>
-) {
+export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observable<RawError>) {
   observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {

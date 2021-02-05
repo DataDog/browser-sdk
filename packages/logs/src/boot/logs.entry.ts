@@ -1,6 +1,5 @@
 import {
   BoundedBuffer,
-  checkIsNotLocalFile,
   combine,
   Context,
   createContextManager,
@@ -53,7 +52,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     logger,
 
     init: monitor((userConfiguration: LogsUserConfiguration) => {
-      if (!checkIsNotLocalFile() || !canInitLogs(userConfiguration)) {
+      if (!canInitLogs(userConfiguration)) {
         return
       }
 

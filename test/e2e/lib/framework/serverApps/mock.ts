@@ -9,23 +9,23 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
 
-  app.get('/empty', (req, res) => {
+  app.get('/empty', (_req, res) => {
     res.end()
   })
 
-  app.get('/favicon.ico', (req, res) => {
+  app.get('/favicon.ico', (_req, res) => {
     res.end()
   })
 
-  app.get('/throw', (req, res) => {
+  app.get('/throw', (_req, res) => {
     res.status(500).send('Server error')
   })
 
-  app.get('/unknown', (req, res) => {
+  app.get('/unknown', (_req, res) => {
     res.status(404).send('Not found')
   })
 
-  app.get('/empty.css', (req, res) => {
+  app.get('/empty.css', (_req, res) => {
     res.header('content-type', 'text/css').end()
   })
 
@@ -46,24 +46,24 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
     res.send(JSON.stringify(req.headers))
   })
 
-  app.get('/', (req, res) => {
+  app.get('/', (_req, res) => {
     res.send(setup)
     res.end()
   })
 
-  app.get('/datadog-logs.js', async (req, res) => {
+  app.get('/datadog-logs.js', async (_req, res) => {
     res.header('content-type', 'application/javascript').send(await buildLogs(endpoints))
   })
 
-  app.get('/datadog-rum.js', async (req, res) => {
+  app.get('/datadog-rum.js', async (_req, res) => {
     res.header('content-type', 'application/javascript').send(await buildRum(endpoints))
   })
 
-  app.get('/datadog-rum-recorder.js', async (req, res) => {
+  app.get('/datadog-rum-recorder.js', async (_req, res) => {
     res.header('content-type', 'application/javascript').send(await buildRumRecorder(endpoints))
   })
 
-  app.get('/app.js', async (req, res) => {
+  app.get('/app.js', async (_req, res) => {
     res.header('content-type', 'application/javascript').send(await buildNpm(endpoints))
   })
 
