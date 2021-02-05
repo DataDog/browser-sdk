@@ -399,11 +399,13 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     descriptors?: FontFaceDescriptors
   ): FontFace {
     const fontFace = new originalFontFace(family, source, descriptors)
-    fontMap.set(fontFace, {
-      descriptors,
-      family,
-      buffer: typeof source !== 'string',
-      fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
+    callMonitored(() => {
+      fontMap.set(fontFace, {
+        descriptors,
+        family,
+        buffer: typeof source !== 'string',
+        fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
+      })
     })
     return fontFace
   } as unknown) as typeof FontFace
