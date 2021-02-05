@@ -1,6 +1,6 @@
 const path = require('path')
 
-module.exports = (env, argv) => ({
+module.exports = (_env, argv) => ({
   entry: './app.ts',
   module: {
     rules: [

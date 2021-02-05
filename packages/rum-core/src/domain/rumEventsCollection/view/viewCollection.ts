@@ -1,9 +1,9 @@
-import { Configuration, getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
+import { getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, configuration: Configuration, location: Location) {
+export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   )
