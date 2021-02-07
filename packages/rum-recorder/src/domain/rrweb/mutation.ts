@@ -6,7 +6,7 @@ import {
   SlimDOMOptions,
   transformAttribute,
 } from '../rrweb-snapshot'
-import { nodeOrAncestorsAreHidden } from '../privacy'
+import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
   AttributeCursor,
@@ -207,7 +207,7 @@ export class MutationBuffer {
         ns = ns && ns.nextSibling
         nextId = ns && mirror.getId((ns as unknown) as INode)
       }
-      if (nextId === -1 && nodeOrAncestorsAreHidden(n.nextSibling)) {
+      if (nextId === -1 && nodeOrAncestorsShouldBeHidden(n.nextSibling)) {
         nextId = null
       }
       return nextId
@@ -336,7 +336,7 @@ export class MutationBuffer {
     switch (m.type) {
       case 'characterData': {
         const value = m.target.textContent
-        if (!nodeOrAncestorsAreHidden(m.target) && value !== m.oldValue) {
+        if (!nodeOrAncestorsShouldBeHidden(m.target) && value !== m.oldValue) {
           this.texts.push({
             value,
             node: m.target,
@@ -346,7 +346,7 @@ export class MutationBuffer {
       }
       case 'attributes': {
         const value = (m.target as HTMLElement).getAttribute(m.attributeName!)
-        if (nodeOrAncestorsAreHidden(m.target) || value === m.oldValue) {
+        if (nodeOrAncestorsShouldBeHidden(m.target) || value === m.oldValue) {
           return
         }
         let item: AttributeCursor | undefined = this.attributes.find((a) => a.node === m.target)
@@ -366,7 +366,7 @@ export class MutationBuffer {
         forEach(m.removedNodes, (n: Node) => {
           const nodeId = mirror.getId(n as INode)
           const parentId = mirror.getId(m.target as INode)
-          if (nodeOrAncestorsAreHidden(n) || nodeOrAncestorsAreHidden(m.target) || isIgnored(n)) {
+          if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || isIgnored(n)) {
             return
           }
           // removed node has not been serialized yet, just remove it from the Set
@@ -406,7 +406,7 @@ export class MutationBuffer {
   }
 
   private genAdds = (n: Node | INode, target?: Node | INode) => {
-    if (nodeOrAncestorsAreHidden(n)) {
+    if (nodeOrAncestorsShouldBeHidden(n)) {
       return
     }
     if (isINode(n)) {

@@ -13,7 +13,7 @@ const PRIVACY_INPUT_TYPES_TO_IGNORE = ['email', 'password', 'tel']
 
 // Returns true if the given DOM node should be hidden. Ancestors
 // are not checked.
-export function nodeIsHidden(node: Node): boolean {
+export function nodeShouldBeHidden(node: Node): boolean {
   return (
     isElement(node) &&
     (node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_HIDDEN ||
@@ -23,21 +23,21 @@ export function nodeIsHidden(node: Node): boolean {
 
 // Returns true if the given DOM node should be hidden, recursively
 // checking its ancestors.
-export function nodeOrAncestorsAreHidden(node: Node | null): boolean {
+export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
   if (!node) {
     return false
   }
 
-  if (nodeIsHidden(node)) {
+  if (nodeShouldBeHidden(node)) {
     return true
   }
 
-  return nodeOrAncestorsAreHidden(node.parentNode)
+  return nodeOrAncestorsShouldBeHidden(node.parentNode)
 }
 
 // Returns true if the given DOM node should have it's input events
 // ignored. Ancestors are not checked.
-export function nodeHasInputIngored(node: Node): boolean {
+export function nodeShouldHaveInputIgnored(node: Node): boolean {
   return (
     isElement(node) &&
     (node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_INPUT_IGNORED ||
@@ -49,16 +49,16 @@ export function nodeHasInputIngored(node: Node): boolean {
 
 // Returns true if the given DOM node should have it's input events
 // ignored, recursively checking its ancestors.
-export function nodeOrAncestorsHaveInputIngnored(node: Node | null): boolean {
+export function nodeOrAncestorsShouldHaveInputIgnored(node: Node | null): boolean {
   if (!node) {
     return false
   }
 
-  if (nodeHasInputIngored(node)) {
+  if (nodeShouldHaveInputIgnored(node)) {
     return true
   }
 
-  return nodeOrAncestorsHaveInputIngnored(node.parentNode)
+  return nodeOrAncestorsShouldHaveInputIgnored(node.parentNode)
 }
 
 function isElement(node: Node): node is Element {

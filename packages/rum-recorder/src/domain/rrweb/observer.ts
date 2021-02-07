@@ -1,6 +1,6 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
-import { nodeOrAncestorsAreHidden, nodeOrAncestorsHaveInputIngnored } from '../privacy'
+import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationBuffer } from './mutation'
 import {
   Arguments,
@@ -101,7 +101,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: Sa
 
   const handlers: ListenerHandler[] = []
   const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
-    if (nodeOrAncestorsAreHidden(event.target as Node)) {
+    if (nodeOrAncestorsShouldBeHidden(event.target as Node)) {
       return
     }
     const id = mirror.getId(event.target as INode)
@@ -128,7 +128,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: Sa
 function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
   const updatePosition = throttle<UIEvent>(
     monitor((evt) => {
-      if (!evt.target || nodeOrAncestorsAreHidden(evt.target as Node)) {
+      if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
         return
       }
       const id = mirror.getId(evt.target as INode)
@@ -182,8 +182,8 @@ function initInputObserver(
       !target ||
       !(target as Element).tagName ||
       INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      nodeOrAncestorsAreHidden(target as Node) ||
-      nodeOrAncestorsHaveInputIngnored(target as Node)
+      nodeOrAncestorsShouldBeHidden(target as Node) ||
+      nodeOrAncestorsShouldHaveInputIgnored(target as Node)
     ) {
       return
     }
@@ -300,7 +300,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (type: 'play' | 'pause') => (event: Event) => {
     const { target } = event
-    if (!target || nodeOrAncestorsAreHidden(target as Node)) {
+    if (!target || nodeOrAncestorsShouldBeHidden(target as Node)) {
       return
     }
     mediaInteractionCb({
@@ -328,7 +328,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler
         (original: (...args: unknown[]) => unknown) =>
           function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             callMonitored(() => {
-              if (!nodeOrAncestorsAreHidden(this.canvas)) {
+              if (!nodeOrAncestorsShouldBeHidden(this.canvas)) {
                 setTimeout(
                   monitor(() => {
                     const recordArgs = [...args]

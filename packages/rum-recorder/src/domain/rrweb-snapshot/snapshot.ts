@@ -183,7 +183,7 @@ function serializeNode(
         systemId: (n as DocumentType).systemId,
       }
     case n.ELEMENT_NODE:
-      const needBlock = nodeIsHidden(n)
+      const needBlock = nodeShouldBeHidden(n)
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
