@@ -183,7 +183,7 @@ function serializeNode(
         systemId: (n as DocumentType).systemId,
       }
     case n.ELEMENT_NODE:
-      const needBlock = nodeShouldBeHidden(n)
+      const shouldBeHidden = nodeShouldBeHidden(n)
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
@@ -251,7 +251,7 @@ function serializeNode(
       if ((n as HTMLElement).scrollTop) {
         attributes.rr_scrollTop = (n as HTMLElement).scrollTop
       }
-      if (needBlock) {
+      if (shouldBeHidden) {
         const { width, height } = (n as HTMLElement).getBoundingClientRect()
         attributes = {
           class: attributes.class,
@@ -265,7 +265,7 @@ function serializeNode(
         attributes,
         childNodes: [],
         isSVG: isSVGElement(n as Element) || undefined,
-        needBlock,
+        shouldBeHidden,
       }
     case n.TEXT_NODE:
       // The parent node may not be a html element which has a tagName attribute.
@@ -435,9 +435,9 @@ export function serializeNodeWithId(
   map[id] = n as INode
   let recordChild = !skipChild
   if (serializedNode.type === NodeType.Element) {
-    recordChild = recordChild && !serializedNode.needBlock
+    recordChild = recordChild && !serializedNode.shouldBeHidden
     // this property was not needed in replay side
-    delete serializedNode.needBlock
+    delete serializedNode.shouldBeHidden
   }
   if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
     if (
