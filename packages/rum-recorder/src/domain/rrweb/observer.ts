@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { MutationBuffer } from './mutation'
 import {
@@ -53,7 +53,7 @@ function initMutationObserver(
 ): MutationObserver {
   // see mutation.ts for details
   mutationBuffer.init(cb, blockClass, blockSelector, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
-  const observer = new MutationObserver(mutationBuffer.processMutations)
+  const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
   observer.observe(document, {
     attributeOldValue: true,
     attributes: true,
@@ -73,7 +73,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
   const updatePosition = throttle<MouseEvent | TouchEvent>(
-    (evt) => {
+    monitor((evt) => {
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
       const position = {
@@ -83,7 +83,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
         y: clientY,
       }
       cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
-    },
+    }),
     threshold,
     {
       trailing: false,
@@ -133,38 +133,44 @@ function initMouseInteractionObserver(
 }
 
 function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
-  const updatePosition = throttle<UIEvent>((evt) => {
-    if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
-      return
-    }
-    const id = mirror.getId(evt.target as INode)
-    if (evt.target === document) {
-      const scrollEl = (document.scrollingElement || document.documentElement)!
-      cb({
-        id,
-        x: scrollEl.scrollLeft,
-        y: scrollEl.scrollTop,
-      })
-    } else {
-      cb({
-        id,
-        x: (evt.target as HTMLElement).scrollLeft,
-        y: (evt.target as HTMLElement).scrollTop,
-      })
-    }
-  }, sampling.scroll || 100)
+  const updatePosition = throttle<UIEvent>(
+    monitor((evt) => {
+      if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
+        return
+      }
+      const id = mirror.getId(evt.target as INode)
+      if (evt.target === document) {
+        const scrollEl = (document.scrollingElement || document.documentElement)!
+        cb({
+          id,
+          x: scrollEl.scrollLeft,
+          y: scrollEl.scrollTop,
+        })
+      } else {
+        cb({
+          id,
+          x: (evt.target as HTMLElement).scrollLeft,
+          y: (evt.target as HTMLElement).scrollTop,
+        })
+      }
+    }),
+    sampling.scroll || 100
+  )
   return on('scroll', updatePosition)
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
-  const updateDimension = throttle(() => {
-    const height = getWindowHeight()
-    const width = getWindowWidth()
-    cb({
-      height: Number(height),
-      width: Number(width),
-    })
-  }, 200)
+  const updateDimension = throttle(
+    monitor(() => {
+      const height = getWindowHeight()
+      const width = getWindowWidth()
+      cb({
+        height: Number(height),
+        width: Number(width),
+      })
+    }),
+    200
+  )
   return on('resize', updateDimension, window)
 }
 
@@ -243,10 +249,10 @@ function initInputObserver(
     handlers.push(
       ...hookProperties.map((p) =>
         hookSetter<HTMLElement>(p[0], p[1], {
-          set() {
+          set: monitor(function () {
             // mock to a normal event
             eventHandler(({ target: this } as unknown) as Event)
-          },
+          }),
         })
       )
     )
@@ -259,27 +265,31 @@ function initInputObserver(
 function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const insertRule = CSSStyleSheet.prototype.insertRule
-  CSSStyleSheet.prototype.insertRule = function (rule: string, index?: number) {
-    const id = mirror.getId(this.ownerNode as INode)
-    if (id !== -1) {
-      cb({
-        id,
-        adds: [{ rule, index }],
-      })
-    }
+  CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
+    callMonitored(() => {
+      const id = mirror.getId(this.ownerNode as INode)
+      if (id !== -1) {
+        cb({
+          id,
+          adds: [{ rule, index }],
+        })
+      }
+    })
     return insertRule.call(this, rule, index)
   }
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const deleteRule = CSSStyleSheet.prototype.deleteRule
-  CSSStyleSheet.prototype.deleteRule = function (index: number) {
-    const id = mirror.getId(this.ownerNode as INode)
-    if (id !== -1) {
-      cb({
-        id,
-        removes: [{ index }],
-      })
-    }
+  CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
+    callMonitored(() => {
+      const id = mirror.getId(this.ownerNode as INode)
+      if (id !== -1) {
+        cb({
+          id,
+          removes: [{ index }],
+        })
+      }
+    })
     return deleteRule.call(this, index)
   }
 
@@ -322,35 +332,40 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         prop,
         (original: (...args: unknown[]) => unknown) =>
           function (this: CanvasRenderingContext2D, ...args: unknown[]) {
-            if (!isBlocked(this.canvas, blockClass)) {
-              setTimeout(() => {
-                const recordArgs = [...args]
-                if (prop === 'drawImage') {
-                  if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                    recordArgs[0] = recordArgs[0].toDataURL()
-                  }
-                }
-                cb({
-                  args: recordArgs,
-                  id: mirror.getId((this.canvas as unknown) as INode),
-                  property: prop,
-                })
-              }, 0)
-            }
+            callMonitored(() => {
+              if (!isBlocked(this.canvas, blockClass)) {
+                setTimeout(
+                  monitor(() => {
+                    const recordArgs = [...args]
+                    if (prop === 'drawImage') {
+                      if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
+                        recordArgs[0] = recordArgs[0].toDataURL()
+                      }
+                    }
+                    cb({
+                      args: recordArgs,
+                      id: mirror.getId((this.canvas as unknown) as INode),
+                      property: prop,
+                    })
+                  }),
+                  0
+                )
+              }
+            })
             return original.apply(this, args)
           }
       )
       handlers.push(restoreHandler)
     } catch {
       const hookHandler = hookSetter<CanvasRenderingContext2D>(CanvasRenderingContext2D.prototype, prop, {
-        set(v) {
+        set: monitor(function (v) {
           cb({
             args: [v],
             id: mirror.getId((this.canvas as unknown) as INode),
             property: prop,
             setter: true,
           })
-        },
+        }),
       })
       handlers.push(hookHandler)
     }
@@ -385,11 +400,13 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     descriptors?: FontFaceDescriptors
   ): FontFace {
     const fontFace = new originalFontFace(family, source, descriptors)
-    fontMap.set(fontFace, {
-      descriptors,
-      family,
-      buffer: typeof source !== 'string',
-      fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
+    callMonitored(() => {
+      fontMap.set(fontFace, {
+        descriptors,
+        family,
+        buffer: typeof source !== 'string',
+        fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
+      })
     })
     return fontFace
   } as unknown) as typeof FontFace
@@ -399,13 +416,16 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
     'add',
     (original: (fontFace: FontFace) => unknown) =>
       function (this: unknown, fontFace: FontFace) {
-        setTimeout(() => {
-          const p = fontMap.get(fontFace)
-          if (p) {
-            cb(p)
-            fontMap.delete(fontFace)
-          }
-        }, 0)
+        setTimeout(
+          monitor(() => {
+            const p = fontMap.get(fontFace)
+            if (p) {
+              cb(p)
+              fontMap.delete(fontFace)
+            }
+          }),
+          0
+        )
         return original.apply(this, [fontFace])
       }
   )

@@ -41,7 +41,7 @@ describe('record', () => {
   })
 
   it('will only have one full snapshot without checkout config', () => {
-    stop = record({ emit: emitSpy })?.stop
+    stop = record({ emit: emitSpy }).stop
 
     const inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -56,7 +56,7 @@ describe('record', () => {
     stop = record({
       emit: emitSpy,
       checkoutEveryNth: 10,
-    })?.stop
+    }).stop
 
     const inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -75,7 +75,7 @@ describe('record', () => {
     jasmine.clock().install()
     jasmine.clock().mockDate()
     const checkoutDelay = 500
-    stop = record({ emit: emitSpy, checkoutEveryNms: checkoutDelay })?.stop
+    stop = record({ emit: emitSpy, checkoutEveryNms: checkoutDelay }).stop
 
     let inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -99,7 +99,7 @@ describe('record', () => {
     stop = record({
       emit: emitSpy,
       checkoutEveryNth: 2,
-    })?.stop
+    }).stop
 
     const p = document.createElement('p')
     const span = document.createElement('span')
@@ -200,7 +200,7 @@ describe('record', () => {
   it('captures stylesheet rules', (done) => {
     stop = record({
       emit: emitSpy,
-    })?.stop
+    }).stop
 
     const styleElement = document.createElement('style')
     sandbox.appendChild(styleElement)

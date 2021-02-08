@@ -8,6 +8,7 @@ import {
   MonitoringMessage,
   resetInternalMonitoring,
   startInternalMonitoring,
+  callMonitored,
 } from './internalMonitoring'
 
 const configuration: Partial<Configuration> = {
@@ -53,7 +54,7 @@ describe('internal monitoring', () => {
       candidate = new Candidate()
     })
 
-    describe('before initialisation', () => {
+    describe('before initialization', () => {
       it('should not monitor', () => {
         expect(() => candidate.notMonitoredThrowing()).toThrowError('not monitored')
         expect(() => candidate.monitoredThrowing()).toThrowError('monitored')
@@ -61,7 +62,7 @@ describe('internal monitoring', () => {
       })
     })
 
-    describe('after initialisation', () => {
+    describe('after initialization', () => {
       beforeEach(() => {
         startInternalMonitoring(configuration as Configuration)
       })
@@ -128,23 +129,44 @@ describe('internal monitoring', () => {
       resetInternalMonitoring()
     })
 
-    it('should preserve original behavior', () => {
-      const decorated = monitor(notThrowing)
-      expect(decorated()).toEqual(1)
+    describe('direct call', () => {
+      it('should preserve original behavior', () => {
+        expect(callMonitored(notThrowing)).toEqual(1)
+      })
+
+      it('should catch error', () => {
+        expect(() => callMonitored(throwing)).not.toThrowError()
+      })
+
+      it('should report error', () => {
+        const server = sinon.fakeServer.create()
+
+        callMonitored(throwing)
+
+        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
+        server.restore()
+      })
     })
 
-    it('should catch error', () => {
-      const decorated = monitor(throwing)
-      expect(() => decorated()).not.toThrowError()
-    })
+    describe('wrapper', () => {
+      it('should preserve original behavior', () => {
+        const decorated = monitor(notThrowing)
+        expect(decorated()).toEqual(1)
+      })
 
-    it('should report error', () => {
-      const server = sinon.fakeServer.create()
+      it('should catch error', () => {
+        const decorated = monitor(throwing)
+        expect(() => decorated()).not.toThrowError()
+      })
 
-      monitor(throwing)()
+      it('should report error', () => {
+        const server = sinon.fakeServer.create()
 
-      expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
-      server.restore()
+        monitor(throwing)()
+
+        expect((JSON.parse(server.requests[0].requestBody) as MonitoringMessage).message).toEqual('error')
+        server.restore()
+      })
     })
   })
 
@@ -166,9 +188,9 @@ describe('internal monitoring', () => {
     })
 
     it('should send the needed data', () => {
-      monitor(() => {
+      callMonitored(() => {
         throw new Error('message')
-      })()
+      })
 
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toEqual(configuration.internalMonitoringEndpoint!)
@@ -188,9 +210,9 @@ describe('internal monitoring', () => {
     it('should cap the data sent', () => {
       const max = configuration.maxInternalMonitoringMessagesPerPage!
       for (let i = 0; i < max + 3; i += 1) {
-        monitor(() => {
+        callMonitored(() => {
           throw new Error('message')
-        })()
+        })
       }
 
       expect(server.requests.length).toEqual(max)
@@ -215,15 +237,15 @@ describe('internal monitoring', () => {
       internalMonitoring.setExternalContextProvider(() => ({
         foo: 'bar',
       }))
-      monitor(() => {
+      callMonitored(() => {
         throw new Error('message')
-      })()
+      })
       expect(JSON.parse(server.requests[0].requestBody).foo).toEqual('bar')
 
       internalMonitoring.setExternalContextProvider(() => ({}))
-      monitor(() => {
+      callMonitored(() => {
         throw new Error('message')
-      })()
+      })
       expect(JSON.parse(server.requests[1].requestBody).foo).not.toBeDefined()
     })
   })

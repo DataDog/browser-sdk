@@ -13,7 +13,7 @@ describe('logs entry', () => {
     ) => void
   >
   let startLogsGetGlobalContext: (() => Context) | undefined
-  const startLogs: StartLogs = (configuration, logger, getGlobalContext) => {
+  const startLogs: StartLogs = (_configuration, _logger, getGlobalContext) => {
     startLogsGetGlobalContext = getGlobalContext
     return (sendLogsSpy as any) as ReturnType<StartLogs>
   }
