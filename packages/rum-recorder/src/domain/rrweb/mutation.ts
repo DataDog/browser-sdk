@@ -22,7 +22,7 @@ interface DoubleLinkedListNode {
   next: DoubleLinkedListNode | null
   value: NodeInLinkedList
 }
-type NodeInLinkedList = Node & {
+export type NodeInLinkedList = Node & {
   __ln: DoubleLinkedListNode
 }
 
