@@ -1,4 +1,5 @@
 import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { NewLocationListener } from '../../../boot/rumPublicApi'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -8,6 +9,7 @@ import { Timings, trackTimings } from './trackTimings'
 
 export interface View {
   id: string
+  name?: string
   location: Location
   referrer: string
   timings: Timings
@@ -41,9 +43,19 @@ export interface ViewCustomTimings {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(location: Location, lifeCycle: LifeCycle, newLocationListener?: NewLocationListener) {
   const startOrigin = 0
-  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
+  const onNewLocation: NewLocationListener = newLocationListener || (() => undefined)
+
+  const { viewName } = onNewLocation(location) || {}
+  const initialView = newView(
+    lifeCycle,
+    location,
+    ViewLoadingType.INITIAL_LOAD,
+    document.referrer,
+    startOrigin,
+    viewName
+  )
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -56,14 +68,21 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
 
   function onLocationChange() {
     if (currentView.isDifferentView(location)) {
-      // Renew view on location changes
-      currentView.end()
-      currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
-    } else {
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
+      const { shouldCreateView, viewName } = {
+        shouldCreateView: true,
+        ...onNewLocation(location, currentView.getLocation()),
+      }
+
+      if (shouldCreateView) {
+        // Renew view on location changes
+        currentView.end()
+        currentView.triggerUpdate()
+        currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
+        return
+      }
     }
+    currentView.updateLocation(location)
+    currentView.triggerUpdate()
   }
 
   // Renew view on session renewal
@@ -105,7 +124,8 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime: number = performance.now()
+  startTime: number = performance.now(),
+  name?: string
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -168,6 +188,7 @@ function newView(
       documentVersion,
       eventCounts,
       id,
+      name,
       loadingTime,
       loadingType,
       location,
@@ -193,6 +214,9 @@ function newView(
         location.pathname !== otherLocation.pathname ||
         (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== location.hash)
       )
+    },
+    getLocation() {
+      return location
     },
     triggerUpdate() {
       // cancel any pending view updates execution

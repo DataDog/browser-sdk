@@ -21,7 +21,13 @@ import { startRum } from './rum'
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent) => void
+  onNewLocation?: NewLocationListener
 }
+
+export type NewLocationListener = (
+  newLocation: Location,
+  oldLocation?: Location
+) => undefined | { shouldCreateView?: boolean; viewName?: string }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 

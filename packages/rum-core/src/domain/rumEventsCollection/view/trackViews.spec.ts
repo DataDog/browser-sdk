@@ -1,5 +1,6 @@
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { NewLocationListener } from '../../../boot/rumPublicApi'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -205,6 +206,87 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/foo?bar=qux')
 
     expect(createSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('rum use onNewLocation callback to rename/ignore views', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+  let onNewLocation: NewLocationListener
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        trackViews(location, lifeCycle, onNewLocation)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should set the view name to the returned viewName', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo' }
+        case '/bar':
+          return { viewName: 'Bar' }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/baz')
+
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).name).toBe('Bar')
+    expect(getViewEvent(4).name).toBeUndefined()
+  })
+
+  it('should ignore the view when shouldCreateView is false', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo', shouldCreateView: true }
+        case '/bar':
+          return { shouldCreateView: false }
+        case '/baz':
+          return { viewName: 'Baz', shouldCreateView: true }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/baz')
+
+    const initialViewId = getViewEvent(0).id
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).name).toBe('Foo')
+    expect(getViewEvent(2).id).toBe(initialViewId)
+    expect(getViewEvent(3).name).toBe('Baz')
+    expect(getViewEvent(3).id).not.toBe(initialViewId)
+  })
+
+  it('should create the initial view even when shouldCreateView is false', () => {
+    onNewLocation = (location) => {
+      if (location.pathname === '/foo') {
+        return { shouldCreateView: false }
+      }
+      if (location.pathname === '/bar') {
+        return { shouldCreateView: true }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).location.pathname).toBe('/foo')
+    expect(getViewEvent(2).location.pathname).toBe('/bar')
+    expect(getViewEvent(4)).toBeUndefined()
   })
 })
 
