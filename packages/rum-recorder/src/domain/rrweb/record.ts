@@ -11,9 +11,6 @@ function record(options: RecordOptions = {}): RecordAPI {
     emit,
     checkoutEveryNms,
     checkoutEveryNth,
-    blockClass = 'rr-block',
-    blockSelector = null,
-    ignoreClass = 'rr-ignore',
     inlineStylesheet = true,
     maskAllInputs,
     maskInputOptions: maskInputOptionsArg,
@@ -122,8 +119,6 @@ function record(options: RecordOptions = {}): RecordAPI {
     const wasFrozen = mutationBuffer.isFrozen()
     mutationBuffer.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
-      blockClass,
-      blockSelector,
       inlineStylesheet,
       recordCanvas,
       maskAllInputs: maskInputOptions,
@@ -170,10 +165,7 @@ function record(options: RecordOptions = {}): RecordAPI {
     handlers.push(
       initObservers(
         {
-          blockClass,
-          blockSelector,
           collectFonts,
-          ignoreClass,
           inlineStylesheet,
           maskInputFn,
           maskInputOptions,

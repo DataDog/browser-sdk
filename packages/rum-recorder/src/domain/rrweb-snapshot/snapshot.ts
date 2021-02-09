@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { forEach } from '../rrweb/utils'
+import { nodeShouldBeHidden } from '../privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -159,41 +159,16 @@ export function transformAttribute(doc: Document, name: string, value: string): 
   return value
 }
 
-export function isBlockedElement(
-  element: HTMLElement,
-  blockClass: string | RegExp,
-  blockSelector: string | null
-): boolean {
-  if (typeof blockClass === 'string') {
-    if (element.classList.contains(blockClass)) {
-      return true
-    }
-  } else {
-    forEach(element.classList, (className: string) => {
-      if (blockClass.test(className)) {
-        return true
-      }
-    })
-  }
-  if (blockSelector) {
-    return element.matches(blockSelector)
-  }
-
-  return false
-}
-
 function serializeNode(
   n: Node,
   options: {
     doc: Document
-    blockClass: string | RegExp
-    blockSelector: string | null
     inlineStylesheet: boolean
     maskInputOptions: MaskInputOptions
     recordCanvas: boolean
   }
 ): SerializedNode | false {
-  const { doc, blockClass, blockSelector, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
+  const { doc, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -208,7 +183,7 @@ function serializeNode(
         systemId: (n as DocumentType).systemId,
       }
     case n.ELEMENT_NODE:
-      const needBlock = isBlockedElement(n as HTMLElement, blockClass, blockSelector)
+      const shouldBeHidden = nodeShouldBeHidden(n)
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
@@ -276,7 +251,7 @@ function serializeNode(
       if ((n as HTMLElement).scrollTop) {
         attributes.rr_scrollTop = (n as HTMLElement).scrollTop
       }
-      if (needBlock) {
+      if (shouldBeHidden) {
         const { width, height } = (n as HTMLElement).getBoundingClientRect()
         attributes = {
           class: attributes.class,
@@ -290,7 +265,7 @@ function serializeNode(
         attributes,
         childNodes: [],
         isSVG: isSVGElement(n as Element) || undefined,
-        needBlock,
+        shouldBeHidden,
       }
     case n.TEXT_NODE:
       // The parent node may not be a html element which has a tagName attribute.
@@ -407,8 +382,6 @@ export function serializeNodeWithId(
   options: {
     doc: Document
     map: IdNodeMap
-    blockClass: string | RegExp
-    blockSelector: string | null
     skipChild: boolean
     inlineStylesheet: boolean
     maskInputOptions?: MaskInputOptions
@@ -420,8 +393,6 @@ export function serializeNodeWithId(
   const {
     doc,
     map,
-    blockClass,
-    blockSelector,
     skipChild = false,
     inlineStylesheet = true,
     maskInputOptions = {},
@@ -431,8 +402,6 @@ export function serializeNodeWithId(
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
-    blockClass,
-    blockSelector,
     inlineStylesheet,
     maskInputOptions,
     recordCanvas,
@@ -466,9 +435,9 @@ export function serializeNodeWithId(
   map[id] = n as INode
   let recordChild = !skipChild
   if (serializedNode.type === NodeType.Element) {
-    recordChild = recordChild && !serializedNode.needBlock
+    recordChild = recordChild && !serializedNode.shouldBeHidden
     // this property was not needed in replay side
-    delete serializedNode.needBlock
+    delete serializedNode.shouldBeHidden
   }
   if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
     if (
@@ -483,8 +452,6 @@ export function serializeNodeWithId(
       const serializedChildNode = serializeNodeWithId(childN, {
         doc,
         map,
-        blockClass,
-        blockSelector,
         skipChild,
         inlineStylesheet,
         maskInputOptions,
@@ -503,22 +470,13 @@ export function serializeNodeWithId(
 export function snapshot(
   n: Document,
   options?: {
-    blockClass?: string | RegExp
     inlineStylesheet?: boolean
     maskAllInputs?: boolean | MaskInputOptions
     slimDOM?: boolean | SlimDOMOptions
     recordCanvas?: boolean
-    blockSelector?: string | null
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const {
-    blockClass = 'rr-block',
-    inlineStylesheet = true,
-    recordCanvas = false,
-    blockSelector = null,
-    maskAllInputs = false,
-    slimDOM = false,
-  } = options || {}
+  const { inlineStylesheet = true, recordCanvas = false, maskAllInputs = false, slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
   const maskInputOptions: MaskInputOptions =
     maskAllInputs === true
@@ -565,8 +523,6 @@ export function snapshot(
     serializeNodeWithId(n, {
       doc: n,
       map: idNodeMap,
-      blockClass,
-      blockSelector,
       skipChild: false,
       inlineStylesheet,
       maskInputOptions,
