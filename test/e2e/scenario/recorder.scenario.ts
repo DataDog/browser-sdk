@@ -1,8 +1,17 @@
-import { CreationReason, IncrementalSource, RecordType } from '@datadog/browser-rum-recorder/cjs/types'
+import { CreationReason, IncrementalSource } from '@datadog/browser-rum-recorder/cjs/types'
+import { InputData } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
 
-import { createTest } from '../lib/framework'
+import { createTest, bundleSetup, html } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
+import {
+  findNodeWithId,
+  findFullSnapshot,
+  findIncrementalSnapshot,
+  findAllIncrementalSnapshots,
+  findMeta,
+  findTextContent,
+} from '../lib/helpers/recorder'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -45,15 +54,74 @@ describe('recorder', () => {
         filename: `${meta['session.id']}-${meta.start}`,
         mimetype: 'application/octet-stream',
       })
-      expect(segment.data.records.find((record) => record.type === RecordType.Meta)).toBeTruthy('have a Meta record')
-      expect(segment.data.records.find((record) => record.type === RecordType.FullSnapshot)).toBeTruthy(
-        'have a FullSnapshot record'
+      expect(findMeta(segment.data)).toBeTruthy('have a Meta record')
+      expect(findFullSnapshot(segment.data)).toBeTruthy('have a FullSnapshot record')
+      expect(findIncrementalSnapshot(segment.data, IncrementalSource.MouseInteraction)).toBeTruthy(
+        'have a IncrementalSnapshot/MouseInteraction record'
       )
-      expect(
-        segment.data.records.find(
-          (record) =>
-            record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.MouseInteraction
-        )
-      ).toBeTruthy('have a IncrementalSnapshot/MouseInteraction record')
     })
+
+  describe('snapshot', () => {
+    createTest('obfuscate blocks')
+      .withSetup(bundleSetup)
+      .withRumRecorder()
+      .withBody(
+        html`
+          <p id="foo">foo</p>
+          <p id="bar" data-dd-privacy="hidden">bar</p>
+          <p id="baz" class="dd-privacy-hidden">baz</p>
+        `
+      )
+      .run(async ({ events }) => {
+        await flushEvents()
+
+        expect(events.sessionReplay.length).toBe(1)
+
+        const fullSnapshot = findFullSnapshot(events.sessionReplay[0].segment.data)!
+
+        const fooNode = findNodeWithId(fullSnapshot, 'foo')
+        expect(fooNode).toBeTruthy()
+        expect(findTextContent(fooNode!)).toBe('foo')
+
+        expect(findNodeWithId(fullSnapshot, 'bar')).toBeFalsy()
+        expect(findNodeWithId(fullSnapshot, 'baz')).toBeFalsy()
+      })
+  })
+
+  describe('input observers', () => {
+    createTest('record input when not to be ignored')
+      .withSetup(bundleSetup)
+      .withRumRecorder()
+      .withBody(
+        html`
+          <input type="text" id="first" name="first" />
+          <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
+          <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
+          <input type="password" id="fourth" name="fourth" />
+        `
+      )
+      .run(async ({ events }) => {
+        const firstInput = await $('#first')
+        await firstInput.setValue('foo')
+
+        const secondInput = await $('#second')
+        await secondInput.setValue('bar')
+
+        const thirdInput = await $('#third')
+        await thirdInput.setValue('baz')
+
+        const fourthInput = await $('#fourth')
+        await fourthInput.setValue('quux')
+
+        await flushEvents()
+
+        expect(events.sessionReplay.length).toBe(1)
+        const { segment } = events.sessionReplay[0]
+
+        const inputRecords = findAllIncrementalSnapshots(segment.data, IncrementalSource.Input)
+
+        expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
+        expect((inputRecords[inputRecords.length - 1].data as InputData).text).toBe('foo')
+      })
+  })
 })

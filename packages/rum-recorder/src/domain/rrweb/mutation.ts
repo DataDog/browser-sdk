@@ -6,16 +6,16 @@ import {
   SlimDOMOptions,
   transformAttribute,
 } from '../rrweb-snapshot'
+import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
   AttributeCursor,
-  BlockClass,
   MutationCallBack,
   MutationRecord,
   RemovedNodeMutation,
   TextCursor,
 } from './types'
-import { forEach, isAncestorRemoved, isBlocked, isIgnored, mirror } from './utils'
+import { forEach, isAncestorRemoved, isIgnored, mirror } from './utils'
 
 interface DoubleLinkedListNode {
   previous: DoubleLinkedListNode | null
@@ -148,10 +148,6 @@ export class MutationBuffer {
   // @ts-ignore Allows creating an instance without initializing all fields
   private emissionCallback: MutationCallBack
   // @ts-ignore Allows creating an instance without initializing all fields
-  private blockClass: BlockClass
-  // @ts-ignore Allows creating an instance without initializing all fields
-  private blockSelector: string | null
-  // @ts-ignore Allows creating an instance without initializing all fields
   private inlineStylesheet: boolean
   // @ts-ignore Allows creating an instance without initializing all fields
   private maskInputOptions: MaskInputOptions
@@ -162,15 +158,11 @@ export class MutationBuffer {
 
   public init(
     cb: MutationCallBack,
-    blockClass: BlockClass,
-    blockSelector: string | null,
     inlineStylesheet: boolean,
     maskInputOptions: MaskInputOptions,
     recordCanvas: boolean,
     slimDOMOptions: SlimDOMOptions
   ) {
-    this.blockClass = blockClass
-    this.blockSelector = blockSelector
     this.inlineStylesheet = inlineStylesheet
     this.maskInputOptions = maskInputOptions
     this.recordCanvas = recordCanvas
@@ -215,7 +207,7 @@ export class MutationBuffer {
         ns = ns && ns.nextSibling
         nextId = ns && mirror.getId((ns as unknown) as INode)
       }
-      if (nextId === -1 && isBlocked(n.nextSibling, this.blockClass)) {
+      if (nextId === -1 && nodeOrAncestorsShouldBeHidden(n.nextSibling)) {
         nextId = null
       }
       return nextId
@@ -230,8 +222,6 @@ export class MutationBuffer {
         return addList.addNode(n)
       }
       const sn = serializeNodeWithId(n, {
-        blockClass: this.blockClass,
-        blockSelector: this.blockSelector,
         doc: document,
         inlineStylesheet: this.inlineStylesheet,
         map: mirror.map,
@@ -346,7 +336,7 @@ export class MutationBuffer {
     switch (m.type) {
       case 'characterData': {
         const value = m.target.textContent
-        if (!isBlocked(m.target, this.blockClass) && value !== m.oldValue) {
+        if (!nodeOrAncestorsShouldBeHidden(m.target) && value !== m.oldValue) {
           this.texts.push({
             value,
             node: m.target,
@@ -356,7 +346,7 @@ export class MutationBuffer {
       }
       case 'attributes': {
         const value = (m.target as HTMLElement).getAttribute(m.attributeName!)
-        if (isBlocked(m.target, this.blockClass) || value === m.oldValue) {
+        if (nodeOrAncestorsShouldBeHidden(m.target) || value === m.oldValue) {
           return
         }
         let item: AttributeCursor | undefined = this.attributes.find((a) => a.node === m.target)
@@ -376,7 +366,7 @@ export class MutationBuffer {
         forEach(m.removedNodes, (n: Node) => {
           const nodeId = mirror.getId(n as INode)
           const parentId = mirror.getId(m.target as INode)
-          if (isBlocked(n, this.blockClass) || isBlocked(m.target, this.blockClass) || isIgnored(n)) {
+          if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || isIgnored(n)) {
             return
           }
           // removed node has not been serialized yet, just remove it from the Set
@@ -416,7 +406,7 @@ export class MutationBuffer {
   }
 
   private genAdds = (n: Node | INode, target?: Node | INode) => {
-    if (isBlocked(n, this.blockClass)) {
+    if (nodeOrAncestorsShouldBeHidden(n)) {
       return
     }
     if (isINode(n)) {
