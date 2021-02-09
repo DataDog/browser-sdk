@@ -69,7 +69,7 @@ describe('recorder', () => {
         html`
           <p id="foo">foo</p>
           <p id="bar" data-dd-privacy="hidden">bar</p>
-          <p id="baz" class="dd-privacy-hidden">baz</p>
+          <p id="baz" class="dd-privacy-hidden baz">baz</p>
         `
       )
       .run(async ({ events }) => {
@@ -83,8 +83,16 @@ describe('recorder', () => {
         expect(fooNode).toBeTruthy()
         expect(findTextContent(fooNode!)).toBe('foo')
 
-        expect(findNodeWithId(fullSnapshot, 'bar')).toBeFalsy()
-        expect(findNodeWithId(fullSnapshot, 'baz')).toBeFalsy()
+        const barNode = findNodeWithId(fullSnapshot, 'bar')
+        expect(barNode).toBeTruthy()
+        expect(barNode!.attributes['data-dd-privacy']).toBe('hidden')
+        expect(barNode!.childNodes.length).toBe(0)
+
+        const bazNode = findNodeWithId(fullSnapshot, 'baz')
+        expect(bazNode).toBeTruthy()
+        expect(bazNode!.attributes.class).toBe('dd-privacy-hidden baz')
+        expect(bazNode!.attributes['data-dd-privacy']).toBe('hidden')
+        expect(bazNode!.childNodes.length).toBe(0)
       })
   })
 
