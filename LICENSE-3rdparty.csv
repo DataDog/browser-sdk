@@ -7,7 +7,6 @@ file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 prod,bumbag,MIT,Copyright (c) 2020 Bumbag Enterprises
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
-prod,rrweb-snapshot,MIT,Copyright (c) 2018 Contributors (https://github.com/rrweb-io/rrweb-snapshot/graphs/contributors) and SmartX Inc.
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
