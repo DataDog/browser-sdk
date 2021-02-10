@@ -48,7 +48,7 @@ function reportRestrictedDeclarations(context, node) {
     case 'ImportDeclaration':
       if (node.declaration) {
         reportRestrictedDeclarations(context, node.declaration)
-      } else if (node.source && !isRestrictedFile(path.basename(node.source.value))) {
+      } else if (node.source && node.importKind !== 'type' && !isRestrictedFile(path.basename(node.source.value))) {
         context.report({
           node: node.source,
           message: `This file can only import types, constants and internal files`,
