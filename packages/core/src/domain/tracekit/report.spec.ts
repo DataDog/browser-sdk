@@ -1,4 +1,4 @@
-import { report } from './report'
+import { report, subscribe, unsubscribe, traceKitWindowOnError } from './report'
 import { Handler } from './types'
 
 describe('report', () => {
@@ -19,11 +19,11 @@ describe('report', () => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toBeUndefined()
         expect(stack.message).toBeUndefined()
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError(undefined!, undefined, testLineNo)
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError(undefined!, undefined, testLineNo)
     })
   })
 
@@ -32,34 +32,34 @@ describe('report', () => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toEqual('ReferenceError')
         expect(stack.message).toEqual('foo is undefined')
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
     })
 
     it('should separate name, message for default error types (e.g. Uncaught ReferenceError)', (done) => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toEqual('ReferenceError')
         expect(stack.message).toEqual('foo is undefined')
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
+      subscribe(subscriptionHandler)
       // should work with/without 'Uncaught'
-      report.traceKitWindowOnError('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
+      traceKitWindowOnError('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
     })
 
     it('should separate name, message for default error types on Opera Mini', (done) => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toEqual('ReferenceError')
         expect(stack.message).toEqual('Undefined variable: foo')
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError(
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError(
         'Uncaught exception: ReferenceError: Undefined variable: foo',
         'http://example.com',
         testLineNo
@@ -71,37 +71,33 @@ describe('report', () => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toEqual(undefined)
         expect(stack.message).toEqual('CustomError: woo scary')
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError('CustomError: woo scary', 'http://example.com', testLineNo)
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError('CustomError: woo scary', 'http://example.com', testLineNo)
     })
 
     it('should ignore arbitrary messages passed through onerror', (done) => {
       subscriptionHandler = (stack) => {
         expect(stack.name).toEqual(undefined)
         expect(stack.message).toEqual('all work and no play makes homer: something something')
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError(
-        'all work and no play makes homer: something something',
-        'http://example.com',
-        testLineNo
-      )
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError('all work and no play makes homer: something something', 'http://example.com', testLineNo)
     })
 
     it('should handle object message passed through onerror', (done) => {
       subscriptionHandler = (stack, _, error) => {
         expect(stack.message).toBeUndefined()
         expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
-      report.subscribe(subscriptionHandler)
-      report.traceKitWindowOnError({ foo: 'bar' } as any)
+      subscribe(subscriptionHandler)
+      traceKitWindowOnError({ foo: 'bar' } as any)
     })
   })
 
@@ -111,11 +107,11 @@ describe('report', () => {
     subscriptionHandler = () => {
       numDone += 1
       if (numDone === numReports) {
-        report.unsubscribe(subscriptionHandler!)
+        unsubscribe(subscriptionHandler!)
         done()
       }
     }
-    report.subscribe(subscriptionHandler)
+    subscribe(subscriptionHandler)
 
     // report always throws an exception in order to trigger
     // window.onerror so it can gather more stack data. Mocha treats
@@ -137,7 +133,7 @@ describe('report', () => {
     // once, regardless of numReports, because the case we want to test for
     // multiple reports is when window.onerror is *not* called between them.
     if (callOnError) {
-      report.traceKitWindowOnError(testMessage)
+      traceKitWindowOnError(testMessage)
     }
   }
 

@@ -1,4 +1,4 @@
-import { report } from './report'
+import { report, subscribe, unsubscribe } from './report'
 import { StackFrame } from './types'
 
 describe('Handler', () => {
@@ -13,11 +13,11 @@ describe('Handler', () => {
       throw new Error('Boom!')
     }
 
-    report.subscribe(handler)
+    subscribe(handler)
     expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
-      report.unsubscribe(handler)
+      unsubscribe(handler)
       expect(stacks.length).toEqual(1)
       done()
     }, 1000)
@@ -32,11 +32,11 @@ describe('Handler', () => {
       throw exception
     }
 
-    report.subscribe(handler)
+    subscribe(handler)
     expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
-      report.unsubscribe(handler)
+      unsubscribe(handler)
 
       expect(handler).toHaveBeenCalledTimes(1)
 

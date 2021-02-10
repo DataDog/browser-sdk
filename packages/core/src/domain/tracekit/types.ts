@@ -6,7 +6,7 @@ export interface BrowserError extends Error {
   description?: string
 }
 
-export type Handler = (...params: any[]) => any
+export type Handler = (stack: StackTrace, isWindowError: boolean, error?: any) => any
 
 /**
  * An object representing a single stack frame.

@@ -11,8 +11,8 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  *
  * Syntax:
  * ```js
- *   report.subscribe(function(stackInfo) { ... })
- *   report.unsubscribe(function(stackInfo) { ... })
+ *   subscribe(function(stackInfo) { ... })
+ *   unsubscribe(function(stackInfo) { ... })
  *   report(exception)
  *   try { ...code... } catch(ex) { report(ex); }
  * ```
@@ -85,10 +85,6 @@ export function report(ex: Error) {
   throw ex // re-throw to propagate to the top level (and cause window.onerror)
 }
 
-report.subscribe = subscribe
-report.unsubscribe = unsubscribe
-report.traceKitWindowOnError = traceKitWindowOnError
-
 const handlers: Handler[] = []
 let lastException: Error | undefined
 let lastExceptionStack: StackTrace | undefined
@@ -98,7 +94,7 @@ let lastExceptionStack: StackTrace | undefined
  * @param {Function} handler
  * @memberof report
  */
-function subscribe(handler: Handler) {
+export function subscribe(handler: Handler) {
   installGlobalHandler()
   installGlobalUnhandledRejectionHandler()
   handlers.push(handler)
@@ -109,7 +105,7 @@ function subscribe(handler: Handler) {
  * @param {Function} handler
  * @memberof report
  */
-function unsubscribe(handler: Handler) {
+export function unsubscribe(handler: Handler) {
   for (let i = handlers.length - 1; i >= 0; i -= 1) {
     if (handlers[i] === handler) {
       handlers.splice(i, 1)
@@ -146,7 +142,7 @@ function notifyHandlers(stack: StackTrace, isWindowError: boolean, error?: any) 
 
 let oldOnerrorHandler: OnErrorEventHandler
 let onErrorHandlerInstalled: boolean
-let oldOnunhandledrejectionHandler: Handler | undefined
+let oldOnunhandledrejectionHandler: Window['onunhandledrejection'] | undefined
 let onUnhandledRejectionHandlerInstalled: boolean
 
 /**
@@ -159,7 +155,7 @@ let onUnhandledRejectionHandlerInstalled: boolean
  * @param {Error=} errorObj The actual Error object.
  * @memberof report
  */
-function traceKitWindowOnError(
+export function traceKitWindowOnError(
   this: any,
   message: Event | string,
   url?: string,
@@ -267,7 +263,7 @@ function installGlobalUnhandledRejectionHandler() {
  */
 function uninstallGlobalUnhandledRejectionHandler() {
   if (onUnhandledRejectionHandlerInstalled) {
-    window.onunhandledrejection = oldOnunhandledrejectionHandler as any
+    window.onunhandledrejection = oldOnunhandledrejectionHandler!
     onUnhandledRejectionHandlerInstalled = false
   }
 }
