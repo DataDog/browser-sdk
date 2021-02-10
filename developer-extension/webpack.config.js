@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebextensionPlugin = require('webpack-webextension-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 
-module.exports = (env, argv) => {
+module.exports = (_env, argv) => {
   return [
     baseConfig({
       entry: './src/background',
