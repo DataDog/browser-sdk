@@ -1,6 +1,7 @@
-import * as CapturedExceptions from '../../test/capturedExceptions'
-import { isSafari } from '../tools/specHelper'
-import { BrowserError, computeStackTrace } from './tracekit'
+import * as CapturedExceptions from '../../../test/capturedExceptions'
+import { isSafari } from '../../tools/specHelper'
+import { computeStackTrace } from './computeStackTrace'
+import { BrowserError } from './types'
 
 describe('Parser', () => {
   function foo() {

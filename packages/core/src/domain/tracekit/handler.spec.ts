@@ -1,4 +1,5 @@
-import { report, StackFrame, wrap } from './tracekit'
+import { report } from './report'
+import { StackFrame } from './types'
 
 describe('Handler', () => {
   it('it should not go into an infinite loop', (done) => {
@@ -49,3 +50,15 @@ describe('Handler', () => {
     }, 1000)
   })
 })
+
+function wrap<Args extends any[], R>(func: (...args: Args) => R) {
+  function wrapped(this: unknown, ...args: Args) {
+    try {
+      return func.apply(this, args)
+    } catch (e) {
+      report(e)
+      throw e
+    }
+  }
+  return wrapped
+}
