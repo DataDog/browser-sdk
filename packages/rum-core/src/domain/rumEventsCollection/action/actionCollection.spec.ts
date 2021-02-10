@@ -1,8 +1,7 @@
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { startActionCollection } from './actionCollection'
-import { ActionType } from './trackActions'
 
 describe('actionCollection', () => {
   let setupBuilder: TestSetupBuilder

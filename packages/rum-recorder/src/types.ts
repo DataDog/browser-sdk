@@ -1,4 +1,4 @@
-import { SerializedNodeWithId } from './domain/rrweb-snapshot'
+import { SerializedNodeWithId } from './domain/rrweb-snapshot/types'
 import type { IncrementalData } from './domain/rrweb/types'
 
 export { IncrementalSource } from './domain/rrweb/types'

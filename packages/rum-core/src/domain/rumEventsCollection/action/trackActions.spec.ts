@@ -1,10 +1,10 @@
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
-import { ActionType, AutoAction, trackActions } from './trackActions'
+import { AutoAction, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8

@@ -1,7 +1,7 @@
+// Ideally, we could use `import type` here, but since we are still supporting TS 3.0, we can't do
+// this for now.
+// eslint-disable-next-line local-rules/enforce-declarative-modules
 import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
-import { ActionType } from './domain/rumEventsCollection/action/trackActions'
-import { PerformanceResourceDetailsElement } from './domain/rumEventsCollection/resource/resourceUtils'
-import { ViewCustomTimings, ViewLoadingType } from './domain/rumEventsCollection/view/trackViews'
 
 export enum RumEventType {
   ACTION = 'action',
@@ -33,6 +33,11 @@ export interface RawRumResourceEvent {
     trace_id: string
     span_id?: string // not available for initial document tracing
   }
+}
+
+export interface PerformanceResourceDetailsElement {
+  duration: number
+  start: number
 }
 
 export interface RawRumErrorEvent {
@@ -79,6 +84,15 @@ export interface RawRumViewEvent {
   }
 }
 
+export enum ViewLoadingType {
+  INITIAL_LOAD = 'initial_load',
+  ROUTE_CHANGE = 'route_change',
+}
+
+export interface ViewCustomTimings {
+  [key: string]: number
+}
+
 interface Count {
   count: number
 }
@@ -105,6 +119,11 @@ export interface RawRumActionEvent {
       name: string
     }
   }
+}
+
+export enum ActionType {
+  CLICK = 'click',
+  CUSTOM = 'custom',
 }
 
 export type RawRumEvent =
