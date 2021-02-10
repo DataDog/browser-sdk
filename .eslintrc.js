@@ -24,7 +24,6 @@ module.exports = {
     'eslint-plugin-local-rules',
   ],
   rules: {
-    'local-rules/enforce-declarative-modules': 'error',
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/ban-ts-comment': [
       'error',
@@ -217,6 +216,13 @@ module.exports = {
         '@typescript-eslint/no-var-requires': 'off',
         '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/restrict-template-expressions': 'off',
+      },
+    },
+    {
+      files: ['packages/*/src/**/*.ts'],
+      excludedFiles: '*.spec.ts',
+      rules: {
+        'local-rules/enforce-declarative-modules': 'error',
       },
     },
   ],
