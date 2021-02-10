@@ -1,5 +1,5 @@
 import { monitor } from '../internalMonitoring'
-import { computeStackTrace } from './computeStackTrace'
+import { computeStackTrace, augmentStackTraceWithInitialElement } from './computeStackTrace'
 import { Handler, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
@@ -166,7 +166,7 @@ export function traceKitWindowOnError(
   let stack: StackTrace
 
   if (lastExceptionStack) {
-    computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo)
+    augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo)
     processLastException()
   } else if (errorObj) {
     stack = computeStackTrace(errorObj)

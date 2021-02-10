@@ -8,7 +8,7 @@ const UNKNOWN_FUNCTION = '?'
  *
  * Syntax:
  * ```js
- * s = computeStackTrace.ofCaller([depth])
+ * s = computeStackTraceOfCaller([depth])
  * s = computeStackTrace(exception) // consider using report instead (see below)
  * ```
  *
@@ -130,9 +130,6 @@ export function computeStackTrace(ex: unknown, depth?: string | number): StackTr
     stack: [],
   }
 }
-computeStackTrace.augmentStackTraceWithInitialElement = augmentStackTraceWithInitialElement
-computeStackTrace.computeStackTraceFromStackProp = computeStackTraceFromStackProp
-computeStackTrace.ofCaller = computeStackTraceOfCaller
 
 const debug = false
 
@@ -180,7 +177,7 @@ const debug = false
  * @return {?StackTrace} Stack trace information.
  * @memberof computeStackTrace
  */
-function computeStackTraceFromStackProp(ex: unknown) {
+export function computeStackTraceFromStackProp(ex: unknown) {
   const stacktrace = tryToGetString(ex, 'stack')
   if (!stacktrace) {
     return
@@ -458,7 +455,7 @@ function computeStackTraceFromOperaMultiLineMessage(ex: unknown): StackTrace | u
  * augmented.
  * @memberof computeStackTrace
  */
-function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
+export function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?: string, lineNo?: string | number) {
   const initial: StackFrame = {
     url,
     line: lineNo ? +lineNo : undefined,
@@ -573,7 +570,7 @@ function tryToGetString(candidate: unknown, property: string) {
  * @return {StackTrace} Stack trace information.
  * @memberof computeStackTrace
  */
-function computeStackTraceOfCaller(depth?: number) {
+export function computeStackTraceOfCaller(depth?: number) {
   const currentDepth = (depth === undefined ? 0 : +depth) + 1 // "+ 1" because "ofCaller" should drop one frame
   try {
     throw new Error()

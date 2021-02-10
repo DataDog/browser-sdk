@@ -1,4 +1,4 @@
-import { computeStackTrace } from './computeStackTrace'
+import { computeStackTrace, computeStackTraceFromStackProp } from './computeStackTrace'
 
 describe('computeStackTrace', () => {
   it('should not remove anonymous functions from the stack', () => {
@@ -13,7 +13,7 @@ describe('computeStackTrace', () => {
     at http://example.com/js/test.js:67:5
     at namedFunc4 (http://example.com/js/script.js:100001:10002)`
     const mockErr: any = { stack }
-    const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
+    const stackFrames = computeStackTraceFromStackProp(mockErr)!
 
     expect(stackFrames.stack[0].func).toEqual('new <anonymous>')
     expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
@@ -54,7 +54,7 @@ ReferenceError: baz is not defined
 `
 
     const mockErr: any = { stack }
-    const stackFrames = computeStackTrace.computeStackTraceFromStackProp(mockErr)!
+    const stackFrames = computeStackTraceFromStackProp(mockErr)!
 
     expect(stackFrames.stack[0].func).toEqual('bar')
     expect(stackFrames.stack[0].url).toEqual('http://example.com/js/test.js')
