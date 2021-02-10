@@ -21,8 +21,10 @@ module.exports = {
     'eslint-plugin-prefer-arrow',
     'eslint-plugin-unicorn',
     '@typescript-eslint',
+    'eslint-plugin-local-rules',
   ],
   rules: {
+    'local-rules/enforce-declarative-modules': 'error',
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/ban-ts-comment': [
       'error',
