@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { nodeShouldBeHidden } from '../privacy'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, nodeShouldBeHidden } from '../privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -254,9 +254,11 @@ function serializeNode(
       if (shouldBeHidden) {
         const { width, height } = (n as HTMLElement).getBoundingClientRect()
         attributes = {
+          id: attributes.id,
           class: attributes.class,
           rr_width: `${width}px`,
           rr_height: `${height}px`,
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
         }
       }
       return {
