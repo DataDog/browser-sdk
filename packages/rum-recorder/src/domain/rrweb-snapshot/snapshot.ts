@@ -12,7 +12,7 @@ import {
   SlimDOMOptions,
 } from './types'
 
-const tagNameRegex = RegExp('[^a-z1-6-_]')
+const tagNameRegex = /[^a-z1-6-_]/
 
 export const IGNORED_NODE = -2
 
