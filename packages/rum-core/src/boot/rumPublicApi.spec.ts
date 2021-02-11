@@ -1,6 +1,6 @@
 import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { ActionType } from '../domain/rumEventsCollection/action/trackActions'
+import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({

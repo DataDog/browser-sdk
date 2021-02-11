@@ -13,12 +13,17 @@ import {
   Observable,
   RawError,
   startAutomaticErrorCollection,
+  UserConfiguration,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
-import { LogsUserConfiguration } from './logs.entry'
+
+export interface LogsUserConfiguration extends UserConfiguration {
+  forwardErrorsToLogs?: boolean
+  beforeSend?: (event: LogsEvent) => void
+}
 
 const FIELDS_WITH_SENSITIVE_DATA = ['view.url', 'view.referrer', 'message', 'error.stack', 'http.url']
 

@@ -1,7 +1,7 @@
 import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { CommonContext, RumEventType } from '../../../rawRumEvent.types'
+import { CommonContext, RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { ActionType, AutoAction, CustomAction, trackActions } from './trackActions'
+import { AutoAction, CustomAction, trackActions } from './trackActions'
 
 export function startActionCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>

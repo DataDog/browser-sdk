@@ -1,4 +1,5 @@
-import { report, StackFrame, wrap } from './tracekit'
+import { report, subscribe, unsubscribe } from './report'
+import { StackFrame } from './types'
 
 describe('Handler', () => {
   it('it should not go into an infinite loop', (done) => {
@@ -12,11 +13,11 @@ describe('Handler', () => {
       throw new Error('Boom!')
     }
 
-    report.subscribe(handler)
+    subscribe(handler)
     expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
-      report.unsubscribe(handler)
+      unsubscribe(handler)
       expect(stacks.length).toEqual(1)
       done()
     }, 1000)
@@ -31,11 +32,11 @@ describe('Handler', () => {
       throw exception
     }
 
-    report.subscribe(handler)
+    subscribe(handler)
     expect(() => wrap(throwException)()).toThrowError()
 
     setTimeout(() => {
-      report.unsubscribe(handler)
+      unsubscribe(handler)
 
       expect(handler).toHaveBeenCalledTimes(1)
 
@@ -49,3 +50,15 @@ describe('Handler', () => {
     }, 1000)
   })
 })
+
+function wrap<Args extends any[], R>(func: (...args: Args) => R) {
+  function wrapped(this: unknown, ...args: Args) {
+    try {
+      return func.apply(this, args)
+    } catch (e) {
+      report(e)
+      throw e
+    }
+  }
+  return wrapped
+}

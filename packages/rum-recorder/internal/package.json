@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/internal.js",
+  "module": "../esm/internal.js",
+  "types": "../cjs/internal.d.ts"
+}

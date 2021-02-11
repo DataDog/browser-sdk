@@ -1,4 +1,4 @@
-import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot'
+import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
