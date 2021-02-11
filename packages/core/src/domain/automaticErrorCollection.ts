@@ -5,7 +5,7 @@ import { Observable } from '../tools/observable'
 import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
-import { computeStackTrace, Handler, report, StackTrace } from './tracekit'
+import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
 
 export type ErrorObservable = Observable<RawError>
 let filteredErrorsObservable: ErrorObservable
@@ -82,11 +82,11 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       startTime: performance.now(),
     })
   }
-  ;(report.subscribe as (handler: Handler) => void)(traceKitReportHandler)
+  subscribe(traceKitReportHandler)
 }
 
 export function stopRuntimeErrorTracking() {
-  ;(report.unsubscribe as (handler: Handler) => void)(traceKitReportHandler)
+  unsubscribe(traceKitReportHandler)
 }
 
 export function trackNetworkError(configuration: Configuration, errorObservable: ErrorObservable) {

@@ -6,7 +6,7 @@ import { getWindowHeight, getWindowWidth, mirror, on } from './utils'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-function record(options: RecordOptions = {}): RecordAPI {
+export function record(options: RecordOptions = {}): RecordAPI {
   const {
     emit,
     checkoutEveryNms,
@@ -269,9 +269,3 @@ function record(options: RecordOptions = {}): RecordAPI {
     takeFullSnapshot,
   }
 }
-
-record.freezePage = () => {
-  mutationBuffer.freeze()
-}
-
-export { record }

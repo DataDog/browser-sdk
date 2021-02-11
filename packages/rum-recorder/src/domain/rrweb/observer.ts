@@ -39,6 +39,8 @@ import {
   throttle,
 } from './utils'
 
+// TODO: remove this global MutationBuffer instance
+// eslint-disable-next-line local-rules/disallow-side-effects
 export const mutationBuffer = new MutationBuffer()
 
 function initMutationObserver(

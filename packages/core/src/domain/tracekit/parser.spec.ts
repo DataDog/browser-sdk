@@ -1,6 +1,7 @@
-import * as CapturedExceptions from '../../test/capturedExceptions'
-import { isSafari } from '../tools/specHelper'
-import { BrowserError, computeStackTrace } from './tracekit'
+import * as CapturedExceptions from '../../../test/capturedExceptions'
+import { isSafari } from '../../tools/specHelper'
+import { computeStackTrace, computeStackTraceOfCaller } from './computeStackTrace'
+import { BrowserError } from './types'
 
 describe('Parser', () => {
   function foo() {
@@ -12,7 +13,7 @@ describe('Parser', () => {
   }
 
   function baz() {
-    return computeStackTrace.ofCaller()
+    return computeStackTraceOfCaller()
   }
 
   it('should get the order of functions called right', () => {

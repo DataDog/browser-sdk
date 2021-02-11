@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, nodeShouldBeHidden } from '../privacy'
+import { nodeShouldBeHidden } from '../privacy'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -11,7 +12,7 @@ import {
   SlimDOMOptions,
 } from './types'
 
-const tagNameRegex = RegExp('[^a-z1-6-_]')
+const tagNameRegex = /[^a-z1-6-_]/
 
 export const IGNORED_NODE = -2
 
