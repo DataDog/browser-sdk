@@ -1,8 +1,9 @@
 import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
-import { initObservers, mutationBuffer } from './observer'
+import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on } from './utils'
+import { MutationController } from './mutation'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
@@ -75,18 +76,19 @@ function record(options: RecordOptions = {}): RecordAPI {
       ? slimDOMOptionsArg
       : {}
 
+  const mutationController = new MutationController()
+
   let lastFullSnapshotRecordTimestamp: number
   let incrementalSnapshotCount = 0
   wrappedEmit = (record, isCheckout) => {
     if (
-      mutationBuffer.isFrozen() &&
+      mutationController.isFrozen() &&
       record.type !== RecordType.FullSnapshot &&
       !(record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Mutation)
     ) {
       // we've got a user initiated record so first we need to apply
       // all DOM changes that have been buffering during paused state
-      mutationBuffer.emit()
-      mutationBuffer.unfreeze()
+      mutationController.unfreeze()
     }
 
     emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
@@ -116,8 +118,8 @@ function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
-    const wasFrozen = mutationBuffer.isFrozen()
-    mutationBuffer.freeze() // don't allow any mirror modifications during snapshotting
+    const wasFrozen = mutationController.isFrozen()
+    mutationController.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
       inlineStylesheet,
       recordCanvas,
@@ -153,8 +155,7 @@ function record(options: RecordOptions = {}): RecordAPI {
       type: RecordType.FullSnapshot,
     })
     if (!wasFrozen) {
-      mutationBuffer.emit() // emit anything queued up now
-      mutationBuffer.unfreeze()
+      mutationController.unfreeze()
     }
   }
 
@@ -165,6 +166,7 @@ function record(options: RecordOptions = {}): RecordAPI {
     handlers.push(
       initObservers(
         {
+          mutationController,
           collectFonts,
           inlineStylesheet,
           maskInputFn,
