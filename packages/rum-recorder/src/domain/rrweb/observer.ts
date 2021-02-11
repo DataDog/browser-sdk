@@ -1,7 +1,7 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { MutationBuffer } from './mutation'
+import { MutationBuffer, MutationController } from './mutation'
 import {
   Arguments,
   CanvasMutationCallback,
@@ -39,19 +39,22 @@ import {
   throttle,
 } from './utils'
 
-// TODO: remove this global MutationBuffer instance
-// eslint-disable-next-line local-rules/disallow-side-effects
-export const mutationBuffer = new MutationBuffer()
-
 function initMutationObserver(
+  mutationController: MutationController,
   cb: MutationCallBack,
   inlineStylesheet: boolean,
   maskInputOptions: MaskInputOptions,
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ): MutationObserver {
-  // see mutation.ts for details
-  mutationBuffer.init(cb, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
+  const mutationBuffer = new MutationBuffer(
+    mutationController,
+    cb,
+    inlineStylesheet,
+    maskInputOptions,
+    recordCanvas,
+    slimDOMOptions
+  )
   const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
   observer.observe(document, {
     attributeOldValue: true,
@@ -515,6 +518,7 @@ function mergeHooks(o: ObserverParam, hooks: HooksParam) {
 export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
   const mutationObserver = initMutationObserver(
+    o.mutationController,
     o.mutationCb,
     o.inlineStylesheet,
     o.maskInputOptions,

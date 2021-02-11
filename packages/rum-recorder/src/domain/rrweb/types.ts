@@ -1,5 +1,6 @@
 import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
+import { MutationController } from './mutation'
 
 export enum IncrementalSource {
   Mutation,
@@ -115,6 +116,7 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
+  mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
   mouseInteractionCb: MouseInteractionCallBack
