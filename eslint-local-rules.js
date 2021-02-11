@@ -10,10 +10,11 @@ const path = require('path')
 // Choose '@typescript-eslint/parser' as a parser to have the exact same structure as our ESLint
 // parser.
 module.exports = {
-  'enforce-declarative-modules': {
+  'disallow-side-effects': {
     meta: {
       docs: {
-        description: 'Disallow potential side effects in when evaluating modules',
+        description:
+          'Disallow potential side effects when evaluating modules, to ensure modules content are tree-shakable.',
         recommended: false,
       },
       schema: [],
@@ -59,7 +60,7 @@ const packagesWithoutSideEffect = new Set(['@datadog/browser-core', '@datadog/br
  * }
  */
 function reportPotentialSideEffect(context, node) {
-  // This acts like a authorized list of syntax nodes to use directly in the body of a module.  All
+  // This acts like an authorized list of syntax nodes to use directly in the body of a module.  All
   // those nodes should not have a side effect when evaluated.
   //
   // This list is probably not complete, feel free to add more cases if you encounter an unhandled
@@ -145,7 +146,11 @@ function reportPotentialSideEffect(context, node) {
   }
 
   // If the node doesn't match any of the condition above, report it
-  context.report({ node, message: `${node.type} not allowed in types, constants and internal files` })
+  context.report({
+    node,
+    message: `${node.type} can have side effects when the module is evaluated. \
+Maybe move it in a function declaration?`,
+  })
 }
 
 /**
@@ -161,7 +166,7 @@ function isAllowedImport(basePath, source) {
 
 /* eslint-disable max-len */
 /**
- * Authorize some call expressions.  Feel free to add more exceptions here.  Good candidates would
+ * Authorize some call expressions. Feel free to add more exceptions here. Good candidates would
  * be functions that are known to be ECMAScript functions without side effects, that are likely to
  * be considered as pure functions by the bundler.
  *
@@ -183,7 +188,7 @@ function isAllowedCallExpression({ callee }) {
 
 /* eslint-disable max-len */
 /**
- * Authorize some 'new' expressions.  Feel free to add more exceptions here.  Good candidates would
+ * Authorize some 'new' expressions. Feel free to add more exceptions here. Good candidates would
  * be functions that are known to be ECMAScript functions without side effects, that are likely to
  * be considered as pure functions by the bundler.
  *

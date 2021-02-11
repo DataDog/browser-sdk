@@ -1,6 +1,3 @@
-// Ideally, we could use `import type` here, but since we are still supporting TS 3.0, we can't do
-// this for now.
-// eslint-disable-next-line local-rules/enforce-declarative-modules
 import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
 
 export enum RumEventType {

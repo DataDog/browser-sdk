@@ -222,7 +222,7 @@ module.exports = {
       files: ['packages/*/src/**/*.ts'],
       excludedFiles: '*.spec.ts',
       rules: {
-        'local-rules/enforce-declarative-modules': 'error',
+        'local-rules/disallow-side-effects': 'error',
       },
     },
   ],
