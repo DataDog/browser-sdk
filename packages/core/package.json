@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",
-    "sinon": "9.2.2"
+    "sinon": "9.2.4"
   },
   "repository": {
     "type": "git",
