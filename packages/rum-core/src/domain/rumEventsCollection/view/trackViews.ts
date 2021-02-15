@@ -43,9 +43,12 @@ export interface ViewCustomTimings {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle, newLocationListener?: NewLocationListener) {
+export function trackViews(
+  location: Location,
+  lifeCycle: LifeCycle,
+  onNewLocation: NewLocationListener = () => undefined
+) {
   const startOrigin = 0
-  const onNewLocation: NewLocationListener = newLocationListener || (() => undefined)
 
   const { viewName } = onNewLocation(location) || {}
   const initialView = newView(
