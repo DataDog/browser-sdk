@@ -24,7 +24,7 @@ RUN apt-get install -y -q --no-install-recommends python
 
 # Install pip
 RUN set -x \
- && curl -OL https://bootstrap.pypa.io/get-pip.py \
+ && curl -OL https://bootstrap.pypa.io/2.7/get-pip.py \
  && python get-pip.py \
  && rm get-pip.py
 
