@@ -68,10 +68,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, newLocation
 
   function onLocationChange() {
     if (currentView.isDifferentView(location)) {
-      const { shouldCreateView, viewName } = {
-        shouldCreateView: true,
-        ...onNewLocation(location, currentView.getLocation()),
-      }
+      const { shouldCreateView = true, viewName } = onNewLocation(location, currentView.getLocation()) || {}
 
       if (shouldCreateView) {
         // Renew view on location changes
