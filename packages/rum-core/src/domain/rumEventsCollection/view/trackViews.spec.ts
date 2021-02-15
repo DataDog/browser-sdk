@@ -222,7 +222,7 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        trackViews(location, lifeCycle, onNewLocation)
+        return trackViews(location, lifeCycle, onNewLocation)
       })
   })
 
