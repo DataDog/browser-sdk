@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
-RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_86.0.4240.75-1_amd64.deb --output google-chrome.deb \
+RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_88.0.4324.150-1_amd64.deb --output google-chrome.deb \
     && dpkg -i google-chrome.deb \
     && rm google-chrome.deb
 
@@ -24,7 +24,7 @@ RUN apt-get install -y -q --no-install-recommends python
 
 # Install pip
 RUN set -x \
- && curl -OL https://bootstrap.pypa.io/get-pip.py \
+ && curl -OL https://bootstrap.pypa.io/2.7/get-pip.py \
  && python get-pip.py \
  && rm get-pip.py
 
