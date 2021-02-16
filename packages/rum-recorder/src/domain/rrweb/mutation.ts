@@ -99,7 +99,7 @@ class DoubleLinkedList {
     }
     /* eslint-disable no-underscore-dangle */
     if (n.__ln) {
-      delete n.__ln
+      delete (n as any).__ln
     }
     /* eslint-enable no-underscore-dangle */
     this.length -= 1

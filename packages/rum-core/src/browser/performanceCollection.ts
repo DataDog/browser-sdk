@@ -12,10 +12,6 @@ import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsC
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
 
-interface BrowserWindow extends Window {
-  PerformanceObserver?: PerformanceObserver
-}
-
 export interface RumPerformanceResourceTiming {
   entryType: 'resource'
   initiatorType: string
@@ -89,7 +85,7 @@ function supportPerformanceObject() {
 
 export function supportPerformanceTimingEvent(entryType: string) {
   return (
-    (window as BrowserWindow).PerformanceObserver &&
+    window.PerformanceObserver &&
     PerformanceObserver.supportedEntryTypes !== undefined &&
     PerformanceObserver.supportedEntryTypes.includes(entryType)
   )
@@ -103,7 +99,7 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
   if (supportPerformanceObject()) {
     handlePerformanceEntries(lifeCycle, configuration, performance.getEntries())
   }
-  if ((window as BrowserWindow).PerformanceObserver) {
+  if (window.PerformanceObserver) {
     const observer = new PerformanceObserver(
       monitor((entries: PerformanceObserverEntryList) =>
         handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())

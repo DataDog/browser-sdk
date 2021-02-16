@@ -270,7 +270,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
     callMonitored(() => {
-      const id = mirror.getId(this.ownerNode as INode)
+      const id = mirror.getId((this.ownerNode as unknown) as INode)
       if (id !== -1) {
         cb({
           id,
@@ -285,7 +285,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
     callMonitored(() => {
-      const id = mirror.getId(this.ownerNode as INode)
+      const id = mirror.getId((this.ownerNode as unknown) as INode)
       if (id !== -1) {
         cb({
           id,
