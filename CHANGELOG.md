@@ -16,6 +16,12 @@
 
 ---
 
+## v2.5.3
+
+- ⚗ Remove mutation buffer global instance ([#728](https://github.com/DataDog/browser-sdk/pull/728))
+- ⚗ replay: set data-dd-privacy attribute on snapshot node if hidden ([#726](https://github.com/DataDog/browser-sdk/pull/726))
+- ⚗ replay: add dd-privacy attribute for obfuscation & ignoring input ([#715](https://github.com/DataDog/browser-sdk/pull/715))
+
 ## v2.5.2
 
 - ⚗ [RUMF-843] monitor rrweb codebase ([#721](https://github.com/DataDog/browser-sdk/pull/721))
