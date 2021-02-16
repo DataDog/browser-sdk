@@ -74,21 +74,23 @@ export function trackViews(
   trackHash(onLocationChange)
 
   function onLocationChange() {
-    if (currentView.isDifferentView(location)) {
-      let viewName
-      let shouldCreateView
-      try {
-        ;({ shouldCreateView = true, viewName } = onNewLocation(location, currentView.getLocation()) || {})
-      } catch (err) {
-        console.error('onNewLocation throwed an error:', err)
+    let viewName
+    let shouldCreateView = currentView.isDifferentView(location)
+    try {
+      const custom = onNewLocation(location, currentView.getLocation()) || {}
+      viewName = custom.viewName
+      if (custom.shouldCreateView !== undefined) {
+        shouldCreateView = custom.shouldCreateView
       }
-      if (shouldCreateView) {
-        // Renew view on location changes
-        currentView.end()
-        currentView.triggerUpdate()
-        currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
-        return
-      }
+    } catch (err) {
+      console.error('onNewLocation throwed an error:', err)
+    }
+    if (shouldCreateView) {
+      // Renew view on location changes
+      currentView.end()
+      currentView.triggerUpdate()
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
+      return
     }
     currentView.updateLocation(location)
     currentView.triggerUpdate()
