@@ -49,8 +49,12 @@ export function trackViews(
   onNewLocation: NewLocationListener = () => undefined
 ) {
   const startOrigin = 0
-
-  const { viewName } = onNewLocation(location) || {}
+  let viewName
+  try {
+    viewName = onNewLocation(location)?.viewName
+  } catch (err) {
+    console.error('onNewLocation throwed an error:', err)
+  }
   const initialView = newView(
     lifeCycle,
     location,
@@ -71,8 +75,13 @@ export function trackViews(
 
   function onLocationChange() {
     if (currentView.isDifferentView(location)) {
-      const { shouldCreateView = true, viewName } = onNewLocation(location, currentView.getLocation()) || {}
-
+      let viewName
+      let shouldCreateView
+      try {
+        ;({ shouldCreateView = true, viewName } = onNewLocation(location, currentView.getLocation()) || {})
+      } catch (err) {
+        console.error('onNewLocation throwed an error:', err)
+      }
       if (shouldCreateView) {
         // Renew view on location changes
         currentView.end()

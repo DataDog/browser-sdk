@@ -288,6 +288,25 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
     expect(getViewEvent(2).location.pathname).toBe('/bar')
     expect(getViewEvent(4)).toBeUndefined()
   })
+
+  it('should catch thrown errors', () => {
+    const fooError = new Error('Error on /foo path')
+    const barError = new Error('Error on /bar path')
+    onNewLocation = (location) => {
+      if (location.pathname === '/foo') {
+        throw fooError
+      }
+      if (location.pathname === '/bar') {
+        throw barError
+      }
+      return undefined
+    }
+    const consoleErrorSpy = spyOn(console, 'error')
+    setupBuilder.build()
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation throwed an error:', fooError)
+    history.pushState({}, '', '/bar')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation throwed an error:', barError)
+  })
 })
 
 describe('rum view referrer', () => {
