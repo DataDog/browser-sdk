@@ -26,6 +26,7 @@ module.exports = {
     'eslint-plugin-prefer-arrow',
     'eslint-plugin-unicorn',
     '@typescript-eslint',
+    'eslint-plugin-local-rules',
   ],
   rules: {
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
@@ -220,6 +221,13 @@ module.exports = {
         '@typescript-eslint/no-var-requires': 'off',
         '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/restrict-template-expressions': 'off',
+      },
+    },
+    {
+      files: ['packages/*/src/**/*.ts'],
+      excludedFiles: '*.spec.ts',
+      rules: {
+        'local-rules/disallow-side-effects': 'error',
       },
     },
   ],

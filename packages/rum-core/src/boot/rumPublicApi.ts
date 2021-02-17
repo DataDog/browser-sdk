@@ -12,9 +12,9 @@ import {
   monitor,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { ActionType, CustomAction } from '../domain/rumEventsCollection/action/trackActions'
+import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
-import { CommonContext, User } from '../rawRumEvent.types'
+import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { startRum } from './rum'
 

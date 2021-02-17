@@ -1,4 +1,4 @@
-import { monitor } from '../domain/internalMonitoring'
+import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
 import { normalizeUrl } from '../tools/urlPolyfill'
@@ -70,45 +70,61 @@ function proxyFetch() {
 
   originalFetch = window.fetch
 
-  window.fetch = monitor(function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
-    const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
-    const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-    const startTime = performance.now()
+  window.fetch = function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
+    let responsePromise: Promise<Response>
 
-    const context: FetchStartContext = {
-      init,
-      input,
-      method,
-      startTime,
-      url,
+    const context = callMonitored(beforeSend, null, [input, init])
+    if (context) {
+      responsePromise = originalFetch.call(this, context.input, context.init)
+      callMonitored(afterSend, null, [responsePromise, context])
+    } else {
+      responsePromise = originalFetch.call(this, input, init)
     }
 
-    const reportFetch = async (response: Response | Error) => {
-      context.duration = performance.now() - context.startTime
-
-      if ('stack' in response || response instanceof Error) {
-        context.status = 0
-        context.response = toStackTraceString(computeStackTrace(response))
-
-        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
-      } else if ('status' in response) {
-        let text: string
-        try {
-          text = await response.clone().text()
-        } catch (e) {
-          text = `Unable to retrieve response: ${e as string}`
-        }
-        context.response = text
-        context.responseType = response.type
-        context.status = response.status
-
-        onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
-      }
-    }
-    beforeSendCallbacks.forEach((callback) => callback(context))
-
-    const responsePromise = originalFetch.call(this, context.input, context.init)
-    responsePromise.then(monitor(reportFetch), monitor(reportFetch))
     return responsePromise
-  })
+  }
+}
+
+function beforeSend(input: RequestInfo, init?: RequestInit) {
+  const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
+  const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
+  const startTime = performance.now()
+
+  const context: FetchStartContext = {
+    init,
+    input,
+    method,
+    startTime,
+    url,
+  }
+
+  beforeSendCallbacks.forEach((callback) => callback(context))
+
+  return context
+}
+
+function afterSend(responsePromise: Promise<Response>, context: FetchStartContext) {
+  const reportFetch = async (response: Response | Error) => {
+    context.duration = performance.now() - context.startTime
+
+    if ('stack' in response || response instanceof Error) {
+      context.status = 0
+      context.response = toStackTraceString(computeStackTrace(response))
+
+      onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
+    } else if ('status' in response) {
+      let text: string
+      try {
+        text = await response.clone().text()
+      } catch (e) {
+        text = `Unable to retrieve response: ${e as string}`
+      }
+      context.response = text
+      context.responseType = response.type
+      context.status = response.status
+
+      onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
+    }
+  }
+  responsePromise.then(monitor(reportFetch), monitor(reportFetch))
 }

@@ -14,7 +14,7 @@ module.exports = [
   {
     ...browsers.CHROME_MOBILE,
     // cf https://github.com/webdriverio/webdriverio/issues/3264,
-    'browserstack.appium_version': '1.9.1',
+    'browserstack.appium_version': '1.17.0',
   },
   // Safari mobile on iOS 12.0 does not support
   // the way we flush events on page change

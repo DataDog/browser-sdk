@@ -4,6 +4,7 @@ import { supportPerformanceTimingEvent } from '../../../browser/performanceColle
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
+import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 import { Timings, trackTimings } from './trackTimings'
 
 export interface View {
@@ -27,15 +28,6 @@ export interface ViewCreatedEvent {
   location: Location
   referrer: string
   startTime: number
-}
-
-export enum ViewLoadingType {
-  INITIAL_LOAD = 'initial_load',
-  ROUTE_CHANGE = 'route_change',
-}
-
-export interface ViewCustomTimings {
-  [key: string]: number
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000

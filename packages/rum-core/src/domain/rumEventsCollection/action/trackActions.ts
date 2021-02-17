@@ -2,12 +2,8 @@ import { addEventListener, Context, DOM_EVENT, generateUUID } from '@datadog/bro
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
+import { ActionType } from '../../../rawRumEvent.types'
 import { getActionNameFromElement } from './getActionNameFromElement'
-
-export enum ActionType {
-  CLICK = 'click',
-  CUSTOM = 'custom',
-}
 
 type AutoActionType = ActionType.CLICK
 

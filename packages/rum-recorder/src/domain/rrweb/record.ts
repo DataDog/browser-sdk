@@ -1,19 +1,17 @@
 import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
-import { initObservers, mutationBuffer } from './observer'
+import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror, on } from './utils'
+import { MutationController } from './mutation'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
-function record(options: RecordOptions = {}): RecordAPI | undefined {
+export function record(options: RecordOptions = {}): RecordAPI {
   const {
     emit,
     checkoutEveryNms,
     checkoutEveryNth,
-    blockClass = 'rr-block',
-    blockSelector = null,
-    ignoreClass = 'rr-ignore',
     inlineStylesheet = true,
     maskAllInputs,
     maskInputOptions: maskInputOptionsArg,
@@ -78,18 +76,19 @@ function record(options: RecordOptions = {}): RecordAPI | undefined {
       ? slimDOMOptionsArg
       : {}
 
+  const mutationController = new MutationController()
+
   let lastFullSnapshotRecordTimestamp: number
   let incrementalSnapshotCount = 0
   wrappedEmit = (record, isCheckout) => {
     if (
-      mutationBuffer.isFrozen() &&
+      mutationController.isFrozen() &&
       record.type !== RecordType.FullSnapshot &&
       !(record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Mutation)
     ) {
       // we've got a user initiated record so first we need to apply
       // all DOM changes that have been buffering during paused state
-      mutationBuffer.emit()
-      mutationBuffer.unfreeze()
+      mutationController.unfreeze()
     }
 
     emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
@@ -119,11 +118,9 @@ function record(options: RecordOptions = {}): RecordAPI | undefined {
       isCheckout
     )
 
-    const wasFrozen = mutationBuffer.isFrozen()
-    mutationBuffer.freeze() // don't allow any mirror modifications during snapshotting
+    const wasFrozen = mutationController.isFrozen()
+    mutationController.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
-      blockClass,
-      blockSelector,
       inlineStylesheet,
       recordCanvas,
       maskAllInputs: maskInputOptions,
@@ -158,133 +155,119 @@ function record(options: RecordOptions = {}): RecordAPI | undefined {
       type: RecordType.FullSnapshot,
     })
     if (!wasFrozen) {
-      mutationBuffer.emit() // emit anything queued up now
-      mutationBuffer.unfreeze()
+      mutationController.unfreeze()
     }
   }
 
-  try {
-    const handlers: ListenerHandler[] = []
-    const init = () => {
-      takeFullSnapshot()
+  const handlers: ListenerHandler[] = []
+  const init = () => {
+    takeFullSnapshot()
 
-      handlers.push(
-        initObservers(
-          {
-            blockClass,
-            blockSelector,
-            collectFonts,
-            ignoreClass,
-            inlineStylesheet,
-            maskInputFn,
-            maskInputOptions,
-            recordCanvas,
-            sampling,
-            slimDOMOptions,
-            canvasMutationCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.CanvasMutation,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            fontCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Font,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            inputCb: (v) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Input,
-                  ...v,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mediaInteractionCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.MediaInteraction,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mouseInteractionCb: (d) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.MouseInteraction,
-                  ...d,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mousemoveCb: (positions, source) =>
-              wrappedEmit({
-                data: {
-                  positions,
-                  source,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            mutationCb: (m) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Mutation,
-                  ...m,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            scrollCb: (p) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.Scroll,
-                  ...p,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            styleSheetRuleCb: (r) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.StyleSheetRule,
-                  ...r,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-            viewportResizeCb: (d) =>
-              wrappedEmit({
-                data: {
-                  source: IncrementalSource.ViewportResize,
-                  ...d,
-                },
-                type: RecordType.IncrementalSnapshot,
-              }),
-          },
-          hooks
-        )
+    handlers.push(
+      initObservers(
+        {
+          mutationController,
+          collectFonts,
+          inlineStylesheet,
+          maskInputFn,
+          maskInputOptions,
+          recordCanvas,
+          sampling,
+          slimDOMOptions,
+          canvasMutationCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.CanvasMutation,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          fontCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Font,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          inputCb: (v) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Input,
+                ...v,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mediaInteractionCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.MediaInteraction,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mouseInteractionCb: (d) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.MouseInteraction,
+                ...d,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mousemoveCb: (positions, source) =>
+            wrappedEmit({
+              data: {
+                positions,
+                source,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          mutationCb: (m) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Mutation,
+                ...m,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          scrollCb: (p) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.Scroll,
+                ...p,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          styleSheetRuleCb: (r) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.StyleSheetRule,
+                ...r,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+          viewportResizeCb: (d) =>
+            wrappedEmit({
+              data: {
+                source: IncrementalSource.ViewportResize,
+                ...d,
+              },
+              type: RecordType.IncrementalSnapshot,
+            }),
+        },
+        hooks
       )
-    }
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-      init()
-    } else {
-      handlers.push(on('load', init, window))
-    }
-    return {
-      stop: () => {
-        handlers.forEach((h) => h())
-      },
-      takeFullSnapshot,
-    }
-  } catch (error) {
-    // TODO: handle internal error
-    console.warn(error)
+    )
+  }
+  if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    init()
+  } else {
+    handlers.push(on('load', init, window))
+  }
+  return {
+    stop: () => {
+      handlers.forEach((h) => h())
+    },
+    takeFullSnapshot,
   }
 }
-
-record.freezePage = () => {
-  mutationBuffer.freeze()
-}
-
-export { record }

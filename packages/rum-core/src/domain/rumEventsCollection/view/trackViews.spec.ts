@@ -5,14 +5,14 @@ import {
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, View, ViewCreatedEvent, ViewLoadingType } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, View, ViewCreatedEvent } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8

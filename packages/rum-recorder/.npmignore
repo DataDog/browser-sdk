@@ -3,3 +3,4 @@
 !/cjs/**/*
 !/esm/**/*
 !/src/**/*
+!/internal/*

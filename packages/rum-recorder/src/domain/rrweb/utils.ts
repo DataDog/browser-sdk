@@ -1,11 +1,12 @@
-import { noop } from '@datadog/browser-core'
+import { noop, monitor } from '@datadog/browser-core'
 import { IGNORED_NODE, INode } from '../rrweb-snapshot'
-import { BlockClass, HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
+import { HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
 
 export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
+  const monitoredFn = monitor(fn)
   const options = { capture: true, passive: true }
-  target.addEventListener(type, fn, options)
-  return () => target.removeEventListener(type, fn, options)
+  target.addEventListener(type, monitoredFn, options)
+  return () => target.removeEventListener(type, monitoredFn, options)
 }
 
 export const mirror: Mirror = {
@@ -137,30 +138,6 @@ export function getWindowWidth(): number {
     (document.documentElement && document.documentElement.clientWidth) ||
     (document.body && document.body.clientWidth)
   )
-}
-
-export function isBlocked(node: Node | null, blockClass: BlockClass): boolean {
-  if (!node) {
-    return false
-  }
-  if (node.nodeType === node.ELEMENT_NODE) {
-    let needBlock = false
-    if (typeof blockClass === 'string') {
-      needBlock = (node as HTMLElement).classList.contains(blockClass)
-    } else {
-      forEach((node as HTMLElement).classList, (className: string) => {
-        if (blockClass.test(className)) {
-          needBlock = true
-        }
-      })
-    }
-    return needBlock || isBlocked(node.parentNode, blockClass)
-  }
-  if (node.nodeType === node.TEXT_NODE) {
-    // check parent node since text node do not have class name
-    return isBlocked(node.parentNode, blockClass)
-  }
-  return isBlocked(node.parentNode, blockClass)
 }
 
 export function isIgnored(n: Node | INode): boolean {

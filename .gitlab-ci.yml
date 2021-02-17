@@ -1,6 +1,6 @@
 variables:
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 19
+  CURRENT_CI_IMAGE: 20
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
 
