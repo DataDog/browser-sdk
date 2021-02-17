@@ -9,7 +9,7 @@ const storeLoadingPromise = new Promise((resolve) => {
   listenAction('newStore', (newStore) => {
     store = newStore
     storeListeners.forEach((listener) => listener(store))
-    resolve()
+    resolve(undefined)
   })
 })
 
