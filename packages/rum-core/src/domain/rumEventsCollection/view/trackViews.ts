@@ -48,20 +48,15 @@ export function trackViews(
   lifeCycle: LifeCycle,
   onNewLocation: NewLocationListener = () => undefined
 ) {
+  onNewLocation = wrapOnNewLocation(onNewLocation)
   const startOrigin = 0
-  let viewName
-  try {
-    viewName = onNewLocation(location)?.viewName
-  } catch (err) {
-    console.error('onNewLocation threw an error:', err)
-  }
   const initialView = newView(
     lifeCycle,
     location,
     ViewLoadingType.INITIAL_LOAD,
     document.referrer,
     startOrigin,
-    viewName
+    onNewLocation(location)?.viewName
   )
   let currentView = initialView
 
@@ -74,18 +69,8 @@ export function trackViews(
   trackHash(onLocationChange)
 
   function onLocationChange() {
-    let viewName
-    let shouldCreateView = currentView.isDifferentView(location)
-    try {
-      const custom = onNewLocation(location, currentView.getLocation()) || {}
-      viewName = custom.viewName
-      if (custom.shouldCreateView !== undefined) {
-        shouldCreateView = custom.shouldCreateView
-      }
-    } catch (err) {
-      console.error('onNewLocation threw an error:', err)
-    }
-    if (shouldCreateView) {
+    const { viewName, shouldCreateView } = onNewLocation(location, currentView.getLocation()) || {}
+    if (shouldCreateView || (shouldCreateView === undefined && currentView.isDifferentView(location))) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
@@ -358,4 +343,16 @@ function sanitizeTiming(name: string) {
     console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
+}
+
+function wrapOnNewLocation(onNewLocation: NewLocationListener): NewLocationListener {
+  return (newLocation, oldLocation) => {
+    let result
+    try {
+      result = onNewLocation(newLocation, oldLocation)
+    } catch (err) {
+      console.error('onNewLocation threw an error:', err)
+    }
+    return result
+  }
 }
