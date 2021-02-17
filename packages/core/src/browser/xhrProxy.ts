@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { monitor, callMonitored } from '../domain/internalMonitoring/monitor'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {

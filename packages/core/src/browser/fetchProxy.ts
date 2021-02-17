@@ -1,4 +1,4 @@
-import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { monitor, callMonitored } from '../domain/internalMonitoring/monitor'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
 import { normalizeUrl } from '../tools/urlPolyfill'

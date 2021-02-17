@@ -10,16 +10,15 @@ export {
 export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
 export { computeStackTrace } from './domain/tracekit'
 export { defineGlobal, makePublicApi, commonInit, checkCookiesAuthorized, checkIsNotLocalFile } from './boot/init'
+export { InternalMonitoring, setDebugMode } from './domain/internalMonitoring/start'
 export {
-  InternalMonitoring,
   MonitoringMessage,
   monitored,
   monitor,
   callMonitored,
   addMonitoringMessage,
   addErrorToMonitoringBatch,
-  setDebugMode,
-} from './domain/internalMonitoring'
+} from './domain/internalMonitoring/monitor'
 export { Observable } from './tools/observable'
 export {
   startSessionManagement,

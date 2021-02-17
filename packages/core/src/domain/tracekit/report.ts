@@ -1,4 +1,4 @@
-import { monitor } from '../internalMonitoring'
+import { monitor } from '../internalMonitoring/monitor'
 import { computeStackTrace, augmentStackTraceWithInitialElement } from './computeStackTrace'
 import { Handler, StackTrace } from './types'
 

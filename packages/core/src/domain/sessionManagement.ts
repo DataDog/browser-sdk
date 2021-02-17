@@ -2,7 +2,7 @@ import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } fr
 import { Observable } from '../tools/observable'
 import * as utils from '../tools/utils'
 import { addEventListeners, addEventListener, DOM_EVENT } from '../tools/events'
-import { monitor } from './internalMonitoring'
+import { monitor } from './internalMonitoring/monitor'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 
 export const SESSION_COOKIE_NAME = '_dd_s'

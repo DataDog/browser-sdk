@@ -4,7 +4,7 @@ import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '.
 import { Observable } from '../tools/observable'
 import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
 import { Configuration } from './configuration'
-import { monitor } from './internalMonitoring'
+import { monitor } from './internalMonitoring/monitor'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
 
 export type ErrorObservable = Observable<RawError>
