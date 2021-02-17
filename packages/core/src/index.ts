@@ -31,6 +31,7 @@ export {
 export { HttpRequest, Batch } from './transport/transport'
 export * from './tools/urlPolyfill'
 export * from './tools/utils'
+export * from './tools/events'
 export { ErrorSource, formatUnknownError, RawError } from './tools/error'
 export { combine, Context, ContextArray, ContextValue, deepClone } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'

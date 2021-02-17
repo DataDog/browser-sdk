@@ -1,6 +1,7 @@
 import { cacheCookieAccess, COOKIE_ACCESS_DELAY, CookieCache, CookieOptions } from '../browser/cookie'
 import { Observable } from '../tools/observable'
 import * as utils from '../tools/utils'
+import { addEventListeners, addEventListener, DOM_EVENT } from '../tools/events'
 import { monitor } from './internalMonitoring'
 import { tryOldCookiesMigration } from './oldCookiesMigration'
 
@@ -141,9 +142,9 @@ export function stopSessionManagement() {
 let stopCallbacks: Array<() => void> = []
 
 export function trackActivity(expandOrRenewSession: () => void) {
-  const { stop } = utils.addEventListeners(
+  const { stop } = addEventListeners(
     window,
-    [utils.DOM_EVENT.CLICK, utils.DOM_EVENT.TOUCH_START, utils.DOM_EVENT.KEY_DOWN, utils.DOM_EVENT.SCROLL],
+    [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL],
     expandOrRenewSession,
     { capture: true, passive: true }
   )
@@ -157,7 +158,7 @@ function trackVisibility(expandSession: () => void) {
     }
   })
 
-  const { stop } = utils.addEventListener(document, utils.DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const { stop } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
 
   const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)

@@ -1,5 +1,6 @@
 import { Context } from '../tools/context'
-import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { jsonStringify, noop, objectValues } from '../tools/utils'
+import { addEventListener, DOM_EVENT } from '../tools/events'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
