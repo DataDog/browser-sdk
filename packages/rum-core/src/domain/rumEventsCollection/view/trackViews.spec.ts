@@ -248,6 +248,66 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
     expect(getViewEvent(4).name).toBeUndefined()
   })
 
+  it('should let user create multiple views for the same URL', () => {
+    let i = 0
+    onNewLocation = () => {
+      i++
+      return { viewName: `Foo ${i}`, shouldCreateView: true }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/foo')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).name).toBe('Foo 1')
+    expect(getViewEvent(2).name).toBe('Foo 2')
+    expect(getViewEvent(4).name).toBe('Foo 3')
+  })
+
+  it('pass current and old locations to onNewLocation', () => {
+    onNewLocation = (location, oldLocation) => {
+      if (oldLocation === undefined) {
+        return { viewName: 'initial view' }
+      }
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: `Foo from ${oldLocation.pathname}` }
+        case '/bar':
+          return { viewName: `Bar from ${oldLocation.pathname}` }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/baz')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).name).toBe('initial view')
+    expect(getViewEvent(2).name).toBe('Bar from /foo')
+    expect(getViewEvent(4).name).toBeUndefined()
+    expect(getViewEvent(6).name).toBe('Foo from /baz')
+  })
+
+  it('should not create view for the same URL when shouldCreateView is undefined', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo' }
+        case '/bar':
+          return { viewName: 'Bar' }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/foo')
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).id).toBe(getViewEvent(0).id)
+    expect(getViewEvent(3).name).toBe('Bar')
+    expect(getViewEvent(5).id).toBe(getViewEvent(3).id)
+    expect(getViewEvent(6).name).toBe('Foo')
+  })
+
   it('should ignore the view when shouldCreateView is false', () => {
     onNewLocation = (location) => {
       switch (location.pathname) {
@@ -290,8 +350,8 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
   })
 
   it('should catch thrown errors', () => {
-    const fooError = new Error('Error on /foo path')
-    const barError = new Error('Error on /bar path')
+    const fooError = 'Error on /foo path'
+    const barError = 'Error on /bar path'
     onNewLocation = (location) => {
       if (location.pathname === '/foo') {
         throw fooError
@@ -303,9 +363,9 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
     }
     const consoleErrorSpy = spyOn(console, 'error')
     setupBuilder.build()
-    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation throwed an error:', fooError)
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation threw an error:', fooError)
     history.pushState({}, '', '/bar')
-    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation throwed an error:', barError)
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation threw an error:', barError)
   })
 })
 

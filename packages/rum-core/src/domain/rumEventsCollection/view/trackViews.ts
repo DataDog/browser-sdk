@@ -53,7 +53,7 @@ export function trackViews(
   try {
     viewName = onNewLocation(location)?.viewName
   } catch (err) {
-    console.error('onNewLocation throwed an error:', err)
+    console.error('onNewLocation threw an error:', err)
   }
   const initialView = newView(
     lifeCycle,
@@ -83,7 +83,7 @@ export function trackViews(
         shouldCreateView = custom.shouldCreateView
       }
     } catch (err) {
-      console.error('onNewLocation throwed an error:', err)
+      console.error('onNewLocation threw an error:', err)
     }
     if (shouldCreateView) {
       // Renew view on location changes
