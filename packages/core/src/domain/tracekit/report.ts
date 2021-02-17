@@ -1,5 +1,5 @@
 import { monitor } from '../internalMonitoring/monitor'
-import { computeStackTrace, augmentStackTraceWithInitialElement } from './computeStackTrace'
+import { computeStackTrace, augmentStackTraceWithInitialElement, setReportFunction } from './computeStackTrace'
 import { Handler, StackTrace } from './types'
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
@@ -58,6 +58,8 @@ const ERROR_TYPES_RE = /^(?:[Uu]ncaught (?:exception: )?)?(?:((?:Eval|Internal|R
  * @throws An exception if an incomplete stack trace is detected (old IE browsers).
  */
 export function report(ex: Error) {
+  setReportFunction(report)
+
   if (lastExceptionStack) {
     if (lastException === ex) {
       return // already caught by an inner catch block, ignore

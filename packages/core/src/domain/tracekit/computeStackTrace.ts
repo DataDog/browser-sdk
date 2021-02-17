@@ -1,5 +1,4 @@
 import { StackFrame, StackTrace } from './types'
-import { report } from './report'
 
 const UNKNOWN_FUNCTION = '?'
 
@@ -487,6 +486,11 @@ export function augmentStackTraceWithInitialElement(stackInfo: StackTrace, url?:
   return false
 }
 
+let reportFunction: unknown
+export function setReportFunction(newReportFunction: unknown) {
+  reportFunction = newReportFunction
+}
+
 /**
  * Computes stack trace information by walking the arguments.caller
  * chain at the time the exception occurred. This will cause earlier
@@ -507,7 +511,7 @@ function computeStackTraceByWalkingCallerChain(ex: unknown, depth: number) {
   let item: StackFrame
 
   for (let curr = computeStackTraceByWalkingCallerChain.caller; curr && !recursion; curr = curr.caller) {
-    if (curr === computeStackTrace || curr === report) {
+    if (curr === computeStackTrace || curr === reportFunction) {
       continue
     }
 
