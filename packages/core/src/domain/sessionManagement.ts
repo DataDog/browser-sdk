@@ -32,7 +32,7 @@ export function startSessionManagement<TrackingType extends string>(
   computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
 ): Session<TrackingType> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
-  tryOldCookiesMigration(sessionCookie)
+  tryOldCookiesMigration(sessionCookie, persistSession)
   const renewObservable = new Observable<void>()
   let currentSessionId = retrieveActiveSession(sessionCookie).id
 
