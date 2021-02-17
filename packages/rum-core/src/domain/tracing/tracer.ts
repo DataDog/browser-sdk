@@ -1,5 +1,5 @@
 import { Configuration, getOrigin, objectEntries } from '@datadog/browser-core'
-import {
+import type {
   RumFetchCompleteContext,
   RumFetchStartContext,
   RumXhrCompleteContext,

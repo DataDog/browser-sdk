@@ -8,8 +8,8 @@ import {
   ResourceType,
 } from '@datadog/browser-core'
 
-import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import type { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
+import type { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement

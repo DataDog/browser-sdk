@@ -1,4 +1,4 @@
-import { StackTrace } from '../domain/tracekit'
+import type { StackTrace } from '../domain/tracekit'
 import { jsonStringify } from './utils'
 
 export interface RawError {

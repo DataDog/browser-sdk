@@ -7,7 +7,7 @@ import {
   transformAttribute,
 } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
-import {
+import type {
   AddedNodeMutation,
   AttributeCursor,
   MutationCallBack,

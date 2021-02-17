@@ -16,7 +16,7 @@ import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 
 import { buildEnv } from './buildEnv'
-import { RumUserConfiguration } from './rumPublicApi'
+import type { RumUserConfiguration } from './rumPublicApi'
 
 export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
   const lifeCycle = new LifeCycle()

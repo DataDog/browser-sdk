@@ -1,10 +1,10 @@
 import { Context } from '@datadog/browser-core'
-import { RumPerformanceEntry } from '../browser/performanceCollection'
+import type { RumPerformanceEntry } from '../browser/performanceCollection'
 import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
-import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
-import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
-import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import type { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
+import type { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
   PERFORMANCE_ENTRY_COLLECTED,
