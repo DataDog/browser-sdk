@@ -23,6 +23,9 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
+  if (!configuration.isEnabled('onNewLocation')) {
+    userConfiguration.onNewLocation = undefined
+  }
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
