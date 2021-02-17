@@ -1,4 +1,4 @@
-import { getTestServers, waitForServersIdle } from '../framework'
+import { getTestServers, waitForServersIdle } from '../framework/httpServers'
 import { browserExecuteAsync, deleteAllCookies } from './browser'
 
 export async function flushEvents() {
