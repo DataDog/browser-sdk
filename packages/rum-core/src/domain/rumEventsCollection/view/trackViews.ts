@@ -65,8 +65,8 @@ export function trackViews(
     initialView.scheduleUpdate()
   })
 
-  trackHistory(onLocationChange)
-  trackHash(onLocationChange)
+  const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
+  const { stop: stopHashTracking } = trackHash(onLocationChange)
 
   function onLocationChange() {
     const { viewName, shouldCreateView } = onNewLocation(location, currentView.getLocation()) || {}
@@ -108,6 +108,8 @@ export function trackViews(
       currentView.triggerUpdate()
     },
     stop: () => {
+      stopHistoryTracking()
+      stopHashTracking()
       stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
@@ -255,11 +257,17 @@ function trackHistory(onHistoryChange: () => void) {
     originalReplaceState.apply(this, arguments as any)
     onHistoryChange()
   })
-  addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const stop = () => {
+    removeListener()
+    history.pushState = originalPushState
+    history.replaceState = originalReplaceState
+  }
+  return { stop }
 }
 
 function trackHash(onHashChange: () => void) {
-  addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
+  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
