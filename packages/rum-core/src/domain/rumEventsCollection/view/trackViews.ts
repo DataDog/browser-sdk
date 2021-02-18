@@ -1,5 +1,5 @@
 import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
-import { NewLocationListener } from '../../../boot/rumPublicApi'
+import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'

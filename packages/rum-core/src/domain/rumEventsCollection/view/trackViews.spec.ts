@@ -1,6 +1,6 @@
 import { createRawRumEvent } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { NewLocationListener } from '../../../boot/rumPublicApi'
+import { NewLocationListener } from '../../../boot/rum'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,

@@ -1,5 +1,5 @@
 import { getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
-import { NewLocationListener } from '../../../boot/rumPublicApi'
+import { NewLocationListener } from '../../../boot/rum'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'

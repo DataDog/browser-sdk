@@ -16,9 +16,17 @@ import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 
 import { buildEnv } from './buildEnv'
-import { NewLocationListener, RumUserConfiguration } from './rumPublicApi'
+import { RumUserConfiguration } from './rumPublicApi'
 
-export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
+export type NewLocationListener = (
+  newLocation: Location,
+  oldLocation?: Location
+) => undefined | { shouldCreateView?: boolean; viewName?: string }
+
+export function startRum(
+  userConfiguration: RumUserConfiguration & { onNewLocation?: NewLocationListener },
+  getCommonContext: () => CommonContext
+) {
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
