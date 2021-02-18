@@ -263,7 +263,7 @@ describe('getActionNameFromElement', () => {
         </form>
       `
       // Set the attribute on the <HTML> element
-      target.ownerDocument!.documentElement.setAttribute('data-dd-action-name', 'foo')
+      target.ownerDocument.documentElement.setAttribute('data-dd-action-name', 'foo')
       expect(getActionNameFromElement(target)).toBe('foo')
     })
 

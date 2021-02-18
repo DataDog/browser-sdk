@@ -1,9 +1,9 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
-import { MutationBuffer } from './mutation'
+import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
+import { MutationBuffer, MutationController } from './mutation'
 import {
   Arguments,
-  BlockClass,
   CanvasMutationCallback,
   FontCallback,
   FontFaceDescriptors,
@@ -32,7 +32,6 @@ import {
   getWindowHeight,
   getWindowWidth,
   hookSetter,
-  isBlocked,
   isTouchEvent,
   mirror,
   on,
@@ -40,19 +39,22 @@ import {
   throttle,
 } from './utils'
 
-export const mutationBuffer = new MutationBuffer()
-
 function initMutationObserver(
+  mutationController: MutationController,
   cb: MutationCallBack,
-  blockClass: BlockClass,
-  blockSelector: string | null,
   inlineStylesheet: boolean,
   maskInputOptions: MaskInputOptions,
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ): MutationObserver {
-  // see mutation.ts for details
-  mutationBuffer.init(cb, blockClass, blockSelector, inlineStylesheet, maskInputOptions, recordCanvas, slimDOMOptions)
+  const mutationBuffer = new MutationBuffer(
+    mutationController,
+    cb,
+    inlineStylesheet,
+    maskInputOptions,
+    recordCanvas,
+    slimDOMOptions
+  )
   const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
   observer.observe(document, {
     attributeOldValue: true,
@@ -95,11 +97,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
   }
 }
 
-function initMouseInteractionObserver(
-  cb: MouseInteractionCallBack,
-  blockClass: BlockClass,
-  sampling: SamplingStrategy
-): ListenerHandler {
+function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: SamplingStrategy): ListenerHandler {
   if (sampling.mouseInteraction === false) {
     return noop
   }
@@ -108,7 +106,7 @@ function initMouseInteractionObserver(
 
   const handlers: ListenerHandler[] = []
   const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
-    if (isBlocked(event.target as Node, blockClass)) {
+    if (nodeOrAncestorsShouldBeHidden(event.target as Node)) {
       return
     }
     const id = mirror.getId(event.target as INode)
@@ -132,10 +130,10 @@ function initMouseInteractionObserver(
   }
 }
 
-function initScrollObserver(cb: ScrollCallback, blockClass: BlockClass, sampling: SamplingStrategy): ListenerHandler {
+function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
   const updatePosition = throttle<UIEvent>(
     monitor((evt) => {
-      if (!evt.target || isBlocked(evt.target as Node, blockClass)) {
+      if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
         return
       }
       const id = mirror.getId(evt.target as INode)
@@ -178,28 +176,27 @@ export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(
   cb: InputCallback,
-  blockClass: BlockClass,
-  ignoreClass: string,
   maskInputOptions: MaskInputOptions,
   maskInputFn: MaskInputFn | undefined,
   sampling: SamplingStrategy
 ): ListenerHandler {
   function eventHandler(event: Event) {
     const { target } = event
+
     if (
       !target ||
       !(target as Element).tagName ||
       INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      isBlocked(target as Node, blockClass)
+      nodeOrAncestorsShouldBeHidden(target as Node) ||
+      nodeOrAncestorsShouldHaveInputIgnored(target as Node)
     ) {
       return
     }
+
     const type: string | undefined = (target as HTMLInputElement).type
-    if (type === 'password' || (target as HTMLElement).classList.contains(ignoreClass)) {
-      return
-    }
     let text = (target as HTMLInputElement).value
     let isChecked = false
+
     if (type === 'radio' || type === 'checkbox') {
       isChecked = (target as HTMLInputElement).checked
     } else if (
@@ -208,7 +205,9 @@ function initInputObserver(
     ) {
       text = maskInputFn ? maskInputFn(text) : '*'.repeat(text.length)
     }
+
     cbWithDedup(target, { text, isChecked })
+
     // if a radio was checked
     // the other radios with the same name attribute will be unchecked.
     const name: string | undefined = (target as HTMLInputElement).name
@@ -223,6 +222,7 @@ function initInputObserver(
       })
     }
   }
+
   function cbWithDedup(target: EventTarget, v: InputValue) {
     const lastInputValue = lastInputValueMap.get(target)
     if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
@@ -234,6 +234,7 @@ function initInputObserver(
       })
     }
   }
+
   const events = sampling.input === 'last' ? ['change'] : ['input', 'change']
   const handlers: Array<ListenerHandler | HookResetter> = events.map((eventName) => on(eventName, eventHandler))
   const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
@@ -245,6 +246,7 @@ function initInputObserver(
     // Some UI library use selectedIndex to set select value
     [HTMLSelectElement.prototype, 'selectedIndex'],
   ]
+
   if (propertyDescriptor && propertyDescriptor.set) {
     handlers.push(
       ...hookProperties.map((p) =>
@@ -257,6 +259,7 @@ function initInputObserver(
       )
     )
   }
+
   return () => {
     handlers.forEach((h) => h())
   }
@@ -267,7 +270,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
     callMonitored(() => {
-      const id = mirror.getId(this.ownerNode as INode)
+      const id = mirror.getId((this.ownerNode as unknown) as INode)
       if (id !== -1) {
         cb({
           id,
@@ -282,7 +285,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
     callMonitored(() => {
-      const id = mirror.getId(this.ownerNode as INode)
+      const id = mirror.getId((this.ownerNode as unknown) as INode)
       if (id !== -1) {
         cb({
           id,
@@ -299,13 +302,10 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   }
 }
 
-function initMediaInteractionObserver(
-  mediaInteractionCb: MediaInteractionCallback,
-  blockClass: BlockClass
-): ListenerHandler {
+function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (type: 'play' | 'pause') => (event: Event) => {
     const { target } = event
-    if (!target || isBlocked(target as Node, blockClass)) {
+    if (!target || nodeOrAncestorsShouldBeHidden(target as Node)) {
       return
     }
     mediaInteractionCb({
@@ -319,7 +319,7 @@ function initMediaInteractionObserver(
   }
 }
 
-function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: BlockClass): ListenerHandler {
+function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler {
   const props = Object.getOwnPropertyNames(CanvasRenderingContext2D.prototype)
   const handlers: ListenerHandler[] = []
   for (const prop of props) {
@@ -333,7 +333,7 @@ function initCanvasMutationObserver(cb: CanvasMutationCallback, blockClass: Bloc
         (original: (...args: unknown[]) => unknown) =>
           function (this: CanvasRenderingContext2D, ...args: unknown[]) {
             callMonitored(() => {
-              if (!isBlocked(this.canvas, blockClass)) {
+              if (!nodeOrAncestorsShouldBeHidden(this.canvas)) {
                 setTimeout(
                   monitor(() => {
                     const recordArgs = [...args]
@@ -518,29 +518,21 @@ function mergeHooks(o: ObserverParam, hooks: HooksParam) {
 export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
   const mutationObserver = initMutationObserver(
+    o.mutationController,
     o.mutationCb,
-    o.blockClass,
-    o.blockSelector,
     o.inlineStylesheet,
     o.maskInputOptions,
     o.recordCanvas,
     o.slimDOMOptions
   )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.blockClass, o.sampling)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.blockClass, o.sampling)
+  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.sampling)
+  const scrollHandler = initScrollObserver(o.scrollCb, o.sampling)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(
-    o.inputCb,
-    o.blockClass,
-    o.ignoreClass,
-    o.maskInputOptions,
-    o.maskInputFn,
-    o.sampling
-  )
-  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb, o.blockClass)
+  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
+  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb, o.blockClass) : noop
+  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb) : noop
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {

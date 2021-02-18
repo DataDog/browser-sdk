@@ -1,6 +1,6 @@
 import { isIE } from '@datadog/browser-core'
 import { serializeNodeWithId, SerializedNodeWithId, IdNodeMap } from '../rrweb-snapshot'
-import { MutationBuffer } from './mutation'
+import { MutationBuffer, MutationController } from './mutation'
 import { MutationCallBack } from './types'
 
 const DEFAULT_OPTIONS = {
@@ -26,11 +26,9 @@ describe('MutationBuffer', () => {
     sandbox = document.createElement('div')
     sandbox.appendChild(document.createElement('div'))
     mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
-    mutationBuffer = new MutationBuffer()
-    mutationBuffer.init(
+    mutationBuffer = new MutationBuffer(
+      new MutationController(),
       mutationCallbackSpy,
-      DEFAULT_OPTIONS.blockClass,
-      DEFAULT_OPTIONS.blockSelector,
       DEFAULT_OPTIONS.inlineStylesheet,
       DEFAULT_OPTIONS.maskInputOptions,
       DEFAULT_OPTIONS.recordCanvas,

@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "2.5.1",
+  "version": "2.5.3",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -13,12 +13,12 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "2.5.1",
+    "@datadog/browser-core": "2.5.3",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
     "@types/sinon": "9.0.10",
-    "sinon": "9.2.2"
+    "sinon": "9.2.4"
   },
   "repository": {
     "type": "git",

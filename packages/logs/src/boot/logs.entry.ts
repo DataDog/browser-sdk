@@ -8,16 +8,9 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
-  UserConfiguration,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { LogsEvent } from '../logsEvent.types'
-import { startLogs } from './logs'
-
-export interface LogsUserConfiguration extends UserConfiguration {
-  forwardErrorsToLogs?: boolean
-  beforeSend?: (event: LogsEvent) => void
-}
+import { startLogs, LogsUserConfiguration } from './logs'
 
 export interface LoggerConfiguration {
   level?: StatusType

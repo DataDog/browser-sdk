@@ -1,5 +1,6 @@
-import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot'
+import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
+import { MutationController } from './mutation'
 
 export enum IncrementalSource {
   Mutation,
@@ -69,8 +70,6 @@ export type IncrementalData =
   | CanvasMutationData
   | FontData
 
-export type BlockClass = string | RegExp
-
 export type SamplingStrategy = Partial<{
   /**
    * false means not to record mouse/touch move events
@@ -97,9 +96,6 @@ export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
   checkoutEveryNth?: number
   checkoutEveryNms?: number
-  blockClass?: BlockClass
-  blockSelector?: string
-  ignoreClass?: string
   maskAllInputs?: boolean
   maskInputOptions?: MaskInputOptions
   maskInputFn?: MaskInputFn
@@ -120,6 +116,7 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
+  mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
   mouseInteractionCb: MouseInteractionCallBack
@@ -127,9 +124,6 @@ export interface ObserverParam {
   viewportResizeCb: ViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  blockClass: BlockClass
-  blockSelector: string | null
-  ignoreClass: string
   maskInputOptions: MaskInputOptions
   maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
