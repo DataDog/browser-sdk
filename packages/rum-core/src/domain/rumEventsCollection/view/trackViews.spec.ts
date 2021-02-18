@@ -248,45 +248,29 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
     expect(getViewEvent(4).name).toBeUndefined()
   })
 
-  it('should let user create multiple views for the same URL', () => {
-    let i = 0
-    onNewLocation = () => {
-      i++
-      return { viewName: `Foo ${i}`, shouldCreateView: true }
-    }
+  it('should allow customer to consider other location changes as new views', () => {
+    onNewLocation = (location) => ({ viewName: `Foo ${location.search}`, shouldCreateView: true })
     setupBuilder.build()
-    history.pushState({}, '', '/foo')
-    history.pushState({}, '', '/foo')
+    history.pushState({}, '', '/foo?view=bar')
+    history.pushState({}, '', '/foo?view=baz')
 
-    expect(getViewEvent(0).name).toBe('Foo 1')
-    expect(getViewEvent(2).name).toBe('Foo 2')
-    expect(getViewEvent(4).name).toBe('Foo 3')
+    expect(getViewEvent(0).name).toBe('Foo ')
+    expect(getViewEvent(2).name).toBe('Foo ?view=bar')
+    expect(getViewEvent(4).name).toBe('Foo ?view=baz')
   })
 
   it('pass current and old locations to onNewLocation', () => {
-    onNewLocation = (location, oldLocation) => {
-      if (oldLocation === undefined) {
-        return { viewName: 'initial view' }
-      }
-      switch (location.pathname) {
-        case '/foo':
-          return { viewName: `Foo from ${oldLocation.pathname}` }
-        case '/bar':
-          return { viewName: `Bar from ${oldLocation.pathname}` }
-      }
-    }
+    onNewLocation = (location, oldLocation) => ({
+      viewName: `old: ${oldLocation?.pathname || 'undefined'}, new: ${location.pathname}`,
+    })
     setupBuilder.build()
     history.pushState({}, '', '/bar')
-    history.pushState({}, '', '/baz')
-    history.pushState({}, '', '/foo')
 
-    expect(getViewEvent(0).name).toBe('initial view')
-    expect(getViewEvent(2).name).toBe('Bar from /foo')
-    expect(getViewEvent(4).name).toBeUndefined()
-    expect(getViewEvent(6).name).toBe('Foo from /baz')
+    expect(getViewEvent(0).name).toBe('old: undefined, new: /foo')
+    expect(getViewEvent(2).name).toBe('old: /foo, new: /bar')
   })
 
-  it('should not create view for the same URL when shouldCreateView is undefined', () => {
+  it('should use our own new view detection rules when shouldCreateView is undefined', () => {
     onNewLocation = (location) => {
       switch (location.pathname) {
         case '/foo':
