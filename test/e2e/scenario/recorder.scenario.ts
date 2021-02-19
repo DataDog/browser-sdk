@@ -1,6 +1,7 @@
 import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum-recorder/cjs/types'
-import { InputData, MutationData, StyleSheetRuleData } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
+import { InputData, StyleSheetRuleData } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
 
+import { NodeType } from '@datadog/browser-rum-recorder/cjs/domain/rrweb-snapshot'
 import { createTest, bundleSetup, html } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
@@ -11,8 +12,7 @@ import {
   findAllIncrementalSnapshots,
   findMeta,
   findTextContent,
-  findElementWithTagName,
-  findTextNode,
+  validateMutations,
 } from '../lib/helpers/recorder'
 
 const INTEGER_RE = /^\d+$/
@@ -122,29 +122,20 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        expect(mutations[0].data.adds).toEqual([
-          {
-            nextId: null,
-            parentId: findElementWithTagName(fullSnapshot, 'p')!.id,
-            node: jasmine.objectContaining({ tagName: 'span' }),
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([
-          {
-            parentId: findElementWithTagName(fullSnapshot, 'body')!.id,
-            id: findElementWithTagName(fullSnapshot, 'ul')!.id,
-          },
-        ])
+        validateMutations(events, {
+          adds: [
+            {
+              parent: { tag: 'p' },
+              node: { tagName: 'span' },
+            },
+          ],
+          removes: [
+            {
+              parent: { tag: 'body' },
+              node: { tag: 'ul' },
+            },
+          ],
+        })
       })
 
     createTest('record character data mutations')
@@ -172,33 +163,24 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        expect(mutations[0].data.adds).toEqual([
-          {
-            nextId: null,
-            parentId: findElementWithTagName(fullSnapshot, 'p')!.id,
-            node: jasmine.objectContaining({ textContent: 'mutated' }),
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([
-          {
-            parentId: findElementWithTagName(fullSnapshot, 'body')!.id,
-            id: findElementWithTagName(fullSnapshot, 'ul')!.id,
-          },
-          {
-            parentId: findElementWithTagName(fullSnapshot, 'p')!.id,
-            id: findTextNode(fullSnapshot, 'mutation observer')!.id,
-          },
-        ])
+        validateMutations(events, {
+          adds: [
+            {
+              parent: { tag: 'p' },
+              node: { type: NodeType.Text, textContent: 'mutated' },
+            },
+          ],
+          removes: [
+            {
+              parent: { tag: 'body' },
+              node: { tag: 'ul' },
+            },
+            {
+              parent: { tag: 'p' },
+              node: { text: 'mutation observer' },
+            },
+          ],
+        })
       })
 
     createTest('record attributes mutations')
@@ -224,28 +206,20 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        expect(mutations[0].data.attributes).toEqual([
-          {
-            id: findElementWithTagName(fullSnapshot, 'body')!.id,
-            attributes: { test: 'true' },
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([
-          {
-            parentId: findElementWithTagName(fullSnapshot, 'body')!.id,
-            id: findElementWithTagName(fullSnapshot, 'ul')!.id,
-          },
-        ])
+        validateMutations(events, {
+          attributes: [
+            {
+              node: { tag: 'body' },
+              attributes: { test: 'true' },
+            },
+          ],
+          removes: [
+            {
+              parent: { tag: 'body' },
+              node: { tag: 'ul' },
+            },
+          ],
+        })
       })
 
     createTest("don't record hidden elements mutations")
@@ -298,68 +272,52 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        const divElement = findElementWithTagName(fullSnapshot, 'div')!
-        const spanElement = findElementWithTagName(fullSnapshot, 'span')!
-        const iElement = findElementWithTagName(fullSnapshot, 'i')!
-        const bElement = findElementWithTagName(fullSnapshot, 'b')!
-        expect(mutations[0].data.adds).toEqual([
-          {
-            nextId: null,
-            parentId: divElement.id,
-            node: { ...spanElement, childNodes: [] },
-          },
-          {
-            nextId: iElement.id,
-            parentId: spanElement.id,
-            node: findTextNode(fullSnapshot, 'c')!,
-          },
-          {
-            nextId: findTextNode(fullSnapshot, 'g')!.id,
-            parentId: spanElement.id,
-            node: { ...iElement, childNodes: [] },
-          },
-          {
-            nextId: bElement.id,
-            parentId: iElement.id,
-            node: findTextNode(fullSnapshot, 'd')!,
-          },
-          {
-            nextId: findTextNode(fullSnapshot, 'f')!.id,
-            parentId: iElement.id,
-            node: { ...bElement, childNodes: [] },
-          },
-          {
-            nextId: null,
-            parentId: bElement.id,
-            node: findTextNode(fullSnapshot, 'e')!,
-          },
-          {
-            nextId: null,
-            parentId: iElement.id,
-            node: findTextNode(fullSnapshot, 'f')!,
-          },
-          {
-            nextId: null,
-            parentId: spanElement.id,
-            node: findTextNode(fullSnapshot, 'g')!,
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([
-          {
-            parentId: findElementWithTagName(fullSnapshot, 'body')!.id,
-            id: spanElement.id,
-          },
-        ])
+        validateMutations(events, {
+          adds: [
+            {
+              parent: { tag: 'div' },
+              node: { from: { tag: 'span' }, childNodes: [] },
+            },
+            {
+              next: { tag: 'i' },
+              parent: { tag: 'span' },
+              node: { from: { text: 'c' } },
+            },
+            {
+              next: { text: 'g' },
+              parent: { tag: 'span' },
+              node: { from: { tag: 'i' }, childNodes: [] },
+            },
+            {
+              next: { tag: 'b' },
+              parent: { tag: 'i' },
+              node: { from: { text: 'd' } },
+            },
+            {
+              next: { text: 'f' },
+              parent: { tag: 'i' },
+              node: { from: { tag: 'b' }, childNodes: [] },
+            },
+            {
+              parent: { tag: 'b' },
+              node: { from: { text: 'e' } },
+            },
+            {
+              parent: { tag: 'i' },
+              node: { from: { text: 'f' } },
+            },
+            {
+              parent: { tag: 'span' },
+              node: { from: { text: 'g' } },
+            },
+          ],
+          removes: [
+            {
+              parent: { tag: 'body' },
+              node: { tag: 'span' },
+            },
+          ],
+        })
       })
 
     createTest('record DOM node movement 2')
@@ -381,74 +339,56 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        const bodyElement = findElementWithTagName(fullSnapshot, 'body')!
-        const spanElement = findElementWithTagName(fullSnapshot, 'span')!
-        const iElement = findElementWithTagName(fullSnapshot, 'i')!
-        const bElement = findElementWithTagName(fullSnapshot, 'b')!
-        const newDivElement = mutations[0].data.adds[7].node
-        expect(mutations[0].data.adds).toEqual([
-          {
-            nextId: iElement.id,
-            parentId: spanElement.id,
-            node: findTextNode(fullSnapshot, 'c')!,
-          },
-          {
-            nextId: findTextNode(fullSnapshot, 'g')!.id,
-            parentId: spanElement.id,
-            node: { ...iElement, childNodes: [] },
-          },
-          {
-            nextId: bElement.id,
-            parentId: iElement.id,
-            node: findTextNode(fullSnapshot, 'd')!,
-          },
-          {
-            nextId: findTextNode(fullSnapshot, 'f')!.id,
-            parentId: iElement.id,
-            node: { ...bElement, childNodes: [] },
-          },
-          {
-            nextId: null,
-            parentId: bElement.id,
-            node: findTextNode(fullSnapshot, 'e')!,
-          },
-          {
-            nextId: null,
-            parentId: iElement.id,
-            node: findTextNode(fullSnapshot, 'f')!,
-          },
-          {
-            nextId: null,
-            parentId: spanElement.id,
-            node: findTextNode(fullSnapshot, 'g')!,
-          },
-          {
-            nextId: null,
-            parentId: bodyElement.id,
-            node: newDivElement,
-          },
-          {
-            nextId: null,
-            parentId: newDivElement.id,
-            node: { ...spanElement, childNodes: [] },
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([
-          {
-            parentId: bodyElement.id,
-            id: spanElement.id,
-          },
-        ])
+        validateMutations(events, {
+          adds: [
+            {
+              next: { tag: 'i' },
+              parent: { tag: 'span' },
+              node: { from: { text: 'c' } },
+            },
+            {
+              next: { text: 'g' },
+              parent: { tag: 'span' },
+              node: { from: { tag: 'i' }, childNodes: [] },
+            },
+            {
+              next: { tag: 'b' },
+              parent: { tag: 'i' },
+              node: { from: { text: 'd' } },
+            },
+            {
+              next: { text: 'f' },
+              parent: { tag: 'i' },
+              node: { from: { tag: 'b' }, childNodes: [] },
+            },
+            {
+              parent: { tag: 'b' },
+              node: { from: { text: 'e' } },
+            },
+            {
+              parent: { tag: 'i' },
+              node: { from: { text: 'f' } },
+            },
+            {
+              parent: { tag: 'span' },
+              node: { from: { text: 'g' } },
+            },
+            {
+              parent: { tag: 'body' },
+              node: { tagName: 'div' },
+            },
+            {
+              parent: { created: 0 },
+              node: { from: { tag: 'span' }, childNodes: [] },
+            },
+          ],
+          removes: [
+            {
+              parent: { tag: 'body' },
+              node: { tag: 'span' },
+            },
+          ],
+        })
       })
 
     createTest('serialize node before record')
@@ -473,36 +413,24 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        expect(events.sessionReplay.length).toBe(1)
-        const segment = events.sessionReplay[0].segment.data
-        const fullSnapshot = findFullSnapshot(segment)!
-
-        const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-          data: MutationData
-        }>
-
-        expect(mutations.length).toBe(1)
-
-        const ulElement = findElementWithTagName(fullSnapshot, 'ul')!
-        const lastId = findElementWithTagName(fullSnapshot, 'body')!.childNodes[2].id
-        expect(mutations[0].data.adds).toEqual([
-          {
-            nextId: null,
-            parentId: ulElement.id,
-            node: jasmine.objectContaining({ tagName: 'li', id: lastId + 1 }),
-          },
-          {
-            nextId: lastId + 1,
-            parentId: ulElement.id,
-            node: jasmine.objectContaining({ tagName: 'li', id: lastId + 2 }),
-          },
-          {
-            nextId: lastId + 2,
-            parentId: ulElement.id,
-            node: jasmine.objectContaining({ tagName: 'li', id: lastId + 3 }),
-          },
-        ])
-        expect(mutations[0].data.removes).toEqual([])
+        validateMutations(events, {
+          adds: [
+            {
+              parent: { tag: 'ul' },
+              node: { tagName: 'li' },
+            },
+            {
+              next: { created: 0 },
+              parent: { tag: 'ul' },
+              node: { tagName: 'li' },
+            },
+            {
+              next: { created: 1 },
+              parent: { tag: 'ul' },
+              node: { tagName: 'li' },
+            },
+          ],
+        })
       })
   })
 
