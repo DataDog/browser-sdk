@@ -152,6 +152,7 @@ export interface ViewContext extends Context {
   }
   view: {
     id: string
+    name?: string
     url: string
     referrer: string
   }

@@ -97,6 +97,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       },
       view: {
         id: currentView!.id,
+        name: currentView!.name,
         referrer: currentView!.referrer,
         url: currentView!.location.href,
       },

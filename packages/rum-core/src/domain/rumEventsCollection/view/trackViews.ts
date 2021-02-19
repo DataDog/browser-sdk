@@ -27,6 +27,7 @@ export interface View {
 
 export interface ViewCreatedEvent {
   id: string
+  name?: string
   location: Location
   referrer: string
   startTime: number
