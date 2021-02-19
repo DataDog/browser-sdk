@@ -114,8 +114,11 @@ describe('recorder', () => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
+
+          // Make sure mutations occurring in a removed element are not reported
           ul.appendChild(li)
           document.body.removeChild(ul)
+
           const p = document.querySelector('p') as HTMLParagraphElement
           p.appendChild(document.createElement('span'))
         })
@@ -153,10 +156,13 @@ describe('recorder', () => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
+
+          // Make sure mutations occurring in a removed element are not reported
           ul.appendChild(li)
           li.innerText = 'new list item'
           li.innerText = 'new list item edit'
           document.body.removeChild(ul)
+
           const p = document.querySelector('p') as HTMLParagraphElement
           p.innerText = 'mutated'
         })
@@ -198,9 +204,12 @@ describe('recorder', () => {
         await browserExecute(() => {
           const li = document.createElement('li')
           const ul = document.querySelector('ul') as HTMLUListElement
+
+          // Make sure mutations occurring in a removed element are not reported
           ul.appendChild(li)
           li.setAttribute('foo', 'bar')
           document.body.removeChild(ul)
+
           document.body.setAttribute('test', 'true')
         })
 

@@ -5,7 +5,6 @@ import {
   TextNode,
   SerializedNodeWithId,
 } from '@datadog/browser-rum-recorder/cjs/domain/rrweb-snapshot/types'
-import { AddedNodeMutation } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
 import {
   Segment,
   RecordType,
