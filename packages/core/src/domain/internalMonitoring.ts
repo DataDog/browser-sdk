@@ -41,6 +41,8 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
       maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
       sentMessageCount: 0,
     })
+
+    startMonitoringClockDrift()
   }
   return {
     setExternalContextProvider: (provider: () => Context) => {
@@ -93,6 +95,26 @@ function startMonitoringBatch(configuration: Configuration) {
 
 export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
+}
+
+function startMonitoringClockDrift() {
+  const interval = setInterval(
+    monitor(() => {
+      const drift = Date.now() - utils.getTimestamp(performance.now())
+      if (Math.abs(drift) > utils.ONE_SECOND) {
+        clearInterval(interval)
+        const navigationStart = utils.getTimestamp(0)
+        addMonitoringMessage('clock drift detected', {
+          debug: {
+            navigationStartUTC: new Date(navigationStart).toUTCString(),
+            timeSpent: Date.now() - navigationStart,
+            drift,
+          },
+        })
+      }
+    }),
+    utils.ONE_MINUTE
+  )
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(
