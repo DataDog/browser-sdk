@@ -16,6 +16,11 @@
 
 ---
 
+## v2.5.4
+
+- 🔊 Add clock drift monitoring ([#736](https://github.com/DataDog/browser-sdk/pull/736))
+- ✨ Implement a developer extension ([#686](https://github.com/DataDog/browser-sdk/pull/686))
+
 ## v2.5.3
 
 - ⚗ Remove mutation buffer global instance ([#728](https://github.com/DataDog/browser-sdk/pull/728))
