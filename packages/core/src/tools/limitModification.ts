@@ -8,14 +8,15 @@ import { Context, deepClone } from './context'
 export function limitModification<T extends Context>(
   object: T,
   modifiableFieldPaths: string[],
-  modifier: (object: T) => void
-): T {
+  modifier: (object: T) => boolean | void
+): boolean | void {
   const clone = deepClone(object)
+  let result
   try {
-    modifier(clone)
+    result = modifier(clone)
   } catch (e) {
     console.error(e)
-    return object
+    return
   }
   modifiableFieldPaths.forEach((path) => {
     const originalValue = get(object, path)
@@ -24,7 +25,7 @@ export function limitModification<T extends Context>(
       set(object, path, newValue)
     }
   })
-  return object
+  return result
 }
 
 function get(object: unknown, path: string) {

@@ -78,8 +78,15 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
 
+        let beforeSendResult
         if (configuration.beforeSend) {
-          limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
+          beforeSendResult = limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
+        }
+        if (beforeSendResult === false && serverRumEvent.type !== RumEventType.VIEW) {
+          return
+        }
+        if (beforeSendResult === false) {
+          console.warn(`Can't dismiss view events using beforeSend, use onNewLocation instead!`)
         }
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
