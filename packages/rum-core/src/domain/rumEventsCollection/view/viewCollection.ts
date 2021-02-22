@@ -1,14 +1,15 @@
 import { getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
+import { NewLocationListener } from '../../../boot/rum'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
+export function startViewCollection(lifeCycle: LifeCycle, location: Location, onNewLocation?: NewLocationListener) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   )
 
-  return trackViews(location, lifeCycle)
+  return trackViews(location, lifeCycle, onNewLocation)
 }
 
 function processViewUpdate(view: View) {
@@ -33,6 +34,7 @@ function processViewUpdate(view: View) {
       first_input_delay: msToNs(view.timings.firstInputDelay),
       first_input_time: msToNs(view.timings.firstInputTime),
       is_active: view.isActive,
+      name: view.name,
       largest_contentful_paint: msToNs(view.timings.largestContentfulPaint),
       load_event: msToNs(view.timings.loadEvent),
       loading_time: msToNs(view.loadingTime),

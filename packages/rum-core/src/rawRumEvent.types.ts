@@ -71,6 +71,7 @@ export interface RawRumViewEvent {
     loading_time?: number
     time_spent: number
     is_active: boolean
+    name?: string
     error: Count
     action: Count
     long_task: Count
@@ -151,6 +152,7 @@ export interface ViewContext extends Context {
   }
   view: {
     id: string
+    name?: string
     url: string
     referrer: string
   }

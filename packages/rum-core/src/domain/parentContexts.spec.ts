@@ -104,6 +104,13 @@ describe('parentContexts', () => {
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })
 
+    it('should return the view name with the view', () => {
+      const { lifeCycle } = setupBuilder.build()
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ name: 'Fake name' }))
+      expect(parentContexts.findView()!.view.name).toBe('Fake name')
+    })
+
     it('should update session id only on VIEW_CREATED', () => {
       const { lifeCycle } = setupBuilder.build()
 
