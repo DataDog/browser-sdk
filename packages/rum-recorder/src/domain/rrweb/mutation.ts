@@ -117,8 +117,10 @@ function isINode(n: Node | INode): n is INode {
 export class MutationController {
   private frozen = false
   private unfreezeListener?: () => void
+  private freezeListener?: () => void
 
   public freeze() {
+    this.freezeListener?.()
     this.frozen = true
   }
 
@@ -129,6 +131,10 @@ export class MutationController {
 
   public isFrozen() {
     return this.frozen
+  }
+
+  public onFreeze(listener: () => void) {
+    this.freezeListener = listener
   }
 
   public onUnfreeze(listener: () => void) {

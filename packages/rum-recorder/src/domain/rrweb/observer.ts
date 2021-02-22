@@ -64,6 +64,7 @@ function initMutationObserver(
     childList: true,
     subtree: true,
   })
+  mutationController.onFreeze(() => mutationBuffer.processMutations(observer.takeRecords()))
   return observer
 }
 
