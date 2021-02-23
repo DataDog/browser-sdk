@@ -16,6 +16,7 @@ const DEFAULT_OPTIONS = {
 describe('MutationObserverWrapper', () => {
   let sandbox: HTMLElement
   let mutationCallbackSpy: jasmine.Spy<MutationCallBack>
+  let mutationController: MutationController
 
   beforeEach(() => {
     if (isIE()) {
@@ -25,10 +26,11 @@ describe('MutationObserverWrapper', () => {
     sandbox = document.createElement('div')
     sandbox.appendChild(document.createElement('div'))
     mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
+    mutationController = new MutationController()
     MockMutationObserver.setup()
 
     new MutationObserverWrapper(
-      new MutationController(),
+      mutationController,
       mutationCallbackSpy,
       DEFAULT_OPTIONS.inlineStylesheet,
       DEFAULT_OPTIONS.maskInputOptions,
@@ -45,19 +47,7 @@ describe('MutationObserverWrapper', () => {
   it('generates a mutation when a node is appended to a known node', () => {
     addNodeToMap(sandbox, {})
 
-    MockMutationObserver.emitRecords([
-      {
-        type: 'childList',
-        target: sandbox,
-        addedNodes: createNodeList([sandbox.firstChild!]),
-        removedNodes: createNodeList([]),
-        oldValue: null,
-        attributeName: null,
-        attributeNamespace: null,
-        nextSibling: null,
-        previousSibling: null,
-      },
-    ])
+    MockMutationObserver.emitRecords([createMutationRecord()])
 
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
     expect(mutationCallbackSpy).toHaveBeenCalledWith({
@@ -66,7 +56,7 @@ describe('MutationObserverWrapper', () => {
       removes: [],
       adds: [
         {
-          parentId: 1,
+          parentId: (jasmine.any(Number) as unknown) as number,
           nextId: null,
           node: (jasmine.objectContaining({
             tagName: 'div',
@@ -77,21 +67,32 @@ describe('MutationObserverWrapper', () => {
   })
 
   it('does not generate a mutation when a node is appended to a unknown node', () => {
-    MockMutationObserver.emitRecords([
-      {
-        type: 'childList',
-        target: sandbox,
-        addedNodes: createNodeList([sandbox.firstChild!]),
-        removedNodes: createNodeList([]),
-        oldValue: null,
-        attributeName: null,
-        attributeNamespace: null,
-        nextSibling: null,
-        previousSibling: null,
-      },
-    ])
+    MockMutationObserver.emitRecords([createMutationRecord()])
     expect(mutationCallbackSpy).not.toHaveBeenCalled()
   })
+
+  it('emits buffered mutation records on freeze', () => {
+    addNodeToMap(sandbox, {})
+
+    MockMutationObserver.storeRecords([createMutationRecord()])
+    expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
+    mutationController.freeze()
+    expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+  })
+
+  function createMutationRecord(): MutationRecord {
+    return {
+      type: 'childList',
+      target: sandbox,
+      addedNodes: createNodeList([sandbox.firstChild!]),
+      removedNodes: createNodeList([]),
+      oldValue: null,
+      attributeName: null,
+      attributeNamespace: null,
+      nextSibling: null,
+      previousSibling: null,
+    }
+  }
 })
 
 function addNodeToMap(node: Node, map: IdNodeMap) {
@@ -113,6 +114,7 @@ function createNodeList(nodes: Node[]): NodeList {
 class MockMutationObserver implements MutationObserver {
   static instances: MockMutationObserver[] = []
   static originalMutationObserverDescriptor?: PropertyDescriptor
+  private storedRecords: MutationRecord[] = []
 
   constructor(public readonly callback: (records: MutationRecord[]) => void) {}
 
@@ -134,6 +136,10 @@ class MockMutationObserver implements MutationObserver {
     this.instances.forEach((instance) => instance.callback(records))
   }
 
+  static storeRecords(records: MutationRecord[]) {
+    this.instances.forEach((instance) => instance.storedRecords.push(...records))
+  }
+
   observe() {
     MockMutationObserver.instances.push(this)
   }
@@ -143,6 +149,6 @@ class MockMutationObserver implements MutationObserver {
   }
 
   takeRecords() {
-    return []
+    return this.storedRecords.splice(0, this.storedRecords.length)
   }
 }
