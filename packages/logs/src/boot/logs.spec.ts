@@ -193,7 +193,9 @@ describe('logs', () => {
     })
 
     it('should allow modification on sensitive field', () => {
-      beforeSend = (event: LogsEvent) => (event.message = 'modified')
+      beforeSend = (event: LogsEvent) => {
+        event.message = 'modified'
+      }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
@@ -201,7 +203,9 @@ describe('logs', () => {
     })
 
     it('should reject modification on non sensitive field', () => {
-      beforeSend = (event: LogsEvent) => ((event.service as any) = 'modified')
+      beforeSend = (event: LogsEvent) => {
+        ;(event.service as any) = 'modified'
+      }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
