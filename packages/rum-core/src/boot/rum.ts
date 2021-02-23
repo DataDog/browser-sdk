@@ -18,11 +18,22 @@ import { startRumBatch } from '../transport/batch'
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rumPublicApi'
 
-export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
+export type NewLocationListener = (
+  newLocation: Location,
+  oldLocation?: Location
+) => undefined | { shouldCreateView?: boolean; viewName?: string }
+
+export function startRum(
+  userConfiguration: RumUserConfiguration & { onNewLocation?: NewLocationListener },
+  getCommonContext: () => CommonContext
+) {
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
+  if (!configuration.isEnabled('onNewLocation')) {
+    userConfiguration.onNewLocation = undefined
+  }
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -40,7 +51,8 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     lifeCycle,
     configuration,
     session,
-    getCommonContext
+    getCommonContext,
+    userConfiguration.onNewLocation
   )
 
   startRequestCollection(lifeCycle, configuration)
@@ -67,14 +79,15 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  getCommonContext: () => CommonContext
+  getCommonContext: () => CommonContext,
+  onNewLocation?: NewLocationListener
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming } = startViewCollection(lifeCycle, location)
+  const { addTiming } = startViewCollection(lifeCycle, location, onNewLocation)
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
