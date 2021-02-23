@@ -8,9 +8,9 @@ describe('limitModification', () => {
       candidate.qux = 'modified2'
     }
 
-    const result = limitModification(object, ['foo.bar', 'qux'], modifier)
+    limitModification(object, ['foo.bar', 'qux'], modifier)
 
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'modified1' },
       qux: 'modified2',
     })
@@ -23,9 +23,9 @@ describe('limitModification', () => {
       candidate.qux = 'modified2'
     }
 
-    const result = limitModification(object, ['foo.bar'], modifier)
+    limitModification(object, ['foo.bar'], modifier)
 
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'modified1' },
       qux: 'qux',
     })
@@ -39,9 +39,9 @@ describe('limitModification', () => {
       candidate.qix = 'modified3'
     }
 
-    const result = limitModification(object, ['foo.bar', 'qux', 'qix'], modifier)
+    limitModification(object, ['foo.bar', 'qux', 'qix'], modifier)
 
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'modified1' },
       qux: 'modified2',
     })
@@ -54,9 +54,9 @@ describe('limitModification', () => {
       candidate.qux = 1234
     }
 
-    const result = limitModification(object, ['foo.bar', 'qux'], modifier)
+    limitModification(object, ['foo.bar', 'qux'], modifier)
 
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'bar' },
       qux: 'qux',
     })
@@ -70,11 +70,26 @@ describe('limitModification', () => {
       delete candidate.qux
     }
 
-    const result = limitModification(object, ['foo.bar', 'qux'], modifier)
+    limitModification(object, ['foo.bar', 'qux'], modifier)
 
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'bar' },
       qux: 'qux',
+    })
+  })
+
+  it('should return the result of the modifier', () => {
+    const object = { foo: { bar: 'bar' } }
+    const modifier = (candidate: any) => {
+      candidate.foo.bar = 'qux'
+      return false
+    }
+
+    const result = limitModification(object, ['foo.bar', 'qux'], modifier)
+
+    expect(result).toBe(false)
+    expect(object).toEqual({
+      foo: { bar: 'qux' },
     })
   })
 
@@ -86,10 +101,10 @@ describe('limitModification', () => {
     }
     const errorSpy = spyOn(console, 'error')
 
-    const result = limitModification(object, ['foo.bar', 'qux'], modifier)
+    limitModification(object, ['foo.bar', 'qux'], modifier)
 
     expect(errorSpy).toHaveBeenCalled()
-    expect(result).toEqual({
+    expect(object).toEqual({
       foo: { bar: 'bar' },
       qux: 'qux',
     })

@@ -129,7 +129,7 @@ describe('logs', () => {
 
   describe('assemble', () => {
     let assemble: (message: LogsMessage, currentContext: Context) => Context | undefined
-    let beforeSend: (event: LogsEvent) => void
+    let beforeSend: (event: LogsEvent) => void | boolean
 
     beforeEach(() => {
       beforeSend = noop
@@ -145,6 +145,11 @@ describe('logs', () => {
     it('should not assemble when session is not tracked', () => {
       sessionIsTracked = false
 
+      expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
+    })
+
+    it('should not assemble if beforeSend returned false', () => {
+      beforeSend = () => false
       expect(assemble(DEFAULT_MESSAGE, { foo: 'from-current-context' })).toBeUndefined()
     })
 
@@ -188,7 +193,9 @@ describe('logs', () => {
     })
 
     it('should allow modification on sensitive field', () => {
-      beforeSend = (event: LogsEvent) => (event.message = 'modified')
+      beforeSend = (event: LogsEvent) => {
+        event.message = 'modified'
+      }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
@@ -196,7 +203,9 @@ describe('logs', () => {
     })
 
     it('should reject modification on non sensitive field', () => {
-      beforeSend = (event: LogsEvent) => ((event.service as any) = 'modified')
+      beforeSend = (event: LogsEvent) => {
+        ;(event.service as any) = 'modified'
+      }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 

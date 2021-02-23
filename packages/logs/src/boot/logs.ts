@@ -22,7 +22,7 @@ import { buildEnv } from './buildEnv'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
-  beforeSend?: (event: LogsEvent) => void
+  beforeSend?: (event: LogsEvent) => void | boolean
 }
 
 const FIELDS_WITH_SENSITIVE_DATA = ['view.url', 'view.referrer', 'message', 'error.stack', 'http.url']
@@ -130,11 +130,14 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
       message
     )
     if (configuration.beforeSend) {
-      limitModification(
+      const shouldSend = limitModification(
         contextualizedMessage as LogsEvent & Context,
         FIELDS_WITH_SENSITIVE_DATA,
         configuration.beforeSend
       )
+      if (shouldSend === false) {
+        return undefined
+      }
     }
     return contextualizedMessage as Context
   }
