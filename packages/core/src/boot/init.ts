@@ -32,7 +32,7 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   const existingGlobalVariable: { q?: Array<() => void> } | undefined = global[name]
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
-    existingGlobalVariable.q.forEach((fn) => fn())
+    existingGlobalVariable.q.forEach((fn) => catchErrors(fn, 'Error thrown during SDK initialization:')())
   }
 }
 
