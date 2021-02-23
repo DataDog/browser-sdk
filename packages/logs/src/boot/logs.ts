@@ -22,7 +22,7 @@ import { buildEnv } from './buildEnv'
 
 export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
-  beforeSend?: (event: LogsEvent) => void
+  beforeSend?: (event: LogsEvent) => void | boolean
 }
 
 const FIELDS_WITH_SENSITIVE_DATA = ['view.url', 'view.referrer', 'message', 'error.stack', 'http.url']
