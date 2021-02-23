@@ -1,7 +1,7 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { MutationBuffer, MutationController } from './mutation'
+import { MutationObserverWrapper, MutationController } from './mutation'
 import {
   Arguments,
   CanvasMutationCallback,
@@ -47,7 +47,7 @@ function initMutationObserver(
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ) {
-  return new MutationBuffer(
+  return new MutationObserverWrapper(
     mutationController,
     cb,
     inlineStylesheet,
@@ -507,7 +507,7 @@ function mergeHooks(o: ObserverParam, hooks: HooksParam) {
 
 export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
-  const mutationBuffer = initMutationObserver(
+  const mutationObserverWrapper = initMutationObserver(
     o.mutationController,
     o.mutationCb,
     o.inlineStylesheet,
@@ -526,7 +526,7 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
-    mutationBuffer.stop()
+    mutationObserverWrapper.stop()
     mousemoveHandler()
     mouseInteractionHandler()
     scrollHandler()
