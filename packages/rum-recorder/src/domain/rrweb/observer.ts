@@ -46,8 +46,8 @@ function initMutationObserver(
   maskInputOptions: MaskInputOptions,
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
-): MutationObserver {
-  const mutationBuffer = new MutationBuffer(
+) {
+  return new MutationBuffer(
     mutationController,
     cb,
     inlineStylesheet,
@@ -55,17 +55,6 @@ function initMutationObserver(
     recordCanvas,
     slimDOMOptions
   )
-  const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
-  observer.observe(document, {
-    attributeOldValue: true,
-    attributes: true,
-    characterData: true,
-    characterDataOldValue: true,
-    childList: true,
-    subtree: true,
-  })
-  mutationController.onFreeze(() => mutationBuffer.processMutations(observer.takeRecords()))
-  return observer
 }
 
 function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): ListenerHandler {
@@ -518,7 +507,7 @@ function mergeHooks(o: ObserverParam, hooks: HooksParam) {
 
 export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
-  const mutationObserver = initMutationObserver(
+  const mutationBuffer = initMutationObserver(
     o.mutationController,
     o.mutationCb,
     o.inlineStylesheet,
@@ -537,7 +526,7 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
-    mutationObserver.disconnect()
+    mutationBuffer.stop()
     mousemoveHandler()
     mouseInteractionHandler()
     scrollHandler()

@@ -15,7 +15,6 @@ const DEFAULT_OPTIONS = {
 
 describe('MutationBuffer', () => {
   let sandbox: HTMLElement
-  let mutationBuffer: MutationBuffer
   let mutationCallbackSpy: jasmine.Spy<MutationCallBack>
 
   beforeEach(() => {
@@ -26,7 +25,9 @@ describe('MutationBuffer', () => {
     sandbox = document.createElement('div')
     sandbox.appendChild(document.createElement('div'))
     mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
-    mutationBuffer = new MutationBuffer(
+    MockMutationObserver.setup()
+
+    new MutationBuffer(
       new MutationController(),
       mutationCallbackSpy,
       DEFAULT_OPTIONS.inlineStylesheet,
@@ -37,13 +38,14 @@ describe('MutationBuffer', () => {
   })
 
   afterEach(() => {
+    MockMutationObserver.cleanup()
     sandbox.remove()
   })
 
   it('generates a mutation when a node is appended to a known node', () => {
     addNodeToMap(sandbox, {})
 
-    mutationBuffer.processMutations([
+    MockMutationObserver.emitRecords([
       {
         type: 'childList',
         target: sandbox,
@@ -51,6 +53,9 @@ describe('MutationBuffer', () => {
         removedNodes: createNodeList([]),
         oldValue: null,
         attributeName: null,
+        attributeNamespace: null,
+        nextSibling: null,
+        previousSibling: null,
       },
     ])
 
@@ -72,7 +77,7 @@ describe('MutationBuffer', () => {
   })
 
   it('does not generate a mutation when a node is appended to a unknown node', () => {
-    mutationBuffer.processMutations([
+    MockMutationObserver.emitRecords([
       {
         type: 'childList',
         target: sandbox,
@@ -80,6 +85,9 @@ describe('MutationBuffer', () => {
         removedNodes: createNodeList([]),
         oldValue: null,
         attributeName: null,
+        attributeNamespace: null,
+        nextSibling: null,
+        previousSibling: null,
       },
     ])
     expect(mutationCallbackSpy).not.toHaveBeenCalled()
@@ -100,4 +108,41 @@ function createNodeList(nodes: Node[]): NodeList {
       return this[index]
     },
   }) as unknown) as NodeList
+}
+
+class MockMutationObserver implements MutationObserver {
+  static instances: MockMutationObserver[] = []
+  static originalMutationObserverDescriptor?: PropertyDescriptor
+
+  constructor(public readonly callback: (records: MutationRecord[]) => void) {}
+
+  static setup() {
+    if (!this.originalMutationObserverDescriptor) {
+      this.originalMutationObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'MutationObserver')
+      window.MutationObserver = (this as unknown) as typeof MutationObserver
+    }
+  }
+
+  static cleanup() {
+    if (this.originalMutationObserverDescriptor) {
+      Object.defineProperty(window, 'MutationObserver', this.originalMutationObserverDescriptor)
+      this.originalMutationObserverDescriptor = undefined
+    }
+  }
+
+  static emitRecords(records: MutationRecord[]) {
+    this.instances.forEach((instance) => instance.callback(records))
+  }
+
+  observe() {
+    MockMutationObserver.instances.push(this)
+  }
+
+  disconnect() {
+    MockMutationObserver.instances = MockMutationObserver.instances.filter((other) => other !== this)
+  }
+
+  takeRecords() {
+    return []
+  }
 }
