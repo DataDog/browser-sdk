@@ -78,7 +78,7 @@ describe('limitModification', () => {
     })
   })
 
-  it('should return the return of the modifier', () => {
+  it('should return the result of the modifier', () => {
     const object = { foo: { bar: 'bar' } }
     const modifier = (candidate: any) => {
       candidate.foo.bar = 'qux'
