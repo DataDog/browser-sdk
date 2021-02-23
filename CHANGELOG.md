@@ -16,6 +16,10 @@
 
 ---
 
+## v2.5.5
+
+- ✨ [RUMF-847] Add onNewLocation to configuration ([#724](https://github.com/DataDog/browser-sdk/pull/724))
+
 ## v2.5.4
 
 - 🔊 Add clock drift monitoring ([#736](https://github.com/DataDog/browser-sdk/pull/736))
