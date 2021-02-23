@@ -10,7 +10,22 @@ export async function flushEvents() {
   )
   await waitForServersIdle()
   const servers = await getTestServers()
-  await browser.url(`${servers.base.url}/empty`)
+
+  // TODO: use /empty instead of /ok
+  //
+  // The rum-recorder code uses a Web Worker to format the request data to be sent to the intake.
+  // Because all Worker communication is asynchronous, it cannot send its request during the
+  // "beforeunload" event, but a few milliseconds after. Thus, when navigating, if the future page
+  // loads very quickly, the page unload may occur before rum-recorder have time to send its last
+  // segment.
+  //
+  // To avoid flaky e2e tests, we currently use /ok with a duration, to allow a bit more time to
+  // send requests to intakes when the "beforeunload" event is dispatched.
+  //
+  // The issue mainly occurs with local e2e tests (not browserstack), because the network latency is
+  // very low (same machine), so the request resolves very quickly. In real life conditions, this
+  // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
+  await browser.url(`${servers.base.url}/ok?duration=200`)
   await waitForServersIdle()
 }
 
