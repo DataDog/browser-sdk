@@ -1,5 +1,7 @@
-import { createRawRumEvent } from '../../../../test/fixtures'
+import { Context } from '../../../../../core/src'
+import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { NewLocationListener } from '../../../boot/rum'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -205,6 +207,150 @@ describe('rum track url change', () => {
     history.pushState({}, '', '/foo?bar=qux')
 
     expect(createSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('rum use onNewLocation callback to rename/ignore views', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+  let onNewLocation: NewLocationListener
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle, onNewLocation)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should set the view name to the returned viewName', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo' }
+        case '/bar':
+          return { viewName: 'Bar' }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/baz')
+
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).name).toBe('Bar')
+    expect(getViewEvent(4).name).toBeUndefined()
+  })
+
+  it('should allow customer to consider other location changes as new views', () => {
+    onNewLocation = (location) => ({ viewName: `Foo ${location.search}`, shouldCreateView: true })
+    setupBuilder.build()
+    history.pushState({}, '', '/foo?view=bar')
+    history.pushState({}, '', '/foo?view=baz')
+
+    expect(getViewEvent(0).name).toBe('Foo ')
+    expect(getViewEvent(2).name).toBe('Foo ?view=bar')
+    expect(getViewEvent(4).name).toBe('Foo ?view=baz')
+  })
+
+  it('pass current and old locations to onNewLocation', () => {
+    onNewLocation = (location, oldLocation) => ({
+      viewName: `old: ${oldLocation?.pathname || 'undefined'}, new: ${location.pathname}`,
+    })
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(0).name).toBe('old: undefined, new: /foo')
+    expect(getViewEvent(2).name).toBe('old: /foo, new: /bar')
+  })
+
+  it('should use our own new view detection rules when shouldCreateView is undefined', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo' }
+        case '/bar':
+          return { viewName: 'Bar' }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/foo')
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).id).toBe(getViewEvent(0).id)
+    expect(getViewEvent(3).name).toBe('Bar')
+    expect(getViewEvent(5).id).toBe(getViewEvent(3).id)
+    expect(getViewEvent(6).name).toBe('Foo')
+  })
+
+  it('should ignore the view when shouldCreateView is false', () => {
+    onNewLocation = (location) => {
+      switch (location.pathname) {
+        case '/foo':
+          return { viewName: 'Foo', shouldCreateView: true }
+        case '/bar':
+          return { shouldCreateView: false }
+        case '/baz':
+          return { viewName: 'Baz', shouldCreateView: true }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/baz')
+
+    const initialViewId = getViewEvent(0).id
+    expect(getViewEvent(0).name).toBe('Foo')
+    expect(getViewEvent(2).name).toBe('Foo')
+    expect(getViewEvent(2).id).toBe(initialViewId)
+    expect(getViewEvent(3).name).toBe('Baz')
+    expect(getViewEvent(3).id).not.toBe(initialViewId)
+  })
+
+  it('should create the initial view even when shouldCreateView is false', () => {
+    onNewLocation = (location) => {
+      if (location.pathname === '/foo') {
+        return { shouldCreateView: false }
+      }
+      if (location.pathname === '/bar') {
+        return { shouldCreateView: true }
+      }
+    }
+    setupBuilder.build()
+    history.pushState({}, '', '/bar')
+    history.pushState({}, '', '/foo')
+
+    expect(getViewEvent(0).location.pathname).toBe('/foo')
+    expect(getViewEvent(2).location.pathname).toBe('/bar')
+    expect(getViewEvent(4)).toBeUndefined()
+  })
+
+  it('should catch thrown errors', () => {
+    const fooError = 'Error on /foo path'
+    const barError = 'Error on /bar path'
+    onNewLocation = (location) => {
+      if (location.pathname === '/foo') {
+        throw fooError
+      }
+      if (location.pathname === '/bar') {
+        throw barError
+      }
+      return undefined
+    }
+    const consoleErrorSpy = spyOn(console, 'error')
+    setupBuilder.build()
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation threw an error:', fooError)
+    history.pushState({}, '', '/bar')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation threw an error:', barError)
   })
 })
 
@@ -622,14 +768,8 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
-        startTime: 0,
-      })
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -642,10 +782,7 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.LONG_TASK } as RumEvent & Context)
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -658,10 +795,7 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -674,10 +808,7 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ACTION } as RumEvent & Context)
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
@@ -690,24 +821,15 @@ describe('rum view measures', () => {
       expect(getHandledCount()).toEqual(1)
       expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       history.pushState({}, '', '/bar')
 
       expect(getHandledCount()).toEqual(3)
       expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
       expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       history.pushState({}, '', '/baz')
 
       expect(getHandledCount()).toEqual(5)
@@ -725,10 +847,7 @@ describe('rum view measures', () => {
         userActionCount: 0,
       })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
 
       expect(getHandledCount()).toEqual(1)
 
@@ -747,10 +866,7 @@ describe('rum view measures', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
-        startTime: 0,
-      })
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
 
       expect(getHandledCount()).toEqual(1)
 

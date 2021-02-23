@@ -1,4 +1,5 @@
 import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -9,6 +10,7 @@ import { Timings, trackTimings } from './trackTimings'
 
 export interface View {
   id: string
+  name?: string
   location: Location
   referrer: string
   timings: Timings
@@ -25,6 +27,7 @@ export interface View {
 
 export interface ViewCreatedEvent {
   id: string
+  name?: string
   location: Location
   referrer: string
   startTime: number
@@ -33,9 +36,21 @@ export interface ViewCreatedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(
+  location: Location,
+  lifeCycle: LifeCycle,
+  onNewLocation: NewLocationListener = () => undefined
+) {
+  onNewLocation = wrapOnNewLocation(onNewLocation)
   const startOrigin = 0
-  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
+  const initialView = newView(
+    lifeCycle,
+    location,
+    ViewLoadingType.INITIAL_LOAD,
+    document.referrer,
+    startOrigin,
+    onNewLocation(location)?.viewName
+  )
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -43,19 +58,20 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
     initialView.scheduleUpdate()
   })
 
-  trackHistory(onLocationChange)
-  trackHash(onLocationChange)
+  const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
+  const { stop: stopHashTracking } = trackHash(onLocationChange)
 
   function onLocationChange() {
-    if (currentView.isDifferentView(location)) {
+    const { viewName, shouldCreateView } = onNewLocation(location, currentView.getLocation()) || {}
+    if (shouldCreateView || (shouldCreateView === undefined && currentView.isDifferentView(location))) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
-    } else {
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
+      return
     }
+    currentView.updateLocation(location)
+    currentView.triggerUpdate()
   }
 
   // Renew view on session renewal
@@ -85,6 +101,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
     },
     stop: () => {
+      stopHistoryTracking()
+      stopHashTracking()
       stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
@@ -97,7 +115,8 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime: number = performance.now()
+  startTime: number = performance.now(),
+  name?: string
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -160,6 +179,7 @@ function newView(
       documentVersion,
       eventCounts,
       id,
+      name,
       loadingTime,
       loadingType,
       location,
@@ -185,6 +205,9 @@ function newView(
         location.pathname !== otherLocation.pathname ||
         (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== location.hash)
       )
+    },
+    getLocation() {
+      return location
     },
     triggerUpdate() {
       // cancel any pending view updates execution
@@ -227,11 +250,17 @@ function trackHistory(onHistoryChange: () => void) {
     originalReplaceState.apply(this, arguments as any)
     onHistoryChange()
   })
-  addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const stop = () => {
+    removeListener()
+    history.pushState = originalPushState
+    history.replaceState = originalReplaceState
+  }
+  return { stop }
 }
 
 function trackHash(onHashChange: () => void) {
-  addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
+  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
@@ -315,4 +344,16 @@ function sanitizeTiming(name: string) {
     console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
+}
+
+function wrapOnNewLocation(onNewLocation: NewLocationListener): NewLocationListener {
+  return (newLocation, oldLocation) => {
+    let result
+    try {
+      result = onNewLocation(newLocation, oldLocation)
+    } catch (err) {
+      console.error('onNewLocation threw an error:', err)
+    }
+    return result
+  }
 }

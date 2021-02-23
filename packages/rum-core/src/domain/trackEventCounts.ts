@@ -17,8 +17,8 @@ export function trackEventCounts(lifeCycle: LifeCycle, callback: (eventCounts: E
     userActionCount: 0,
   }
 
-  const subscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent }): void => {
-    switch (rawRumEvent.type) {
+  const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, ({ type }): void => {
+    switch (type) {
       case RumEventType.ERROR:
         eventCounts.errorCount += 1
         callback(eventCounts)

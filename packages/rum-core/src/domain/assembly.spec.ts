@@ -89,6 +89,56 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
+
+    it('should allow dismissing events other than views', () => {
+      beforeSend = () => false
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents.length).toBe(0)
+    })
+
+    it('should not allow dismissing view events', () => {
+      beforeSend = () => false
+      const consoleWarnSpy = spyOn(console, 'warn')
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+        startTime: 0,
+      })
+
+      expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        `Can't dismiss view events using beforeSend, use onNewLocation instead!`
+      )
+    })
   })
 
   describe('rum context', () => {

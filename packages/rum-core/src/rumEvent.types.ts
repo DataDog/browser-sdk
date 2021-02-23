@@ -114,6 +114,10 @@ export type RumErrorEvent = CommonProperties & {
      */
     readonly is_crash?: boolean
     /**
+     * The type of the error
+     */
+    readonly type?: string
+    /**
      * Resource properties of the error
      */
     readonly resource?: {
@@ -460,7 +464,7 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly load_event?: number
     /**
-     * User custom timings of the view
+     * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
      */
     readonly custom_timings?: {
       [k: string]: number
@@ -590,6 +594,10 @@ export interface CommonProperties {
      * URL of the view
      */
     url: string
+    /**
+     * User defined name of the view
+     */
+    name?: string
     [k: string]: unknown
   }
   /**
