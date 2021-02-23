@@ -2,6 +2,7 @@ import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Datacenter } from '../domain/transportConfiguration'
+import { catchErrors } from '../tools/catchErrors'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
@@ -48,6 +49,9 @@ export interface BuildEnv {
 }
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
+  if (userConfiguration.beforeSend) {
+    userConfiguration.beforeSend = catchErrors(userConfiguration.beforeSend, 'beforeSend threw an error:')
+  }
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
 
