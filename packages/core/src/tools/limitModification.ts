@@ -5,11 +5,11 @@ import { Context, deepClone } from './context'
  * - field path do not support array, 'a.b.c' only
  * - modifiable fields type must be string
  */
-export function limitModification<T extends Context>(
+export function limitModification<T extends Context, Result>(
   object: T,
   modifiableFieldPaths: string[],
-  modifier: (object: T) => boolean | void
-): boolean | void {
+  modifier: (object: T) => Result
+): Result | undefined {
   const clone = deepClone(object)
   let result
   try {
