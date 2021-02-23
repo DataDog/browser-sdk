@@ -77,21 +77,25 @@ export function startRumAssembly(
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
-
-        let beforeSendResult
-        if (configuration.beforeSend) {
-          beforeSendResult = limitModification(serverRumEvent, FIELDS_WITH_SENSITIVE_DATA, configuration.beforeSend)
+        if (shouldSend(serverRumEvent, configuration.beforeSend)) {
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
-        if (beforeSendResult === false && serverRumEvent.type !== RumEventType.VIEW) {
-          return
-        }
-        if (beforeSendResult === false) {
-          console.warn(`Can't dismiss view events using beforeSend, use onNewLocation instead!`)
-        }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }
   )
+}
+
+function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => any) {
+  if (beforeSend) {
+    const result = limitModification(event, FIELDS_WITH_SENSITIVE_DATA, beforeSend)
+    if (result === false && event.type !== RumEventType.VIEW) {
+      return false
+    }
+    if (result === false) {
+      console.warn(`Can't dismiss view events using beforeSend, use onNewLocation instead!`)
+    }
+  }
+  return true
 }
 
 function needToAssembleWithAction(
