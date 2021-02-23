@@ -17,6 +17,7 @@ describe('MutationObserverWrapper', () => {
   let sandbox: HTMLElement
   let mutationCallbackSpy: jasmine.Spy<MutationCallBack>
   let mutationController: MutationController
+  let mutationObserverWrapper: MutationObserverWrapper
 
   beforeEach(() => {
     if (isIE()) {
@@ -29,7 +30,7 @@ describe('MutationObserverWrapper', () => {
     mutationController = new MutationController()
     MockMutationObserver.setup()
 
-    new MutationObserverWrapper(
+    mutationObserverWrapper = new MutationObserverWrapper(
       mutationController,
       mutationCallbackSpy,
       DEFAULT_OPTIONS.inlineStylesheet,
@@ -41,6 +42,7 @@ describe('MutationObserverWrapper', () => {
 
   afterEach(() => {
     MockMutationObserver.cleanup()
+    mutationObserverWrapper.stop()
     sandbox.remove()
   })
 
@@ -112,7 +114,7 @@ function createNodeList(nodes: Node[]): NodeList {
 }
 
 class MockMutationObserver implements MutationObserver {
-  static instances: MockMutationObserver[] = []
+  static instance?: MockMutationObserver
   static originalMutationObserverDescriptor?: PropertyDescriptor
   private storedRecords: MutationRecord[] = []
 
@@ -133,19 +135,24 @@ class MockMutationObserver implements MutationObserver {
   }
 
   static emitRecords(records: MutationRecord[]) {
-    this.instances.forEach((instance) => instance.callback(records))
+    this.instance?.callback(records)
   }
 
   static storeRecords(records: MutationRecord[]) {
-    this.instances.forEach((instance) => instance.storedRecords.push(...records))
+    this.instance?.storedRecords.push(...records)
   }
 
   observe() {
-    MockMutationObserver.instances.push(this)
+    if (MockMutationObserver.instance) {
+      throw new Error('Only a single MockMutationObserver can observe at a time')
+    }
+    MockMutationObserver.instance = this
   }
 
   disconnect() {
-    MockMutationObserver.instances = MockMutationObserver.instances.filter((other) => other !== this)
+    if (MockMutationObserver.instance === this) {
+      MockMutationObserver.instance = undefined
+    }
   }
 
   takeRecords() {
