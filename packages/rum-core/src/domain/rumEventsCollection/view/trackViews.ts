@@ -1,4 +1,13 @@
-import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import {
+  addEventListener,
+  catchErrors,
+  DOM_EVENT,
+  generateUUID,
+  monitor,
+  noop,
+  ONE_MINUTE,
+  throttle,
+} from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
@@ -41,7 +50,7 @@ export function trackViews(
   lifeCycle: LifeCycle,
   onNewLocation: NewLocationListener = () => undefined
 ) {
-  onNewLocation = wrapOnNewLocation(onNewLocation)
+  onNewLocation = catchErrors(onNewLocation, 'onNewLocation threw an error:')
   const startOrigin = 0
   const initialView = newView(
     lifeCycle,
@@ -344,16 +353,4 @@ function sanitizeTiming(name: string) {
     console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
-}
-
-function wrapOnNewLocation(onNewLocation: NewLocationListener): NewLocationListener {
-  return (newLocation, oldLocation) => {
-    let result
-    try {
-      result = onNewLocation(newLocation, oldLocation)
-    } catch (err) {
-      console.error('onNewLocation threw an error:', err)
-    }
-    return result
-  }
 }
