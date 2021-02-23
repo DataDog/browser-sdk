@@ -75,7 +75,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     cookieOptions: CookieOptions
 
     service?: string
-    beforeSend?: (event: any) => void | boolean
+    beforeSend?: (event: any) => unknown
 
     isEnabled: (feature: string) => boolean
   }

@@ -85,7 +85,7 @@ export function startRumAssembly(
   )
 }
 
-function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => any) {
+function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => unknown) {
   if (beforeSend) {
     const result = limitModification(event, FIELDS_WITH_SENSITIVE_DATA, beforeSend)
     if (result === false && event.type !== RumEventType.VIEW) {

@@ -130,12 +130,12 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
       message
     )
     if (configuration.beforeSend) {
-      const result = limitModification(
+      const shouldSend = limitModification(
         contextualizedMessage as LogsEvent & Context,
         FIELDS_WITH_SENSITIVE_DATA,
         configuration.beforeSend
       )
-      if (result === false) {
+      if (shouldSend === false) {
         return undefined
       }
     }
