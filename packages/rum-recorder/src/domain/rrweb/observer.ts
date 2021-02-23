@@ -1,7 +1,7 @@
 import { noop, monitor, callMonitored } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { MutationBuffer, MutationController } from './mutation'
+import { MutationObserverWrapper, MutationController } from './mutation'
 import {
   Arguments,
   CanvasMutationCallback,
@@ -46,8 +46,8 @@ function initMutationObserver(
   maskInputOptions: MaskInputOptions,
   recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
-): MutationObserver {
-  const mutationBuffer = new MutationBuffer(
+) {
+  const mutationObserverWrapper = new MutationObserverWrapper(
     mutationController,
     cb,
     inlineStylesheet,
@@ -55,16 +55,7 @@ function initMutationObserver(
     recordCanvas,
     slimDOMOptions
   )
-  const observer = new MutationObserver(monitor(mutationBuffer.processMutations))
-  observer.observe(document, {
-    attributeOldValue: true,
-    attributes: true,
-    characterData: true,
-    characterDataOldValue: true,
-    childList: true,
-    subtree: true,
-  })
-  return observer
+  return () => mutationObserverWrapper.stop()
 }
 
 function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): ListenerHandler {
@@ -517,7 +508,7 @@ function mergeHooks(o: ObserverParam, hooks: HooksParam) {
 
 export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
   mergeHooks(o, hooks)
-  const mutationObserver = initMutationObserver(
+  const mutationHandler = initMutationObserver(
     o.mutationController,
     o.mutationCb,
     o.inlineStylesheet,
@@ -536,7 +527,7 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
-    mutationObserver.disconnect()
+    mutationHandler()
     mousemoveHandler()
     mouseInteractionHandler()
     scrollHandler()

@@ -254,6 +254,30 @@ describe('record', () => {
     })
   })
 
+  it('flushes pending mutation records before taking a full snapshot', (done) => {
+    const recordApi = record({
+      emit: emitSpy,
+    })
+    stop = recordApi.stop
+
+    sandbox.appendChild(document.createElement('div'))
+
+    recordApi.takeFullSnapshot()
+
+    waitEmitCalls(5, () => {
+      const records = getEmittedRecords()
+
+      expect(records[0].type).toEqual(RecordType.Meta)
+      expect(records[1].type).toEqual(RecordType.FullSnapshot)
+      expect(records[2].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[2] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+      expect(records[3].type).toEqual(RecordType.Meta)
+      expect(records[4].type).toEqual(RecordType.FullSnapshot)
+
+      expectNoExtraEmitCalls(done)
+    })
+  })
+
   function getEmittedRecords() {
     return emitSpy.calls.allArgs().map(([record]) => record)
   }

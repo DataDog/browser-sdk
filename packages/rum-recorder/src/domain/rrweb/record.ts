@@ -106,6 +106,9 @@ export function record(options: RecordOptions = {}): RecordAPI {
   }
 
   const takeFullSnapshot = (isCheckout = false) => {
+    const wasFrozen = mutationController.isFrozen()
+    mutationController.freeze() // don't allow any mirror modifications during snapshotting
+
     wrappedEmit(
       {
         data: {
@@ -118,8 +121,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
-    const wasFrozen = mutationController.isFrozen()
-    mutationController.freeze() // don't allow any mirror modifications during snapshotting
     const [node, idNodeMap] = snapshot(document, {
       inlineStylesheet,
       recordCanvas,
