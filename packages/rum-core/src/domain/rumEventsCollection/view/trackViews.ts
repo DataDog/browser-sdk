@@ -1,13 +1,4 @@
-import {
-  addEventListener,
-  catchErrors,
-  DOM_EVENT,
-  generateUUID,
-  monitor,
-  noop,
-  ONE_MINUTE,
-  throttle,
-} from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
@@ -50,7 +41,6 @@ export function trackViews(
   lifeCycle: LifeCycle,
   onNewLocation: NewLocationListener = () => undefined
 ) {
-  onNewLocation = catchErrors(onNewLocation, 'onNewLocation threw an error:')
   const startOrigin = 0
   const initialView = newView(
     lifeCycle,
