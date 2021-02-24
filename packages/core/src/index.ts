@@ -43,7 +43,7 @@ export {
   resetFetchProxy,
 } from './browser/fetchProxy'
 export { BoundedBuffer } from './tools/boundedBuffer'
-export { catchErrors } from './tools/catchErrors'
+export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 
