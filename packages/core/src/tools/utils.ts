@@ -44,37 +44,41 @@ export enum RequestType {
 }
 
 // use lodash API
-export function throttle(fn: () => void, wait: number, options?: { leading?: boolean; trailing?: boolean }) {
+export function throttle<T extends (...args: any[]) => void>(
+  fn: T,
+  wait: number,
+  options?: { leading?: boolean; trailing?: boolean }
+) {
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
-  let hasPendingExecution = false
+  let hasPendingExecutionWithParameters: Parameters<T> | undefined
   let pendingTimeoutId: number
 
   return {
-    throttled: () => {
+    throttled: (...parameters: Parameters<T>) => {
       if (inWaitPeriod) {
-        hasPendingExecution = true
+        hasPendingExecutionWithParameters = parameters
         return
       }
       if (needLeadingExecution) {
-        fn()
+        fn(...parameters)
       } else {
-        hasPendingExecution = true
+        hasPendingExecutionWithParameters = parameters
       }
       inWaitPeriod = true
       pendingTimeoutId = setTimeout(() => {
-        if (needTrailingExecution && hasPendingExecution) {
-          fn()
+        if (needTrailingExecution && hasPendingExecutionWithParameters) {
+          fn(...hasPendingExecutionWithParameters)
         }
         inWaitPeriod = false
-        hasPendingExecution = false
+        hasPendingExecutionWithParameters = undefined
       }, wait)
     },
     cancel: () => {
       clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
-      hasPendingExecution = false
+      hasPendingExecutionWithParameters = undefined
     },
   }
 }
