@@ -1,4 +1,4 @@
-import { noop, monitor, callMonitored } from '@datadog/browser-core'
+import { noop, monitor, callMonitored, throttle } from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
@@ -27,17 +27,7 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import {
-  forEach,
-  getWindowHeight,
-  getWindowWidth,
-  hookSetter,
-  isTouchEvent,
-  mirror,
-  on,
-  patch,
-  throttle,
-} from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror, on, patch } from './utils'
 
 function initMutationObserver(
   mutationController: MutationController,
@@ -65,8 +55,9 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
 
   const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
 
-  const updatePosition = throttle<MouseEvent | TouchEvent>(
-    monitor((evt) => {
+  const { throttled: updatePosition } = throttle(
+    monitor((evt: MouseEvent | TouchEvent) => {
+      console.log(evt)
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
       const position = {
@@ -122,8 +113,8 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: Sa
 }
 
 function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
-  const updatePosition = throttle<UIEvent>(
-    monitor((evt) => {
+  const { throttled: updatePosition } = throttle(
+    monitor((evt: UIEvent) => {
       if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
         return
       }
@@ -149,7 +140,7 @@ function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): Lis
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
-  const updateDimension = throttle(
+  const { throttled: updateDimension } = throttle(
     monitor(() => {
       const height = getWindowHeight()
       const width = getWindowWidth()
