@@ -49,9 +49,6 @@ export interface BuildEnv {
 }
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
-  if (userConfiguration.beforeSend) {
-    userConfiguration.beforeSend = catchErrors(userConfiguration.beforeSend, 'beforeSend threw an error:')
-  }
   const configuration = buildConfiguration(userConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
 
