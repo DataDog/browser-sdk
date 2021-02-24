@@ -77,11 +77,6 @@ export type SamplingStrategy = Partial<{
    */
   mousemove: boolean | number
   /**
-   * false means not to record mouse interaction events
-   * can also specify record some kinds of mouse interactions
-   */
-  mouseInteraction: boolean | { [key: string]: boolean | undefined }
-  /**
    * number is the throttle threshold of recording scroll
    */
   scroll: number
@@ -216,16 +211,15 @@ export interface MousePosition {
 }
 
 export enum MouseInteractions {
-  MouseUp,
-  MouseDown,
-  Click,
-  ContextMenu,
-  DblClick,
-  Focus,
-  Blur,
-  TouchStart,
-  TouchMove_Departed, // we will start a separate observer for touch move event
-  TouchEnd,
+  MouseUp = 0,
+  MouseDown = 1,
+  Click = 2,
+  ContextMenu = 3,
+  DblClick = 4,
+  Focus = 5,
+  Blur = 6,
+  TouchStart = 7,
+  TouchEnd = 9,
 }
 
 interface MouseInteractionParam {

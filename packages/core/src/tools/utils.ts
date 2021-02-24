@@ -8,11 +8,14 @@ export const ONE_KILO_BYTE = 1024
 export enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
+  DBL_CLICK = 'dblclick',
   KEY_DOWN = 'keydown',
   LOAD = 'load',
   POP_STATE = 'popstate',
   SCROLL = 'scroll',
   TOUCH_START = 'touchstart',
+  TOUCH_END = 'touchend',
+  TOUCH_MOVE = 'touchmove',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
   POINTER_DOWN = 'pointerdown',
@@ -21,8 +24,16 @@ export enum DOM_EVENT {
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
   MOUSE_DOWN = 'mousedown',
+  MOUSE_UP = 'mouseup',
+  MOUSE_MOVE = 'mousemove',
   FOCUS = 'focus',
   BLUR = 'blur',
+  CONTEXT_MENU = 'contextmenu',
+  RESIZE = 'resize',
+  CHANGE = 'change',
+  INPUT = 'input',
+  PLAY = 'play',
+  PAUSE = 'pause',
 }
 
 export enum ResourceType {

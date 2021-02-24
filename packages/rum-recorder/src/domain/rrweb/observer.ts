@@ -1,4 +1,12 @@
-import { noop, monitor, callMonitored, throttle } from '@datadog/browser-core'
+import {
+  noop,
+  monitor,
+  callMonitored,
+  throttle,
+  DOM_EVENT,
+  addEventListeners,
+  addEventListener,
+} from '@datadog/browser-core'
 import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
@@ -27,7 +35,7 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror, on, patch } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror, patch } from './utils'
 
 function initMutationObserver(
   mutationController: MutationController,
@@ -72,21 +80,26 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
       trailing: false,
     }
   )
-  const handlers = [on('mousemove', updatePosition), on('touchmove', updatePosition)]
-  return () => {
-    handlers.forEach((h) => h())
-  }
+
+  return addEventListeners(document, [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE], updatePosition, {
+    capture: true,
+    passive: true,
+  }).stop
 }
 
-function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: SamplingStrategy): ListenerHandler {
-  if (sampling.mouseInteraction === false) {
-    return noop
-  }
-  const disableMap: Record<string, boolean | undefined> =
-    sampling.mouseInteraction === true || sampling.mouseInteraction === undefined ? {} : sampling.mouseInteraction
-
-  const handlers: ListenerHandler[] = []
-  const getHandler = (eventKey: keyof typeof MouseInteractions) => (event: MouseEvent | TouchEvent) => {
+const eventTypeToMouseInteraction = {
+  [DOM_EVENT.MOUSE_UP]: MouseInteractions.MouseUp,
+  [DOM_EVENT.MOUSE_DOWN]: MouseInteractions.MouseDown,
+  [DOM_EVENT.CLICK]: MouseInteractions.Click,
+  [DOM_EVENT.CONTEXT_MENU]: MouseInteractions.ContextMenu,
+  [DOM_EVENT.DBL_CLICK]: MouseInteractions.DblClick,
+  [DOM_EVENT.FOCUS]: MouseInteractions.Focus,
+  [DOM_EVENT.BLUR]: MouseInteractions.Blur,
+  [DOM_EVENT.TOUCH_START]: MouseInteractions.TouchStart,
+  [DOM_EVENT.TOUCH_END]: MouseInteractions.TouchEnd,
+}
+function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHandler {
+  const handler = (event: MouseEvent | TouchEvent) => {
     if (nodeOrAncestorsShouldBeHidden(event.target as Node)) {
       return
     }
@@ -94,21 +107,15 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack, sampling: Sa
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
     cb({
       id,
-      type: MouseInteractions[eventKey],
+      type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,
     })
   }
-  ;(Object.keys(MouseInteractions) as Array<keyof typeof MouseInteractions>)
-    .filter((key) => Number.isNaN(Number(key)) && !key.endsWith('_Departed') && disableMap[key] !== false)
-    .forEach((eventKey: keyof typeof MouseInteractions) => {
-      const eventName = eventKey.toLowerCase()
-      const handler = getHandler(eventKey)
-      handlers.push(on(eventName, handler))
-    })
-  return () => {
-    handlers.forEach((h) => h())
-  }
+  return addEventListeners(document, Object.keys(eventTypeToMouseInteraction) as DOM_EVENT[], handler, {
+    capture: true,
+    passive: true,
+  }).stop
 }
 
 function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
@@ -135,7 +142,7 @@ function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): Lis
     }),
     sampling.scroll || 100
   )
-  return on('scroll', updatePosition)
+  return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
 }
 
 function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler {
@@ -150,7 +157,7 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
     }),
     200
   )
-  return on('resize', updateDimension, window)
+  return addEventListener(window, DOM_EVENT.RESIZE, updateDimension, { capture: true, passive: true }).stop
 }
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
@@ -161,7 +168,7 @@ function initInputObserver(
   maskInputFn: MaskInputFn | undefined,
   sampling: SamplingStrategy
 ): ListenerHandler {
-  function eventHandler(event: Event) {
+  function eventHandler(event: { target: EventTarget | null }) {
     const { target } = event
 
     if (
@@ -216,8 +223,12 @@ function initInputObserver(
     }
   }
 
-  const events = sampling.input === 'last' ? ['change'] : ['input', 'change']
-  const handlers: Array<ListenerHandler | HookResetter> = events.map((eventName) => on(eventName, eventHandler))
+  const events = sampling.input === 'last' ? [DOM_EVENT.CHANGE] : [DOM_EVENT.INPUT, DOM_EVENT.CHANGE]
+  const { stop: stopEventListeners } = addEventListeners(document, events, eventHandler, {
+    capture: true,
+    passive: true,
+  })
+
   const propertyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
   const hookProperties: Array<[HTMLElement, string]> = [
     [HTMLInputElement.prototype, 'value'],
@@ -228,13 +239,14 @@ function initInputObserver(
     [HTMLSelectElement.prototype, 'selectedIndex'],
   ]
 
+  const hookResetters: HookResetter[] = []
   if (propertyDescriptor && propertyDescriptor.set) {
-    handlers.push(
+    hookResetters.push(
       ...hookProperties.map((p) =>
         hookSetter<HTMLElement>(p[0], p[1], {
           set: monitor(function () {
             // mock to a normal event
-            eventHandler(({ target: this } as unknown) as Event)
+            eventHandler({ target: this })
           }),
         })
       )
@@ -242,7 +254,8 @@ function initInputObserver(
   }
 
   return () => {
-    handlers.forEach((h) => h())
+    hookResetters.forEach((h) => h())
+    stopEventListeners()
   }
 }
 
@@ -284,20 +297,17 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 }
 
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
-  const handler = (type: 'play' | 'pause') => (event: Event) => {
+  const handler = (event: Event) => {
     const { target } = event
     if (!target || nodeOrAncestorsShouldBeHidden(target as Node)) {
       return
     }
     mediaInteractionCb({
       id: mirror.getId(target as INode),
-      type: type === 'play' ? MediaInteractions.Play : MediaInteractions.Pause,
+      type: event.type === 'play' ? MediaInteractions.Play : MediaInteractions.Pause,
     })
   }
-  const handlers = [on('play', handler('play')), on('pause', handler('pause'))]
-  return () => {
-    handlers.forEach((h) => h())
-  }
+  return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
 function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler {
@@ -507,7 +517,7 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
     o.slimDOMOptions
   )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb, o.sampling)
+  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
   const scrollHandler = initScrollObserver(o.scrollCb, o.sampling)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
   const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
