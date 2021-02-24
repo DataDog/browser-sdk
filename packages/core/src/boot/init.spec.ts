@@ -32,7 +32,7 @@ describe('defineGlobal', () => {
 
   it('catches the errors thrown by the queued callbacks', () => {
     const myError = 'Ooops!'
-    const fn = () => {
+    const onReady = () => {
       throw myError
     }
     const myGlobal: any = {
