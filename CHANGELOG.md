@@ -16,6 +16,13 @@
 
 ---
 
+## v2.5.5
+
+- 🐛 [REPLAY-187] flush pending records before taking a fullsnapshot ([#742](https://github.com/DataDog/browser-sdk/pull/742))
+- ✨ [RUMF-854] Enable beforeSend to dismiss events ([#743](https://github.com/DataDog/browser-sdk/pull/743))
+- ✅ [RUMF-815] import RRWeb integration tests ([#738](https://github.com/DataDog/browser-sdk/pull/738))
+- ✨ [RUMF-847] Add onNewLocation to configuration ([#724](https://github.com/DataDog/browser-sdk/pull/724))
+
 ## v2.5.4
 
 - 🔊 Add clock drift monitoring ([#736](https://github.com/DataDog/browser-sdk/pull/736))
