@@ -397,6 +397,15 @@ export function addEventListeners(
   }
 }
 
+export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
+  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
+    callback()
+  } else {
+    const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
+    addEventListener(window, eventName, callback, { once: true })
+  }
+}
+
 // Define those types for TS 3.0 compatibility
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
 export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown

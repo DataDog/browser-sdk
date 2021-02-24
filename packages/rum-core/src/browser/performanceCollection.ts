@@ -1,11 +1,11 @@
 import {
-  addEventListener,
   addEventListeners,
   Configuration,
   DOM_EVENT,
   getRelativeTime,
   isNumber,
   monitor,
+  runOnReadyState,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
@@ -245,15 +245,6 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
         callback(timing)
       }
     }
-  }
-}
-
-function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
-  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
-    callback()
-  } else {
-    const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
-    addEventListener(window, eventName, callback, { once: true })
   }
 }
 
