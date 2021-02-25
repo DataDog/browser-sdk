@@ -352,10 +352,10 @@ interface AddEventListenerOptions {
  *
  * * returns a `stop` function to remove the listener
  */
-export function addEventListener(
+export function addEventListener<E extends Event>(
   emitter: EventEmitter,
   event: DOM_EVENT,
-  listener: (event: Event) => void,
+  listener: (event: E) => void,
   options?: AddEventListenerOptions
 ) {
   return addEventListeners(emitter, [event], listener, options)
@@ -373,24 +373,24 @@ export function addEventListener(
  *
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
-export function addEventListeners(
+export function addEventListeners<E extends Event>(
   emitter: EventEmitter,
   events: DOM_EVENT[],
-  listener: (event: Event) => void,
+  listener: (event: E) => void,
   { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
 ) {
-  const wrapedListener = monitor(
+  const wrappedListener = monitor(
     once
       ? (event: Event) => {
           stop()
-          listener(event)
+          listener(event as E)
         }
-      : listener
+      : (listener as (event: Event) => void)
   )
 
   const options = passive ? { capture, passive } : capture
-  events.forEach((event) => emitter.addEventListener(event, wrapedListener, options))
-  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrapedListener, options))
+  events.forEach((event) => emitter.addEventListener(event, wrappedListener, options))
+  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrappedListener, options))
 
   return {
     stop,
