@@ -43,7 +43,7 @@ export interface UserConfiguration {
   internalMonitoringApiKey?: string
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
-  resourceSampleRate?: number
+  resourceSampleRate?: number // deprecated
   datacenter?: Datacenter // deprecated
   site?: string
   enableExperimentalFeatures?: string[]
