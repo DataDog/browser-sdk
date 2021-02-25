@@ -52,7 +52,7 @@ export function startRum(
     configuration,
     session,
     getCommonContext,
-    userConfiguration.onNewLocation && catchUserErrors(userConfiguration.onNewLocation, 'onNewLocation threw an error:')
+    userConfiguration.onNewLocation
   )
 
   startRequestCollection(lifeCycle, configuration)
@@ -87,7 +87,11 @@ export function startRumEventCollection(
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming } = startViewCollection(lifeCycle, location, onNewLocation)
+  const { addTiming, stop: stopViewCollection } = startViewCollection(
+    lifeCycle,
+    location,
+    onNewLocation && catchUserErrors(onNewLocation, 'onNewLocation threw an error:')
+  )
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
@@ -99,6 +103,7 @@ export function startRumEventCollection(
     addTiming,
 
     stop() {
+      stopViewCollection()
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
