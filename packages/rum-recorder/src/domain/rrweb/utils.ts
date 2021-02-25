@@ -1,6 +1,6 @@
 import { noop, monitor } from '@datadog/browser-core'
 import { IGNORED_NODE, INode } from '../rrweb-snapshot'
-import { HookResetter, ListenerHandler, Mirror, ThrottleOptions } from './types'
+import { HookResetter, ListenerHandler, Mirror } from './types'
 
 export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
   const monitoredFn = monitor(fn)
@@ -33,34 +33,6 @@ export const mirror: Mirror = {
   has(id) {
     return mirror.map.hasOwnProperty(id)
   },
-}
-
-// copy from underscore and modified
-export function throttle<T>(func: (arg: T) => void, wait: number, options: ThrottleOptions = {}) {
-  let timeout: number | undefined
-  let previous = 0
-  return function (this: unknown) {
-    const now = Date.now()
-    if (!previous && options.leading === false) {
-      previous = now
-    }
-    const remaining = wait - (now - previous)
-    const args = (arguments as unknown) as [T]
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout)
-        timeout = undefined
-      }
-      previous = now
-      func.apply(this, args)
-    } else if (!timeout && options.trailing !== false) {
-      timeout = setTimeout(() => {
-        previous = options.leading === false ? 0 : Date.now()
-        timeout = undefined
-        func.apply(this, args)
-      }, remaining)
-    }
-  }
 }
 
 export function hookSetter<T>(
