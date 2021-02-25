@@ -1,5 +1,6 @@
 import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
+import { catchUserErrors } from '../tools/catchUserErrors'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 import { computeTransportConfiguration, Datacenter } from './transportConfiguration'
 
@@ -105,7 +106,8 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
     : []
 
   const configuration: Configuration = {
-    beforeSend: userConfiguration.beforeSend,
+    beforeSend:
+      userConfiguration.beforeSend && catchUserErrors(userConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(userConfiguration),
     isEnabled: (feature: string) => includes(enableExperimentalFeatures, feature),
     service: userConfiguration.service,

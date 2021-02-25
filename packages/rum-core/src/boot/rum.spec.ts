@@ -5,7 +5,7 @@ import { RumPerformanceNavigationTiming } from '../browser/performanceCollection
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { RumEvent } from '../rumEvent.types'
-import { startRumEventCollection } from './rum'
+import { NewLocationListener, startRumEventCollection } from './rum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEvent[] = []
@@ -182,5 +182,44 @@ describe('rum view url', () => {
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
+  })
+})
+
+describe('rum onNewLocation', () => {
+  let setupBuilder: TestSetupBuilder
+  let serverRumEvents: RumEvent[]
+  let onNewLocation: NewLocationListener
+
+  beforeEach(() => {
+    setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
+      serverRumEvents = collectServerEvents(lifeCycle)
+      return startRumEventCollection(
+        applicationId,
+        location,
+        lifeCycle,
+        configuration,
+        session,
+        () => ({
+          context: {},
+          user: {},
+        }),
+        onNewLocation
+      )
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should catch errors thrown by onNewLocation', () => {
+    const myError = 'Ooops!'
+    onNewLocation = () => {
+      throw myError
+    }
+    const consoleErrorSpy = spyOn(console, 'error')
+    setupBuilder.withFakeLocation('http://foo.com/').build()
+    expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('onNewLocation threw an error:', myError)
   })
 })
