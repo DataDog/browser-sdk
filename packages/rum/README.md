@@ -116,7 +116,6 @@ window.DD_RUM.init({
   applicationId: 'XXX',
   clientToken: 'XXX',
   site: 'datadoghq.com',
-  resourceSampleRate: 100,
   sampleRate: 100,
 })
 ```
@@ -136,7 +135,6 @@ The following parameters are available:
 | `env`                   | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc.                                |
 | `version`               | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.                                |
 | `trackInteractions`     | Boolean | No       | `false`         | Enables [automatic collection of users actions][6].                                                      |
-| `resourceSampleRate`    | Number  | No       | `100`           | The percentage of tracked sessions with resources collection: `100` for all, `0` for none.               |
 | `sampleRate`            | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. |
 | `silentMultipleInit`    | Boolean | No       | `false`         | Initialization fails silently if Datadog's RUM is already initialized on the page.                       |
 | `proxyHost`             | String  | No       |                 | Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.       |
@@ -159,7 +157,6 @@ init(configuration: {
     applicationId: string,
     clientToken: string,
     site?: string,
-    resourceSampleRate?: number
     sampleRate?: number,
     silentMultipleInit?: boolean,
     trackInteractions?: boolean,
