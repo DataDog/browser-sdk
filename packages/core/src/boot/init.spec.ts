@@ -37,7 +37,7 @@ describe('defineGlobal', () => {
     }
     const myGlobal: any = {
       foo: {
-        q: [fn],
+        q: [onReady],
       },
     }
     const consoleErrorSpy = spyOn(console, 'error')
