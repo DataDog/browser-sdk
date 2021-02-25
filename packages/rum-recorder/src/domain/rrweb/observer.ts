@@ -57,7 +57,6 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
 
   const { throttled: updatePosition } = throttle(
     monitor((evt: MouseEvent | TouchEvent) => {
-      console.log(evt)
       const { target } = evt
       const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
       const position = {

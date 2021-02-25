@@ -52,33 +52,33 @@ export function throttle<T extends (...args: any[]) => void>(
   const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
   const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
-  let hasPendingExecutionWithParameters: Parameters<T> | undefined
+  let pendingExecutionWithParameters: Parameters<T> | undefined
   let pendingTimeoutId: number
 
   return {
     throttled: (...parameters: Parameters<T>) => {
       if (inWaitPeriod) {
-        hasPendingExecutionWithParameters = parameters
+        pendingExecutionWithParameters = parameters
         return
       }
       if (needLeadingExecution) {
         fn(...parameters)
       } else {
-        hasPendingExecutionWithParameters = parameters
+        pendingExecutionWithParameters = parameters
       }
       inWaitPeriod = true
       pendingTimeoutId = setTimeout(() => {
-        if (needTrailingExecution && hasPendingExecutionWithParameters) {
-          fn(...hasPendingExecutionWithParameters)
+        if (needTrailingExecution && pendingExecutionWithParameters) {
+          fn(...pendingExecutionWithParameters)
         }
         inWaitPeriod = false
-        hasPendingExecutionWithParameters = undefined
+        pendingExecutionWithParameters = undefined
       }, wait)
     },
     cancel: () => {
       clearTimeout(pendingTimeoutId)
       inWaitPeriod = false
-      hasPendingExecutionWithParameters = undefined
+      pendingExecutionWithParameters = undefined
     },
   }
 }
