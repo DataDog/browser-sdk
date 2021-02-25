@@ -5,7 +5,7 @@ export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
 export const ONE_KILO_BYTE = 1024
 
-export enum DOM_EVENT {
+export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
   DBL_CLICK = 'dblclick',
