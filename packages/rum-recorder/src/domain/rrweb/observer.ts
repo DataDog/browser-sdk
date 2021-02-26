@@ -304,7 +304,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
     }
     mediaInteractionCb({
       id: mirror.getId(target as INode),
-      type: event.type === 'play' ? MediaInteractions.Play : MediaInteractions.Pause,
+      type: event.type === DOM_EVENT.PLAY ? MediaInteractions.Play : MediaInteractions.Pause,
     })
   }
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
