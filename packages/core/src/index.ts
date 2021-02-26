@@ -30,6 +30,7 @@ export {
 } from './domain/sessionManagement'
 export { HttpRequest, Batch } from './transport/transport'
 export * from './tools/urlPolyfill'
+export * from './tools/timeUtils'
 export * from './tools/utils'
 export { ErrorSource, formatUnknownError, RawError } from './tools/error'
 export { combine, Context, ContextArray, ContextValue, deepClone } from './tools/context'

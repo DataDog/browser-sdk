@@ -120,13 +120,6 @@ export function round(num: number, decimals: 0 | 1 | 2 | 3) {
   return +num.toFixed(decimals)
 }
 
-export function msToNs<T>(duration: number | T): number | T {
-  if (typeof duration !== 'number') {
-    return duration
-  }
-  return round(duration * 1e6, 0)
-}
-
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
 
@@ -207,34 +200,8 @@ export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }
 
-export function isNumber(value: unknown): value is number {
+export function isNumber<T = number>(value: unknown): value is T {
   return typeof value === 'number'
-}
-
-/**
- * Get the time since the navigation was started.
- *
- * Note: this does not use `performance.timeOrigin` because it doesn't seem to reflect the actual
- * time on which the navigation has started: it may be much farther in the past, at least in Firefox 71.
- * Related issue in Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1429926
- */
-export function getRelativeTime(timestamp: number) {
-  return timestamp - getNavigationStart()
-}
-
-export function getTimestamp(relativeTime: number) {
-  return Math.floor(getNavigationStart() + relativeTime)
-}
-
-/**
- * Navigation start slightly change on some rare cases
- */
-let navigationStart: number | undefined
-export function getNavigationStart() {
-  if (navigationStart === undefined) {
-    navigationStart = performance.timing.navigationStart
-  }
-  return navigationStart
 }
 
 export function objectValues(object: { [key: string]: unknown }) {
