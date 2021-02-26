@@ -78,7 +78,7 @@ function proxyXhr() {
       // so it should stay compatible with older versions
       this._datadog_xhr = {
         method,
-        startTime: -1, // computed in send call
+        startTime: -1 as RelativeTime, // computed in send call
         url: normalizeUrl(url),
       }
     })
@@ -88,7 +88,8 @@ function proxyXhr() {
   XMLHttpRequest.prototype.send = function (this: BrowserXHR) {
     callMonitored(() => {
       if (this._datadog_xhr) {
-        this._datadog_xhr.startTime = performance.now()
+        const xhrContext = this._datadog_xhr as XhrStartContext & Partial<XhrCompleteContext>
+        xhrContext.startTime = performance.now() as RelativeTime
 
         const originalOnreadystatechange = this.onreadystatechange
 
@@ -109,16 +110,16 @@ function proxyXhr() {
           }
           hasBeenReported = true
 
-          this._datadog_xhr.duration = performance.now() - this._datadog_xhr.startTime
-          this._datadog_xhr.response = this.response as string | undefined
-          this._datadog_xhr.status = this.status
+          xhrContext.duration = (performance.now() - xhrContext.startTime) as Duration
+          xhrContext.response = this.response as string | undefined
+          xhrContext.status = this.status
 
-          onRequestCompleteCallbacks.forEach((callback) => callback(this._datadog_xhr as XhrCompleteContext))
+          onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
         }
 
         this.addEventListener('loadend', monitor(reportXhr))
 
-        beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr, this))
+        beforeSendCallbacks.forEach((callback) => callback(xhrContext, this))
       }
     })
 

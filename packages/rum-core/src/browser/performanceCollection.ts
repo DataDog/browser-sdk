@@ -268,11 +268,11 @@ function computeRelativePerformanceTiming() {
   const result: Partial<IndexedPerformanceTiming> = {}
   const timing = performance.timing as IndexedPerformanceTiming
   for (const key in timing) {
-    if (isNumber(timing[key])) {
-      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key] as number)
+    if (isNumber<TimeStamp>(timing[key])) {
+      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key])
     }
   }
-  return result as PerformanceTiming
+  return result as Omit<RumPerformanceResourceTiming, 'entryType'> & Omit<RumPerformanceNavigationTiming, 'entryType'>
 }
 
 function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configuration, entries: PerformanceEntry[]) {
@@ -286,7 +286,7 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
       entry.entryType === 'first-input' ||
       entry.entryType === 'layout-shift'
     ) {
-      handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
+      handleRumPerformanceEntry(lifeCycle, configuration, (entry as unknown) as RumPerformanceEntry)
     }
   })
 }

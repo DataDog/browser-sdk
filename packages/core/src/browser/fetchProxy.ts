@@ -89,7 +89,7 @@ function proxyFetch() {
 function beforeSend(input: RequestInfo, init?: RequestInit) {
   const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
   const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-  const startTime = performance.now()
+  const startTime = performance.now() as RelativeTime
 
   const context: FetchStartContext = {
     init,
@@ -104,9 +104,9 @@ function beforeSend(input: RequestInfo, init?: RequestInit) {
   return context
 }
 
-function afterSend(responsePromise: Promise<Response>, context: FetchStartContext) {
+function afterSend(responsePromise: Promise<Response>, context: FetchStartContext & Partial<FetchCompleteContext>) {
   const reportFetch = async (response: Response | Error) => {
-    context.duration = performance.now() - context.startTime
+    context.duration = (performance.now() - context.startTime) as Duration
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0
