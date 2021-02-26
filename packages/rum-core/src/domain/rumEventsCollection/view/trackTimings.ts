@@ -1,16 +1,16 @@
-import { addEventListeners, DOM_EVENT, EventEmitter } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
 export interface Timings {
-  firstContentfulPaint?: number
-  domInteractive?: number
-  domContentLoaded?: number
-  domComplete?: number
-  loadEvent?: number
-  largestContentfulPaint?: number
-  firstInputDelay?: number
-  firstInputTime?: number
+  firstContentfulPaint?: Duration
+  domInteractive?: Duration
+  domContentLoaded?: Duration
+  domComplete?: Duration
+  loadEvent?: Duration
+  largestContentfulPaint?: Duration
+  firstInputDelay?: Duration
+  firstInputTime?: Duration
 }
 
 export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {

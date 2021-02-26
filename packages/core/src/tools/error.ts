@@ -1,8 +1,9 @@
 import { StackTrace } from '../domain/tracekit'
+import { RelativeTime } from './timeUtils'
 import { jsonStringify } from './utils'
 
 export interface RawError {
-  startTime: number
+  startTime: RelativeTime
   message: string
   type?: string
   stack?: string

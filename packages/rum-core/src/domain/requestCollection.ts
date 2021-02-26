@@ -1,8 +1,9 @@
 import {
   Configuration,
+  Duration,
   FetchCompleteContext,
   FetchStartContext,
-  Observable,
+  RelativeTime,
   RequestType,
   startFetchProxy,
   startXhrProxy,
@@ -35,13 +36,11 @@ export interface RequestCompleteEvent {
   status: number
   response?: string
   responseType?: string
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
 }
-
-export type RequestObservables = [Observable<RequestStartEvent>, Observable<RequestCompleteEvent>]
 
 let nextRequestIndex = 1
 

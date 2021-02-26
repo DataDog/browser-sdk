@@ -1,10 +1,11 @@
+import { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
 interface Timing {
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
 }
 
 /**

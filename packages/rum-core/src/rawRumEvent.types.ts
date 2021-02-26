@@ -1,4 +1,4 @@
-import { Context, ErrorSource, ResourceType } from '@datadog/browser-core'
+import { Context, Duration, ErrorSource, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
 
 export enum RumEventType {
   ACTION = 'action',
@@ -9,12 +9,12 @@ export enum RumEventType {
 }
 
 export interface RawRumResourceEvent {
-  date: number
+  date: TimeStamp
   type: RumEventType.RESOURCE
   resource: {
     type: ResourceType
     id?: string // only for traced requests
-    duration: number
+    duration: ServerDuration
     url: string
     method?: string
     status_code?: number
@@ -33,12 +33,12 @@ export interface RawRumResourceEvent {
 }
 
 export interface PerformanceResourceDetailsElement {
-  duration: number
-  start: number
+  duration: ServerDuration
+  start: ServerDuration
 }
 
 export interface RawRumErrorEvent {
-  date: number
+  date: TimeStamp
   type: RumEventType.ERROR
   error: {
     resource?: {
@@ -54,22 +54,24 @@ export interface RawRumErrorEvent {
 }
 
 export interface RawRumViewEvent {
-  date: number
+  date: TimeStamp
   type: RumEventType.VIEW
   view: {
     loading_type: ViewLoadingType
-    first_contentful_paint?: number
-    first_input_delay?: number
-    first_input_time?: number
+    first_contentful_paint?: ServerDuration
+    first_input_delay?: ServerDuration
+    first_input_time?: ServerDuration
     cumulative_layout_shift?: number
-    custom_timings?: ViewCustomTimings
-    largest_contentful_paint?: number
-    dom_interactive?: number
-    dom_content_loaded?: number
-    dom_complete?: number
-    load_event?: number
-    loading_time?: number
-    time_spent: number
+    custom_timings?: {
+      [key: string]: ServerDuration
+    }
+    largest_contentful_paint?: ServerDuration
+    dom_interactive?: ServerDuration
+    dom_content_loaded?: ServerDuration
+    dom_complete?: ServerDuration
+    load_event?: ServerDuration
+    loading_time?: ServerDuration
+    time_spent: ServerDuration
     is_active: boolean
     name?: string
     error: Count
@@ -88,7 +90,7 @@ export enum ViewLoadingType {
 }
 
 export interface ViewCustomTimings {
-  [key: string]: number
+  [key: string]: Duration
 }
 
 interface Count {
@@ -96,20 +98,20 @@ interface Count {
 }
 
 export interface RawRumLongTaskEvent {
-  date: number
+  date: TimeStamp
   type: RumEventType.LONG_TASK
   long_task: {
-    duration: number
+    duration: ServerDuration
   }
 }
 
 export interface RawRumActionEvent {
-  date?: number
+  date: TimeStamp
   type: RumEventType.ACTION
   action: {
     id?: string
     type: ActionType
-    loading_time?: number
+    loading_time?: ServerDuration
     error?: Count
     long_task?: Count
     resource?: Count
@@ -132,7 +134,7 @@ export type RawRumEvent =
   | RawRumActionEvent
 
 export interface RumContext {
-  date: number
+  date: TimeStamp
   application: {
     id: string
   }

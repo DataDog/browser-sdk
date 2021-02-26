@@ -3,9 +3,12 @@ import {
   addEventListeners,
   Configuration,
   DOM_EVENT,
+  Duration,
   getRelativeTime,
   isNumber,
   monitor,
+  RelativeTime,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
@@ -16,52 +19,52 @@ export interface RumPerformanceResourceTiming {
   entryType: 'resource'
   initiatorType: string
   name: string
-  startTime: number
-  duration: number
-  fetchStart: number
-  domainLookupStart: number
-  domainLookupEnd: number
-  connectStart: number
-  secureConnectionStart: number
-  connectEnd: number
-  requestStart: number
-  responseStart: number
-  responseEnd: number
-  redirectStart: number
-  redirectEnd: number
+  startTime: RelativeTime
+  duration: Duration
+  fetchStart: RelativeTime
+  domainLookupStart: RelativeTime
+  domainLookupEnd: RelativeTime
+  connectStart: RelativeTime
+  secureConnectionStart: RelativeTime
+  connectEnd: RelativeTime
+  requestStart: RelativeTime
+  responseStart: RelativeTime
+  responseEnd: RelativeTime
+  redirectStart: RelativeTime
+  redirectEnd: RelativeTime
   decodedBodySize: number
   traceId?: string
 }
 
 export interface RumPerformanceLongTaskTiming {
   entryType: 'longtask'
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
 }
 
 export interface RumPerformancePaintTiming {
   entryType: 'paint'
   name: 'first-paint' | 'first-contentful-paint'
-  startTime: number
+  startTime: RelativeTime
 }
 
 export interface RumPerformanceNavigationTiming {
   entryType: 'navigation'
-  domComplete: number
-  domContentLoadedEventEnd: number
-  domInteractive: number
-  loadEventEnd: number
+  domComplete: RelativeTime
+  domContentLoadedEventEnd: RelativeTime
+  domInteractive: RelativeTime
+  loadEventEnd: RelativeTime
 }
 
 export interface RumLargestContentfulPaintTiming {
   entryType: 'largest-contentful-paint'
-  startTime: number
+  startTime: RelativeTime
 }
 
 export interface RumFirstInputTiming {
   entryType: 'first-input'
-  startTime: number
-  processingStart: number
+  startTime: RelativeTime
+  processingStart: RelativeTime
 }
 
 export interface RumLayoutShiftTiming {

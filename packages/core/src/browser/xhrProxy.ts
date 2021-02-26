@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { Duration, RelativeTime } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -17,7 +18,7 @@ export interface XhrProxy<
 export interface XhrStartContext {
   method: string
   url: string
-  startTime: number
+  startTime: RelativeTime
 
   /**
    * allow clients to enhance the context
@@ -26,7 +27,7 @@ export interface XhrStartContext {
 }
 
 export interface XhrCompleteContext extends XhrStartContext {
-  duration: number
+  duration: Duration
   status: number
   response: string | undefined
 }

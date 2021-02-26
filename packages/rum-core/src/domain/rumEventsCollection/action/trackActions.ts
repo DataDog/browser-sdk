@@ -1,4 +1,4 @@
-import { addEventListener, Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
+import { addEventListener, Context, DOM_EVENT, Duration, generateUUID, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -16,7 +16,7 @@ export interface ActionCounts {
 export interface CustomAction {
   type: ActionType.CUSTOM
   name: string
-  startTime: number
+  startTime: RelativeTime
   context?: Context
 }
 
@@ -24,14 +24,14 @@ export interface AutoAction {
   type: AutoActionType
   id: string
   name: string
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
   counts: ActionCounts
 }
 
 export interface AutoActionCreatedEvent {
   id: string
-  startTime: number
+  startTime: RelativeTime
 }
 
 export function trackActions(lifeCycle: LifeCycle) {

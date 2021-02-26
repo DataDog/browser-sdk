@@ -1,4 +1,14 @@
-import { addEventListener, DOM_EVENT, generateUUID, monitor, noop, ONE_MINUTE, throttle } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  Duration,
+  generateUUID,
+  monitor,
+  noop,
+  ONE_MINUTE,
+  RelativeTime,
+  throttle,
+} from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
@@ -17,10 +27,10 @@ export interface View {
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
   isActive: boolean
-  loadingTime?: number | undefined
+  loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
 }
@@ -30,7 +40,7 @@ export interface ViewCreatedEvent {
   name?: string
   location: Location
   referrer: string
-  startTime: number
+  startTime: RelativeTime
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000

@@ -1,6 +1,7 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
+import { Duration, RelativeTime } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<
@@ -13,7 +14,7 @@ export interface FetchProxy<
 
 export interface FetchStartContext {
   method: string
-  startTime: number
+  startTime: RelativeTime
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -25,7 +26,7 @@ export interface FetchStartContext {
 }
 
 export interface FetchCompleteContext extends FetchStartContext {
-  duration: number
+  duration: Duration
   status: number
   response: string
   responseType?: string

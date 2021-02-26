@@ -3,16 +3,17 @@ import {
   Configuration,
   Context,
   formatUnknownError,
-  getTimestamp,
+  getTimeStamp,
   Observable,
   RawError,
+  RelativeTime,
   startAutomaticErrorCollection,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
-  startTime: number
+  startTime: RelativeTime
   error: unknown
   context?: Context
   source: ProvidedSource

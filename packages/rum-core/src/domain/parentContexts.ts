@@ -1,4 +1,4 @@
-import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { monitor, ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -10,8 +10,8 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 
 interface PreviousContext<T> {
-  startTime: number
-  endTime: number
+  startTime: RelativeTime
+  endTime: RelativeTime
   context: T
 }
 
