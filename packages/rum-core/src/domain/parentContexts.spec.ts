@@ -1,3 +1,4 @@
+import { Duration, RelativeTime } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
 import {
@@ -11,13 +12,13 @@ import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 function stubActionWithDuration(duration: number): AutoAction {
-  const action: Partial<AutoAction> = { duration }
+  const action: Partial<AutoAction> = { duration: duration as Duration }
   return action as AutoAction
 }
 
 describe('parentContexts', () => {
   const FAKE_ID = 'fake'
-  const startTime = 10
+  const startTime = 10 as RelativeTime
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return { location, startTime, id: FAKE_ID, referrer: 'http://foo.com', ...partialViewCreatedEvent }
@@ -65,22 +66,37 @@ describe('parentContexts', () => {
     it('should return the view context corresponding to startTime', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 30, id: 'view 3' }))
+      lifeCycle.notify(
+        LifeCycleEventType.VIEW_CREATED,
+        buildViewCreatedEvent({ startTime: 10 as RelativeTime, id: 'view 1' })
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.VIEW_CREATED,
+        buildViewCreatedEvent({ startTime: 20 as RelativeTime, id: 'view 2' })
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.VIEW_CREATED,
+        buildViewCreatedEvent({ startTime: 30 as RelativeTime, id: 'view 3' })
+      )
 
-      expect(parentContexts.findView(15)!.view.id).toEqual('view 1')
-      expect(parentContexts.findView(20)!.view.id).toEqual('view 2')
-      expect(parentContexts.findView(40)!.view.id).toEqual('view 3')
+      expect(parentContexts.findView(15 as RelativeTime)!.view.id).toEqual('view 1')
+      expect(parentContexts.findView(20 as RelativeTime)!.view.id).toEqual('view 2')
+      expect(parentContexts.findView(40 as RelativeTime)!.view.id).toEqual('view 3')
     })
 
     it('should return undefined when no view context corresponding to startTime', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 10, id: 'view 1' }))
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ startTime: 20, id: 'view 2' }))
+      lifeCycle.notify(
+        LifeCycleEventType.VIEW_CREATED,
+        buildViewCreatedEvent({ startTime: 10 as RelativeTime, id: 'view 1' })
+      )
+      lifeCycle.notify(
+        LifeCycleEventType.VIEW_CREATED,
+        buildViewCreatedEvent({ startTime: 20 as RelativeTime, id: 'view 2' })
+      )
 
-      expect(parentContexts.findView(5)).not.toBeDefined()
+      expect(parentContexts.findView(5 as RelativeTime)).not.toBeDefined()
     })
 
     it('should replace the current view context on VIEW_CREATED', () => {
@@ -144,29 +160,29 @@ describe('parentContexts', () => {
     it('should return the action context corresponding to startTime', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10 as RelativeTime, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 30, id: 'action 2' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 30 as RelativeTime, id: 'action 2' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 50, id: 'action 3' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 50 as RelativeTime, id: 'action 3' })
 
-      expect(parentContexts.findAction(15)!.action.id).toBe('action 1')
-      expect(parentContexts.findAction(20)!.action.id).toBe('action 1')
-      expect(parentContexts.findAction(30)!.action.id).toBe('action 2')
-      expect(parentContexts.findAction(55)!.action.id).toBe('action 3')
+      expect(parentContexts.findAction(15 as RelativeTime)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(20 as RelativeTime)!.action.id).toBe('action 1')
+      expect(parentContexts.findAction(30 as RelativeTime)!.action.id).toBe('action 2')
+      expect(parentContexts.findAction(55 as RelativeTime)!.action.id).toBe('action 3')
     })
 
     it('should return undefined if no action context corresponding to startTime', () => {
       const { lifeCycle } = setupBuilder.build()
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10 as RelativeTime, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_DISCARDED)
 
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20 as RelativeTime, id: 'action 2' })
 
-      expect(parentContexts.findAction(10)).toBeUndefined()
+      expect(parentContexts.findAction(10 as RelativeTime)).toBeUndefined()
     })
 
     it('should clear the current action on ACTION_DISCARDED', () => {
@@ -196,51 +212,54 @@ describe('parentContexts', () => {
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({
           id: 'view 1',
-          startTime: 10,
+          startTime: 10 as RelativeTime,
         })
       )
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({
           id: 'view 2',
-          startTime: 20,
+          startTime: 20 as RelativeTime,
         })
       )
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 10 as RelativeTime, id: 'action 1' })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20, id: 'action 2' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: 20 as RelativeTime, id: 'action 2' })
 
-      expect(parentContexts.findView(15)).toBeDefined()
-      expect(parentContexts.findAction(15)).toBeDefined()
-      expect(parentContexts.findView(25)).toBeDefined()
-      expect(parentContexts.findAction(25)).toBeDefined()
+      expect(parentContexts.findView(15 as RelativeTime)).toBeDefined()
+      expect(parentContexts.findAction(15 as RelativeTime)).toBeDefined()
+      expect(parentContexts.findView(25 as RelativeTime)).toBeDefined()
+      expect(parentContexts.findAction(25 as RelativeTime)).toBeDefined()
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(parentContexts.findView(15)).toBeUndefined()
-      expect(parentContexts.findAction(15)).toBeUndefined()
-      expect(parentContexts.findView(25)).toBeUndefined()
-      expect(parentContexts.findAction(25)).toBeUndefined()
+      expect(parentContexts.findView(15 as RelativeTime)).toBeUndefined()
+      expect(parentContexts.findAction(15 as RelativeTime)).toBeUndefined()
+      expect(parentContexts.findView(25 as RelativeTime)).toBeUndefined()
+      expect(parentContexts.findAction(25 as RelativeTime)).toBeUndefined()
     })
 
     it('should be cleared when too old', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       const originalTime = performance.now()
-      const targetTime = originalTime + 5
+      const targetTime = (originalTime + 5) as RelativeTime
 
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({
           id: 'view 1',
-          startTime: originalTime,
+          startTime: originalTime as RelativeTime,
         })
       )
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startTime: originalTime, id: 'action 1' })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+        startTime: originalTime as RelativeTime,
+        id: 'action 1',
+      })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
-        buildViewCreatedEvent({ startTime: originalTime + 10, id: 'view 2' })
+        buildViewCreatedEvent({ startTime: (originalTime + 10) as RelativeTime, id: 'view 2' })
       )
 
       clock.tick(10)

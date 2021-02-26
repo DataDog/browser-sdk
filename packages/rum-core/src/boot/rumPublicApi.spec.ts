@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND, RelativeTime } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
@@ -186,7 +186,7 @@ describe('rum entry', () => {
         clock.tick(ONE_SECOND)
         publicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addActionSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
+        expect(addActionSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
@@ -288,7 +288,7 @@ describe('rum entry', () => {
         clock.tick(ONE_SECOND)
         publicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addErrorSpy.calls.argsFor(0)[0].startTime).toEqual(ONE_SECOND)
+        expect(addErrorSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
@@ -421,7 +421,7 @@ describe('rum entry', () => {
       publicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10)
+      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10 as RelativeTime)
     })
 
     it('should add custom timings', () => {

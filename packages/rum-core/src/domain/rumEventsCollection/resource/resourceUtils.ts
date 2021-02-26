@@ -4,8 +4,11 @@ import {
   getPathName,
   includes,
   isValidUrl,
-  msToNs,
   ResourceType,
+  Duration,
+  toServerDuration,
+  ServerDuration,
+  RelativeTime,
 } from '@datadog/browser-core'
 
 import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
@@ -70,15 +73,15 @@ export function isRequestKind(timing: RumPerformanceResourceTiming) {
   return timing.initiatorType === 'xmlhttprequest' || timing.initiatorType === 'fetch'
 }
 
-export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
+export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): ServerDuration {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
   if (duration === 0 && startTime < responseEnd) {
-    return msToNs(responseEnd - startTime)
+    return toServerDuration((responseEnd - startTime) as Duration)
   }
 
-  return msToNs(duration)
+  return toServerDuration(duration)
 }
 
 export function computePerformanceResourceDetails(
@@ -183,10 +186,10 @@ function hasRedirection(entry: RumPerformanceResourceTiming) {
   return entry.fetchStart !== entry.startTime
 }
 
-function formatTiming(origin: number, start: number, end: number) {
+function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
   return {
-    duration: msToNs(end - start),
-    start: msToNs(start - origin),
+    duration: toServerDuration((end - start) as Duration),
+    start: toServerDuration((start - origin) as Duration),
   }
 }
 

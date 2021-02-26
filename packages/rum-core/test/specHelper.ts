@@ -7,6 +7,7 @@ import {
   DEFAULT_CONFIGURATION,
   noop,
   SPEC_ENDPOINTS,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
@@ -178,7 +179,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     application: {
       id: fakeId,
     },
-    date: 0,
+    date: 0 as TimeStamp,
     session: {
       id: fakeId,
       type: 'user',

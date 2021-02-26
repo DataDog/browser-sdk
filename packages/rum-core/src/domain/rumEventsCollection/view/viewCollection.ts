@@ -1,4 +1,10 @@
-import { getTimestamp, isEmptyObject, mapValues, msToNs } from '@datadog/browser-core'
+import {
+  getTimeStamp,
+  isEmptyObject,
+  mapValues,
+  toOptionalServerDuration,
+  toServerDuration,
+} from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -17,27 +23,27 @@ function processViewUpdate(view: View) {
     _dd: {
       document_version: view.documentVersion,
     },
-    date: getTimestamp(view.startTime),
+    date: getTimeStamp(view.startTime),
     type: RumEventType.VIEW,
     view: {
       action: {
         count: view.eventCounts.userActionCount,
       },
       cumulative_layout_shift: view.cumulativeLayoutShift,
-      dom_complete: msToNs(view.timings.domComplete),
-      dom_content_loaded: msToNs(view.timings.domContentLoaded),
-      dom_interactive: msToNs(view.timings.domInteractive),
+      dom_complete: toOptionalServerDuration(view.timings.domComplete),
+      dom_content_loaded: toOptionalServerDuration(view.timings.domContentLoaded),
+      dom_interactive: toOptionalServerDuration(view.timings.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
-      first_contentful_paint: msToNs(view.timings.firstContentfulPaint),
-      first_input_delay: msToNs(view.timings.firstInputDelay),
-      first_input_time: msToNs(view.timings.firstInputTime),
+      first_contentful_paint: toOptionalServerDuration(view.timings.firstContentfulPaint),
+      first_input_delay: toOptionalServerDuration(view.timings.firstInputDelay),
+      first_input_time: toOptionalServerDuration(view.timings.firstInputTime),
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: msToNs(view.timings.largestContentfulPaint),
-      load_event: msToNs(view.timings.loadEvent),
-      loading_time: msToNs(view.loadingTime),
+      largest_contentful_paint: toOptionalServerDuration(view.timings.largestContentfulPaint),
+      load_event: toOptionalServerDuration(view.timings.loadEvent),
+      loading_time: toOptionalServerDuration(view.loadingTime),
       loading_type: view.loadingType,
       long_task: {
         count: view.eventCounts.longTaskCount,
@@ -45,11 +51,11 @@ function processViewUpdate(view: View) {
       resource: {
         count: view.eventCounts.resourceCount,
       },
-      time_spent: msToNs(view.duration),
+      time_spent: toServerDuration(view.duration),
     },
   }
   if (!isEmptyObject(view.customTimings)) {
-    viewEvent.view.custom_timings = mapValues(view.customTimings, msToNs)
+    viewEvent.view.custom_timings = mapValues(view.customTimings, toServerDuration)
   }
   return {
     rawRumEvent: viewEvent,

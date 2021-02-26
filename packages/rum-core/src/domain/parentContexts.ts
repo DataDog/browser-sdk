@@ -16,8 +16,8 @@ interface PreviousContext<T> {
 }
 
 export interface ParentContexts {
-  findAction: (startTime?: number) => ActionContext | undefined
-  findView: (startTime?: number) => ViewContext | undefined
+  findAction: (startTime?: RelativeTime) => ActionContext | undefined
+  findView: (startTime?: RelativeTime) => ViewContext | undefined
   stop: () => void
 }
 
@@ -57,7 +57,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     if (currentAction) {
       previousActions.unshift({
         context: buildCurrentActionContext(),
-        endTime: currentAction.startTime + action.duration,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (currentAction.startTime + action.duration) as RelativeTime,
         startTime: currentAction.startTime,
       })
     }
@@ -111,8 +112,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
-    currentContext?: { startTime: number },
-    startTime?: number
+    currentContext?: { startTime: RelativeTime },
+    startTime?: RelativeTime
   ) {
     if (startTime === undefined) {
       return currentContext ? buildContext() : undefined

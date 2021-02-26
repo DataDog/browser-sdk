@@ -101,17 +101,17 @@ function startActionManagement(lifeCycle: LifeCycle) {
 
 class PendingAutoAction {
   private id: string
-  private startTime: number
+  private startTime: RelativeTime
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
-    this.startTime = performance.now()
+    this.startTime = performance.now() as RelativeTime
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
   }
 
-  complete(endTime: number) {
+  complete(endTime: RelativeTime) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -119,7 +119,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: endTime - this.startTime,
+      duration: (endTime - this.startTime) as Duration,
       id: this.id,
       name: this.name,
       startTime: this.startTime,

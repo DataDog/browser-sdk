@@ -43,14 +43,14 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observa
   }
 }
 
-function computeRawError(error: unknown, startTime: number, source: ProvidedSource): RawError {
+function computeRawError(error: unknown, startTime: RelativeTime, source: ProvidedSource): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
   return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
 function processError(error: RawError) {
   const rawRumEvent: RawRumErrorEvent = {
-    date: getTimestamp(error.startTime),
+    date: getTimeStamp(error.startTime),
     error: {
       message: error.message,
       resource: error.resource

@@ -1,5 +1,5 @@
-import { combine, Configuration, getTimestamp, msToNs } from '@datadog/browser-core'
-import { CommonContext, RumEventType, ActionType } from '../../../rawRumEvent.types'
+import { combine, Configuration, getTimeStamp, toServerDuration } from '@datadog/browser-core'
+import { ActionType, CommonContext, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
 
@@ -30,7 +30,7 @@ function processAction(action: AutoAction | CustomAction) {
             count: action.counts.errorCount,
           },
           id: action.id,
-          loading_time: msToNs(action.duration),
+          loading_time: toServerDuration(action.duration),
           long_task: {
             count: action.counts.longTaskCount,
           },
@@ -49,7 +49,7 @@ function processAction(action: AutoAction | CustomAction) {
         },
         type: action.type,
       },
-      date: getTimestamp(action.startTime),
+      date: getTimeStamp(action.startTime),
       type: RumEventType.ACTION as const,
     },
     autoActionProperties

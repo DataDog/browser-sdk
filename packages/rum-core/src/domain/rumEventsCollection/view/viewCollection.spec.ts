@@ -1,3 +1,4 @@
+import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -26,11 +27,11 @@ describe('viewCollection', () => {
     const view = {
       cumulativeLayoutShift: 1,
       customTimings: {
-        bar: 20,
-        foo: 10,
+        bar: 20 as Duration,
+        foo: 10 as Duration,
       },
       documentVersion: 3,
-      duration: 100,
+      duration: 100 as Duration,
       eventCounts: {
         errorCount: 10,
         longTaskCount: 10,
@@ -40,20 +41,20 @@ describe('viewCollection', () => {
       id: 'xxx',
       name: undefined,
       isActive: false,
-      loadingTime: 20,
+      loadingTime: 20 as Duration,
       loadingType: ViewLoadingType.INITIAL_LOAD,
       location: location as Location,
       referrer: '',
-      startTime: 1234,
+      startTime: 1234 as RelativeTime,
       timings: {
-        domComplete: 10,
-        domContentLoaded: 10,
-        domInteractive: 10,
-        firstContentfulPaint: 10,
-        firstInputDelay: 12,
-        firstInputTime: 10,
-        largestContentfulPaint: 10,
-        loadEvent: 10,
+        domComplete: 10 as Duration,
+        domContentLoaded: 10 as Duration,
+        domInteractive: 10 as Duration,
+        firstContentfulPaint: 10 as Duration,
+        firstInputDelay: 12 as Duration,
+        firstInputTime: 10 as Duration,
+        largestContentfulPaint: 10 as Duration,
+        loadEvent: 10 as Duration,
       },
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
@@ -71,23 +72,23 @@ describe('viewCollection', () => {
         },
         cumulative_layout_shift: 1,
         custom_timings: {
-          bar: 20 * 1e6,
-          foo: 10 * 1e6,
+          bar: (20 * 1e6) as ServerDuration,
+          foo: (10 * 1e6) as ServerDuration,
         },
-        dom_complete: 10 * 1e6,
-        dom_content_loaded: 10 * 1e6,
-        dom_interactive: 10 * 1e6,
+        dom_complete: (10 * 1e6) as ServerDuration,
+        dom_content_loaded: (10 * 1e6) as ServerDuration,
+        dom_interactive: (10 * 1e6) as ServerDuration,
         error: {
           count: 10,
         },
-        first_contentful_paint: 10 * 1e6,
-        first_input_delay: 12 * 1e6,
-        first_input_time: 10 * 1e6,
+        first_contentful_paint: (10 * 1e6) as ServerDuration,
+        first_input_delay: (12 * 1e6) as ServerDuration,
+        first_input_time: (10 * 1e6) as ServerDuration,
         is_active: false,
         name: undefined,
-        largest_contentful_paint: 10 * 1e6,
-        load_event: 10 * 1e6,
-        loading_time: 20 * 1e6,
+        largest_contentful_paint: (10 * 1e6) as ServerDuration,
+        load_event: (10 * 1e6) as ServerDuration,
+        loading_time: (20 * 1e6) as ServerDuration,
         loading_type: ViewLoadingType.INITIAL_LOAD,
         long_task: {
           count: 10,
@@ -95,7 +96,7 @@ describe('viewCollection', () => {
         resource: {
           count: 10,
         },
-        time_spent: 100 * 1e6,
+        time_spent: (100 * 1e6) as ServerDuration,
       },
     })
   })

@@ -1,4 +1,4 @@
-import { monitor, Observable } from '@datadog/browser-core'
+import { monitor, Observable, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -14,7 +14,7 @@ export interface PageActivityEvent {
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
-  completionCallback: (hadActivity: boolean, endTime: number) => void
+  completionCallback: (hadActivity: boolean, endTime: RelativeTime) => void
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
@@ -113,24 +113,24 @@ export function trackPageActivities(
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  completionCallback: (hadActivity: boolean, endTime: number) => void
+  completionCallback: (hadActivity: boolean, endTime: RelativeTime) => void
 ): { stop: () => void } {
   let idleTimeoutId: number
   let hasCompleted = false
 
   const validationTimeoutId = setTimeout(
-    monitor(() => complete(false, 0)),
+    monitor(() => complete(false, 0 as RelativeTime)),
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
   const maxDurationTimeoutId = setTimeout(
-    monitor(() => complete(true, performance.now())),
+    monitor(() => complete(true, performance.now() as RelativeTime)),
     PAGE_ACTIVITY_MAX_DURATION
   )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    const lastChangeTime = performance.now()
+    const lastChangeTime = performance.now() as RelativeTime
     if (!isBusy) {
       idleTimeoutId = setTimeout(
         monitor(() => complete(true, lastChangeTime)),
@@ -147,7 +147,7 @@ export function waitPageActivitiesCompletion(
     stopPageActivitiesTracking()
   }
 
-  function complete(hadActivity: boolean, endTime: number) {
+  function complete(hadActivity: boolean, endTime: RelativeTime) {
     if (hasCompleted) {
       return
     }

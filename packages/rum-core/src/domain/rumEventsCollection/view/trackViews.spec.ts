@@ -1,4 +1,4 @@
-import { catchUserErrors, Context } from '../../../../../core/src'
+import { catchUserErrors, Context, Duration, RelativeTime } from '../../../../../core/src'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { NewLocationListener } from '../../../boot/rum'
@@ -17,40 +17,40 @@ import {
 import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, View, ViewCreatedEvent } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
-const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
+const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
   name: 'first-contentful-paint',
-  startTime: 123,
+  startTime: 123 as RelativeTime,
 }
 const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   entryType: 'largest-contentful-paint',
-  startTime: 789,
+  startTime: 789 as RelativeTime,
 }
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
-  domComplete: 456,
-  domContentLoadedEventEnd: 345,
-  domInteractive: 234,
+  domComplete: 456 as RelativeTime,
+  domContentLoadedEventEnd: 345 as RelativeTime,
+  domInteractive: 234 as RelativeTime,
   entryType: 'navigation',
-  loadEventEnd: 567,
+  loadEventEnd: 567 as RelativeTime,
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  domComplete: 2,
-  domContentLoadedEventEnd: 1,
-  domInteractive: 1,
+  domComplete: 2 as RelativeTime,
+  domContentLoadedEventEnd: 1 as RelativeTime,
+  domInteractive: 1 as RelativeTime,
   entryType: 'navigation',
-  loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8,
+  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as RelativeTime,
 }
 
 const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  domComplete: 2,
-  domContentLoadedEventEnd: 1,
-  domInteractive: 1,
+  domComplete: 2 as RelativeTime,
+  domContentLoadedEventEnd: 1 as RelativeTime,
+  domInteractive: 1 as RelativeTime,
   entryType: 'navigation',
-  loadEventEnd: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2,
+  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
 }
 
 function mockGetElementById() {
@@ -669,10 +669,10 @@ describe('rum view measures', () => {
 
       expect(getHandledCount()).toEqual(2)
       expect(getViewEvent(1).timings).toEqual({
-        domComplete: 456,
-        domContentLoaded: 345,
-        domInteractive: 234,
-        loadEvent: 567,
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        loadEvent: 567 as Duration,
       })
     })
 
@@ -690,12 +690,12 @@ describe('rum view measures', () => {
 
       expect(getHandledCount()).toEqual(3)
       expect(getViewEvent(1).timings).toEqual({
-        domComplete: 456,
-        domContentLoaded: 345,
-        domInteractive: 234,
-        firstContentfulPaint: 123,
-        largestContentfulPaint: 789,
-        loadEvent: 567,
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        firstContentfulPaint: 123 as Duration,
+        largestContentfulPaint: 789 as Duration,
+        loadEvent: 567 as Duration,
       })
       expect(getViewEvent(2).timings).toEqual({})
     })
@@ -703,7 +703,7 @@ describe('rum view measures', () => {
     describe('load event happening after initial view end', () => {
       let initialView: { init: View; end: View; last: View }
       let secondView: { init: View; last: View }
-      const VIEW_DURATION = 100
+      const VIEW_DURATION = 100 as Duration
 
       beforeEach(() => {
         const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
@@ -742,12 +742,12 @@ describe('rum view measures', () => {
 
       it('should set timings only on the initial view', () => {
         expect(initialView.last.timings).toEqual({
-          domComplete: 456,
-          domContentLoaded: 345,
-          domInteractive: 234,
-          firstContentfulPaint: 123,
-          largestContentfulPaint: 789,
-          loadEvent: 567,
+          domComplete: 456 as Duration,
+          domContentLoaded: 345 as Duration,
+          domInteractive: 234 as Duration,
+          firstContentfulPaint: 123 as Duration,
+          largestContentfulPaint: 789 as Duration,
+          loadEvent: 567 as Duration,
         })
       })
 
@@ -949,7 +949,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => View
-  let addTiming: (name: string, time?: number) => void
+  let addTiming: (name: string, time?: RelativeTime) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -976,7 +976,7 @@ describe('rum track custom timings', () => {
 
     const event = getViewEvent(3)
     expect(event.id).toEqual(currentViewId)
-    expect(event.customTimings).toEqual({ foo: 20 })
+    expect(event.customTimings).toEqual({ foo: 20 as Duration })
   })
 
   it('should add multiple custom timings', () => {
@@ -989,8 +989,8 @@ describe('rum track custom timings', () => {
 
     const event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: 30,
-      foo: 20,
+      bar: 30 as Duration,
+      foo: 20 as Duration,
     })
   })
 
@@ -1004,8 +1004,8 @@ describe('rum track custom timings', () => {
 
     let event = getViewEvent(2)
     expect(event.customTimings).toEqual({
-      bar: 30,
-      foo: 20,
+      bar: 30 as Duration,
+      foo: 20 as Duration,
     })
 
     clock.tick(20)
@@ -1013,18 +1013,18 @@ describe('rum track custom timings', () => {
 
     event = getViewEvent(3)
     expect(event.customTimings).toEqual({
-      bar: 30,
-      foo: 50,
+      bar: 30 as Duration,
+      foo: 50 as Duration,
     })
   })
 
   it('should add custom timing with a specific time', () => {
     setupBuilder.build()
 
-    addTiming('foo', 1234)
+    addTiming('foo', 1234 as RelativeTime)
 
     expect(getViewEvent(1).customTimings).toEqual({
-      foo: 1234,
+      foo: 1234 as Duration,
     })
   })
 
@@ -1032,10 +1032,10 @@ describe('rum track custom timings', () => {
     setupBuilder.build()
     const warnSpy = spyOn(console, 'warn')
 
-    addTiming('foo bar-qux.@zip_21%$*€👋', 1234)
+    addTiming('foo bar-qux.@zip_21%$*€👋', 1234 as RelativeTime)
 
     expect(getViewEvent(1).customTimings).toEqual({
-      'foo_bar-qux.@zip_21_$____': 1234,
+      'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(warnSpy).toHaveBeenCalled()
   })

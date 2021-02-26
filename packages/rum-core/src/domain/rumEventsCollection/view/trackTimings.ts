@@ -61,7 +61,7 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
   return { stop }
 }
 
-export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: number) => void) {
+export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: RelativeTime) => void) {
   const firstHidden = trackFirstHidden()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (
@@ -84,7 +84,7 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
 export function trackLargestContentfulPaint(
   lifeCycle: LifeCycle,
   emitter: EventEmitter,
-  callback: (value: number) => void
+  callback: (value: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -101,7 +101,7 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
-  const { unsubscribe: unsubcribeLifeCycle } = lifeCycle.subscribe(
+  const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
       if (
@@ -117,7 +117,7 @@ export function trackLargestContentfulPaint(
   return {
     stop: () => {
       stopEventListener()
-      unsubcribeLifeCycle()
+      unsubscribeLifeCycle()
     },
   }
 }
@@ -132,15 +132,15 @@ export function trackLargestContentfulPaint(
  */
 export function trackFirstInputTimings(
   lifeCycle: LifeCycle,
-  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: number; firstInputTime: number }) => void
+  callback: ({ firstInputDelay, firstInputTime }: { firstInputDelay: Duration; firstInputTime: Duration }) => void
 ) {
   const firstHidden = trackFirstHidden()
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
       callback({
-        firstInputDelay: entry.processingStart - entry.startTime,
-        firstInputTime: entry.startTime,
+        firstInputDelay: (entry.processingStart - entry.startTime) as Duration,
+        firstInputTime: entry.startTime as Duration,
       })
     }
   })

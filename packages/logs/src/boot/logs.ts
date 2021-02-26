@@ -6,12 +6,13 @@ import {
   Configuration,
   Context,
   ErrorObservable,
-  getTimestamp,
+  getTimeStamp,
   HttpRequest,
   InternalMonitoring,
   limitModification,
   Observable,
   RawError,
+  RelativeTime,
   startAutomaticErrorCollection,
   UserConfiguration,
 } from '@datadog/browser-core'
@@ -61,7 +62,7 @@ export function doStartLogs(
       error.message,
       combine(
         {
-          date: getTimestamp(error.startTime),
+          date: getTimeStamp(error.startTime),
           error: {
             kind: error.type,
             origin: error.source,
@@ -153,10 +154,10 @@ export function assembleMessageContexts(
 }
 
 interface Rum {
-  getInternalContext: (startTime?: number) => Context
+  getInternalContext: (startTime?: RelativeTime) => Context
 }
 
-function getRUMInternalContext(startTime?: number): Context | undefined {
+function getRUMInternalContext(startTime?: RelativeTime): Context | undefined {
   const rum = (window as any).DD_RUM as Rum
   return rum && rum.getInternalContext ? rum.getInternalContext(startTime) : undefined
 }

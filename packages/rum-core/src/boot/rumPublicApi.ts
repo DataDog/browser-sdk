@@ -10,6 +10,7 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
+  RelativeTime,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
@@ -35,9 +36,9 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
 
   let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, number]>()
+  const beforeInitAddTiming = new BoundedBuffer<[string, RelativeTime]>()
   let addTimingStrategy: ReturnType<StartRum>['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, performance.now()])
+    beforeInitAddTiming.add([name, performance.now() as RelativeTime])
   }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
@@ -99,7 +100,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       addActionStrategy({
         name,
         context: deepClone(context as Context),
-        startTime: performance.now(),
+        startTime: performance.now() as RelativeTime,
         type: ActionType.CUSTOM,
       })
     }),
@@ -123,7 +124,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
         error,
         context: deepClone(context as Context),
         source: checkedSource,
-        startTime: performance.now(),
+        startTime: performance.now() as RelativeTime,
       })
     }),
 

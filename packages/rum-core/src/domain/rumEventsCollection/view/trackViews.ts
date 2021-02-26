@@ -51,7 +51,7 @@ export function trackViews(
   lifeCycle: LifeCycle,
   onNewLocation: NewLocationListener = () => undefined
 ) {
-  const startOrigin = 0
+  const startOrigin = 0 as RelativeTime
   const initialView = newView(
     lifeCycle,
     location,
@@ -105,7 +105,7 @@ export function trackViews(
   )
 
   return {
-    addTiming: (name: string, time = performance.now()) => {
+    addTiming: (name: string, time: RelativeTime = performance.now() as RelativeTime) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
@@ -124,7 +124,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime: number = performance.now(),
+  startTime: RelativeTime = performance.now() as RelativeTime,
   name?: string
 ) {
   // Setup initial values
@@ -139,8 +139,8 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let cumulativeLayoutShift: number | undefined
-  let loadingTime: number | undefined
-  let endTime: number | undefined
+  let loadingTime: Duration | undefined
+  let endTime: Duration | undefined
   let location: Location = { ...initialLocation }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
@@ -195,7 +195,7 @@ function newView(
       referrer,
       startTime,
       timings,
-      duration: (endTime === undefined ? performance.now() : endTime) - startTime,
+      duration: ((endTime === undefined ? performance.now() : endTime) - startTime) as Duration,
       isActive: endTime === undefined,
     })
   }
@@ -203,7 +203,7 @@ function newView(
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = performance.now()
+      endTime = performance.now() as Duration
       stopEventCountsTracking()
       stopActivityLoadingTimeTracking()
       stopCLSTracking()
@@ -229,8 +229,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, time: number) {
-      customTimings[sanitizeTiming(name)] = time - startTime
+    addTiming(name: string, time: RelativeTime) {
+      customTimings[sanitizeTiming(name)] = (time - startTime) as Duration
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
@@ -272,26 +272,26 @@ function trackHash(onHashChange: () => void) {
   return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
-function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: number) => void) {
+function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Duration) => void) {
   let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
-  const loadingTimeCandidates: number[] = []
+  const loadingTimeCandidates: Duration[] = []
 
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
-      callback(Math.max(...loadingTimeCandidates))
+      callback(Math.max(...loadingTimeCandidates) as Duration)
     }
   }
 
   return {
-    setLoadEvent: (loadEvent: number) => {
+    setLoadEvent: (loadEvent: Duration) => {
       if (isWaitingForLoadEvent) {
         isWaitingForLoadEvent = false
         loadingTimeCandidates.push(loadEvent)
         invokeCallbackIfAllCandidatesAreReceived()
       }
     },
-    setActivityLoadingTime: (activityLoadingTime: number | undefined) => {
+    setActivityLoadingTime: (activityLoadingTime: Duration | undefined) => {
       if (isWaitingForActivityLoadingTime) {
         isWaitingForActivityLoadingTime = false
         if (activityLoadingTime !== undefined) {
@@ -303,11 +303,11 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: num
   }
 }
 
-function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: number | undefined) => void) {
+function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: Duration | undefined) => void) {
   const startTime = performance.now()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
-      callback(endTime - startTime)
+      callback((endTime - startTime) as Duration)
     } else {
       callback(undefined)
     }
@@ -317,7 +317,7 @@ function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeVa
 }
 
 /**
- * Track layout shifts (LS) occuring during the Views.  This yields multiple values that can be
+ * Track layout shifts (LS) occurring during the Views.  This yields multiple values that can be
  * added up to compute the cumulated layout shift (CLS).
  *
  * See isLayoutShiftSupported to check for browser support.

@@ -158,7 +158,7 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
         decodedBodySize: 0,
         duration: relativePerformanceTiming.responseEnd,
         name: window.location.href,
-        startTime: 0,
+        startTime: 0 as RelativeTime,
         ...forcedAttributes,
       }
     }
@@ -202,8 +202,8 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
       // (e.g. performance.now()).
       const timing: RumFirstInputTiming = {
         entryType: 'first-input',
-        processingStart: performance.now(),
-        startTime: evt.timeStamp,
+        processingStart: performance.now() as RelativeTime,
+        startTime: evt.timeStamp as RelativeTime,
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {

@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { isIE, RelativeTime } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
@@ -131,11 +131,11 @@ describe('rum session keep alive', () => {
 
 describe('rum view url', () => {
   const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
-    domComplete: 456,
-    domContentLoadedEventEnd: 345,
-    domInteractive: 234,
+    domComplete: 456 as RelativeTime,
+    domContentLoadedEventEnd: 345 as RelativeTime,
+    domInteractive: 234 as RelativeTime,
     entryType: 'navigation',
-    loadEventEnd: 567,
+    loadEventEnd: 567 as RelativeTime,
   }
   const VIEW_DURATION = 1000
 

@@ -38,7 +38,7 @@ export function createDocumentTraceData(
   traceId: string | undefined | null,
   rawTraceTime: string | undefined | null
 ): DocumentTraceData | undefined {
-  const traceTime = rawTraceTime && Number(rawTraceTime)
+  const traceTime = rawTraceTime && (Number(rawTraceTime) as TimeStamp)
   if (!traceId || !traceTime) {
     return undefined
   }
