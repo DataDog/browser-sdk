@@ -41,7 +41,6 @@ export function trackViews(
   lifeCycle: LifeCycle,
   onNewLocation: NewLocationListener = () => undefined
 ) {
-  onNewLocation = wrapOnNewLocation(onNewLocation)
   const startOrigin = 0
   const initialView = newView(
     lifeCycle,
@@ -344,16 +343,4 @@ function sanitizeTiming(name: string) {
     console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
-}
-
-function wrapOnNewLocation(onNewLocation: NewLocationListener): NewLocationListener {
-  return (newLocation, oldLocation) => {
-    let result
-    try {
-      result = onNewLocation(newLocation, oldLocation)
-    } catch (err) {
-      console.error('onNewLocation threw an error:', err)
-    }
-    return result
-  }
 }

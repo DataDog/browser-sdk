@@ -218,6 +218,15 @@ describe('utils', () => {
         expect(spy).toHaveBeenCalledTimes(1)
       })
     })
+
+    it('passes last parameters as arguments', () => {
+      const throttled = throttle(spy, 2).throttled
+      throttled(1)
+      throttled(2)
+      throttled(3)
+      jasmine.clock().tick(2)
+      expect(spy.calls.allArgs()).toEqual([[1], [3]])
+    })
   })
 
   describe('jsonStringify', () => {

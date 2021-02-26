@@ -11,13 +11,7 @@ export function limitModification<T extends Context, Result>(
   modifier: (object: T) => Result
 ): Result | undefined {
   const clone = deepClone(object)
-  let result
-  try {
-    result = modifier(clone)
-  } catch (e) {
-    console.error(e)
-    return
-  }
+  const result = modifier(clone)
   modifiableFieldPaths.forEach((path) => {
     const originalValue = get(object, path)
     const newValue = get(clone, path)

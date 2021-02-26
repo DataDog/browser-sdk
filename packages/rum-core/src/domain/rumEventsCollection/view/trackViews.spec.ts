@@ -1,4 +1,4 @@
-import { Context } from '../../../../../core/src'
+import { catchUserErrors, Context } from '../../../../../core/src'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { NewLocationListener } from '../../../boot/rum'
@@ -223,7 +223,7 @@ describe('rum use onNewLocation callback to rename/ignore views', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, onNewLocation)
+        return trackViews(location, lifeCycle, catchUserErrors(onNewLocation, 'onNewLocation threw an error:'))
       })
   })
 
