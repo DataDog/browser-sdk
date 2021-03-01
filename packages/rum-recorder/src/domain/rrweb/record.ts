@@ -15,7 +15,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     checkoutEveryNth,
     inlineStylesheet = true,
     slimDOMOptions: slimDOMOptionsArg,
-    packFn,
   } = options
   // runtime checks for user options
   if (!emit) {
@@ -57,7 +56,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       mutationController.unfreeze()
     }
 
-    emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
+    emit(record, isCheckout)
     if (record.type === RecordType.FullSnapshot) {
       lastFullSnapshotRecordTimestamp = Date.now()
       incrementalSnapshotCount = 0

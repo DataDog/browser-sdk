@@ -66,7 +66,6 @@ export interface RecordOptions {
   checkoutEveryNms?: number
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
-  packFn?: (record: RawRecord) => RawRecord
 }
 
 export interface RecordAPI {
