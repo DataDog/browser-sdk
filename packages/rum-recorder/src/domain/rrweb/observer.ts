@@ -11,13 +11,11 @@ import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
-  Arguments,
   CanvasMutationCallback,
   FontCallback,
   FontFaceDescriptors,
   FontParam,
   HookResetter,
-  HooksParam,
   IncrementalSource,
   InputCallback,
   InputValue,
@@ -431,83 +429,7 @@ function initFontObserver(cb: FontCallback): ListenerHandler {
   }
 }
 
-function mergeHooks(o: ObserverParam, hooks: HooksParam) {
-  const {
-    mutationCb,
-    mousemoveCb,
-    mouseInteractionCb,
-    scrollCb,
-    viewportResizeCb,
-    inputCb,
-    mediaInteractionCb,
-    styleSheetRuleCb,
-    canvasMutationCb,
-    fontCb,
-  } = o
-  o.mutationCb = (...p: Arguments<MutationCallBack>) => {
-    if (hooks.mutation) {
-      hooks.mutation(...p)
-    }
-    mutationCb(...p)
-  }
-  o.mousemoveCb = (...p: Arguments<MousemoveCallBack>) => {
-    if (hooks.mousemove) {
-      hooks.mousemove(...p)
-    }
-    mousemoveCb(...p)
-  }
-  o.mouseInteractionCb = (...p: Arguments<MouseInteractionCallBack>) => {
-    if (hooks.mouseInteraction) {
-      hooks.mouseInteraction(...p)
-    }
-    mouseInteractionCb(...p)
-  }
-  o.scrollCb = (...p: Arguments<ScrollCallback>) => {
-    if (hooks.scroll) {
-      hooks.scroll(...p)
-    }
-    scrollCb(...p)
-  }
-  o.viewportResizeCb = (...p: Arguments<ViewportResizeCallback>) => {
-    if (hooks.viewportResize) {
-      hooks.viewportResize(...p)
-    }
-    viewportResizeCb(...p)
-  }
-  o.inputCb = (...p: Arguments<InputCallback>) => {
-    if (hooks.input) {
-      hooks.input(...p)
-    }
-    inputCb(...p)
-  }
-  o.mediaInteractionCb = (...p: Arguments<MediaInteractionCallback>) => {
-    if (hooks.mediaInteaction) {
-      hooks.mediaInteaction(...p)
-    }
-    mediaInteractionCb(...p)
-  }
-  o.styleSheetRuleCb = (...p: Arguments<StyleSheetRuleCallback>) => {
-    if (hooks.styleSheetRule) {
-      hooks.styleSheetRule(...p)
-    }
-    styleSheetRuleCb(...p)
-  }
-  o.canvasMutationCb = (...p: Arguments<CanvasMutationCallback>) => {
-    if (hooks.canvasMutation) {
-      hooks.canvasMutation(...p)
-    }
-    canvasMutationCb(...p)
-  }
-  o.fontCb = (...p: Arguments<FontCallback>) => {
-    if (hooks.font) {
-      hooks.font(...p)
-    }
-    fontCb(...p)
-  }
-}
-
-export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
-  mergeHooks(o, hooks)
+export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(
     o.mutationController,
     o.mutationCb,

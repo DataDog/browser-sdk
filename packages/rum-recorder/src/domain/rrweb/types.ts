@@ -96,7 +96,6 @@ export interface RecordOptions {
   maskInputFn?: MaskInputFn
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
-  hooks?: HooksParam
   packFn?: (record: RawRecord) => RawRecord
   sampling?: SamplingStrategy
   recordCanvas?: boolean
@@ -129,19 +128,6 @@ export interface ObserverParam {
   recordCanvas: boolean
   collectFonts: boolean
   slimDOMOptions: SlimDOMOptions
-}
-
-export interface HooksParam {
-  mutation?: MutationCallBack
-  mousemove?: MousemoveCallBack
-  mouseInteraction?: MouseInteractionCallBack
-  scroll?: ScrollCallback
-  viewportResize?: ViewportResizeCallback
-  input?: InputCallback
-  mediaInteaction?: MediaInteractionCallback
-  styleSheetRule?: StyleSheetRuleCallback
-  canvasMutation?: CanvasMutationCallback
-  font?: FontCallback
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
