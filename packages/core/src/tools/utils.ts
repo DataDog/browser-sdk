@@ -211,7 +211,7 @@ export function isPercentage(value: unknown) {
   return isNumber(value) && value >= 0 && value <= 100
 }
 
-export function isNumber<T = number>(value: unknown): value is T {
+export function isNumber(value: unknown): value is number {
   return typeof value === 'number'
 }
 

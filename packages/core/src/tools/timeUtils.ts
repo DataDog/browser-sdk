@@ -8,7 +8,7 @@ export type RelativeTime = number & { r: 'Time relative to navigation start' } &
 export function toServerDuration(duration: Duration): ServerDuration
 export function toServerDuration(duration: Duration | undefined): ServerDuration | undefined
 export function toServerDuration(duration: Duration | undefined) {
-  if (!isNumber<Duration>(duration)) {
+  if (!isNumber(duration)) {
     return duration
   }
   return round(duration * 1e6, 0) as ServerDuration
