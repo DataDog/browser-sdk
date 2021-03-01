@@ -60,23 +60,6 @@ export type IncrementalData =
   | MediaInteractionData
   | StyleSheetRuleData
 
-export type SamplingStrategy = Partial<{
-  /**
-   * false means not to record mouse/touch move events
-   * number is the throttle threshold of recording mouse/touch move
-   */
-  mousemove: boolean | number
-  /**
-   * number is the throttle threshold of recording scroll
-   */
-  scroll: number
-  /**
-   * 'all' will record all the input events
-   * 'last' will only record the last input value while input a sequence of chars
-   */
-  input: 'all' | 'last'
-}>
-
 export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
   checkoutEveryNth?: number
@@ -87,9 +70,6 @@ export interface RecordOptions {
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
   packFn?: (record: RawRecord) => RawRecord
-  sampling?: SamplingStrategy
-  // departed, please use sampling options
-  mousemoveWait?: number
 }
 
 export interface RecordAPI {
@@ -110,7 +90,6 @@ export interface ObserverParam {
   maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
-  sampling: SamplingStrategy
   slimDOMOptions: SlimDOMOptions
 }
 

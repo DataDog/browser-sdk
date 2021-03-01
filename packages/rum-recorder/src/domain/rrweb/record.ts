@@ -19,16 +19,10 @@ export function record(options: RecordOptions = {}): RecordAPI {
     slimDOMOptions: slimDOMOptionsArg,
     maskInputFn,
     packFn,
-    sampling = {},
-    mousemoveWait,
   } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
-  }
-  // move departed options to new options
-  if (mousemoveWait !== undefined && sampling.mousemove === undefined) {
-    sampling.mousemove = mousemoveWait
   }
 
   const maskInputOptions: MaskInputOptions =
@@ -167,7 +161,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
         inlineStylesheet,
         maskInputFn,
         maskInputOptions,
-        sampling,
         slimDOMOptions,
         inputCb: (v) =>
           wrappedEmit({

@@ -24,12 +24,14 @@ import {
   MousemoveCallBack,
   MutationCallBack,
   ObserverParam,
-  SamplingStrategy,
   ScrollCallback,
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
 import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror } from './utils'
+
+const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
+const SCROLL_OBSERVER_THRESHOLD = 100
 
 function initMutationObserver(
   mutationController: MutationController,
@@ -48,13 +50,7 @@ function initMutationObserver(
   return () => mutationObserverWrapper.stop()
 }
 
-function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): ListenerHandler {
-  if (sampling.mousemove === false) {
-    return noop
-  }
-
-  const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
-
+function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((evt: MouseEvent | TouchEvent) => {
       const { target } = evt
@@ -67,7 +63,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
       }
       cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     }),
-    threshold,
+    MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
       trailing: false,
     }
@@ -110,7 +106,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
   }).stop
 }
 
-function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
+function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((evt: UIEvent) => {
       if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
@@ -132,7 +128,7 @@ function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): Lis
         })
       }
     }),
-    sampling.scroll || 100
+    SCROLL_OBSERVER_THRESHOLD
   )
   return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
 }
@@ -157,8 +153,7 @@ const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(
   cb: InputCallback,
   maskInputOptions: MaskInputOptions,
-  maskInputFn: MaskInputFn | undefined,
-  sampling: SamplingStrategy
+  maskInputFn: MaskInputFn | undefined
 ): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const { target } = event
@@ -215,8 +210,7 @@ function initInputObserver(
     }
   }
 
-  const events = sampling.input === 'last' ? [DOM_EVENT.CHANGE] : [DOM_EVENT.INPUT, DOM_EVENT.CHANGE]
-  const { stop: stopEventListeners } = addEventListeners(document, events, eventHandler, {
+  const { stop: stopEventListeners } = addEventListeners(document, [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], eventHandler, {
     capture: true,
     passive: true,
   })
@@ -310,11 +304,11 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     o.maskInputOptions,
     o.slimDOMOptions
   )
-  const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
+  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.sampling)
+  const scrollHandler = initScrollObserver(o.scrollCb)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
+  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
 
