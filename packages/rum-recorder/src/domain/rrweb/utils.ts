@@ -1,13 +1,6 @@
-import { noop, monitor } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import { IGNORED_NODE, INode } from '../rrweb-snapshot'
-import { HookResetter, ListenerHandler, Mirror } from './types'
-
-export function on(type: string, fn: (event: any) => void, target: Document | Window = document): ListenerHandler {
-  const monitoredFn = monitor(fn)
-  const options = { capture: true, passive: true }
-  target.addEventListener(type, monitoredFn, options)
-  return () => target.removeEventListener(type, monitoredFn, options)
-}
+import { HookResetter, Mirror } from './types'
 
 export const mirror: Mirror = {
   map: {},
