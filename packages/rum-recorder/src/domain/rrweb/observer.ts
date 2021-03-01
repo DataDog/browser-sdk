@@ -11,9 +11,6 @@ import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
-  FontCallback,
-  FontFaceDescriptors,
-  FontParam,
   HookResetter,
   IncrementalSource,
   InputCallback,
@@ -305,71 +302,6 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
-declare class FontFace {
-  constructor(family: string, source: string | ArrayBufferView, descriptors?: FontFaceDescriptors)
-}
-
-type WindowWithFontFace = typeof window & {
-  FontFace: typeof FontFace
-}
-
-type DocumentWithFonts = Document & {
-  fonts: { add(fontFace: FontFace): void }
-}
-
-function initFontObserver(cb: FontCallback): ListenerHandler {
-  const handlers: ListenerHandler[] = []
-
-  const fontMap = new WeakMap<object, FontParam>()
-
-  const originalFontFace = (window as WindowWithFontFace).FontFace
-
-  ;(window as WindowWithFontFace).FontFace = (function FontFace(
-    family: string,
-    source: string | ArrayBufferView,
-    descriptors?: FontFaceDescriptors
-  ): FontFace {
-    const fontFace = new originalFontFace(family, source, descriptors)
-    callMonitored(() => {
-      fontMap.set(fontFace, {
-        descriptors,
-        family,
-        buffer: typeof source !== 'string',
-        fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
-      })
-    })
-    return fontFace
-  } as unknown) as typeof FontFace
-
-  const restoreHandler = patch(
-    (document as DocumentWithFonts).fonts,
-    'add',
-    (original: (fontFace: FontFace) => unknown) =>
-      function (this: unknown, fontFace: FontFace) {
-        setTimeout(
-          monitor(() => {
-            const p = fontMap.get(fontFace)
-            if (p) {
-              cb(p)
-              fontMap.delete(fontFace)
-            }
-          }),
-          0
-        )
-        return original.apply(this, [fontFace])
-      }
-  )
-
-  handlers.push(() => {
-    ;(window as any).FonFace = originalFontFace
-  })
-  handlers.push(restoreHandler)
-
-  return () => {
-    handlers.forEach((h) => h())
-  }
-}
-
 export function initObservers(o: ObserverParam): ListenerHandler {
   const mutationHandler = initMutationObserver(
     o.mutationController,
@@ -385,7 +317,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
     mutationHandler()
@@ -396,6 +327,5 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     inputHandler()
     mediaInteractionHandler()
     styleSheetObserver()
-    fontObserver()
   }
 }

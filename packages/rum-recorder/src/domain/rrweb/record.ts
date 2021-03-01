@@ -21,7 +21,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     packFn,
     sampling = {},
     mousemoveWait,
-    collectFonts = false,
   } = options
   // runtime checks for user options
   if (!emit) {
@@ -165,20 +164,11 @@ export function record(options: RecordOptions = {}): RecordAPI {
     handlers.push(
       initObservers({
         mutationController,
-        collectFonts,
         inlineStylesheet,
         maskInputFn,
         maskInputOptions,
         sampling,
         slimDOMOptions,
-        fontCb: (p) =>
-          wrappedEmit({
-            data: {
-              source: IncrementalSource.Font,
-              ...p,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
         inputCb: (v) =>
           wrappedEmit({
             data: {

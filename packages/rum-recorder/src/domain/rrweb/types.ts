@@ -13,7 +13,7 @@ export enum IncrementalSource {
   MediaInteraction = 7,
   StyleSheetRule = 8,
   // CanvasMutation = 9,
-  Font = 10,
+  // Font = 10,
 }
 
 export type MutationData = {
@@ -50,10 +50,6 @@ export type StyleSheetRuleData = {
   source: IncrementalSource.StyleSheetRule
 } & StyleSheetRuleParam
 
-export type FontData = {
-  source: IncrementalSource.Font
-} & FontParam
-
 export type IncrementalData =
   | MutationData
   | MousemoveData
@@ -63,7 +59,6 @@ export type IncrementalData =
   | InputData
   | MediaInteractionData
   | StyleSheetRuleData
-  | FontData
 
 export type SamplingStrategy = Partial<{
   /**
@@ -93,7 +88,6 @@ export interface RecordOptions {
   inlineStylesheet?: boolean
   packFn?: (record: RawRecord) => RawRecord
   sampling?: SamplingStrategy
-  collectFonts?: boolean
   // departed, please use sampling options
   mousemoveWait?: number
 }
@@ -116,9 +110,7 @@ export interface ObserverParam {
   maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
-  fontCb: FontCallback
   sampling: SamplingStrategy
-  collectFonts: boolean
   slimDOMOptions: SlimDOMOptions
 }
 
@@ -233,24 +225,6 @@ export interface StyleSheetRuleParam {
 }
 
 export type StyleSheetRuleCallback = (s: StyleSheetRuleParam) => void
-
-export interface FontFaceDescriptors {
-  style?: string
-  weight?: string
-  stretch?: string
-  unicodeRange?: string
-  variant?: string
-  featureSettings?: string
-}
-
-export interface FontParam {
-  family: string
-  fontSource: string
-  buffer: boolean
-  descriptors?: FontFaceDescriptors
-}
-
-export type FontCallback = (p: FontParam) => void
 
 export interface ViewportResizeDimention {
   width: number
