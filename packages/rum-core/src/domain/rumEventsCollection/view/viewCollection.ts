@@ -1,8 +1,9 @@
 import {
+  Duration,
   getTimeStamp,
   isEmptyObject,
   mapValues,
-  toOptionalServerDuration,
+  ServerDuration,
   toServerDuration,
 } from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
@@ -30,20 +31,20 @@ function processViewUpdate(view: View) {
         count: view.eventCounts.userActionCount,
       },
       cumulative_layout_shift: view.cumulativeLayoutShift,
-      dom_complete: toOptionalServerDuration(view.timings.domComplete),
-      dom_content_loaded: toOptionalServerDuration(view.timings.domContentLoaded),
-      dom_interactive: toOptionalServerDuration(view.timings.domInteractive),
+      dom_complete: toServerDuration(view.timings.domComplete),
+      dom_content_loaded: toServerDuration(view.timings.domContentLoaded),
+      dom_interactive: toServerDuration(view.timings.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
-      first_contentful_paint: toOptionalServerDuration(view.timings.firstContentfulPaint),
-      first_input_delay: toOptionalServerDuration(view.timings.firstInputDelay),
-      first_input_time: toOptionalServerDuration(view.timings.firstInputTime),
+      first_contentful_paint: toServerDuration(view.timings.firstContentfulPaint),
+      first_input_delay: toServerDuration(view.timings.firstInputDelay),
+      first_input_time: toServerDuration(view.timings.firstInputTime),
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: toOptionalServerDuration(view.timings.largestContentfulPaint),
-      load_event: toOptionalServerDuration(view.timings.loadEvent),
-      loading_time: toOptionalServerDuration(view.loadingTime),
+      largest_contentful_paint: toServerDuration(view.timings.largestContentfulPaint),
+      load_event: toServerDuration(view.timings.loadEvent),
+      loading_time: toServerDuration(view.loadingTime),
       loading_type: view.loadingType,
       long_task: {
         count: view.eventCounts.longTaskCount,
@@ -55,7 +56,10 @@ function processViewUpdate(view: View) {
     },
   }
   if (!isEmptyObject(view.customTimings)) {
-    viewEvent.view.custom_timings = mapValues(view.customTimings, toServerDuration)
+    viewEvent.view.custom_timings = mapValues(
+      view.customTimings,
+      toServerDuration as (duration: Duration) => ServerDuration
+    )
   }
   return {
     rawRumEvent: viewEvent,

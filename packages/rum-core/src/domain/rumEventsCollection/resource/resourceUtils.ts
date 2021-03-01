@@ -1,18 +1,18 @@
 import {
   addMonitoringMessage,
   Configuration,
+  Duration,
   getPathName,
   includes,
   isValidUrl,
-  ResourceType,
-  Duration,
-  toServerDuration,
-  ServerDuration,
   RelativeTime,
+  ResourceType,
+  ServerDuration,
+  toServerDuration,
 } from '@datadog/browser-core'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement

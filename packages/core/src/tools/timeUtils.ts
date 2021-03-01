@@ -5,14 +5,12 @@ export type ServerDuration = number & { s: 'Duration in ns' }
 export type TimeStamp = number & { t: 'Epoch time' }
 export type RelativeTime = number & { r: 'Time relative to navigation start' } & { d: 'Duration in ms' }
 
-export function toOptionalServerDuration(duration: Duration | undefined): ServerDuration | undefined {
+export function toServerDuration(duration: Duration): ServerDuration
+export function toServerDuration(duration: Duration | undefined): ServerDuration | undefined
+export function toServerDuration(duration: Duration | undefined) {
   if (!isNumber<Duration>(duration)) {
     return duration
   }
-  return toServerDuration(duration)
-}
-
-export function toServerDuration(duration: Duration) {
   return round(duration * 1e6, 0) as ServerDuration
 }
 
