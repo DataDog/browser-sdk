@@ -3,17 +3,17 @@ import type { RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
 export enum IncrementalSource {
-  Mutation,
-  MouseMove,
-  MouseInteraction,
-  Scroll,
-  ViewportResize,
-  Input,
-  TouchMove,
-  MediaInteraction,
-  StyleSheetRule,
-  CanvasMutation,
-  Font,
+  Mutation = 0,
+  MouseMove = 1,
+  MouseInteraction = 2,
+  Scroll = 3,
+  ViewportResize = 4,
+  Input = 5,
+  TouchMove = 6,
+  MediaInteraction = 7,
+  StyleSheetRule = 8,
+  // CanvasMutation = 9,
+  Font = 10,
 }
 
 export type MutationData = {
@@ -50,10 +50,6 @@ export type StyleSheetRuleData = {
   source: IncrementalSource.StyleSheetRule
 } & StyleSheetRuleParam
 
-export type CanvasMutationData = {
-  source: IncrementalSource.CanvasMutation
-} & CanvasMutationParam
-
 export type FontData = {
   source: IncrementalSource.Font
 } & FontParam
@@ -67,7 +63,6 @@ export type IncrementalData =
   | InputData
   | MediaInteractionData
   | StyleSheetRuleData
-  | CanvasMutationData
   | FontData
 
 export type SamplingStrategy = Partial<{
@@ -98,7 +93,6 @@ export interface RecordOptions {
   inlineStylesheet?: boolean
   packFn?: (record: RawRecord) => RawRecord
   sampling?: SamplingStrategy
-  recordCanvas?: boolean
   collectFonts?: boolean
   // departed, please use sampling options
   mousemoveWait?: number
@@ -122,10 +116,8 @@ export interface ObserverParam {
   maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
-  canvasMutationCb: CanvasMutationCallback
   fontCb: FontCallback
   sampling: SamplingStrategy
-  recordCanvas: boolean
   collectFonts: boolean
   slimDOMOptions: SlimDOMOptions
 }
@@ -241,15 +233,6 @@ export interface StyleSheetRuleParam {
 }
 
 export type StyleSheetRuleCallback = (s: StyleSheetRuleParam) => void
-
-export type CanvasMutationCallback = (p: CanvasMutationParam) => void
-
-export interface CanvasMutationParam {
-  id: number
-  property: string
-  args: unknown[]
-  setter?: true
-}
 
 export interface FontFaceDescriptors {
   style?: string

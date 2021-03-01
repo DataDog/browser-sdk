@@ -21,7 +21,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     packFn,
     sampling = {},
     mousemoveWait,
-    recordCanvas = false,
     collectFonts = false,
   } = options
   // runtime checks for user options
@@ -123,7 +122,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
     const [node, idNodeMap] = snapshot(document, {
       inlineStylesheet,
-      recordCanvas,
       maskAllInputs: maskInputOptions,
       slimDOM: slimDOMOptions,
     })
@@ -171,17 +169,8 @@ export function record(options: RecordOptions = {}): RecordAPI {
         inlineStylesheet,
         maskInputFn,
         maskInputOptions,
-        recordCanvas,
         sampling,
         slimDOMOptions,
-        canvasMutationCb: (p) =>
-          wrappedEmit({
-            data: {
-              source: IncrementalSource.CanvasMutation,
-              ...p,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
         fontCb: (p) =>
           wrappedEmit({
             data: {

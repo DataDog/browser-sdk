@@ -9,7 +9,6 @@ const DEFAULT_OPTIONS = {
   inlineStylesheet: false,
   skipChild: true,
   slimDOMOptions: {},
-  recordCanvas: false,
   maskInputOptions: {},
 }
 
@@ -35,7 +34,6 @@ describe('MutationObserverWrapper', () => {
       mutationCallbackSpy,
       DEFAULT_OPTIONS.inlineStylesheet,
       DEFAULT_OPTIONS.maskInputOptions,
-      DEFAULT_OPTIONS.recordCanvas,
       DEFAULT_OPTIONS.slimDOMOptions
     )
   })

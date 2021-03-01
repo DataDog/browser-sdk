@@ -166,10 +166,9 @@ function serializeNode(
     doc: Document
     inlineStylesheet: boolean
     maskInputOptions: MaskInputOptions
-    recordCanvas: boolean
   }
 ): SerializedNode | false {
-  const { doc, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
+  const { doc, inlineStylesheet, maskInputOptions = {} } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -236,10 +235,6 @@ function serializeNode(
         if (attributes.value === (selectValue as HTMLSelectElement).value) {
           attributes.selected = (n as HTMLOptionElement).selected
         }
-      }
-      // canvas image data
-      if (tagName === 'canvas' && recordCanvas) {
-        attributes.rr_dataURL = (n as HTMLCanvasElement).toDataURL()
       }
       // media elements
       if (tagName === 'audio' || tagName === 'video') {
@@ -389,25 +384,15 @@ export function serializeNodeWithId(
     inlineStylesheet: boolean
     maskInputOptions?: MaskInputOptions
     slimDOMOptions: SlimDOMOptions
-    recordCanvas?: boolean
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const {
-    doc,
-    map,
-    skipChild = false,
-    inlineStylesheet = true,
-    maskInputOptions = {},
-    slimDOMOptions,
-    recordCanvas = false,
-  } = options
+  const { doc, map, skipChild = false, inlineStylesheet = true, maskInputOptions = {}, slimDOMOptions } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
     inlineStylesheet,
     maskInputOptions,
-    recordCanvas,
   })
   if (!_serializedNode) {
     // TODO: dev only
@@ -459,7 +444,6 @@ export function serializeNodeWithId(
         inlineStylesheet,
         maskInputOptions,
         slimDOMOptions,
-        recordCanvas,
         preserveWhiteSpace,
       })
       if (serializedChildNode) {
@@ -476,10 +460,9 @@ export function snapshot(
     inlineStylesheet?: boolean
     maskAllInputs?: boolean | MaskInputOptions
     slimDOM?: boolean | SlimDOMOptions
-    recordCanvas?: boolean
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const { inlineStylesheet = true, recordCanvas = false, maskAllInputs = false, slimDOM = false } = options || {}
+  const { inlineStylesheet = true, maskAllInputs = false, slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
   const maskInputOptions: MaskInputOptions =
     maskAllInputs === true
@@ -530,7 +513,6 @@ export function snapshot(
       inlineStylesheet,
       maskInputOptions,
       slimDOMOptions,
-      recordCanvas,
     }),
     idNodeMap,
   ]

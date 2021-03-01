@@ -181,7 +181,6 @@ export class MutationObserverWrapper {
     private emissionCallback: MutationCallBack,
     private inlineStylesheet: boolean,
     private maskInputOptions: MaskInputOptions,
-    private recordCanvas: boolean,
     private slimDOMOptions: SlimDOMOptions
   ) {
     this.observer = new MutationObserver(monitor(this.processMutations))
@@ -245,7 +244,6 @@ export class MutationObserverWrapper {
         inlineStylesheet: this.inlineStylesheet,
         map: mirror.map,
         maskInputOptions: this.maskInputOptions,
-        recordCanvas: this.recordCanvas,
         skipChild: true,
         slimDOMOptions: this.slimDOMOptions,
       })

@@ -11,7 +11,6 @@ import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
-  CanvasMutationCallback,
   FontCallback,
   FontFaceDescriptors,
   FontParam,
@@ -40,7 +39,6 @@ function initMutationObserver(
   cb: MutationCallBack,
   inlineStylesheet: boolean,
   maskInputOptions: MaskInputOptions,
-  recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ) {
   const mutationObserverWrapper = new MutationObserverWrapper(
@@ -48,7 +46,6 @@ function initMutationObserver(
     cb,
     inlineStylesheet,
     maskInputOptions,
-    recordCanvas,
     slimDOMOptions
   )
   return () => mutationObserverWrapper.stop()
@@ -308,62 +305,6 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
-function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler {
-  const props = Object.getOwnPropertyNames(CanvasRenderingContext2D.prototype)
-  const handlers: ListenerHandler[] = []
-  for (const prop of props) {
-    try {
-      if (typeof CanvasRenderingContext2D.prototype[prop as keyof CanvasRenderingContext2D] !== 'function') {
-        continue
-      }
-      const restoreHandler = patch(
-        CanvasRenderingContext2D.prototype,
-        prop,
-        (original: (...args: unknown[]) => unknown) =>
-          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
-            callMonitored(() => {
-              if (!nodeOrAncestorsShouldBeHidden(this.canvas)) {
-                setTimeout(
-                  monitor(() => {
-                    const recordArgs = [...args]
-                    if (prop === 'drawImage') {
-                      if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                        recordArgs[0] = recordArgs[0].toDataURL()
-                      }
-                    }
-                    cb({
-                      args: recordArgs,
-                      id: mirror.getId((this.canvas as unknown) as INode),
-                      property: prop,
-                    })
-                  }),
-                  0
-                )
-              }
-            })
-            return original.apply(this, args)
-          }
-      )
-      handlers.push(restoreHandler)
-    } catch {
-      const hookHandler = hookSetter<CanvasRenderingContext2D>(CanvasRenderingContext2D.prototype, prop, {
-        set: monitor(function (v) {
-          cb({
-            args: [v],
-            id: mirror.getId((this.canvas as unknown) as INode),
-            property: prop,
-            setter: true,
-          })
-        }),
-      })
-      handlers.push(hookHandler)
-    }
-  }
-  return () => {
-    handlers.forEach((h) => h())
-  }
-}
-
 declare class FontFace {
   constructor(family: string, source: string | ArrayBufferView, descriptors?: FontFaceDescriptors)
 }
@@ -435,7 +376,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     o.mutationCb,
     o.inlineStylesheet,
     o.maskInputOptions,
-    o.recordCanvas,
     o.slimDOMOptions
   )
   const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
@@ -445,7 +385,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb) : noop
   const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
@@ -457,7 +396,6 @@ export function initObservers(o: ObserverParam): ListenerHandler {
     inputHandler()
     mediaInteractionHandler()
     styleSheetObserver()
-    canvasMutationObserver()
     fontObserver()
   }
 }
