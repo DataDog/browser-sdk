@@ -1,4 +1,4 @@
-import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
+import { IdNodeMap, INode, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
@@ -64,9 +64,6 @@ export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
   checkoutEveryNth?: number
   checkoutEveryNms?: number
-  maskAllInputs?: boolean
-  maskInputOptions?: MaskInputOptions
-  maskInputFn?: MaskInputFn
   slimDOMOptions?: SlimDOMOptions | 'all' | true
   inlineStylesheet?: boolean
   packFn?: (record: RawRecord) => RawRecord
@@ -86,8 +83,6 @@ export interface ObserverParam {
   viewportResizeCb: ViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  maskInputOptions: MaskInputOptions
-  maskInputFn?: MaskInputFn
   inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
   slimDOMOptions: SlimDOMOptions
@@ -242,5 +237,3 @@ export interface Mirror {
 export type ListenerHandler = () => void
 export type HookResetter = () => void
 export type Arguments<T> = T extends (...payload: infer U) => unknown ? U : unknown
-
-export type MaskInputFn = (text: string) => string

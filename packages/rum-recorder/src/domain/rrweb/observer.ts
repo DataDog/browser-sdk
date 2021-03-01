@@ -1,13 +1,5 @@
-import {
-  noop,
-  monitor,
-  callMonitored,
-  throttle,
-  DOM_EVENT,
-  addEventListeners,
-  addEventListener,
-} from '@datadog/browser-core'
-import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
+import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
+import { INode, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
@@ -16,7 +8,6 @@ import {
   InputCallback,
   InputValue,
   ListenerHandler,
-  MaskInputFn,
   MediaInteractionCallback,
   MediaInteractions,
   MouseInteractionCallBack,
@@ -37,16 +28,9 @@ function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
   inlineStylesheet: boolean,
-  maskInputOptions: MaskInputOptions,
   slimDOMOptions: SlimDOMOptions
 ) {
-  const mutationObserverWrapper = new MutationObserverWrapper(
-    mutationController,
-    cb,
-    inlineStylesheet,
-    maskInputOptions,
-    slimDOMOptions
-  )
+  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb, inlineStylesheet, slimDOMOptions)
   return () => mutationObserverWrapper.stop()
 }
 
@@ -150,11 +134,7 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
-function initInputObserver(
-  cb: InputCallback,
-  maskInputOptions: MaskInputOptions,
-  maskInputFn: MaskInputFn | undefined
-): ListenerHandler {
+function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const { target } = event
 
@@ -169,16 +149,11 @@ function initInputObserver(
     }
 
     const type: string | undefined = (target as HTMLInputElement).type
-    let text = (target as HTMLInputElement).value
+    const text = (target as HTMLInputElement).value
     let isChecked = false
 
     if (type === 'radio' || type === 'checkbox') {
       isChecked = (target as HTMLInputElement).checked
-    } else if (
-      maskInputOptions[(target as Element).tagName.toLowerCase() as keyof MaskInputOptions] ||
-      maskInputOptions[type as keyof MaskInputOptions]
-    ) {
-      text = maskInputFn ? maskInputFn(text) : '*'.repeat(text.length)
     }
 
     cbWithDedup(target, { text, isChecked })
@@ -297,18 +272,12 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(
-    o.mutationController,
-    o.mutationCb,
-    o.inlineStylesheet,
-    o.maskInputOptions,
-    o.slimDOMOptions
-  )
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.inlineStylesheet, o.slimDOMOptions)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
   const scrollHandler = initScrollObserver(o.scrollCb)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn)
+  const inputHandler = initInputObserver(o.inputCb)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
 

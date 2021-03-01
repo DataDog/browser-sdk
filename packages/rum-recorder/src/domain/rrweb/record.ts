@@ -1,5 +1,5 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
+import { SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
@@ -14,39 +14,13 @@ export function record(options: RecordOptions = {}): RecordAPI {
     checkoutEveryNms,
     checkoutEveryNth,
     inlineStylesheet = true,
-    maskAllInputs,
-    maskInputOptions: maskInputOptionsArg,
     slimDOMOptions: slimDOMOptionsArg,
-    maskInputFn,
     packFn,
   } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
   }
-
-  const maskInputOptions: MaskInputOptions =
-    maskAllInputs === true
-      ? {
-          color: true,
-          date: true,
-          'datetime-local': true,
-          email: true,
-          month: true,
-          number: true, // eslint-disable-line id-blacklist
-          range: true,
-          search: true,
-          select: true,
-          tel: true,
-          text: true,
-          textarea: true,
-          time: true,
-          url: true,
-          week: true,
-        }
-      : maskInputOptionsArg !== undefined
-      ? maskInputOptionsArg
-      : {}
 
   const slimDOMOptions: SlimDOMOptions =
     slimDOMOptionsArg === true || slimDOMOptionsArg === 'all'
@@ -115,7 +89,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
     const [node, idNodeMap] = snapshot(document, {
       inlineStylesheet,
-      maskAllInputs: maskInputOptions,
       slimDOM: slimDOMOptions,
     })
 
@@ -159,8 +132,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
       initObservers({
         mutationController,
         inlineStylesheet,
-        maskInputFn,
-        maskInputOptions,
         slimDOMOptions,
         inputCb: (v) =>
           wrappedEmit({

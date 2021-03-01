@@ -1,16 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import {
-  SerializedNode,
-  SerializedNodeWithId,
-  NodeType,
-  Attributes,
-  INode,
-  IdNodeMap,
-  MaskInputOptions,
-  SlimDOMOptions,
-} from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap, SlimDOMOptions } from './types'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -165,10 +156,9 @@ function serializeNode(
   options: {
     doc: Document
     inlineStylesheet: boolean
-    maskInputOptions: MaskInputOptions
   }
 ): SerializedNode | false {
-  const { doc, inlineStylesheet, maskInputOptions = {} } = options
+  const { doc, inlineStylesheet } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -221,11 +211,7 @@ function serializeNode(
           attributes.type !== 'button' &&
           value
         ) {
-          attributes.value =
-            maskInputOptions[attributes.type as keyof MaskInputOptions] ||
-            maskInputOptions[tagName as keyof MaskInputOptions]
-              ? '*'.repeat(value.length)
-              : value
+          attributes.value = value
         } else if ((n as HTMLInputElement).checked) {
           attributes.checked = (n as HTMLInputElement).checked
         }
@@ -382,17 +368,15 @@ export function serializeNodeWithId(
     map: IdNodeMap
     skipChild: boolean
     inlineStylesheet: boolean
-    maskInputOptions?: MaskInputOptions
     slimDOMOptions: SlimDOMOptions
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false, inlineStylesheet = true, maskInputOptions = {}, slimDOMOptions } = options
+  const { doc, map, skipChild = false, inlineStylesheet = true, slimDOMOptions } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
     inlineStylesheet,
-    maskInputOptions,
   })
   if (!_serializedNode) {
     // TODO: dev only
@@ -442,7 +426,6 @@ export function serializeNodeWithId(
         map,
         skipChild,
         inlineStylesheet,
-        maskInputOptions,
         slimDOMOptions,
         preserveWhiteSpace,
       })
@@ -458,35 +441,11 @@ export function snapshot(
   n: Document,
   options?: {
     inlineStylesheet?: boolean
-    maskAllInputs?: boolean | MaskInputOptions
     slimDOM?: boolean | SlimDOMOptions
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const { inlineStylesheet = true, maskAllInputs = false, slimDOM = false } = options || {}
+  const { inlineStylesheet = true, slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
-  const maskInputOptions: MaskInputOptions =
-    maskAllInputs === true
-      ? {
-          color: true,
-          date: true,
-          'datetime-local': true,
-          email: true,
-          month: true,
-          // eslint-disable-next-line id-blacklist
-          number: true,
-          range: true,
-          search: true,
-          tel: true,
-          text: true,
-          time: true,
-          url: true,
-          week: true,
-          textarea: true,
-          select: true,
-        }
-      : maskAllInputs === false
-      ? {}
-      : maskAllInputs
   const slimDOMOptions: SlimDOMOptions =
     slimDOM === true || slimDOM === 'all'
       ? // if true: set of sensible options that should not throw away any information
@@ -511,7 +470,6 @@ export function snapshot(
       map: idNodeMap,
       skipChild: false,
       inlineStylesheet,
-      maskInputOptions,
       slimDOMOptions,
     }),
     idNodeMap,
