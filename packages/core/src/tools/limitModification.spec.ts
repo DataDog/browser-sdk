@@ -92,21 +92,4 @@ describe('limitModification', () => {
       foo: { bar: 'qux' },
     })
   })
-
-  it('should catch and log modifier exception', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
-    const modifier = (candidate: any) => {
-      candidate.qux = 'modified'
-      candidate.foo.qux.bar = 'will throw'
-    }
-    const errorSpy = spyOn(console, 'error')
-
-    limitModification(object, ['foo.bar', 'qux'], modifier)
-
-    expect(errorSpy).toHaveBeenCalled()
-    expect(object).toEqual({
-      foo: { bar: 'bar' },
-      qux: 'qux',
-    })
-  })
 })

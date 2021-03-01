@@ -2,6 +2,7 @@ import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Datacenter } from '../domain/transportConfiguration'
+import { catchUserErrors } from '../tools/catchUserErrors'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
@@ -31,7 +32,7 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   const existingGlobalVariable: { q?: Array<() => void> } | undefined = global[name]
   global[name] = api
   if (existingGlobalVariable && existingGlobalVariable.q) {
-    existingGlobalVariable.q.forEach((fn) => fn())
+    existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())
   }
 }
 

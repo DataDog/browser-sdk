@@ -1,5 +1,5 @@
 import { Context } from '../tools/context'
-import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { addEventListener, DOM_EVENT, getTimestamp, jsonStringify, noop, objectValues } from '../tools/utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -30,7 +30,9 @@ export class HttpRequest {
 }
 
 function addBatchTime(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
+  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}&m_time=${getTimestamp(
+    performance.now()
+  )}`
 }
 
 export class Batch {

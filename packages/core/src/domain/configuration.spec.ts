@@ -1,3 +1,4 @@
+import { RumEvent } from '../../../rum/src'
 import { BuildEnv, BuildMode } from '../boot/init'
 import { buildConfiguration } from './configuration'
 import { Datacenter } from './transportConfiguration'
@@ -29,6 +30,35 @@ describe('configuration', () => {
     it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
       const configuration = buildConfiguration({ clientToken, trackSessionAcrossSubdomains: true }, usEnv)
       expect(configuration.cookieOptions).toEqual({ secure: false, crossSite: false, domain: jasmine.any(String) })
+    })
+  })
+
+  describe('beforeSend', () => {
+    it('should be undefined when beforeSend is missing on user configuration', () => {
+      const configuration = buildConfiguration({ clientToken }, usEnv)
+      expect(configuration.beforeSend).toBeUndefined()
+    })
+
+    it('should return the same result as the original', () => {
+      const beforeSend = (event: RumEvent) => {
+        if (event.view.url === '/foo') {
+          return false
+        }
+      }
+      const configuration = buildConfiguration({ clientToken, beforeSend }, usEnv)
+      expect(configuration.beforeSend!({ view: { url: '/foo' } })).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/bar' } })).toBeUndefined()
+    })
+
+    it('should catch errors and log them', () => {
+      const myError = 'Ooops!'
+      const beforeSend = () => {
+        throw myError
+      }
+      const configuration = buildConfiguration({ clientToken, beforeSend }, usEnv)
+      const consoleErrorSpy = spyOn(console, 'error')
+      expect(configuration.beforeSend!(null)).toBeUndefined()
+      expect(consoleErrorSpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
     })
   })
 })
