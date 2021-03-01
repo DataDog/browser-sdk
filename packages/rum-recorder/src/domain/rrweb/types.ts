@@ -65,7 +65,6 @@ export interface RecordOptions {
   checkoutEveryNth?: number
   checkoutEveryNms?: number
   slimDOMOptions?: SlimDOMOptions | 'all' | true
-  inlineStylesheet?: boolean
 }
 
 export interface RecordAPI {
@@ -82,7 +81,6 @@ export interface ObserverParam {
   viewportResizeCb: ViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
   slimDOMOptions: SlimDOMOptions
 }

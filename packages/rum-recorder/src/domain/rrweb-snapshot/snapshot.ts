@@ -155,10 +155,9 @@ function serializeNode(
   n: Node,
   options: {
     doc: Document
-    inlineStylesheet: boolean
   }
 ): SerializedNode | false {
-  const { doc, inlineStylesheet } = options
+  const { doc } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -180,7 +179,7 @@ function serializeNode(
         attributes[name] = transformAttribute(doc, name, value)
       }
       // remote css
-      if (tagName === 'link' && inlineStylesheet) {
+      if (tagName === 'link') {
         const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
         const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
         if (cssText) {
@@ -367,16 +366,14 @@ export function serializeNodeWithId(
     doc: Document
     map: IdNodeMap
     skipChild: boolean
-    inlineStylesheet: boolean
     slimDOMOptions: SlimDOMOptions
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false, inlineStylesheet = true, slimDOMOptions } = options
+  const { doc, map, skipChild = false, slimDOMOptions } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
-    inlineStylesheet,
   })
   if (!_serializedNode) {
     // TODO: dev only
@@ -425,7 +422,6 @@ export function serializeNodeWithId(
         doc,
         map,
         skipChild,
-        inlineStylesheet,
         slimDOMOptions,
         preserveWhiteSpace,
       })
@@ -440,11 +436,10 @@ export function serializeNodeWithId(
 export function snapshot(
   n: Document,
   options?: {
-    inlineStylesheet?: boolean
     slimDOM?: boolean | SlimDOMOptions
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const { inlineStylesheet = true, slimDOM = false } = options || {}
+  const { slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
   const slimDOMOptions: SlimDOMOptions =
     slimDOM === true || slimDOM === 'all'
@@ -469,7 +464,6 @@ export function snapshot(
       doc: n,
       map: idNodeMap,
       skipChild: false,
-      inlineStylesheet,
       slimDOMOptions,
     }),
     idNodeMap,

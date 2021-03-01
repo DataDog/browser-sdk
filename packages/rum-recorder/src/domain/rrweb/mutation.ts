@@ -172,7 +172,6 @@ export class MutationObserverWrapper {
   public constructor(
     private controller: MutationController,
     private emissionCallback: MutationCallBack,
-    private inlineStylesheet: boolean,
     private slimDOMOptions: SlimDOMOptions
   ) {
     this.observer = new MutationObserver(monitor(this.processMutations))
@@ -233,7 +232,6 @@ export class MutationObserverWrapper {
       }
       const sn = serializeNodeWithId(n, {
         doc: document,
-        inlineStylesheet: this.inlineStylesheet,
         map: mirror.map,
         skipChild: true,
         slimDOMOptions: this.slimDOMOptions,

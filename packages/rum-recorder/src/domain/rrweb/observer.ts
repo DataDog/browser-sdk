@@ -27,10 +27,9 @@ const SCROLL_OBSERVER_THRESHOLD = 100
 function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
-  inlineStylesheet: boolean,
   slimDOMOptions: SlimDOMOptions
 ) {
-  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb, inlineStylesheet, slimDOMOptions)
+  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb, slimDOMOptions)
   return () => mutationObserverWrapper.stop()
 }
 
@@ -272,7 +271,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.inlineStylesheet, o.slimDOMOptions)
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.slimDOMOptions)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
   const scrollHandler = initScrollObserver(o.scrollCb)

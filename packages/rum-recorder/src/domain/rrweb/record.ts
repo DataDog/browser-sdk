@@ -9,13 +9,7 @@ import { MutationController } from './mutation'
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 export function record(options: RecordOptions = {}): RecordAPI {
-  const {
-    emit,
-    checkoutEveryNms,
-    checkoutEveryNth,
-    inlineStylesheet = true,
-    slimDOMOptions: slimDOMOptionsArg,
-  } = options
+  const { emit, checkoutEveryNms, checkoutEveryNth, slimDOMOptions: slimDOMOptionsArg } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -87,7 +81,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     )
 
     const [node, idNodeMap] = snapshot(document, {
-      inlineStylesheet,
       slimDOM: slimDOMOptions,
     })
 
@@ -130,7 +123,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     handlers.push(
       initObservers({
         mutationController,
-        inlineStylesheet,
         slimDOMOptions,
         inputCb: (v) =>
           wrappedEmit({
