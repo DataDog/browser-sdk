@@ -1,8 +1,9 @@
+import { runOnReadyState } from '@datadog/browser-core'
 import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
-import { getWindowHeight, getWindowWidth, mirror, on } from './utils'
+import { getWindowHeight, getWindowWidth, mirror } from './utils'
 import { MutationController } from './mutation'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
@@ -260,11 +261,9 @@ export function record(options: RecordOptions = {}): RecordAPI {
       )
     )
   }
-  if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    init()
-  } else {
-    handlers.push(on('load', init, window))
-  }
+
+  runOnReadyState('complete', init)
+
   return {
     stop: () => {
       handlers.forEach((h) => h())

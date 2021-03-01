@@ -1,4 +1,5 @@
 import { Context } from '../tools/context'
+import { getTimeStamp, RelativeTime } from '../tools/timeUtils'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 
 // https://en.wikipedia.org/wiki/UTF-8
@@ -30,7 +31,9 @@ export class HttpRequest {
 }
 
 function addBatchTime(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
+  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}&m_time=${getTimeStamp(
+    performance.now() as RelativeTime
+  )}`
 }
 
 export class Batch {

@@ -5,14 +5,17 @@ export const ONE_MINUTE = 60 * ONE_SECOND
 export const ONE_HOUR = 60 * ONE_MINUTE
 export const ONE_KILO_BYTE = 1024
 
-export enum DOM_EVENT {
+export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
   CLICK = 'click',
+  DBL_CLICK = 'dblclick',
   KEY_DOWN = 'keydown',
   LOAD = 'load',
   POP_STATE = 'popstate',
   SCROLL = 'scroll',
   TOUCH_START = 'touchstart',
+  TOUCH_END = 'touchend',
+  TOUCH_MOVE = 'touchmove',
   VISIBILITY_CHANGE = 'visibilitychange',
   DOM_CONTENT_LOADED = 'DOMContentLoaded',
   POINTER_DOWN = 'pointerdown',
@@ -21,8 +24,16 @@ export enum DOM_EVENT {
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
   MOUSE_DOWN = 'mousedown',
+  MOUSE_UP = 'mouseup',
+  MOUSE_MOVE = 'mousemove',
   FOCUS = 'focus',
   BLUR = 'blur',
+  CONTEXT_MENU = 'contextmenu',
+  RESIZE = 'resize',
+  CHANGE = 'change',
+  INPUT = 'input',
+  PLAY = 'play',
+  PAUSE = 'pause',
 }
 
 export enum ResourceType {
@@ -319,10 +330,10 @@ interface AddEventListenerOptions {
  *
  * * returns a `stop` function to remove the listener
  */
-export function addEventListener(
+export function addEventListener<E extends Event>(
   emitter: EventEmitter,
   event: DOM_EVENT,
-  listener: (event: Event) => void,
+  listener: (event: E) => void,
   options?: AddEventListenerOptions
 ) {
   return addEventListeners(emitter, [event], listener, options)
@@ -340,27 +351,36 @@ export function addEventListener(
  *
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
-export function addEventListeners(
+export function addEventListeners<E extends Event>(
   emitter: EventEmitter,
   events: DOM_EVENT[],
-  listener: (event: Event) => void,
+  listener: (event: E) => void,
   { once, capture, passive }: { once?: boolean; capture?: boolean; passive?: boolean } = {}
 ) {
-  const wrapedListener = monitor(
+  const wrappedListener = monitor(
     once
       ? (event: Event) => {
           stop()
-          listener(event)
+          listener(event as E)
         }
-      : listener
+      : (listener as (event: Event) => void)
   )
 
   const options = passive ? { capture, passive } : capture
-  events.forEach((event) => emitter.addEventListener(event, wrapedListener, options))
-  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrapedListener, options))
+  events.forEach((event) => emitter.addEventListener(event, wrappedListener, options))
+  const stop = () => events.forEach((event) => emitter.removeEventListener(event, wrappedListener, options))
 
   return {
     stop,
+  }
+}
+
+export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', callback: () => void) {
+  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
+    callback()
+  } else {
+    const eventName = expectedReadyState === 'complete' ? DOM_EVENT.LOAD : DOM_EVENT.DOM_CONTENT_LOADED
+    addEventListener(window, eventName, callback, { once: true })
   }
 }
 
