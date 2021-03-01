@@ -62,8 +62,6 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
-  checkoutEveryNth?: number
-  checkoutEveryNms?: number
   slimDOMOptions?: SlimDOMOptions | 'all' | true
 }
 

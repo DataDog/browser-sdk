@@ -9,7 +9,7 @@ import { MutationController } from './mutation'
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 export function record(options: RecordOptions = {}): RecordAPI {
-  const { emit, checkoutEveryNms, checkoutEveryNth, slimDOMOptions: slimDOMOptionsArg } = options
+  const { emit, slimDOMOptions: slimDOMOptionsArg } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -37,8 +37,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const mutationController = new MutationController()
 
-  let lastFullSnapshotRecordTimestamp: number
-  let incrementalSnapshotCount = 0
   wrappedEmit = (record, isCheckout) => {
     if (
       mutationController.isFrozen() &&
@@ -51,17 +49,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     }
 
     emit(record, isCheckout)
-    if (record.type === RecordType.FullSnapshot) {
-      lastFullSnapshotRecordTimestamp = Date.now()
-      incrementalSnapshotCount = 0
-    } else if (record.type === RecordType.IncrementalSnapshot) {
-      incrementalSnapshotCount += 1
-      const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
-      const exceedTime = checkoutEveryNms && Date.now() - lastFullSnapshotRecordTimestamp > checkoutEveryNms
-      if (exceedCount || exceedTime) {
-        takeFullSnapshot(true)
-      }
-    }
   }
 
   const takeFullSnapshot = (isCheckout = false) => {
