@@ -29,7 +29,7 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror, patch } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror } from './utils'
 
 function initMutationObserver(
   mutationController: MutationController,
