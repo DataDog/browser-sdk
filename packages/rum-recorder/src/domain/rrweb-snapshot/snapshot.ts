@@ -301,11 +301,13 @@ function isNodeIgnored(sn: SerializedNode): boolean {
     }
 
     if (sn.tagName === 'link') {
+      const relAttribute = lowerIfExists(sn.attributes.rel)
       return (
         // Scripts
-        (sn.attributes.rel === 'preload' && sn.attributes.as === 'script') ||
+        (relAttribute === 'preload' && sn.attributes.as === 'script') ||
         // Favicons
-        sn.attributes.rel === 'shortcut icon'
+        relAttribute === 'shortcut icon' ||
+        relAttribute === 'icon'
       )
     }
 
