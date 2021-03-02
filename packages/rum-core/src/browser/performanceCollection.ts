@@ -250,19 +250,24 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
   }
 }
 
-interface IndexedPerformanceTiming extends PerformanceTiming {
-  [key: string]: any
+type IndexedPerformanceTiming = {
+  [key in keyof PerformanceTiming]: any
+}
+
+export type RelativePerformanceTiming = {
+  -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
 }
 
 function computeRelativePerformanceTiming() {
-  const result: Partial<IndexedPerformanceTiming> = {}
+  const result: Partial<RelativePerformanceTiming> = {}
   const timing = performance.timing as IndexedPerformanceTiming
   for (const key in timing) {
-    if (isNumber(timing[key])) {
-      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key])
+    if (isNumber(timing[key as keyof PerformanceTiming])) {
+      const numberKey = key as keyof RelativePerformanceTiming
+      result[numberKey] = timing[numberKey] === 0 ? (0 as RelativeTime) : getRelativeTime(timing[numberKey])
     }
   }
-  return result as Omit<RumPerformanceResourceTiming, 'entryType'> & Omit<RumPerformanceNavigationTiming, 'entryType'>
+  return result as RelativePerformanceTiming
 }
 
 function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configuration, entries: PerformanceEntry[]) {
