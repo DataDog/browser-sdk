@@ -289,68 +289,71 @@ function lowerIfExists(maybeAttr: string | number | boolean): string {
   return (maybeAttr as string).toLowerCase()
 }
 
-function slimDOMExcluded(sn: SerializedNode): boolean {
+function isNodeIgnored(sn: SerializedNode): boolean {
   if (sn.type === NodeType.Comment) {
     // TODO: convert IE conditional comments to real nodes
     return true
-  } else if (sn.type === NodeType.Element) {
-    if (
-      sn.tagName === 'script' ||
-      (sn.tagName === 'link' && sn.attributes.rel === 'preload' && sn.attributes.as === 'script')
-    ) {
+  }
+
+  if (sn.type === NodeType.Element) {
+    if (sn.tagName === 'script') {
       return true
-    } else if (
-      (sn.tagName === 'link' && sn.attributes.rel === 'shortcut icon') ||
-      (sn.tagName === 'meta' &&
-        (/^msapplication-tile(image|color)$/.test(lowerIfExists(sn.attributes.name)) ||
-          lowerIfExists(sn.attributes.name) === 'application-name' ||
-          lowerIfExists(sn.attributes.rel) === 'icon' ||
-          lowerIfExists(sn.attributes.rel) === 'apple-touch-icon' ||
-          lowerIfExists(sn.attributes.rel) === 'shortcut icon'))
-    ) {
-      return true
-    } else if (sn.tagName === 'meta') {
-      if (/^description|keywords$/.test(lowerIfExists(sn.attributes.name))) {
-        return true
-      } else if (
-        /^(og|twitter|fb):/.test(lowerIfExists(sn.attributes.property)) || // og = opengraph (facebook)
-        /^(og|twitter):/.test(lowerIfExists(sn.attributes.name)) ||
-        lowerIfExists(sn.attributes.name) === 'pinterest'
-      ) {
-        return true
-      } else if (
-        lowerIfExists(sn.attributes.name) === 'robots' ||
-        lowerIfExists(sn.attributes.name) === 'googlebot' ||
-        lowerIfExists(sn.attributes.name) === 'bingbot'
-      ) {
-        return true
-      } else if (sn.attributes['http-equiv'] !== undefined) {
-        // e.g. X-UA-Compatible, Content-Type, Content-Language,
-        // cache-control, X-Translated-By
-        return true
-      } else if (
-        lowerIfExists(sn.attributes.name) === 'author' ||
-        lowerIfExists(sn.attributes.name) === 'generator' ||
-        lowerIfExists(sn.attributes.name) === 'framework' ||
-        lowerIfExists(sn.attributes.name) === 'publisher' ||
-        lowerIfExists(sn.attributes.name) === 'progid' ||
-        /^article:/.test(lowerIfExists(sn.attributes.property)) ||
-        /^product:/.test(lowerIfExists(sn.attributes.property))
-      ) {
-        return true
-      } else if (
-        lowerIfExists(sn.attributes.name) === 'google-site-verification' ||
-        lowerIfExists(sn.attributes.name) === 'yandex-verification' ||
-        lowerIfExists(sn.attributes.name) === 'csrf-token' ||
-        lowerIfExists(sn.attributes.name) === 'p:domain_verify' ||
-        lowerIfExists(sn.attributes.name) === 'verify-v1' ||
-        lowerIfExists(sn.attributes.name) === 'verification' ||
-        lowerIfExists(sn.attributes.name) === 'shopify-checkout-api-token'
-      ) {
-        return true
-      }
+    }
+
+    if (sn.tagName === 'link') {
+      return (
+        // Scripts
+        (sn.attributes.rel === 'preload' && sn.attributes.as === 'script') ||
+        // Favicons
+        sn.attributes.rel === 'shortcut icon'
+      )
+    }
+
+    if (sn.tagName === 'meta') {
+      const nameAttribute = lowerIfExists(sn.attributes.name)
+      const relAttribute = lowerIfExists(sn.attributes.rel)
+      const propertyAttribute = lowerIfExists(sn.attributes.property)
+      return (
+        // Favicons
+        /^msapplication-tile(image|color)$/.test(nameAttribute) ||
+        nameAttribute === 'application-name' ||
+        relAttribute === 'icon' ||
+        relAttribute === 'apple-touch-icon' ||
+        relAttribute === 'shortcut icon' ||
+        // Description
+        nameAttribute === 'keywords' ||
+        nameAttribute === 'description' ||
+        // Social
+        /^(og|twitter|fb):/.test(propertyAttribute) ||
+        /^(og|twitter):/.test(nameAttribute) ||
+        nameAttribute === 'pinterest' ||
+        // Robots
+        nameAttribute === 'robots' ||
+        nameAttribute === 'googlebot' ||
+        nameAttribute === 'bingbot' ||
+        // Http headers. Ex: X-UA-Compatible, Content-Type, Content-Language, cache-control,
+        // X-Translated-By
+        sn.attributes['http-equiv'] !== undefined ||
+        // Authorship
+        nameAttribute === 'author' ||
+        nameAttribute === 'generator' ||
+        nameAttribute === 'framework' ||
+        nameAttribute === 'publisher' ||
+        nameAttribute === 'progid' ||
+        /^article:/.test(propertyAttribute) ||
+        /^product:/.test(propertyAttribute) ||
+        // Verification
+        nameAttribute === 'google-site-verification' ||
+        nameAttribute === 'yandex-verification' ||
+        nameAttribute === 'csrf-token' ||
+        nameAttribute === 'p:domain_verify' ||
+        nameAttribute === 'verify-v1' ||
+        nameAttribute === 'verification' ||
+        nameAttribute === 'shopify-checkout-api-token'
+      )
     }
   }
+
   return false
 }
 
@@ -379,7 +382,7 @@ export function serializeNodeWithId(
   if ('__sn' in n) {
     id = n.__sn.id
   } else if (
-    slimDOMExcluded(_serializedNode) ||
+    isNodeIgnored(_serializedNode) ||
     (!preserveWhiteSpace &&
       _serializedNode.type === NodeType.Text &&
       !_serializedNode.isStyle &&
