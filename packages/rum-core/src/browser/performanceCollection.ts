@@ -2,10 +2,15 @@ import {
   addEventListeners,
   Configuration,
   DOM_EVENT,
+  Duration,
   getRelativeTime,
   isNumber,
   monitor,
+  Omit,
+  relativeNow,
+  RelativeTime,
   runOnReadyState,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
@@ -16,52 +21,52 @@ export interface RumPerformanceResourceTiming {
   entryType: 'resource'
   initiatorType: string
   name: string
-  startTime: number
-  duration: number
-  fetchStart: number
-  domainLookupStart: number
-  domainLookupEnd: number
-  connectStart: number
-  secureConnectionStart: number
-  connectEnd: number
-  requestStart: number
-  responseStart: number
-  responseEnd: number
-  redirectStart: number
-  redirectEnd: number
+  startTime: RelativeTime
+  duration: Duration
+  fetchStart: RelativeTime
+  domainLookupStart: RelativeTime
+  domainLookupEnd: RelativeTime
+  connectStart: RelativeTime
+  secureConnectionStart: RelativeTime
+  connectEnd: RelativeTime
+  requestStart: RelativeTime
+  responseStart: RelativeTime
+  responseEnd: RelativeTime
+  redirectStart: RelativeTime
+  redirectEnd: RelativeTime
   decodedBodySize: number
   traceId?: string
 }
 
 export interface RumPerformanceLongTaskTiming {
   entryType: 'longtask'
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
 }
 
 export interface RumPerformancePaintTiming {
   entryType: 'paint'
   name: 'first-paint' | 'first-contentful-paint'
-  startTime: number
+  startTime: RelativeTime
 }
 
 export interface RumPerformanceNavigationTiming {
   entryType: 'navigation'
-  domComplete: number
-  domContentLoadedEventEnd: number
-  domInteractive: number
-  loadEventEnd: number
+  domComplete: RelativeTime
+  domContentLoadedEventEnd: RelativeTime
+  domInteractive: RelativeTime
+  loadEventEnd: RelativeTime
 }
 
 export interface RumLargestContentfulPaintTiming {
   entryType: 'largest-contentful-paint'
-  startTime: number
+  startTime: RelativeTime
 }
 
 export interface RumFirstInputTiming {
   entryType: 'first-input'
-  startTime: number
-  processingStart: number
+  startTime: RelativeTime
+  processingStart: RelativeTime
 }
 
 export interface RumLayoutShiftTiming {
@@ -155,7 +160,7 @@ export function retrieveInitialDocumentResourceTiming(callback: (timing: RumPerf
         decodedBodySize: 0,
         duration: relativePerformanceTiming.responseEnd,
         name: window.location.href,
-        startTime: 0,
+        startTime: 0 as RelativeTime,
         ...forcedAttributes,
       }
     }
@@ -199,8 +204,8 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
       // (e.g. performance.now()).
       const timing: RumFirstInputTiming = {
         entryType: 'first-input',
-        processingStart: performance.now(),
-        startTime: evt.timeStamp,
+        processingStart: relativeNow(),
+        startTime: evt.timeStamp as RelativeTime,
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
@@ -214,7 +219,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
 
   /**
    * Pointer events are a special case, because they can trigger main or compositor thread behavior.
-   * We differenciate these cases based on whether or not we see a pointercancel event, which are
+   * We differentiate these cases based on whether or not we see a pointercancel event, which are
    * fired when we scroll. If we're scrolling we don't need to report input delay since FID excludes
    * scrolling and pinch/zooming.
    */
@@ -248,19 +253,22 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
   }
 }
 
-interface IndexedPerformanceTiming extends PerformanceTiming {
-  [key: string]: any
+export type RelativePerformanceTiming = {
+  -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
 }
 
 function computeRelativePerformanceTiming() {
-  const result: Partial<IndexedPerformanceTiming> = {}
-  const timing = performance.timing as IndexedPerformanceTiming
+  const result: Partial<RelativePerformanceTiming> = {}
+  const timing = performance.timing
   for (const key in timing) {
-    if (isNumber(timing[key])) {
-      result[key] = timing[key] === 0 ? 0 : getRelativeTime(timing[key] as number)
+    if (isNumber(timing[key as keyof PerformanceTiming])) {
+      const numberKey = key as keyof RelativePerformanceTiming
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const timingElement = timing[numberKey] as TimeStamp
+      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
     }
   }
-  return result as PerformanceTiming
+  return result as RelativePerformanceTiming
 }
 
 function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configuration, entries: PerformanceEntry[]) {
@@ -274,7 +282,7 @@ function handlePerformanceEntries(lifeCycle: LifeCycle, configuration: Configura
       entry.entryType === 'first-input' ||
       entry.entryType === 'layout-shift'
     ) {
-      handleRumPerformanceEntry(lifeCycle, configuration, entry as RumPerformanceEntry)
+      handleRumPerformanceEntry(lifeCycle, configuration, (entry as unknown) as RumPerformanceEntry)
     }
   })
 }

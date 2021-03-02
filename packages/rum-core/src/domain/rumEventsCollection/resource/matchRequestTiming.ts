@@ -1,10 +1,11 @@
+import { Duration, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
 interface Timing {
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
 }
 
 /**
@@ -51,9 +52,10 @@ function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTim
 }
 
 function endTime(timing: Timing) {
-  return timing.startTime + timing.duration
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  return (timing.startTime + timing.duration) as RelativeTime
 }
 
-function isBetween(timing: Timing, start: number, end: number) {
+function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
   return timing.startTime >= start && endTime(timing) <= end
 }

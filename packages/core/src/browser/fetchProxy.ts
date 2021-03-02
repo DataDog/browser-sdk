@@ -1,6 +1,7 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
+import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<
@@ -13,7 +14,7 @@ export interface FetchProxy<
 
 export interface FetchStartContext {
   method: string
-  startTime: number
+  startTime: RelativeTime
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -25,7 +26,7 @@ export interface FetchStartContext {
 }
 
 export interface FetchCompleteContext extends FetchStartContext {
-  duration: number
+  duration: Duration
   status: number
   response: string
   responseType?: string
@@ -88,7 +89,7 @@ function proxyFetch() {
 function beforeSend(input: RequestInfo, init?: RequestInit) {
   const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
   const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-  const startTime = performance.now()
+  const startTime = relativeNow()
 
   const context: FetchStartContext = {
     init,
@@ -103,9 +104,9 @@ function beforeSend(input: RequestInfo, init?: RequestInit) {
   return context
 }
 
-function afterSend(responsePromise: Promise<Response>, context: FetchStartContext) {
+function afterSend(responsePromise: Promise<Response>, context: FetchStartContext & Partial<FetchCompleteContext>) {
   const reportFetch = async (response: Response | Error) => {
-    context.duration = performance.now() - context.startTime
+    context.duration = elapsed(context.startTime, relativeNow())
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0

@@ -1,3 +1,4 @@
+import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -28,10 +29,10 @@ describe('actionCollection', () => {
         longTaskCount: 10,
         resourceCount: 10,
       },
-      duration: 100,
+      duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
-      startTime: 1234,
+      startTime: 1234 as RelativeTime,
       type: ActionType.CLICK,
     })
 
@@ -42,7 +43,7 @@ describe('actionCollection', () => {
           count: 10,
         },
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-        loading_time: 100 * 1e6,
+        loading_time: (100 * 1e6) as ServerDuration,
         long_task: {
           count: 10,
         },
@@ -63,7 +64,7 @@ describe('actionCollection', () => {
     const { rawRumEvents } = setupBuilder.build()
     addAction({
       name: 'foo',
-      startTime: 1234,
+      startTime: 1234 as RelativeTime,
       type: ActionType.CUSTOM,
     })
 

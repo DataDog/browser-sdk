@@ -1,8 +1,8 @@
-import { findCommaSeparatedValue, ONE_MINUTE } from '@datadog/browser-core'
+import { findCommaSeparatedValue, ONE_MINUTE, TimeStamp } from '@datadog/browser-core'
 
 interface DocumentTraceData {
   traceId: string
-  traceTime: number
+  traceTime: TimeStamp
 }
 
 export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
@@ -38,7 +38,7 @@ export function createDocumentTraceData(
   traceId: string | undefined | null,
   rawTraceTime: string | undefined | null
 ): DocumentTraceData | undefined {
-  const traceTime = rawTraceTime && Number(rawTraceTime)
+  const traceTime = rawTraceTime && (Number(rawTraceTime) as TimeStamp)
   if (!traceId || !traceTime) {
     return undefined
   }
@@ -64,7 +64,7 @@ export function findTraceComment(document: Document): string | undefined {
   // 2. If the comment is placed after the </html> tag, but have some space or new lines before or
   // after, the DOM parser will lift it (and the surrounding text) at the end of the <body> tag.
   // Try to look for the comment at the end of the <body> by by iterating over its child nodes in
-  // reverse order, stoping if we come accross a non-text node.
+  // reverse order, stopping if we come across a non-text node.
   if (document.body) {
     for (let i = document.body.childNodes.length - 1; i >= 0; i -= 1) {
       const node = document.body.childNodes[i]

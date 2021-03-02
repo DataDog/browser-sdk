@@ -1,4 +1,4 @@
-import { monitor, ONE_MINUTE, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { monitor, ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -10,14 +10,14 @@ export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 
 interface PreviousContext<T> {
-  startTime: number
-  endTime: number
+  startTime: RelativeTime
+  endTime: RelativeTime
   context: T
 }
 
 export interface ParentContexts {
-  findAction: (startTime?: number) => ActionContext | undefined
-  findView: (startTime?: number) => ViewContext | undefined
+  findAction: (startTime?: RelativeTime) => ActionContext | undefined
+  findView: (startTime?: RelativeTime) => ViewContext | undefined
   stop: () => void
 }
 
@@ -57,7 +57,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     if (currentAction) {
       previousActions.unshift({
         context: buildCurrentActionContext(),
-        endTime: currentAction.startTime + action.duration,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (currentAction.startTime + action.duration) as RelativeTime,
         startTime: currentAction.startTime,
       })
     }
@@ -111,8 +112,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
-    currentContext?: { startTime: number },
-    startTime?: number
+    currentContext?: { startTime: RelativeTime },
+    startTime?: RelativeTime
   ) {
     if (startTime === undefined) {
       return currentContext ? buildContext() : undefined

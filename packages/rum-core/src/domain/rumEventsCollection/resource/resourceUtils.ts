@@ -1,15 +1,18 @@
 import {
   addMonitoringMessage,
   Configuration,
+  elapsed,
   getPathName,
   includes,
   isValidUrl,
-  msToNs,
+  RelativeTime,
   ResourceType,
+  ServerDuration,
+  toServerDuration,
 } from '@datadog/browser-core'
+import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
@@ -70,15 +73,15 @@ export function isRequestKind(timing: RumPerformanceResourceTiming) {
   return timing.initiatorType === 'xmlhttprequest' || timing.initiatorType === 'fetch'
 }
 
-export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): number {
+export function computePerformanceResourceDuration(entry: RumPerformanceResourceTiming): ServerDuration {
   const { duration, startTime, responseEnd } = entry
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
   if (duration === 0 && startTime < responseEnd) {
-    return msToNs(responseEnd - startTime)
+    return toServerDuration(elapsed(startTime, responseEnd))
   }
 
-  return msToNs(duration)
+  return toServerDuration(duration)
 }
 
 export function computePerformanceResourceDetails(
@@ -183,10 +186,10 @@ function hasRedirection(entry: RumPerformanceResourceTiming) {
   return entry.fetchStart !== entry.startTime
 }
 
-function formatTiming(origin: number, start: number, end: number) {
+function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
   return {
-    duration: msToNs(end - start),
-    start: msToNs(start - origin),
+    duration: toServerDuration(elapsed(start, end)),
+    start: toServerDuration(elapsed(origin, start)),
   }
 }
 

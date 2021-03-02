@@ -1,4 +1,4 @@
-import { combine, generateUUID, getTimestamp, msToNs, RequestType, ResourceType } from '@datadog/browser-core'
+import { combine, generateUUID, getTimeStamp, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -38,10 +38,10 @@ function processRequest(request: RequestCompleteEvent) {
 
   const resourceEvent = combine(
     {
-      date: getTimestamp(startTime),
+      date: getTimeStamp(startTime),
       resource: {
         type,
-        duration: msToNs(request.duration),
+        duration: toServerDuration(request.duration),
         method: request.method,
         status_code: request.status,
         url: request.url,
@@ -61,7 +61,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
 
   const resourceEvent = combine(
     {
-      date: getTimestamp(entry.startTime),
+      date: getTimeStamp(entry.startTime),
       resource: {
         type,
         url: entry.name,

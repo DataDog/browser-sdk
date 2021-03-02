@@ -1,4 +1,4 @@
-import { noop, Observable } from '@datadog/browser-core'
+import { noop, Observable, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent } from './requestCollection'
@@ -167,7 +167,7 @@ describe('waitPageActivitiesCompletion', () => {
     const startTime = performance.now()
     waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
       expect(hadActivity).toBeTrue()
-      expect(endTime).toEqual(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(endTime).toEqual((startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as RelativeTime)
       done()
     })
 
@@ -187,7 +187,7 @@ describe('waitPageActivitiesCompletion', () => {
 
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
         expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY)
+        expect(endTime).toBe((startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as RelativeTime)
         done()
       })
 
@@ -209,7 +209,7 @@ describe('waitPageActivitiesCompletion', () => {
 
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
         expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
+        expect(endTime).toBe((startTime + PAGE_ACTIVITY_MAX_DURATION) as RelativeTime)
         stop = true
         done()
       })
@@ -229,7 +229,9 @@ describe('waitPageActivitiesCompletion', () => {
       const startTime = performance.now()
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
         expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2)
+        expect(endTime).toBe(
+          (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as RelativeTime
+        )
         done()
       })
 
@@ -247,7 +249,7 @@ describe('waitPageActivitiesCompletion', () => {
       const startTime = performance.now()
       waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
         expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(startTime + PAGE_ACTIVITY_MAX_DURATION)
+        expect(endTime).toBe((startTime + PAGE_ACTIVITY_MAX_DURATION) as RelativeTime)
         done()
       })
 

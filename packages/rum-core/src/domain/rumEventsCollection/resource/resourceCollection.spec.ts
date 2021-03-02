@@ -1,4 +1,4 @@
-import { RequestType, ResourceType } from '@datadog/browser-core'
+import { Duration, RelativeTime, RequestType, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
@@ -35,17 +35,17 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
         createResourceEntry({
-          duration: 100,
+          duration: 100 as Duration,
           name: 'https://resource.com/valid',
-          startTime: 1234,
+          startTime: 1234 as RelativeTime,
         })
       )
 
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: (jasmine.any(Number) as unknown) as number,
+        date: (jasmine.any(Number) as unknown) as TimeStamp,
         resource: {
-          duration: 100 * 1e6,
+          duration: (100 * 1e6) as ServerDuration,
           size: undefined,
           type: ResourceType.OTHER,
           url: 'https://resource.com/valid',
@@ -59,9 +59,9 @@ describe('resourceCollection', () => {
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
-          duration: 100,
+          duration: 100 as Duration,
           method: 'GET',
-          startTime: 1234,
+          startTime: 1234 as RelativeTime,
           status: 200,
           type: RequestType.XHR,
           url: 'https://resource.com/valid',
@@ -70,9 +70,9 @@ describe('resourceCollection', () => {
 
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: (jasmine.any(Number) as unknown) as number,
+        date: (jasmine.any(Number) as unknown) as TimeStamp,
         resource: {
-          duration: 100 * 1e6,
+          duration: (100 * 1e6) as ServerDuration,
           method: 'GET',
           status_code: 200,
           type: ResourceType.XHR,
@@ -220,9 +220,9 @@ describe('resourceCollection', () => {
 
 function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
   const request: Partial<RequestCompleteEvent> = {
-    duration: 100,
+    duration: 100 as Duration,
     method: 'GET',
-    startTime: 1234,
+    startTime: 1234 as RelativeTime,
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',

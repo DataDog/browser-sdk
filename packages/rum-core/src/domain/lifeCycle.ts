@@ -1,4 +1,4 @@
-import { Context } from '@datadog/browser-core'
+import { Context, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -48,7 +48,7 @@ export class LifeCycle {
   notify(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     data: {
-      startTime: number
+      startTime: RelativeTime
       rawRumEvent: RawRumEvent
       savedCommonContext?: CommonContext
       customerContext?: Context
@@ -90,7 +90,7 @@ export class LifeCycle {
   subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     callback: (data: {
-      startTime: number
+      startTime: RelativeTime
       rawRumEvent: RawRumEvent
       savedCommonContext?: CommonContext
       customerContext?: Context
