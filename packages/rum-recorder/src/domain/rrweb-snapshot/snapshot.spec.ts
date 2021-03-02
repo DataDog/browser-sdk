@@ -82,7 +82,7 @@ describe('serializeNodeWithId', () => {
       map: {},
     }
 
-    it('does not same ignored nodes in the map', () => {
+    it('does not save ignored nodes in the map', () => {
       const map = {}
       serializeNodeWithId(document.createElement('script'), { ...defaultOptions, map })
       expect(map).toEqual({})
