@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { monitor, callMonitored } from '../domain/internalMonitoring'
-import { Duration, RelativeTime } from '../tools/timeUtils'
+import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -89,7 +89,7 @@ function proxyXhr() {
     callMonitored(() => {
       if (this._datadog_xhr) {
         const xhrContext = this._datadog_xhr as XhrStartContext & Partial<XhrCompleteContext>
-        xhrContext.startTime = performance.now() as RelativeTime
+        xhrContext.startTime = relativeNow()
 
         const originalOnreadystatechange = this.onreadystatechange
 
@@ -110,7 +110,7 @@ function proxyXhr() {
           }
           hasBeenReported = true
 
-          xhrContext.duration = (performance.now() - xhrContext.startTime) as Duration
+          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
           xhrContext.response = this.response as string | undefined
           xhrContext.status = this.status
 

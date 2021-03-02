@@ -1,7 +1,7 @@
 import {
   addMonitoringMessage,
   Configuration,
-  Duration,
+  elapsed,
   getPathName,
   includes,
   isValidUrl,
@@ -78,7 +78,7 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
 
   // Safari duration is always 0 on timings blocked by cross origin policies.
   if (duration === 0 && startTime < responseEnd) {
-    return toServerDuration((responseEnd - startTime) as Duration)
+    return toServerDuration(elapsed(startTime, responseEnd))
   }
 
   return toServerDuration(duration)
@@ -188,8 +188,8 @@ function hasRedirection(entry: RumPerformanceResourceTiming) {
 
 function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
   return {
-    duration: toServerDuration((end - start) as Duration),
-    start: toServerDuration((start - origin) as Duration),
+    duration: toServerDuration(elapsed(start, end)),
+    start: toServerDuration(elapsed(origin, start)),
   }
 }
 

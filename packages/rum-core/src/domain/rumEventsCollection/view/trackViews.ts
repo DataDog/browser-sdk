@@ -2,10 +2,12 @@ import {
   addEventListener,
   DOM_EVENT,
   Duration,
+  elapsed,
   generateUUID,
   monitor,
   noop,
   ONE_MINUTE,
+  relativeNow,
   RelativeTime,
   throttle,
 } from '@datadog/browser-core'
@@ -105,7 +107,7 @@ export function trackViews(
   )
 
   return {
-    addTiming: (name: string, time: RelativeTime = performance.now() as RelativeTime) => {
+    addTiming: (name: string, time = relativeNow()) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
@@ -124,7 +126,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime: RelativeTime = performance.now() as RelativeTime,
+  startTime = relativeNow(),
   name?: string
 ) {
   // Setup initial values
@@ -140,7 +142,7 @@ function newView(
   let documentVersion = 0
   let cumulativeLayoutShift: number | undefined
   let loadingTime: Duration | undefined
-  let endTime: Duration | undefined
+  let endTime: RelativeTime | undefined
   let location: Location = { ...initialLocation }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
@@ -195,7 +197,7 @@ function newView(
       referrer,
       startTime,
       timings,
-      duration: ((endTime === undefined ? performance.now() : endTime) - startTime) as Duration,
+      duration: elapsed(startTime, endTime === undefined ? relativeNow() : endTime),
       isActive: endTime === undefined,
     })
   }
@@ -203,7 +205,7 @@ function newView(
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = performance.now() as Duration
+      endTime = relativeNow()
       stopEventCountsTracking()
       stopActivityLoadingTimeTracking()
       stopCLSTracking()
@@ -229,8 +231,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, time: RelativeTime) {
-      customTimings[sanitizeTiming(name)] = (time - startTime) as Duration
+    addTiming(name: string, endTime: RelativeTime) {
+      customTimings[sanitizeTiming(name)] = elapsed(startTime, endTime)
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
@@ -304,10 +306,10 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
 }
 
 function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: Duration | undefined) => void) {
-  const startTime = performance.now()
+  const startTime = relativeNow()
   const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
     if (hadActivity) {
-      callback((endTime - startTime) as Duration)
+      callback(elapsed(startTime, endTime))
     } else {
       callback(undefined)
     }

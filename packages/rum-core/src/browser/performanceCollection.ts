@@ -6,6 +6,7 @@ import {
   getRelativeTime,
   isNumber,
   monitor,
+  relativeNow,
   RelativeTime,
   runOnReadyState,
 } from '@datadog/browser-core'
@@ -201,7 +202,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
       // (e.g. performance.now()).
       const timing: RumFirstInputTiming = {
         entryType: 'first-input',
-        processingStart: performance.now() as RelativeTime,
+        processingStart: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
       }
 
@@ -216,7 +217,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
 
   /**
    * Pointer events are a special case, because they can trigger main or compositor thread behavior.
-   * We differenciate these cases based on whether or not we see a pointercancel event, which are
+   * We differentiate these cases based on whether or not we see a pointercancel event, which are
    * fired when we scroll. If we're scrolling we don't need to report input delay since FID excludes
    * scrolling and pinch/zooming.
    */

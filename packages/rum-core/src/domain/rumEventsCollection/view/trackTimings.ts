@@ -1,4 +1,4 @@
-import { addEventListeners, DOM_EVENT, Duration, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, Duration, elapsed, EventEmitter, RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -139,7 +139,7 @@ export function trackFirstInputTimings(
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
       callback({
-        firstInputDelay: (entry.processingStart - entry.startTime) as Duration,
+        firstInputDelay: elapsed(entry.startTime, entry.processingStart),
         firstInputTime: entry.startTime as Duration,
       })
     }

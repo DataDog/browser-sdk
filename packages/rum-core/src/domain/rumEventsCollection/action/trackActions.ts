@@ -1,4 +1,13 @@
-import { addEventListener, Context, DOM_EVENT, Duration, generateUUID, RelativeTime } from '@datadog/browser-core'
+import {
+  addEventListener,
+  Context,
+  DOM_EVENT,
+  Duration,
+  elapsed,
+  generateUUID,
+  relativeNow,
+  RelativeTime,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -106,7 +115,7 @@ class PendingAutoAction {
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
-    this.startTime = performance.now() as RelativeTime
+    this.startTime = relativeNow()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
   }
@@ -119,7 +128,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: (endTime - this.startTime) as Duration,
+      duration: elapsed(this.startTime, endTime),
       id: this.id,
       name: this.name,
       startTime: this.startTime,

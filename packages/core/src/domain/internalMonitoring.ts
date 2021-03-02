@@ -1,7 +1,7 @@
 import { combine, Context } from '../tools/context'
 import { toStackTraceString } from '../tools/error'
 import { assign, jsonStringify, ONE_MINUTE, ONE_SECOND, Parameters, ThisParameterType } from '../tools/utils'
-import { getTimeStamp, RelativeTime } from '../tools/timeUtils'
+import { getTimeStamp, relativeNow, RelativeTime } from '../tools/timeUtils'
 import { Batch, HttpRequest } from '../transport/transport'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
@@ -101,7 +101,7 @@ export function resetInternalMonitoring() {
 function startMonitoringClockDrift() {
   const interval = setInterval(
     monitor(() => {
-      const drift = Date.now() - getTimeStamp(performance.now() as RelativeTime)
+      const drift = Date.now() - getTimeStamp(relativeNow())
       if (Math.abs(drift) > ONE_SECOND) {
         clearInterval(interval)
         const navigationStart = getTimeStamp(0 as RelativeTime)

@@ -14,6 +14,20 @@ export function toServerDuration(duration: Duration | undefined) {
   return round(duration * 1e6, 0) as ServerDuration
 }
 
+export function timeStampNow() {
+  return Date.now() as TimeStamp
+}
+
+export function relativeNow() {
+  return performance.now() as RelativeTime
+}
+
+export function elapsed(start: TimeStamp, end: TimeStamp): Duration
+export function elapsed(start: RelativeTime, end: RelativeTime): Duration
+export function elapsed(start: number, end: number) {
+  return (end - start) as Duration
+}
+
 /**
  * Get the time since the navigation was started.
  *

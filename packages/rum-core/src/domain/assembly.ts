@@ -1,4 +1,4 @@
-import { combine, Configuration, Context, isEmptyObject, limitModification, TimeStamp } from '@datadog/browser-core'
+import { combine, Configuration, Context, isEmptyObject, limitModification, timeStampNow } from '@datadog/browser-core'
 import {
   CommonContext,
   RawRumErrorEvent,
@@ -55,7 +55,7 @@ export function startRumAssembly(
           application: {
             id: applicationId,
           },
-          date: new Date().getTime() as TimeStamp,
+          date: timeStampNow(),
           service: configuration.service,
           session: {
             has_replay: commonContext.hasReplay,
