@@ -389,3 +389,5 @@ export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', 
 export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#parameterstype
 export type Parameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? P : never
+// https://www.typescriptlang.org/docs/handbook/utility-types.html#omittype-keys
+export type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>

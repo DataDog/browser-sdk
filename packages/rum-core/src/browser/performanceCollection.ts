@@ -9,6 +9,7 @@ import {
   relativeNow,
   RelativeTime,
   runOnReadyState,
+  Omit,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
