@@ -1,21 +1,21 @@
-import { addEventListener, DOM_EVENT, EventEmitter } from '@datadog/browser-core'
+import { addEventListener, DOM_EVENT, EventEmitter, RelativeTime } from '@datadog/browser-core'
 
-let trackFirstHiddenSingleton: { timeStamp: number } | undefined
+let trackFirstHiddenSingleton: { timeStamp: RelativeTime } | undefined
 let stopListeners: (() => void) | undefined
 
 export function trackFirstHidden(emitter: EventEmitter = window) {
   if (!trackFirstHiddenSingleton) {
     if (document.visibilityState === 'hidden') {
-      trackFirstHiddenSingleton = { timeStamp: 0 }
+      trackFirstHiddenSingleton = { timeStamp: 0 as RelativeTime }
     } else {
       trackFirstHiddenSingleton = {
-        timeStamp: Infinity,
+        timeStamp: Infinity as RelativeTime,
       }
       ;({ stop: stopListeners } = addEventListener(
         emitter,
         DOM_EVENT.PAGE_HIDE,
         ({ timeStamp }) => {
-          trackFirstHiddenSingleton!.timeStamp = timeStamp
+          trackFirstHiddenSingleton!.timeStamp = timeStamp as RelativeTime
         },
         { capture: true, once: true }
       ))

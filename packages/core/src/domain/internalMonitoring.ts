@@ -1,6 +1,7 @@
 import { combine, Context } from '../tools/context'
 import { toStackTraceString } from '../tools/error'
-import * as utils from '../tools/utils'
+import { assign, jsonStringify, ONE_MINUTE, ONE_SECOND, Parameters, ThisParameterType } from '../tools/utils'
+import { getTimeStamp, relativeNow, RelativeTime } from '../tools/timeUtils'
 import { Batch, HttpRequest } from '../transport/transport'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
@@ -36,7 +37,7 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
   if (configuration.internalMonitoringEndpoint) {
     const batch = startMonitoringBatch(configuration)
 
-    utils.assign(monitoringConfiguration, {
+    assign(monitoringConfiguration, {
       batch,
       maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
       sentMessageCount: 0,
@@ -100,10 +101,10 @@ export function resetInternalMonitoring() {
 function startMonitoringClockDrift() {
   const interval = setInterval(
     monitor(() => {
-      const drift = Date.now() - utils.getTimestamp(performance.now())
-      if (Math.abs(drift) > utils.ONE_SECOND) {
+      const drift = Date.now() - getTimeStamp(relativeNow())
+      if (Math.abs(drift) > ONE_SECOND) {
         clearInterval(interval)
-        const navigationStart = utils.getTimestamp(0)
+        const navigationStart = getTimeStamp(0 as RelativeTime)
         addMonitoringMessage('clock drift detected', {
           debug: {
             navigationStartUTC: new Date(navigationStart).toUTCString(),
@@ -113,7 +114,7 @@ function startMonitoringClockDrift() {
         })
       }
     }),
-    utils.ONE_MINUTE
+    ONE_MINUTE
   )
 }
 
@@ -123,7 +124,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
   descriptor: TypedPropertyDescriptor<T>
 ) {
   const originalMethod = descriptor.value!
-  descriptor.value = function (this: any, ...args: utils.Parameters<T>) {
+  descriptor.value = function (this: any, ...args: Parameters<T>) {
     const decorated = monitoringConfiguration.batch ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
@@ -132,14 +133,14 @@ export function monitored<T extends (...params: any[]) => unknown>(
 export function monitor<T extends (...args: any[]) => any>(fn: T): T {
   return (function (this: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return callMonitored(fn, this, (arguments as unknown) as utils.Parameters<T>)
+    return callMonitored(fn, this, (arguments as unknown) as Parameters<T>)
   } as unknown) as T // consider output type has input type
 }
 
 export function callMonitored<T extends (...args: any[]) => any>(
   fn: T,
-  context: utils.ThisParameterType<T>,
-  args: utils.Parameters<T>
+  context: ThisParameterType<T>,
+  args: Parameters<T>
 ): ReturnType<T> | undefined
 export function callMonitored<T extends (this: void) => any>(fn: T): ReturnType<T> | undefined
 export function callMonitored<T extends (...args: any[]) => any>(
@@ -202,7 +203,7 @@ function formatError(e: unknown) {
     error: {
       stack: 'Not an instance of error',
     },
-    message: `Uncaught ${utils.jsonStringify(e)!}`,
+    message: `Uncaught ${jsonStringify(e)!}`,
   }
 }
 

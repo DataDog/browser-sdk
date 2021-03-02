@@ -1,4 +1,10 @@
-import { createNewEvent, DOM_EVENT, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import {
+  createNewEvent,
+  DOM_EVENT,
+  RelativeTime,
+  restorePageVisibility,
+  setPageVisibility,
+} from '@datadog/browser-core'
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
@@ -8,12 +14,12 @@ describe('trackFirstHidden', () => {
   })
 
   it('should return Infinity if the page was not hidden yet', () => {
-    expect(trackFirstHidden().timeStamp).toBe(Infinity)
+    expect(trackFirstHidden().timeStamp).toBe(Infinity as RelativeTime)
   })
 
   it('should return 0 if the page was hidden when executing trackFirstHidden', () => {
     setPageVisibility('hidden')
-    expect(trackFirstHidden().timeStamp).toBe(0)
+    expect(trackFirstHidden().timeStamp).toBe(0 as RelativeTime)
   })
 
   it('should stay to 0 if the page was hidden when executing trackFirstHidden and a pagehide occurs', () => {
@@ -23,7 +29,7 @@ describe('trackFirstHidden', () => {
 
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
-    expect(firstHidden.timeStamp).toBe(0)
+    expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
   })
 
   it('should return the timestamp of the first pagehide event', () => {
@@ -32,7 +38,7 @@ describe('trackFirstHidden', () => {
 
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
-    expect(firstHidden.timeStamp).toBe(100)
+    expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
   })
 
   it('should stay to the first value if multiple pagehide event occurs', () => {
@@ -42,6 +48,6 @@ describe('trackFirstHidden', () => {
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 200 }))
 
-    expect(firstHidden.timeStamp).toBe(100)
+    expect(firstHidden.timeStamp).toBe(100 as RelativeTime)
   })
 })

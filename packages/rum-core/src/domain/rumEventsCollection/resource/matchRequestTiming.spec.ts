@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { Duration, isIE, RelativeTime } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
@@ -6,7 +6,7 @@ import { RequestCompleteEvent } from '../../requestCollection'
 import { matchRequestTiming } from './matchRequestTiming'
 
 describe('matchRequestTiming', () => {
-  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100, duration: 500 }
+  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100 as RelativeTime, duration: 500 as Duration }
   let entries: RumPerformanceResourceTiming[]
 
   beforeEach(() => {
@@ -14,11 +14,11 @@ describe('matchRequestTiming', () => {
       pending('no full rum support')
     }
     entries = []
-    spyOn(performance, 'getEntriesByName').and.returnValues(entries as PerformanceResourceTiming[])
+    spyOn(performance, 'getEntriesByName').and.returnValues((entries as unknown) as PerformanceResourceTiming[])
   })
 
   it('should match single timing nested in the request ', () => {
-    const match = createResourceEntry({ startTime: 200, duration: 300 })
+    const match = createResourceEntry({ startTime: 200 as RelativeTime, duration: 300 as Duration })
     entries.push(match)
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -27,7 +27,7 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match single timing outside the request ', () => {
-    const match = createResourceEntry({ startTime: 0, duration: 300 })
+    const match = createResourceEntry({ startTime: 0 as RelativeTime, duration: 300 as Duration })
     entries.push(match)
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -36,8 +36,8 @@ describe('matchRequestTiming', () => {
   })
 
   it('should match two following timings nested in the request ', () => {
-    const optionsTiming = createResourceEntry({ startTime: 150, duration: 50 })
-    const actualTiming = createResourceEntry({ startTime: 200, duration: 100 })
+    const optionsTiming = createResourceEntry({ startTime: 150 as RelativeTime, duration: 50 as Duration })
+    const actualTiming = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
     entries.push(optionsTiming, actualTiming)
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -46,8 +46,8 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match two not following timings nested in the request ', () => {
-    const match1 = createResourceEntry({ startTime: 150, duration: 100 })
-    const match2 = createResourceEntry({ startTime: 200, duration: 100 })
+    const match1 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 100 as Duration })
+    const match2 = createResourceEntry({ startTime: 200 as RelativeTime, duration: 100 as Duration })
     entries.push(match1, match2)
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -56,9 +56,9 @@ describe('matchRequestTiming', () => {
   })
 
   it('should not match multiple timings nested in the request', () => {
-    const match1 = createResourceEntry({ startTime: 100, duration: 50 })
-    const match2 = createResourceEntry({ startTime: 150, duration: 50 })
-    const match3 = createResourceEntry({ startTime: 200, duration: 50 })
+    const match1 = createResourceEntry({ startTime: 100 as RelativeTime, duration: 50 as Duration })
+    const match2 = createResourceEntry({ startTime: 150 as RelativeTime, duration: 50 as Duration })
+    const match3 = createResourceEntry({ startTime: 200 as RelativeTime, duration: 50 as Duration })
     entries.push(match1, match2, match3)
 
     const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
@@ -68,9 +68,9 @@ describe('matchRequestTiming', () => {
 
   it('should match invalid timing nested in the request ', () => {
     const match = createResourceEntry({
-      duration: 100,
-      fetchStart: 0,
-      startTime: 200,
+      duration: 100 as Duration,
+      fetchStart: 0 as RelativeTime,
+      startTime: 200 as RelativeTime,
     })
     entries.push(match)
 

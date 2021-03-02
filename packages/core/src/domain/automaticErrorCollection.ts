@@ -2,6 +2,7 @@ import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../brows
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
 import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
 import { Observable } from '../tools/observable'
+import { relativeNow } from '../tools/timeUtils'
 import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
@@ -33,7 +34,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
       filteredErrorObservable.notify({
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
         source: ErrorSource.AGENT,
-        startTime: performance.now(),
+        startTime: relativeNow(),
       })
     }
   })
@@ -50,7 +51,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     errorObservable.notify({
       message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
       source: ErrorSource.CONSOLE,
-      startTime: performance.now(),
+      startTime: relativeNow(),
     })
   })
 }
@@ -79,7 +80,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       stack,
       type,
       source: ErrorSource.SOURCE,
-      startTime: performance.now(),
+      startTime: relativeNow(),
     })
   }
   subscribe(traceKitReportHandler)

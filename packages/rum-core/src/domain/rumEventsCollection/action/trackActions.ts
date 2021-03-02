@@ -1,4 +1,13 @@
-import { addEventListener, Context, DOM_EVENT, generateUUID } from '@datadog/browser-core'
+import {
+  addEventListener,
+  Context,
+  DOM_EVENT,
+  Duration,
+  elapsed,
+  generateUUID,
+  relativeNow,
+  RelativeTime,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
@@ -16,7 +25,7 @@ export interface ActionCounts {
 export interface CustomAction {
   type: ActionType.CUSTOM
   name: string
-  startTime: number
+  startTime: RelativeTime
   context?: Context
 }
 
@@ -24,14 +33,14 @@ export interface AutoAction {
   type: AutoActionType
   id: string
   name: string
-  startTime: number
-  duration: number
+  startTime: RelativeTime
+  duration: Duration
   counts: ActionCounts
 }
 
 export interface AutoActionCreatedEvent {
   id: string
-  startTime: number
+  startTime: RelativeTime
 }
 
 export function trackActions(lifeCycle: LifeCycle) {
@@ -101,17 +110,17 @@ function startActionManagement(lifeCycle: LifeCycle) {
 
 class PendingAutoAction {
   private id: string
-  private startTime: number
+  private startTime: RelativeTime
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
-    this.startTime = performance.now()
+    this.startTime = relativeNow()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
   }
 
-  complete(endTime: number) {
+  complete(endTime: RelativeTime) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -119,7 +128,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: endTime - this.startTime,
+      duration: elapsed(this.startTime, endTime),
       id: this.id,
       name: this.name,
       startTime: this.startTime,

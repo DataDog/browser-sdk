@@ -1,3 +1,4 @@
+import { RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
@@ -237,7 +238,7 @@ describe('error limitation', () => {
   let filteredSubscriber: jasmine.Spy
   const CONTEXT = {
     source: ErrorSource.SOURCE,
-    startTime: 100,
+    startTime: 100 as RelativeTime,
   }
 
   beforeEach(() => {

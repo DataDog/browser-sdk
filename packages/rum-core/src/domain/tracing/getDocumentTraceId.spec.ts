@@ -1,3 +1,4 @@
+import { TimeStamp } from '@datadog/browser-core'
 import {
   createDocumentTraceData,
   findTraceComment,
@@ -102,7 +103,7 @@ describe('getDocumentTraceDataFromMeta', () => {
           </html>`
         )
       )
-    ).toEqual({ traceId: '123', traceTime: 456 })
+    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp })
   })
 
   it('returns undefined if a meta is missing', () => {
@@ -171,7 +172,7 @@ describe('createDocumentTraceData', () => {
   it('parses a trace comment', () => {
     expect(createDocumentTraceData('123', '456')).toEqual({
       traceId: '123',
-      traceTime: 456,
+      traceTime: 456 as TimeStamp,
     })
   })
 
