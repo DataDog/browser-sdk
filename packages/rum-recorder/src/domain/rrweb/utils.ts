@@ -69,8 +69,7 @@ export function isIgnored(n: Node | INode): boolean {
   if ('__sn' in n) {
     return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle
   }
-  // The main part of the slimDOM check happens in
-  // rrweb-snapshot::serializeNodeWithId
+  // The ignored DOM logic happens in rrweb-snapshot::serializeNodeWithId
   return false
 }
 

@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap, SlimDOMOptions } from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -289,69 +289,63 @@ function lowerIfExists(maybeAttr: string | number | boolean): string {
   return (maybeAttr as string).toLowerCase()
 }
 
-function slimDOMExcluded(sn: SerializedNode, slimDOMOptions: SlimDOMOptions): boolean {
-  if (slimDOMOptions.comment && sn.type === NodeType.Comment) {
+function slimDOMExcluded(sn: SerializedNode): boolean {
+  if (sn.type === NodeType.Comment) {
     // TODO: convert IE conditional comments to real nodes
     return true
   } else if (sn.type === NodeType.Element) {
     if (
-      slimDOMOptions.script &&
-      (sn.tagName === 'script' ||
-        (sn.tagName === 'link' && sn.attributes.rel === 'preload' && sn.attributes.as === 'script'))
+      sn.tagName === 'script' ||
+      (sn.tagName === 'link' && sn.attributes.rel === 'preload' && sn.attributes.as === 'script')
     ) {
       return true
     } else if (
-      slimDOMOptions.headFavicon &&
-      ((sn.tagName === 'link' && sn.attributes.rel === 'shortcut icon') ||
-        (sn.tagName === 'meta' &&
-          (/^msapplication-tile(image|color)$/.test(lowerIfExists(sn.attributes.name)) ||
-            lowerIfExists(sn.attributes.name) === 'application-name' ||
-            lowerIfExists(sn.attributes.rel) === 'icon' ||
-            lowerIfExists(sn.attributes.rel) === 'apple-touch-icon' ||
-            lowerIfExists(sn.attributes.rel) === 'shortcut icon')))
+      (sn.tagName === 'link' && sn.attributes.rel === 'shortcut icon') ||
+      (sn.tagName === 'meta' &&
+        (/^msapplication-tile(image|color)$/.test(lowerIfExists(sn.attributes.name)) ||
+          lowerIfExists(sn.attributes.name) === 'application-name' ||
+          lowerIfExists(sn.attributes.rel) === 'icon' ||
+          lowerIfExists(sn.attributes.rel) === 'apple-touch-icon' ||
+          lowerIfExists(sn.attributes.rel) === 'shortcut icon'))
     ) {
       return true
     } else if (sn.tagName === 'meta') {
-      if (slimDOMOptions.headMetaDescKeywords && /^description|keywords$/.test(lowerIfExists(sn.attributes.name))) {
+      if (/^description|keywords$/.test(lowerIfExists(sn.attributes.name))) {
         return true
       } else if (
-        slimDOMOptions.headMetaSocial &&
-        (/^(og|twitter|fb):/.test(lowerIfExists(sn.attributes.property)) || // og = opengraph (facebook)
-          /^(og|twitter):/.test(lowerIfExists(sn.attributes.name)) ||
-          lowerIfExists(sn.attributes.name) === 'pinterest')
+        /^(og|twitter|fb):/.test(lowerIfExists(sn.attributes.property)) || // og = opengraph (facebook)
+        /^(og|twitter):/.test(lowerIfExists(sn.attributes.name)) ||
+        lowerIfExists(sn.attributes.name) === 'pinterest'
       ) {
         return true
       } else if (
-        slimDOMOptions.headMetaRobots &&
-        (lowerIfExists(sn.attributes.name) === 'robots' ||
-          lowerIfExists(sn.attributes.name) === 'googlebot' ||
-          lowerIfExists(sn.attributes.name) === 'bingbot')
+        lowerIfExists(sn.attributes.name) === 'robots' ||
+        lowerIfExists(sn.attributes.name) === 'googlebot' ||
+        lowerIfExists(sn.attributes.name) === 'bingbot'
       ) {
         return true
-      } else if (slimDOMOptions.headMetaHttpEquiv && sn.attributes['http-equiv'] !== undefined) {
+      } else if (sn.attributes['http-equiv'] !== undefined) {
         // e.g. X-UA-Compatible, Content-Type, Content-Language,
         // cache-control, X-Translated-By
         return true
       } else if (
-        slimDOMOptions.headMetaAuthorship &&
-        (lowerIfExists(sn.attributes.name) === 'author' ||
-          lowerIfExists(sn.attributes.name) === 'generator' ||
-          lowerIfExists(sn.attributes.name) === 'framework' ||
-          lowerIfExists(sn.attributes.name) === 'publisher' ||
-          lowerIfExists(sn.attributes.name) === 'progid' ||
-          /^article:/.test(lowerIfExists(sn.attributes.property)) ||
-          /^product:/.test(lowerIfExists(sn.attributes.property)))
+        lowerIfExists(sn.attributes.name) === 'author' ||
+        lowerIfExists(sn.attributes.name) === 'generator' ||
+        lowerIfExists(sn.attributes.name) === 'framework' ||
+        lowerIfExists(sn.attributes.name) === 'publisher' ||
+        lowerIfExists(sn.attributes.name) === 'progid' ||
+        /^article:/.test(lowerIfExists(sn.attributes.property)) ||
+        /^product:/.test(lowerIfExists(sn.attributes.property))
       ) {
         return true
       } else if (
-        slimDOMOptions.headMetaVerification &&
-        (lowerIfExists(sn.attributes.name) === 'google-site-verification' ||
-          lowerIfExists(sn.attributes.name) === 'yandex-verification' ||
-          lowerIfExists(sn.attributes.name) === 'csrf-token' ||
-          lowerIfExists(sn.attributes.name) === 'p:domain_verify' ||
-          lowerIfExists(sn.attributes.name) === 'verify-v1' ||
-          lowerIfExists(sn.attributes.name) === 'verification' ||
-          lowerIfExists(sn.attributes.name) === 'shopify-checkout-api-token')
+        lowerIfExists(sn.attributes.name) === 'google-site-verification' ||
+        lowerIfExists(sn.attributes.name) === 'yandex-verification' ||
+        lowerIfExists(sn.attributes.name) === 'csrf-token' ||
+        lowerIfExists(sn.attributes.name) === 'p:domain_verify' ||
+        lowerIfExists(sn.attributes.name) === 'verify-v1' ||
+        lowerIfExists(sn.attributes.name) === 'verification' ||
+        lowerIfExists(sn.attributes.name) === 'shopify-checkout-api-token'
       ) {
         return true
       }
@@ -366,11 +360,10 @@ export function serializeNodeWithId(
     doc: Document
     map: IdNodeMap
     skipChild: boolean
-    slimDOMOptions: SlimDOMOptions
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false, slimDOMOptions } = options
+  const { doc, map, skipChild = false } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
@@ -386,7 +379,7 @@ export function serializeNodeWithId(
   if ('__sn' in n) {
     id = n.__sn.id
   } else if (
-    slimDOMExcluded(_serializedNode, slimDOMOptions) ||
+    slimDOMExcluded(_serializedNode) ||
     (!preserveWhiteSpace &&
       _serializedNode.type === NodeType.Text &&
       !_serializedNode.isStyle &&
@@ -399,7 +392,7 @@ export function serializeNodeWithId(
   const serializedNode = Object.assign(_serializedNode, { id })
   ;(n as INode).__sn = serializedNode
   if (id === IGNORED_NODE) {
-    return null // slimDOM
+    return null
   }
   map[id] = n as INode
   let recordChild = !skipChild
@@ -410,7 +403,6 @@ export function serializeNodeWithId(
   }
   if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
     if (
-      slimDOMOptions.headWhitespace &&
       _serializedNode.type === NodeType.Element &&
       _serializedNode.tagName === 'head'
       // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
@@ -422,7 +414,6 @@ export function serializeNodeWithId(
         doc,
         map,
         skipChild,
-        slimDOMOptions,
         preserveWhiteSpace,
       })
       if (serializedChildNode) {
@@ -433,38 +424,13 @@ export function serializeNodeWithId(
   return serializedNode
 }
 
-export function snapshot(
-  n: Document,
-  options?: {
-    slimDOM?: boolean | SlimDOMOptions
-  }
-): [SerializedNodeWithId | null, IdNodeMap] {
-  const { slimDOM = false } = options || {}
+export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] {
   const idNodeMap: IdNodeMap = {}
-  const slimDOMOptions: SlimDOMOptions =
-    slimDOM === true || slimDOM === 'all'
-      ? // if true: set of sensible options that should not throw away any information
-        {
-          script: true,
-          comment: true,
-          headFavicon: true,
-          headWhitespace: true,
-          headMetaDescKeywords: slimDOM === 'all', // destructive
-          headMetaSocial: true,
-          headMetaRobots: true,
-          headMetaHttpEquiv: true,
-          headMetaAuthorship: true,
-          headMetaVerification: true,
-        }
-      : slimDOM === false
-      ? {}
-      : slimDOM
   return [
     serializeNodeWithId(n, {
       doc: n,
       map: idNodeMap,
       skipChild: false,
-      slimDOMOptions,
     }),
     idNodeMap,
   ]

@@ -7,7 +7,6 @@ const DEFAULT_OPTIONS = {
   blockClass: 'dd-block',
   blockSelector: null,
   skipChild: true,
-  slimDOMOptions: {},
 }
 
 describe('MutationObserverWrapper', () => {
@@ -27,11 +26,7 @@ describe('MutationObserverWrapper', () => {
     mutationController = new MutationController()
     MockMutationObserver.setup()
 
-    mutationObserverWrapper = new MutationObserverWrapper(
-      mutationController,
-      mutationCallbackSpy,
-      DEFAULT_OPTIONS.slimDOMOptions
-    )
+    mutationObserverWrapper = new MutationObserverWrapper(mutationController, mutationCallbackSpy)
   })
 
   afterEach(() => {
