@@ -231,4 +231,3 @@ export interface Mirror {
 
 export type ListenerHandler = () => void
 export type HookResetter = () => void
-export type Arguments<T> = T extends (...payload: infer U) => unknown ? U : unknown
