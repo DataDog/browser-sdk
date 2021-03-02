@@ -1,28 +1,13 @@
-import {
-  noop,
-  monitor,
-  callMonitored,
-  throttle,
-  DOM_EVENT,
-  addEventListeners,
-  addEventListener,
-} from '@datadog/browser-core'
-import { INode, MaskInputOptions, SlimDOMOptions } from '../rrweb-snapshot'
+import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
+import { INode, SlimDOMOptions } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
-  Arguments,
-  CanvasMutationCallback,
-  FontCallback,
-  FontFaceDescriptors,
-  FontParam,
   HookResetter,
-  HooksParam,
   IncrementalSource,
   InputCallback,
   InputValue,
   ListenerHandler,
-  MaskInputFn,
   MediaInteractionCallback,
   MediaInteractions,
   MouseInteractionCallBack,
@@ -30,39 +15,25 @@ import {
   MousemoveCallBack,
   MutationCallBack,
   ObserverParam,
-  SamplingStrategy,
   ScrollCallback,
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror, patch } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror } from './utils'
+
+const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
+const SCROLL_OBSERVER_THRESHOLD = 100
 
 function initMutationObserver(
   mutationController: MutationController,
   cb: MutationCallBack,
-  inlineStylesheet: boolean,
-  maskInputOptions: MaskInputOptions,
-  recordCanvas: boolean,
   slimDOMOptions: SlimDOMOptions
 ) {
-  const mutationObserverWrapper = new MutationObserverWrapper(
-    mutationController,
-    cb,
-    inlineStylesheet,
-    maskInputOptions,
-    recordCanvas,
-    slimDOMOptions
-  )
+  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb, slimDOMOptions)
   return () => mutationObserverWrapper.stop()
 }
 
-function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): ListenerHandler {
-  if (sampling.mousemove === false) {
-    return noop
-  }
-
-  const threshold = typeof sampling.mousemove === 'number' ? sampling.mousemove : 50
-
+function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((evt: MouseEvent | TouchEvent) => {
       const { target } = evt
@@ -75,7 +46,7 @@ function initMoveObserver(cb: MousemoveCallBack, sampling: SamplingStrategy): Li
       }
       cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     }),
-    threshold,
+    MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
       trailing: false,
     }
@@ -118,7 +89,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
   }).stop
 }
 
-function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): ListenerHandler {
+function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((evt: UIEvent) => {
       if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
@@ -140,7 +111,7 @@ function initScrollObserver(cb: ScrollCallback, sampling: SamplingStrategy): Lis
         })
       }
     }),
-    sampling.scroll || 100
+    SCROLL_OBSERVER_THRESHOLD
   )
   return addEventListener(document, DOM_EVENT.SCROLL, updatePosition, { capture: true, passive: true }).stop
 }
@@ -162,12 +133,7 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
-function initInputObserver(
-  cb: InputCallback,
-  maskInputOptions: MaskInputOptions,
-  maskInputFn: MaskInputFn | undefined,
-  sampling: SamplingStrategy
-): ListenerHandler {
+function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const { target } = event
 
@@ -182,16 +148,11 @@ function initInputObserver(
     }
 
     const type: string | undefined = (target as HTMLInputElement).type
-    let text = (target as HTMLInputElement).value
+    const text = (target as HTMLInputElement).value
     let isChecked = false
 
     if (type === 'radio' || type === 'checkbox') {
       isChecked = (target as HTMLInputElement).checked
-    } else if (
-      maskInputOptions[(target as Element).tagName.toLowerCase() as keyof MaskInputOptions] ||
-      maskInputOptions[type as keyof MaskInputOptions]
-    ) {
-      text = maskInputFn ? maskInputFn(text) : '*'.repeat(text.length)
     }
 
     cbWithDedup(target, { text, isChecked })
@@ -223,8 +184,7 @@ function initInputObserver(
     }
   }
 
-  const events = sampling.input === 'last' ? [DOM_EVENT.CHANGE] : [DOM_EVENT.INPUT, DOM_EVENT.CHANGE]
-  const { stop: stopEventListeners } = addEventListeners(document, events, eventHandler, {
+  const { stop: stopEventListeners } = addEventListeners(document, [DOM_EVENT.INPUT, DOM_EVENT.CHANGE], eventHandler, {
     capture: true,
     passive: true,
   })
@@ -310,221 +270,15 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
-function initCanvasMutationObserver(cb: CanvasMutationCallback): ListenerHandler {
-  const props = Object.getOwnPropertyNames(CanvasRenderingContext2D.prototype)
-  const handlers: ListenerHandler[] = []
-  for (const prop of props) {
-    try {
-      if (typeof CanvasRenderingContext2D.prototype[prop as keyof CanvasRenderingContext2D] !== 'function') {
-        continue
-      }
-      const restoreHandler = patch(
-        CanvasRenderingContext2D.prototype,
-        prop,
-        (original: (...args: unknown[]) => unknown) =>
-          function (this: CanvasRenderingContext2D, ...args: unknown[]) {
-            callMonitored(() => {
-              if (!nodeOrAncestorsShouldBeHidden(this.canvas)) {
-                setTimeout(
-                  monitor(() => {
-                    const recordArgs = [...args]
-                    if (prop === 'drawImage') {
-                      if (recordArgs[0] && recordArgs[0] instanceof HTMLCanvasElement) {
-                        recordArgs[0] = recordArgs[0].toDataURL()
-                      }
-                    }
-                    cb({
-                      args: recordArgs,
-                      id: mirror.getId((this.canvas as unknown) as INode),
-                      property: prop,
-                    })
-                  }),
-                  0
-                )
-              }
-            })
-            return original.apply(this, args)
-          }
-      )
-      handlers.push(restoreHandler)
-    } catch {
-      const hookHandler = hookSetter<CanvasRenderingContext2D>(CanvasRenderingContext2D.prototype, prop, {
-        set: monitor(function (v) {
-          cb({
-            args: [v],
-            id: mirror.getId((this.canvas as unknown) as INode),
-            property: prop,
-            setter: true,
-          })
-        }),
-      })
-      handlers.push(hookHandler)
-    }
-  }
-  return () => {
-    handlers.forEach((h) => h())
-  }
-}
-
-declare class FontFace {
-  constructor(family: string, source: string | ArrayBufferView, descriptors?: FontFaceDescriptors)
-}
-
-type WindowWithFontFace = typeof window & {
-  FontFace: typeof FontFace
-}
-
-type DocumentWithFonts = Document & {
-  fonts: { add(fontFace: FontFace): void }
-}
-
-function initFontObserver(cb: FontCallback): ListenerHandler {
-  const handlers: ListenerHandler[] = []
-
-  const fontMap = new WeakMap<object, FontParam>()
-
-  const originalFontFace = (window as WindowWithFontFace).FontFace
-
-  ;(window as WindowWithFontFace).FontFace = (function FontFace(
-    family: string,
-    source: string | ArrayBufferView,
-    descriptors?: FontFaceDescriptors
-  ): FontFace {
-    const fontFace = new originalFontFace(family, source, descriptors)
-    callMonitored(() => {
-      fontMap.set(fontFace, {
-        descriptors,
-        family,
-        buffer: typeof source !== 'string',
-        fontSource: typeof source === 'string' ? source : JSON.stringify(Array.from(new Uint8Array(source as any))),
-      })
-    })
-    return fontFace
-  } as unknown) as typeof FontFace
-
-  const restoreHandler = patch(
-    (document as DocumentWithFonts).fonts,
-    'add',
-    (original: (fontFace: FontFace) => unknown) =>
-      function (this: unknown, fontFace: FontFace) {
-        setTimeout(
-          monitor(() => {
-            const p = fontMap.get(fontFace)
-            if (p) {
-              cb(p)
-              fontMap.delete(fontFace)
-            }
-          }),
-          0
-        )
-        return original.apply(this, [fontFace])
-      }
-  )
-
-  handlers.push(() => {
-    ;(window as any).FonFace = originalFontFace
-  })
-  handlers.push(restoreHandler)
-
-  return () => {
-    handlers.forEach((h) => h())
-  }
-}
-
-function mergeHooks(o: ObserverParam, hooks: HooksParam) {
-  const {
-    mutationCb,
-    mousemoveCb,
-    mouseInteractionCb,
-    scrollCb,
-    viewportResizeCb,
-    inputCb,
-    mediaInteractionCb,
-    styleSheetRuleCb,
-    canvasMutationCb,
-    fontCb,
-  } = o
-  o.mutationCb = (...p: Arguments<MutationCallBack>) => {
-    if (hooks.mutation) {
-      hooks.mutation(...p)
-    }
-    mutationCb(...p)
-  }
-  o.mousemoveCb = (...p: Arguments<MousemoveCallBack>) => {
-    if (hooks.mousemove) {
-      hooks.mousemove(...p)
-    }
-    mousemoveCb(...p)
-  }
-  o.mouseInteractionCb = (...p: Arguments<MouseInteractionCallBack>) => {
-    if (hooks.mouseInteraction) {
-      hooks.mouseInteraction(...p)
-    }
-    mouseInteractionCb(...p)
-  }
-  o.scrollCb = (...p: Arguments<ScrollCallback>) => {
-    if (hooks.scroll) {
-      hooks.scroll(...p)
-    }
-    scrollCb(...p)
-  }
-  o.viewportResizeCb = (...p: Arguments<ViewportResizeCallback>) => {
-    if (hooks.viewportResize) {
-      hooks.viewportResize(...p)
-    }
-    viewportResizeCb(...p)
-  }
-  o.inputCb = (...p: Arguments<InputCallback>) => {
-    if (hooks.input) {
-      hooks.input(...p)
-    }
-    inputCb(...p)
-  }
-  o.mediaInteractionCb = (...p: Arguments<MediaInteractionCallback>) => {
-    if (hooks.mediaInteaction) {
-      hooks.mediaInteaction(...p)
-    }
-    mediaInteractionCb(...p)
-  }
-  o.styleSheetRuleCb = (...p: Arguments<StyleSheetRuleCallback>) => {
-    if (hooks.styleSheetRule) {
-      hooks.styleSheetRule(...p)
-    }
-    styleSheetRuleCb(...p)
-  }
-  o.canvasMutationCb = (...p: Arguments<CanvasMutationCallback>) => {
-    if (hooks.canvasMutation) {
-      hooks.canvasMutation(...p)
-    }
-    canvasMutationCb(...p)
-  }
-  o.fontCb = (...p: Arguments<FontCallback>) => {
-    if (hooks.font) {
-      hooks.font(...p)
-    }
-    fontCb(...p)
-  }
-}
-
-export function initObservers(o: ObserverParam, hooks: HooksParam = {}): ListenerHandler {
-  mergeHooks(o, hooks)
-  const mutationHandler = initMutationObserver(
-    o.mutationController,
-    o.mutationCb,
-    o.inlineStylesheet,
-    o.maskInputOptions,
-    o.recordCanvas,
-    o.slimDOMOptions
-  )
-  const mousemoveHandler = initMoveObserver(o.mousemoveCb, o.sampling)
+export function initObservers(o: ObserverParam): ListenerHandler {
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.slimDOMOptions)
+  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
-  const scrollHandler = initScrollObserver(o.scrollCb, o.sampling)
+  const scrollHandler = initScrollObserver(o.scrollCb)
   const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb, o.maskInputOptions, o.maskInputFn, o.sampling)
+  const inputHandler = initInputObserver(o.inputCb)
   const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
   const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-  const canvasMutationObserver = o.recordCanvas ? initCanvasMutationObserver(o.canvasMutationCb) : noop
-  const fontObserver = o.collectFonts ? initFontObserver(o.fontCb) : noop
 
   return () => {
     mutationHandler()
@@ -535,7 +289,5 @@ export function initObservers(o: ObserverParam, hooks: HooksParam = {}): Listene
     inputHandler()
     mediaInteractionHandler()
     styleSheetObserver()
-    canvasMutationObserver()
-    fontObserver()
   }
 }

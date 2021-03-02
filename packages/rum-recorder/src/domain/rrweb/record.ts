@@ -1,5 +1,5 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { MaskInputOptions, SlimDOMOptions, snapshot } from '../rrweb-snapshot'
+import { SlimDOMOptions, snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
@@ -9,53 +9,11 @@ import { MutationController } from './mutation'
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 export function record(options: RecordOptions = {}): RecordAPI {
-  const {
-    emit,
-    checkoutEveryNms,
-    checkoutEveryNth,
-    inlineStylesheet = true,
-    maskAllInputs,
-    maskInputOptions: maskInputOptionsArg,
-    slimDOMOptions: slimDOMOptionsArg,
-    maskInputFn,
-    hooks,
-    packFn,
-    sampling = {},
-    mousemoveWait,
-    recordCanvas = false,
-    collectFonts = false,
-  } = options
+  const { emit, slimDOMOptions: slimDOMOptionsArg } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
   }
-  // move departed options to new options
-  if (mousemoveWait !== undefined && sampling.mousemove === undefined) {
-    sampling.mousemove = mousemoveWait
-  }
-
-  const maskInputOptions: MaskInputOptions =
-    maskAllInputs === true
-      ? {
-          color: true,
-          date: true,
-          'datetime-local': true,
-          email: true,
-          month: true,
-          number: true, // eslint-disable-line id-blacklist
-          range: true,
-          search: true,
-          select: true,
-          tel: true,
-          text: true,
-          textarea: true,
-          time: true,
-          url: true,
-          week: true,
-        }
-      : maskInputOptionsArg !== undefined
-      ? maskInputOptionsArg
-      : {}
 
   const slimDOMOptions: SlimDOMOptions =
     slimDOMOptionsArg === true || slimDOMOptionsArg === 'all'
@@ -79,8 +37,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const mutationController = new MutationController()
 
-  let lastFullSnapshotRecordTimestamp: number
-  let incrementalSnapshotCount = 0
   wrappedEmit = (record, isCheckout) => {
     if (
       mutationController.isFrozen() &&
@@ -92,18 +48,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       mutationController.unfreeze()
     }
 
-    emit(((packFn ? packFn(record) : record) as unknown) as RawRecord, isCheckout)
-    if (record.type === RecordType.FullSnapshot) {
-      lastFullSnapshotRecordTimestamp = Date.now()
-      incrementalSnapshotCount = 0
-    } else if (record.type === RecordType.IncrementalSnapshot) {
-      incrementalSnapshotCount += 1
-      const exceedCount = checkoutEveryNth && incrementalSnapshotCount >= checkoutEveryNth
-      const exceedTime = checkoutEveryNms && Date.now() - lastFullSnapshotRecordTimestamp > checkoutEveryNms
-      if (exceedCount || exceedTime) {
-        takeFullSnapshot(true)
-      }
-    }
+    emit(record, isCheckout)
   }
 
   const takeFullSnapshot = (isCheckout = false) => {
@@ -123,9 +68,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     )
 
     const [node, idNodeMap] = snapshot(document, {
-      inlineStylesheet,
-      recordCanvas,
-      maskAllInputs: maskInputOptions,
       slimDOM: slimDOMOptions,
     })
 
@@ -166,99 +108,74 @@ export function record(options: RecordOptions = {}): RecordAPI {
     takeFullSnapshot()
 
     handlers.push(
-      initObservers(
-        {
-          mutationController,
-          collectFonts,
-          inlineStylesheet,
-          maskInputFn,
-          maskInputOptions,
-          recordCanvas,
-          sampling,
-          slimDOMOptions,
-          canvasMutationCb: (p) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.CanvasMutation,
-                ...p,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          fontCb: (p) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.Font,
-                ...p,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          inputCb: (v) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.Input,
-                ...v,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          mediaInteractionCb: (p) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.MediaInteraction,
-                ...p,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          mouseInteractionCb: (d) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.MouseInteraction,
-                ...d,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          mousemoveCb: (positions, source) =>
-            wrappedEmit({
-              data: {
-                positions,
-                source,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          mutationCb: (m) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.Mutation,
-                ...m,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          scrollCb: (p) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.Scroll,
-                ...p,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          styleSheetRuleCb: (r) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.StyleSheetRule,
-                ...r,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-          viewportResizeCb: (d) =>
-            wrappedEmit({
-              data: {
-                source: IncrementalSource.ViewportResize,
-                ...d,
-              },
-              type: RecordType.IncrementalSnapshot,
-            }),
-        },
-        hooks
-      )
+      initObservers({
+        mutationController,
+        slimDOMOptions,
+        inputCb: (v) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.Input,
+              ...v,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        mediaInteractionCb: (p) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.MediaInteraction,
+              ...p,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        mouseInteractionCb: (d) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.MouseInteraction,
+              ...d,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        mousemoveCb: (positions, source) =>
+          wrappedEmit({
+            data: {
+              positions,
+              source,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        mutationCb: (m) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.Mutation,
+              ...m,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        scrollCb: (p) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.Scroll,
+              ...p,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        styleSheetRuleCb: (r) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.StyleSheetRule,
+              ...r,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+        viewportResizeCb: (d) =>
+          wrappedEmit({
+            data: {
+              source: IncrementalSource.ViewportResize,
+              ...d,
+            },
+            type: RecordType.IncrementalSnapshot,
+          }),
+      })
     )
   }
 

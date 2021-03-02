@@ -59,26 +59,6 @@ export type IdNodeMap = {
   [key: number]: INode
 }
 
-export type MaskInputOptions = Partial<{
-  color: boolean
-  date: boolean
-  'datetime-local': boolean
-  email: boolean
-  month: boolean
-  // eslint-disable-next-line id-blacklist
-  number: boolean
-  range: boolean
-  search: boolean
-  tel: boolean
-  text: boolean
-  time: boolean
-  url: boolean
-  week: boolean
-  // unify textarea and select element with text input
-  textarea: boolean
-  select: boolean
-}>
-
 export type SlimDOMOptions = Partial<{
   script: boolean
   comment: boolean

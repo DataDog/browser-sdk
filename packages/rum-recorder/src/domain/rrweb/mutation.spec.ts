@@ -6,11 +6,8 @@ import { MutationCallBack } from './types'
 const DEFAULT_OPTIONS = {
   blockClass: 'dd-block',
   blockSelector: null,
-  inlineStylesheet: false,
   skipChild: true,
   slimDOMOptions: {},
-  recordCanvas: false,
-  maskInputOptions: {},
 }
 
 describe('MutationObserverWrapper', () => {
@@ -33,9 +30,6 @@ describe('MutationObserverWrapper', () => {
     mutationObserverWrapper = new MutationObserverWrapper(
       mutationController,
       mutationCallbackSpy,
-      DEFAULT_OPTIONS.inlineStylesheet,
-      DEFAULT_OPTIONS.maskInputOptions,
-      DEFAULT_OPTIONS.recordCanvas,
       DEFAULT_OPTIONS.slimDOMOptions
     )
   })

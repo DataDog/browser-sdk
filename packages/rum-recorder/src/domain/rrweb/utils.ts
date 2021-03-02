@@ -1,4 +1,3 @@
-import { noop } from '@datadog/browser-core'
 import { IGNORED_NODE, INode } from '../rrweb-snapshot'
 import { HookResetter, Mirror } from './types'
 
@@ -47,45 +46,6 @@ export function hookSetter<T>(
   })
   return () => {
     Object.defineProperty(target, key, original || {})
-  }
-}
-
-// eslint-disable-next-line max-len
-// copy from https://github.com/getsentry/sentry-javascript/blob/b2109071975af8bf0316d3b5b38f519bdaf5dc15/packages/utils/src/object.ts
-export function patch(
-  source: { [key: string]: any },
-  name: string,
-  replacement: (...args: any[]) => unknown
-): () => void {
-  try {
-    if (!(name in source)) {
-      return noop
-    }
-
-    const original = source[name] as () => unknown
-    const wrapped = replacement(original)
-
-    // Make sure it's a function first, as we need to attach an empty prototype for `defineProperties` to work
-    // otherwise it'll throw "TypeError: Object.defineProperties called on non-object"
-    if (typeof wrapped === 'function') {
-      wrapped.prototype = wrapped.prototype || {}
-      Object.defineProperties(wrapped, {
-        __rrweb_original__: {
-          enumerable: false,
-          value: original,
-        },
-      })
-    }
-
-    source[name] = wrapped
-
-    return () => {
-      source[name] = original
-    }
-  } catch {
-    return noop
-    // This can throw if multiple fill happens on a global object like XMLHttpRequest
-    // Fixes https://github.com/getsentry/sentry-javascript/issues/2043
   }
 }
 

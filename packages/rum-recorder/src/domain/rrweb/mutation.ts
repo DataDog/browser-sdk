@@ -1,12 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import {
-  IGNORED_NODE,
-  INode,
-  MaskInputOptions,
-  serializeNodeWithId,
-  SlimDOMOptions,
-  transformAttribute,
-} from '../rrweb-snapshot'
+import { IGNORED_NODE, INode, serializeNodeWithId, SlimDOMOptions, transformAttribute } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -179,9 +172,6 @@ export class MutationObserverWrapper {
   public constructor(
     private controller: MutationController,
     private emissionCallback: MutationCallBack,
-    private inlineStylesheet: boolean,
-    private maskInputOptions: MaskInputOptions,
-    private recordCanvas: boolean,
     private slimDOMOptions: SlimDOMOptions
   ) {
     this.observer = new MutationObserver(monitor(this.processMutations))
@@ -242,10 +232,7 @@ export class MutationObserverWrapper {
       }
       const sn = serializeNodeWithId(n, {
         doc: document,
-        inlineStylesheet: this.inlineStylesheet,
         map: mirror.map,
-        maskInputOptions: this.maskInputOptions,
-        recordCanvas: this.recordCanvas,
         skipChild: true,
         slimDOMOptions: this.slimDOMOptions,
       })

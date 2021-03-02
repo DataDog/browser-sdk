@@ -1,16 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import {
-  SerializedNode,
-  SerializedNodeWithId,
-  NodeType,
-  Attributes,
-  INode,
-  IdNodeMap,
-  MaskInputOptions,
-  SlimDOMOptions,
-} from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap, SlimDOMOptions } from './types'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -164,12 +155,9 @@ function serializeNode(
   n: Node,
   options: {
     doc: Document
-    inlineStylesheet: boolean
-    maskInputOptions: MaskInputOptions
-    recordCanvas: boolean
   }
 ): SerializedNode | false {
-  const { doc, inlineStylesheet, maskInputOptions = {}, recordCanvas } = options
+  const { doc } = options
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -191,7 +179,7 @@ function serializeNode(
         attributes[name] = transformAttribute(doc, name, value)
       }
       // remote css
-      if (tagName === 'link' && inlineStylesheet) {
+      if (tagName === 'link') {
         const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
         const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
         if (cssText) {
@@ -222,11 +210,7 @@ function serializeNode(
           attributes.type !== 'button' &&
           value
         ) {
-          attributes.value =
-            maskInputOptions[attributes.type as keyof MaskInputOptions] ||
-            maskInputOptions[tagName as keyof MaskInputOptions]
-              ? '*'.repeat(value.length)
-              : value
+          attributes.value = value
         } else if ((n as HTMLInputElement).checked) {
           attributes.checked = (n as HTMLInputElement).checked
         }
@@ -236,10 +220,6 @@ function serializeNode(
         if (attributes.value === (selectValue as HTMLSelectElement).value) {
           attributes.selected = (n as HTMLOptionElement).selected
         }
-      }
-      // canvas image data
-      if (tagName === 'canvas' && recordCanvas) {
-        attributes.rr_dataURL = (n as HTMLCanvasElement).toDataURL()
       }
       // media elements
       if (tagName === 'audio' || tagName === 'video') {
@@ -386,28 +366,14 @@ export function serializeNodeWithId(
     doc: Document
     map: IdNodeMap
     skipChild: boolean
-    inlineStylesheet: boolean
-    maskInputOptions?: MaskInputOptions
     slimDOMOptions: SlimDOMOptions
-    recordCanvas?: boolean
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const {
-    doc,
-    map,
-    skipChild = false,
-    inlineStylesheet = true,
-    maskInputOptions = {},
-    slimDOMOptions,
-    recordCanvas = false,
-  } = options
+  const { doc, map, skipChild = false, slimDOMOptions } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
-    inlineStylesheet,
-    maskInputOptions,
-    recordCanvas,
   })
   if (!_serializedNode) {
     // TODO: dev only
@@ -456,10 +422,7 @@ export function serializeNodeWithId(
         doc,
         map,
         skipChild,
-        inlineStylesheet,
-        maskInputOptions,
         slimDOMOptions,
-        recordCanvas,
         preserveWhiteSpace,
       })
       if (serializedChildNode) {
@@ -473,37 +436,11 @@ export function serializeNodeWithId(
 export function snapshot(
   n: Document,
   options?: {
-    inlineStylesheet?: boolean
-    maskAllInputs?: boolean | MaskInputOptions
     slimDOM?: boolean | SlimDOMOptions
-    recordCanvas?: boolean
   }
 ): [SerializedNodeWithId | null, IdNodeMap] {
-  const { inlineStylesheet = true, recordCanvas = false, maskAllInputs = false, slimDOM = false } = options || {}
+  const { slimDOM = false } = options || {}
   const idNodeMap: IdNodeMap = {}
-  const maskInputOptions: MaskInputOptions =
-    maskAllInputs === true
-      ? {
-          color: true,
-          date: true,
-          'datetime-local': true,
-          email: true,
-          month: true,
-          // eslint-disable-next-line id-blacklist
-          number: true,
-          range: true,
-          search: true,
-          tel: true,
-          text: true,
-          time: true,
-          url: true,
-          week: true,
-          textarea: true,
-          select: true,
-        }
-      : maskAllInputs === false
-      ? {}
-      : maskAllInputs
   const slimDOMOptions: SlimDOMOptions =
     slimDOM === true || slimDOM === 'all'
       ? // if true: set of sensible options that should not throw away any information
@@ -527,10 +464,7 @@ export function snapshot(
       doc: n,
       map: idNodeMap,
       skipChild: false,
-      inlineStylesheet,
-      maskInputOptions,
       slimDOMOptions,
-      recordCanvas,
     }),
     idNodeMap,
   ]

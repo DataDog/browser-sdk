@@ -7,8 +7,6 @@ export {
   InputData,
   MediaInteractionData,
   StyleSheetRuleData,
-  CanvasMutationData,
-  FontData,
   MediaInteractions,
   MouseInteractions,
   AddedNodeMutation,

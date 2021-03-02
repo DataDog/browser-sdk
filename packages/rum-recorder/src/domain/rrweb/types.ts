@@ -1,19 +1,19 @@
-import { IdNodeMap, INode, MaskInputOptions, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
+import { IdNodeMap, INode, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
 export enum IncrementalSource {
-  Mutation,
-  MouseMove,
-  MouseInteraction,
-  Scroll,
-  ViewportResize,
-  Input,
-  TouchMove,
-  MediaInteraction,
-  StyleSheetRule,
-  CanvasMutation,
-  Font,
+  Mutation = 0,
+  MouseMove = 1,
+  MouseInteraction = 2,
+  Scroll = 3,
+  ViewportResize = 4,
+  Input = 5,
+  TouchMove = 6,
+  MediaInteraction = 7,
+  StyleSheetRule = 8,
+  // CanvasMutation = 9,
+  // Font = 10,
 }
 
 export type MutationData = {
@@ -50,14 +50,6 @@ export type StyleSheetRuleData = {
   source: IncrementalSource.StyleSheetRule
 } & StyleSheetRuleParam
 
-export type CanvasMutationData = {
-  source: IncrementalSource.CanvasMutation
-} & CanvasMutationParam
-
-export type FontData = {
-  source: IncrementalSource.Font
-} & FontParam
-
 export type IncrementalData =
   | MutationData
   | MousemoveData
@@ -67,42 +59,10 @@ export type IncrementalData =
   | InputData
   | MediaInteractionData
   | StyleSheetRuleData
-  | CanvasMutationData
-  | FontData
-
-export type SamplingStrategy = Partial<{
-  /**
-   * false means not to record mouse/touch move events
-   * number is the throttle threshold of recording mouse/touch move
-   */
-  mousemove: boolean | number
-  /**
-   * number is the throttle threshold of recording scroll
-   */
-  scroll: number
-  /**
-   * 'all' will record all the input events
-   * 'last' will only record the last input value while input a sequence of chars
-   */
-  input: 'all' | 'last'
-}>
 
 export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
-  checkoutEveryNth?: number
-  checkoutEveryNms?: number
-  maskAllInputs?: boolean
-  maskInputOptions?: MaskInputOptions
-  maskInputFn?: MaskInputFn
   slimDOMOptions?: SlimDOMOptions | 'all' | true
-  inlineStylesheet?: boolean
-  hooks?: HooksParam
-  packFn?: (record: RawRecord) => RawRecord
-  sampling?: SamplingStrategy
-  recordCanvas?: boolean
-  collectFonts?: boolean
-  // departed, please use sampling options
-  mousemoveWait?: number
 }
 
 export interface RecordAPI {
@@ -119,29 +79,8 @@ export interface ObserverParam {
   viewportResizeCb: ViewportResizeCallback
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
-  maskInputOptions: MaskInputOptions
-  maskInputFn?: MaskInputFn
-  inlineStylesheet: boolean
   styleSheetRuleCb: StyleSheetRuleCallback
-  canvasMutationCb: CanvasMutationCallback
-  fontCb: FontCallback
-  sampling: SamplingStrategy
-  recordCanvas: boolean
-  collectFonts: boolean
   slimDOMOptions: SlimDOMOptions
-}
-
-export interface HooksParam {
-  mutation?: MutationCallBack
-  mousemove?: MousemoveCallBack
-  mouseInteraction?: MouseInteractionCallBack
-  scroll?: ScrollCallback
-  viewportResize?: ViewportResizeCallback
-  input?: InputCallback
-  mediaInteaction?: MediaInteractionCallback
-  styleSheetRule?: StyleSheetRuleCallback
-  canvasMutation?: CanvasMutationCallback
-  font?: FontCallback
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
@@ -256,33 +195,6 @@ export interface StyleSheetRuleParam {
 
 export type StyleSheetRuleCallback = (s: StyleSheetRuleParam) => void
 
-export type CanvasMutationCallback = (p: CanvasMutationParam) => void
-
-export interface CanvasMutationParam {
-  id: number
-  property: string
-  args: unknown[]
-  setter?: true
-}
-
-export interface FontFaceDescriptors {
-  style?: string
-  weight?: string
-  stretch?: string
-  unicodeRange?: string
-  variant?: string
-  featureSettings?: string
-}
-
-export interface FontParam {
-  family: string
-  fontSource: string
-  buffer: boolean
-  descriptors?: FontFaceDescriptors
-}
-
-export type FontCallback = (p: FontParam) => void
-
 export interface ViewportResizeDimention {
   width: number
   height: number
@@ -319,6 +231,3 @@ export interface Mirror {
 
 export type ListenerHandler = () => void
 export type HookResetter = () => void
-export type Arguments<T> = T extends (...payload: infer U) => unknown ? U : unknown
-
-export type MaskInputFn = (text: string) => string

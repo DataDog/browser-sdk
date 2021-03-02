@@ -52,54 +52,11 @@ describe('record', () => {
     expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toEqual(1)
   })
 
-  it('can checkout full snapshot by number of records', () => {
-    stop = record({
-      emit: emitSpy,
-      checkoutEveryNth: 10,
-    }).stop
-
-    const inputEventCount = 30
-    dispatchInputEvents(inputEventCount)
-
-    const records = getEmittedRecords()
-    expect(records.length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS * 4)
-    expect(records.filter((record) => record.type === RecordType.Meta).length).toBe(4)
-    expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toBe(4)
-    expect(records[1].type).toBe(RecordType.FullSnapshot)
-    expect(records[13].type).toBe(RecordType.FullSnapshot)
-    expect(records[25].type).toBe(RecordType.FullSnapshot)
-    expect(records[37].type).toBe(RecordType.FullSnapshot)
-  })
-
-  it('can checkout full snapshot by time', () => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate()
-    const checkoutDelay = 500
-    stop = record({ emit: emitSpy, checkoutEveryNms: checkoutDelay }).stop
-
-    let inputEventCount = 30
-    dispatchInputEvents(inputEventCount)
-    jasmine.clock().tick(checkoutDelay)
-
-    expect(getEmittedRecords().length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS)
-
-    jasmine.clock().tick(1)
-    inputEventCount += 1
-    dispatchInputEvents(1)
-
-    const records = getEmittedRecords()
-    expect(records.length).toBe(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS * 2)
-    expect(records.filter((record) => record.type === RecordType.Meta).length).toBe(2)
-    expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toBe(2)
-    expect(records[1].type).toBe(RecordType.FullSnapshot)
-    expect(records[34].type).toBe(RecordType.FullSnapshot)
-  })
-
   it('is safe to checkout during async callbacks', (done) => {
-    stop = record({
+    const recordApi = record({
       emit: emitSpy,
-      checkoutEveryNth: 2,
-    }).stop
+    })
+    stop = recordApi.stop
 
     const p = document.createElement('p')
     const span = document.createElement('span')
@@ -112,6 +69,7 @@ describe('record', () => {
 
     setTimeout(() => {
       span.innerText = 'test'
+      recordApi.takeFullSnapshot()
     }, 10)
 
     setTimeout(() => {
