@@ -6,10 +6,11 @@ import {
   getRelativeTime,
   isNumber,
   monitor,
+  Omit,
   relativeNow,
   RelativeTime,
   runOnReadyState,
-  Omit,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
@@ -252,21 +253,19 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
   }
 }
 
-type IndexedPerformanceTiming = {
-  [key in keyof PerformanceTiming]: any
-}
-
 export type RelativePerformanceTiming = {
   -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
 }
 
 function computeRelativePerformanceTiming() {
   const result: Partial<RelativePerformanceTiming> = {}
-  const timing = performance.timing as IndexedPerformanceTiming
+  const timing = performance.timing
   for (const key in timing) {
     if (isNumber(timing[key as keyof PerformanceTiming])) {
       const numberKey = key as keyof RelativePerformanceTiming
-      result[numberKey] = timing[numberKey] === 0 ? (0 as RelativeTime) : getRelativeTime(timing[numberKey])
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const timingElement = timing[numberKey] as TimeStamp
+      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
     }
   }
   return result as RelativePerformanceTiming
