@@ -1,5 +1,5 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { SlimDOMOptions, snapshot } from '../rrweb-snapshot'
+import { snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
@@ -9,31 +9,11 @@ import { MutationController } from './mutation'
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 export function record(options: RecordOptions = {}): RecordAPI {
-  const { emit, slimDOMOptions: slimDOMOptionsArg } = options
+  const { emit } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
   }
-
-  const slimDOMOptions: SlimDOMOptions =
-    slimDOMOptionsArg === true || slimDOMOptionsArg === 'all'
-      ? {
-          comment: true,
-          headFavicon: true,
-          // the following are off for slimDOMOptions === true,
-          // as they destroy some (hidden) info:
-          headMetaAuthorship: slimDOMOptionsArg === 'all',
-          headMetaDescKeywords: slimDOMOptionsArg === 'all',
-          headMetaHttpEquiv: true,
-          headMetaRobots: true,
-          headMetaSocial: true,
-          headMetaVerification: true,
-          headWhitespace: true,
-          script: true,
-        }
-      : slimDOMOptionsArg
-      ? slimDOMOptionsArg
-      : {}
 
   const mutationController = new MutationController()
 
@@ -67,9 +47,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
-    const [node, idNodeMap] = snapshot(document, {
-      slimDOM: slimDOMOptions,
-    })
+    const [node, idNodeMap] = snapshot(document)
 
     if (!node) {
       return console.warn('Failed to snapshot the document')
@@ -110,7 +88,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
     handlers.push(
       initObservers({
         mutationController,
-        slimDOMOptions,
         inputCb: (v) =>
           wrappedEmit({
             data: {

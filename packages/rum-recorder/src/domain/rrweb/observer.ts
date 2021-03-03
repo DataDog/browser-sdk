@@ -1,5 +1,5 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { INode, SlimDOMOptions } from '../rrweb-snapshot'
+import { INode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
@@ -24,12 +24,8 @@ import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mir
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 
-function initMutationObserver(
-  mutationController: MutationController,
-  cb: MutationCallBack,
-  slimDOMOptions: SlimDOMOptions
-) {
-  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb, slimDOMOptions)
+function initMutationObserver(mutationController: MutationController, cb: MutationCallBack) {
+  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb)
   return () => mutationObserverWrapper.stop()
 }
 
@@ -271,7 +267,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
 }
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb, o.slimDOMOptions)
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
   const scrollHandler = initScrollObserver(o.scrollCb)
