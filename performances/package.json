@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "name": "performances",
+  "version": "0.0.0",
+  "dependencies": {
+    "puppeteer": "8.0.0"
+  }
+}
