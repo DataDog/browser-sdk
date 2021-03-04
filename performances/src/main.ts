@@ -26,14 +26,16 @@ async function runScenario(page: Page) {
 
 async function setupSDK(page: Page) {
   await page.evaluateOnNewDocument(`
-    import('https://www.datadoghq-browser-agent.com/datadog-rum.js')
-      .then(() => {
-        window.DD_RUM.init({
-          clientToken: 'xxx',
-          applicationId: 'xxx',
-          site: 'localhost',
-          trackInteractions: true,
+    if (location.href !== 'about:blank') {
+      import('https://www.datadoghq-browser-agent.com/datadog-rum.js')
+        .then(() => {
+          window.DD_RUM.init({
+            clientToken: 'xxx',
+            applicationId: 'xxx',
+            site: 'localhost',
+            trackInteractions: true,
+          })
         })
-      })
+    }
   `)
 }
