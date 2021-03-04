@@ -1,11 +1,11 @@
 import { CDPSession, Page, Protocol } from 'puppeteer'
-import { ProfilingResults } from './types'
+import { ProfilingResults, ProfilingOptions } from './types'
 
-export async function startProfiling(page: Page) {
+export async function startProfiling(options: ProfilingOptions, page: Page) {
   const client = await page.target().createCDPSession()
-  const stopCPUProfiling = await startCPUProfiling(client)
-  const { stopMemoryProfiling, takeMemoryMeasurements } = await startMemoryProfiling(client)
-  const stopNetworkProfiling = await startNetworkProfiling(client)
+  const stopCPUProfiling = await startCPUProfiling(options, client)
+  const { stopMemoryProfiling, takeMemoryMeasurements } = await startMemoryProfiling(options, client)
+  const stopNetworkProfiling = await startNetworkProfiling(options, client)
 
   return {
     takeMeasurements: async () => {
@@ -19,7 +19,7 @@ export async function startProfiling(page: Page) {
   }
 }
 
-async function startCPUProfiling(client: CDPSession) {
+async function startCPUProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('Profiler.enable')
   await client.send('Profiler.start')
 
@@ -38,7 +38,7 @@ async function startCPUProfiling(client: CDPSession) {
     for (const node of profile.nodes) {
       const consumption = timeDeltaForNodeId.get(node.id) || 0
       totalConsumption += consumption
-      if (isSdkUrl(node.callFrame.url)) {
+      if (isSdkUrl(options, node.callFrame.url)) {
         sdkConsumption += consumption
       }
     }
@@ -47,7 +47,7 @@ async function startCPUProfiling(client: CDPSession) {
   }
 }
 
-async function startMemoryProfiling(client: CDPSession) {
+async function startMemoryProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('HeapProfiler.enable')
   await client.send('HeapProfiler.startSampling', {
     // Set a low sampling interval to have more precise measurement
@@ -72,7 +72,7 @@ async function startMemoryProfiling(client: CDPSession) {
       for (const node of iterNodes(profile.head)) {
         const consumption = sizeForNodeId.get(node.id) || 0
         totalConsumption += consumption
-        if (isSdkUrl(node.callFrame.url)) {
+        if (isSdkUrl(options, node.callFrame.url)) {
           sdkConsumption += consumption
         }
       }
@@ -89,7 +89,7 @@ async function startMemoryProfiling(client: CDPSession) {
   }
 }
 
-async function startNetworkProfiling(client: CDPSession) {
+async function startNetworkProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('Network.enable')
   let totalUpload = 0
   let totalDownload = 0
@@ -101,7 +101,7 @@ async function startNetworkProfiling(client: CDPSession) {
   const requestListener = ({ initiator, request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
     const size = getRequestApproximateSize(request)
     totalUpload += size
-    if (isSdkUrl(request.url) || (initiator.stack && isSdkUrl(initiator.stack.callFrames[0].url))) {
+    if (isSdkUrl(options, request.url) || (initiator.stack && isSdkUrl(options, initiator.stack.callFrames[0].url))) {
       sdkUpload += size
       sdkRequestIds.add(requestId)
     }
@@ -127,8 +127,8 @@ async function startNetworkProfiling(client: CDPSession) {
   }
 }
 
-function isSdkUrl(url: string) {
-  return url.startsWith('https://www.datadoghq-browser-agent.com/')
+function isSdkUrl(options: ProfilingOptions, url: string) {
+  return url === options.bundleUrl
 }
 
 function* iterNodes<N extends { children?: N[] }>(root: N): Generator<N> {

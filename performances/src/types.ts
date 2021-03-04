@@ -1,3 +1,7 @@
+export interface ProfilingOptions {
+  bundleUrl: string
+}
+
 export interface ProfilingResults {
   memory: ProfilingResult
   cpu: ProfilingResult

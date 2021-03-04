@@ -3,26 +3,33 @@ import puppeteer, { Page } from 'puppeteer'
 import { formatProfilingResults } from './format'
 import { startProfiling } from './profiling'
 import { trackNetwork } from './trackNetwork'
-import { ProfilingResults } from './types'
+import { ProfilingResults, ProfilingOptions } from './types'
 
 main().catch(console.error)
 
 async function main() {
-  const wikipediaResults = await profileScenario(runWikipediaScenario)
+  const options: ProfilingOptions = {
+    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
+  }
+
+  const wikipediaResults = await profileScenario(options, runWikipediaScenario)
 
   console.log('# Wikipedia:')
   console.log()
   console.log(formatProfilingResults(wikipediaResults))
   console.log()
 
-  const twitterResults = await profileScenario(runTwitterScenario)
+  const twitterResults = await profileScenario(options, runTwitterScenario)
 
   console.log('# Twitter:')
   console.log()
   console.log(formatProfilingResults(twitterResults))
 }
 
-async function profileScenario(runScenario: (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>) {
+async function profileScenario(
+  options: ProfilingOptions,
+  runScenario: (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>
+) {
   const browser = await puppeteer.launch({
     defaultViewport: { width: 1366, height: 768 },
     // Twitter detects headless browsing and refuses to load
@@ -31,8 +38,8 @@ async function profileScenario(runScenario: (page: Page, takeMeasurements: () =>
   let result: ProfilingResults
   try {
     const page = await browser.newPage()
-    await setupSDK(page)
-    const { stopProfiling, takeMeasurements } = await startProfiling(page)
+    await setupSDK(page, options)
+    const { stopProfiling, takeMeasurements } = await startProfiling(options, page)
     await runScenario(page, takeMeasurements)
     result = await stopProfiling()
   } finally {
@@ -89,11 +96,11 @@ async function runTwitterScenario(page: Page, takeMeasurements: () => Promise<vo
   await page.goto('about:blank')
 }
 
-async function setupSDK(page: Page) {
+async function setupSDK(page: Page, options: ProfilingOptions) {
   await page.setBypassCSP(true)
   await page.evaluateOnNewDocument(`
     if (location.href !== 'about:blank') {
-      import('https://www.datadoghq-browser-agent.com/datadog-rum.js')
+      import(${JSON.stringify(options.bundleUrl)})
         .then(() => {
           window.DD_RUM.init({
             clientToken: 'xxx',
