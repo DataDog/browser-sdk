@@ -2,6 +2,7 @@ import puppeteer, { Page } from 'puppeteer'
 
 import { formatProfilingResults } from './format'
 import { startProfiling } from './profiling'
+import { trackNetwork } from './trackNetwork'
 import { ProfilingResults } from './types'
 
 main().catch(console.error)
@@ -12,10 +13,21 @@ async function main() {
   console.log('# Wikipedia:')
   console.log()
   console.log(formatProfilingResults(wikipediaResults))
+  console.log()
+
+  const twitterResults = await profileScenario(runTwitterScenario)
+
+  console.log('# Twitter:')
+  console.log()
+  console.log(formatProfilingResults(twitterResults))
 }
 
 async function profileScenario(runScenario: (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>) {
-  const browser = await puppeteer.launch({ defaultViewport: { width: 1366, height: 768 }, headless: true })
+  const browser = await puppeteer.launch({
+    defaultViewport: { width: 1366, height: 768 },
+    // Twitter detects headless browsing and refuses to load
+    headless: false,
+  })
   let result: ProfilingResults
   try {
     const page = await browser.newPage()
@@ -36,6 +48,44 @@ async function runWikipediaScenario(page: Page, takeMeasurements: () => Promise<
   await takeMeasurements()
   await page.goto('https://en.wikipedia.org/wiki/Ubuntu')
   await takeMeasurements()
+  await page.goto('about:blank')
+}
+
+async function runTwitterScenario(page: Page, takeMeasurements: () => Promise<void>) {
+  const { waitForNetworkIdle } = trackNetwork(page)
+  await page.goto('https://twitter.com/explore')
+  await waitForNetworkIdle()
+
+  // Even if the network is idle, sometimes links take a bit longer to render
+  await page.waitForSelector('[data-testid="trend"]')
+  await takeMeasurements()
+  await page.click('[data-testid="trend"]')
+  await waitForNetworkIdle()
+  await takeMeasurements()
+
+  // Click on all tabs
+  const tabs = await page.$$('[role="tab"]')
+  for (const tab of tabs) {
+    await tab.click()
+    await waitForNetworkIdle()
+    await takeMeasurements()
+  }
+
+  await page.click('[aria-label="Settings"]')
+  await waitForNetworkIdle()
+  await takeMeasurements()
+
+  // Scroll to the bottom of the page, because some checkboxes may be hidden below fixed banners
+  await page.evaluate(`scrollTo(0, 100000)`)
+
+  // Click on all checkboxes except the first one
+  const checkboxes = await page.$$('input[type="checkbox"]')
+  for (const checkbox of checkboxes.slice(1)) {
+    await checkbox.click()
+    await waitForNetworkIdle()
+    await takeMeasurements()
+  }
+
   await page.goto('about:blank')
 }
 
