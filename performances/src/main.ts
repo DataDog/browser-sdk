@@ -9,18 +9,21 @@ async function main() {
   try {
     const page = await browser.newPage()
     await setupSDK(page)
-    const stopProfiling = await startProfiling(page)
-    await runScenario(page)
+    const { stopProfiling, takeMeasurements } = await startProfiling(page)
+    await runScenario(page, takeMeasurements)
     await stopProfiling()
   } finally {
     await browser.close()
   }
 }
 
-async function runScenario(page: Page) {
-  await page.goto('https://en.wikipedia.org/wiki/Ubuntu')
-  await page.goto('https://en.wikipedia.org/wiki/Datadog')
+async function runScenario(page: Page, takeMeasurements: () => Promise<void>) {
   await page.goto('https://en.wikipedia.org/wiki/Event_monitoring')
+  await takeMeasurements()
+  await page.goto('https://en.wikipedia.org/wiki/Datadog')
+  await takeMeasurements()
+  await page.goto('https://en.wikipedia.org/wiki/Ubuntu')
+  await takeMeasurements()
   await page.goto('about:blank')
 }
 

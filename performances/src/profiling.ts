@@ -3,13 +3,18 @@ import { CDPSession, Page, Protocol } from 'puppeteer'
 export async function startProfiling(page: Page) {
   const client = await page.target().createCDPSession()
   const stopCPUProfiling = await startCPUProfiling(client)
-  const stopMemoryProfiling = await startMemoryProfiling(client)
+  const { stopMemoryProfiling, takeMemoryMeasurements } = await startMemoryProfiling(client)
   const stopNetworkProfiling = await startNetworkProfiling(client)
 
-  return async () => {
-    await stopCPUProfiling()
-    await stopMemoryProfiling()
-    stopNetworkProfiling()
+  return {
+    takeMeasurements: async () => {
+      await takeMemoryMeasurements()
+    },
+    stopProfiling: async () => {
+      await stopCPUProfiling()
+      await stopMemoryProfiling()
+      stopNetworkProfiling()
+    },
   }
 }
 
@@ -42,27 +47,38 @@ async function startMemoryProfiling(client: CDPSession) {
   await client.send('HeapProfiler.enable')
   await client.send('HeapProfiler.startSampling', {
     // Set a low sampling interval to have more precise measurement
-    samplingInterval: 1000,
+    samplingInterval: 100,
   })
 
-  return async () => {
-    await client.send('HeapProfiler.collectGarbage')
-    const { profile } = await client.send('HeapProfiler.stopSampling')
+  const measurements: number[] = []
 
-    const sizeForNodeId = new Map<number, number>()
+  return {
+    takeMemoryMeasurements: async () => {
+      await client.send('HeapProfiler.collectGarbage')
+      const { profile } = await client.send('HeapProfiler.getSamplingProfile')
 
-    for (const sample of profile.samples) {
-      sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
-    }
+      const sizeForNodeId = new Map<number, number>()
 
-    let total = 0
-    for (const node of iterNodes(profile.head)) {
-      if (isSDKCallFrame(node.callFrame)) {
-        total += sizeForNodeId.get(node.id) || 0
+      for (const sample of profile.samples) {
+        sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
       }
-    }
 
-    console.log(`Memory: ${total} bytes`)
+      let total = 0
+      for (const node of iterNodes(profile.head)) {
+        if (isSDKCallFrame(node.callFrame)) {
+          total += sizeForNodeId.get(node.id) || 0
+        }
+      }
+      measurements.push(total)
+    },
+
+    stopMemoryProfiling: async () => {
+      await client.send('HeapProfiler.stopSampling')
+
+      measurements.sort((a, b) => a - b)
+      const median = measurements[Math.floor(measurements.length / 2)]
+      console.log(`Memory: ${median} bytes (median)`)
+    },
   }
 }
 
