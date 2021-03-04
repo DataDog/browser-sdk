@@ -34,7 +34,7 @@ async function startCPUProfiling(client: CDPSession) {
 
     let total = 0
     for (const node of profile.nodes) {
-      if (isSDKCallFrame(node.callFrame)) {
+      if (isSdkUrl(node.callFrame.url)) {
         total += timeDeltaForNodeId.get(node.id) || 0
       }
     }
@@ -65,7 +65,7 @@ async function startMemoryProfiling(client: CDPSession) {
 
       let total = 0
       for (const node of iterNodes(profile.head)) {
-        if (isSDKCallFrame(node.callFrame)) {
+        if (isSdkUrl(node.callFrame.url)) {
           total += sizeForNodeId.get(node.id) || 0
         }
       }
@@ -84,22 +84,38 @@ async function startMemoryProfiling(client: CDPSession) {
 
 async function startNetworkProfiling(client: CDPSession) {
   await client.send('Network.enable')
-  let total = 0
-  const requestListener = (info: Protocol.Network.RequestWillBeSentEvent) => {
-    if (info.initiator.stack && isSDKCallFrame(info.initiator.stack.callFrames[0])) {
-      total += getRequestApproximateSize(info.request)
+  let totalUpload = 0
+  let totalDownload = 0
+
+  const sdkRequestIds = new Set<string>()
+
+  const requestListener = ({ initiator, request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
+    if (isSdkUrl(request.url) || (initiator.stack && isSdkUrl(initiator.stack.callFrames[0].url))) {
+      totalUpload += getRequestApproximateSize(request)
+      sdkRequestIds.add(requestId)
     }
   }
+
+  const loadingFinishedListener = ({ requestId, encodedDataLength }: Protocol.Network.LoadingFinishedEvent) => {
+    if (sdkRequestIds.has(requestId)) {
+      totalDownload += encodedDataLength
+    }
+  }
+
   client.on('Network.requestWillBeSent', requestListener)
+  client.on('Network.loadingFinished', loadingFinishedListener)
   return () => {
     client.off('Network.requestWillBeSent', requestListener)
+    client.off('Network.loadingFinishedListener', loadingFinishedListener)
 
-    console.log(`Bandwidth: ${total} bytes`)
+    console.log(`Bandwidth:`)
+    console.log(`  up ${totalUpload} bytes`)
+    console.log(`  down ${totalDownload} bytes`)
   }
 }
 
-function isSDKCallFrame(callFrame: Protocol.Runtime.CallFrame) {
-  return callFrame.url.startsWith('https://www.datadoghq-browser-agent.com/')
+function isSdkUrl(url: string) {
+  return url.startsWith('https://www.datadoghq-browser-agent.com/')
 }
 
 function* iterNodes<N extends { children?: N[] }>(root: N): Generator<N> {
