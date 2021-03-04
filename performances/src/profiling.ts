@@ -1,4 +1,5 @@
 import { CDPSession, Page, Protocol } from 'puppeteer'
+import { ProfilingResults } from './types'
 
 export async function startProfiling(page: Page) {
   const client = await page.target().createCDPSession()
@@ -10,11 +11,11 @@ export async function startProfiling(page: Page) {
     takeMeasurements: async () => {
       await takeMemoryMeasurements()
     },
-    stopProfiling: async () => {
-      await stopCPUProfiling()
-      await stopMemoryProfiling()
-      stopNetworkProfiling()
-    },
+    stopProfiling: async (): Promise<ProfilingResults> => ({
+      memory: await stopMemoryProfiling(),
+      cpu: await stopCPUProfiling(),
+      ...stopNetworkProfiling(),
+    }),
   }
 }
 
@@ -32,14 +33,17 @@ async function startCPUProfiling(client: CDPSession) {
       timeDeltaForNodeId.set(nodeId, (timeDeltaForNodeId.get(nodeId) || 0) + profile.timeDeltas![index])
     }
 
-    let total = 0
+    let totalConsumption = 0
+    let sdkConsumption = 0
     for (const node of profile.nodes) {
+      const consumption = timeDeltaForNodeId.get(node.id) || 0
+      totalConsumption += consumption
       if (isSdkUrl(node.callFrame.url)) {
-        total += timeDeltaForNodeId.get(node.id) || 0
+        sdkConsumption += consumption
       }
     }
 
-    console.log(`CPU: ${total} microseconds`)
+    return { total: totalConsumption, sdk: sdkConsumption }
   }
 }
 
@@ -50,7 +54,7 @@ async function startMemoryProfiling(client: CDPSession) {
     samplingInterval: 100,
   })
 
-  const measurements: number[] = []
+  const measurements: Array<{ sdkConsumption: number; totalConsumption: number }> = []
 
   return {
     takeMemoryMeasurements: async () => {
@@ -63,21 +67,24 @@ async function startMemoryProfiling(client: CDPSession) {
         sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
       }
 
-      let total = 0
+      let totalConsumption = 0
+      let sdkConsumption = 0
       for (const node of iterNodes(profile.head)) {
+        const consumption = sizeForNodeId.get(node.id) || 0
+        totalConsumption += consumption
         if (isSdkUrl(node.callFrame.url)) {
-          total += sizeForNodeId.get(node.id) || 0
+          sdkConsumption += consumption
         }
       }
-      measurements.push(total)
+      measurements.push({ totalConsumption, sdkConsumption })
     },
 
     stopMemoryProfiling: async () => {
       await client.send('HeapProfiler.stopSampling')
 
-      measurements.sort((a, b) => a - b)
-      const median = measurements[Math.floor(measurements.length / 2)]
-      console.log(`Memory: ${median} bytes (median)`)
+      measurements.sort((a, b) => a.sdkConsumption - b.sdkConsumption)
+      const { sdkConsumption, totalConsumption } = measurements[Math.floor(measurements.length / 2)]
+      return { total: totalConsumption, sdk: sdkConsumption }
     },
   }
 }
@@ -86,19 +93,24 @@ async function startNetworkProfiling(client: CDPSession) {
   await client.send('Network.enable')
   let totalUpload = 0
   let totalDownload = 0
+  let sdkUpload = 0
+  let sdkDownload = 0
 
   const sdkRequestIds = new Set<string>()
 
   const requestListener = ({ initiator, request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
+    const size = getRequestApproximateSize(request)
+    totalUpload += size
     if (isSdkUrl(request.url) || (initiator.stack && isSdkUrl(initiator.stack.callFrames[0].url))) {
-      totalUpload += getRequestApproximateSize(request)
+      sdkUpload += size
       sdkRequestIds.add(requestId)
     }
   }
 
   const loadingFinishedListener = ({ requestId, encodedDataLength }: Protocol.Network.LoadingFinishedEvent) => {
+    totalDownload += encodedDataLength
     if (sdkRequestIds.has(requestId)) {
-      totalDownload += encodedDataLength
+      sdkDownload += encodedDataLength
     }
   }
 
@@ -108,9 +120,10 @@ async function startNetworkProfiling(client: CDPSession) {
     client.off('Network.requestWillBeSent', requestListener)
     client.off('Network.loadingFinishedListener', loadingFinishedListener)
 
-    console.log(`Bandwidth:`)
-    console.log(`  up ${totalUpload} bytes`)
-    console.log(`  down ${totalDownload} bytes`)
+    return {
+      upload: { total: totalUpload, sdk: sdkUpload },
+      download: { total: totalDownload, sdk: sdkDownload },
+    }
   }
 }
 
