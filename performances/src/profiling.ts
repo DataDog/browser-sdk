@@ -98,10 +98,10 @@ async function startNetworkProfiling(options: ProfilingOptions, client: CDPSessi
 
   const sdkRequestIds = new Set<string>()
 
-  const requestListener = ({ initiator, request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
+  const requestListener = ({ request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
     const size = getRequestApproximateSize(request)
     totalUpload += size
-    if (isSdkUrl(options, request.url) || (initiator.stack && isSdkUrl(options, initiator.stack.callFrames[0].url))) {
+    if (isSdkUrl(options, request.url)) {
       sdkUpload += size
       sdkRequestIds.add(requestId)
     }
@@ -128,7 +128,7 @@ async function startNetworkProfiling(options: ProfilingOptions, client: CDPSessi
 }
 
 function isSdkUrl(options: ProfilingOptions, url: string) {
-  return url === options.bundleUrl
+  return url === options.bundleUrl || url.startsWith(`https://${options.proxyHost}/`)
 }
 
 function* iterNodes<N extends { children?: N[] }>(root: N): Generator<N> {

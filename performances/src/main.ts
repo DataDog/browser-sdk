@@ -10,6 +10,7 @@ main().catch(console.error)
 async function main() {
   const options: ProfilingOptions = {
     bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
+    proxyHost: 'datadog-browser-sdk-profiling-proxy',
   }
 
   const wikipediaResults = await profileScenario(options, runWikipediaScenario)
@@ -105,8 +106,9 @@ async function setupSDK(page: Page, options: ProfilingOptions) {
           window.DD_RUM.init({
             clientToken: 'xxx',
             applicationId: 'xxx',
-            site: 'localhost',
+            site: 'datadoghq.com',
             trackInteractions: true,
+            proxyHost: ${JSON.stringify(options.proxyHost)}
           })
         })
     }

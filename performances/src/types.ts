@@ -1,5 +1,6 @@
 export interface ProfilingOptions {
   bundleUrl: string
+  proxyHost: string
 }
 
 export interface ProfilingResults {
