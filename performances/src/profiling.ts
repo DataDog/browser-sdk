@@ -8,9 +8,7 @@ export async function startProfiling(options: ProfilingOptions, page: Page) {
   const stopNetworkProfiling = await startNetworkProfiling(options, client)
 
   return {
-    takeMeasurements: async () => {
-      await takeMemoryMeasurements()
-    },
+    takeMeasurements: takeMemoryMeasurements,
     stopProfiling: async (): Promise<ProfilingResults> => ({
       memory: await stopMemoryProfiling(),
       cpu: await stopCPUProfiling(),
