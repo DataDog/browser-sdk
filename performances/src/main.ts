@@ -5,7 +5,10 @@ import { startProfiling } from './profiling'
 import { trackNetwork } from './trackNetwork'
 import { ProfilingResults, ProfilingOptions } from './types'
 
-main().catch(console.error)
+main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})
 
 async function main() {
   const options: ProfilingOptions = {
