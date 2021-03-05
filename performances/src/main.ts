@@ -39,6 +39,9 @@ async function profileScenario(
   let result: ProfilingResults
   try {
     const page = await browser.newPage()
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US',
+    })
     await setupSDK(page, options)
     const { stopProfiling, takeMeasurements } = await startProfiling(options, page)
     await runScenario(page, takeMeasurements)
