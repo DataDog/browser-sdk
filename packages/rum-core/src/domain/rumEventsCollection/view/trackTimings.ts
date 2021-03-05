@@ -137,7 +137,13 @@ export function trackFirstInputTimings(
   const firstHidden = trackFirstHidden()
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
+    if (
+      entry.entryType === 'first-input' &&
+      entry.startTime < firstHidden.timeStamp &&
+      // Discard invalid first-input entries, see
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
+      entry.startTime <= entry.processingStart
+    ) {
       callback({
         firstInputDelay: elapsed(entry.startTime, entry.processingStart),
         firstInputTime: entry.startTime as Duration,
