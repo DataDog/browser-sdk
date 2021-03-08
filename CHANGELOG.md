@@ -16,6 +16,12 @@
 
 ---
 
+## v2.6.0
+
+- ⚗ [RUMF-858] add monotonic batch time ([#748](https://github.com/DataDog/browser-sdk/pull/748))
+- ✨ [RUM] Catch errors thrown by user callbacks ([#745](https://github.com/DataDog/browser-sdk/pull/745))
+- 📝 Doc: remove resourceSampleRate ([#747](https://github.com/DataDog/browser-sdk/pull/747))
+
 ## v2.5.5
 
 - 🐛 [REPLAY-187] flush pending records before taking a fullsnapshot ([#742](https://github.com/DataDog/browser-sdk/pull/742))

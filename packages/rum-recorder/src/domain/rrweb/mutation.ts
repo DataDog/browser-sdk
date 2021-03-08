@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { IGNORED_NODE, INode, serializeNodeWithId, SlimDOMOptions, transformAttribute } from '../rrweb-snapshot'
+import { IGNORED_NODE, INode, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -169,11 +169,7 @@ export class MutationObserverWrapper {
   private movedSet = new Set<Node>()
   private droppedSet = new Set<Node>()
 
-  public constructor(
-    private controller: MutationController,
-    private emissionCallback: MutationCallBack,
-    private slimDOMOptions: SlimDOMOptions
-  ) {
+  public constructor(private controller: MutationController, private emissionCallback: MutationCallBack) {
     this.observer = new MutationObserver(monitor(this.processMutations))
     this.observer.observe(document, {
       attributeOldValue: true,
@@ -211,7 +207,7 @@ export class MutationObserverWrapper {
     const addList = new DoubleLinkedList()
     const getNextId = (n: Node): number | null => {
       let ns: Node | null = n
-      let nextId: number | null = IGNORED_NODE // slimDOM: ignored
+      let nextId: number | null = IGNORED_NODE
       while (nextId === IGNORED_NODE) {
         ns = ns && ns.nextSibling
         nextId = ns && mirror.getId((ns as unknown) as INode)
@@ -234,7 +230,6 @@ export class MutationObserverWrapper {
         doc: document,
         map: mirror.map,
         skipChild: true,
-        slimDOMOptions: this.slimDOMOptions,
       })
       if (sn) {
         adds.push({

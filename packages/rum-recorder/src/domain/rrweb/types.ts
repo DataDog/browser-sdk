@@ -1,4 +1,4 @@
-import { IdNodeMap, INode, SerializedNodeWithId, SlimDOMOptions } from '../rrweb-snapshot/types'
+import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
 import type { RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
@@ -62,7 +62,6 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
-  slimDOMOptions?: SlimDOMOptions | 'all' | true
 }
 
 export interface RecordAPI {
@@ -80,7 +79,6 @@ export interface ObserverParam {
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
-  slimDOMOptions: SlimDOMOptions
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
