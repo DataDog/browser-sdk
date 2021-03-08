@@ -207,7 +207,7 @@ export interface InputValue {
 
 export type InputCallback = (v: InputValue & { id: number }) => void
 
-export const enum MediaInteractions {
+export enum MediaInteractions {
   Play,
   Pause,
 }
