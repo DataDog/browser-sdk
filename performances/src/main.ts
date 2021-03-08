@@ -17,17 +17,31 @@ async function main() {
   }
 
   const wikipediaResults = await profileScenario(options, runWikipediaScenario)
-
-  console.log('# Wikipedia:')
-  console.log()
-  console.log(formatProfilingResults(wikipediaResults))
-  console.log()
-
   const twitterResults = await profileScenario(options, runTwitterScenario)
 
-  console.log('# Twitter:')
-  console.log()
-  console.log(formatProfilingResults(twitterResults))
+  console.log(`
+# Wikipedia
+
+Illustrates a mostly static site scenario.
+
+* Navigate on three Wikipedia articles
+* Do a search (with dynamic autocompletion) and go to the first result
+
+${formatProfilingResults(wikipediaResults)}
+
+
+# Twitter
+
+Illustrates a SPA scenario.
+
+* Navigate to the top trending topics
+* Click on the first trending topic
+* Click on Top, Latest, People, Photos and Videos tabs
+* Navigate to the Settings page
+* Click on a few checkboxes
+
+${formatProfilingResults(twitterResults)}
+`)
 }
 
 async function profileScenario(
