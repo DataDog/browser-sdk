@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "performances",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "ts-node ./src/main.ts"
+  },
+  "dependencies": {
+    "puppeteer": "8.0.0"
+  }
+}

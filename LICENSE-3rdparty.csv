@@ -60,6 +60,7 @@ dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
+dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
 dev,replace-in-file,MIT,Copyright 2015-2019 Adam Reis
 dev,sinon,BSD-3-Clause,Copyright 2010-2017 Christian Johansen
 dev,string-replace-loader,MIT,Copyright 2015 Valentyn Barmashyn

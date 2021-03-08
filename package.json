@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "developer-extension"
+    "developer-extension",
+    "performances"
   ],
   "scripts": {
     "postinstall": "scripts/cli update_submodule",
