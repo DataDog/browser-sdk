@@ -156,6 +156,7 @@ export function trackFirstInputTimings(
       } else if (entry.toJSON) {
         addMonitoringMessage(`Negative FID for entry ${entry.name}`, {
           entry: { ...entry.toJSON(), target: undefined },
+          fid: entry.processingStart - entry.startTime,
         })
       }
     }
