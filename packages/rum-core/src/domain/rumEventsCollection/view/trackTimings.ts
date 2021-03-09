@@ -1,4 +1,12 @@
-import { addEventListeners, DOM_EVENT, Duration, elapsed, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import {
+  addEventListeners,
+  addMonitoringMessage,
+  DOM_EVENT,
+  Duration,
+  elapsed,
+  EventEmitter,
+  RelativeTime,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -137,17 +145,19 @@ export function trackFirstInputTimings(
   const firstHidden = trackFirstHidden()
 
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (
-      entry.entryType === 'first-input' &&
-      entry.startTime < firstHidden.timeStamp &&
+    if (entry.entryType === 'first-input' && entry.startTime < firstHidden.timeStamp) {
       // Discard invalid first-input entries, see
       // https://bugs.chromium.org/p/chromium/issues/detail?id=1185815
-      entry.startTime <= entry.processingStart
-    ) {
-      callback({
-        firstInputDelay: elapsed(entry.startTime, entry.processingStart),
-        firstInputTime: entry.startTime as Duration,
-      })
+      if (entry.startTime <= entry.processingStart) {
+        callback({
+          firstInputDelay: elapsed(entry.startTime, entry.processingStart),
+          firstInputTime: entry.startTime as Duration,
+        })
+      } else if (entry.toJSON) {
+        addMonitoringMessage(`Negative FID for entry ${entry.name}`, {
+          entry: { ...entry.toJSON(), target: undefined },
+        })
+      }
     }
   })
 

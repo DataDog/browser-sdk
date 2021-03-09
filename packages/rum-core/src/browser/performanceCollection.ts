@@ -1,6 +1,7 @@
 import {
   addEventListeners,
   Configuration,
+  Context,
   DOM_EVENT,
   Duration,
   getRelativeTime,
@@ -67,6 +68,8 @@ export interface RumFirstInputTiming {
   entryType: 'first-input'
   startTime: RelativeTime
   processingStart: RelativeTime
+  name: string
+  toJSON?: () => Context
 }
 
 export interface RumLayoutShiftTiming {
@@ -206,6 +209,7 @@ function retrieveFirstInputTiming(callback: (timing: RumFirstInputTiming) => voi
         entryType: 'first-input',
         processingStart: relativeNow(),
         startTime: evt.timeStamp as RelativeTime,
+        name: `emulated ${evt.type}`,
       }
 
       if (evt.type === DOM_EVENT.POINTER_DOWN) {
