@@ -222,4 +222,17 @@ describe('firstInputTimings', () => {
 
     expect(fitCallback).not.toHaveBeenCalled()
   })
+
+  it('should not be present if the first-input performance entry is invalid', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+      entryType: 'first-input' as const,
+      // Invalid, because processingStart should be >= startTime
+      processingStart: 900 as RelativeTime,
+      startTime: 1000 as RelativeTime,
+    })
+
+    expect(fitCallback).not.toHaveBeenCalled()
+  })
 })
