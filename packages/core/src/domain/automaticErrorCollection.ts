@@ -1,9 +1,9 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
-import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
+import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { relativeNow } from '../tools/timeUtils'
-import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
+import { jsonStringify, ONE_MINUTE, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
@@ -58,24 +58,29 @@ export function startConsoleTracking(configuration: Configuration, errorObservab
 
 function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
   if (configuration.isEnabled('console-stack')) {
-    // TODO implement me
-    return { message: 'foo' }
+    const firstErrorParam = find(params, (param: unknown) => param instanceof Error) as Error
+    return {
+      message: ['console error:', ...params].map(formatConsoleParameters(formatErrorMessage)).join(' '),
+      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+    }
   }
-  return { message: ['console error:', ...params].map(formatConsoleParameters).join(' ') }
+  return { message: ['console error:', ...params].map(formatConsoleParameters(toStackTraceString)).join(' ') }
 }
 
 export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
-function formatConsoleParameters(param: unknown) {
-  if (typeof param === 'string') {
-    return param
+function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string) {
+  return (param: unknown) => {
+    if (typeof param === 'string') {
+      return param
+    }
+    if (param instanceof Error) {
+      return stackTraceFormatter(computeStackTrace(param))
+    }
+    return jsonStringify(param, undefined, 2)
   }
-  if (param instanceof Error) {
-    return toStackTraceString(computeStackTrace(param))
-  }
-  return jsonStringify(param, undefined, 2)
 }
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void

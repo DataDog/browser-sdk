@@ -58,7 +58,9 @@ describe('console tracker (console-stack disabled)', () => {
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toContain('console error: TypeError: hello')
+    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toMatch(
+      /^console error: TypeError: hello\s+at/
+    )
   })
 })
 
@@ -92,6 +94,7 @@ describe('console tracker (console-stack enabled)', () => {
     expect(notifyError).toHaveBeenCalledWith({
       ...CONSOLE_CONTEXT,
       message: 'console error: foo bar',
+      stack: undefined,
       startTime: jasmine.any(Number),
     })
   })
@@ -101,13 +104,19 @@ describe('console tracker (console-stack enabled)', () => {
     expect(notifyError).toHaveBeenCalledWith({
       ...CONSOLE_CONTEXT,
       message: 'console error: Hello {\n  "foo": "bar"\n}',
+      stack: undefined,
       startTime: jasmine.any(Number),
     })
   })
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toContain('console error: TypeError: hello')
+    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toBe('console error: TypeError: hello')
+  })
+
+  it('should extract stack from first error', () => {
+    console.error(new TypeError('foo'), new TypeError('bar'))
+    expect((notifyError.calls.mostRecent().args[0] as RawError).stack).toMatch(/^TypeError: foo\s+at/)
   })
 })
 
