@@ -15,7 +15,7 @@ export function startAutomaticErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)
-    startConsoleTracking(errorObservable)
+    startConsoleTracking(configuration, errorObservable)
     startRuntimeErrorTracking(errorObservable)
     filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
@@ -42,18 +42,26 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
   return filteredErrorObservable
 }
 
-let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
+let originalConsoleError: (...params: unknown[]) => void
 
-export function startConsoleTracking(errorObservable: ErrorObservable) {
+export function startConsoleTracking(configuration: Configuration, errorObservable: ErrorObservable) {
   originalConsoleError = console.error
-  console.error = monitor((message?: any, ...optionalParams: any[]) => {
-    originalConsoleError.apply(console, [message, ...optionalParams])
+  console.error = monitor((...params: unknown[]) => {
+    originalConsoleError.apply(console, params)
     errorObservable.notify({
-      message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
+      ...buildErrorFromParams(configuration, params),
       source: ErrorSource.CONSOLE,
       startTime: relativeNow(),
     })
   })
+}
+
+function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
+  if (configuration.isEnabled('console-stack')) {
+    // TODO implement me
+    return { message: 'foo' }
+  }
+  return { message: ['console error:', ...params].map(formatConsoleParameters).join(' ') }
 }
 
 export function stopConsoleTracking() {
