@@ -58,9 +58,12 @@ describe('console tracker (console-stack disabled)', () => {
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toMatch(
-      /^console error: TypeError: hello\s+at/
-    )
+    const message = (notifyError.calls.mostRecent().args[0] as RawError).message
+    if (!isIE()) {
+      expect(message).toMatch(/^console error: TypeError: hello\s+at/)
+    } else {
+      expect(message).toContain('console error: TypeError: hello')
+    }
   })
 })
 
@@ -116,7 +119,12 @@ describe('console tracker (console-stack enabled)', () => {
 
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).stack).toMatch(/^TypeError: foo\s+at/)
+    const stack = (notifyError.calls.mostRecent().args[0] as RawError).stack
+    if (!isIE()) {
+      expect(stack).toMatch(/^TypeError: foo\s+at/)
+    } else {
+      expect(stack).toContain('TypeError: foo')
+    }
   })
 })
 
