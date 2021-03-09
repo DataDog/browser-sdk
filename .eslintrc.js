@@ -231,5 +231,11 @@ module.exports = {
         'local-rules/disallow-side-effects': 'error',
       },
     },
+    {
+      files: ['packages/{rum,logs,rum-recorder}/src/index.ts', 'packages/rum-recorder/src/internal.ts'],
+      rules: {
+        'local-rules/disallow-const-enum-exports': 'error',
+      },
+    },
   ],
 }
