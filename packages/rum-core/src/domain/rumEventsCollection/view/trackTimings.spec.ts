@@ -47,6 +47,7 @@ const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   entryType: 'first-input',
   processingStart: 1100 as RelativeTime,
   startTime: 1000 as RelativeTime,
+  name: 'fake',
 }
 
 describe('trackTimings', () => {
@@ -231,6 +232,7 @@ describe('firstInputTimings', () => {
       // Invalid, because processingStart should be >= startTime
       processingStart: 900 as RelativeTime,
       startTime: 1000 as RelativeTime,
+      name: 'fake',
     })
 
     expect(fitCallback).not.toHaveBeenCalled()
