@@ -11,7 +11,6 @@ import {
   RelativeTime,
   throttle,
 } from '@datadog/browser-core'
-import { NewLocationListener } from '../../../boot/rum'
 
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -48,20 +47,9 @@ export interface ViewCreatedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(
-  location: Location,
-  lifeCycle: LifeCycle,
-  onNewLocation: NewLocationListener = () => undefined
-) {
+export function trackViews(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0 as RelativeTime
-  const initialView = newView(
-    lifeCycle,
-    location,
-    ViewLoadingType.INITIAL_LOAD,
-    document.referrer,
-    startOrigin,
-    onNewLocation(location)?.viewName
-  )
+  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -73,12 +61,11 @@ export function trackViews(
   const { stop: stopHashTracking } = trackHash(onLocationChange)
 
   function onLocationChange() {
-    const { viewName, shouldCreateView } = onNewLocation(location, currentView.getLocation()) || {}
-    if (shouldCreateView || (shouldCreateView === undefined && currentView.isDifferentView(location))) {
+    if (currentView.isDifferentView(location)) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
+      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
       return
     }
     currentView.updateLocation(location)

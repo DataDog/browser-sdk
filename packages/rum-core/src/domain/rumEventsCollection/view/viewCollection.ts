@@ -6,17 +6,16 @@ import {
   ServerDuration,
   toServerDuration,
 } from '@datadog/browser-core'
-import { NewLocationListener } from '../../../boot/rum'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, View } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, location: Location, onNewLocation?: NewLocationListener) {
+export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   )
 
-  return trackViews(location, lifeCycle, onNewLocation)
+  return trackViews(location, lifeCycle)
 }
 
 function processViewUpdate(view: View) {

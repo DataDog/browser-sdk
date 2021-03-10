@@ -92,7 +92,7 @@ function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => unkn
       return false
     }
     if (result === false) {
-      console.warn(`Can't dismiss view events using beforeSend, use onNewLocation instead!`)
+      console.warn(`Can't dismiss view events using beforeSend!`)
     }
   }
   return true

@@ -135,9 +135,7 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        `Can't dismiss view events using beforeSend, use onNewLocation instead!`
-      )
+      expect(consoleWarnSpy).toHaveBeenCalledWith(`Can't dismiss view events using beforeSend!`)
     })
   })
 
