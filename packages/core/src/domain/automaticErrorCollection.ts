@@ -60,27 +60,29 @@ function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
   if (configuration.isEnabled('console-stack')) {
     const firstErrorParam = find(params, (param: unknown) => param instanceof Error) as Error
     return {
-      message: ['console error:', ...params].map(formatConsoleParameters(formatErrorMessage)).join(' '),
+      message: ['console error:', ...params]
+        .map((param) => formatConsoleParameters(formatErrorMessage, param))
+        .join(' '),
       stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
     }
   }
-  return { message: ['console error:', ...params].map(formatConsoleParameters(toStackTraceString)).join(' ') }
+  return {
+    message: ['console error:', ...params].map((param) => formatConsoleParameters(toStackTraceString, param)).join(' '),
+  }
 }
 
 export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
-function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string) {
-  return (param: unknown) => {
-    if (typeof param === 'string') {
-      return param
-    }
-    if (param instanceof Error) {
-      return stackTraceFormatter(computeStackTrace(param))
-    }
-    return jsonStringify(param, undefined, 2)
+function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string, param: unknown) {
+  if (typeof param === 'string') {
+    return param
   }
+  if (param instanceof Error) {
+    return stackTraceFormatter(computeStackTrace(param))
+  }
+  return jsonStringify(param, undefined, 2)
 }
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
