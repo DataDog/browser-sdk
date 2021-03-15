@@ -58,7 +58,7 @@ export function startConsoleTracking(configuration: Configuration, errorObservab
 
 function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
   if (configuration.isEnabled('console-stack')) {
-    const firstErrorParam = find(params, (param: unknown) => param instanceof Error) as Error
+    const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
     return {
       message: ['console error:', ...params]
         .map((param) => formatConsoleParameters(formatErrorMessage, param))
