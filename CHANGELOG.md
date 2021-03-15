@@ -16,6 +16,11 @@
 
 ---
 
+## v2.6.1
+
+- 🐛 [RUMF-855] discard negative first-input delays ([#758](https://github.com/DataDog/browser-sdk/pull/758))
+- ⚗ performance impact summary tool ([#755](https://github.com/DataDog/browser-sdk/pull/755))
+
 ## v2.6.0
 
 - ⚗ [RUMF-858] add monotonic batch time ([#748](https://github.com/DataDog/browser-sdk/pull/748))
