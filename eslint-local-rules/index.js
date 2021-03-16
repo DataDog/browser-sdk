@@ -8,5 +8,5 @@
 // parser.
 module.exports = {
   'disallow-side-effects': require('./disallowSideEffects'),
-  'disallow-const-enum-exports': require('./disallowConstEnumExports'),
+  'disallow-enum-exports': require('./disallowEnumExports'),
 }

@@ -1,7 +1,17 @@
 const { SymbolFlags } = require('typescript')
 
 /**
- * This rule forbids exporting 'const enums'.
+ * This rule forbids exporting 'enums'.  It serves two purposes:
+ *
+ * # enums
+ *
+ * This SDK is used in a variety of ways. It can be used in JS, in TS, but also a mix between the
+ * two, for example when including the bundle via the CDN and using it in a JS or TS app. We want to
+ * give the user flexibility on how to specify constant options, to let them chose between hardcoded
+ * strings or importing some constant. To allow this, we can't use enums publicly because it is not
+ * flexible enough.
+ *
+ * # const enums
  *
  * 'const enums' are useful in TS to optimize the generated code, but they don't produce any JS code
  * on their own[0].  So, exporting them in public packages entry points should be avoided, because
@@ -27,7 +37,7 @@ const { SymbolFlags } = require('typescript')
 module.exports = {
   meta: {
     docs: {
-      description: 'Disallow export of const enums.',
+      description: 'Disallow export of enums.',
       recommended: false,
     },
     schema: [],
@@ -41,8 +51,8 @@ module.exports = {
         for (const specifier of node.specifiers) {
           const originalNode = parserServices.esTreeNodeToTSNodeMap.get(specifier)
           const type = checker.getTypeAtLocation(originalNode)
-          if (type.symbol && isConstEnum(type.symbol)) {
-            context.report(specifier, 'Cannot export const enum')
+          if (type.symbol && isEnum(type.symbol)) {
+            context.report(specifier, 'Cannot export enum')
           }
         }
       },
@@ -52,8 +62,8 @@ module.exports = {
         const moduleExports = checker.getExportsOfModule(moduleSymbol)
 
         for (const symbol of moduleExports) {
-          if (isConstEnum(symbol)) {
-            context.report(node, `Cannot export const enum ${symbol.getName()}`)
+          if (isEnum(symbol)) {
+            context.report(node, `Cannot export enum ${symbol.getName()}`)
           }
         }
       },
@@ -61,7 +71,7 @@ module.exports = {
   },
 }
 
-function isConstEnum(symbol) {
+function isEnum(symbol) {
   // eslint-disable-next-line no-bitwise
-  return symbol.getFlags() & SymbolFlags.ConstEnum
+  return symbol.getFlags() & SymbolFlags.Enum
 }

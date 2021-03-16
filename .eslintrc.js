@@ -234,7 +234,7 @@ module.exports = {
     {
       files: ['packages/{rum,logs,rum-recorder}/src/index.ts', 'packages/rum-recorder/src/internal.ts'],
       rules: {
-        'local-rules/disallow-const-enum-exports': 'error',
+        'local-rules/disallow-enum-exports': 'error',
       },
     },
   ],
