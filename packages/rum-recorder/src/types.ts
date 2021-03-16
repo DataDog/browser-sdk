@@ -36,16 +36,18 @@ export type Record = RawRecord & {
   delay?: number
 }
 
-export enum RecordType {
-  FullSnapshot = 2,
-  IncrementalSnapshot = 3,
-  Meta = 4,
-  Focus = 6,
-  ViewEnd = 7,
+export const RecordType = {
+  FullSnapshot: 2 as const,
+  IncrementalSnapshot: 3 as const,
+  Meta: 4 as const,
+  Focus: 6 as const,
+  ViewEnd: 7 as const,
 }
 
+export type RecordType = typeof RecordType[keyof typeof RecordType]
+
 export interface FullSnapshotRecord {
-  type: RecordType.FullSnapshot
+  type: typeof RecordType.FullSnapshot
   data: {
     node: SerializedNodeWithId
     initialOffset: {
@@ -56,12 +58,12 @@ export interface FullSnapshotRecord {
 }
 
 export interface IncrementalSnapshotRecord {
-  type: RecordType.IncrementalSnapshot
+  type: typeof RecordType.IncrementalSnapshot
   data: IncrementalData
 }
 
 export interface MetaRecord {
-  type: RecordType.Meta
+  type: typeof RecordType.Meta
   data: {
     href: string
     width: number
@@ -70,12 +72,12 @@ export interface MetaRecord {
 }
 
 export interface FocusRecord {
-  type: RecordType.Focus
+  type: typeof RecordType.Focus
   data: {
     has_focus: boolean
   }
 }
 
 export interface ViewEndRecord {
-  type: RecordType.ViewEnd
+  type: typeof RecordType.ViewEnd
 }

@@ -147,17 +147,19 @@ export interface MousePosition {
   timeOffset: number
 }
 
-export enum MouseInteractions {
-  MouseUp = 0,
-  MouseDown = 1,
-  Click = 2,
-  ContextMenu = 3,
-  DblClick = 4,
-  Focus = 5,
-  Blur = 6,
-  TouchStart = 7,
-  TouchEnd = 9,
+export const MouseInteractions = {
+  MouseUp: 0 as const,
+  MouseDown: 1 as const,
+  Click: 2 as const,
+  ContextMenu: 3 as const,
+  DblClick: 4 as const,
+  Focus: 5 as const,
+  Blur: 6 as const,
+  TouchStart: 7 as const,
+  TouchEnd: 9 as const,
 }
+
+export type MouseInteractions = typeof MouseInteractions[keyof typeof MouseInteractions]
 
 interface MouseInteractionParam {
   type: MouseInteractions
@@ -207,10 +209,12 @@ export interface InputValue {
 
 export type InputCallback = (v: InputValue & { id: number }) => void
 
-export enum MediaInteractions {
-  Play,
-  Pause,
+export const MediaInteractions = {
+  Play: 0 as const,
+  Pause: 1 as const,
 }
+
+export type MediaInteractions = typeof MediaInteractions[keyof typeof MediaInteractions]
 
 export interface MediaInteractionParam {
   type: MediaInteractions
