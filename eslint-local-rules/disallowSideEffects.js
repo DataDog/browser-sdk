@@ -1,39 +1,28 @@
-/* eslint-disable unicorn/filename-case */
 const path = require('path')
 
-// Declare the local rules used by the Browser SDK
-//
-// See https://eslint.org/docs/developer-guide/working-with-rules for documentation on how to write
-// rules.
-//
-// You can use https://astexplorer.net/ to explore the parsed data structure of a code snippet.
-// Choose '@typescript-eslint/parser' as a parser to have the exact same structure as our ESLint
-// parser.
 module.exports = {
-  'disallow-side-effects': {
-    meta: {
-      docs: {
-        description:
-          'Disallow potential side effects when evaluating modules, to ensure modules content are tree-shakable.',
-        recommended: false,
+  meta: {
+    docs: {
+      description:
+        'Disallow potential side effects when evaluating modules, to ensure modules content are tree-shakable.',
+      recommended: false,
+    },
+    schema: [],
+  },
+  create(context) {
+    const filename = context.getFilename()
+    if (pathsWithSideEffect.has(filename)) {
+      return {}
+    }
+    return {
+      Program(node) {
+        reportPotentialSideEffect(context, node)
       },
-      schema: [],
-    },
-    create(context) {
-      const filename = context.getFilename()
-      if (pathsWithSideEffect.has(filename)) {
-        return {}
-      }
-      return {
-        Program(node) {
-          reportPotentialSideEffect(context, node)
-        },
-      }
-    },
+    }
   },
 }
 
-const packagesRoot = `${__dirname}/packages`
+const packagesRoot = path.resolve(__dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([
