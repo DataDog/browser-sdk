@@ -128,6 +128,7 @@ class StubXhr {
 
   abort() {
     this.status = 0
+    this.dispatchEvent('abort')
   }
 
   complete(status: number, response?: string) {

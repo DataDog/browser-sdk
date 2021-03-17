@@ -30,6 +30,7 @@ export interface XhrCompleteContext extends XhrStartContext {
   duration: Duration
   status: number
   response: string | undefined
+  isAborted: boolean
 }
 
 let xhrProxySingleton: XhrProxy | undefined
@@ -59,8 +60,8 @@ export function startXhrProxy<
 export function resetXhrProxy() {
   if (xhrProxySingleton) {
     xhrProxySingleton = undefined
-    beforeSendCallbacks.splice(0, beforeSendCallbacks.length)
-    onRequestCompleteCallbacks.splice(0, onRequestCompleteCallbacks.length)
+    beforeSendCallbacks.length = 0
+    onRequestCompleteCallbacks.length = 0
     XMLHttpRequest.prototype.open = originalXhrOpen
     XMLHttpRequest.prototype.send = originalXhrSend
   }
@@ -71,6 +72,7 @@ function proxyXhr() {
   originalXhrOpen = XMLHttpRequest.prototype.open
   // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
+
   XMLHttpRequest.prototype.open = function (this: BrowserXHR, method: string, url: string) {
     callMonitored(() => {
       // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
@@ -104,7 +106,8 @@ function proxyXhr() {
         }
 
         let hasBeenReported = false
-        const reportXhr = () => {
+
+        const reportXhr = ({ isAborted = false }: { isAborted?: boolean } = {}) => {
           if (hasBeenReported) {
             return
           }
@@ -113,11 +116,19 @@ function proxyXhr() {
           xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
           xhrContext.response = this.response as string | undefined
           xhrContext.status = this.status
+          xhrContext.isAborted = isAborted
 
           onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
         }
 
-        this.addEventListener('loadend', monitor(reportXhr))
+        this.addEventListener(
+          'loadend',
+          monitor(() => reportXhr())
+        )
+        this.addEventListener(
+          'abort',
+          monitor(() => reportXhr({ isAborted: true }))
+        )
 
         beforeSendCallbacks.forEach((callback) => callback(xhrContext, this))
       }
