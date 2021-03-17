@@ -37,12 +37,12 @@ export type Record = RawRecord & {
 }
 
 export const RecordType = {
-  FullSnapshot: 2 as const,
-  IncrementalSnapshot: 3 as const,
-  Meta: 4 as const,
-  Focus: 6 as const,
-  ViewEnd: 7 as const,
-}
+  FullSnapshot: 2,
+  IncrementalSnapshot: 3,
+  Meta: 4,
+  Focus: 6,
+  ViewEnd: 7,
+} as const
 
 export type RecordType = typeof RecordType[keyof typeof RecordType]
 
