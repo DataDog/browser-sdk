@@ -43,7 +43,7 @@ export function formatUnknownError(stackTrace: StackTrace | undefined, errorObje
 }
 
 export function toStackTraceString(stack: StackTrace) {
-  let result = `${stack.name || 'Error'}: ${stack.message!}`
+  let result = formatErrorMessage(stack)
   stack.stack.forEach((frame) => {
     const func = frame.func === '?' ? '<anonymous>' : frame.func
     const args = frame.args && frame.args.length > 0 ? `(${frame.args.join(', ')})` : ''
@@ -52,4 +52,8 @@ export function toStackTraceString(stack: StackTrace) {
     result += `\n  at ${func!}${args} @ ${frame.url!}${line}${column}`
   })
   return result
+}
+
+export function formatErrorMessage(stack: StackTrace) {
+  return `${stack.name || 'Error'}: ${stack.message!}`
 }

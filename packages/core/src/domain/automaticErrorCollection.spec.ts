@@ -13,7 +13,7 @@ import {
 } from './automaticErrorCollection'
 import { Configuration } from './configuration'
 
-describe('console tracker', () => {
+describe('console tracker (console-stack disabled)', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
   const CONSOLE_CONTEXT = {
@@ -22,10 +22,11 @@ describe('console tracker', () => {
 
   beforeEach(() => {
     consoleErrorStub = spyOn(console, 'error')
-    notifyError = jasmine.createSpy()
+    notifyError = jasmine.createSpy('notifyError')
     const errorObservable = new Observable<RawError>()
+    const configuration: Partial<Configuration> = { isEnabled: () => false }
     errorObservable.subscribe(notifyError)
-    startConsoleTracking(errorObservable)
+    startConsoleTracking(configuration as Configuration, errorObservable)
   })
 
   afterEach(() => {
@@ -57,7 +58,73 @@ describe('console tracker', () => {
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toContain('console error: TypeError: hello')
+    const message = (notifyError.calls.mostRecent().args[0] as RawError).message
+    if (!isIE()) {
+      expect(message).toMatch(/^console error: TypeError: hello\s+at/)
+    } else {
+      expect(message).toContain('console error: TypeError: hello')
+    }
+  })
+})
+
+describe('console tracker (console-stack enabled)', () => {
+  let consoleErrorStub: jasmine.Spy
+  let notifyError: jasmine.Spy
+  const CONSOLE_CONTEXT = {
+    source: ErrorSource.CONSOLE,
+  }
+
+  beforeEach(() => {
+    consoleErrorStub = spyOn(console, 'error')
+    notifyError = jasmine.createSpy('notifyError')
+    const errorObservable = new Observable<RawError>()
+    const configuration: Partial<Configuration> = { isEnabled: () => true }
+    errorObservable.subscribe(notifyError)
+    startConsoleTracking(configuration as Configuration, errorObservable)
+  })
+
+  afterEach(() => {
+    stopConsoleTracking()
+  })
+
+  it('should keep original behavior', () => {
+    console.error('foo', 'bar')
+    expect(consoleErrorStub).toHaveBeenCalledWith('foo', 'bar')
+  })
+
+  it('should notify error', () => {
+    console.error('foo', 'bar')
+    expect(notifyError).toHaveBeenCalledWith({
+      ...CONSOLE_CONTEXT,
+      message: 'console error: foo bar',
+      stack: undefined,
+      startTime: jasmine.any(Number),
+    })
+  })
+
+  it('should stringify object parameters', () => {
+    console.error('Hello', { foo: 'bar' })
+    expect(notifyError).toHaveBeenCalledWith({
+      ...CONSOLE_CONTEXT,
+      message: 'console error: Hello {\n  "foo": "bar"\n}',
+      stack: undefined,
+      startTime: jasmine.any(Number),
+    })
+  })
+
+  it('should format error instance', () => {
+    console.error(new TypeError('hello'))
+    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toBe('console error: TypeError: hello')
+  })
+
+  it('should extract stack from first error', () => {
+    console.error(new TypeError('foo'), new TypeError('bar'))
+    const stack = (notifyError.calls.mostRecent().args[0] as RawError).stack
+    if (!isIE()) {
+      expect(stack).toMatch(/^TypeError: foo\s+at/)
+    } else {
+      expect(stack).toContain('TypeError: foo')
+    }
   })
 })
 

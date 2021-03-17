@@ -1,9 +1,9 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
-import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
+import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { relativeNow } from '../tools/timeUtils'
-import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
+import { jsonStringify, ONE_MINUTE, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
@@ -15,7 +15,7 @@ export function startAutomaticErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)
-    startConsoleTracking(errorObservable)
+    startConsoleTracking(configuration, errorObservable)
     startRuntimeErrorTracking(errorObservable)
     filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
@@ -42,30 +42,45 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
   return filteredErrorObservable
 }
 
-let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
+let originalConsoleError: (...params: unknown[]) => void
 
-export function startConsoleTracking(errorObservable: ErrorObservable) {
+export function startConsoleTracking(configuration: Configuration, errorObservable: ErrorObservable) {
   originalConsoleError = console.error
-  console.error = monitor((message?: any, ...optionalParams: any[]) => {
-    originalConsoleError.apply(console, [message, ...optionalParams])
+  console.error = monitor((...params: unknown[]) => {
+    originalConsoleError.apply(console, params)
     errorObservable.notify({
-      message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
+      ...buildErrorFromParams(configuration, params),
       source: ErrorSource.CONSOLE,
       startTime: relativeNow(),
     })
   })
 }
 
+function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
+  if (configuration.isEnabled('console-stack')) {
+    const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
+    return {
+      message: ['console error:', ...params]
+        .map((param) => formatConsoleParameters(formatErrorMessage, param))
+        .join(' '),
+      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+    }
+  }
+  return {
+    message: ['console error:', ...params].map((param) => formatConsoleParameters(toStackTraceString, param)).join(' '),
+  }
+}
+
 export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
-function formatConsoleParameters(param: unknown) {
+function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string, param: unknown) {
   if (typeof param === 'string') {
     return param
   }
   if (param instanceof Error) {
-    return toStackTraceString(computeStackTrace(param))
+    return stackTraceFormatter(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
