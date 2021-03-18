@@ -64,7 +64,7 @@ describe('fetch proxy', () => {
       expect(request.method).toEqual('GET')
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
-      expect(request.response).toBe('AbortError: The user aborted a request')
+      expect(request.response).toContain('AbortError: The user aborted a request')
       expect(request.isAborted).toBe(true)
       done()
     })

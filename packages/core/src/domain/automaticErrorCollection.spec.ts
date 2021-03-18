@@ -248,6 +248,15 @@ describe('network error tracker', () => {
     })
   })
 
+  it('should not track aborted requests ', (done) => {
+    fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).not.toHaveBeenCalled()
+      done()
+    })
+  })
+
   it('should track refused request', (done) => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
 
