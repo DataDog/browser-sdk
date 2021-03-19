@@ -138,7 +138,6 @@ describe('xhr proxy', () => {
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.abort()
-        xhr.complete(0, 'ok')
       },
       onComplete(xhr) {
         const request = getRequest(0)
