@@ -18,6 +18,9 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
     if (configuration.isEnabled('postpone_start_recording')) {
       ;(rumRecorderGlobal as any).startSessionReplayRecording = monitor(startSessionReplayRecording)
+      if (!(userConfiguration as any).manualSessionReplayRecordingStart) {
+        startSessionReplayRecording()
+      }
     } else {
       startSessionReplayRecording()
     }

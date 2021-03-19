@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Configuration } from '@datadog/browser-core'
-import { RumPublicApi, StartRum } from '@datadog/browser-rum-core'
+import { RumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 import { makeRumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
 describe('makeRumRecorderPublicApi', () => {
-  let rumGlobal: RumPublicApi & { startSessionReplayRecording?(): void }
+  let rumGlobal: RumPublicApi & {
+    // TODO postpone_start_recording: those types will be included in rum-recorder public API when
+    // postpone_start_recording is stabilized.
+    startSessionReplayRecording?(): void
+    init(options: RumUserConfiguration & { manualSessionReplayRecordingStart?: boolean }): void
+  }
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let startRumSpy: jasmine.Spy<StartRum>
   let enabledFlags: string[] = []
@@ -57,7 +62,7 @@ describe('makeRumRecorderPublicApi', () => {
 
     it('if enabled, recording should not start when calling init()', () => {
       enabledFlags = ['postpone_start_recording']
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
@@ -70,7 +75,7 @@ describe('makeRumRecorderPublicApi', () => {
 
     it('if enabled, commonContext.hasReplay should be true only if startSessionReplayRecording is called', () => {
       enabledFlags = ['postpone_start_recording']
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+      rumGlobal.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
       expect(getCommonContext().hasReplay).toBeUndefined()
       rumGlobal.startSessionReplayRecording!()
       expect(getCommonContext().hasReplay).toBe(true)
