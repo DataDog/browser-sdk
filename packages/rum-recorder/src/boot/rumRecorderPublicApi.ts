@@ -17,12 +17,12 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
 
     if (configuration.isEnabled('postpone_start_recording')) {
-      ;(rumRecorderGlobal as any).startSessionRecord = monitor(startSessionRecord)
+      ;(rumRecorderGlobal as any).startSessionReplayRecording = monitor(startSessionReplayRecording)
     } else {
-      startSessionRecord()
+      startSessionReplayRecording()
     }
 
-    function startSessionRecord() {
+    function startSessionReplayRecording() {
       if (isRecording) {
         return
       }
