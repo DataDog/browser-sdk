@@ -93,11 +93,26 @@ function proxyXhr() {
         const xhrContext = this._datadog_xhr as XhrStartContext & Partial<XhrCompleteContext>
         xhrContext.startTime = relativeNow()
 
-        const originalOnreadystatechange = this.onreadystatechange
+        const completeContext = () => {
+          if (xhrContext.duration !== undefined) {
+            return
+          }
+          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
+          xhrContext.response = this.response as string | undefined
+          xhrContext.status = this.status
+          if (xhrContext.isAborted === undefined) {
+            xhrContext.isAborted = false
+          }
+        }
 
+        const originalOnreadystatechange = this.onreadystatechange
         this.onreadystatechange = function () {
           if (this.readyState === XMLHttpRequest.DONE) {
-            callMonitored(reportXhr)
+            // Try to complete the context as soon as possible, because the XHR may be mutated by
+            // the application during a future event. For example, Angular is calling .abort() on
+            // completed requests during a onreadystatechange event, so the status becomes '0'
+            // before the request is collected.
+            callMonitored(completeContext)
           }
 
           if (originalOnreadystatechange) {
@@ -105,29 +120,19 @@ function proxyXhr() {
           }
         }
 
-        let hasBeenReported = false
-
-        const reportXhr = ({ isAborted = false }: { isAborted?: boolean } = {}) => {
-          if (hasBeenReported) {
-            return
-          }
-          hasBeenReported = true
-
-          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
-          xhrContext.response = this.response as string | undefined
-          xhrContext.status = this.status
-          xhrContext.isAborted = isAborted
-
-          onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
-        }
+        this.addEventListener(
+          'abort',
+          monitor(() => {
+            xhrContext.isAborted = true
+          })
+        )
 
         this.addEventListener(
           'loadend',
-          monitor(() => reportXhr())
-        )
-        this.addEventListener(
-          'abort',
-          monitor(() => reportXhr({ isAborted: true }))
+          monitor(() => {
+            completeContext()
+            onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
+          })
         )
 
         beforeSendCallbacks.forEach((callback) => callback(xhrContext, this))
