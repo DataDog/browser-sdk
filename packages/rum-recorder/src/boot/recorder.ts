@@ -34,7 +34,7 @@ export function startRecording(
   trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
 
   return {
-    stop() {
+    stop: () => {
       stopRecording()
       stopSegmentCollection()
       stopTrackingFocusRecords()

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Configuration } from '@datadog/browser-core'
+import { Configuration, noop } from '@datadog/browser-core'
 import { RumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 import { makeRumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
 
@@ -18,7 +18,9 @@ describe('makeRumRecorderPublicApi', () => {
 
   beforeEach(() => {
     enabledFlags = []
-    startRecordingSpy = jasmine.createSpy()
+    startRecordingSpy = jasmine.createSpy().and.callFake(() => ({
+      stop: noop,
+    }))
     startRumSpy = jasmine.createSpy().and.callFake(() => {
       const configuration: Partial<Configuration> = {
         isEnabled(flag: string) {

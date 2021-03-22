@@ -7,17 +7,18 @@ export type StartRecording = typeof startRecording
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
   const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
-    let isRecording: true | undefined
+    let stopRecording: (() => void) | undefined
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
-      hasReplay: isRecording,
+      hasReplay: stopRecording ? true : undefined,
     }))
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
 
     if (configuration.isEnabled('postpone_start_recording')) {
       ;(rumRecorderGlobal as any).startSessionReplayRecording = monitor(startSessionReplayRecording)
+      ;(rumRecorderGlobal as any).stopSessionReplayRecording = monitor(stopSessionReplayRecording)
       if (!(userConfiguration as any).manualSessionReplayRecordingStart) {
         startSessionReplayRecording()
       }
@@ -26,12 +27,25 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     }
 
     function startSessionReplayRecording() {
-      if (isRecording) {
+      if (stopRecording) {
+        return
+      }
+      ;({ stop: stopRecording } = startRecordingImpl(
+        lifeCycle,
+        userConfiguration.applicationId,
+        configuration,
+        session,
+        parentContexts
+      ))
+    }
+
+    function stopSessionReplayRecording() {
+      if (!stopRecording) {
         return
       }
 
-      isRecording = true
-      startRecordingImpl(lifeCycle, userConfiguration.applicationId, configuration, session, parentContexts)
+      stopRecording()
+      stopRecording = undefined
     }
 
     return startRumResult
