@@ -79,6 +79,9 @@ export interface RawRumViewEvent {
     long_task: Count
     resource: Count
   }
+  session: {
+    has_replay: true | undefined
+  }
   _dd: {
     document_version: number
   }

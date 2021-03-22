@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { makeRumPublicApi, StartRum } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, makeRumPublicApi, StartRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
 
@@ -37,6 +37,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
         session,
         parentContexts
       ))
+      lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
     }
 
     function stopSessionReplayRecording() {
@@ -46,6 +47,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
       stopRecording()
       stopRecording = undefined
+      lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
     return startRumResult

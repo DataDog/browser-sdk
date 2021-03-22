@@ -1040,3 +1040,72 @@ describe('rum track custom timings', () => {
     expect(warnSpy).toHaveBeenCalled()
   })
 })
+
+describe('track hasReplay', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .withFakeClock()
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('sets hasReplay to false by default', () => {
+    setupBuilder.build()
+    expect(getViewEvent(0).hasReplay).toBe(false)
+  })
+
+  it('sets hasReplay to true when the recording starts', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(1).hasReplay).toBe(true)
+  })
+
+  it('keeps hasReplay to true when the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(1).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to true when a new view is created after the recording starts', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(2).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to false when a new view is created after the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(2).hasReplay).toBe(false)
+  })
+})
