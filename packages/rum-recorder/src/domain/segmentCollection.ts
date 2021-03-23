@@ -33,6 +33,8 @@ export const MAX_SEGMENT_DURATION = 30_000
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
+let workerSingleton: DeflateWorker
+
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   applicationId: string,
@@ -40,12 +42,14 @@ export function startSegmentCollection(
   parentContexts: ParentContexts,
   send: (data: Uint8Array, meta: SegmentMeta) => void
 ) {
-  const worker = createDeflateWorker()
+  if (!workerSingleton) {
+    workerSingleton = createDeflateWorker()
+  }
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(applicationId, session, parentContexts),
     send,
-    worker
+    workerSingleton
   )
 }
 
@@ -58,7 +62,7 @@ export function doStartSegmentCollection(
 ) {
   let currentSegment: Segment | undefined
   let currentSegmentExpirationTimeoutId: number
-  let nextSegmentCreationReason: CreationReason = 'init'
+  let nextSegmentCreationReason: CreationReason | undefined = 'init'
 
   const writer = new DeflateSegmentWriter(
     worker,
@@ -91,7 +95,7 @@ export function doStartSegmentCollection(
     { capture: true }
   )
 
-  function flushSegment(creationReason: CreationReason) {
+  function flushSegment(creationReason?: CreationReason) {
     if (currentSegment) {
       currentSegment.flush()
       currentSegment = undefined
@@ -104,6 +108,9 @@ export function doStartSegmentCollection(
   return {
     addRecord: (record: Record) => {
       if (!currentSegment) {
+        if (!nextSegmentCreationReason) {
+          return
+        }
         const context = getSegmentContext()
         if (!context) {
           return
@@ -121,10 +128,10 @@ export function doStartSegmentCollection(
       }
     },
     stop: () => {
+      flushSegment()
       unsubscribeViewCreated()
       unsubscribeBeforeUnload()
       unsubscribeVisibilityChange()
-      worker.terminate()
     },
   }
 }

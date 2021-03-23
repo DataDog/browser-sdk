@@ -12,7 +12,7 @@ const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
 const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
 
 describe('startSegmentCollection', () => {
-  let stopErrorCollection: () => void
+  let stopSegmentCollection: () => void
 
   function startSegmentCollection(context: SegmentContext | undefined) {
     const lifeCycle = new LifeCycle()
@@ -21,7 +21,7 @@ describe('startSegmentCollection', () => {
     const sendSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
-    stopErrorCollection = stop
+    stopSegmentCollection = stop
     const segmentFlushSpy = spyOn(Segment.prototype, 'flush').and.callThrough()
     return {
       addRecord,
@@ -42,7 +42,7 @@ describe('startSegmentCollection', () => {
 
   afterEach(() => {
     jasmine.clock().uninstall()
-    stopErrorCollection()
+    stopSegmentCollection()
   })
 
   it('immediately starts a new segment', () => {
@@ -132,6 +132,13 @@ describe('startSegmentCollection', () => {
 
       expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
+    })
+
+    it('flushes a segment when calling stop()', () => {
+      const { segmentFlushSpy, addRecord } = startSegmentCollection(CONTEXT)
+      addRecord(RECORD)
+      stopSegmentCollection()
+      expect(segmentFlushSpy).toHaveBeenCalled()
     })
   })
 })
