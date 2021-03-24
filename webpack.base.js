@@ -71,7 +71,7 @@ module.exports = ({ entry, mode, filename, datacenter, types }) => ({
   plugins: [
     new BannerPlugin({
       banner({ filename }) {
-        const env = filename.match(SUFFIX_REGEXP)[1]
+        const env = SUFFIX_REGEXP.exec(filename)[1]
         const newFileName = filename.replace(SUFFIX_REGEXP, '')
         return `\n${filename} IS DEPRECATED, USE ${newFileName} WITH { site: 'datadoghq.${
           env === 'eu' ? 'eu' : 'com'
