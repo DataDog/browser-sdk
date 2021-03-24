@@ -2,6 +2,7 @@ const path = require('path')
 
 module.exports = (_env, argv) => ({
   entry: './app.ts',
+  target: ['web', 'es5'],
   module: {
     rules: [
       {
