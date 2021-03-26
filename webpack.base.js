@@ -4,7 +4,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const buildEnv = require('./scripts/build-env')
 
-const tsconfigPath = path.join(__dirname, 'tsconfig.base.json')
+const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 const SUFFIX_REGEXP = /-(us|eu)/
 
 module.exports = ({ entry, mode, filename, datacenter, types }) => ({
