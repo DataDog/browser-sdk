@@ -5,13 +5,21 @@ import { startRecording } from './recorder'
 
 export type StartRecording = typeof startRecording
 
+const enum StateType {
+  Init,
+  Recording,
+}
+type State = { type: StateType.Init } | { type: StateType.Recording; stopRecording: () => void }
+
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
   const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
-    let stopRecording: (() => void) | undefined
+    let state: State = {
+      type: StateType.Init,
+    }
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
-      hasReplay: stopRecording ? true : undefined,
+      hasReplay: state.type === StateType.Recording ? true : undefined,
     }))
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
@@ -27,26 +35,33 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     }
 
     function startSessionReplayRecording() {
-      if (stopRecording) {
+      if (state.type === StateType.Recording) {
         return
       }
-      ;({ stop: stopRecording } = startRecordingImpl(
+
+      const { stop: stopRecording } = startRecordingImpl(
         lifeCycle,
         userConfiguration.applicationId,
         configuration,
         session,
         parentContexts
-      ))
+      )
+      state = {
+        type: StateType.Recording,
+        stopRecording,
+      }
       lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
     }
 
     function stopSessionReplayRecording() {
-      if (!stopRecording) {
+      if (state.type !== StateType.Recording) {
         return
       }
 
-      stopRecording()
-      stopRecording = undefined
+      state.stopRecording()
+      state = {
+        type: StateType.Init,
+      }
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
