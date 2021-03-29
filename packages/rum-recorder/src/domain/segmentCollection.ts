@@ -53,6 +53,25 @@ export function startSegmentCollection(
   )
 }
 
+const enum StateType {
+  WaitingForInitialRecord,
+  SegmentPending,
+  Stopped,
+}
+type State =
+  | {
+      type: StateType.WaitingForInitialRecord
+      nextSegmentCreationReason: CreationReason
+    }
+  | {
+      type: StateType.SegmentPending
+      segment: Segment
+      expirationTimeoutId: number
+    }
+  | {
+      type: StateType.Stopped
+    }
+
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
@@ -60,9 +79,10 @@ export function doStartSegmentCollection(
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
-  let currentSegment: Segment | undefined
-  let currentSegmentExpirationTimeoutId: number
-  let nextSegmentCreationReason: CreationReason | undefined = 'init'
+  let state: State = {
+    type: StateType.WaitingForInitialRecord,
+    nextSegmentCreationReason: 'init',
+  }
 
   const writer = new DeflateSegmentWriter(
     worker,
@@ -95,38 +115,50 @@ export function doStartSegmentCollection(
     { capture: true }
   )
 
-  function flushSegment(creationReason?: CreationReason) {
-    if (currentSegment) {
-      currentSegment.flush()
-      currentSegment = undefined
-      clearTimeout(currentSegmentExpirationTimeoutId)
+  function flushSegment(nextSegmentCreationReason?: CreationReason) {
+    if (state.type === StateType.SegmentPending) {
+      state.segment.flush()
+      clearTimeout(state.expirationTimeoutId)
     }
 
-    nextSegmentCreationReason = creationReason
+    if (nextSegmentCreationReason) {
+      state = {
+        type: StateType.WaitingForInitialRecord,
+        nextSegmentCreationReason,
+      }
+    } else {
+      state = {
+        type: StateType.Stopped,
+      }
+    }
   }
 
   return {
     addRecord: (record: Record) => {
-      if (!currentSegment) {
-        if (!nextSegmentCreationReason) {
-          return
-        }
-        const context = getSegmentContext()
-        if (!context) {
-          return
-        }
+      switch (state.type) {
+        case StateType.WaitingForInitialRecord:
+          const context = getSegmentContext()
+          if (!context) {
+            return
+          }
+          state = {
+            type: StateType.SegmentPending,
+            segment: new Segment(writer, context, state.nextSegmentCreationReason, record),
+            expirationTimeoutId: setTimeout(
+              monitor(() => {
+                flushSegment('max_duration')
+              }),
+              MAX_SEGMENT_DURATION
+            ),
+          }
+          break
 
-        currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
-        currentSegmentExpirationTimeoutId = setTimeout(
-          monitor(() => {
-            flushSegment('max_duration')
-          }),
-          MAX_SEGMENT_DURATION
-        )
-      } else {
-        currentSegment.addRecord(record)
+        case StateType.SegmentPending:
+          state.segment.addRecord(record)
+          break
       }
     },
+
     stop: () => {
       flushSegment()
       unsubscribeViewCreated()
