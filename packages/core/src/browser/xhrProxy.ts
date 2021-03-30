@@ -103,6 +103,10 @@ function proxyXhr() {
 
         this.onreadystatechange = function () {
           if (this.readyState === XMLHttpRequest.DONE) {
+            // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+            // application during a future event. For example, Angular is calling .abort() on
+            // completed requests during a onreadystatechange event, so the status becomes '0'
+            // before the request is collected.
             callMonitored(reportXhr)
           }
 
