@@ -37,7 +37,7 @@ module.exports = (_env, argv) => {
     return {
       entry,
       output,
-      devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
+      devtool: argv.mode === 'development' ? 'inline-source-map' : false,
 
       module: {
         rules: [
