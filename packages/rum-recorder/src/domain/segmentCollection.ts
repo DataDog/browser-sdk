@@ -53,23 +53,23 @@ export function startSegmentCollection(
   )
 }
 
-const enum StateType {
+const enum SegmentCollectionStatus {
   WaitingForInitialRecord,
   SegmentPending,
   Stopped,
 }
-type State =
+type SegmentCollectionState =
   | {
-      type: StateType.WaitingForInitialRecord
+      status: SegmentCollectionStatus.WaitingForInitialRecord
       nextSegmentCreationReason: CreationReason
     }
   | {
-      type: StateType.SegmentPending
+      status: SegmentCollectionStatus.SegmentPending
       segment: Segment
       expirationTimeoutId: number
     }
   | {
-      type: StateType.Stopped
+      status: SegmentCollectionStatus.Stopped
     }
 
 export function doStartSegmentCollection(
@@ -79,8 +79,8 @@ export function doStartSegmentCollection(
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
-  let state: State = {
-    type: StateType.WaitingForInitialRecord,
+  let state: SegmentCollectionState = {
+    status: SegmentCollectionStatus.WaitingForInitialRecord,
     nextSegmentCreationReason: 'init',
   }
 
@@ -116,33 +116,33 @@ export function doStartSegmentCollection(
   )
 
   function flushSegment(nextSegmentCreationReason?: CreationReason) {
-    if (state.type === StateType.SegmentPending) {
+    if (state.status === SegmentCollectionStatus.SegmentPending) {
       state.segment.flush()
       clearTimeout(state.expirationTimeoutId)
     }
 
     if (nextSegmentCreationReason) {
       state = {
-        type: StateType.WaitingForInitialRecord,
+        status: SegmentCollectionStatus.WaitingForInitialRecord,
         nextSegmentCreationReason,
       }
     } else {
       state = {
-        type: StateType.Stopped,
+        status: SegmentCollectionStatus.Stopped,
       }
     }
   }
 
   return {
     addRecord: (record: Record) => {
-      switch (state.type) {
-        case StateType.WaitingForInitialRecord:
+      switch (state.status) {
+        case SegmentCollectionStatus.WaitingForInitialRecord:
           const context = getSegmentContext()
           if (!context) {
             return
           }
           state = {
-            type: StateType.SegmentPending,
+            status: SegmentCollectionStatus.SegmentPending,
             segment: new Segment(writer, context, state.nextSegmentCreationReason, record),
             expirationTimeoutId: setTimeout(
               monitor(() => {
@@ -153,7 +153,7 @@ export function doStartSegmentCollection(
           }
           break
 
-        case StateType.SegmentPending:
+        case SegmentCollectionStatus.SegmentPending:
           state.segment.addRecord(record)
           break
       }

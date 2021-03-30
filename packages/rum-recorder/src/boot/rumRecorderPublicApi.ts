@@ -5,21 +5,28 @@ import { startRecording } from './recorder'
 
 export type StartRecording = typeof startRecording
 
-const enum StateType {
-  Init,
-  Recording,
+const enum RecorderStatus {
+  Stopped,
+  Started,
 }
-type State = { type: StateType.Init } | { type: StateType.Recording; stopRecording: () => void }
+type RecorderState =
+  | {
+      status: RecorderStatus.Stopped
+    }
+  | {
+      status: RecorderStatus.Started
+      stopRecording: () => void
+    }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
   const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
-    let state: State = {
-      type: StateType.Init,
+    let state: RecorderState = {
+      status: RecorderStatus.Stopped,
     }
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
-      hasReplay: state.type === StateType.Recording ? true : undefined,
+      hasReplay: state.status === RecorderStatus.Started ? true : undefined,
     }))
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
@@ -35,7 +42,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     }
 
     function startSessionReplayRecording() {
-      if (state.type === StateType.Recording) {
+      if (state.status === RecorderStatus.Started) {
         return
       }
 
@@ -47,20 +54,20 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
         parentContexts
       )
       state = {
-        type: StateType.Recording,
+        status: RecorderStatus.Started,
         stopRecording,
       }
       lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
     }
 
     function stopSessionReplayRecording() {
-      if (state.type !== StateType.Recording) {
+      if (state.status !== RecorderStatus.Started) {
         return
       }
 
       state.stopRecording()
       state = {
-        type: StateType.Init,
+        status: RecorderStatus.Stopped,
       }
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
