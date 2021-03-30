@@ -38,6 +38,7 @@ const beforeSendCallbacks: Array<(context: XhrStartContext, xhr: XMLHttpRequest)
 const onRequestCompleteCallbacks: Array<(context: XhrCompleteContext) => void> = []
 let originalXhrOpen: typeof XMLHttpRequest.prototype.open
 let originalXhrSend: typeof XMLHttpRequest.prototype.send
+let originalXhrAbort: typeof XMLHttpRequest.prototype.abort
 
 export function startXhrProxy<
   StartContext extends XhrStartContext = XhrStartContext,
@@ -64,6 +65,7 @@ export function resetXhrProxy() {
     onRequestCompleteCallbacks.length = 0
     XMLHttpRequest.prototype.open = originalXhrOpen
     XMLHttpRequest.prototype.send = originalXhrSend
+    XMLHttpRequest.prototype.abort = originalXhrAbort
   }
 }
 
@@ -72,6 +74,8 @@ function proxyXhr() {
   originalXhrOpen = XMLHttpRequest.prototype.open
   // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrSend = XMLHttpRequest.prototype.send
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  originalXhrAbort = XMLHttpRequest.prototype.abort
 
   XMLHttpRequest.prototype.open = function (this: BrowserXHR, method: string, url: string) {
     callMonitored(() => {
@@ -90,8 +94,10 @@ function proxyXhr() {
   XMLHttpRequest.prototype.send = function (this: BrowserXHR) {
     callMonitored(() => {
       if (this._datadog_xhr) {
-        const xhrContext = this._datadog_xhr as XhrStartContext & Partial<XhrCompleteContext>
-        xhrContext.startTime = relativeNow()
+        const xhrPendingContext = this._datadog_xhr as XhrStartContext &
+          Pick<XhrCompleteContext, 'startTime' | 'isAborted'>
+        xhrPendingContext.startTime = relativeNow()
+        xhrPendingContext.isAborted = false
 
         const originalOnreadystatechange = this.onreadystatechange
 
@@ -113,19 +119,31 @@ function proxyXhr() {
           }
           hasBeenReported = true
 
-          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
-          xhrContext.response = this.response as string | undefined
-          xhrContext.status = this.status
+          const xhrCompleteContext: XhrCompleteContext = {
+            ...xhrPendingContext,
+            duration: elapsed(xhrPendingContext.startTime, relativeNow()),
+            response: this.response as string | undefined,
+            status: this.status,
+          }
 
-          onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
+          onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
         }
 
         this.addEventListener('loadend', monitor(reportXhr))
 
-        beforeSendCallbacks.forEach((callback) => callback(xhrContext, this))
+        beforeSendCallbacks.forEach((callback) => callback(xhrPendingContext, this))
       }
     })
 
     return originalXhrSend.apply(this, arguments as any)
+  }
+
+  XMLHttpRequest.prototype.abort = function (this: BrowserXHR) {
+    callMonitored(() => {
+      if (this._datadog_xhr) {
+        this._datadog_xhr.isAborted = true
+      }
+    })
+    return originalXhrAbort.apply(this, arguments as any)
   }
 }
