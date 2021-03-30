@@ -93,26 +93,11 @@ function proxyXhr() {
         const xhrContext = this._datadog_xhr as XhrStartContext & Partial<XhrCompleteContext>
         xhrContext.startTime = relativeNow()
 
-        const completeContext = () => {
-          if (xhrContext.duration !== undefined) {
-            return
-          }
-          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
-          xhrContext.response = this.response as string | undefined
-          xhrContext.status = this.status
-          if (xhrContext.isAborted === undefined) {
-            xhrContext.isAborted = false
-          }
-        }
-
         const originalOnreadystatechange = this.onreadystatechange
+
         this.onreadystatechange = function () {
           if (this.readyState === XMLHttpRequest.DONE) {
-            // Try to complete the context as soon as possible, because the XHR may be mutated by
-            // the application during a future event. For example, Angular is calling .abort() on
-            // completed requests during a onreadystatechange event, so the status becomes '0'
-            // before the request is collected.
-            callMonitored(completeContext)
+            callMonitored(reportXhr)
           }
 
           if (originalOnreadystatechange) {
@@ -120,20 +105,22 @@ function proxyXhr() {
           }
         }
 
-        this.addEventListener(
-          'abort',
-          monitor(() => {
-            xhrContext.isAborted = true
-          })
-        )
+        let hasBeenReported = false
 
-        this.addEventListener(
-          'loadend',
-          monitor(() => {
-            completeContext()
-            onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
-          })
-        )
+        const reportXhr = () => {
+          if (hasBeenReported) {
+            return
+          }
+          hasBeenReported = true
+
+          xhrContext.duration = elapsed(xhrContext.startTime, relativeNow())
+          xhrContext.response = this.response as string | undefined
+          xhrContext.status = this.status
+
+          onRequestCompleteCallbacks.forEach((callback) => callback(xhrContext as XhrCompleteContext))
+        }
+
+        this.addEventListener('loadend', monitor(reportXhr))
 
         beforeSendCallbacks.forEach((callback) => callback(xhrContext, this))
       }
