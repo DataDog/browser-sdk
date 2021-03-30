@@ -9,6 +9,7 @@ import {
   ONE_MINUTE,
   relativeNow,
   RelativeTime,
+  round,
   throttle,
 } from '@datadog/browser-core'
 import { NewLocationListener } from '../../../boot/rum'
@@ -185,7 +186,7 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      cumulativeLayoutShift,
+      cumulativeLayoutShift: cumulativeLayoutShift && round(cumulativeLayoutShift, 4),
       customTimings,
       documentVersion,
       eventCounts,
