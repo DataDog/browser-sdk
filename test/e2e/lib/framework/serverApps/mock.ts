@@ -67,9 +67,5 @@ export function createMockServerApp(endpoints: Endpoints, setup: string) {
     res.header('content-type', 'application/javascript').send(await buildNpm(endpoints))
   })
 
-  app.get('/network-error', (_req, res) => {
-    res.connection.destroy()
-  })
-
   return app
 }

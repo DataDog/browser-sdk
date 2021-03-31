@@ -1,6 +1,7 @@
 import { createTest, bundleSetup } from '../../lib/framework'
 import { browserExecute, browserExecuteAsync, withBrowserLogs } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
+import { UNREACHABLE_URL } from '../../lib/helpers/constants'
 
 describe('rum errors', () => {
   createTest('send console.error errors')
@@ -21,17 +22,17 @@ describe('rum errors', () => {
   createTest('send XHR network errors')
     .withRum()
     .withSetup(bundleSetup)
-    .run(async ({ events, baseUrl }) => {
-      await browserExecuteAsync((done) => {
+    .run(async ({ events }) => {
+      await browserExecuteAsync((unreachableUrl, done) => {
         const xhr = new XMLHttpRequest()
         xhr.addEventListener('error', () => done(undefined))
-        xhr.open('GET', '/network-error')
+        xhr.open('GET', unreachableUrl)
         xhr.send()
-      })
+      }, UNREACHABLE_URL)
 
       await flushEvents()
       expect(events.rumErrors.length).toBe(1)
-      expect(events.rumErrors[0].error.message).toBe(`XHR error GET ${baseUrl}/network-error`)
+      expect(events.rumErrors[0].error.message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
       expect(events.rumErrors[0].error.source).toBe('network')
 
       const resourceEvent = events.rumResources.find((event) => event.resource.type === 'xhr')
@@ -39,23 +40,26 @@ describe('rum errors', () => {
       expect(resourceEvent?.resource.status_code).toBe(0)
 
       await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        // Some browser report two errors:
+        // * failed to load resource
+        // * blocked by CORS policy
+        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
       })
     })
 
   createTest('send fetch network errors')
     .withRum()
     .withSetup(bundleSetup)
-    .run(async ({ events, baseUrl }) => {
-      await browserExecuteAsync((done) => {
-        fetch('/network-error').catch(() => {
+    .run(async ({ events }) => {
+      await browserExecuteAsync((unreachableUrl, done) => {
+        fetch(unreachableUrl).catch(() => {
           done(undefined)
         })
-      })
+      }, UNREACHABLE_URL)
 
       await flushEvents()
       expect(events.rumErrors.length).toBe(1)
-      expect(events.rumErrors[0].error.message).toBe(`Fetch error GET ${baseUrl}/network-error`)
+      expect(events.rumErrors[0].error.message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
       expect(events.rumErrors[0].error.source).toBe('network')
 
       const resourceEvent = events.rumResources.find((event) => event.resource.type === 'fetch')
@@ -63,7 +67,10 @@ describe('rum errors', () => {
       expect(resourceEvent?.resource.status_code).toBe(0)
 
       await withBrowserLogs((browserLogs) => {
-        expect(browserLogs.length).toEqual(1)
+        // Some browser report two errors:
+        // * failed to load resource
+        // * blocked by CORS policy
+        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
       })
     })
 })
