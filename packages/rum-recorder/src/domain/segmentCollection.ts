@@ -33,6 +33,8 @@ export const MAX_SEGMENT_DURATION = 30_000
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
+let workerSingleton: DeflateWorker
+
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   applicationId: string,
@@ -40,14 +42,35 @@ export function startSegmentCollection(
   parentContexts: ParentContexts,
   send: (data: Uint8Array, meta: SegmentMeta) => void
 ) {
-  const worker = createDeflateWorker()
+  if (!workerSingleton) {
+    workerSingleton = createDeflateWorker()
+  }
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(applicationId, session, parentContexts),
     send,
-    worker
+    workerSingleton
   )
 }
+
+const enum SegmentCollectionStatus {
+  WaitingForInitialRecord,
+  SegmentPending,
+  Stopped,
+}
+type SegmentCollectionState =
+  | {
+      status: SegmentCollectionStatus.WaitingForInitialRecord
+      nextSegmentCreationReason: CreationReason
+    }
+  | {
+      status: SegmentCollectionStatus.SegmentPending
+      segment: Segment
+      expirationTimeoutId: number
+    }
+  | {
+      status: SegmentCollectionStatus.Stopped
+    }
 
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
@@ -56,9 +79,10 @@ export function doStartSegmentCollection(
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
-  let currentSegment: Segment | undefined
-  let currentSegmentExpirationTimeoutId: number
-  let nextSegmentCreationReason: CreationReason = 'init'
+  let state: SegmentCollectionState = {
+    status: SegmentCollectionStatus.WaitingForInitialRecord,
+    nextSegmentCreationReason: 'init',
+  }
 
   const writer = new DeflateSegmentWriter(
     worker,
@@ -91,40 +115,55 @@ export function doStartSegmentCollection(
     { capture: true }
   )
 
-  function flushSegment(creationReason: CreationReason) {
-    if (currentSegment) {
-      currentSegment.flush()
-      currentSegment = undefined
-      clearTimeout(currentSegmentExpirationTimeoutId)
+  function flushSegment(nextSegmentCreationReason?: CreationReason) {
+    if (state.status === SegmentCollectionStatus.SegmentPending) {
+      state.segment.flush()
+      clearTimeout(state.expirationTimeoutId)
     }
 
-    nextSegmentCreationReason = creationReason
+    if (nextSegmentCreationReason) {
+      state = {
+        status: SegmentCollectionStatus.WaitingForInitialRecord,
+        nextSegmentCreationReason,
+      }
+    } else {
+      state = {
+        status: SegmentCollectionStatus.Stopped,
+      }
+    }
   }
 
   return {
     addRecord: (record: Record) => {
-      if (!currentSegment) {
-        const context = getSegmentContext()
-        if (!context) {
-          return
-        }
+      switch (state.status) {
+        case SegmentCollectionStatus.WaitingForInitialRecord:
+          const context = getSegmentContext()
+          if (!context) {
+            return
+          }
+          state = {
+            status: SegmentCollectionStatus.SegmentPending,
+            segment: new Segment(writer, context, state.nextSegmentCreationReason, record),
+            expirationTimeoutId: setTimeout(
+              monitor(() => {
+                flushSegment('max_duration')
+              }),
+              MAX_SEGMENT_DURATION
+            ),
+          }
+          break
 
-        currentSegment = new Segment(writer, context, nextSegmentCreationReason, record)
-        currentSegmentExpirationTimeoutId = setTimeout(
-          monitor(() => {
-            flushSegment('max_duration')
-          }),
-          MAX_SEGMENT_DURATION
-        )
-      } else {
-        currentSegment.addRecord(record)
+        case SegmentCollectionStatus.SegmentPending:
+          state.segment.addRecord(record)
+          break
       }
     },
+
     stop: () => {
+      flushSegment()
       unsubscribeViewCreated()
       unsubscribeBeforeUnload()
       unsubscribeVisibilityChange()
-      worker.terminate()
     },
   }
 }
