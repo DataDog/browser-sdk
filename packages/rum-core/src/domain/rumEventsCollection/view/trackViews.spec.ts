@@ -907,7 +907,7 @@ describe('rum view measures', () => {
       expect(getViewEvent(0).cumulativeLayoutShift).toBe(undefined)
     })
 
-    it('should accmulate layout shift values', () => {
+    it('should accumulate layout shift values', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
@@ -925,7 +925,28 @@ describe('rum view measures', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.1 + 0.2)
+      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.3)
+    })
+
+    it('should round the cumulative layout shift value to 4 decimals', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 1.23456789,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 1.11111111111,
+      })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(2)
+      expect(getViewEvent(1).cumulativeLayoutShift).toBe(2.3457)
     })
 
     it('should ignore entries with recent input', () => {

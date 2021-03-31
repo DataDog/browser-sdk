@@ -47,7 +47,6 @@ const FAKE_FIRST_INPUT_ENTRY: RumFirstInputTiming = {
   entryType: 'first-input',
   processingStart: 1100 as RelativeTime,
   startTime: 1000 as RelativeTime,
-  name: 'fake',
 }
 
 describe('trackTimings', () => {
@@ -224,17 +223,16 @@ describe('firstInputTimings', () => {
     expect(fitCallback).not.toHaveBeenCalled()
   })
 
-  it('should not be present if the first-input performance entry is invalid', () => {
+  it('should be adjusted to 0 if the computed value would be negative due to browser timings imprecisions', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       entryType: 'first-input' as const,
-      // Invalid, because processingStart should be >= startTime
       processingStart: 900 as RelativeTime,
       startTime: 1000 as RelativeTime,
-      name: 'fake',
     })
 
-    expect(fitCallback).not.toHaveBeenCalled()
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 0, firstInputTime: 1000 })
   })
 })
