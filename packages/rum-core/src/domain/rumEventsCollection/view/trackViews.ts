@@ -36,6 +36,7 @@ export interface View {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
+  hasReplay: boolean
 }
 
 export interface ViewCreatedEvent {
@@ -55,9 +56,11 @@ export function trackViews(
   onNewLocation: NewLocationListener = () => undefined
 ) {
   const startOrigin = 0 as RelativeTime
+  let hasReplay = false
   const initialView = newView(
     lifeCycle,
     location,
+    hasReplay,
     ViewLoadingType.INITIAL_LOAD,
     document.referrer,
     startOrigin,
@@ -79,7 +82,15 @@ export function trackViews(
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url, undefined, viewName)
+      currentView = newView(
+        lifeCycle,
+        location,
+        hasReplay,
+        ViewLoadingType.ROUTE_CHANGE,
+        currentView.url,
+        undefined,
+        viewName
+      )
       return
     }
     currentView.updateLocation(location)
@@ -90,13 +101,22 @@ export function trackViews(
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+    currentView = newView(lifeCycle, location, hasReplay, ViewLoadingType.ROUTE_CHANGE, currentView.url)
   })
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
     currentView.end()
     currentView.triggerUpdate()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.RECORD_STARTED, () => {
+    hasReplay = true
+    currentView.updateHasReplay(true)
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.RECORD_STOPPED, () => {
+    hasReplay = false
   })
 
   // Session keep alive
@@ -125,6 +145,7 @@ export function trackViews(
 function newView(
   lifeCycle: LifeCycle,
   initialLocation: Location,
+  initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
   startTime = relativeNow(),
@@ -145,6 +166,7 @@ function newView(
   let loadingTime: Duration | undefined
   let endTime: RelativeTime | undefined
   let location: Location = { ...initialLocation }
+  let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
@@ -195,6 +217,7 @@ function newView(
       loadingTime,
       loadingType,
       location,
+      hasReplay,
       referrer,
       startTime,
       timings,
@@ -237,6 +260,9 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
+    },
+    updateHasReplay(newHasReplay: boolean) {
+      hasReplay = newHasReplay
     },
     get url() {
       return location.href

@@ -80,6 +80,9 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             resource: { count: 0 },
             time_spent: 0 as ServerDuration,
           },
+          session: {
+            has_replay: undefined,
+          },
         },
         overrides
       )
