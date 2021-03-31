@@ -115,6 +115,7 @@ class StubXhr {
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
 
+  private hasEnded = false
   private fakeEventTarget: HTMLDivElement
 
   constructor() {
@@ -128,9 +129,22 @@ class StubXhr {
 
   abort() {
     this.status = 0
+    if (this.hasEnded) {
+      // Calling xhr.abort() on an ended request does not trigger events
+      return
+    }
+    this.hasEnded = true
+    this.readyState = XMLHttpRequest.DONE
+    this.onreadystatechange()
+    this.dispatchEvent('abort')
+    this.dispatchEvent('loadend')
   }
 
   complete(status: number, response?: string) {
+    if (this.hasEnded) {
+      throw new Error("Can't call complete() on a ended request")
+    }
+    this.hasEnded = true
     this.response = response
     this.status = status
     this.readyState = XMLHttpRequest.DONE

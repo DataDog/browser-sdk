@@ -1,6 +1,6 @@
 import { RumResourceEvent } from '@datadog/browser-rum'
-import { createTest, html } from '../../lib/framework'
-import { sendXhr } from '../../lib/helpers/browser'
+import { bundleSetup, createTest, EventRegistry, html } from '../../lib/framework'
+import { browserExecuteAsync, sendXhr } from '../../lib/helpers/browser'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 const REQUEST_DURATION = 200
@@ -76,6 +76,131 @@ describe('rum resources', () => {
       expect(resourceEvent!.resource.url).toBe(`${baseUrl}/`)
       expectToHaveValidTimings(resourceEvent!)
     })
+
+  describe('XHR abort support', () => {
+    createTest('track aborted XHR')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', '/ok?duration=1000')
+          xhr.send()
+          setTimeout(() => {
+            xhr.abort()
+            done(undefined)
+          }, 100)
+        })
+
+        await flushEvents()
+
+        expectXHR(events).toBeAborted()
+      })
+
+    createTest('aborting an unsent XHR should be ignored')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', '/ok')
+          xhr.abort()
+          xhr.send()
+          xhr.addEventListener('loadend', () => done(undefined))
+        })
+
+        await flushEvents()
+
+        expectXHR(events).toBeLoaded()
+      })
+
+    createTest('aborting an XHR when state becomes DONE and before the loadend event should be ignored')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', '/ok')
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+              xhr.abort()
+              done(undefined)
+            }
+          }
+          xhr.send()
+        })
+
+        await flushEvents()
+
+        expectXHR(events).toBeLoaded()
+      })
+
+    createTest('aborting an XHR after the loadend event should be ignored')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', '/ok')
+          xhr.addEventListener('loadend', () => {
+            setTimeout(() => {
+              xhr.abort()
+              done(undefined)
+            })
+          })
+          xhr.send()
+        })
+
+        await flushEvents()
+
+        expectXHR(events).toBeLoaded()
+      })
+
+    function expectXHR(events: EventRegistry) {
+      const resourceEvent = events.rumResources.find((event) => event.resource.type === 'xhr')
+      expect(resourceEvent).toBeTruthy()
+
+      return {
+        toBeAborted() {
+          // Aborted XHR should not be considered as error
+          expect(events.rumErrors.length).toBe(0)
+
+          expect(resourceEvent?.resource.status_code).toBe(0)
+        },
+
+        toBeLoaded() {
+          expect(resourceEvent?.resource.status_code).toBe(200)
+        },
+      }
+    }
+  })
+
+  describe('fetch abort support', () => {
+    createTest('track aborted fetch')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const controller = new AbortController()
+          fetch('/ok?duration=1000', { signal: controller.signal }).catch(() => {
+            // ignore abortion error
+            done(undefined)
+          })
+          setTimeout(() => {
+            controller.abort()
+          }, 100)
+        })
+
+        await flushEvents()
+
+        // Aborted fetch should not be considered as error
+        expect(events.rumErrors.length).toBe(0)
+
+        const resourceEvent = events.rumResources.find((event) => event.resource.type === 'fetch')
+        expect(resourceEvent).toBeTruthy()
+        expect(resourceEvent?.resource.status_code).toBe(0)
+      })
+  })
 })
 
 function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
