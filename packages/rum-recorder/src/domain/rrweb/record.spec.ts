@@ -10,6 +10,7 @@ import {
 } from '../../types'
 import { SerializedNodeWithId, NodeType } from '../rrweb-snapshot/types'
 import { record } from './record'
+import { RecordAPI } from './types'
 
 // Each full snapshot is generating two records, a Meta record and a FullSnapshot record
 const RECORDS_PER_FULL_SNAPSHOTS = 2
@@ -17,7 +18,7 @@ const RECORDS_PER_FULL_SNAPSHOTS = 2
 describe('record', () => {
   let sandbox: HTMLElement
   let input: HTMLInputElement
-  let stop: (() => void) | undefined
+  let recordApi: RecordAPI
   let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
@@ -35,13 +36,11 @@ describe('record', () => {
   afterEach(() => {
     jasmine.clock().uninstall()
     sandbox.remove()
-    if (stop) {
-      stop()
-    }
+    recordApi?.stop()
   })
 
   it('will only have one full snapshot without checkout config', () => {
-    stop = record({ emit: emitSpy }).stop
+    startRecording()
 
     const inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -53,10 +52,7 @@ describe('record', () => {
   })
 
   it('is safe to checkout during async callbacks', (done) => {
-    const recordApi = record({
-      emit: emitSpy,
-    })
-    stop = recordApi.stop
+    startRecording()
 
     const p = document.createElement('p')
     const span = document.createElement('span')
@@ -156,9 +152,7 @@ describe('record', () => {
   })
 
   it('captures stylesheet rules', (done) => {
-    stop = record({
-      emit: emitSpy,
-    }).stop
+    startRecording()
 
     const styleElement = document.createElement('style')
     sandbox.appendChild(styleElement)
@@ -213,10 +207,7 @@ describe('record', () => {
   })
 
   it('flushes pending mutation records before taking a full snapshot', (done) => {
-    const recordApi = record({
-      emit: emitSpy,
-    })
-    stop = recordApi.stop
+    startRecording()
 
     sandbox.appendChild(document.createElement('div'))
 
@@ -235,6 +226,12 @@ describe('record', () => {
       expectNoExtraEmitCalls(done)
     })
   })
+
+  function startRecording() {
+    recordApi = record({
+      emit: emitSpy,
+    })
+  }
 
   function getEmittedRecords() {
     return emitSpy.calls.allArgs().map(([record]) => record)
