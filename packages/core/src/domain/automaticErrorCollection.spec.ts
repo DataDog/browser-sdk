@@ -2,7 +2,7 @@ import { RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
-import { ONE_MINUTE } from '../tools/utils'
+import { includes, ONE_MINUTE } from '../tools/utils'
 import {
   filterErrors,
   startConsoleTracking,
@@ -192,6 +192,7 @@ describe('network error tracker', () => {
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorTracking: () => void
+  let enabledExperimentalFeatures: string[]
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
     duration: 10,
@@ -206,9 +207,17 @@ describe('network error tracker', () => {
     if (isIE()) {
       pending('no fetch support')
     }
+    enabledExperimentalFeatures = []
+
     const errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
-    const configuration = { requestErrorResponseLengthLimit: 32, ...SPEC_ENDPOINTS }
+    const configuration = {
+      requestErrorResponseLengthLimit: 32,
+      isEnabled(featureFlag: string) {
+        return includes(enabledExperimentalFeatures, featureFlag)
+      },
+      ...SPEC_ENDPOINTS,
+    }
 
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration as Configuration, errorObservable))
@@ -248,11 +257,11 @@ describe('network error tracker', () => {
     })
   })
 
-  it('should not track aborted requests ', (done) => {
+  it('should track aborted requests ', (done) => {
     fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
 
     fetchStubManager.whenAllComplete(() => {
-      expect(errorObservableSpy).not.toHaveBeenCalled()
+      expect(errorObservableSpy).toHaveBeenCalled()
       done()
     })
   })
@@ -305,6 +314,21 @@ describe('network error tracker', () => {
       const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack
       expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
       done()
+    })
+  })
+
+  describe('feature "remove-network-errors" enabled', () => {
+    beforeEach(() => {
+      enabledExperimentalFeatures.push('remove-network-errors')
+    })
+
+    it('should not track aborted requests ', (done) => {
+      fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+
+      fetchStubManager.whenAllComplete(() => {
+        expect(errorObservableSpy).not.toHaveBeenCalled()
+        done()
+      })
     })
   })
 })
