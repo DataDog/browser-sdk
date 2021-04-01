@@ -5,8 +5,8 @@ import { inflate } from 'pako'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
 
-import { FocusRecord, RawRecord, Segment, RecordType } from '../types'
-import { startRecording, trackFocusRecords } from './recorder'
+import { Segment, RecordType } from '../types'
+import { startRecording } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -158,60 +158,6 @@ describe('startRecording', () => {
         expectNoExtraRequestSendCalls(done)
       })
     })
-  })
-})
-
-describe('trackFocusRecords', () => {
-  let hasFocus: boolean
-  let addRecordSpy: jasmine.Spy<(rawRecord: RawRecord) => void>
-  let lifeCycle: LifeCycle
-
-  beforeEach(() => {
-    hasFocus = true
-    lifeCycle = new LifeCycle()
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
-    addRecordSpy = jasmine.createSpy()
-  })
-
-  it('adds an initial Focus record', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on focus', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    window.dispatchEvent(createNewEvent('focus'))
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on blur', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    window.dispatchEvent(createNewEvent('blur'))
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on new view', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('set has_focus to true if the document has the focus', () => {
-    hasFocus = true
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(true)
-  })
-
-  it("set has_focus to false if the document doesn't have the focus", () => {
-    hasFocus = false
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(false)
   })
 })
 
