@@ -59,7 +59,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
 function buildErrorFromParams(params: unknown[]) {
   const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
   return {
-    message: ['console error:', ...params].map((param) => formatConsoleParameters(formatErrorMessage, param)).join(' '),
+    message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
   }
 }
@@ -68,12 +68,12 @@ export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
-function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string, param: unknown) {
+function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
     return param
   }
   if (param instanceof Error) {
-    return stackTraceFormatter(computeStackTrace(param))
+    return formatErrorMessage(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
