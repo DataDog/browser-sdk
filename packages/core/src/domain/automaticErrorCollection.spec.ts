@@ -13,7 +13,7 @@ import {
 } from './automaticErrorCollection'
 import { Configuration } from './configuration'
 
-describe('console tracker (console-stack disabled)', () => {
+describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
   const CONSOLE_CONTEXT = {
@@ -24,63 +24,8 @@ describe('console tracker (console-stack disabled)', () => {
     consoleErrorStub = spyOn(console, 'error')
     notifyError = jasmine.createSpy('notifyError')
     const errorObservable = new Observable<RawError>()
-    const configuration: Partial<Configuration> = { isEnabled: () => false }
     errorObservable.subscribe(notifyError)
-    startConsoleTracking(configuration as Configuration, errorObservable)
-  })
-
-  afterEach(() => {
-    stopConsoleTracking()
-  })
-
-  it('should keep original behavior', () => {
-    console.error('foo', 'bar')
-    expect(consoleErrorStub).toHaveBeenCalledWith('foo', 'bar')
-  })
-
-  it('should notify error', () => {
-    console.error('foo', 'bar')
-    expect(notifyError).toHaveBeenCalledWith({
-      ...CONSOLE_CONTEXT,
-      message: 'console error: foo bar',
-      startTime: jasmine.any(Number),
-    })
-  })
-
-  it('should stringify object parameters', () => {
-    console.error('Hello', { foo: 'bar' })
-    expect(notifyError).toHaveBeenCalledWith({
-      ...CONSOLE_CONTEXT,
-      message: 'console error: Hello {\n  "foo": "bar"\n}',
-      startTime: jasmine.any(Number),
-    })
-  })
-
-  it('should format error instance', () => {
-    console.error(new TypeError('hello'))
-    const message = (notifyError.calls.mostRecent().args[0] as RawError).message
-    if (!isIE()) {
-      expect(message).toMatch(/^console error: TypeError: hello\s+at/)
-    } else {
-      expect(message).toContain('console error: TypeError: hello')
-    }
-  })
-})
-
-describe('console tracker (console-stack enabled)', () => {
-  let consoleErrorStub: jasmine.Spy
-  let notifyError: jasmine.Spy
-  const CONSOLE_CONTEXT = {
-    source: ErrorSource.CONSOLE,
-  }
-
-  beforeEach(() => {
-    consoleErrorStub = spyOn(console, 'error')
-    notifyError = jasmine.createSpy('notifyError')
-    const errorObservable = new Observable<RawError>()
-    const configuration: Partial<Configuration> = { isEnabled: () => true }
-    errorObservable.subscribe(notifyError)
-    startConsoleTracking(configuration as Configuration, errorObservable)
+    startConsoleTracking(errorObservable)
   })
 
   afterEach(() => {
