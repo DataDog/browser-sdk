@@ -4,6 +4,7 @@ import { inflate } from 'pako'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
+import { setMaxSegmentSize } from '../domain/segmentCollection'
 
 import { Segment, RecordType } from '../types'
 import { startRecording } from './recorder'
@@ -51,6 +52,7 @@ describe('startRecording', () => {
   })
 
   afterEach(() => {
+    setMaxSegmentSize()
     setupBuilder.cleanup()
   })
 
@@ -155,6 +157,21 @@ describe('startRecording', () => {
       expect(getRequestData(calls.first())['view.id']).toBe('view-id')
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
+        expectNoExtraRequestSendCalls(done)
+      })
+    })
+  })
+
+  // eslint-disable-next-line max-len
+  it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
+    setMaxSegmentSize(10)
+    setupBuilder.build()
+
+    waitRequestSendCalls(1, (calls) => {
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records[0].type).toBe(RecordType.Meta)
+        expect(segment.records[1].type).toBe(RecordType.Focus)
+        expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
         expectNoExtraRequestSendCalls(done)
       })
     })
