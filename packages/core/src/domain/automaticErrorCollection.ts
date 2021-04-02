@@ -62,9 +62,6 @@ function buildErrorFromParams(params: unknown[]) {
     message: ['console error:', ...params].map((param) => formatConsoleParameters(formatErrorMessage, param)).join(' '),
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
   }
-  return {
-    message: ['console error:', ...params].map((param) => formatConsoleParameters(toStackTraceString, param)).join(' '),
-  }
 }
 
 export function stopConsoleTracking() {
