@@ -47,6 +47,16 @@ export function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
+    wrappedEmit(
+      {
+        data: {
+          has_focus: document.hasFocus(),
+        },
+        type: RecordType.Focus,
+      },
+      isCheckout
+    )
+
     const [node, idNodeMap] = snapshot(document)
 
     if (!node) {
@@ -151,6 +161,11 @@ export function record(options: RecordOptions = {}): RecordAPI {
               ...d,
             },
             type: RecordType.IncrementalSnapshot,
+          }),
+        focusCb: (data) =>
+          wrappedEmit({
+            type: RecordType.Focus,
+            data,
           }),
       })
     )
