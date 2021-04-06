@@ -16,6 +16,30 @@
 
 ---
 
+## v2.7.1
+
+- ✨ [RUMF-863] Enable console error with stack traces ([#781](https://github.com/DataDog/browser-sdk/pull/781))
+- ⚗ [RUMF-869] Ensure the "Focus" records are emited in the same segment as the "FullSnapshot" ([#779](https://github.com/DataDog/browser-sdk/pull/779))
+
+## v2.7.0
+
+- ⚗ [RUMF-853] introduce a feature flag for aborted network errors ([#777](https://github.com/DataDog/browser-sdk/pull/777))
+- ⚗ [RUMF-853] don't emit error for requests aborted by the application ([#768](https://github.com/DataDog/browser-sdk/pull/768))
+- ⚗ [RUMF-867] implement stop recording ([#771](https://github.com/DataDog/browser-sdk/pull/771))
+- ⚗ [RUMF-857] round CLS to 4 decimals ([#773](https://github.com/DataDog/browser-sdk/pull/773))
+- 🐛 Revert negative FID monitoring and adjust to 0 ([#775](https://github.com/DataDog/browser-sdk/pull/775))
+- ⚗ [RUMF-866] adjust postpone start recording ([#769](https://github.com/DataDog/browser-sdk/pull/769))
+
+## v2.6.2
+
+- 🐛 [RUMF-862] fix export MediaInteractions enum ([#761](https://github.com/DataDog/browser-sdk/pull/761))
+- ⚗ [RUMF-863] rework console error calls containing error instances ([#762](https://github.com/DataDog/browser-sdk/pull/762))
+
+## v2.6.1
+
+- 🐛 [RUMF-855] discard negative first-input delays ([#758](https://github.com/DataDog/browser-sdk/pull/758))
+- ⚗ performance impact summary tool ([#755](https://github.com/DataDog/browser-sdk/pull/755))
+
 ## v2.6.0
 
 - ⚗ [RUMF-858] add monotonic batch time ([#748](https://github.com/DataDog/browser-sdk/pull/748))

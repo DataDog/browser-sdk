@@ -7,17 +7,19 @@ import {
   FullSnapshotRecord,
   RawRecord,
   IncrementalSnapshotRecord,
+  FocusRecord,
 } from '../../types'
 import { SerializedNodeWithId, NodeType } from '../rrweb-snapshot/types'
 import { record } from './record'
+import { RecordAPI } from './types'
 
-// Each full snapshot is generating two records, a Meta record and a FullSnapshot record
-const RECORDS_PER_FULL_SNAPSHOTS = 2
+// Each full snapshot is generating three records: Meta, Focus and FullSnapshot
+const RECORDS_PER_FULL_SNAPSHOTS = 3
 
 describe('record', () => {
   let sandbox: HTMLElement
   let input: HTMLInputElement
-  let stop: (() => void) | undefined
+  let recordApi: RecordAPI
   let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
@@ -35,13 +37,11 @@ describe('record', () => {
   afterEach(() => {
     jasmine.clock().uninstall()
     sandbox.remove()
-    if (stop) {
-      stop()
-    }
+    recordApi?.stop()
   })
 
   it('will only have one full snapshot without checkout config', () => {
-    stop = record({ emit: emitSpy }).stop
+    startRecording()
 
     const inputEventCount = 30
     dispatchInputEvents(inputEventCount)
@@ -53,10 +53,7 @@ describe('record', () => {
   })
 
   it('is safe to checkout during async callbacks', (done) => {
-    const recordApi = record({
-      emit: emitSpy,
-    })
-    stop = recordApi.stop
+    startRecording()
 
     const p = document.createElement('p')
     const span = document.createElement('span')
@@ -77,22 +74,23 @@ describe('record', () => {
       sandbox.appendChild(span)
     }, 10)
 
-    waitEmitCalls(7, () => {
+    waitEmitCalls(9, () => {
       const records = getEmittedRecords()
       const sandboxNode = findNode(
-        (records[1] as FullSnapshotRecord).data.node,
+        (records[2] as FullSnapshotRecord).data.node,
         (node) => node.type === NodeType.Element && node.attributes.id === 'sandbox'
       )!
       const inputId = findNode(sandboxNode, (node) => node.type === NodeType.Element && node.tagName === 'input')!.id
-      const paragraphId = ((records[2] as IncrementalSnapshotRecord).data as MutationData).adds[0].node.id
-      const spanId = ((records[2] as IncrementalSnapshotRecord).data as MutationData).adds[1].node.id
+      const paragraphId = ((records[3] as IncrementalSnapshotRecord).data as MutationData).adds[0].node.id
+      const spanId = ((records[3] as IncrementalSnapshotRecord).data as MutationData).adds[1].node.id
 
       expect(records[0].type).toBe(RecordType.Meta)
+      expect(records[1].type).toBe(RecordType.Focus)
 
-      expect(records[1].type).toBe(RecordType.FullSnapshot)
+      expect(records[2].type).toBe(RecordType.FullSnapshot)
 
-      expect(records[2].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[2] as IncrementalSnapshotRecord).data).toEqual(
+      expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
+      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -109,8 +107,8 @@ describe('record', () => {
         })
       )
 
-      expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
+      expect(records[4].type).toBe(RecordType.IncrementalSnapshot)
+      expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -125,12 +123,13 @@ describe('record', () => {
         })
       )
 
-      expect(records[4].type).toBe(RecordType.Meta)
+      expect(records[5].type).toBe(RecordType.Meta)
+      expect(records[6].type).toBe(RecordType.Focus)
 
-      expect(records[5].type).toBe(RecordType.FullSnapshot)
+      expect(records[7].type).toBe(RecordType.FullSnapshot)
 
-      expect(records[6].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[6] as IncrementalSnapshotRecord).data).toEqual(
+      expect(records[8].type).toBe(RecordType.IncrementalSnapshot)
+      expect((records[8] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.Mutation,
           adds: [
@@ -156,9 +155,7 @@ describe('record', () => {
   })
 
   it('captures stylesheet rules', (done) => {
-    stop = record({
-      emit: emitSpy,
-    }).stop
+    startRecording()
 
     const styleElement = document.createElement('style')
     sandbox.appendChild(styleElement)
@@ -177,31 +174,32 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(6, () => {
+    waitEmitCalls(7, () => {
       const records = getEmittedRecords()
 
       expect(records[0].type).toEqual(RecordType.Meta)
-      expect(records[1].type).toEqual(RecordType.FullSnapshot)
-      expect(records[2].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[2] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({ source: IncrementalSource.Mutation })
-      )
+      expect(records[1].type).toEqual(RecordType.Focus)
+      expect(records[2].type).toEqual(RecordType.FullSnapshot)
       expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
-        })
+        jasmine.objectContaining({ source: IncrementalSource.Mutation })
       )
       expect(records[4].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          removes: [{ index: 0 }],
+          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
         })
       )
       expect(records[5].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[5] as IncrementalSnapshotRecord).data).toEqual(
+        jasmine.objectContaining({
+          source: IncrementalSource.StyleSheetRule,
+          removes: [{ index: 0 }],
+        })
+      )
+      expect(records[6].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[6] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
@@ -213,28 +211,88 @@ describe('record', () => {
   })
 
   it('flushes pending mutation records before taking a full snapshot', (done) => {
-    const recordApi = record({
-      emit: emitSpy,
-    })
-    stop = recordApi.stop
+    startRecording()
 
     sandbox.appendChild(document.createElement('div'))
 
     recordApi.takeFullSnapshot()
 
-    waitEmitCalls(5, () => {
+    waitEmitCalls(7, () => {
       const records = getEmittedRecords()
 
       expect(records[0].type).toEqual(RecordType.Meta)
-      expect(records[1].type).toEqual(RecordType.FullSnapshot)
-      expect(records[2].type).toEqual(RecordType.IncrementalSnapshot)
-      expect((records[2] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
-      expect(records[3].type).toEqual(RecordType.Meta)
-      expect(records[4].type).toEqual(RecordType.FullSnapshot)
+      expect(records[1].type).toEqual(RecordType.Focus)
+      expect(records[2].type).toEqual(RecordType.FullSnapshot)
+      expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[3] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+      expect(records[4].type).toEqual(RecordType.Meta)
+      expect(records[5].type).toEqual(RecordType.Focus)
+      expect(records[6].type).toEqual(RecordType.FullSnapshot)
 
       expectNoExtraEmitCalls(done)
     })
   })
+
+  describe('Focus records', () => {
+    let hasFocus: boolean
+
+    beforeEach(() => {
+      hasFocus = true
+      spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
+    })
+
+    it('adds an initial Focus record when starting to record', () => {
+      startRecording()
+      expect(getEmittedRecords()[1]).toEqual({
+        type: RecordType.Focus,
+        data: {
+          has_focus: true,
+        },
+      })
+    })
+
+    it('adds a Focus record on focus', () => {
+      startRecording()
+      emitSpy.calls.reset()
+
+      window.dispatchEvent(createNewEvent('focus'))
+      expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
+    })
+
+    it('adds a Focus record on blur', () => {
+      startRecording()
+      emitSpy.calls.reset()
+
+      window.dispatchEvent(createNewEvent('blur'))
+      expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
+    })
+
+    it('adds a Focus record on when taking a full snapshot', () => {
+      startRecording()
+      emitSpy.calls.reset()
+
+      recordApi.takeFullSnapshot()
+      expect(getEmittedRecords()[1].type).toBe(RecordType.Focus)
+    })
+
+    it('set has_focus to true if the document has the focus', () => {
+      hasFocus = true
+      startRecording()
+      expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(true)
+    })
+
+    it("set has_focus to false if the document doesn't have the focus", () => {
+      hasFocus = false
+      startRecording()
+      expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(false)
+    })
+  })
+
+  function startRecording() {
+    recordApi = record({
+      emit: emitSpy,
+    })
+  }
 
   function getEmittedRecords() {
     return emitSpy.calls.allArgs().map(([record]) => record)

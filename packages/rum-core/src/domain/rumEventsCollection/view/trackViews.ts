@@ -9,6 +9,7 @@ import {
   ONE_MINUTE,
   relativeNow,
   RelativeTime,
+  round,
   throttle,
 } from '@datadog/browser-core'
 
@@ -34,6 +35,7 @@ export interface View {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
+  hasReplay: boolean
 }
 
 export interface ViewCreatedEvent {
@@ -49,7 +51,15 @@ export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function trackViews(location: Location, lifeCycle: LifeCycle) {
   const startOrigin = 0 as RelativeTime
-  const initialView = newView(lifeCycle, location, ViewLoadingType.INITIAL_LOAD, document.referrer, startOrigin)
+  let hasReplay = false
+  const initialView = newView(
+    lifeCycle,
+    location,
+    hasReplay,
+    ViewLoadingType.INITIAL_LOAD,
+    document.referrer,
+    startOrigin
+  )
   let currentView = initialView
 
   const { stop: stopTimingsTracking } = trackTimings(lifeCycle, (timings) => {
@@ -65,7 +75,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+      currentView = newView(lifeCycle, location, hasReplay, ViewLoadingType.ROUTE_CHANGE, currentView.url)
       return
     }
     currentView.updateLocation(location)
@@ -76,13 +86,22 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, location, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+    currentView = newView(lifeCycle, location, hasReplay, ViewLoadingType.ROUTE_CHANGE, currentView.url)
   })
 
   // End the current view on page unload
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
     currentView.end()
     currentView.triggerUpdate()
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.RECORD_STARTED, () => {
+    hasReplay = true
+    currentView.updateHasReplay(true)
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.RECORD_STOPPED, () => {
+    hasReplay = false
   })
 
   // Session keep alive
@@ -111,6 +130,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
 function newView(
   lifeCycle: LifeCycle,
   initialLocation: Location,
+  initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
   startTime = relativeNow(),
@@ -131,6 +151,7 @@ function newView(
   let loadingTime: Duration | undefined
   let endTime: RelativeTime | undefined
   let location: Location = { ...initialLocation }
+  let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
@@ -172,7 +193,7 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      cumulativeLayoutShift,
+      cumulativeLayoutShift: cumulativeLayoutShift && round(cumulativeLayoutShift, 4),
       customTimings,
       documentVersion,
       eventCounts,
@@ -181,6 +202,7 @@ function newView(
       loadingTime,
       loadingType,
       location,
+      hasReplay,
       referrer,
       startTime,
       timings,
@@ -223,6 +245,9 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
+    },
+    updateHasReplay(newHasReplay: boolean) {
+      hasReplay = newHasReplay
     },
     get url() {
       return location.href

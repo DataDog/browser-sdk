@@ -1,9 +1,9 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
-import { ErrorSource, formatUnknownError, RawError, toStackTraceString } from '../tools/error'
+import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { relativeNow } from '../tools/timeUtils'
-import { jsonStringify, ONE_MINUTE, RequestType } from '../tools/utils'
+import { jsonStringify, ONE_MINUTE, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
@@ -42,18 +42,26 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
   return filteredErrorObservable
 }
 
-let originalConsoleError: (message?: any, ...optionalParams: any[]) => void
+let originalConsoleError: (...params: unknown[]) => void
 
 export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
-  console.error = monitor((message?: any, ...optionalParams: any[]) => {
-    originalConsoleError.apply(console, [message, ...optionalParams])
+  console.error = monitor((...params: unknown[]) => {
+    originalConsoleError.apply(console, params)
     errorObservable.notify({
-      message: ['console error:', message, ...optionalParams].map(formatConsoleParameters).join(' '),
+      ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startTime: relativeNow(),
     })
   })
+}
+
+function buildErrorFromParams(params: unknown[]) {
+  const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
+  return {
+    message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
+    stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+  }
 }
 
 export function stopConsoleTracking() {
@@ -65,7 +73,7 @@ function formatConsoleParameters(param: unknown) {
     return param
   }
   if (param instanceof Error) {
-    return toStackTraceString(computeStackTrace(param))
+    return formatErrorMessage(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
@@ -95,7 +103,11 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
-    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
+    if (
+      !configuration.isIntakeUrl(request.url) &&
+      (!configuration.isEnabled('remove-network-errors') || !request.isAborted) &&
+      (isRejected(request) || isServerError(request))
+    ) {
       errorObservable.notify({
         message: `${format(type)} error ${request.method} ${request.url}`,
         resource: {

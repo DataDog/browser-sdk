@@ -762,7 +762,7 @@ describe('rum view measures', () => {
       expect(getViewEvent(0).cumulativeLayoutShift).toBe(undefined)
     })
 
-    it('should accmulate layout shift values', () => {
+    it('should accumulate layout shift values', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
@@ -780,7 +780,28 @@ describe('rum view measures', () => {
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.1 + 0.2)
+      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.3)
+    })
+
+    it('should round the cumulative layout shift value to 4 decimals', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 1.23456789,
+      })
+
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        hadRecentInput: false,
+        value: 1.11111111111,
+      })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(getHandledCount()).toEqual(2)
+      expect(getViewEvent(1).cumulativeLayoutShift).toBe(2.3457)
     })
 
     it('should ignore entries with recent input', () => {
@@ -893,5 +914,74 @@ describe('rum track custom timings', () => {
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(warnSpy).toHaveBeenCalled()
+  })
+})
+
+describe('track hasReplay', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => View
+
+  beforeEach(() => {
+    ;({ handler, getViewEvent } = spyOnViews())
+
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .withFakeClock()
+      .beforeBuild(({ location, lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+        return trackViews(location, lifeCycle)
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('sets hasReplay to false by default', () => {
+    setupBuilder.build()
+    expect(getViewEvent(0).hasReplay).toBe(false)
+  })
+
+  it('sets hasReplay to true when the recording starts', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(1).hasReplay).toBe(true)
+  })
+
+  it('keeps hasReplay to true when the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(1).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to true when a new view is created after the recording starts', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(2).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to false when a new view is created after the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getViewEvent(2).hasReplay).toBe(false)
   })
 })

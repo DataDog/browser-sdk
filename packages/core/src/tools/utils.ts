@@ -127,7 +127,7 @@ export function performDraw(threshold: number): boolean {
   return threshold !== 0 && Math.random() * 100 <= threshold
 }
 
-export function round(num: number, decimals: 0 | 1 | 2 | 3) {
+export function round(num: number, decimals: 0 | 1 | 2 | 3 | 4) {
   return +num.toFixed(decimals)
 }
 
@@ -197,7 +197,10 @@ export function includes(candidate: string | unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
-export function find<T>(array: T[], predicate: (item: T, index: number, array: T[]) => unknown): T | undefined {
+export function find<T, S extends T>(
+  array: T[],
+  predicate: (item: T, index: number, array: T[]) => item is S
+): S | undefined {
   for (let i = 0; i < array.length; i += 1) {
     const item = array[i]
     if (predicate(item, i, array)) {

@@ -1,34 +1,75 @@
 import { monitor } from '@datadog/browser-core'
-import { makeRumPublicApi, StartRum } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, makeRumPublicApi, StartRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
 
 export type StartRecording = typeof startRecording
 
+const enum RecorderStatus {
+  Stopped,
+  Started,
+}
+type RecorderState =
+  | {
+      status: RecorderStatus.Stopped
+    }
+  | {
+      status: RecorderStatus.Started
+      stopRecording: () => void
+    }
+
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
   const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
-    let isRecording: true | undefined
+    let state: RecorderState = {
+      status: RecorderStatus.Stopped,
+    }
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
-      hasReplay: isRecording,
+      hasReplay: state.status === RecorderStatus.Started ? true : undefined,
     }))
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
 
     if (configuration.isEnabled('postpone_start_recording')) {
-      ;(rumRecorderGlobal as any).startSessionRecord = monitor(startSessionRecord)
+      ;(rumRecorderGlobal as any).startSessionReplayRecording = monitor(startSessionReplayRecording)
+      ;(rumRecorderGlobal as any).stopSessionReplayRecording = monitor(stopSessionReplayRecording)
+      if (!(userConfiguration as any).manualSessionReplayRecordingStart) {
+        startSessionReplayRecording()
+      }
     } else {
-      startSessionRecord()
+      startSessionReplayRecording()
     }
 
-    function startSessionRecord() {
-      if (isRecording) {
+    function startSessionReplayRecording() {
+      if (state.status === RecorderStatus.Started) {
         return
       }
 
-      isRecording = true
-      startRecordingImpl(lifeCycle, userConfiguration.applicationId, configuration, session, parentContexts)
+      const { stop: stopRecording } = startRecordingImpl(
+        lifeCycle,
+        userConfiguration.applicationId,
+        configuration,
+        session,
+        parentContexts
+      )
+      state = {
+        status: RecorderStatus.Started,
+        stopRecording,
+      }
+      lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    }
+
+    function stopSessionReplayRecording() {
+      if (state.status !== RecorderStatus.Started) {
+        return
+      }
+
+      state.stopRecording()
+      state = {
+        status: RecorderStatus.Stopped,
+      }
+      lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
     return startRumResult

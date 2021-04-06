@@ -10,7 +10,6 @@ export class Segment {
   private end: number
   private recordsCount: number
   private hasFullSnapshot: boolean
-  private lastRecordType: RecordType
 
   constructor(
     private writer: SegmentWriter,
@@ -20,22 +19,15 @@ export class Segment {
   ) {
     this.start = initialRecord.timestamp
     this.end = initialRecord.timestamp
-    this.lastRecordType = initialRecord.type
-    this.hasFullSnapshot = false
     this.recordsCount = 1
+    this.hasFullSnapshot = initialRecord.type === RecordType.FullSnapshot
     this.writer.write(`{"records":[${JSON.stringify(initialRecord)}`)
   }
 
   addRecord(record: Record): void {
     this.end = record.timestamp
-    if (!this.hasFullSnapshot) {
-      // Note: to be exploitable by the replay, this field should be true only if the FullSnapshot
-      // is preceded by a Meta record. Because rrweb is emitting both records synchronously and
-      // contiguously, it should always be the case, but check it nonetheless.
-      this.hasFullSnapshot = record.type === RecordType.FullSnapshot && this.lastRecordType === RecordType.Meta
-    }
-    this.lastRecordType = record.type
     this.recordsCount += 1
+    this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
     this.writer.write(`,${JSON.stringify(record)}`)
   }
 

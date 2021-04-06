@@ -21,6 +21,8 @@ export enum LifeCycleEventType {
   BEFORE_UNLOAD,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
+  RECORD_STARTED,
+  RECORD_STOPPED,
 }
 
 export interface Subscription {
@@ -44,6 +46,8 @@ export class LifeCycle {
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
       | LifeCycleEventType.VIEW_ENDED
+      | LifeCycleEventType.RECORD_STARTED
+      | LifeCycleEventType.RECORD_STOPPED
   ): void
   notify(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -84,7 +88,9 @@ export class LifeCycle {
       | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
-      | LifeCycleEventType.VIEW_ENDED,
+      | LifeCycleEventType.VIEW_ENDED
+      | LifeCycleEventType.RECORD_STARTED
+      | LifeCycleEventType.RECORD_STOPPED,
     callback: () => void
   ): Subscription
   subscribe(

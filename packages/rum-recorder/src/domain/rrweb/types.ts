@@ -1,5 +1,5 @@
 import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
-import type { RawRecord } from '../../types'
+import type { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
 export enum IncrementalSource {
@@ -79,6 +79,7 @@ export interface ObserverParam {
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
+  focusCb: FocusCallback
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
@@ -147,17 +148,19 @@ export interface MousePosition {
   timeOffset: number
 }
 
-export enum MouseInteractions {
-  MouseUp = 0,
-  MouseDown = 1,
-  Click = 2,
-  ContextMenu = 3,
-  DblClick = 4,
-  Focus = 5,
-  Blur = 6,
-  TouchStart = 7,
-  TouchEnd = 9,
-}
+export const MouseInteractions = {
+  MouseUp: 0,
+  MouseDown: 1,
+  Click: 2,
+  ContextMenu: 3,
+  DblClick: 4,
+  Focus: 5,
+  Blur: 6,
+  TouchStart: 7,
+  TouchEnd: 9,
+} as const
+
+export type MouseInteractions = typeof MouseInteractions[keyof typeof MouseInteractions]
 
 interface MouseInteractionParam {
   type: MouseInteractions
@@ -207,10 +210,12 @@ export interface InputValue {
 
 export type InputCallback = (v: InputValue & { id: number }) => void
 
-export const enum MediaInteractions {
-  Play,
-  Pause,
-}
+export const MediaInteractions = {
+  Play: 0,
+  Pause: 1,
+} as const
+
+export type MediaInteractions = typeof MediaInteractions[keyof typeof MediaInteractions]
 
 export interface MediaInteractionParam {
   type: MediaInteractions
@@ -218,6 +223,8 @@ export interface MediaInteractionParam {
 }
 
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
+
+export type FocusCallback = (data: FocusRecord['data']) => void
 
 export interface Mirror {
   map: IdNodeMap

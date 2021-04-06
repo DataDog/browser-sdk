@@ -1,19 +1,26 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Configuration } from '@datadog/browser-core'
-import { RumPublicApi, StartRum } from '@datadog/browser-rum-core'
+import { Configuration, noop } from '@datadog/browser-core'
+import { RumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 import { makeRumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
 describe('makeRumRecorderPublicApi', () => {
-  let rumGlobal: RumPublicApi & { startSessionRecord?(): void }
+  let rumGlobal: RumPublicApi & {
+    // TODO postpone_start_recording: those types will be included in rum-recorder public API when
+    // postpone_start_recording is stabilized.
+    startSessionReplayRecording?(): void
+    init(options: RumUserConfiguration & { manualSessionReplayRecordingStart?: boolean }): void
+  }
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let startRumSpy: jasmine.Spy<StartRum>
   let enabledFlags: string[] = []
 
   beforeEach(() => {
     enabledFlags = []
-    startRecordingSpy = jasmine.createSpy()
+    startRecordingSpy = jasmine.createSpy().and.callFake(() => ({
+      stop: noop,
+    }))
     startRumSpy = jasmine.createSpy().and.callFake(() => {
       const configuration: Partial<Configuration> = {
         isEnabled(flag: string) {
@@ -49,40 +56,56 @@ describe('makeRumRecorderPublicApi', () => {
   })
 
   describe('experimental flag postpone_start_recording', () => {
-    it('if disabled, startSessionRecord should not be defined', () => {
-      expect(rumGlobal.startSessionRecord).toBeUndefined()
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      expect(rumGlobal.startSessionRecord).toBeUndefined()
+    describe('if disabled', () => {
+      it('startSessionReplayRecording should not be defined', () => {
+        expect(rumGlobal.startSessionReplayRecording).toBeUndefined()
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+        expect(rumGlobal.startSessionReplayRecording).toBeUndefined()
+      })
+
+      it('option manualSessionReplayRecordingStart should not be taken into account', () => {
+        rumGlobal.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+        expect(startRecordingSpy).toHaveBeenCalled()
+      })
     })
 
-    it('if enabled, recording should not start when calling init()', () => {
-      enabledFlags = ['postpone_start_recording']
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      expect(startRecordingSpy).not.toHaveBeenCalled()
-    })
+    describe('if enabled', () => {
+      beforeEach(() => {
+        enabledFlags = ['postpone_start_recording']
+      })
 
-    it('if enabled, startSessionRecord should be defined', () => {
-      enabledFlags = ['postpone_start_recording']
-      expect(rumGlobal.startSessionRecord).toBeUndefined()
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      expect(rumGlobal.startSessionRecord).toEqual(jasmine.any(Function))
-    })
+      it('recording should start when calling init() with default options', () => {
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+        expect(startRecordingSpy).toHaveBeenCalled()
+      })
 
-    it('if enabled, commonContext.hasReplay should be true only if startSessionRecord is called', () => {
-      enabledFlags = ['postpone_start_recording']
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      expect(getCommonContext().hasReplay).toBeUndefined()
-      rumGlobal.startSessionRecord!()
-      expect(getCommonContext().hasReplay).toBe(true)
-    })
+      it('startSessionReplayRecording should be defined', () => {
+        expect(rumGlobal.startSessionReplayRecording).toBeUndefined()
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+        expect(rumGlobal.startSessionReplayRecording).toEqual(jasmine.any(Function))
+      })
 
-    it('if enabled, calling startSessionRecord multiple times should only start recording once', () => {
-      enabledFlags = ['postpone_start_recording']
-      rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
-      rumGlobal.startSessionRecord!()
-      rumGlobal.startSessionRecord!()
-      rumGlobal.startSessionRecord!()
-      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+      it('calling startSessionReplayRecording while recording is already start should be ignored', () => {
+        rumGlobal.init(DEFAULT_INIT_CONFIGURATION)
+        rumGlobal.startSessionReplayRecording!()
+        rumGlobal.startSessionReplayRecording!()
+        rumGlobal.startSessionReplayRecording!()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+      })
+
+      describe('with manualSessionReplayRecordingStart: true option', () => {
+        it('recording should not start when calling init() with option manualSessionReplayRecordingStart', () => {
+          rumGlobal.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+          expect(startRecordingSpy).not.toHaveBeenCalled()
+        })
+
+        it('commonContext.hasReplay should be true only if startSessionReplayRecording is called', () => {
+          rumGlobal.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+          expect(getCommonContext().hasReplay).toBeUndefined()
+          rumGlobal.startSessionReplayRecording!()
+          expect(getCommonContext().hasReplay).toBe(true)
+        })
+      })
     })
   })
 })

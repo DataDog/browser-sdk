@@ -178,6 +178,7 @@ module.exports = {
     'no-trailing-spaces': 'off',
     'no-undef-init': 'error',
     'no-underscore-dangle': 'error',
+    'no-unreachable': 'error',
     'no-unsafe-finally': 'error',
     'no-unused-labels': 'error',
     'no-unused-vars': 'off',
@@ -229,6 +230,12 @@ module.exports = {
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',
+      },
+    },
+    {
+      files: ['packages/{rum,logs,rum-recorder}/src/index.ts', 'packages/rum-recorder/src/internal.ts'],
+      rules: {
+        'local-rules/disallow-enum-exports': 'error',
       },
     },
   ],

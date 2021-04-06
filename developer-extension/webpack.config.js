@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WebextensionPlugin = require('webpack-webextension-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
+const { DefinePlugin } = require('webpack')
 
 module.exports = (_env, argv) => {
   return [
@@ -29,6 +30,9 @@ module.exports = (_env, argv) => {
         new HtmlWebpackPlugin({
           filename: 'popup.html',
         }),
+        new DefinePlugin({
+          'process.env.BUMBAG_ENV': JSON.stringify('production'),
+        }),
       ],
     }),
   ]
@@ -37,7 +41,7 @@ module.exports = (_env, argv) => {
     return {
       entry,
       output,
-      devtool: argv.mode === 'development' ? 'inline-source-map' : 'false',
+      devtool: argv.mode === 'development' ? 'inline-source-map' : false,
 
       module: {
         rules: [

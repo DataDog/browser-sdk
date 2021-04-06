@@ -58,7 +58,6 @@ export function startRumAssembly(
           date: timeStampNow(),
           service: configuration.service,
           session: {
-            has_replay: commonContext.hasReplay,
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
             // cf https://github.com/puppeteer/puppeteer/issues/3667
             type: getSessionType(),
@@ -71,6 +70,10 @@ export function startRumAssembly(
         const context = combine(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
           serverRumEvent.context = context
+        }
+
+        if (!('has_replay' in serverRumEvent.session)) {
+          ;(serverRumEvent.session as { has_replay?: boolean }).has_replay = commonContext.hasReplay
         }
 
         if (!isEmptyObject(commonContext.user)) {

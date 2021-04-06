@@ -53,6 +53,9 @@ function processViewUpdate(view: View) {
       },
       time_spent: toServerDuration(view.duration),
     },
+    session: {
+      has_replay: view.hasReplay || undefined,
+    },
   }
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(

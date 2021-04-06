@@ -1,8 +1,7 @@
 import { createTest } from '../lib/framework'
+import { UNREACHABLE_URL } from '../lib/helpers/constants'
 import { browserExecute, browserExecuteAsync, flushBrowserLogs, withBrowserLogs } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
-
-const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
 describe('logs', () => {
   createTest('send logs')

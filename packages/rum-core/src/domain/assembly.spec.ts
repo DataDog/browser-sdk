@@ -365,10 +365,20 @@ describe('rum assembly', () => {
       commonContext.hasReplay = true
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
         startTime: 0 as RelativeTime,
       })
       expect(serverRumEvents[0].session.has_replay).toBe(true)
+    })
+
+    it('should not use commonContext.hasReplay on view events', () => {
+      commonContext.hasReplay = true
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].session.has_replay).toBe(undefined)
     })
   })
 })

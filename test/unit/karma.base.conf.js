@@ -13,7 +13,7 @@ if (testReportDirectory) {
 module.exports = {
   basePath: '../..',
   files: ['packages/*/+(src|test)/**/*.spec.ts'],
-  frameworks: ['jasmine'],
+  frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
       random: true,
@@ -37,6 +37,7 @@ module.exports = {
     stats: 'minimal',
     module: webpackConfig.module,
     resolve: webpackConfig.resolve,
+    target: webpackConfig.target,
     devtool: false,
     mode: 'development',
     plugins: [
@@ -44,6 +45,13 @@ module.exports = {
         test: /\.(ts|js)($|\?)/i,
       }),
     ],
+    optimization: {
+      // By default, karma-webpack creates a bundle with one entry point for each spec file, but
+      // with all dependencies shared.  Our test suite does not support sharing dependencies, each
+      // spec bundle should include its own copy of dependencies.
+      runtimeChunk: false,
+      splitChunks: false,
+    },
   },
   webpackMiddleware: {
     stats: 'errors-only',

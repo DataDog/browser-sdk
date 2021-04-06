@@ -2,7 +2,7 @@ import { RelativeTime } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
-import { ONE_MINUTE } from '../tools/utils'
+import { includes, ONE_MINUTE } from '../tools/utils'
 import {
   filterErrors,
   startConsoleTracking,
@@ -22,7 +22,7 @@ describe('console tracker', () => {
 
   beforeEach(() => {
     consoleErrorStub = spyOn(console, 'error')
-    notifyError = jasmine.createSpy()
+    notifyError = jasmine.createSpy('notifyError')
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe(notifyError)
     startConsoleTracking(errorObservable)
@@ -42,6 +42,7 @@ describe('console tracker', () => {
     expect(notifyError).toHaveBeenCalledWith({
       ...CONSOLE_CONTEXT,
       message: 'console error: foo bar',
+      stack: undefined,
       startTime: jasmine.any(Number),
     })
   })
@@ -51,13 +52,24 @@ describe('console tracker', () => {
     expect(notifyError).toHaveBeenCalledWith({
       ...CONSOLE_CONTEXT,
       message: 'console error: Hello {\n  "foo": "bar"\n}',
+      stack: undefined,
       startTime: jasmine.any(Number),
     })
   })
 
   it('should format error instance', () => {
     console.error(new TypeError('hello'))
-    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toContain('console error: TypeError: hello')
+    expect((notifyError.calls.mostRecent().args[0] as RawError).message).toBe('console error: TypeError: hello')
+  })
+
+  it('should extract stack from first error', () => {
+    console.error(new TypeError('foo'), new TypeError('bar'))
+    const stack = (notifyError.calls.mostRecent().args[0] as RawError).stack
+    if (!isIE()) {
+      expect(stack).toMatch(/^TypeError: foo\s+at/)
+    } else {
+      expect(stack).toContain('TypeError: foo')
+    }
   })
 })
 
@@ -125,6 +137,7 @@ describe('network error tracker', () => {
   let fetchStub: FetchStub
   let fetchStubManager: FetchStubManager
   let stopNetworkErrorTracking: () => void
+  let enabledExperimentalFeatures: string[]
   const FAKE_URL = 'http://fake.com/'
   const DEFAULT_REQUEST = {
     duration: 10,
@@ -139,9 +152,17 @@ describe('network error tracker', () => {
     if (isIE()) {
       pending('no fetch support')
     }
+    enabledExperimentalFeatures = []
+
     const errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
-    const configuration = { requestErrorResponseLengthLimit: 32, ...SPEC_ENDPOINTS }
+    const configuration = {
+      requestErrorResponseLengthLimit: 32,
+      isEnabled(featureFlag: string) {
+        return includes(enabledExperimentalFeatures, featureFlag)
+      },
+      ...SPEC_ENDPOINTS,
+    }
 
     fetchStubManager = stubFetch()
     ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration as Configuration, errorObservable))
@@ -177,6 +198,15 @@ describe('network error tracker', () => {
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).not.toHaveBeenCalled()
+      done()
+    })
+  })
+
+  it('should track aborted requests ', (done) => {
+    fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+
+    fetchStubManager.whenAllComplete(() => {
+      expect(errorObservableSpy).toHaveBeenCalled()
       done()
     })
   })
@@ -229,6 +259,21 @@ describe('network error tracker', () => {
       const stack = (errorObservableSpy.calls.mostRecent().args[0] as RawError).stack
       expect(stack).toEqual('Lorem ipsum dolor sit amet orci ...')
       done()
+    })
+  })
+
+  describe('feature "remove-network-errors" enabled', () => {
+    beforeEach(() => {
+      enabledExperimentalFeatures.push('remove-network-errors')
+    })
+
+    it('should not track aborted requests ', (done) => {
+      fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+
+      fetchStubManager.whenAllComplete(() => {
+        expect(errorObservableSpy).not.toHaveBeenCalled()
+        done()
+      })
     })
   })
 })
