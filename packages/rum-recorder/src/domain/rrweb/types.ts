@@ -1,5 +1,5 @@
 import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
-import type { FocusRecord, RawRecord } from '../../types'
+import { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
 export enum IncrementalSource {
