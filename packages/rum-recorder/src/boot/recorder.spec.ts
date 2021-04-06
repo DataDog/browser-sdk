@@ -164,7 +164,7 @@ describe('startRecording', () => {
 
   // eslint-disable-next-line max-len
   it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
-    setMaxSegmentSize(10)
+    setMaxSegmentSize(0)
     setupBuilder.build()
 
     waitRequestSendCalls(1, (calls) => {
