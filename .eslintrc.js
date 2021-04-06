@@ -178,6 +178,7 @@ module.exports = {
     'no-trailing-spaces': 'off',
     'no-undef-init': 'error',
     'no-underscore-dangle': 'error',
+    'no-unreachable': 'error',
     'no-unsafe-finally': 'error',
     'no-unused-labels': 'error',
     'no-unused-vars': 'off',

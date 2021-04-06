@@ -5,7 +5,6 @@ const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, s
 
 const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
 const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp: 10, data: {} as any }
-const META_RECORD: Record = { type: RecordType.Meta, timestamp: 10, data: {} as any }
 
 describe('Segment', () => {
   it('writes a segment', () => {
@@ -58,25 +57,9 @@ describe('Segment', () => {
     })
   })
 
-  it("doesn't set has_full_snapshot to true if a FullSnapshot is the initial record", () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init', FULL_SNAPSHOT_RECORD)
-    segment.flush()
-    expect(writer.flushed[0].meta.has_full_snapshot).toEqual(false)
-  })
-
-  it("doesn't set has_full_snapshot to true if a FullSnapshot is not directly preceded by a Meta record", () => {
+  it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init', RECORD)
-    segment.addRecord(FULL_SNAPSHOT_RECORD)
-    segment.flush()
-    expect(writer.flushed[0].meta.has_full_snapshot).toEqual(false)
-  })
-
-  it('sets has_full_snapshot to true if a FullSnapshot is preceded by a Meta record', () => {
-    const writer = new StringWriter()
-    const segment = new Segment(writer, CONTEXT, 'init', RECORD)
-    segment.addRecord(META_RECORD)
     segment.addRecord(FULL_SNAPSHOT_RECORD)
     segment.flush()
     expect(writer.flushed[0].meta.has_full_snapshot).toEqual(true)
@@ -85,7 +68,6 @@ describe('Segment', () => {
   it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init', RECORD)
-    segment.addRecord(META_RECORD)
     segment.addRecord(FULL_SNAPSHOT_RECORD)
     segment.addRecord(RECORD)
     segment.flush()

@@ -1,5 +1,5 @@
 import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
-import type { RawRecord } from '../../types'
+import type { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
 export enum IncrementalSource {
@@ -79,6 +79,7 @@ export interface ObserverParam {
   inputCb: InputCallback
   mediaInteractionCb: MediaInteractionCallback
   styleSheetRuleCb: StyleSheetRuleCallback
+  focusCb: FocusCallback
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
@@ -222,6 +223,8 @@ export interface MediaInteractionParam {
 }
 
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
+
+export type FocusCallback = (data: FocusRecord['data']) => void
 
 export interface Mirror {
   map: IdNodeMap
