@@ -7,6 +7,7 @@ import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
 export const MAX_SEGMENT_DURATION = 30_000
+let MAX_SEGMENT_SIZE = SEND_BEACON_BYTE_LENGTH_LIMIT
 
 // Segments are the main data structure for session replays. They contain context information used
 // for indexing or UI needs, and a list of records (RRWeb 'events', renamed to avoid confusing
@@ -87,7 +88,7 @@ export function doStartSegmentCollection(
   const writer = new DeflateSegmentWriter(
     worker,
     (size) => {
-      if (size > SEND_BEACON_BYTE_LENGTH_LIMIT) {
+      if (size > MAX_SEGMENT_SIZE) {
         flushSegment('max_size')
       }
     },
@@ -187,4 +188,8 @@ export function computeSegmentContext(applicationId: string, session: RumSession
       id: viewContext.view.id,
     },
   }
+}
+
+export function setMaxSegmentSize(newSize: number = SEND_BEACON_BYTE_LENGTH_LIMIT) {
+  MAX_SEGMENT_SIZE = newSize
 }

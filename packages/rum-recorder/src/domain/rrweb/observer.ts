@@ -3,6 +3,7 @@ import { INode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
+  FocusCallback,
   HookResetter,
   IncrementalSource,
   InputCallback,
@@ -23,6 +24,30 @@ import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mir
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
+
+export function initObservers(o: ObserverParam): ListenerHandler {
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb)
+  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
+  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
+  const scrollHandler = initScrollObserver(o.scrollCb)
+  const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
+  const inputHandler = initInputObserver(o.inputCb)
+  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
+  const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
+  const focusHandler = initFocusObserver(o.focusCb)
+
+  return () => {
+    mutationHandler()
+    mousemoveHandler()
+    mouseInteractionHandler()
+    scrollHandler()
+    viewportResizeHandler()
+    inputHandler()
+    mediaInteractionHandler()
+    styleSheetObserver()
+    focusHandler()
+  }
+}
 
 function initMutationObserver(mutationController: MutationController, cb: MutationCallBack) {
   const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb)
@@ -266,24 +291,8 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
   return addEventListeners(document, [DOM_EVENT.PLAY, DOM_EVENT.PAUSE], handler, { capture: true, passive: true }).stop
 }
 
-export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb)
-  const mousemoveHandler = initMoveObserver(o.mousemoveCb)
-  const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
-  const scrollHandler = initScrollObserver(o.scrollCb)
-  const viewportResizeHandler = initViewportResizeObserver(o.viewportResizeCb)
-  const inputHandler = initInputObserver(o.inputCb)
-  const mediaInteractionHandler = initMediaInteractionObserver(o.mediaInteractionCb)
-  const styleSheetObserver = initStyleSheetObserver(o.styleSheetRuleCb)
-
-  return () => {
-    mutationHandler()
-    mousemoveHandler()
-    mouseInteractionHandler()
-    scrollHandler()
-    viewportResizeHandler()
-    inputHandler()
-    mediaInteractionHandler()
-    styleSheetObserver()
-  }
+function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
+  return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
+    focusCb({ has_focus: document.hasFocus() })
+  }).stop
 }

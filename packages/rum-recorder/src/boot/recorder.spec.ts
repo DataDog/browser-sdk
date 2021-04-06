@@ -4,9 +4,10 @@ import { inflate } from 'pako'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
+import { setMaxSegmentSize } from '../domain/segmentCollection'
 
-import { FocusRecord, RawRecord, Segment, RecordType } from '../types'
-import { startRecording, trackFocusRecords } from './recorder'
+import { Segment, RecordType } from '../types'
+import { startRecording } from './recorder'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
@@ -51,6 +52,7 @@ describe('startRecording', () => {
   })
 
   afterEach(() => {
+    setMaxSegmentSize()
     setupBuilder.cleanup()
   })
 
@@ -159,59 +161,20 @@ describe('startRecording', () => {
       })
     })
   })
-})
 
-describe('trackFocusRecords', () => {
-  let hasFocus: boolean
-  let addRecordSpy: jasmine.Spy<(rawRecord: RawRecord) => void>
-  let lifeCycle: LifeCycle
+  // eslint-disable-next-line max-len
+  it('does not split Meta, Focus and FullSnapshot records between multiple segments when taking a full snapshot', (done) => {
+    setMaxSegmentSize(0)
+    setupBuilder.build()
 
-  beforeEach(() => {
-    hasFocus = true
-    lifeCycle = new LifeCycle()
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
-    addRecordSpy = jasmine.createSpy()
-  })
-
-  it('adds an initial Focus record', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on focus', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    window.dispatchEvent(createNewEvent('focus'))
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on blur', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    window.dispatchEvent(createNewEvent('blur'))
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('adds a Focus record on new view', () => {
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    addRecordSpy.calls.reset()
-
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
-    expect(addRecordSpy).toHaveBeenCalled()
-  })
-
-  it('set has_focus to true if the document has the focus', () => {
-    hasFocus = true
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(true)
-  })
-
-  it("set has_focus to false if the document doesn't have the focus", () => {
-    hasFocus = false
-    trackFocusRecords(lifeCycle, addRecordSpy)
-    expect((addRecordSpy.calls.mostRecent().args[0] as FocusRecord).data.has_focus).toBe(false)
+    waitRequestSendCalls(1, (calls) => {
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records[0].type).toBe(RecordType.Meta)
+        expect(segment.records[1].type).toBe(RecordType.Focus)
+        expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
+        expectNoExtraRequestSendCalls(done)
+      })
+    })
   })
 })
 
