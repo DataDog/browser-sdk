@@ -15,7 +15,7 @@ export function startAutomaticErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)
-    startConsoleTracking(configuration, errorObservable)
+    startConsoleTracking(errorObservable)
     startRuntimeErrorTracking(errorObservable)
     filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
@@ -44,30 +44,23 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
 
 let originalConsoleError: (...params: unknown[]) => void
 
-export function startConsoleTracking(configuration: Configuration, errorObservable: ErrorObservable) {
+export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = monitor((...params: unknown[]) => {
     originalConsoleError.apply(console, params)
     errorObservable.notify({
-      ...buildErrorFromParams(configuration, params),
+      ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startTime: relativeNow(),
     })
   })
 }
 
-function buildErrorFromParams(configuration: Configuration, params: unknown[]) {
-  if (configuration.isEnabled('console-stack')) {
-    const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
-    return {
-      message: ['console error:', ...params]
-        .map((param) => formatConsoleParameters(formatErrorMessage, param))
-        .join(' '),
-      stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
-    }
-  }
+function buildErrorFromParams(params: unknown[]) {
+  const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
   return {
-    message: ['console error:', ...params].map((param) => formatConsoleParameters(toStackTraceString, param)).join(' '),
+    message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
+    stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
   }
 }
 
@@ -75,12 +68,12 @@ export function stopConsoleTracking() {
   console.error = originalConsoleError
 }
 
-function formatConsoleParameters(stackTraceFormatter: (stack: StackTrace) => string, param: unknown) {
+function formatConsoleParameters(param: unknown) {
   if (typeof param === 'string') {
     return param
   }
   if (param instanceof Error) {
-    return stackTraceFormatter(computeStackTrace(param))
+    return formatErrorMessage(computeStackTrace(param))
   }
   return jsonStringify(param, undefined, 2)
 }
