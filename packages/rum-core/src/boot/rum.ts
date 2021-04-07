@@ -1,4 +1,4 @@
-import { catchUserErrors, combine, commonInit, Configuration } from '@datadog/browser-core'
+import { combine, commonInit, Configuration } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -18,22 +18,11 @@ import { startRumBatch } from '../transport/batch'
 import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rumPublicApi'
 
-export type NewLocationListener = (
-  newLocation: Location,
-  oldLocation?: Location
-) => undefined | { shouldCreateView?: boolean; viewName?: string }
-
-export function startRum(
-  userConfiguration: RumUserConfiguration & { onNewLocation?: NewLocationListener },
-  getCommonContext: () => CommonContext
-) {
+export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
-  if (!configuration.isEnabled('onNewLocation')) {
-    userConfiguration.onNewLocation = undefined
-  }
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -51,8 +40,7 @@ export function startRum(
     lifeCycle,
     configuration,
     session,
-    getCommonContext,
-    userConfiguration.onNewLocation
+    getCommonContext
   )
 
   startRequestCollection(lifeCycle, configuration)
@@ -79,19 +67,14 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  getCommonContext: () => CommonContext,
-  onNewLocation?: NewLocationListener
+  getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming, stop: stopViewCollection } = startViewCollection(
-    lifeCycle,
-    location,
-    onNewLocation && catchUserErrors(onNewLocation, 'onNewLocation threw an error:')
-  )
+  const { addTiming, stop: stopViewCollection } = startViewCollection(lifeCycle, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
