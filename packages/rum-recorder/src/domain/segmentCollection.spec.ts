@@ -102,36 +102,53 @@ describe('startSegmentCollection', () => {
       expect(sendCurrentSegment().creation_reason).not.toBe('visibility_hidden')
     })
 
-    it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
-      const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-      worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
-      addRecord(RECORD)
-      worker.processAll()
+    describe('max_size flush strategy', () => {
+      it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
+        const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+        worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
+        addRecord(RECORD)
+        worker.processAll()
 
-      expect(sendCurrentSegment().creation_reason).toBe('max_size')
+        expect(sendCurrentSegment().creation_reason).toBe('max_size')
+      })
+
+      it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
+        const { worker, addRecord, segmentFlushSpy } = startSegmentCollection(CONTEXT)
+        worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
+        addRecord(RECORD)
+        addRecord(RECORD)
+        // Process only the first record
+        worker.processOne()
+        addRecord(RECORD)
+        worker.processAll()
+
+        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+      })
     })
 
-    it('flushes a segment after MAX_SEGMENT_DURATION', () => {
-      jasmine.clock().install()
-      const { segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
-      addRecord(RECORD)
-      jasmine.clock().tick(MAX_SEGMENT_DURATION)
+    describe('max_duration flush strategy', () => {
+      it('flushes a segment after MAX_SEGMENT_DURATION', () => {
+        jasmine.clock().install()
+        const { segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+        addRecord(RECORD)
+        jasmine.clock().tick(MAX_SEGMENT_DURATION)
 
-      expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
-      expect(sendCurrentSegment().creation_reason).toBe('max_duration')
-    })
+        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+        expect(sendCurrentSegment().creation_reason).toBe('max_duration')
+      })
 
-    it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
-      jasmine.clock().install()
-      const { lifeCycle, segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
-      addRecord(RECORD)
-      jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-      addRecord(RECORD)
-      jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+      it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
+        jasmine.clock().install()
+        const { lifeCycle, segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+        addRecord(RECORD)
+        jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+        lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+        addRecord(RECORD)
+        jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
 
-      expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
-      expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
+        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+        expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
+      })
     })
 
     it('flushes a segment when calling stop()', () => {
