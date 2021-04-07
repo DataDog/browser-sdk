@@ -93,18 +93,6 @@ export function doStartSegmentCollection(
     nextSegmentCreationReason: 'init',
   }
 
-  const writer = new DeflateSegmentWriter(
-    worker,
-    (size) => {
-      if (size > MAX_SEGMENT_SIZE) {
-        flushSegment('max_size')
-      }
-    },
-    (data, meta) => {
-      send(data, meta)
-    }
-  )
-
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     flushSegment('view_change')
   })
@@ -142,24 +130,43 @@ export function doStartSegmentCollection(
     }
   }
 
+  function createNewSegment(creationReason: CreationReason, initialRecord: Record) {
+    const context = getSegmentContext()
+    if (!context) {
+      return
+    }
+
+    const writer = new DeflateSegmentWriter(
+      worker,
+      (size) => {
+        if (!segment.isFlushed && size > MAX_SEGMENT_SIZE) {
+          flushSegment('max_size')
+        }
+      },
+      (data) => {
+        send(data, segment.meta)
+      }
+    )
+
+    const segment = new Segment(writer, context, creationReason, initialRecord)
+
+    state = {
+      status: SegmentCollectionStatus.SegmentPending,
+      segment,
+      expirationTimeoutId: setTimeout(
+        monitor(() => {
+          flushSegment('max_duration')
+        }),
+        MAX_SEGMENT_DURATION
+      ),
+    }
+  }
+
   return {
     addRecord: (record: Record) => {
       switch (state.status) {
         case SegmentCollectionStatus.WaitingForInitialRecord:
-          const context = getSegmentContext()
-          if (!context) {
-            return
-          }
-          state = {
-            status: SegmentCollectionStatus.SegmentPending,
-            segment: new Segment(writer, context, state.nextSegmentCreationReason, record),
-            expirationTimeoutId: setTimeout(
-              monitor(() => {
-                flushSegment('max_duration')
-              }),
-              MAX_SEGMENT_DURATION
-            ),
-          }
+          createNewSegment(state.nextSegmentCreationReason, record)
           break
 
         case SegmentCollectionStatus.SegmentPending:

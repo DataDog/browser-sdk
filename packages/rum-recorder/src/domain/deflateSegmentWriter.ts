@@ -1,54 +1,44 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
-import { SegmentMeta } from '../types'
-import { DeflateWorker } from './deflateWorker'
+import { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
 import { SegmentWriter } from './segment'
 
+let nextId = 0
+
 export class DeflateSegmentWriter implements SegmentWriter {
-  private nextId = 0
-  private pendingMeta: Array<{ id: number; meta: SegmentMeta }> = []
+  private id = nextId++
 
-  constructor(
-    private worker: DeflateWorker,
-    private onWrote: (size: number) => void,
-    private onFlushed: (data: Uint8Array, meta: SegmentMeta) => void
-  ) {
-    worker.addEventListener(
-      'message',
-      monitor(({ data }) => {
-        if (!('error' in data)) {
+  constructor(private worker: DeflateWorker, onWrote: (size: number) => void, onFlushed: (data: Uint8Array) => void) {
+    const listener: DeflateWorkerListener = monitor(({ data }) => {
+      if (!('error' in data)) {
+        if (data.id > this.id) {
+          // Messages should be received in the same order as they are sent, so if we receive a
+          // message with an id superior to this DeflateSegmentWriter instance id, we know that
+          // another, more recent DeflateSegmentWriter instance is being used.
+          //
+          // In theory, a "flush" response should have been received at this point, so the listener
+          // should already have been removed. But if something goes wrong and we didn't receive a
+          // "flush" response, remove the listener to avoid any leak, and send a monitor message to
+          // help investigate the issue.
+          worker.removeEventListener('message', listener)
+          addMonitoringMessage(`DeflateSegmentWriter did not receive a 'flush' response before being replaced.`)
+        } else if (data.id === this.id) {
           if ('result' in data) {
-            let pendingMeta = this.pendingMeta.shift()!
-
-            // Messages should be received in the same order as they are sent, so the first
-            // 'pendingMeta' of the list should be the one corresponding to the handled message.
-            // But if something goes wrong in the worker and a response is lost, we need to avoid
-            // associating an incorrect meta to the flushed segment. Remove any pending meta with an id
-            // inferior to the one being waited for.
-            if (pendingMeta.id !== data.id) {
-              let lostCount = 0
-              while (pendingMeta.id !== data.id) {
-                pendingMeta = this.pendingMeta.shift()!
-                lostCount += 1
-              }
-              addMonitoringMessage(`${lostCount} deflate worker responses have been lost`)
-            }
-            this.onFlushed(data.result, pendingMeta.meta)
+            onFlushed(data.result)
+            worker.removeEventListener('message', listener)
           } else {
-            this.onWrote(data.size)
+            onWrote(data.size)
           }
         }
-      })
-    )
+      }
+    })
+    worker.addEventListener('message', listener)
   }
 
   write(data: string): void {
-    this.worker.postMessage({ data, id: this.nextId, action: 'write' })
-    this.nextId += 1
+    this.worker.postMessage({ data, id: this.id, action: 'write' })
   }
 
-  flush(data: string | undefined, meta: SegmentMeta): void {
-    this.worker.postMessage({ data, id: this.nextId, action: 'flush' })
-    this.pendingMeta.push({ meta, id: this.nextId })
-    this.nextId += 1
+  flush(data: string | undefined): void {
+    this.worker.postMessage({ data, id: this.id, action: 'flush' })
   }
 }

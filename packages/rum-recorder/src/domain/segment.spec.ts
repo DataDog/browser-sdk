@@ -16,28 +16,18 @@ describe('Segment', () => {
 
     expect(writer.flushed).toEqual([
       {
-        meta: {
-          creation_reason: 'init' as const,
-          end: 10,
-          has_full_snapshot: false,
-          records_count: 1,
-          start: 10,
-          ...CONTEXT,
-        },
-        segment: {
-          creation_reason: 'init' as const,
-          end: 10,
-          has_full_snapshot: false,
-          records: [
-            {
-              timestamp: 10,
-              type: RecordType.ViewEnd,
-            },
-          ],
-          records_count: 1,
-          start: 10,
-          ...CONTEXT,
-        },
+        creation_reason: 'init' as const,
+        end: 10,
+        has_full_snapshot: false,
+        records: [
+          {
+            timestamp: 10,
+            type: RecordType.ViewEnd,
+          },
+        ],
+        records_count: 1,
+        start: 10,
+        ...CONTEXT,
       },
     ])
   })
@@ -46,8 +36,7 @@ describe('Segment', () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init', RECORD)
     segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 })
-    segment.flush()
-    expect(writer.flushed[0].meta).toEqual({
+    expect(segment.meta).toEqual({
       creation_reason: 'init',
       end: 15,
       has_full_snapshot: false,
@@ -57,12 +46,19 @@ describe('Segment', () => {
     })
   })
 
+  it('is marked as flushed when flush() is called', () => {
+    const writer = new StringWriter()
+    const segment = new Segment(writer, CONTEXT, 'init', RECORD)
+    expect(segment.isFlushed).toBe(false)
+    segment.flush()
+    expect(segment.isFlushed).toBe(true)
+  })
+
   it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
     const writer = new StringWriter()
     const segment = new Segment(writer, CONTEXT, 'init', RECORD)
     segment.addRecord(FULL_SNAPSHOT_RECORD)
-    segment.flush()
-    expect(writer.flushed[0].meta.has_full_snapshot).toEqual(true)
+    expect(segment.meta.has_full_snapshot).toEqual(true)
   })
 
   it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
@@ -70,19 +66,18 @@ describe('Segment', () => {
     const segment = new Segment(writer, CONTEXT, 'init', RECORD)
     segment.addRecord(FULL_SNAPSHOT_RECORD)
     segment.addRecord(RECORD)
-    segment.flush()
-    expect(writer.flushed[0].meta.has_full_snapshot).toEqual(true)
+    expect(segment.meta.has_full_snapshot).toEqual(true)
   })
 })
 
 class StringWriter implements SegmentWriter {
   output = ''
-  flushed: Array<{ meta: SegmentMeta; segment: SegmentMeta & { records: Record[] } }> = []
+  flushed: Array<SegmentMeta & { records: Record[] }> = []
   write(data: string) {
     this.output += data
   }
-  flush(data: string, meta: SegmentMeta) {
-    this.flushed.push({ meta, segment: JSON.parse(this.output + data) })
+  flush(data: string) {
+    this.flushed.push(JSON.parse(this.output + data))
     this.output = ''
   }
 }

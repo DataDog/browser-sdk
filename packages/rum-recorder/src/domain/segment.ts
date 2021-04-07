@@ -2,10 +2,12 @@ import { CreationReason, Record, RecordType, SegmentContext, SegmentMeta } from 
 
 export interface SegmentWriter {
   write(data: string): void
-  flush(data: string, meta: SegmentMeta): void
+  flush(data: string): void
 }
 
 export class Segment {
+  public isFlushed = false
+
   private start: number
   private end: number
   private recordsCount: number
@@ -32,7 +34,12 @@ export class Segment {
   }
 
   flush() {
-    const meta: SegmentMeta = {
+    this.writer.flush(`],${JSON.stringify(this.meta).slice(1)}\n`)
+    this.isFlushed = true
+  }
+
+  get meta(): SegmentMeta {
+    return {
       creation_reason: this.creationReason,
       end: this.end,
       has_full_snapshot: this.hasFullSnapshot,
@@ -40,6 +47,5 @@ export class Segment {
       start: this.start,
       ...this.context,
     }
-    this.writer.flush(`],${JSON.stringify(meta).slice(1)}\n`, meta)
   }
 }

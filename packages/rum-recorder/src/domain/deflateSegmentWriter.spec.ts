@@ -1,7 +1,6 @@
 import { noop, setDebugMode } from '@datadog/browser-core'
 
 import { MockWorker } from '../../test/utils'
-import { SegmentMeta } from '../types'
 import { DeflateSegmentWriter } from './deflateSegmentWriter'
 
 describe('DeflateWriter', () => {
@@ -25,25 +24,38 @@ describe('DeflateWriter', () => {
   })
 
   it('calls the onFlushed callback when data is flush', () => {
-    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
     const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
-    const meta: SegmentMeta = { start: 12 } as any
-    writer.flush(undefined, meta)
+    writer.flush(undefined)
     worker.processAll()
-    expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta]])
+    expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array)]])
   })
 
-  it('calls the onFlushed callback with the correct meta even if a previous action failed somehow', () => {
+  it('calls the onWrote callbacks separately when two DeflateSegmentWriter are used', () => {
+    const onWroteSpy1 = jasmine.createSpy<(size: number) => void>()
+    const onWroteSpy2 = jasmine.createSpy<(size: number) => void>()
+    const writer1 = new DeflateSegmentWriter(worker, onWroteSpy1, noop)
+    writer1.write('cake')
+    writer1.flush(undefined)
+    const writer2 = new DeflateSegmentWriter(worker, onWroteSpy2, noop)
+    writer2.write('potato')
+    worker.processAll()
+    expect(onWroteSpy1).toHaveBeenCalledOnceWith('cake'.length)
+    expect(onWroteSpy2).toHaveBeenCalledOnceWith('potato'.length)
+  })
+
+  it('unsubscribes from the worker if a flush() response fails and another DeflateSegmentWriter is used', () => {
     const consoleSpy = spyOn(console, 'log')
-    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
-    const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
-    const meta1: SegmentMeta = { start: 12 } as any
-    const meta2: SegmentMeta = { start: 13 } as any
-    writer.flush(undefined, meta1)
-    writer.flush(undefined, meta2)
+    const writer1 = new DeflateSegmentWriter(worker, noop, noop)
+    writer1.flush(undefined)
+    const writer2 = new DeflateSegmentWriter(worker, noop, noop)
+    writer2.write('foo')
     worker.skipOne()
     worker.processAll()
-    expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
-    expect(consoleSpy).toHaveBeenCalledWith('[MONITORING MESSAGE]', '1 deflate worker responses have been lost')
+    expect(worker.listenersCount).toBe(1)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[MONITORING MESSAGE]',
+      "DeflateSegmentWriter did not receive a 'flush' response before being replaced."
+    )
   })
 })
