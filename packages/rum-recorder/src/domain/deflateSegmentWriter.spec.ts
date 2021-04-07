@@ -20,7 +20,7 @@ describe('DeflateWriter', () => {
     const onWroteSpy = jasmine.createSpy<(size: number) => void>()
     const writer = new DeflateSegmentWriter(worker, onWroteSpy, noop)
     writer.write('foo')
-    worker.process()
+    worker.processAll()
     expect(onWroteSpy.calls.allArgs()).toEqual([[3]])
   })
 
@@ -29,7 +29,7 @@ describe('DeflateWriter', () => {
     const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
     const meta: SegmentMeta = { start: 12 } as any
     writer.flush(undefined, meta)
-    worker.process()
+    worker.processAll()
     expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta]])
   })
 
@@ -41,7 +41,8 @@ describe('DeflateWriter', () => {
     const meta2: SegmentMeta = { start: 13 } as any
     writer.flush(undefined, meta1)
     writer.flush(undefined, meta2)
-    worker.process(0)
+    worker.skipOne()
+    worker.processAll()
     expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array), meta2]])
     expect(consoleSpy).toHaveBeenCalledWith('[MONITORING MESSAGE]', '1 deflate worker responses have been lost')
   })

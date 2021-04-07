@@ -3,21 +3,24 @@ import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../sr
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
   deflatedSize = 0
-  private listener: DeflateWorkerListener | undefined
+  private listeners: DeflateWorkerListener[] = []
 
   get pendingData() {
     return this.pendingMessages.map((message) => message.data || '').join('')
   }
 
   addEventListener(_: 'message', listener: DeflateWorkerListener): void {
-    if (this.listener) {
-      throw new Error('MockWorker supports only one listener')
+    const index = this.listeners.indexOf(listener)
+    if (index < 0) {
+      this.listeners.push(listener)
     }
-    this.listener = listener
   }
 
-  removeEventListener(): void {
-    this.listener = undefined
+  removeEventListener(_: 'message', listener: DeflateWorkerListener): void {
+    const index = this.listeners.indexOf(listener)
+    if (index >= 0) {
+      this.listeners.splice(index, 1)
+    }
   }
 
   postMessage(message: DeflateWorkerAction): void {
@@ -28,27 +31,38 @@ export class MockWorker implements DeflateWorker {
     // do nothing
   }
 
-  process(ignoreMessageWithId?: number): void {
-    if (this.listener) {
-      for (const message of this.pendingMessages) {
-        if (ignoreMessageWithId === message.id) {
-          continue
-        }
-        switch (message.action) {
-          case 'write':
+  processAll(): void {
+    while (this.pendingMessages.length) {
+      this.processOne()
+    }
+  }
+
+  skipOne(): void {
+    this.pendingMessages.shift()
+  }
+
+  processOne(): void {
+    const message = this.pendingMessages.shift()
+    if (message) {
+      switch (message.action) {
+        case 'write':
+          this.deflatedSize += message.data.length
+          this.listeners.forEach((listener) => listener({ data: { id: message.id, size: this.deflatedSize } }))
+          break
+        case 'flush':
+          if (message.data) {
             this.deflatedSize += message.data.length
-            this.listener({ data: { id: message.id, size: this.deflatedSize } })
-            break
-          case 'flush':
-            if (message.data) {
-              this.deflatedSize += message.data.length
-            }
-            this.listener({ data: { id: message.id, result: new Uint8Array(this.deflatedSize) } })
-            this.deflatedSize = 0
-        }
+          }
+          this.listeners.forEach((listener) =>
+            listener({ data: { id: message.id, result: new Uint8Array(this.deflatedSize) } })
+          )
+          this.deflatedSize = 0
       }
     }
-    this.pendingMessages.length = 0
+  }
+
+  get listenersCount() {
+    return this.listeners.length
   }
 }
 

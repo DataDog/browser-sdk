@@ -34,7 +34,7 @@ describe('startSegmentCollection', () => {
         addRecord(RECORD)
         // Flush segment
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-        worker.process()
+        worker.processAll()
         return sendSpy.calls.mostRecent().args[1]
       },
     }
@@ -106,7 +106,7 @@ describe('startSegmentCollection', () => {
       const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
       addRecord(RECORD)
-      worker.process()
+      worker.processAll()
 
       expect(sendCurrentSegment().creation_reason).toBe('max_size')
     })
