@@ -1,4 +1,4 @@
-import { addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
+import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../types'
@@ -45,6 +45,14 @@ export function startSegmentCollection(
 ) {
   if (!workerSingleton) {
     workerSingleton = createDeflateWorker()
+    workerSingleton.addEventListener(
+      'message',
+      monitor(({ data }) => {
+        if ('error' in data) {
+          addErrorToMonitoringBatch(data.error)
+        }
+      })
+    )
   }
   return doStartSegmentCollection(
     lifeCycle,
