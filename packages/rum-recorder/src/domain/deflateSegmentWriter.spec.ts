@@ -19,7 +19,7 @@ describe('DeflateWriter', () => {
     const onWroteSpy = jasmine.createSpy<(size: number) => void>()
     const writer = new DeflateSegmentWriter(worker, onWroteSpy, noop)
     writer.write('foo')
-    worker.processAll()
+    worker.processAllMessages()
     expect(onWroteSpy.calls.allArgs()).toEqual([[3]])
   })
 
@@ -27,7 +27,7 @@ describe('DeflateWriter', () => {
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
     const writer = new DeflateSegmentWriter(worker, noop, onFlushedSpy)
     writer.flush(undefined)
-    worker.processAll()
+    worker.processAllMessages()
     expect(onFlushedSpy.calls.allArgs()).toEqual([[jasmine.any(Uint8Array)]])
   })
 
@@ -39,7 +39,7 @@ describe('DeflateWriter', () => {
     writer1.flush(undefined)
     const writer2 = new DeflateSegmentWriter(worker, onWroteSpy2, noop)
     writer2.write('potato')
-    worker.processAll()
+    worker.processAllMessages()
     expect(onWroteSpy1).toHaveBeenCalledOnceWith('cake'.length)
     expect(onWroteSpy2).toHaveBeenCalledOnceWith('potato'.length)
   })
@@ -50,8 +50,8 @@ describe('DeflateWriter', () => {
     writer1.flush(undefined)
     const writer2 = new DeflateSegmentWriter(worker, noop, noop)
     writer2.write('foo')
-    worker.skipOne()
-    worker.processAll()
+    worker.dropNextMessage()
+    worker.processAllMessages()
     expect(worker.listenersCount).toBe(1)
     expect(consoleSpy).toHaveBeenCalledWith(
       '[MONITORING MESSAGE]',

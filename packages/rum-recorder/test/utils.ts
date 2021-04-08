@@ -38,17 +38,17 @@ export class MockWorker implements DeflateWorker {
     return this.listeners.length
   }
 
-  processAll(): void {
+  processAllMessages(): void {
     while (this.pendingMessages.length) {
-      this.processOne()
+      this.processNextMessage()
     }
   }
 
-  skipOne(): void {
+  dropNextMessage(): void {
     this.pendingMessages.shift()
   }
 
-  processOne(): void {
+  processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
       this.deflatedData.push(encoder.encode(message.data))
