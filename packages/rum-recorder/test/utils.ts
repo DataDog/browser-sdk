@@ -1,4 +1,5 @@
 import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
+import { Segment } from '../src/types'
 
 // In the mock worker, for simplicity, we'll just encode the string to UTF-8 instead of deflate it.
 const encoder = new TextEncoder()
@@ -91,6 +92,10 @@ function mergeUint8Arrays(arrays: Uint8Array[]) {
     offset += bytes.byteLength
   }
   return result
+}
+
+export function parseSegment(bytes: Uint8Array) {
+  return JSON.parse(new TextDecoder().decode(bytes)) as Segment
 }
 
 export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {

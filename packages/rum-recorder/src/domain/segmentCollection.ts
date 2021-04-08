@@ -2,7 +2,6 @@ import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, m
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../types'
-import { DeflateSegmentWriter } from './deflateSegmentWriter'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
@@ -136,8 +135,11 @@ export function doStartSegmentCollection(
       return
     }
 
-    const writer = new DeflateSegmentWriter(
+    const segment = new Segment(
       worker,
+      context,
+      creationReason,
+      initialRecord,
       (size) => {
         if (!segment.isFlushed && size > MAX_SEGMENT_SIZE) {
           flushSegment('max_size')
@@ -147,8 +149,6 @@ export function doStartSegmentCollection(
         send(data, segment.meta)
       }
     )
-
-    const segment = new Segment(writer, context, creationReason, initialRecord)
 
     state = {
       status: SegmentCollectionStatus.SegmentPending,
