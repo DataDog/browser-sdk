@@ -82,6 +82,13 @@ describe('startSegmentCollection', () => {
       restorePageVisibility()
     })
 
+    it('does not flush empty segments', () => {
+      const { lifeCycle, sendSpy, worker } = startSegmentCollection(CONTEXT)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      worker.processAllMessages()
+      expect(sendSpy).not.toHaveBeenCalled()
+    })
+
     it('flushes segment on unload', () => {
       const { lifeCycle, sendCurrentSegment } = startSegmentCollection(CONTEXT)
       lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
@@ -125,16 +132,35 @@ describe('startSegmentCollection', () => {
         expect(sendCurrentSegment().creation_reason).toBe('max_size')
       })
 
-      it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
+      it('continues to add records to the current segment while the worker is processing messages', () => {
         const { worker, addRecord, sendSpy } = startSegmentCollection(CONTEXT)
         addRecord(VERY_BIG_RECORD)
         addRecord(RECORD)
-        // Process only the first record
-        worker.processNextMessage()
+        addRecord(RECORD)
         addRecord(RECORD)
         worker.processAllMessages()
 
         expect(sendSpy).toHaveBeenCalledTimes(1)
+        expect(sendSpy.calls.mostRecent().args[1].records_count).toBe(4)
+      })
+
+      it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
+        const { worker, addRecord, sendSpy } = startSegmentCollection(CONTEXT)
+        // Add two records to the current segment
+        addRecord(VERY_BIG_RECORD)
+        addRecord(RECORD)
+
+        // Process only the first record. This should flush the current segment because it reached
+        // the max_size limit.
+        worker.processNextMessage()
+
+        // Add a record to the new segment, to make sure it is not flushed even if it is not empty
+        addRecord(RECORD)
+
+        worker.processAllMessages()
+
+        expect(sendSpy).toHaveBeenCalledTimes(1)
+        expect(sendSpy.calls.mostRecent().args[1].records_count).toBe(2)
       })
     })
 
