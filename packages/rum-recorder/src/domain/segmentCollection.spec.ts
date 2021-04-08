@@ -3,7 +3,6 @@ import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext 
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { MockWorker } from '../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
-import { Segment } from './segment'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -29,12 +28,11 @@ describe('startSegmentCollection', () => {
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
     stopSegmentCollection = stop
-    const segmentFlushSpy = spyOn(Segment.prototype, 'flush').and.callThrough()
     return {
       addRecord,
       eventEmitter,
       lifeCycle,
-      segmentFlushSpy,
+      sendSpy,
       worker,
       sendCurrentSegment: () => {
         // Make sure the segment is not empty
@@ -53,28 +51,30 @@ describe('startSegmentCollection', () => {
   })
 
   it('immediately starts a new segment', () => {
-    const { addRecord, worker, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+    const { addRecord, worker, sendSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
     expect(worker.pendingData).toBe('')
     addRecord(RECORD)
     expect(worker.pendingData).toBe('{"records":[{"type":7,"timestamp":10}')
-    expect(segmentFlushSpy).not.toHaveBeenCalled()
+    worker.processAllMessages()
+    expect(sendSpy).not.toHaveBeenCalled()
     expect(sendCurrentSegment().creation_reason).toBe('init')
   })
 
-  it('flushes a segment', () => {
-    const { lifeCycle, segmentFlushSpy, addRecord } = startSegmentCollection(CONTEXT)
+  it('sends a segment', () => {
+    const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(CONTEXT)
     addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-
-    expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+    worker.processAllMessages()
+    expect(sendSpy).toHaveBeenCalledTimes(1)
   })
 
   it("ignores calls to addRecord if context can't be get", () => {
-    const { worker, lifeCycle, addRecord, segmentFlushSpy } = startSegmentCollection(undefined)
+    const { lifeCycle, worker, sendSpy, addRecord } = startSegmentCollection(undefined)
     addRecord(RECORD)
     lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
     expect(worker.pendingData).toBe('')
-    expect(segmentFlushSpy).not.toHaveBeenCalled()
+    worker.processAllMessages()
+    expect(sendSpy).not.toHaveBeenCalled()
   })
 
   describe('segment flush strategy', () => {
@@ -96,16 +96,23 @@ describe('startSegmentCollection', () => {
 
     it('flushes segment when the page become hidden', () => {
       setPageVisibility('hidden')
-      const { eventEmitter, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      const { addRecord, eventEmitter, sendCurrentSegment, worker, sendSpy } = startSegmentCollection(CONTEXT)
+      addRecord(RECORD)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
+
+      worker.processAllMessages()
+      expect(sendSpy).toHaveBeenCalledTimes(1)
       expect(sendCurrentSegment().creation_reason).toBe('visibility_hidden')
     })
 
     it('does not flush segment when the page become visible', () => {
       setPageVisibility('visible')
-      const { eventEmitter, segmentFlushSpy, sendCurrentSegment } = startSegmentCollection(CONTEXT)
+      const { addRecord, eventEmitter, sendCurrentSegment, worker, sendSpy } = startSegmentCollection(CONTEXT)
+      addRecord(RECORD)
       eventEmitter.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-      expect(segmentFlushSpy).not.toHaveBeenCalled()
+
+      worker.processAllMessages()
+      expect(sendSpy).not.toHaveBeenCalled()
       expect(sendCurrentSegment().creation_reason).not.toBe('visibility_hidden')
     })
 
@@ -119,7 +126,7 @@ describe('startSegmentCollection', () => {
       })
 
       it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
-        const { worker, addRecord, segmentFlushSpy } = startSegmentCollection(CONTEXT)
+        const { worker, addRecord, sendSpy } = startSegmentCollection(CONTEXT)
         addRecord(VERY_BIG_RECORD)
         addRecord(RECORD)
         // Process only the first record
@@ -127,40 +134,42 @@ describe('startSegmentCollection', () => {
         addRecord(RECORD)
         worker.processAllMessages()
 
-        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+        expect(sendSpy).toHaveBeenCalledTimes(1)
       })
     })
 
     describe('max_duration flush strategy', () => {
       it('flushes a segment after MAX_SEGMENT_DURATION', () => {
         jasmine.clock().install()
-        const { segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+        const { sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
         jasmine.clock().tick(MAX_SEGMENT_DURATION)
-
-        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+        worker.processAllMessages()
+        expect(sendSpy).toHaveBeenCalledTimes(1)
         expect(sendCurrentSegment().creation_reason).toBe('max_duration')
       })
 
       it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
         jasmine.clock().install()
-        const { lifeCycle, segmentFlushSpy, sendCurrentSegment, addRecord } = startSegmentCollection(CONTEXT)
+        const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
         jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
         addRecord(RECORD)
         jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
 
-        expect(segmentFlushSpy).toHaveBeenCalledTimes(1)
+        worker.processAllMessages()
+        expect(sendSpy).toHaveBeenCalledTimes(1)
         expect(sendCurrentSegment().creation_reason).not.toBe('max_duration')
       })
     })
 
     it('flushes a segment when calling stop()', () => {
-      const { segmentFlushSpy, addRecord } = startSegmentCollection(CONTEXT)
+      const { addRecord, worker, sendSpy } = startSegmentCollection(CONTEXT)
       addRecord(RECORD)
       stopSegmentCollection()
-      expect(segmentFlushSpy).toHaveBeenCalled()
+      worker.processAllMessages()
+      expect(sendSpy).toHaveBeenCalledTimes(1)
     })
   })
 })
