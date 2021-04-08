@@ -64,7 +64,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     })
   }
 
-  const rumGlobal = makePublicApi({
+  const rumPublicApi = makePublicApi({
     init: monitor((userConfiguration: C) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
@@ -115,7 +115,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
      * @deprecated use addAction instead
      */
     addUserAction: (name: string, context?: object) => {
-      rumGlobal.addAction(name, context as Context)
+      rumPublicApi.addAction(name, context as Context)
     },
 
     addError: monitor((error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
@@ -147,7 +147,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       }
     }),
   })
-  return rumGlobal
+  return rumPublicApi
 
   function sanitizeUser(newUser: unknown) {
     if (typeof newUser !== 'object' || !newUser) {
