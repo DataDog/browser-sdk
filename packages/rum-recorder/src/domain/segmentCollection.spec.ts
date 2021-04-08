@@ -9,6 +9,13 @@ import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION }
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: Record = { type: RecordType.ViewEnd, timestamp: 10 }
 
+// A record that will make the segment size reach the SEND_BEACON_BYTE_LENGTH_LIMIT limit
+const VERY_BIG_RECORD: Record = {
+  type: RecordType.FullSnapshot,
+  timestamp: 10,
+  data: Array(SEND_BEACON_BYTE_LENGTH_LIMIT).join('a') as any,
+}
+
 const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
 
 describe('startSegmentCollection', () => {
@@ -105,8 +112,7 @@ describe('startSegmentCollection', () => {
     describe('max_size flush strategy', () => {
       it('flushes segment when the current segment deflate size reaches SEND_BEACON_BYTE_LENGTH_LIMIT', () => {
         const { worker, addRecord, sendCurrentSegment } = startSegmentCollection(CONTEXT)
-        worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
-        addRecord(RECORD)
+        addRecord(VERY_BIG_RECORD)
         worker.processAll()
 
         expect(sendCurrentSegment().creation_reason).toBe('max_size')
@@ -114,8 +120,7 @@ describe('startSegmentCollection', () => {
 
       it('does not flush segment prematurely when records from the previous segment are still being processed', () => {
         const { worker, addRecord, segmentFlushSpy } = startSegmentCollection(CONTEXT)
-        worker.deflatedSize = SEND_BEACON_BYTE_LENGTH_LIMIT
-        addRecord(RECORD)
+        addRecord(VERY_BIG_RECORD)
         addRecord(RECORD)
         // Process only the first record
         worker.processOne()

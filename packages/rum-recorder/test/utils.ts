@@ -1,13 +1,12 @@
 import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
 
+// In the mock worker, for simplicity, we'll just encode the string to UTF-8 instead of deflate it.
+const encoder = new TextEncoder()
+
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
-  deflatedSize = 0
+  private deflatedData: Uint8Array[] = []
   private listeners: DeflateWorkerListener[] = []
-
-  get pendingData() {
-    return this.pendingMessages.map((message) => message.data || '').join('')
-  }
 
   addEventListener(_: 'message', listener: DeflateWorkerListener): void {
     const index = this.listeners.indexOf(listener)
@@ -31,6 +30,14 @@ export class MockWorker implements DeflateWorker {
     // do nothing
   }
 
+  get pendingData() {
+    return this.pendingMessages.map((message) => message.data || '').join('')
+  }
+
+  get listenersCount() {
+    return this.listeners.length
+  }
+
   processAll(): void {
     while (this.pendingMessages.length) {
       this.processOne()
@@ -44,26 +51,46 @@ export class MockWorker implements DeflateWorker {
   processOne(): void {
     const message = this.pendingMessages.shift()
     if (message) {
+      this.deflatedData.push(encoder.encode(message.data))
+
       switch (message.action) {
         case 'write':
-          this.deflatedSize += message.data.length
-          this.listeners.forEach((listener) => listener({ data: { id: message.id, size: this.deflatedSize } }))
+          this.listeners.forEach((listener) =>
+            listener({
+              data: {
+                id: message.id,
+                size: uint8ArraysSize(this.deflatedData),
+              },
+            })
+          )
           break
         case 'flush':
-          if (message.data) {
-            this.deflatedSize += message.data.length
-          }
           this.listeners.forEach((listener) =>
-            listener({ data: { id: message.id, result: new Uint8Array(this.deflatedSize) } })
+            listener({
+              data: {
+                id: message.id,
+                result: mergeUint8Arrays(this.deflatedData),
+              },
+            })
           )
-          this.deflatedSize = 0
+          this.deflatedData.length = 0
       }
     }
   }
+}
 
-  get listenersCount() {
-    return this.listeners.length
+function uint8ArraysSize(arrays: Uint8Array[]) {
+  return arrays.reduce((sum, bytes) => sum + bytes.length, 0)
+}
+
+function mergeUint8Arrays(arrays: Uint8Array[]) {
+  const result = new Uint8Array(uint8ArraysSize(arrays))
+  let offset = 0
+  for (const bytes of arrays) {
+    result.set(bytes, offset)
+    offset += bytes.byteLength
   }
+  return result
 }
 
 export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
