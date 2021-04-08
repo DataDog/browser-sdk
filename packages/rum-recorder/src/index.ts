@@ -3,7 +3,6 @@ export { datadogRum } from './boot/recorder.entry'
 export {
   CommonProperties,
   ProvidedSource,
-  RumPublicApi as RumGlobal,
   RumUserConfiguration,
   // Events
   RumEvent,
@@ -13,3 +12,5 @@ export {
   RumResourceEvent,
   RumViewEvent,
 } from '@datadog/browser-rum-core'
+
+export { RumRecorderPublicApi as RumGlobal, RumRecorderUserConfiguration } from './boot/rumRecorderPublicApi'

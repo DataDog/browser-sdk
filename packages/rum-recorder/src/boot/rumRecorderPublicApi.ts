@@ -1,9 +1,14 @@
-import { monitor } from '@datadog/browser-core'
-import { LifeCycleEventType, makeRumPublicApi, StartRum } from '@datadog/browser-rum-core'
+import { monitor, noop } from '@datadog/browser-core'
+import { LifeCycleEventType, makeRumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
 
 export type StartRecording = typeof startRecording
+export type RumRecorderPublicApi = ReturnType<typeof makeRumRecorderPublicApi>
+
+export interface RumRecorderUserConfiguration extends RumUserConfiguration {
+  manualSessionReplayRecordingStart?: boolean
+}
 
 const enum RecorderStatus {
   Stopped,
@@ -19,7 +24,7 @@ type RecorderState =
     }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
-  const rumRecorderGlobal = makeRumPublicApi((userConfiguration, getCommonContext) => {
+  const rumPublicApi = makeRumPublicApi<RumRecorderUserConfiguration>((userConfiguration, getCommonContext) => {
     let state: RecorderState = {
       status: RecorderStatus.Stopped,
     }
@@ -31,17 +36,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
 
-    if (configuration.isEnabled('postpone_start_recording')) {
-      ;(rumRecorderGlobal as any).startSessionReplayRecording = monitor(startSessionReplayRecording)
-      ;(rumRecorderGlobal as any).stopSessionReplayRecording = monitor(stopSessionReplayRecording)
-      if (!(userConfiguration as any).manualSessionReplayRecordingStart) {
-        startSessionReplayRecording()
-      }
-    } else {
-      startSessionReplayRecording()
-    }
-
-    function startSessionReplayRecording() {
+    startSessionReplayRecordingImpl = () => {
       if (state.status === RecorderStatus.Started) {
         return
       }
@@ -60,7 +55,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
     }
 
-    function stopSessionReplayRecording() {
+    stopSessionReplayRecordingImpl = () => {
       if (state.status !== RecorderStatus.Started) {
         return
       }
@@ -72,7 +67,33 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
+    onInit(userConfiguration)
+
     return startRumResult
   })
-  return rumRecorderGlobal
+
+  let onInit = (userConfiguration: RumRecorderUserConfiguration) => {
+    if (!userConfiguration.manualSessionReplayRecordingStart) {
+      startSessionReplayRecordingImpl()
+    }
+  }
+
+  let startSessionReplayRecordingImpl = () => {
+    onInit = () => startSessionReplayRecordingImpl()
+  }
+
+  let stopSessionReplayRecordingImpl = () => {
+    onInit = noop
+  }
+
+  const rumRecorderPublicApi = {
+    ...rumPublicApi,
+    startSessionReplayRecording: monitor(() => {
+      startSessionReplayRecordingImpl()
+    }),
+    stopSessionReplayRecording: monitor(() => {
+      stopSessionReplayRecordingImpl()
+    }),
+  }
+  return rumRecorderPublicApi
 }
