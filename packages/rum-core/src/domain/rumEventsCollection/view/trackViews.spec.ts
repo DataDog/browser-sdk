@@ -13,7 +13,7 @@ import {
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, View, ViewCreatedEvent } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, ViewEvent, ViewCreatedEvent } from './trackViews'
 
 const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
@@ -61,7 +61,7 @@ function spyOnViews() {
   const handler = jasmine.createSpy()
 
   function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as View
+    return handler.calls.argsFor(index)[0] as ViewEvent
   }
 
   function getHandledCount() {
@@ -276,7 +276,7 @@ describe('rum track renew session', () => {
   let handler: jasmine.Spy
   let initialViewId: string
   let getHandledCount: () => number
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
 
   beforeEach(() => {
     ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
@@ -322,7 +322,7 @@ describe('rum track renew session', () => {
 describe('rum track loading type', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -359,7 +359,7 @@ describe('rum track loading type', () => {
 describe('rum track view is active', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -398,7 +398,7 @@ describe('rum track view is active', () => {
 describe('rum track loading time', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
   let getHandledCount: () => number
 
   beforeEach(() => {
@@ -493,7 +493,7 @@ describe('rum view measures', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getHandledCount: () => number
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
 
   beforeEach(() => {
     ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
@@ -556,8 +556,8 @@ describe('rum view measures', () => {
     })
 
     describe('load event happening after initial view end', () => {
-      let initialView: { init: View; end: View; last: View }
-      let secondView: { init: View; last: View }
+      let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
+      let secondView: { init: ViewEvent; last: ViewEvent }
       const VIEW_DURATION = 100 as Duration
 
       beforeEach(() => {
@@ -824,7 +824,7 @@ describe('rum view measures', () => {
 describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
   let addTiming: (name: string, time?: RelativeTime) => void
 
   beforeEach(() => {
@@ -920,7 +920,7 @@ describe('rum track custom timings', () => {
 describe('track hasReplay', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
-  let getViewEvent: (index: number) => View
+  let getViewEvent: (index: number) => ViewEvent
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())

@@ -4,7 +4,7 @@ import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
-import { View, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import { ViewEvent, ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 
 export enum LifeCycleEventType {
   PERFORMANCE_ENTRY_COLLECTED,
@@ -38,7 +38,7 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.AUTO_ACTION_COMPLETED, data: AutoAction): void
   notify(eventType: LifeCycleEventType.AUTO_ACTION_CREATED, data: AutoActionCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
-  notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: View): void
+  notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: ViewEvent): void
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
@@ -81,7 +81,7 @@ export class LifeCycle {
     callback: (data: AutoActionCreatedEvent) => void
   ): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
-  subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: View) => void): Subscription
+  subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: ViewEvent) => void): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
