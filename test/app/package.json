@@ -7,7 +7,10 @@
     "compat:ssr": "webpack --mode=development && node dist/app.js"
   },
   "dependencies": {
+    "@datadog/browser-core": "file:../../packages/core",
     "@datadog/browser-logs": "file:../../packages/logs",
+    "@datadog/browser-rum": "file:../../packages/rum",
+    "@datadog/browser-rum-core": "file:../../packages/rum-core",
     "@datadog/browser-rum-recorder": "file:../../packages/rum-recorder"
   },
   "resolutions": {

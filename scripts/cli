@@ -54,7 +54,7 @@ cmd_version () {
   node ./scripts/generate-changelog.js
   # keep test app lockfile up to date
   cd test/app
-  yarn
+  yarn upgrade
   git add yarn.lock
 }
 
