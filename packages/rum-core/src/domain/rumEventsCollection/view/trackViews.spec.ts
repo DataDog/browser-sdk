@@ -1,23 +1,13 @@
-import { Context, Duration, RelativeTime } from '../../../../../core/src'
-import { RumEvent } from '../../../../../rum/src'
+import { Duration, RelativeTime } from '../../../../../core/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
   RumPerformancePaintTiming,
 } from '../../../browser/performanceCollection'
-import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
+import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import {
-  PAGE_ACTIVITY_END_DELAY,
-  PAGE_ACTIVITY_MAX_DURATION,
-  PAGE_ACTIVITY_VALIDATION_DELAY,
-} from '../../trackPageActivities'
 import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, ViewEvent, ViewCreatedEvent } from './trackViews'
-
-const AFTER_PAGE_ACTIVITY_MAX_DURATION = PAGE_ACTIVITY_MAX_DURATION * 1.1
-const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
-const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -34,22 +24,6 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domInteractive: 234 as RelativeTime,
   entryType: 'navigation',
   loadEventEnd: 567 as RelativeTime,
-}
-
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  domComplete: 2 as RelativeTime,
-  domContentLoadedEventEnd: 1 as RelativeTime,
-  domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as RelativeTime,
-}
-
-const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformanceNavigationTiming = {
-  domComplete: 2 as RelativeTime,
-  domContentLoadedEventEnd: 1 as RelativeTime,
-  domInteractive: 1 as RelativeTime,
-  entryType: 'navigation',
-  loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
 }
 
 function mockGetElementById() {
@@ -395,101 +369,7 @@ describe('rum track view is active', () => {
   })
 })
 
-describe('rum track loading time', () => {
-  let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-  let getHandledCount: () => number
-
-  beforeEach(() => {
-    ;({ handler, getHandledCount, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeClock()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should have an undefined loading time if there is no activity on a route change', () => {
-    const { clock } = setupBuilder.build()
-
-    history.pushState({}, '', '/bar')
-    clock.tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(2).loadingTime).toBeUndefined()
-  })
-
-  it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-
-    history.pushState({}, '', '/bar')
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getViewEvent(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-  })
-
-  it('should use loadEventEnd for initial view when having no activity', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-    expect(getHandledCount()).toEqual(1)
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
-  })
-
-  it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-    expect(getHandledCount()).toEqual(1)
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING
-    )
-
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd)
-  })
-
-  it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-    expect(getHandledCount()).toEqual(1)
-
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(
-      LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-      FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING
-    )
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-  })
-})
-
-describe('rum view measures', () => {
+describe('rum view timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getHandledCount: () => number
@@ -510,41 +390,92 @@ describe('rum view measures', () => {
     setupBuilder.cleanup()
   })
 
-  describe('timings', () => {
-    it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+  it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+    expect(getHandledCount()).toEqual(1)
+    expect(getViewEvent(0).timings).toEqual({})
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+
+    expect(getHandledCount()).toEqual(1)
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getHandledCount()).toEqual(2)
+    expect(getViewEvent(1).timings).toEqual({
+      domComplete: 456 as Duration,
+      domContentLoaded: 345 as Duration,
+      domInteractive: 234 as Duration,
+      loadEvent: 567 as Duration,
+    })
+  })
+
+  it('should update timings when ending a view', () => {
+    const { lifeCycle } = setupBuilder.build()
+    expect(getHandledCount()).toEqual(1)
+    expect(getViewEvent(0).timings).toEqual({})
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+    expect(getHandledCount()).toEqual(1)
+
+    history.pushState({}, '', '/bar')
+
+    expect(getHandledCount()).toEqual(3)
+    expect(getViewEvent(1).timings).toEqual({
+      domComplete: 456 as Duration,
+      domContentLoaded: 345 as Duration,
+      domInteractive: 234 as Duration,
+      firstContentfulPaint: 123 as Duration,
+      largestContentfulPaint: 789 as Duration,
+      loadEvent: 567 as Duration,
+    })
+    expect(getViewEvent(2).timings).toEqual({})
+  })
+
+  describe('load event happening after initial view end', () => {
+    let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
+    let secondView: { init: ViewEvent; last: ViewEvent }
+    const VIEW_DURATION = 100 as Duration
+
+    beforeEach(() => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).timings).toEqual({})
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+      clock.tick(VIEW_DURATION)
 
-      expect(getHandledCount()).toEqual(1)
+      history.pushState({}, '', '/bar')
 
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      clock.tick(VIEW_DURATION)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).timings).toEqual({
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        loadEvent: 567 as Duration,
-      })
-    })
-
-    it('should update timings when ending a view', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).timings).toEqual({})
+      expect(getHandledCount()).toEqual(3)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-      expect(getHandledCount()).toEqual(1)
 
-      history.pushState({}, '', '/bar')
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).timings).toEqual({
+      expect(getHandledCount()).toEqual(4)
+
+      initialView = {
+        end: getViewEvent(1),
+        init: getViewEvent(0),
+        last: getViewEvent(3),
+      }
+      secondView = {
+        init: getViewEvent(2),
+        last: getViewEvent(2),
+      }
+    })
+
+    it('should not set timings to the second view', () => {
+      expect(secondView.last.timings).toEqual({})
+    })
+
+    it('should set timings only on the initial view', () => {
+      expect(initialView.last.timings).toEqual({
         domComplete: 456 as Duration,
         domContentLoaded: 345 as Duration,
         domInteractive: 234 as Duration,
@@ -552,271 +483,15 @@ describe('rum view measures', () => {
         largestContentfulPaint: 789 as Duration,
         loadEvent: 567 as Duration,
       })
-      expect(getViewEvent(2).timings).toEqual({})
     })
 
-    describe('load event happening after initial view end', () => {
-      let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
-      let secondView: { init: ViewEvent; last: ViewEvent }
-      const VIEW_DURATION = 100 as Duration
-
-      beforeEach(() => {
-        const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-        expect(getHandledCount()).toEqual(1)
-
-        clock.tick(VIEW_DURATION)
-
-        history.pushState({}, '', '/bar')
-
-        clock.tick(VIEW_DURATION)
-
-        expect(getHandledCount()).toEqual(3)
-
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
-        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-
-        clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-        expect(getHandledCount()).toEqual(4)
-
-        initialView = {
-          end: getViewEvent(1),
-          init: getViewEvent(0),
-          last: getViewEvent(3),
-        }
-        secondView = {
-          init: getViewEvent(2),
-          last: getViewEvent(2),
-        }
-      })
-
-      it('should not set timings to the second view', () => {
-        expect(secondView.last.timings).toEqual({})
-      })
-
-      it('should set timings only on the initial view', () => {
-        expect(initialView.last.timings).toEqual({
-          domComplete: 456 as Duration,
-          domContentLoaded: 345 as Duration,
-          domInteractive: 234 as Duration,
-          firstContentfulPaint: 123 as Duration,
-          largestContentfulPaint: 789 as Duration,
-          loadEvent: 567 as Duration,
-        })
-      })
-
-      it('should not update the initial view duration when updating it with new timings', () => {
-        expect(initialView.end.duration).toBe(VIEW_DURATION)
-        expect(initialView.last.duration).toBe(VIEW_DURATION)
-      })
-
-      it('should update the initial view loadingTime following the loadEventEnd value', () => {
-        expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
-      })
-    })
-  })
-
-  describe('event counts', () => {
-    it('should track error count', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.errorCount).toEqual(2)
-      expect(getViewEvent(2).eventCounts.errorCount).toEqual(0)
+    it('should not update the initial view duration when updating it with new timings', () => {
+      expect(initialView.end.duration).toBe(VIEW_DURATION)
+      expect(initialView.last.duration).toBe(VIEW_DURATION)
     })
 
-    it('should track long task count', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.LONG_TASK } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.longTaskCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.longTaskCount).toEqual(0)
-    })
-
-    it('should track resource count', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
-    })
-
-    it('should track action count', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ACTION } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.userActionCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.userActionCount).toEqual(0)
-    })
-
-    it('should reset event count when the view changes', () => {
-      const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/baz')
-
-      expect(getHandledCount()).toEqual(5)
-      expect(getViewEvent(3).eventCounts.resourceCount).toEqual(2)
-      expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
-    })
-
-    it('should update eventCounts when a resource event is collected (throttled)', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts).toEqual({
-        errorCount: 0,
-        longTaskCount: 0,
-        resourceCount: 0,
-        userActionCount: 0,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-
-      expect(getHandledCount()).toEqual(1)
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).eventCounts).toEqual({
-        errorCount: 0,
-        longTaskCount: 0,
-        resourceCount: 1,
-        userActionCount: 0,
-      })
-    })
-
-    it('should not update eventCounts after ending a view', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      expect(getHandledCount()).toEqual(1)
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-
-      expect(getHandledCount()).toEqual(1)
-
-      history.pushState({}, '', '/bar')
-
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
-      expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(3)
-    })
-  })
-
-  describe('cumulativeLayoutShift', () => {
-    let isLayoutShiftSupported: boolean
-    beforeEach(() => {
-      if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
-        pending('No PerformanceObserver support')
-      }
-      isLayoutShiftSupported = true
-      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.callFake(() =>
-        isLayoutShiftSupported ? ['layout-shift'] : []
-      )
-    })
-
-    it('should be initialized to 0', () => {
-      setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
-    })
-
-    it('should be initialized to undefined if layout-shift is not supported', () => {
-      isLayoutShiftSupported = false
-      setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(undefined)
-    })
-
-    it('should accumulate layout shift values', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 0.1,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 0.2,
-      })
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.3)
-    })
-
-    it('should round the cumulative layout shift value to 4 decimals', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 1.23456789,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 1.11111111111,
-      })
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(2.3457)
-    })
-
-    it('should ignore entries with recent input', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: true,
-        value: 0.1,
-      })
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
+    it('should update the initial view loadingTime following the loadEventEnd value', () => {
+      expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
     })
   })
 })

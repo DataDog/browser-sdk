@@ -5,20 +5,17 @@ import {
   elapsed,
   generateUUID,
   monitor,
-  noop,
   ONE_MINUTE,
   relativeNow,
   RelativeTime,
-  round,
   throttle,
 } from '@datadog/browser-core'
 
-import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { waitIdlePageActivity } from '../../trackPageActivities'
+import { EventCounts } from '../../trackEventCounts'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
+import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {
   id: string
@@ -138,17 +135,9 @@ function newView(
 ) {
   // Setup initial values
   const id = generateUUID()
-  let eventCounts: EventCounts = {
-    errorCount: 0,
-    longTaskCount: 0,
-    resourceCount: 0,
-    userActionCount: 0,
-  }
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let cumulativeLayoutShift: number | undefined
-  let loadingTime: Duration | undefined
   let endTime: RelativeTime | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = isRecording
@@ -164,28 +153,11 @@ function newView(
     }
   )
 
-  const { stop: stopEventCountsTracking } = trackEventCounts(lifeCycle, (newEventCounts) => {
-    eventCounts = newEventCounts
-    scheduleViewUpdate()
-  })
-
-  const { setActivityLoadingTime, setLoadEvent } = trackLoadingTime(loadingType, (newLoadingTime) => {
-    loadingTime = newLoadingTime
-    scheduleViewUpdate()
-  })
-
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
-
-  let stopCLSTracking: () => void
-  if (isLayoutShiftSupported()) {
-    cumulativeLayoutShift = 0
-    ;({ stop: stopCLSTracking } = trackLayoutShift(lifeCycle, (layoutShift) => {
-      cumulativeLayoutShift! += layoutShift
-      scheduleViewUpdate()
-    }))
-  } else {
-    stopCLSTracking = noop
-  }
+  const { setLoadEvent, stop: stopViewMetricsTracking, viewMetrics } = trackViewMetrics(
+    lifeCycle,
+    scheduleViewUpdate,
+    loadingType
+  )
 
   // Initial view update
   triggerViewUpdate()
@@ -193,13 +165,11 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      cumulativeLayoutShift: cumulativeLayoutShift && round(cumulativeLayoutShift, 4),
+      ...viewMetrics,
       customTimings,
       documentVersion,
-      eventCounts,
       id,
       name,
-      loadingTime,
       loadingType,
       location,
       hasReplay,
@@ -215,9 +185,7 @@ function newView(
     scheduleUpdate: scheduleViewUpdate,
     end() {
       endTime = relativeNow()
-      stopEventCountsTracking()
-      stopActivityLoadingTimeTracking()
-      stopCLSTracking()
+      stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
     isDifferentView(otherLocation: Location) {
@@ -284,78 +252,6 @@ function trackHistory(onHistoryChange: () => void) {
 
 function trackHash(onHashChange: () => void) {
   return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
-}
-
-function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Duration) => void) {
-  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
-  let isWaitingForActivityLoadingTime = true
-  const loadingTimeCandidates: Duration[] = []
-
-  function invokeCallbackIfAllCandidatesAreReceived() {
-    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
-      callback(Math.max(...loadingTimeCandidates) as Duration)
-    }
-  }
-
-  return {
-    setLoadEvent: (loadEvent: Duration) => {
-      if (isWaitingForLoadEvent) {
-        isWaitingForLoadEvent = false
-        loadingTimeCandidates.push(loadEvent)
-        invokeCallbackIfAllCandidatesAreReceived()
-      }
-    },
-    setActivityLoadingTime: (activityLoadingTime: Duration | undefined) => {
-      if (isWaitingForActivityLoadingTime) {
-        isWaitingForActivityLoadingTime = false
-        if (activityLoadingTime !== undefined) {
-          loadingTimeCandidates.push(activityLoadingTime)
-        }
-        invokeCallbackIfAllCandidatesAreReceived()
-      }
-    },
-  }
-}
-
-function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: Duration | undefined) => void) {
-  const startTime = relativeNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-    if (hadActivity) {
-      callback(elapsed(startTime, endTime))
-    } else {
-      callback(undefined)
-    }
-  })
-
-  return { stop: stopWaitIdlePageActivity }
-}
-
-/**
- * Track layout shifts (LS) occurring during the Views.  This yields multiple values that can be
- * added up to compute the cumulated layout shift (CLS).
- *
- * See isLayoutShiftSupported to check for browser support.
- *
- * Documentation: https://web.dev/cls/
- * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
- */
-function trackLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
-  const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-      callback(entry.value)
-    }
-  })
-
-  return {
-    stop,
-  }
-}
-
-/**
- * Check whether `layout-shift` is supported by the browser.
- */
-function isLayoutShiftSupported() {
-  return supportPerformanceTimingEvent('layout-shift')
 }
 
 /**
