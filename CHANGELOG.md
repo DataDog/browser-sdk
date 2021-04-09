@@ -16,6 +16,11 @@
 
 ---
 
+## v2.7.2
+
+- ✨ [RUMF-867] enable start/stop recording API ([#784](https://github.com/DataDog/browser-sdk/pull/784))
+- 🐛 fix developer extension popup ([#778](https://github.com/DataDog/browser-sdk/pull/778))
+
 ## v2.7.1
 
 - ✨ [RUMF-863] Enable console error with stack traces ([#781](https://github.com/DataDog/browser-sdk/pull/781))
