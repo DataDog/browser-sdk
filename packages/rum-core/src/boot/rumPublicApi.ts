@@ -27,28 +27,33 @@ export interface RumUserConfiguration extends UserConfiguration {
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
-export type StartRum = typeof startRum
+export type StartRum<C extends RumUserConfiguration = RumUserConfiguration> = (
+  userConfiguration: C,
+  getCommonContext: () => CommonContext
+) => StartRumResult
 
-export function makeRumPublicApi(startRumImpl: StartRum) {
+type StartRumResult = ReturnType<typeof startRum>
+
+export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: StartRum<C>) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
   let user: User = {}
 
-  let getInternalContextStrategy: ReturnType<StartRum>['getInternalContext'] = () => undefined
+  let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
   const beforeInitAddTiming = new BoundedBuffer<[string, RelativeTime]>()
-  let addTimingStrategy: ReturnType<StartRum>['addTiming'] = (name) => {
+  let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
     beforeInitAddTiming.add([name, relativeNow()])
   }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
-  let addActionStrategy: ReturnType<StartRum>['addAction'] = (action) => {
+  let addActionStrategy: StartRumResult['addAction'] = (action) => {
     beforeInitAddAction.add([action, clonedCommonContext()])
   }
 
   const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
-  let addErrorStrategy: ReturnType<StartRum>['addError'] = (providedError) => {
+  let addErrorStrategy: StartRumResult['addError'] = (providedError) => {
     beforeInitAddError.add([providedError, clonedCommonContext()])
   }
 
@@ -59,8 +64,8 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
     })
   }
 
-  const rumGlobal = makePublicApi({
-    init: monitor((userConfiguration: RumUserConfiguration) => {
+  const rumPublicApi = makePublicApi({
+    init: monitor((userConfiguration: C) => {
       if (
         !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
         !checkIsNotLocalFile() ||
@@ -110,7 +115,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
      * @deprecated use addAction instead
      */
     addUserAction: (name: string, context?: object) => {
-      rumGlobal.addAction(name, context as Context)
+      rumPublicApi.addAction(name, context as Context)
     },
 
     addError: monitor((error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
@@ -142,7 +147,7 @@ export function makeRumPublicApi(startRumImpl: StartRum) {
       }
     }),
   })
-  return rumGlobal
+  return rumPublicApi
 
   function sanitizeUser(newUser: unknown) {
     if (typeof newUser !== 'object' || !newUser) {

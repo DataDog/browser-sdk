@@ -17,49 +17,49 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
 describe('rum entry', () => {
   describe('configuration validation', () => {
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
     let errorSpy: jasmine.Spy
 
     beforeEach(() => {
       errorSpy = spyOn(console, 'error')
-      publicApi = makeRumPublicApi(noopStartRum)
+      rumPublicApi = makeRumPublicApi(noopStartRum)
     })
 
     it('init should log an error with no application id', () => {
       const invalidConfiguration = { clientToken: 'yes' }
-      publicApi.init(invalidConfiguration as RumUserConfiguration)
+      rumPublicApi.init(invalidConfiguration as RumUserConfiguration)
       expect(console.error).toHaveBeenCalledTimes(1)
 
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes' })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes' })
       expect(errorSpy).toHaveBeenCalledTimes(1)
     })
 
     it('init should log an error if sampleRate is invalid', () => {
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 'foo' as any })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 'foo' as any })
       expect(errorSpy).toHaveBeenCalledTimes(1)
 
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 200 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 200 })
       expect(errorSpy).toHaveBeenCalledTimes(2)
     })
 
     it('init should log an error if resourceSampleRate is invalid', () => {
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 'foo' as any })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 'foo' as any })
       expect(errorSpy).toHaveBeenCalledTimes(1)
 
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
       expect(errorSpy).toHaveBeenCalledTimes(2)
     })
 
     it('should log an error if init is called several times', () => {
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
       expect(errorSpy).toHaveBeenCalledTimes(0)
 
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
       expect(errorSpy).toHaveBeenCalledTimes(1)
     })
 
     it('should log an error if tracing is enabled without a service configured', () => {
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: [] })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: [] })
       expect(errorSpy).toHaveBeenCalledTimes(0)
 
       makeRumPublicApi(noopStartRum).init({
@@ -79,7 +79,7 @@ describe('rum entry', () => {
     })
 
     it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-      publicApi.init({
+      rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
         resourceSampleRate: 1,
@@ -88,7 +88,7 @@ describe('rum entry', () => {
       })
       expect(errorSpy).toHaveBeenCalledTimes(0)
 
-      publicApi.init({
+      rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
         resourceSampleRate: 1,
@@ -99,55 +99,55 @@ describe('rum entry', () => {
     })
 
     it("shouldn't trigger any console.log if the configuration is correct", () => {
-      publicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
       expect(errorSpy).toHaveBeenCalledTimes(0)
     })
   })
 
   describe('getInternalContext', () => {
     let getInternalContextSpy: jasmine.Spy<ReturnType<StartRum>['getInternalContext']>
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
       getInternalContextSpy = jasmine.createSpy().and.callFake(() => ({
         application_id: '123',
         session_id: '123',
       }))
-      publicApi = makeRumPublicApi(() => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         getInternalContext: getInternalContextSpy,
       }))
     })
 
     it('returns undefined before init', () => {
-      expect(publicApi.getInternalContext()).toBe(undefined)
+      expect(rumPublicApi.getInternalContext()).toBe(undefined)
       expect(getInternalContextSpy).not.toHaveBeenCalled()
     })
 
     it('returns the internal context after init', () => {
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(publicApi.getInternalContext()).toEqual({ application_id: '123', session_id: '123' })
+      expect(rumPublicApi.getInternalContext()).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalled()
     })
 
     it('uses the startTime if specified', () => {
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       const startTime = 234832890
-      expect(publicApi.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
+      expect(rumPublicApi.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalledWith(startTime)
     })
   })
 
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
-      publicApi = makeRumPublicApi(() => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addAction: addActionSpy,
       }))
@@ -159,10 +159,10 @@ describe('rum entry', () => {
     })
 
     it('allows sending actions before init', () => {
-      publicApi.addAction('foo', { bar: 'baz' })
+      rumPublicApi.addAction('foo', { bar: 'baz' })
 
       expect(addActionSpy).not.toHaveBeenCalled()
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       expect(addActionSpy.calls.argsFor(0)).toEqual([
@@ -181,20 +181,20 @@ describe('rum entry', () => {
         const { clock } = setupBuilder.withFakeClock().build()
 
         clock.tick(ONE_SECOND)
-        publicApi.addAction('foo')
+        rumPublicApi.addAction('foo')
 
         clock.tick(ONE_SECOND)
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
-        publicApi.addRumGlobalContext('foo', 'bar')
-        publicApi.addAction('message')
-        publicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.addAction('message')
+        rumPublicApi.addRumGlobalContext('foo', 'baz')
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[1]!.context).toEqual({
           foo: 'bar',
@@ -203,11 +203,11 @@ describe('rum entry', () => {
 
       it('stores a deep copy of the user', () => {
         const user = { id: 'foo' }
-        publicApi.setUser(user)
-        publicApi.addAction('message')
+        rumPublicApi.setUser(user)
+        rumPublicApi.addAction('message')
         user.id = 'bar'
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
           id: 'foo',
@@ -216,10 +216,10 @@ describe('rum entry', () => {
 
       it('stores a deep copy of the action context', () => {
         const context = { foo: 'bar' }
-        publicApi.addAction('message', context)
+        rumPublicApi.addAction('message', context)
         context.foo = 'baz'
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addActionSpy.calls.argsFor(0)[0].context).toEqual({
           foo: 'bar',
@@ -230,12 +230,12 @@ describe('rum entry', () => {
 
   describe('addError', () => {
     let addErrorSpy: jasmine.Spy<ReturnType<StartRum>['addError']>
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addErrorSpy = jasmine.createSpy()
-      publicApi = makeRumPublicApi(() => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addError: addErrorSpy,
       }))
@@ -247,10 +247,10 @@ describe('rum entry', () => {
     })
 
     it('allows capturing an error before init', () => {
-      publicApi.addError(new Error('foo'))
+      rumPublicApi.addError(new Error('foo'))
 
       expect(addErrorSpy).not.toHaveBeenCalled()
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       expect(addErrorSpy.calls.argsFor(0)).toEqual([
@@ -265,15 +265,15 @@ describe('rum entry', () => {
     })
 
     it('allows setting an ErrorSource', () => {
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
-      publicApi.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
       expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
     })
 
     it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
       const consoleSpy = spyOn(console, 'error')
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
-      publicApi.addError(new Error('foo'), undefined, 'invalid' as any)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
       expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
       expect(consoleSpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
@@ -283,20 +283,20 @@ describe('rum entry', () => {
         const { clock } = setupBuilder.withFakeClock().build()
 
         clock.tick(ONE_SECOND)
-        publicApi.addError(new Error('foo'))
+        rumPublicApi.addError(new Error('foo'))
 
         clock.tick(ONE_SECOND)
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
-        publicApi.addRumGlobalContext('foo', 'bar')
-        publicApi.addError(new Error('message'))
-        publicApi.addRumGlobalContext('foo', 'baz')
+        rumPublicApi.addRumGlobalContext('foo', 'bar')
+        rumPublicApi.addError(new Error('message'))
+        rumPublicApi.addRumGlobalContext('foo', 'baz')
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[1]!.context).toEqual({
           foo: 'bar',
@@ -305,11 +305,11 @@ describe('rum entry', () => {
 
       it('stores a deep copy of the user', () => {
         const user = { id: 'foo' }
-        publicApi.setUser(user)
-        publicApi.addError(new Error('message'))
+        rumPublicApi.setUser(user)
+        rumPublicApi.addError(new Error('message'))
         user.id = 'bar'
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[1]!.user).toEqual({
           id: 'foo',
@@ -318,10 +318,10 @@ describe('rum entry', () => {
 
       it('stores a deep copy of the error context', () => {
         const context = { foo: 'bar' }
-        publicApi.addError(new Error('message'), context)
+        rumPublicApi.addError(new Error('message'), context)
         context.foo = 'baz'
 
-        publicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(addErrorSpy.calls.argsFor(0)[0].context).toEqual({
           foo: 'bar',
@@ -333,13 +333,13 @@ describe('rum entry', () => {
   describe('setUser', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let errorSpy: jasmine.Spy<() => void>
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
       errorSpy = spyOn(console, 'error')
-      publicApi = makeRumPublicApi(() => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addAction: addActionSpy,
       }))
@@ -352,10 +352,10 @@ describe('rum entry', () => {
 
     it('should attach valid objects', () => {
       const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-      publicApi.setUser(user)
-      publicApi.addAction('message')
+      rumPublicApi.setUser(user)
+      rumPublicApi.addAction('message')
 
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
         email: 'qux',
@@ -368,10 +368,10 @@ describe('rum entry', () => {
 
     it('should sanitize predefined properties', () => {
       const user = { id: null, name: 2, email: { bar: 'qux' } }
-      publicApi.setUser(user as any)
-      publicApi.addAction('message')
+      rumPublicApi.setUser(user as any)
+      rumPublicApi.addAction('message')
 
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({
         email: '[object Object]',
@@ -382,9 +382,9 @@ describe('rum entry', () => {
     })
 
     it('should reject non object input', () => {
-      publicApi.setUser(2 as any)
-      publicApi.setUser(null as any)
-      publicApi.setUser(undefined as any)
+      rumPublicApi.setUser(2 as any)
+      rumPublicApi.setUser(null as any)
+      rumPublicApi.setUser(undefined as any)
       expect(errorSpy).toHaveBeenCalledTimes(3)
     })
   })
@@ -392,13 +392,13 @@ describe('rum entry', () => {
   describe('addTiming', () => {
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let errorSpy: jasmine.Spy<() => void>
-    let publicApi: RumPublicApi
+    let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       errorSpy = spyOn(console, 'error')
-      publicApi = makeRumPublicApi(() => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
         addTiming: addTimingSpy,
       }))
@@ -413,21 +413,21 @@ describe('rum entry', () => {
       const { clock } = setupBuilder.withFakeClock().build()
 
       clock.tick(10)
-      publicApi.addTiming('foo')
+      rumPublicApi.addTiming('foo')
 
       expect(addTimingSpy).not.toHaveBeenCalled()
 
       clock.tick(20)
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10 as RelativeTime)
     })
 
     it('should add custom timings', () => {
-      publicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-      publicApi.addTiming('foo')
+      rumPublicApi.addTiming('foo')
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
