@@ -1,6 +1,4 @@
 import {
-  addEventListener,
-  DOM_EVENT,
   Duration,
   elapsed,
   generateUUID,
@@ -16,6 +14,7 @@ import { EventCounts } from '../../trackEventCounts'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackViewMetrics } from './trackViewMetrics'
+import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 
 export interface ViewEvent {
   id: string
@@ -64,11 +63,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
     initialView.scheduleUpdate()
   })
 
-  const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
-  const { stop: stopHashTracking } = trackHash(onLocationChange)
-
-  function onLocationChange() {
-    if (currentView.isDifferentView(location)) {
+  const { stop: stopLocationChangesTracking } = trackLocationChanges(() => {
+    if (areDifferentLocation(currentView.getLocation(), location)) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
@@ -77,7 +73,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
     }
     currentView.updateLocation(location)
     currentView.triggerUpdate()
-  }
+  })
 
   // Renew view on session renewal
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -115,8 +111,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
     },
     stop: () => {
-      stopHistoryTracking()
-      stopHashTracking()
+      stopLocationChangesTracking()
       stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
@@ -188,12 +183,6 @@ function newView(
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
-    isDifferentView(otherLocation: Location) {
-      return (
-        location.pathname !== otherLocation.pathname ||
-        (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== location.hash)
-      )
-    },
     getLocation() {
       return location
     },
@@ -221,37 +210,6 @@ function newView(
       return location.href
     },
   }
-}
-
-function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substr(1)
-  return !!document.getElementById(correspondingId)
-}
-
-function trackHistory(onHistoryChange: () => void) {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalPushState = history.pushState
-  history.pushState = monitor(function (this: History['pushState']) {
-    originalPushState.apply(this, arguments as any)
-    onHistoryChange()
-  })
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalReplaceState = history.replaceState
-  history.replaceState = monitor(function (this: History['replaceState']) {
-    originalReplaceState.apply(this, arguments as any)
-    onHistoryChange()
-  })
-  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
-  const stop = () => {
-    removeListener()
-    history.pushState = originalPushState
-    history.replaceState = originalReplaceState
-  }
-  return { stop }
-}
-
-function trackHash(onHashChange: () => void) {
-  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 /**
