@@ -1,9 +1,6 @@
 import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
 import { Segment } from '../src/types'
 
-// In the mock worker, for simplicity, we'll just encode the string to UTF-8 instead of deflate it.
-const encoder = new TextEncoder()
-
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
   private deflatedData: Uint8Array[] = []
@@ -52,7 +49,8 @@ export class MockWorker implements DeflateWorker {
   processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
-      this.deflatedData.push(encoder.encode(message.data))
+      // In the mock worker, for simplicity, we'll just encode the string to UTF-8 instead of deflate it.
+      this.deflatedData.push(new TextEncoder().encode(message.data))
 
       switch (message.action) {
         case 'write':

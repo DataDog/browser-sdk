@@ -1,4 +1,4 @@
-import { noop, setDebugMode } from '@datadog/browser-core'
+import { isIE, noop, setDebugMode } from '@datadog/browser-core'
 import { MockWorker, parseSegment } from '../../test/utils'
 import { Record, RecordType, SegmentContext } from '../types'
 import { Segment } from './segment'
@@ -15,6 +15,10 @@ describe('Segment', () => {
   let worker: MockWorker
 
   beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+
     worker = new MockWorker()
     setDebugMode(true)
   })
