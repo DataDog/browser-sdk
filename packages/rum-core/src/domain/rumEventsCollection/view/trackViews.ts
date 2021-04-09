@@ -46,29 +46,16 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 export function trackViews(location: Location, lifeCycle: LifeCycle) {
-  const startOrigin = 0 as RelativeTime
   let isRecording = false
-  const initialView = newView(
-    lifeCycle,
-    location,
-    isRecording,
-    ViewLoadingType.INITIAL_LOAD,
-    document.referrer,
-    startOrigin
-  )
-  let currentView = initialView
 
-  const { stop: stopTimingsTracking } = trackInitialViewTimings(lifeCycle, (timings) => {
-    initialView.updateTimings(timings)
-    initialView.scheduleUpdate()
-  })
-
+  // eslint-disable-next-line prefer-const
+  let { stop: stopInitialViewTracking, initialView: currentView } = trackInitialView()
   const { stop: stopLocationChangesTracking } = trackLocationChanges(() => {
     if (areDifferentLocation(currentView.getLocation(), location)) {
       // Renew view on location changes
       currentView.end()
       currentView.triggerUpdate()
-      currentView = newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+      currentView = trackViewChange()
       return
     }
     currentView.updateLocation(location)
@@ -79,7 +66,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     // do not trigger view update to avoid wrong data
     currentView.end()
-    currentView = newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+    currentView = trackViewChange()
   })
 
   // End the current view on page unload
@@ -105,14 +92,35 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
     SESSION_KEEP_ALIVE_INTERVAL
   )
 
+  function trackInitialView() {
+    const startOrigin = 0 as RelativeTime
+    const initialView = newView(
+      lifeCycle,
+      location,
+      isRecording,
+      ViewLoadingType.INITIAL_LOAD,
+      document.referrer,
+      startOrigin
+    )
+    const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
+      initialView.updateTimings(timings)
+      initialView.scheduleUpdate()
+    })
+    return { initialView, stop }
+  }
+
+  function trackViewChange() {
+    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+  }
+
   return {
     addTiming: (name: string, time = relativeNow()) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
     stop: () => {
+      stopInitialViewTracking()
       stopLocationChangesTracking()
-      stopTimingsTracking()
       currentView.end()
       clearInterval(keepAliveInterval)
     },
