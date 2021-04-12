@@ -130,7 +130,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
 function newView(
   lifeCycle: LifeCycle,
   initialLocation: Location,
-  isRecording: boolean,
+  initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
   startTime = relativeNow(),
@@ -143,7 +143,7 @@ function newView(
   let documentVersion = 0
   let endTime: RelativeTime | undefined
   let location: Location = { ...initialLocation }
-  let hasReplay = isRecording
+  let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
 
