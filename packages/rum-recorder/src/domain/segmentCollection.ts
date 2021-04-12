@@ -1,8 +1,7 @@
-import { addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
+import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../types'
-import { DeflateSegmentWriter } from './deflateSegmentWriter'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
@@ -45,6 +44,14 @@ export function startSegmentCollection(
 ) {
   if (!workerSingleton) {
     workerSingleton = createDeflateWorker()
+    workerSingleton.addEventListener(
+      'message',
+      monitor(({ data }) => {
+        if ('error' in data) {
+          addErrorToMonitoringBatch(data.error)
+        }
+      })
+    )
   }
   return doStartSegmentCollection(
     lifeCycle,
@@ -85,18 +92,6 @@ export function doStartSegmentCollection(
     nextSegmentCreationReason: 'init',
   }
 
-  const writer = new DeflateSegmentWriter(
-    worker,
-    (size) => {
-      if (size > MAX_SEGMENT_SIZE) {
-        flushSegment('max_size')
-      }
-    },
-    (data, meta) => {
-      send(data, meta)
-    }
-  )
-
   const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
     flushSegment('view_change')
   })
@@ -134,24 +129,44 @@ export function doStartSegmentCollection(
     }
   }
 
+  function createNewSegment(creationReason: CreationReason, initialRecord: Record) {
+    const context = getSegmentContext()
+    if (!context) {
+      return
+    }
+
+    const segment = new Segment(
+      worker,
+      context,
+      creationReason,
+      initialRecord,
+      (size) => {
+        if (!segment.isFlushed && size > MAX_SEGMENT_SIZE) {
+          flushSegment('max_size')
+        }
+      },
+      (data) => {
+        send(data, segment.meta)
+      }
+    )
+
+    state = {
+      status: SegmentCollectionStatus.SegmentPending,
+      segment,
+      expirationTimeoutId: setTimeout(
+        monitor(() => {
+          flushSegment('max_duration')
+        }),
+        MAX_SEGMENT_DURATION
+      ),
+    }
+  }
+
   return {
     addRecord: (record: Record) => {
       switch (state.status) {
         case SegmentCollectionStatus.WaitingForInitialRecord:
-          const context = getSegmentContext()
-          if (!context) {
-            return
-          }
-          state = {
-            status: SegmentCollectionStatus.SegmentPending,
-            segment: new Segment(writer, context, state.nextSegmentCreationReason, record),
-            expirationTimeoutId: setTimeout(
-              monitor(() => {
-                flushSegment('max_duration')
-              }),
-              MAX_SEGMENT_DURATION
-            ),
-          }
+          createNewSegment(state.nextSegmentCreationReason, record)
           break
 
         case SegmentCollectionStatus.SegmentPending:
