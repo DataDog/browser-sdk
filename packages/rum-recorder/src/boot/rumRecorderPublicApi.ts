@@ -1,4 +1,4 @@
-import { monitor, noop } from '@datadog/browser-core'
+import { Configuration, monitor, noop } from '@datadog/browser-core'
 import { LifeCycleEventType, makeRumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
@@ -67,13 +67,18 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
-    onInit(userConfiguration)
+    onInit(userConfiguration, configuration)
 
     return startRumResult
   })
 
-  let onInit = (userConfiguration: RumRecorderUserConfiguration) => {
-    if (!userConfiguration.manualSessionReplayRecordingStart) {
+  let onInit = (userConfiguration: RumRecorderUserConfiguration, configuration: Configuration) => {
+    if (
+      !userConfiguration.manualSessionReplayRecordingStart &&
+      // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
+      // the Datadog app. See RUMF-886
+      !configuration.isEnabled('postpone_start_recording')
+    ) {
       startSessionReplayRecordingImpl()
     }
   }

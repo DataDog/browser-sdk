@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { Configuration } from '@datadog/browser-core'
+import { Configuration, includes } from '@datadog/browser-core'
 import { StartRum } from '@datadog/browser-rum-core'
 import { makeRumRecorderPublicApi, RumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
 
@@ -16,8 +16,12 @@ describe('makeRumRecorderPublicApi', () => {
     startRecordingSpy = jasmine.createSpy().and.callFake(() => ({
       stop: stopRecordingSpy,
     }))
-    startRumSpy = jasmine.createSpy().and.callFake(() => {
-      const configuration: Partial<Configuration> = {}
+    startRumSpy = jasmine.createSpy<StartRum>().and.callFake((userConfiguration) => {
+      const configuration: Partial<Configuration> = {
+        isEnabled(feature) {
+          return includes(userConfiguration.enableExperimentalFeatures || [], feature)
+        },
+      }
       return ({ configuration } as unknown) as ReturnType<StartRum>
     })
     rumRecorderPublicApi = makeRumRecorderPublicApi(startRumSpy, startRecordingSpy)
@@ -42,6 +46,14 @@ describe('makeRumRecorderPublicApi', () => {
 
     it('does not start recording when calling init() with manualSessionReplayRecordingStart: true', () => {
       rumRecorderPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+      expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start recording when calling init() with the feature "postpone_start_recording"', () => {
+      rumRecorderPublicApi.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        enableExperimentalFeatures: ['postpone_start_recording'],
+      })
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
   })
