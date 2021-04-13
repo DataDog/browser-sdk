@@ -13,7 +13,7 @@ export interface Timings {
   firstInputTime?: Duration
 }
 
-export function trackTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
+export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings: Timings) => void) {
   let timings: Timings | undefined
   function setTimings(newTimings: Partial<Timings>) {
     timings = { ...timings, ...newTimings }

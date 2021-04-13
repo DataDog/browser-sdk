@@ -21,8 +21,8 @@ import {
   trackFirstInputTimings,
   trackLargestContentfulPaint,
   trackNavigationTimings,
-  trackTimings,
-} from './trackTimings'
+  trackInitialViewTimings,
+} from './trackInitialViewTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -55,7 +55,7 @@ describe('trackTimings', () => {
 
   beforeEach(() => {
     timingsCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackTimings(lifeCycle, timingsCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackInitialViewTimings(lifeCycle, timingsCallback))
   })
 
   afterEach(() => {

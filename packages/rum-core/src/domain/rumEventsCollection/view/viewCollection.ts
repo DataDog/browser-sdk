@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { trackViews, View } from './trackViews'
+import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
@@ -18,7 +18,7 @@ export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
   return trackViews(location, lifeCycle)
 }
 
-function processViewUpdate(view: View) {
+function processViewUpdate(view: ViewEvent) {
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
