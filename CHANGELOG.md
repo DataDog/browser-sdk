@@ -16,6 +16,11 @@
 
 ---
 
+## v2.7.3
+
+- 🐛 [RUMF-886] don't start recording when 'postpone_start_recording' is enabled ([#790](https://github.com/DataDog/browser-sdk/pull/790))
+- 🐛 [RUMF-882] Segments can be flushed because of the max_size limit even if the max_size isn't reached ([#787](https://github.com/DataDog/browser-sdk/pull/787))
+
 ## v2.7.2
 
 - ✨ [RUMF-867] enable start/stop recording API ([#784](https://github.com/DataDog/browser-sdk/pull/784))
