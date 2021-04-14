@@ -143,4 +143,17 @@ describe('rum track location change', () => {
 
     expect(createSpy).not.toHaveBeenCalled()
   })
+
+  it('should not create a new view when the search part of the hash changes', () => {
+    history.pushState({}, '', '/foo#bar')
+    const { lifeCycle } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+
+    history.pushState({}, '', '/foo#bar?search=1')
+    history.pushState({}, '', '/foo#bar?search=2')
+    history.pushState({}, '', '/foo#bar?')
+    history.pushState({}, '', '/foo#bar')
+
+    expect(createSpy).not.toHaveBeenCalled()
+  })
 })
