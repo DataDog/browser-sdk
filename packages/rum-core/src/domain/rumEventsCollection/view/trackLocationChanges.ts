@@ -15,7 +15,8 @@ export function trackLocationChanges(onLocationChange: () => void) {
 export function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
   return (
     currentLocation.pathname !== otherLocation.pathname ||
-    (!isHashAnAnchor(otherLocation.hash) && otherLocation.hash !== currentLocation.hash)
+    (!isHashAnAnchor(otherLocation.hash) &&
+      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
   )
 }
 
@@ -48,4 +49,9 @@ function trackHash(onHashChange: () => void) {
 function isHashAnAnchor(hash: string) {
   const correspondingId = hash.substr(1)
   return !!document.getElementById(correspondingId)
+}
+
+function getPathFromHash(hash: string) {
+  const index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
 }
