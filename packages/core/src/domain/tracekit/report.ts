@@ -74,11 +74,11 @@ export function report(ex: Error) {
   // this exception; otherwise, we will end up with an incomplete
   // stack trace
   setTimeout(
-    () => {
+    monitor(() => {
       if (lastException === ex) {
         processLastException()
       }
-    },
+    }),
     stack.incomplete ? 2000 : 0
   )
 
