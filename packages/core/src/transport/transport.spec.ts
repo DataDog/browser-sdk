@@ -53,6 +53,17 @@ describe('request', () => {
     expect(navigator.sendBeacon).toHaveBeenCalled()
     expect(server.requests.length).toEqual(1)
   })
+
+  it('should fallback to xhr when sendBeacon throws', () => {
+    spyOn(navigator, 'sendBeacon').and.callFake(() => {
+      throw new TypeError()
+    })
+
+    request.send('{"foo":"bar1"}\n{"foo":"bar2"}', 10)
+
+    expect(navigator.sendBeacon).toHaveBeenCalled()
+    expect(server.requests.length).toEqual(1)
+  })
 })
 
 describe('batch', () => {

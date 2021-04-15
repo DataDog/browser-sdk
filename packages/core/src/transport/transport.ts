@@ -1,7 +1,7 @@
 import { Context } from '../tools/context'
 import { getTimeStamp, relativeNow } from '../tools/timeUtils'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
-import { monitor } from '../domain/internalMonitoring'
+import { monitor, addErrorToMonitoringBatch } from '../domain/internalMonitoring'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -20,9 +20,13 @@ export class HttpRequest {
   send(data: string | FormData, size: number) {
     const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
     if (navigator.sendBeacon && size < this.bytesLimit) {
-      const isQueued = navigator.sendBeacon(url, data)
-      if (isQueued) {
-        return
+      try {
+        const isQueued = navigator.sendBeacon(url, data)
+        if (isQueued) {
+          return
+        }
+      } catch (e) {
+        addErrorToMonitoringBatch(e)
       }
     }
     const request = new XMLHttpRequest()
