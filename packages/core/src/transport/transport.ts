@@ -1,6 +1,7 @@
 import { Context } from '../tools/context'
 import { getTimeStamp, relativeNow } from '../tools/timeUtils'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
+import { monitor } from '../domain/internalMonitoring'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
@@ -149,10 +150,13 @@ export class Batch {
   }
 
   private flushPeriodically() {
-    setTimeout(() => {
-      this.flush()
-      this.flushPeriodically()
-    }, this.flushTimeout)
+    setTimeout(
+      monitor(() => {
+        this.flush()
+        this.flushPeriodically()
+      }),
+      this.flushTimeout
+    )
   }
 
   private flushOnVisibilityHidden() {
