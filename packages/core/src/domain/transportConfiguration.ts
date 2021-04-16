@@ -40,7 +40,6 @@ interface TransportSettings {
   site: string
   buildMode: BuildMode
   sdkVersion: string
-  applicationId?: string
   proxyHost?: string
 
   service?: string
@@ -50,7 +49,6 @@ interface TransportSettings {
 
 export function computeTransportConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const transportSettings: TransportSettings = {
-    applicationId: userConfiguration.applicationId,
     buildMode: buildEnv.buildMode,
     clientToken: userConfiguration.clientToken,
     env: userConfiguration.env,
@@ -161,10 +159,7 @@ function getEndpoint(intakeType: IntakeType, endpointType: EndpointType, setting
   const datadogHost = getHost(intakeType, endpointType, settings.site)
   const host = settings.proxyHost ? settings.proxyHost : datadogHost
   const proxyParameter = settings.proxyHost ? `ddhost=${datadogHost}&` : ''
-  const applicationIdParameter = settings.applicationId ? `_dd.application_id=${settings.applicationId}&` : ''
-  const parameters = `${applicationIdParameter}${proxyParameter}ddsource=${
-    source || 'browser'
-  }&ddtags=${encodeURIComponent(tags)}`
+  const parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
 
   return `https://${host}/v1/input/${settings.clientToken}?${parameters}`
 }
