@@ -26,7 +26,7 @@ export class HttpRequest {
           return
         }
       } catch (e) {
-        addErrorToMonitoringBatch(e)
+        reportBeaconError(e)
       }
     }
     const request = new XMLHttpRequest()
@@ -39,6 +39,14 @@ function addBatchTime(url: string) {
   return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}&m_time=${getTimeStamp(
     relativeNow()
   )}`
+}
+
+let hasReportedBeaconError = false
+function reportBeaconError(e: unknown) {
+  if (!hasReportedBeaconError) {
+    hasReportedBeaconError = true
+    addErrorToMonitoringBatch(e)
+  }
 }
 
 export class Batch {
