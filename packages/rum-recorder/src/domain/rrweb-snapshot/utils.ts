@@ -1,4 +1,4 @@
-import { INode } from './types'
+import { INode, SerializedNodeWithId } from './types'
 
 export function hasSerializedNode(n: Node): n is INode {
   return '__sn' in n
@@ -10,4 +10,9 @@ export function getSerializedNodeId(n: Node) {
     return -1
   }
   return n.__sn.id // eslint-disable-line no-underscore-dangle
+}
+
+export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) {
+  // eslint-disable-next-line no-underscore-dangle
+  ;(n as Partial<INode>).__sn = serializeNode
 }

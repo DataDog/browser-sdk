@@ -2,7 +2,7 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
-import { getSerializedNodeId } from './utils'
+import { getSerializedNodeId, setSerializedNode } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -396,7 +396,7 @@ export function serializeNodeWithId(
     }
   }
   const serializedNode = Object.assign(_serializedNode, { id })
-  ;(n as INode).__sn = serializedNode
+  setSerializedNode(n, serializedNode)
   if (id === IGNORED_NODE) {
     return null
   }
