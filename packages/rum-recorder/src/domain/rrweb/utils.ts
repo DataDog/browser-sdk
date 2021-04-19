@@ -1,9 +1,5 @@
 import { getSerializedNodeId, IGNORED_NODE } from '../rrweb-snapshot'
-import { HookResetter, Mirror } from './types'
-
-export const mirror: Mirror = {
-  map: {},
-}
+import { HookResetter } from './types'
 
 export function hookSetter<T>(
   target: T,

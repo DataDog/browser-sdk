@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode } from './types'
 import { getSerializedNodeId, setSerializedNode } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
@@ -364,12 +364,11 @@ export function serializeNodeWithId(
   n: Node | INode,
   options: {
     doc: Document
-    map: IdNodeMap
     skipChild: boolean
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false } = options
+  const { doc, skipChild = false } = options
   let { preserveWhiteSpace = true } = options
   const _serializedNode = serializeNode(n, {
     doc,
@@ -400,7 +399,6 @@ export function serializeNodeWithId(
   if (id === IGNORED_NODE) {
     return null
   }
-  map[id] = n as INode
   let recordChild = !skipChild
   if (serializedNode.type === NodeType.Element) {
     recordChild = recordChild && !serializedNode.shouldBeHidden
@@ -418,7 +416,6 @@ export function serializeNodeWithId(
     for (const childN of Array.from(n.childNodes)) {
       const serializedChildNode = serializeNodeWithId(childN, {
         doc,
-        map,
         skipChild,
         preserveWhiteSpace,
       })
@@ -430,14 +427,9 @@ export function serializeNodeWithId(
   return serializedNode
 }
 
-export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] {
-  const idNodeMap: IdNodeMap = {}
-  return [
-    serializeNodeWithId(n, {
-      doc: n,
-      map: idNodeMap,
-      skipChild: false,
-    }),
-    idNodeMap,
-  ]
+export function snapshot(n: Document): SerializedNodeWithId | null {
+  return serializeNodeWithId(n, {
+    doc: n,
+    skipChild: false,
+  })
 }

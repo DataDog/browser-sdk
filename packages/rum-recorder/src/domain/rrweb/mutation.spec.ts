@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { serializeNodeWithId, SerializedNodeWithId, IdNodeMap } from '../rrweb-snapshot'
+import { serializeNodeWithId, SerializedNodeWithId } from '../rrweb-snapshot'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import { MutationCallBack } from './types'
 
@@ -36,7 +36,7 @@ describe('MutationObserverWrapper', () => {
   })
 
   it('generates a mutation when a node is appended to a known node', () => {
-    addNodeToMap(sandbox, {})
+    addNodeToMap(sandbox)
 
     MockMutationObserver.emitRecords([createMutationRecord()])
 
@@ -63,7 +63,7 @@ describe('MutationObserverWrapper', () => {
   })
 
   it('emits buffered mutation records on freeze', () => {
-    addNodeToMap(sandbox, {})
+    addNodeToMap(sandbox)
 
     MockMutationObserver.storeRecords([createMutationRecord()])
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
@@ -86,10 +86,9 @@ describe('MutationObserverWrapper', () => {
   }
 })
 
-function addNodeToMap(node: Node, map: IdNodeMap) {
+function addNodeToMap(node: Node) {
   serializeNodeWithId(node, {
     doc: document,
-    map,
     ...DEFAULT_OPTIONS,
   })
 }

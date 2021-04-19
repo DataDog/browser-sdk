@@ -1,4 +1,4 @@
-import { IdNodeMap, SerializedNodeWithId } from '../rrweb-snapshot/types'
+import { SerializedNodeWithId } from '../rrweb-snapshot/types'
 import { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
@@ -225,10 +225,6 @@ export interface MediaInteractionParam {
 export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
 export type FocusCallback = (data: FocusRecord['data']) => void
-
-export interface Mirror {
-  map: IdNodeMap
-}
 
 export type ListenerHandler = () => void
 export type HookResetter = () => void

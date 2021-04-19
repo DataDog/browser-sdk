@@ -3,7 +3,7 @@ import { snapshot } from '../rrweb-snapshot'
 import { RawRecord, RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
-import { getWindowHeight, getWindowWidth, mirror } from './utils'
+import { getWindowHeight, getWindowWidth } from './utils'
 import { MutationController } from './mutation'
 
 let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
@@ -33,7 +33,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const takeFullSnapshot = (isCheckout = false) => {
     const wasFrozen = mutationController.isFrozen()
-    mutationController.freeze() // don't allow any mirror modifications during snapshotting
+    mutationController.freeze() // don't allow any node to be serialized or mutation to be emitted during sharpshooting
 
     wrappedEmit(
       {
@@ -57,13 +57,12 @@ export function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
-    const [node, idNodeMap] = snapshot(document)
+    const node = snapshot(document)
 
     if (!node) {
       return console.warn('Failed to snapshot the document')
     }
 
-    mirror.map = idNodeMap
     wrappedEmit({
       data: {
         node,

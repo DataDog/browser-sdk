@@ -54,7 +54,3 @@ export type SerializedNodeWithId = SerializedNode & { id: number }
 export interface INode extends Node {
   __sn: SerializedNodeWithId
 }
-
-export type IdNodeMap = {
-  [key: number]: INode
-}

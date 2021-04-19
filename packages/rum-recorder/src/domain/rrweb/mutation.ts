@@ -17,7 +17,7 @@ import {
   RemovedNodeMutation,
   TextCursor,
 } from './types'
-import { forEach, isAncestorRemoved, isIgnored, mirror } from './utils'
+import { forEach, isAncestorRemoved, isIgnored } from './utils'
 
 interface DoubleLinkedListNode {
   previous: DoubleLinkedListNode | null
@@ -200,9 +200,6 @@ export class MutationObserverWrapper {
   }
 
   private emit = () => {
-    // delay any modification of the mirror until this function
-    // so that the mirror for takeFullSnapshot doesn't get mutated while it's event is being processed
-
     const adds: AddedNodeMutation[] = []
 
     /**
@@ -233,7 +230,6 @@ export class MutationObserverWrapper {
       }
       const sn = serializeNodeWithId(n, {
         doc: document,
-        map: mirror.map,
         skipChild: true,
       })
       if (sn) {
@@ -382,18 +378,15 @@ export class MutationObserverWrapper {
             this.droppedSet.add(n)
           } else if (this.addedSet.has(m.target) && nodeId === -1) {
             /**
-             * If target was newly added and removed child node was
-             * not serialized, it means the child node has been removed
-             * before callback fired, so we can ignore it because
-             * newly added node will be serialized without child nodes.
+             * If target was newly added and removed child node was not serialized, it means the
+             * child node has been removed before callback fired, so we can ignore it because newly
+             * added node will be serialized without child nodes.
              * TODO: verify this
              */
           } else if (isAncestorRemoved(m.target)) {
             /**
-             * If parent id was not in the mirror map any more, it
-             * means the parent node has already been removed. So
-             * the node is also removed which we do not need to track
-             * and replay.
+             * If parent id was not serialized any more, it means the parent node has already been
+             * removed. So the node is also removed which we do not need to track and replay.
              */
           } else if (this.movedSet.has(n) && this.movedMap[moveKey(nodeId, parentId)]) {
             deepDelete(this.movedSet, n)
