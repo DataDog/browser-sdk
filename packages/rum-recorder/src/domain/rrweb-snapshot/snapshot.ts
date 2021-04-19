@@ -2,7 +2,7 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
-import { hasSerializedNode } from './utils'
+import { getSerializedNodeId } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -380,20 +380,20 @@ export function serializeNodeWithId(
     return null
   }
 
-  let id
   // Try to reuse the previous id
-  if (hasSerializedNode(n)) {
-    id = n.__sn.id
-  } else if (
-    isNodeIgnored(_serializedNode) ||
-    (!preserveWhiteSpace &&
-      _serializedNode.type === NodeType.Text &&
-      !_serializedNode.isStyle &&
-      !_serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
-  ) {
-    id = IGNORED_NODE
-  } else {
-    id = genId()
+  let id = getSerializedNodeId(n)
+  if (id === -1) {
+    if (
+      isNodeIgnored(_serializedNode) ||
+      (!preserveWhiteSpace &&
+        _serializedNode.type === NodeType.Text &&
+        !_serializedNode.isStyle &&
+        !_serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
+    ) {
+      id = IGNORED_NODE
+    } else {
+      id = genId()
+    }
   }
   const serializedNode = Object.assign(_serializedNode, { id })
   ;(n as INode).__sn = serializedNode

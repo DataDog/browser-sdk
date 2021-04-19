@@ -1,6 +1,6 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { INode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
+import { getSerializedNodeId } from '../rrweb-snapshot'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
   FocusCallback,
@@ -20,7 +20,7 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -56,16 +56,15 @@ function initMutationObserver(mutationController: MutationController, cb: Mutati
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
-    monitor((evt: MouseEvent | TouchEvent) => {
-      const { target } = evt
-      const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
+    monitor((event: MouseEvent | TouchEvent) => {
+      const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
       const position = {
-        id: mirror.getId(target as INode),
+        id: getSerializedNodeId(event.target as Node),
         timeOffset: 0,
         x: clientX,
         y: clientY,
       }
-      cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
+      cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     }),
     MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
@@ -95,7 +94,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
     if (nodeOrAncestorsShouldBeHidden(event.target as Node)) {
       return
     }
-    const id = mirror.getId(event.target as INode)
+    const id = getSerializedNodeId(event.target as Node)
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
     cb({
       id,
@@ -116,7 +115,7 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
       if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
         return
       }
-      const id = mirror.getId(evt.target as INode)
+      const id = getSerializedNodeId(evt.target as Node)
       if (evt.target === document) {
         const scrollEl = (document.scrollingElement || document.documentElement)!
         cb({
@@ -197,7 +196,7 @@ function initInputObserver(cb: InputCallback): ListenerHandler {
     const lastInputValue = lastInputValueMap.get(target)
     if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
       lastInputValueMap.set(target, v)
-      const id = mirror.getId(target as INode)
+      const id = getSerializedNodeId(target as Node)
       cb({
         ...v,
         id,
@@ -245,7 +244,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
     callMonitored(() => {
-      const id = mirror.getId((this.ownerNode as unknown) as INode)
+      const id = getSerializedNodeId(this.ownerNode!)
       if (id !== -1) {
         cb({
           id,
@@ -260,7 +259,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
     callMonitored(() => {
-      const id = mirror.getId((this.ownerNode as unknown) as INode)
+      const id = getSerializedNodeId(this.ownerNode!)
       if (id !== -1) {
         cb({
           id,
@@ -284,7 +283,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
       return
     }
     mediaInteractionCb({
-      id: mirror.getId(target as INode),
+      id: getSerializedNodeId(target as Node),
       type: event.type === DOM_EVENT.PLAY ? MediaInteractions.Play : MediaInteractions.Pause,
     })
   }

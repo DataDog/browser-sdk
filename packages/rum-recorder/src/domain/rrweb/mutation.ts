@@ -1,5 +1,12 @@
 import { monitor } from '@datadog/browser-core'
-import { hasSerializedNode, IGNORED_NODE, INode, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
+import {
+  getSerializedNodeId,
+  hasSerializedNode,
+  IGNORED_NODE,
+  INode,
+  serializeNodeWithId,
+  transformAttribute,
+} from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -207,7 +214,7 @@ export class MutationObserverWrapper {
       let nextId: number | null = IGNORED_NODE
       while (nextId === IGNORED_NODE) {
         ns = ns && ns.nextSibling
-        nextId = ns && mirror.getId((ns as unknown) as INode)
+        nextId = ns && getSerializedNodeId(ns)
       }
       if (nextId === -1 && nodeOrAncestorsShouldBeHidden(n.nextSibling)) {
         nextId = null
@@ -218,7 +225,7 @@ export class MutationObserverWrapper {
       if (!n.parentNode) {
         return
       }
-      const parentId = mirror.getId((n.parentNode as Node) as INode)
+      const parentId = getSerializedNodeId(n.parentNode)
       const nextId = getNextId(n)
       if (parentId === -1 || nextId === -1) {
         return addList.addNode(n)
@@ -262,7 +269,7 @@ export class MutationObserverWrapper {
     while (addList.length) {
       let node: DoubleLinkedListNode | null = null
       if (candidate) {
-        const parentId = mirror.getId((candidate.value.parentNode as Node) as INode)
+        const parentId = getSerializedNodeId(candidate.value.parentNode!)
         const nextId = getNextId(candidate.value)
         if (parentId !== -1 && nextId !== -1) {
           node = candidate
@@ -271,7 +278,7 @@ export class MutationObserverWrapper {
       if (!node) {
         for (let index = addList.length - 1; index >= 0; index -= 1) {
           const nodeCandidate = addList.get(index)!
-          const parentId = mirror.getId((nodeCandidate.value.parentNode as Node) as INode)
+          const parentId = getSerializedNodeId(nodeCandidate.value.parentNode!)
           const nextId = getNextId(nodeCandidate.value)
           if (parentId !== -1 && nextId !== -1) {
             node = nodeCandidate
@@ -297,14 +304,14 @@ export class MutationObserverWrapper {
       attributes: this.attributes
         .map((attribute) => ({
           attributes: attribute.attributes,
-          id: mirror.getId(attribute.node as INode),
+          id: getSerializedNodeId(attribute.node),
         }))
         // attribute mutation's id was not in the mirror map means the target node has been removed
         .filter((attribute) => mirror.has(attribute.id)),
       removes: this.removes,
       texts: this.texts
         .map((text) => ({
-          id: mirror.getId(text.node as INode),
+          id: getSerializedNodeId(text.node),
           value: text.value,
         }))
         // text mutation's id was not in the mirror map means the target node has been removed
@@ -362,8 +369,8 @@ export class MutationObserverWrapper {
       case 'childList': {
         forEach(m.addedNodes, (n: Node) => this.genAdds(n, m.target))
         forEach(m.removedNodes, (n: Node) => {
-          const nodeId = mirror.getId(n as INode)
-          const parentId = mirror.getId(m.target as INode)
+          const nodeId = getSerializedNodeId(n)
+          const parentId = getSerializedNodeId(m.target)
           if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || isIgnored(n)) {
             return
           }
@@ -379,7 +386,7 @@ export class MutationObserverWrapper {
              * newly added node will be serialized without child nodes.
              * TODO: verify this
              */
-          } else if (isAncestorRemoved(m.target as INode)) {
+          } else if (isAncestorRemoved(m.target)) {
             /**
              * If parent id was not in the mirror map any more, it
              * means the parent node has already been removed. So
@@ -412,13 +419,11 @@ export class MutationObserverWrapper {
         return
       }
       this.movedSet.add(n)
-      let targetId: number | null = null
-      if (target && hasSerializedNode(target)) {
-        targetId = target.__sn.id // eslint-disable-line no-underscore-dangle
-      }
-      if (targetId) {
-        // eslint-disable-next-line no-underscore-dangle
-        this.movedMap[moveKey(n.__sn.id, targetId)] = true
+      if (target) {
+        const targetId = getSerializedNodeId(target)
+        if (targetId !== -1) {
+          this.movedMap[moveKey(getSerializedNodeId(n), targetId)] = true
+        }
       }
     } else {
       this.addedSet.add(n)
@@ -444,7 +449,7 @@ function isParentRemoved(removes: RemovedNodeMutation[], n: Node): boolean {
   if (!parentNode) {
     return false
   }
-  const parentId = mirror.getId((parentNode as Node) as INode)
+  const parentId = getSerializedNodeId(parentNode)
   if (removes.some((r) => r.id === parentId)) {
     return true
   }
