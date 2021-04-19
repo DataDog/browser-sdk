@@ -16,6 +16,11 @@
 
 ---
 
+## v2.7.4
+
+- [RUMF-868] ignore paramaters stored in the hash ([#792](https://github.com/DataDog/browser-sdk/pull/792))
+- 🐛 fallback to xhr when sendBeacon throws ([#796](https://github.com/DataDog/browser-sdk/pull/796))
+
 ## v2.7.3
 
 - 🐛 [RUMF-886] don't start recording when 'postpone_start_recording' is enabled ([#790](https://github.com/DataDog/browser-sdk/pull/790))
