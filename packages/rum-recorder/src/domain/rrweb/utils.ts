@@ -1,19 +1,8 @@
-import { getSerializedNodeId, IGNORED_NODE, INode } from '../rrweb-snapshot'
+import { getSerializedNodeId, IGNORED_NODE } from '../rrweb-snapshot'
 import { HookResetter, Mirror } from './types'
 
 export const mirror: Mirror = {
   map: {},
-  // TODO: use a weakmap to get rid of manually memory management
-  removeNodeFromMap(n) {
-    const id = getSerializedNodeId(n)
-    delete mirror.map[id]
-    if (n.childNodes) {
-      forEach(n.childNodes, (child: ChildNode) => mirror.removeNodeFromMap((child as Node) as INode))
-    }
-  },
-  has(id) {
-    return mirror.map.hasOwnProperty(id)
-  },
 }
 
 export function hookSetter<T>(
@@ -60,7 +49,7 @@ export function isIgnored(n: Node): boolean {
 
 export function isAncestorRemoved(target: Node): boolean {
   const id = getSerializedNodeId(target)
-  if (!mirror.has(id)) {
+  if (id === -1) {
     return true
   }
   if (target.parentNode && target.parentNode.nodeType === target.DOCUMENT_NODE) {

@@ -1,3 +1,4 @@
+import { forEach } from '../rrweb/utils'
 import { INode, SerializedNodeWithId } from './types'
 
 export function hasSerializedNode(n: Node): n is INode {
@@ -15,4 +16,10 @@ export function getSerializedNodeId(n: Node) {
 export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) {
   // eslint-disable-next-line no-underscore-dangle
   ;(n as Partial<INode>).__sn = serializeNode
+}
+
+export function recursivelyRemoveSerializedNodes(n: Node) {
+  // eslint-disable-next-line no-underscore-dangle
+  delete (n as Partial<INode>).__sn
+  forEach(n.childNodes, recursivelyRemoveSerializedNodes)
 }

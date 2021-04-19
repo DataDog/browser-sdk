@@ -1,4 +1,4 @@
-import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
+import { IdNodeMap, SerializedNodeWithId } from '../rrweb-snapshot/types'
 import { FocusRecord, RawRecord } from '../../types'
 import { MutationController } from './mutation'
 
@@ -228,8 +228,6 @@ export type FocusCallback = (data: FocusRecord['data']) => void
 
 export interface Mirror {
   map: IdNodeMap
-  removeNodeFromMap: (n: INode) => void
-  has: (id: number) => boolean
 }
 
 export type ListenerHandler = () => void

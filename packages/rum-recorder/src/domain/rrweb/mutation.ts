@@ -4,6 +4,7 @@ import {
   hasSerializedNode,
   IGNORED_NODE,
   INode,
+  recursivelyRemoveSerializedNodes,
   serializeNodeWithId,
   transformAttribute,
 } from '../rrweb-snapshot'
@@ -244,10 +245,6 @@ export class MutationObserverWrapper {
       }
     }
 
-    while (this.mapRemoves.length) {
-      mirror.removeNodeFromMap(this.mapRemoves.shift() as INode)
-    }
-
     this.movedSet.forEach((n) => {
       if (isParentRemoved(this.removes, n) && !this.movedSet.has(n.parentNode!)) {
         return
@@ -306,17 +303,22 @@ export class MutationObserverWrapper {
           attributes: attribute.attributes,
           id: getSerializedNodeId(attribute.node),
         }))
-        // attribute mutation's id was not in the mirror map means the target node has been removed
-        .filter((attribute) => mirror.has(attribute.id)),
+        // ignore mutations whose target node has been removed
+        .filter((attribute) => attribute.id !== -1),
       removes: this.removes,
       texts: this.texts
         .map((text) => ({
           id: getSerializedNodeId(text.node),
           value: text.value,
         }))
-        // text mutation's id was not in the mirror map means the target node has been removed
-        .filter((text) => mirror.has(text.id)),
+        // ignore mutations whose target node has been removed
+        .filter((text) => text.id !== -1),
     }
+
+    while (this.mapRemoves.length) {
+      recursivelyRemoveSerializedNodes(this.mapRemoves.shift()!)
+    }
+
     // payload may be empty if the mutations happened in some blocked elements
     if (!payload.texts.length && !payload.attributes.length && !payload.removes.length && !payload.adds.length) {
       return
