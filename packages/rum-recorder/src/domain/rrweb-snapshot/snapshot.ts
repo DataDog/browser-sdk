@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode } from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes } from './types'
 import { getSerializedNodeId, setSerializedNode } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
@@ -361,7 +361,7 @@ function isNodeIgnored(sn: SerializedNode): boolean {
 }
 
 export function serializeNodeWithId(
-  n: Node | INode,
+  n: Node,
   options: {
     doc: Document
     skipChild: boolean

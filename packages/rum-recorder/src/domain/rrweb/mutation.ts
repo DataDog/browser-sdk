@@ -3,7 +3,6 @@ import {
   getSerializedNodeId,
   hasSerializedNode,
   IGNORED_NODE,
-  INode,
   recursivelyRemoveSerializedNodes,
   serializeNodeWithId,
   transformAttribute,
@@ -405,7 +404,7 @@ export class MutationObserverWrapper {
     }
   }
 
-  private genAdds = (n: Node | INode, target?: Node | INode) => {
+  private genAdds = (n: Node, target?: Node) => {
     if (nodeOrAncestorsShouldBeHidden(n)) {
       return
     }
