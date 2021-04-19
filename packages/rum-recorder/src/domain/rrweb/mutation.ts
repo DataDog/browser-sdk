@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { IGNORED_NODE, INode, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
+import { hasSerializedNode, IGNORED_NODE, INode, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -101,9 +101,6 @@ class DoubleLinkedList {
 }
 
 const moveKey = (id: number, parentId: number) => `${id}@${parentId}`
-function isINode(n: Node | INode): n is INode {
-  return '__sn' in n
-}
 
 /**
  * Controls how mutations are processed, allowing to temporarily freeze the mutations process.
@@ -410,13 +407,13 @@ export class MutationObserverWrapper {
     if (nodeOrAncestorsShouldBeHidden(n)) {
       return
     }
-    if (isINode(n)) {
+    if (hasSerializedNode(n)) {
       if (isIgnored(n)) {
         return
       }
       this.movedSet.add(n)
       let targetId: number | null = null
-      if (target && isINode(target)) {
+      if (target && hasSerializedNode(target)) {
         targetId = target.__sn.id // eslint-disable-line no-underscore-dangle
       }
       if (targetId) {

@@ -2,6 +2,7 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
+import { hasSerializedNode } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -381,7 +382,7 @@ export function serializeNodeWithId(
 
   let id
   // Try to reuse the previous id
-  if ('__sn' in n) {
+  if (hasSerializedNode(n)) {
     id = n.__sn.id
   } else if (
     isNodeIgnored(_serializedNode) ||

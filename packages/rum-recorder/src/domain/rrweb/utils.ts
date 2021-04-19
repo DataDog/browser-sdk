@@ -1,12 +1,11 @@
-import { IGNORED_NODE, INode } from '../rrweb-snapshot'
+import { hasSerializedNode, IGNORED_NODE, INode } from '../rrweb-snapshot'
 import { HookResetter, Mirror } from './types'
 
 export const mirror: Mirror = {
   map: {},
   getId(n) {
     // if n is not a serialized INode, use -1 as its id.
-    // eslint-disable-next-line no-underscore-dangle
-    if (!n.__sn) {
+    if (!hasSerializedNode(n)) {
       return -1
     }
     return n.__sn.id // eslint-disable-line no-underscore-dangle
@@ -66,7 +65,7 @@ export function getWindowWidth(): number {
 }
 
 export function isIgnored(n: Node | INode): boolean {
-  if ('__sn' in n) {
+  if (hasSerializedNode(n)) {
     return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle
   }
   // The ignored DOM logic happens in rrweb-snapshot::serializeNodeWithId
