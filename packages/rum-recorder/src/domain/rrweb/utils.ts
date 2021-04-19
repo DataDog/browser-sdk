@@ -3,9 +3,6 @@ import { HookResetter, Mirror } from './types'
 
 export const mirror: Mirror = {
   map: {},
-  getNode(id) {
-    return mirror.map[id] || null
-  },
   // TODO: use a weakmap to get rid of manually memory management
   removeNodeFromMap(n) {
     const id = getSerializedNodeId(n)

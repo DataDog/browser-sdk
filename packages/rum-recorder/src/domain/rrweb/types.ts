@@ -228,7 +228,6 @@ export type FocusCallback = (data: FocusRecord['data']) => void
 
 export interface Mirror {
   map: IdNodeMap
-  getNode: (id: number) => INode | null
   removeNodeFromMap: (n: INode) => void
   has: (id: number) => boolean
 }
