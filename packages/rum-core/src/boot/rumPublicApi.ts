@@ -13,6 +13,10 @@ import {
   relativeNow,
   RelativeTime,
   UserConfiguration,
+  timeStampNow,
+  TimeStamp,
+  preferredTime,
+  preferredNow,
 } from '@datadog/browser-core'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
@@ -33,6 +37,10 @@ export type StartRum<C extends RumUserConfiguration = RumUserConfiguration> = (
 ) => StartRumResult
 
 type StartRumResult = ReturnType<typeof startRum>
+type SavedTimes = { relative: RelativeTime; timeStamp: TimeStamp }
+function saveTimes() {
+  return { relative: relativeNow(), timeStamp: timeStampNow() }
+}
 
 export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: StartRum<C>) {
   let isAlreadyInitialized = false
@@ -42,14 +50,14 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, RelativeTime]>()
+  const beforeInitAddTiming = new BoundedBuffer<[string, SavedTimes]>()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, relativeNow()])
+    beforeInitAddTiming.add([name, saveTimes()])
   }
 
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
+  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext, SavedTimes]>()
   let addActionStrategy: StartRumResult['addAction'] = (action) => {
-    beforeInitAddAction.add([action, clonedCommonContext()])
+    beforeInitAddAction.add([action, clonedCommonContext(), saveTimes()])
   }
 
   const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
@@ -86,9 +94,14 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         user,
         context: globalContextManager.get(),
       })))
-      beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
+      beforeInitAddAction.drain(([action, commonContext, { relative, timeStamp }]) =>
+        addActionStrategy({ ...action, startTime: preferredTime(timeStamp, relative) }, commonContext)
+      )
+      // error time get corrected internally
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
+      beforeInitAddTiming.drain(([name, { relative, timeStamp }]) =>
+        addTimingStrategy(name, preferredTime(timeStamp, relative))
+      )
 
       isAlreadyInitialized = true
     }),
@@ -106,7 +119,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       addActionStrategy({
         name,
         context: deepClone(context as Context),
-        startTime: relativeNow(),
+        startTime: preferredNow(),
         type: ActionType.CUSTOM,
       })
     }),
