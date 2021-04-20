@@ -1,4 +1,4 @@
-import { DEFAULT_CONFIGURATION, noop, RelativeTime } from '@datadog/browser-core'
+import { DEFAULT_CONFIGURATION, noop, Time } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { CommonContext, RumEventType } from '../rawRumEvent.types'
@@ -71,7 +71,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].view.url).toBe('modified')
@@ -84,7 +84,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
@@ -97,28 +97,28 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents.length).toBe(0)
@@ -131,7 +131,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
         }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
@@ -143,7 +143,7 @@ describe('rum assembly', () => {
     it('should be merged with event attributes', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].view.id).toBeDefined()
@@ -153,7 +153,7 @@ describe('rum assembly', () => {
     it('should be overwritten by event attributes', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, { date: 10 }),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].date).toBe(10)
@@ -165,7 +165,7 @@ describe('rum assembly', () => {
       commonContext.context = { bar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
@@ -175,7 +175,7 @@ describe('rum assembly', () => {
       commonContext.context = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].context).toBe(undefined)
@@ -185,12 +185,12 @@ describe('rum assembly', () => {
       commonContext.context = { bar: 'foo', baz: 'foz' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       delete commonContext.context.bar
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect((serverRumEvents[0].context as any).bar).toEqual('foo')
@@ -206,7 +206,7 @@ describe('rum assembly', () => {
           context: { replacedContext: 'a' },
           user: {},
         },
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect((serverRumEvents[0].context as any).replacedContext).toEqual('a')
@@ -219,7 +219,7 @@ describe('rum assembly', () => {
       commonContext.user = { id: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].usr!.id).toEqual('foo')
@@ -229,7 +229,7 @@ describe('rum assembly', () => {
       commonContext.user = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].usr).toBe(undefined)
@@ -244,7 +244,7 @@ describe('rum assembly', () => {
           context: {},
           user: { replacedAttribute: 'a' },
         },
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect(serverRumEvents[0].usr!.replacedAttribute).toEqual('a')
@@ -257,7 +257,7 @@ describe('rum assembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext: { foo: 'bar' },
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
 
       expect((serverRumEvents[0].context as any).foo).toEqual('bar')
@@ -269,7 +269,7 @@ describe('rum assembly', () => {
       ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((category) => {
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
           rawRumEvent: createRawRumEvent(category),
-          startTime: 0 as RelativeTime,
+          startTime: 0 as Time,
         })
         expect(serverRumEvents[0].action).toEqual({ id: '7890' })
         serverRumEvents = []
@@ -277,14 +277,14 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents[0].action).not.toBeDefined()
       serverRumEvents = []
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect((serverRumEvents[0] as RumActionEvent).action.id).not.toBeDefined()
       serverRumEvents = []
@@ -295,7 +295,7 @@ describe('rum assembly', () => {
     it('should be merged with event attributes', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents[0].view).toEqual({
         id: 'abcde',
@@ -312,7 +312,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents.length).toBe(1)
     })
@@ -322,7 +322,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents.length).toBe(0)
     })
@@ -332,7 +332,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents.length).toBe(1)
     })
@@ -342,7 +342,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents.length).toBe(0)
     })
@@ -352,7 +352,7 @@ describe('rum assembly', () => {
     it('should include the session type and id', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents[0].session).toEqual({
         has_replay: undefined,
@@ -366,7 +366,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ERROR),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents[0].session.has_replay).toBe(true)
     })
@@ -376,7 +376,7 @@ describe('rum assembly', () => {
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        startTime: 0 as RelativeTime,
+        startTime: 0 as Time,
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
     })

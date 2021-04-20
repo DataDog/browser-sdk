@@ -1,4 +1,4 @@
-import { getTimeStamp, toServerDuration } from '@datadog/browser-core'
+import { toServerDuration, getCorrectedTimeStamp, preferredTime } from '@datadog/browser-core'
 import { RawRumLongTaskEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
@@ -7,8 +7,9 @@ export function startLongTaskCollection(lifeCycle: LifeCycle) {
     if (entry.entryType !== 'longtask') {
       return
     }
+    const timestamp = getCorrectedTimeStamp(entry.startTime)
     const rawRumEvent: RawRumLongTaskEvent = {
-      date: getTimeStamp(entry.startTime),
+      date: timestamp,
       long_task: {
         duration: toServerDuration(entry.duration),
       },
@@ -16,7 +17,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle) {
     }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent,
-      startTime: entry.startTime,
+      startTime: preferredTime(timestamp, entry.startTime),
     })
   })
 }

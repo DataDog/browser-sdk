@@ -1,4 +1,4 @@
-import { monitor, Observable, relativeNow, RelativeTime } from '@datadog/browser-core'
+import { monitor, Observable, Time, preferredNow } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -12,9 +12,11 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
+type CompletionCallbackParameters = { hadActivity: true; endTime: Time } | { hadActivity: false }
+
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
-  completionCallback: (hadActivity: boolean, endTime: RelativeTime) => void
+  completionCallback: (params: CompletionCallbackParameters) => void
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
 
@@ -113,27 +115,27 @@ export function trackPageActivities(
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  completionCallback: (hadActivity: boolean, endTime: RelativeTime) => void
+  completionCallback: (params: CompletionCallbackParameters) => void
 ): { stop: () => void } {
   let idleTimeoutId: number
   let hasCompleted = false
 
   const validationTimeoutId = setTimeout(
-    monitor(() => complete(false, 0 as RelativeTime)),
+    monitor(() => complete({ hadActivity: false })),
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
   const maxDurationTimeoutId = setTimeout(
-    monitor(() => complete(true, relativeNow())),
+    monitor(() => complete({ hadActivity: true, endTime: preferredNow() })),
     PAGE_ACTIVITY_MAX_DURATION
   )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    const lastChangeTime = relativeNow()
+    const lastChangeTime = preferredNow()
     if (!isBusy) {
       idleTimeoutId = setTimeout(
-        monitor(() => complete(true, lastChangeTime)),
+        monitor(() => complete({ hadActivity: true, endTime: lastChangeTime })),
         PAGE_ACTIVITY_END_DELAY
       )
     }
@@ -147,12 +149,12 @@ export function waitPageActivitiesCompletion(
     stopPageActivitiesTracking()
   }
 
-  function complete(hadActivity: boolean, endTime: RelativeTime) {
+  function complete(params: CompletionCallbackParameters) {
     if (hasCompleted) {
       return
     }
     stop()
-    completionCallback(hadActivity, endTime)
+    completionCallback(params)
   }
 
   return { stop }

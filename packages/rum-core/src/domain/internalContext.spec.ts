@@ -73,4 +73,13 @@ describe('internal context', () => {
     expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
     expect(parentContextsStub.findAction).toHaveBeenCalledWith(123)
   })
+
+  it('should return current internal context', () => {
+    setupBuilder.build()
+
+    internalContext.get()
+
+    expect(parentContextsStub.findView).toHaveBeenCalledWith(undefined)
+    expect(parentContextsStub.findAction).toHaveBeenCalledWith(undefined)
+  })
 })

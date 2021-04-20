@@ -6,7 +6,6 @@ import {
   Configuration,
   Context,
   ErrorObservable,
-  getTimeStamp,
   HttpRequest,
   InternalMonitoring,
   limitModification,
@@ -14,6 +13,7 @@ import {
   RawError,
   RelativeTime,
   startAutomaticErrorCollection,
+  getTimeStamp,
   UserConfiguration,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'

@@ -1,5 +1,14 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
-import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
+import {
+  Duration,
+  elapsed,
+  relativeNow,
+  RelativeTime,
+  preferredNow,
+  timeStampNow,
+  TimeStamp,
+  preferredTime,
+} from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -18,6 +27,7 @@ export interface XhrStartContext {
   method: string
   url: string
   startTime: RelativeTime
+  startTimeStamp: TimeStamp
 
   /**
    * allow clients to enhance the context
@@ -83,8 +93,10 @@ function proxyXhr() {
       // so it should stay compatible with older versions
       this._datadog_xhr = {
         method,
-        startTime: -1 as RelativeTime, // computed in send call
         url: normalizeUrl(url),
+        // computed in send call
+        startTime: -1 as RelativeTime,
+        startTimeStamp: -1 as TimeStamp,
       }
     })
     return originalXhrOpen.apply(this, arguments as any)
@@ -96,6 +108,7 @@ function proxyXhr() {
         const xhrPendingContext = this._datadog_xhr as XhrStartContext &
           Pick<XhrCompleteContext, 'startTime' | 'isAborted'>
         xhrPendingContext.startTime = relativeNow()
+        xhrPendingContext.startTimeStamp = timeStampNow()
         xhrPendingContext.isAborted = false
 
         const originalOnreadystatechange = this.onreadystatechange
@@ -124,7 +137,10 @@ function proxyXhr() {
 
           const xhrCompleteContext: XhrCompleteContext = {
             ...xhrPendingContext,
-            duration: elapsed(xhrPendingContext.startTime, relativeNow()),
+            duration: elapsed(
+              preferredTime(xhrPendingContext.startTimeStamp, xhrPendingContext.startTime),
+              preferredNow()
+            ),
             response: this.response as string | undefined,
             status: this.status,
           }

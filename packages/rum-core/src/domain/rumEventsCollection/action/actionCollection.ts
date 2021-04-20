@@ -1,4 +1,4 @@
-import { combine, Configuration, getTimeStamp, toServerDuration } from '@datadog/browser-core'
+import { combine, Configuration, preferredTimeStamp, toServerDuration } from '@datadog/browser-core'
 import { ActionType, CommonContext, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
@@ -49,7 +49,7 @@ function processAction(action: AutoAction | CustomAction) {
         },
         type: action.type,
       },
-      date: getTimeStamp(action.startTime),
+      date: preferredTimeStamp(action.startTime),
       type: RumEventType.ACTION as const,
     },
     autoActionProperties

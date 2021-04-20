@@ -1,4 +1,4 @@
-import { Duration, isIE, RelativeTime } from '@datadog/browser-core'
+import { Duration, isIE, RelativeTime, Time } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
@@ -6,7 +6,7 @@ import { RequestCompleteEvent } from '../../requestCollection'
 import { matchRequestTiming } from './matchRequestTiming'
 
 describe('matchRequestTiming', () => {
-  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100 as RelativeTime, duration: 500 as Duration }
+  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100 as Time, duration: 500 as Duration }
   let entries: RumPerformanceResourceTiming[]
 
   beforeEach(() => {

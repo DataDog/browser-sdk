@@ -5,8 +5,8 @@ import {
   Duration,
   elapsed,
   generateUUID,
-  relativeNow,
-  RelativeTime,
+  Time,
+  preferredNow,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
@@ -25,7 +25,7 @@ export interface ActionCounts {
 export interface CustomAction {
   type: ActionType.CUSTOM
   name: string
-  startTime: RelativeTime
+  startTime: Time
   context?: Context
 }
 
@@ -33,14 +33,14 @@ export interface AutoAction {
   type: AutoActionType
   id: string
   name: string
-  startTime: RelativeTime
+  startTime: Time
   duration: Duration
   counts: ActionCounts
 }
 
 export interface AutoActionCreatedEvent {
   id: string
-  startTime: RelativeTime
+  startTime: Time
 }
 
 export function trackActions(lifeCycle: LifeCycle) {
@@ -89,9 +89,9 @@ function startActionManagement(lifeCycle: LifeCycle) {
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name)
 
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-        if (hadActivity) {
-          pendingAutoAction.complete(endTime)
+      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (params) => {
+        if (params.hadActivity) {
+          pendingAutoAction.complete(params.endTime)
         } else {
           pendingAutoAction.discard()
         }
@@ -110,17 +110,17 @@ function startActionManagement(lifeCycle: LifeCycle) {
 
 class PendingAutoAction {
   private id: string
-  private startTime: RelativeTime
+  private startTime: Time
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
-    this.startTime = relativeNow()
+    this.startTime = preferredNow()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
   }
 
-  complete(endTime: RelativeTime) {
+  complete(endTime: Time) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {

@@ -4,9 +4,10 @@ import {
   generateUUID,
   monitor,
   ONE_MINUTE,
-  relativeNow,
-  RelativeTime,
   throttle,
+  Time,
+  preferredNow,
+  preferredTimeOrigin,
 } from '@datadog/browser-core'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -25,7 +26,7 @@ export interface ViewEvent {
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
-  startTime: RelativeTime
+  startTime: Time
   duration: Duration
   isActive: boolean
   loadingTime?: Duration
@@ -39,7 +40,7 @@ export interface ViewCreatedEvent {
   name?: string
   location: Location
   referrer: string
-  startTime: RelativeTime
+  startTime: Time
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -93,7 +94,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   function trackInitialView() {
-    const startOrigin = 0 as RelativeTime
+    const startOrigin = preferredTimeOrigin()
     const initialView = newView(
       lifeCycle,
       location,
@@ -114,7 +115,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   }
 
   return {
-    addTiming: (name: string, time = relativeNow()) => {
+    addTiming: (name: string, time = preferredNow()) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
@@ -133,7 +134,7 @@ function newView(
   initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime = relativeNow(),
+  startTime = preferredNow(),
   name?: string
 ) {
   // Setup initial values
@@ -141,7 +142,7 @@ function newView(
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let endTime: RelativeTime | undefined
+  let endTime: Time | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
@@ -179,7 +180,7 @@ function newView(
       referrer,
       startTime,
       timings,
-      duration: elapsed(startTime, endTime === undefined ? relativeNow() : endTime),
+      duration: elapsed(startTime, endTime === undefined ? preferredNow() : endTime),
       isActive: endTime === undefined,
     })
   }
@@ -187,7 +188,7 @@ function newView(
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = relativeNow()
+      endTime = preferredNow()
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
@@ -205,7 +206,7 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, endTime: RelativeTime) {
+    addTiming(name: string, endTime: Time) {
       customTimings[sanitizeTiming(name)] = elapsed(startTime, endTime)
     },
     updateLocation(newLocation: Location) {

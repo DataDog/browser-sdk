@@ -1,10 +1,10 @@
-import { Duration, RelativeTime } from '@datadog/browser-core'
+import { Duration, preferredTime, getCorrectedTimeStamp, Time } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { toValidEntry } from './resourceUtils'
 
 interface Timing {
-  startTime: RelativeTime
+  startTime: Time
   duration: Duration
 }
 
@@ -34,7 +34,7 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   const candidates = sameNameEntries
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
-    .filter((entry) => isBetween(entry, request.startTime, endTime(request)))
+    .filter((entry) => isBetween(toTiming(entry), request.startTime, endTime(request)))
 
   if (candidates.length === 1) {
     return candidates[0]
@@ -48,14 +48,18 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
 }
 
 function firstCanBeOptionRequest(correspondingEntries: RumPerformanceResourceTiming[]) {
-  return endTime(correspondingEntries[0]) <= correspondingEntries[1].startTime
+  return endTime(toTiming(correspondingEntries[0])) <= toTiming(correspondingEntries[1]).startTime
+}
+
+function toTiming(entry: RumPerformanceResourceTiming) {
+  return { startTime: preferredTime(getCorrectedTimeStamp(entry.startTime), entry.startTime), duration: entry.duration }
 }
 
 function endTime(timing: Timing) {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return (timing.startTime + timing.duration) as RelativeTime
+  return (timing.startTime + timing.duration) as Time
 }
 
-function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
+function isBetween(timing: Timing, start: Time, end: Time) {
   return timing.startTime >= start && endTime(timing) <= end
 }

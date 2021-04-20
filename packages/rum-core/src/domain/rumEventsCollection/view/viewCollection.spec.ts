@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { Duration, ServerDuration, Time } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -47,7 +47,7 @@ describe('viewCollection', () => {
       loadingType: ViewLoadingType.INITIAL_LOAD,
       location: location as Location,
       referrer: '',
-      startTime: 1234 as RelativeTime,
+      startTime: 1234 as Time,
       timings: {
         domComplete: 10 as Duration,
         domContentLoaded: 10 as Duration,

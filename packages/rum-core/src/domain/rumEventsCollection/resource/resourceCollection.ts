@@ -1,4 +1,13 @@
-import { combine, generateUUID, getTimeStamp, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
+import {
+  combine,
+  generateUUID,
+  preferredTimeStamp,
+  RequestType,
+  ResourceType,
+  toServerDuration,
+  preferredTime,
+  getCorrectedTimeStamp,
+} from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -31,14 +40,16 @@ function processRequest(request: RequestCompleteEvent) {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-  const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  const startTime = matchingTiming
+    ? preferredTime(getCorrectedTimeStamp(matchingTiming.startTime), matchingTiming.startTime)
+    : request.startTime
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request)
 
   const resourceEvent = combine(
     {
-      date: getTimeStamp(startTime),
+      date: preferredTimeStamp(startTime),
       resource: {
         type,
         duration: toServerDuration(request.duration),
@@ -59,9 +70,10 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
   const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry)
 
+  const time = preferredTime(getCorrectedTimeStamp(entry.startTime), entry.startTime)
   const resourceEvent = combine(
     {
-      date: getTimeStamp(entry.startTime),
+      date: preferredTimeStamp(time),
       resource: {
         type,
         url: entry.name,
@@ -71,7 +83,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
     tracingInfo,
     entryMetrics
   )
-  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RawRumResourceEvent }
+  return { startTime: time, rawRumEvent: resourceEvent as RawRumResourceEvent }
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {

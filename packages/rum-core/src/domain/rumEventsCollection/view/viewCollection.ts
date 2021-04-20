@@ -1,6 +1,6 @@
 import {
   Duration,
-  getTimeStamp,
+  preferredTimeStamp,
   isEmptyObject,
   mapValues,
   ServerDuration,
@@ -23,7 +23,7 @@ function processViewUpdate(view: ViewEvent) {
     _dd: {
       document_version: view.documentVersion,
     },
-    date: getTimeStamp(view.startTime),
+    date: preferredTimeStamp(view.startTime),
     type: RumEventType.VIEW,
     view: {
       action: {

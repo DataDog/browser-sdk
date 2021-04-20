@@ -3,11 +3,12 @@ import {
   Configuration,
   Context,
   formatUnknownError,
-  getTimeStamp,
   Observable,
   RawError,
   RelativeTime,
   startAutomaticErrorCollection,
+  getCorrectedTimeStamp,
+  preferredTime,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -49,8 +50,9 @@ function computeRawError(error: unknown, startTime: RelativeTime, source: Provid
 }
 
 function processError(error: RawError) {
+  const timeStamp = getCorrectedTimeStamp(error.startTime)
   const rawRumEvent: RawRumErrorEvent = {
-    date: getTimeStamp(error.startTime),
+    date: timeStamp,
     error: {
       message: error.message,
       resource: error.resource
@@ -69,6 +71,6 @@ function processError(error: RawError) {
 
   return {
     rawRumEvent,
-    startTime: error.startTime,
+    startTime: preferredTime(timeStamp, error.startTime),
   }
 }

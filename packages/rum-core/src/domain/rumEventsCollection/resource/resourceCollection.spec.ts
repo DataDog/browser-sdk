@@ -1,4 +1,12 @@
-import { Duration, RelativeTime, RequestType, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import {
+  Duration,
+  RelativeTime,
+  RequestType,
+  ResourceType,
+  ServerDuration,
+  TimeStamp,
+  Time,
+} from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
@@ -61,7 +69,7 @@ describe('resourceCollection', () => {
         createCompletedRequest({
           duration: 100 as Duration,
           method: 'GET',
-          startTime: 1234 as RelativeTime,
+          startTime: 1234 as Time,
           status: 200,
           type: RequestType.XHR,
           url: 'https://resource.com/valid',
@@ -220,7 +228,7 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
   const request: Partial<RequestCompleteEvent> = {
     duration: 100 as Duration,
     method: 'GET',
-    startTime: 1234 as RelativeTime,
+    startTime: 1234 as Time,
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
