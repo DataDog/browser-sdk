@@ -21,8 +21,14 @@ describe('MutationObserverWrapper', () => {
       pending('IE not supported')
     }
 
+    // Mutation processing expects to happen after the whole document has been serialized first
+    // (during a FullSnapshot).
+    serializeNodeWithId(document, { ...DEFAULT_OPTIONS, skipChild: false })
+
     sandbox = document.createElement('div')
     sandbox.appendChild(document.createElement('div'))
+    document.body.appendChild(sandbox)
+
     mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
     mutationController = new MutationController()
     MockMutationObserver.setup()
@@ -70,6 +76,57 @@ describe('MutationObserverWrapper', () => {
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
     mutationController.freeze()
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not emit attribute changes on removed nodes', () => {
+    const node = document.createElement('div')
+    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
+    serializeNodeWithId(node, DEFAULT_OPTIONS)
+    MockMutationObserver.emitRecords([
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([node]),
+        addedNodes: createNodeList([]),
+      } as unknown) as MutationRecord,
+      ({
+        type: 'attributes',
+        target: node,
+        attributeName: 'data-foo',
+        oldValue: 'bar',
+      } as unknown) as MutationRecord,
+    ])
+
+    expect(mutationCallbackSpy).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        attributes: [],
+      })
+    )
+  })
+
+  it('does not emit text changes on removed nodes', () => {
+    const node = document.createElement('div')
+    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
+    serializeNodeWithId(node, DEFAULT_OPTIONS)
+    MockMutationObserver.emitRecords([
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([node]),
+        addedNodes: createNodeList([]),
+      } as unknown) as MutationRecord,
+      ({
+        type: 'characterData',
+        target: node,
+        oldValue: 'bar',
+      } as unknown) as MutationRecord,
+    ])
+
+    expect(mutationCallbackSpy).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        texts: [],
+      })
+    )
   })
 
   function createMutationRecord(): MutationRecord {

@@ -291,6 +291,10 @@ export class MutationObserverWrapper {
       pushAdd(node.value)
     }
 
+    while (this.mapRemoves.length) {
+      recursivelyRemoveSerializedNodes(this.mapRemoves.shift()!)
+    }
+
     const payload = {
       adds,
       attributes: this.attributes
@@ -308,10 +312,6 @@ export class MutationObserverWrapper {
         }))
         // ignore mutations whose target node has been removed
         .filter((text) => text.id !== -1),
-    }
-
-    while (this.mapRemoves.length) {
-      recursivelyRemoveSerializedNodes(this.mapRemoves.shift()!)
     }
 
     // payload may be empty if the mutations happened in some blocked elements
