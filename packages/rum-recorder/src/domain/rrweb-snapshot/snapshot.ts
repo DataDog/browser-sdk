@@ -2,7 +2,7 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes } from './types'
-import { getSerializedNodeId, setSerializedNode } from './utils'
+import { getSerializedNodeId, isSerializedNodeId, setSerializedNode } from './utils'
 
 const tagNameRegex = /[^a-z1-6-_]/
 
@@ -381,7 +381,7 @@ export function serializeNodeWithId(
 
   // Try to reuse the previous id
   let id = getSerializedNodeId(n)
-  if (id === -1) {
+  if (!isSerializedNodeId(id)) {
     if (
       isNodeIgnored(_serializedNode) ||
       (!preserveWhiteSpace &&

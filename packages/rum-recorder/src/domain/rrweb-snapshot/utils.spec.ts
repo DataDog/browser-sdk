@@ -1,4 +1,10 @@
-import { getSerializedNodeId, hasSerializedNode, recursivelyRemoveSerializedNodes, setSerializedNode } from './utils'
+import {
+  getSerializedNodeId,
+  hasSerializedNode,
+  recursivelyRemoveSerializedNodes,
+  SERIALIZED_NODE_ID_NOT_FOUND,
+  setSerializedNode,
+} from './utils'
 
 describe('serialized Node storage in DOM Nodes', () => {
   describe('hasSerializedNode', () => {
@@ -23,8 +29,8 @@ describe('serialized Node storage in DOM Nodes', () => {
   })
 
   describe('getSerializedNodeId', () => {
-    it('returns -1 for DOM Nodes that are not yet serialized', () => {
-      expect(getSerializedNodeId(document.createElement('div'))).toBe(-1)
+    it('returns SERIALIZED_NODE_ID_NOT_FOUND for DOM Nodes that are not yet serialized', () => {
+      expect(getSerializedNodeId(document.createElement('div'))).toBe(SERIALIZED_NODE_ID_NOT_FOUND)
     })
 
     it('returns the serialized Node id', () => {
@@ -34,12 +40,12 @@ describe('serialized Node storage in DOM Nodes', () => {
       expect(getSerializedNodeId(node)).toBe(42)
     })
 
-    it('returns -1 if the serialized Node have been removed', () => {
+    it('returns SERIALIZED_NODE_ID_NOT_FOUND if the serialized Node have been removed', () => {
       const node = document.createElement('div')
       setSerializedNode(node, {} as any)
       recursivelyRemoveSerializedNodes(node)
 
-      expect(getSerializedNodeId(node)).toBe(-1)
+      expect(getSerializedNodeId(node)).toBe(SERIALIZED_NODE_ID_NOT_FOUND)
     })
   })
 

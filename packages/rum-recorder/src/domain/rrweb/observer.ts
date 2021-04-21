@@ -1,6 +1,6 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { getSerializedNodeId } from '../rrweb-snapshot'
+import { getSerializedNodeId, hasSerializedNode } from '../rrweb-snapshot'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
   FocusCallback,
@@ -244,10 +244,9 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
     callMonitored(() => {
-      const id = getSerializedNodeId(this.ownerNode!)
-      if (id !== -1) {
+      if (hasSerializedNode(this.ownerNode!)) {
         cb({
-          id,
+          id: getSerializedNodeId(this.ownerNode),
           adds: [{ rule, index }],
         })
       }
@@ -259,10 +258,9 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
     callMonitored(() => {
-      const id = getSerializedNodeId(this.ownerNode!)
-      if (id !== -1) {
+      if (hasSerializedNode(this.ownerNode!)) {
         cb({
-          id,
+          id: getSerializedNodeId(this.ownerNode),
           removes: [{ index }],
         })
       }

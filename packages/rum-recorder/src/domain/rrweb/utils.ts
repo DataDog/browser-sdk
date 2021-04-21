@@ -1,4 +1,4 @@
-import { getSerializedNodeId, IGNORED_NODE } from '../rrweb-snapshot'
+import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE } from '../rrweb-snapshot'
 import { HookResetter } from './types'
 
 export function hookSetter<T>(
@@ -44,8 +44,7 @@ export function isIgnored(n: Node): boolean {
 }
 
 export function isAncestorRemoved(target: Node): boolean {
-  const id = getSerializedNodeId(target)
-  if (id === -1) {
+  if (!hasSerializedNode(target)) {
     return true
   }
   if (target.parentNode && target.parentNode.nodeType === target.DOCUMENT_NODE) {

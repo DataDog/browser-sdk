@@ -2,6 +2,7 @@ import { monitor } from '@datadog/browser-core'
 import {
   getSerializedNodeId,
   hasSerializedNode,
+  isSerializedNodeId,
   IGNORED_NODE,
   recursivelyRemoveSerializedNodes,
   serializeNodeWithId,
@@ -213,7 +214,7 @@ export class MutationObserverWrapper {
         ns = ns && ns.nextSibling
         nextId = ns && getSerializedNodeId(ns)
       }
-      if (nextId === -1 && nodeOrAncestorsShouldBeHidden(n.nextSibling)) {
+      if (nextId && !isSerializedNodeId(nextId) && nodeOrAncestorsShouldBeHidden(n.nextSibling)) {
         nextId = null
       }
       return nextId
@@ -224,7 +225,7 @@ export class MutationObserverWrapper {
       }
       const parentId = getSerializedNodeId(n.parentNode)
       const nextId = getNextId(n)
-      if (parentId === -1 || nextId === -1) {
+      if (!isSerializedNodeId(parentId) || (nextId && !isSerializedNodeId(nextId))) {
         return addList.addNode(n)
       }
       const sn = serializeNodeWithId(n, {
@@ -263,7 +264,7 @@ export class MutationObserverWrapper {
       if (candidate) {
         const parentId = getSerializedNodeId(candidate.value.parentNode!)
         const nextId = getNextId(candidate.value)
-        if (parentId !== -1 && nextId !== -1) {
+        if (isSerializedNodeId(parentId) && (!nextId || isSerializedNodeId(nextId))) {
           node = candidate
         }
       }
@@ -272,7 +273,7 @@ export class MutationObserverWrapper {
           const nodeCandidate = addList.get(index)!
           const parentId = getSerializedNodeId(nodeCandidate.value.parentNode!)
           const nextId = getNextId(nodeCandidate.value)
-          if (parentId !== -1 && nextId !== -1) {
+          if (isSerializedNodeId(parentId) && (!nextId || isSerializedNodeId(nextId))) {
             node = nodeCandidate
             break
           }
@@ -303,7 +304,7 @@ export class MutationObserverWrapper {
           id: getSerializedNodeId(attribute.node),
         }))
         // ignore mutations whose target node has been removed
-        .filter((attribute) => attribute.id !== -1),
+        .filter((attribute) => isSerializedNodeId(attribute.id)),
       removes: this.removes,
       texts: this.texts
         .map((text) => ({
@@ -311,7 +312,7 @@ export class MutationObserverWrapper {
           value: text.value,
         }))
         // ignore mutations whose target node has been removed
-        .filter((text) => text.id !== -1),
+        .filter((text) => isSerializedNodeId(text.id)),
     }
 
     // payload may be empty if the mutations happened in some blocked elements
@@ -375,7 +376,7 @@ export class MutationObserverWrapper {
           if (this.addedSet.has(n)) {
             deepDelete(this.addedSet, n)
             this.droppedSet.add(n)
-          } else if (this.addedSet.has(m.target) && nodeId === -1) {
+          } else if (this.addedSet.has(m.target) && !isSerializedNodeId(nodeId)) {
             /**
              * If target was newly added and removed child node was not serialized, it means the
              * child node has been removed before callback fired, so we can ignore it because newly
@@ -415,7 +416,7 @@ export class MutationObserverWrapper {
       this.movedSet.add(n)
       if (target) {
         const targetId = getSerializedNodeId(target)
-        if (targetId !== -1) {
+        if (isSerializedNodeId(targetId)) {
           this.movedMap[moveKey(getSerializedNodeId(n), targetId)] = true
         }
       }
