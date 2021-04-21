@@ -93,3 +93,7 @@ export function getNavigationStart() {
   }
   return navigationStart
 }
+
+export function resetNavigationStart() {
+  navigationStart = undefined
+}

@@ -8,6 +8,7 @@ import {
   noop,
   SPEC_ENDPOINTS,
   TimeStamp,
+  resetNavigationStart,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
@@ -120,8 +121,14 @@ export function setup(): TestSetupBuilder {
       jasmine.clock().mockDate()
       const start = Date.now()
       spyOn(performance, 'now').and.callFake(() => Date.now() - start)
+      resetNavigationStart()
+      Object.defineProperty(performance.timing, 'navigationStart', { value: start, configurable: true })
       clock = jasmine.clock()
-      cleanupClock = () => jasmine.clock().uninstall()
+      cleanupClock = () => {
+        jasmine.clock().uninstall()
+        delete (performance.timing as any).navigationStart
+        resetNavigationStart()
+      }
       return setupBuilder
     },
     beforeBuild(callback: BeforeBuildCallback) {

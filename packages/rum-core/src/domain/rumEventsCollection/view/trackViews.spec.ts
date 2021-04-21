@@ -1,4 +1,5 @@
-import { Duration, RelativeTime, Time } from '../../../../../core/src'
+import { getTimeStamp } from '@datadog/browser-core'
+import { Duration, RelativeTime, Time, preferredTime } from '../../../../../core/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -429,7 +430,7 @@ describe('rum track custom timings', () => {
   it('should add custom timing with a specific time', () => {
     setupBuilder.build()
 
-    addTiming('foo', 1234 as Time)
+    addTiming('foo', preferredTime(getTimeStamp(1234 as RelativeTime), 1234 as RelativeTime))
 
     expect(getViewEvent(1).customTimings).toEqual({
       foo: 1234 as Duration,
@@ -440,7 +441,7 @@ describe('rum track custom timings', () => {
     setupBuilder.build()
     const warnSpy = spyOn(console, 'warn')
 
-    addTiming('foo bar-qux.@zip_21%$*€👋', 1234 as Time)
+    addTiming('foo bar-qux.@zip_21%$*€👋', preferredTime(getTimeStamp(1234 as RelativeTime), 1234 as RelativeTime))
 
     expect(getViewEvent(1).customTimings).toEqual({
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,

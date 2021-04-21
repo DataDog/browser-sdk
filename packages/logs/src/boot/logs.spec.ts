@@ -8,6 +8,9 @@ import {
   Observable,
   RawError,
   Time,
+  preferredTime,
+  getTimeStamp,
+  RelativeTime,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
@@ -283,7 +286,7 @@ describe('logs', () => {
       errorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
-        startTime: 1234 as Time,
+        startTime: preferredTime(getTimeStamp(1234 as RelativeTime), 1234 as RelativeTime),
         type: 'Error',
       })
 

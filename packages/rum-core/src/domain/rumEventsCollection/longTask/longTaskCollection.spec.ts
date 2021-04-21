@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { Duration, getTimeStamp, preferredTime, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumPerformanceEntry } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -10,6 +10,7 @@ describe('long task collection', () => {
 
   beforeEach(() => {
     setupBuilder = setup()
+      .withFakeClock()
       .withConfiguration({
         isEnabled: () => true,
       })
@@ -43,7 +44,7 @@ describe('long task collection', () => {
       startTime: 1234 as RelativeTime,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(preferredTime(getTimeStamp(1234 as RelativeTime), 1234 as RelativeTime))
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       long_task: {

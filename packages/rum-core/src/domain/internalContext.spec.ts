@@ -1,3 +1,4 @@
+import { preferredTimeOrigin } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
@@ -70,8 +71,10 @@ describe('internal context', () => {
 
     internalContext.get(123)
 
-    expect(parentContextsStub.findView).toHaveBeenCalledWith(123)
-    expect(parentContextsStub.findAction).toHaveBeenCalledWith(123)
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    expect(parentContextsStub.findView).toHaveBeenCalledWith(preferredTimeOrigin() + 123)
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    expect(parentContextsStub.findAction).toHaveBeenCalledWith(preferredTimeOrigin() + 123)
   })
 
   it('should return current internal context', () => {

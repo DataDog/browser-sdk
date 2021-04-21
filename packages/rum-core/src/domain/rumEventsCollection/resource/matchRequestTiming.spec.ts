@@ -1,13 +1,15 @@
-import { Duration, isIE, RelativeTime, Time } from '@datadog/browser-core'
+import { Duration, isIE, RelativeTime, preferredTime, TimeStamp } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RequestCompleteEvent } from '../../requestCollection'
 
+import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { matchRequestTiming } from './matchRequestTiming'
 
 describe('matchRequestTiming', () => {
-  const FAKE_REQUEST: Partial<RequestCompleteEvent> = { startTime: 100 as Time, duration: 500 as Duration }
+  let FAKE_REQUEST: Partial<RequestCompleteEvent>
   let entries: RumPerformanceResourceTiming[]
+  let setupBuilder: TestSetupBuilder
 
   beforeEach(() => {
     if (isIE()) {
@@ -15,6 +17,15 @@ describe('matchRequestTiming', () => {
     }
     entries = []
     spyOn(performance, 'getEntriesByName').and.returnValues((entries as unknown) as PerformanceResourceTiming[])
+    setupBuilder = setup().withFakeClock()
+    FAKE_REQUEST = {
+      startTime: preferredTime((Date.now() + 100) as TimeStamp, 100 as RelativeTime),
+      duration: 500 as Duration,
+    }
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
   })
 
   it('should match single timing nested in the request ', () => {

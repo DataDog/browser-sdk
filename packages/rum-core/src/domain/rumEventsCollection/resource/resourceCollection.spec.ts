@@ -6,6 +6,8 @@ import {
   ServerDuration,
   TimeStamp,
   Time,
+  getTimeStamp,
+  preferredTime,
 } from '@datadog/browser-core'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
@@ -21,6 +23,7 @@ describe('resourceCollection', () => {
   describe('when resource tracking is enabled', () => {
     beforeEach(() => {
       setupBuilder = setup()
+        .withFakeClock()
         .withSession({
           getId: () => '1234',
           isTracked: () => true,
@@ -49,7 +52,7 @@ describe('resourceCollection', () => {
         })
       )
 
-      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].startTime).toBe(preferredTime(getTimeStamp(1234 as RelativeTime), 1234 as RelativeTime))
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as TimeStamp,
         resource: {
