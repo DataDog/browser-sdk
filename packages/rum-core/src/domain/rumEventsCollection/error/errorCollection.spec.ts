@@ -1,4 +1,4 @@
-import { ErrorSource, Observable, RawError, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, Observable, RawError, Time } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { doStartErrorCollection } from './errorCollection'
@@ -28,7 +28,7 @@ describe('error collection', () => {
       addError({
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
-        startTime: 12 as RelativeTime,
+        startTime: 12 as Time,
       })
 
       expect(rawRumEvents.length).toBe(1)
@@ -56,7 +56,7 @@ describe('error collection', () => {
         context: { foo: 'bar' },
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
-        startTime: 12 as RelativeTime,
+        startTime: 12 as Time,
       })
       expect(rawRumEvents[0].customerContext).toEqual({
         foo: 'bar',
@@ -69,7 +69,7 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           source: ErrorSource.CUSTOM,
-          startTime: 12 as RelativeTime,
+          startTime: 12 as Time,
         },
         { context: { foo: 'bar' }, user: {} }
       )
@@ -84,7 +84,7 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           source: ErrorSource.CUSTOM,
-          startTime: 12 as RelativeTime,
+          startTime: 12 as Time,
         },
         { context: {}, user: { id: 'foo' } }
       )
@@ -106,7 +106,7 @@ describe('error collection', () => {
         },
         source: ErrorSource.NETWORK,
         stack: 'bar',
-        startTime: 1234 as RelativeTime,
+        startTime: 1234 as Time,
         type: 'foo',
       })
 

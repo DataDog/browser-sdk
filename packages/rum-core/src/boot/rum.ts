@@ -1,4 +1,4 @@
-import { combine, commonInit, Configuration, preferSystemClock } from '@datadog/browser-core'
+import { combine, commonInit, Configuration } from '@datadog/browser-core'
 import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -22,9 +22,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   const lifeCycle = new LifeCycle()
 
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
-  if (configuration.isEnabled('system-clock')) {
-    preferSystemClock()
-  }
   const session = startRumSession(configuration, lifeCycle)
 
   internalMonitoring.setExternalContextProvider(() =>

@@ -60,9 +60,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     beforeInitAddAction.add([action, clonedCommonContext(), saveTimes()])
   }
 
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
+  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext, SavedTimes]>()
   let addErrorStrategy: StartRumResult['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, clonedCommonContext()])
+    beforeInitAddError.add([providedError, clonedCommonContext(), saveTimes()])
   }
 
   function clonedCommonContext(): CommonContext {
@@ -98,7 +98,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         addActionStrategy({ ...action, startTime: preferredTime(timeStamp, relative) }, commonContext)
       )
       // error time get corrected internally
-      beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
+      beforeInitAddError.drain(([error, commonContext, { relative, timeStamp }]) =>
+        addErrorStrategy({ ...error, startTime: preferredTime(timeStamp, relative) }, commonContext)
+      )
       beforeInitAddTiming.drain(([name, { relative, timeStamp }]) =>
         addTimingStrategy(name, preferredTime(timeStamp, relative))
       )
@@ -143,7 +145,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         error,
         context: deepClone(context as Context),
         source: checkedSource,
-        startTime: relativeNow(),
+        startTime: preferredNow(),
       })
     }),
 

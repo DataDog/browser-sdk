@@ -7,7 +7,7 @@ import {
   noop,
   Observable,
   RawError,
-  RelativeTime,
+  Time,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
@@ -254,7 +254,7 @@ describe('logs', () => {
       errorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
-        startTime: 1234 as RelativeTime,
+        startTime: 1234 as Time,
         type: 'Error',
       })
 
@@ -283,7 +283,7 @@ describe('logs', () => {
       errorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
-        startTime: 1234 as RelativeTime,
+        startTime: 1234 as Time,
         type: 'Error',
       })
 

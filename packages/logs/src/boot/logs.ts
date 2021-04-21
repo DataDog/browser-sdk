@@ -13,8 +13,9 @@ import {
   RawError,
   RelativeTime,
   startAutomaticErrorCollection,
-  getTimeStamp,
   UserConfiguration,
+  preferredTimeStamp,
+  preferredRelativeTime,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
@@ -62,7 +63,7 @@ export function doStartLogs(
       error.message,
       combine(
         {
-          date: getTimeStamp(error.startTime),
+          date: preferredTimeStamp(error.startTime),
           error: {
             kind: error.type,
             origin: error.source,
@@ -78,7 +79,7 @@ export function doStartLogs(
               },
             }
           : undefined,
-        getRUMInternalContext(error.startTime)
+        getRUMInternalContext(preferredRelativeTime(error.startTime))
       )
     )
   })
