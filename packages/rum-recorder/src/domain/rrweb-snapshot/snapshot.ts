@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes } from './types'

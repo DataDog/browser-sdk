@@ -15,16 +15,14 @@ export function getSerializedNodeId(n: Node) {
   if (!hasSerializedNode(n)) {
     return SERIALIZED_NODE_ID_NOT_FOUND
   }
-  return n.__sn.id // eslint-disable-line no-underscore-dangle
+  return n.__sn.id
 }
 
 export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) {
-  // eslint-disable-next-line no-underscore-dangle
   ;(n as Partial<NodeWithSerializedNode>).__sn = serializeNode
 }
 
 export function recursivelyRemoveSerializedNodes(n: Node) {
-  // eslint-disable-next-line no-underscore-dangle
   delete (n as Partial<NodeWithSerializedNode>).__sn
   forEach(n.childNodes, recursivelyRemoveSerializedNodes)
 }

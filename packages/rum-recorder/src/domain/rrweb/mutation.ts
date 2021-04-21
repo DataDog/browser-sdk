@@ -53,7 +53,6 @@ class DoubleLinkedList {
       previous: null,
       value: n as NodeInLinkedList,
     }
-    /* eslint-disable no-underscore-dangle */
     ;(n as NodeInLinkedList).__ln = node
     if (n.previousSibling && isNodeInLinkedList(n.previousSibling)) {
       const current = n.previousSibling.__ln.next
@@ -68,7 +67,6 @@ class DoubleLinkedList {
       node.previous = current
       node.next = n.nextSibling.__ln
       n.nextSibling.__ln.previous = node
-      /* eslint-enable no-underscore-dangle */
       if (current) {
         current.next = node
       }
@@ -83,7 +81,7 @@ class DoubleLinkedList {
   }
 
   public removeNode(n: NodeInLinkedList) {
-    const current = n.__ln // eslint-disable-line no-underscore-dangle
+    const current = n.__ln
     if (!this.head) {
       return
     }
@@ -99,11 +97,9 @@ class DoubleLinkedList {
         current.next.previous = current.previous
       }
     }
-    /* eslint-disable no-underscore-dangle */
     if (n.__ln) {
       delete (n as any).__ln
     }
-    /* eslint-enable no-underscore-dangle */
     this.length -= 1
   }
 }
