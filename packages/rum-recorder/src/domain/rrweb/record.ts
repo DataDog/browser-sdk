@@ -33,7 +33,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const takeFullSnapshot = (isCheckout = false) => {
     const wasFrozen = mutationController.isFrozen()
-    mutationController.freeze() // don't allow any node to be serialized or mutation to be emitted during sharpshooting
+    mutationController.freeze() // don't allow any node to be serialized or mutation to be emitted during snapshooting
 
     wrappedEmit(
       {
