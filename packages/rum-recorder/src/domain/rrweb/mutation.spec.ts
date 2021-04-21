@@ -4,6 +4,7 @@ import { MutationObserverWrapper, MutationController } from './mutation'
 import { MutationCallBack } from './types'
 
 const DEFAULT_OPTIONS = {
+  doc: document,
   blockClass: 'dd-block',
   blockSelector: null,
   skipChild: true,
@@ -36,7 +37,7 @@ describe('MutationObserverWrapper', () => {
   })
 
   it('generates a mutation when a node is appended to a known node', () => {
-    addNodeToMap(sandbox)
+    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
 
     MockMutationObserver.emitRecords([createMutationRecord()])
 
@@ -63,7 +64,7 @@ describe('MutationObserverWrapper', () => {
   })
 
   it('emits buffered mutation records on freeze', () => {
-    addNodeToMap(sandbox)
+    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
 
     MockMutationObserver.storeRecords([createMutationRecord()])
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
@@ -85,13 +86,6 @@ describe('MutationObserverWrapper', () => {
     }
   }
 })
-
-function addNodeToMap(node: Node) {
-  serializeNodeWithId(node, {
-    doc: document,
-    ...DEFAULT_OPTIONS,
-  })
-}
 
 function createNodeList(nodes: Node[]): NodeList {
   return (Object.assign(nodes.slice(), {
