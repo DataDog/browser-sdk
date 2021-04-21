@@ -1,12 +1,10 @@
 import { runOnReadyState } from '@datadog/browser-core'
 import { snapshot } from '../rrweb-snapshot'
-import { RawRecord, RecordType } from '../../types'
+import { RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth } from './utils'
 import { MutationController } from './mutation'
-
-let wrappedEmit!: (record: RawRecord, isCheckout?: boolean) => void
 
 export function record(options: RecordOptions = {}): RecordAPI {
   const { emit } = options
@@ -17,25 +15,10 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const mutationController = new MutationController()
 
-  wrappedEmit = (record, isCheckout) => {
-    if (
-      mutationController.isFrozen() &&
-      record.type !== RecordType.FullSnapshot &&
-      !(record.type === RecordType.IncrementalSnapshot && record.data.source === IncrementalSource.Mutation)
-    ) {
-      // we've got a user initiated record so first we need to apply
-      // all DOM changes that have been buffering during paused state
-      mutationController.unfreeze()
-    }
-
-    emit(record, isCheckout)
-  }
-
   const takeFullSnapshot = (isCheckout = false) => {
-    const wasFrozen = mutationController.isFrozen()
-    mutationController.freeze() // don't allow any node to be serialized or mutation to be emitted during snapshooting
+    mutationController.flush() // process any pending mutation before taking a full snapshot
 
-    wrappedEmit(
+    emit(
       {
         data: {
           height: getWindowHeight(),
@@ -47,7 +30,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       isCheckout
     )
 
-    wrappedEmit(
+    emit(
       {
         data: {
           has_focus: document.hasFocus(),
@@ -63,7 +46,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       return console.warn('Failed to snapshot the document')
     }
 
-    wrappedEmit({
+    emit({
       data: {
         node,
         initialOffset: {
@@ -85,9 +68,6 @@ export function record(options: RecordOptions = {}): RecordAPI {
       },
       type: RecordType.FullSnapshot,
     })
-    if (!wasFrozen) {
-      mutationController.unfreeze()
-    }
   }
 
   const handlers: ListenerHandler[] = []
@@ -98,7 +78,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
       initObservers({
         mutationController,
         inputCb: (v) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.Input,
               ...v,
@@ -106,7 +86,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         mediaInteractionCb: (p) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.MediaInteraction,
               ...p,
@@ -114,7 +94,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         mouseInteractionCb: (d) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.MouseInteraction,
               ...d,
@@ -122,7 +102,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         mousemoveCb: (positions, source) =>
-          wrappedEmit({
+          emit({
             data: {
               positions,
               source,
@@ -130,7 +110,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         mutationCb: (m) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.Mutation,
               ...m,
@@ -138,7 +118,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         scrollCb: (p) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.Scroll,
               ...p,
@@ -146,7 +126,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         styleSheetRuleCb: (r) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.StyleSheetRule,
               ...r,
@@ -154,7 +134,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         viewportResizeCb: (d) =>
-          wrappedEmit({
+          emit({
             data: {
               source: IncrementalSource.ViewportResize,
               ...d,
@@ -162,7 +142,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
             type: RecordType.IncrementalSnapshot,
           }),
         focusCb: (data) =>
-          wrappedEmit({
+          emit({
             type: RecordType.Focus,
             data,
           }),

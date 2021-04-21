@@ -69,12 +69,12 @@ describe('MutationObserverWrapper', () => {
     expect(mutationCallbackSpy).not.toHaveBeenCalled()
   })
 
-  it('emits buffered mutation records on freeze', () => {
+  it('emits buffered mutation records on flush', () => {
     serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
 
     MockMutationObserver.storeRecords([createMutationRecord()])
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
-    mutationController.freeze()
+    mutationController.flush()
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
   })
 

@@ -107,33 +107,17 @@ class DoubleLinkedList {
 const moveKey = (id: number, parentId: number) => `${id}@${parentId}`
 
 /**
- * Controls how mutations are processed, allowing to temporarily freeze the mutations process.
+ * Controls how mutations are processed, allowing to flush pending mutations.
  */
 export class MutationController {
-  private frozen = false
-  private unfreezeListener?: () => void
-  private freezeListener?: () => void
+  private flushListener?: () => void
 
-  public freeze() {
-    this.freezeListener?.()
-    this.frozen = true
+  public flush() {
+    this.flushListener?.()
   }
 
-  public unfreeze() {
-    this.unfreezeListener?.()
-    this.frozen = false
-  }
-
-  public isFrozen() {
-    return this.frozen
-  }
-
-  public onFreeze(listener: () => void) {
-    this.freezeListener = listener
-  }
-
-  public onUnfreeze(listener: () => void) {
-    this.unfreezeListener = listener
+  public onFlush(listener: () => void) {
+    this.flushListener = listener
   }
 }
 
@@ -180,8 +164,7 @@ export class MutationObserverWrapper {
       childList: true,
       subtree: true,
     })
-    this.controller.onFreeze(() => this.processMutations(this.observer.takeRecords()))
-    this.controller.onUnfreeze(this.emit)
+    this.controller.onFlush(() => this.processMutations(this.observer.takeRecords()))
   }
 
   public stop() {
@@ -190,9 +173,7 @@ export class MutationObserverWrapper {
 
   private processMutations = (mutations: MutationRecord[]) => {
     mutations.forEach(this.processMutation)
-    if (!this.controller.isFrozen()) {
-      this.emit()
-    }
+    this.emit()
   }
 
   private emit = () => {
