@@ -4,7 +4,6 @@ import {
   hasSerializedNode,
   isSerializedNodeId,
   IGNORED_NODE,
-  recursivelyRemoveSerializedNodes,
   serializeNodeWithId,
   transformAttribute,
 } from '../rrweb-snapshot'
@@ -145,7 +144,6 @@ export class MutationObserverWrapper {
   private texts: TextCursor[] = []
   private attributes: AttributeCursor[] = []
   private removes: RemovedNodeMutation[] = []
-  private mapRemoves: Node[] = []
 
   private movedMap: Record<string, true> = {}
 
@@ -288,27 +286,23 @@ export class MutationObserverWrapper {
       pushAdd(node.value)
     }
 
-    while (this.mapRemoves.length) {
-      recursivelyRemoveSerializedNodes(this.mapRemoves.shift()!)
-    }
-
     const payload = {
       adds,
       attributes: this.attributes
+        // ignore mutations whose target node has been removed
+        .filter((attribute) => document.contains(attribute.node))
         .map((attribute) => ({
           attributes: attribute.attributes,
           id: getSerializedNodeId(attribute.node),
-        }))
-        // ignore mutations whose target node has been removed
-        .filter((attribute) => isSerializedNodeId(attribute.id)),
+        })),
       removes: this.removes,
       texts: this.texts
+        // ignore mutations whose target node has been removed
+        .filter((text) => document.contains(text.node))
         .map((text) => ({
           id: getSerializedNodeId(text.node),
           value: text.value,
-        }))
-        // ignore mutations whose target node has been removed
-        .filter((text) => isSerializedNodeId(text.id)),
+        })),
     }
 
     // payload may be empty if the mutations happened in some blocked elements
@@ -392,7 +386,6 @@ export class MutationObserverWrapper {
               id: nodeId,
             })
           }
-          this.mapRemoves.push(n)
         })
         break
       }

@@ -1,4 +1,3 @@
-import { forEach } from '../rrweb/utils'
 import { SerializedNodeWithId } from './types'
 
 export const SERIALIZED_NODE_ID_NOT_FOUND = -1
@@ -20,11 +19,6 @@ export function getSerializedNodeId(n: Node) {
 
 export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) {
   ;(n as Partial<NodeWithSerializedNode>).__sn = serializeNode
-}
-
-export function recursivelyRemoveSerializedNodes(n: Node) {
-  delete (n as Partial<NodeWithSerializedNode>).__sn
-  forEach(n.childNodes, recursivelyRemoveSerializedNodes)
 }
 
 export function isSerializedNodeId(id: number) {
