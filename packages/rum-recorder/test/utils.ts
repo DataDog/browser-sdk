@@ -362,7 +362,11 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
       }
 
       if ('childNodes' in node) {
-        return new ExpectedNode({ ...node, childNodes: [] })
+        const nodeCopy = { ...node, childNodes: [] }
+        if (!nodeCopy.isSVG) {
+          delete nodeCopy.isSVG
+        }
+        return new ExpectedNode(nodeCopy)
       }
 
       return new ExpectedNode(node)

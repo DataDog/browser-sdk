@@ -23,3 +23,14 @@ export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) 
 export function nodeIsIgnored(n: Node): boolean {
   return getSerializedNodeId(n) === IGNORED_NODE_ID
 }
+
+export function nodeOrAncestorsIsIgnored(n: Node) {
+  let current: Node | null = n
+  while (current) {
+    if (nodeIsIgnored(current)) {
+      return true
+    }
+    current = current.parentNode
+  }
+  return false
+}
