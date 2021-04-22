@@ -1,31 +1,5 @@
-import { IGNORED_NODE, INode } from '../rrweb-snapshot'
-import { HookResetter, Mirror } from './types'
-
-export const mirror: Mirror = {
-  map: {},
-  getId(n) {
-    // if n is not a serialized INode, use -1 as its id.
-    // eslint-disable-next-line no-underscore-dangle
-    if (!n.__sn) {
-      return -1
-    }
-    return n.__sn.id // eslint-disable-line no-underscore-dangle
-  },
-  getNode(id) {
-    return mirror.map[id] || null
-  },
-  // TODO: use a weakmap to get rid of manually memory management
-  removeNodeFromMap(n) {
-    const id = n.__sn && n.__sn.id // eslint-disable-line no-underscore-dangle
-    delete mirror.map[id]
-    if (n.childNodes) {
-      forEach(n.childNodes, (child: ChildNode) => mirror.removeNodeFromMap((child as Node) as INode))
-    }
-  },
-  has(id) {
-    return mirror.map.hasOwnProperty(id)
-  },
-}
+import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE } from '../rrweb-snapshot'
+import { HookResetter } from './types'
 
 export function hookSetter<T>(
   target: T,
@@ -65,17 +39,12 @@ export function getWindowWidth(): number {
   )
 }
 
-export function isIgnored(n: Node | INode): boolean {
-  if ('__sn' in n) {
-    return n.__sn.id === IGNORED_NODE // eslint-disable-line no-underscore-dangle
-  }
-  // The ignored DOM logic happens in rrweb-snapshot::serializeNodeWithId
-  return false
+export function isIgnored(n: Node): boolean {
+  return getSerializedNodeId(n) === IGNORED_NODE
 }
 
-export function isAncestorRemoved(target: INode): boolean {
-  const id = mirror.getId(target)
-  if (!mirror.has(id)) {
+export function isAncestorRemoved(target: Node): boolean {
+  if (!hasSerializedNode(target)) {
     return true
   }
   if (target.parentNode && target.parentNode.nodeType === target.DOCUMENT_NODE) {
@@ -85,7 +54,7 @@ export function isAncestorRemoved(target: INode): boolean {
   if (!target.parentNode) {
     return true
   }
-  return isAncestorRemoved((target.parentNode as unknown) as INode)
+  return isAncestorRemoved(target.parentNode)
 }
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {

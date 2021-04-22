@@ -50,11 +50,3 @@ export type CommentNode = {
 export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode | CommentNode
 
 export type SerializedNodeWithId = SerializedNode & { id: number }
-
-export interface INode extends Node {
-  __sn: SerializedNodeWithId
-}
-
-export type IdNodeMap = {
-  [key: number]: INode
-}
