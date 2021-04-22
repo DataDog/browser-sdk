@@ -78,6 +78,17 @@ unit:
     - yarn test:unit
     - ./scripts/codecov.sh
 
+unit_system_clock:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    reports:
+      junit: test-report/unit/*.xml
+  script:
+    - yarn
+    - SYSTEM_CLOCK=true yarn test:unit
+
 e2e:
   stage: test
   tags: ['runner:main', 'size:large']
@@ -91,6 +102,20 @@ e2e:
   script:
     - yarn
     - yarn test:e2e
+
+e2e_system_clock:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - SYSTEM_CLOCK=true yarn test:e2e
 
 check-licenses:
   stage: test

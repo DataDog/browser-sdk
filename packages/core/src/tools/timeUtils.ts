@@ -1,4 +1,5 @@
-import { isNumber, round, ONE_SECOND } from './utils'
+import { buildEnv } from '../boot/buildEnv'
+import { isNumber, round } from './utils'
 
 export type Duration = number & { d: 'Duration in ms' }
 export type ServerDuration = number & { s: 'Duration in ns' }
@@ -6,7 +7,7 @@ export type TimeStamp = number & { t: 'Epoch time' }
 export type RelativeTime = number & { r: 'Time relative to navigation start' } & { d: 'Duration in ms' }
 export type Time = (TimeStamp | RelativeTime) & { p: 'preferred time' }
 
-let isSystemClockPreferred = false
+let isSystemClockPreferred = buildEnv.systemClock
 
 export function preferSystemClock() {
   isSystemClockPreferred = true
@@ -86,7 +87,7 @@ export function getTimeStamp(relativeTime: RelativeTime) {
  * Navigation start slightly change on some rare cases
  */
 let navigationStart: TimeStamp | undefined
-function getNavigationStart() {
+export function getNavigationStart() {
   if (navigationStart === undefined) {
     navigationStart = performance.timing.navigationStart as TimeStamp
   }
