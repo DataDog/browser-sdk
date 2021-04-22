@@ -80,20 +80,23 @@ describe('MutationObserverWrapper', () => {
 
   it('does not emit attribute changes on removed nodes', () => {
     const node = document.createElement('div')
-    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
-    serializeNodeWithId(node, DEFAULT_OPTIONS)
+    sandbox.appendChild(node)
+    serializeNodeWithId(sandbox, { ...DEFAULT_OPTIONS, skipChild: false })
+
+    node.remove()
+
     MockMutationObserver.emitRecords([
-      ({
-        type: 'childList',
-        target: sandbox,
-        removedNodes: createNodeList([node]),
-        addedNodes: createNodeList([]),
-      } as unknown) as MutationRecord,
       ({
         type: 'attributes',
         target: node,
         attributeName: 'data-foo',
         oldValue: 'bar',
+      } as unknown) as MutationRecord,
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([node]),
+        addedNodes: createNodeList([]),
       } as unknown) as MutationRecord,
     ])
 
@@ -106,19 +109,24 @@ describe('MutationObserverWrapper', () => {
 
   it('does not emit text changes on removed nodes', () => {
     const node = document.createElement('div')
-    serializeNodeWithId(sandbox, DEFAULT_OPTIONS)
-    serializeNodeWithId(node, DEFAULT_OPTIONS)
+    sandbox.appendChild(node)
+    const textNode = document.createTextNode('foo')
+    node.appendChild(textNode)
+    serializeNodeWithId(sandbox, { ...DEFAULT_OPTIONS, skipChild: false })
+
+    node.remove()
+
     MockMutationObserver.emitRecords([
+      ({
+        type: 'characterData',
+        target: textNode,
+        oldValue: 'bar',
+      } as unknown) as MutationRecord,
       ({
         type: 'childList',
         target: sandbox,
         removedNodes: createNodeList([node]),
         addedNodes: createNodeList([]),
-      } as unknown) as MutationRecord,
-      ({
-        type: 'characterData',
-        target: node,
-        oldValue: 'bar',
       } as unknown) as MutationRecord,
     ])
 
@@ -127,6 +135,44 @@ describe('MutationObserverWrapper', () => {
         texts: [],
       })
     )
+  })
+
+  it('removing then re-adding a node in a single mutation batch does not break subsequent mutation processing', () => {
+    const after = document.createElement('div')
+    sandbox.appendChild(after)
+
+    serializeNodeWithId(sandbox, { ...DEFAULT_OPTIONS, skipChild: false })
+
+    MockMutationObserver.emitRecords([
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([after]),
+        addedNodes: createNodeList([]),
+      } as unknown) as MutationRecord,
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([]),
+        addedNodes: createNodeList([after]),
+      } as unknown) as MutationRecord,
+    ])
+
+    expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+    const node = document.createElement('div')
+    sandbox.insertBefore(node, after)
+
+    MockMutationObserver.emitRecords([
+      ({
+        type: 'childList',
+        target: sandbox,
+        removedNodes: createNodeList([]),
+        addedNodes: createNodeList([node]),
+      } as unknown) as MutationRecord,
+    ])
+
+    expect(mutationCallbackSpy).toHaveBeenCalledTimes(2)
   })
 
   function createMutationRecord(): MutationRecord {
