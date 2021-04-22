@@ -1,7 +1,7 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes } from './types'
-import { getSerializedNodeId, isSerializedNodeId, setSerializedNode } from './utils'
+import { getSerializedNodeId, isSerializedNodeId, setSerializedNode } from './serializationUtils'
 
 const tagNameRegex = /[^a-z1-6-_]/
 

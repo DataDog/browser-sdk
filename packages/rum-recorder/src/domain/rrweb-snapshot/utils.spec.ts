@@ -4,7 +4,7 @@ import {
   recursivelyRemoveSerializedNodes,
   SERIALIZED_NODE_ID_NOT_FOUND,
   setSerializedNode,
-} from './utils'
+} from './serializationUtils'
 
 describe('serialized Node storage in DOM Nodes', () => {
   describe('hasSerializedNode', () => {
