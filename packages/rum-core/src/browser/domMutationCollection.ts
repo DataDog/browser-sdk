@@ -26,7 +26,6 @@ function getMutationObserverConstructor(): MutationObserverConstructor | undefin
   // [1] https://github.com/angular/angular/issues/26948
   // [2] https://github.com/angular/angular/issues/31712
   if (browserWindow.Zone) {
-    // eslint-disable-next-line no-underscore-dangle
     const symbol = browserWindow.Zone.__symbol__('MutationObserver')
     constructor = browserWindow[symbol as any] as any
   }
