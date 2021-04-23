@@ -108,5 +108,6 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
+  // eslint-disable-next-line no-underscore-dangle
   return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
 }

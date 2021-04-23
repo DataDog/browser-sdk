@@ -89,9 +89,16 @@ describe('serializeNodeWithId', () => {
       }
     })
 
+    it('does not save ignored nodes in the map', () => {
+      const map = {}
+      serializeNodeWithId(document.createElement('script'), { ...defaultOptions, map })
+      expect(map).toEqual({})
+    })
+
     it('sets ignored serialized node id to IGNORED_NODE', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, defaultOptions)
+      // eslint-disable-next-line no-underscore-dangle
       expect((scriptElement as any).__sn).toEqual(jasmine.objectContaining({ id: IGNORED_NODE }))
     })
 
