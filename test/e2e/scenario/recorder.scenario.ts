@@ -13,7 +13,7 @@ import {
   findMeta,
   findTextContent,
   validateMutations,
-} from '../lib/helpers/recorder'
+} from '../../../packages/rum-recorder/test/utils'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -125,7 +125,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           adds: [
             {
               parent: { tag: 'p' },
@@ -169,7 +169,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           adds: [
             {
               parent: { tag: 'p' },
@@ -215,7 +215,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           attributes: [
             {
               node: { tag: 'body' },
@@ -281,7 +281,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           adds: [
             {
               parent: { tag: 'div' },
@@ -348,7 +348,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           adds: [
             {
               next: { tag: 'i' },
@@ -422,7 +422,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        validateMutations(events.sessionReplay[0].segment.data, {
           adds: [
             {
               parent: { tag: 'ul' },
