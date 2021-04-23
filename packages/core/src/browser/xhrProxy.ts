@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'

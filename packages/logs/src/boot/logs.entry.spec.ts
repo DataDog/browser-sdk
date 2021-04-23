@@ -62,7 +62,6 @@ describe('logs entry', () => {
     })
 
     it('should add a `_setDebug` that works', () => {
-      // eslint-disable-next-line no-underscore-dangle
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
