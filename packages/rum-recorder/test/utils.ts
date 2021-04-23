@@ -311,6 +311,14 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
      * Validates the mutation payload against the expected text, attribute, add and remove mutations.
      */
     validate: (payload: MutationPayload, expected: ExpectedMutationsPayload) => {
+      // When serializing a Node, some properties like 'isSVG' may be undefined, and they are not
+      // sent to the intake.
+      //
+      // To be able to validate mutations from E2E and Unit tests, we prefer to keep a single
+      // format. Thus, we serialize and deserialize the payload before validating it, so undefined
+      // properties are dropped during unit tests.
+      payload = JSON.parse(JSON.stringify(payload))
+
       expect(payload.adds).toEqual(
         (expected.adds || []).map(({ node, parent, next }) => ({
           node: node.toSerializedNodeWithId(),

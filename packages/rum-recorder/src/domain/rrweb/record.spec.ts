@@ -1,5 +1,5 @@
 import { createNewEvent, isIE } from '@datadog/browser-core'
-import { collectAsyncCalls } from '../../../test/utils'
+import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
   RecordType,
   IncrementalSource,
@@ -9,7 +9,7 @@ import {
   IncrementalSnapshotRecord,
   FocusRecord,
 } from '../../types'
-import { SerializedNodeWithId, NodeType } from '../rrweb-snapshot/types'
+import { NodeType } from '../rrweb-snapshot/types'
 import { record } from './record'
 import { RecordAPI } from './types'
 
@@ -76,52 +76,34 @@ describe('record', () => {
 
     waitEmitCalls(9, () => {
       const records = getEmittedRecords()
-      const sandboxNode = findNode(
-        (records[2] as FullSnapshotRecord).data.node,
-        (node) => node.type === NodeType.Element && node.attributes.id === 'sandbox'
-      )!
-      const inputId = findNode(sandboxNode, (node) => node.type === NodeType.Element && node.tagName === 'input')!.id
-      const paragraphId = ((records[3] as IncrementalSnapshotRecord).data as MutationData).adds[0].node.id
-      const spanId = ((records[3] as IncrementalSnapshotRecord).data as MutationData).adds[1].node.id
-
       expect(records[0].type).toBe(RecordType.Meta)
       expect(records[1].type).toBe(RecordType.Focus)
 
       expect(records[2].type).toBe(RecordType.FullSnapshot)
 
       expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.Mutation,
-          adds: [
-            jasmine.objectContaining({
-              parentId: sandboxNode.id,
-              node: jasmine.objectContaining({ tagName: 'p' }),
-            }),
-            jasmine.objectContaining({
-              parentId: paragraphId,
-              node: jasmine.objectContaining({ tagName: 'span' }),
-            }),
-          ],
-          removes: [{ parentId: sandboxNode.id, id: inputId }],
-        })
+
+      const { validate: validateMutationPayload, newNode, selectNode } = createMutationPayloadValidator(
+        (records[2] as FullSnapshotRecord).data.node
       )
 
+      const p = newNode({ type: NodeType.Element, tagName: 'p' })
+      const span = newNode({ type: NodeType.Element, tagName: 'span' })
+      const text = newNode({ type: NodeType.Text, textContent: 'test' })
+      const sandbox = selectNode({ idAttribute: 'sandbox' })
+
+      validateMutationPayload((records[3] as IncrementalSnapshotRecord).data as MutationData, {
+        adds: [
+          { parent: sandbox, node: p },
+          { parent: p, node: span },
+        ],
+        removes: [{ node: selectNode({ tag: 'input' }), parent: sandbox }],
+      })
+
       expect(records[4].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.Mutation,
-          adds: [
-            jasmine.objectContaining({
-              parentId: spanId,
-              node: jasmine.objectContaining({
-                textContent: 'test',
-              }),
-            }),
-          ],
-          removes: [],
-        })
-      )
+      validateMutationPayload((records[4] as IncrementalSnapshotRecord).data as MutationData, {
+        adds: [{ parent: span, node: text }],
+      })
 
       expect(records[5].type).toBe(RecordType.Meta)
       expect(records[6].type).toBe(RecordType.Focus)
@@ -129,27 +111,14 @@ describe('record', () => {
       expect(records[7].type).toBe(RecordType.FullSnapshot)
 
       expect(records[8].type).toBe(RecordType.IncrementalSnapshot)
-      expect((records[8] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({
-          source: IncrementalSource.Mutation,
-          adds: [
-            jasmine.objectContaining({
-              parentId: sandboxNode.id,
-              node: jasmine.objectContaining({
-                tagName: 'span',
-                id: spanId,
-              }),
-            }),
-            jasmine.objectContaining({
-              parentId: spanId,
-              node: jasmine.objectContaining({
-                textContent: 'test',
-              }),
-            }),
-          ],
-          removes: [{ parentId: paragraphId, id: spanId }],
-        })
-      )
+      validateMutationPayload((records[8] as IncrementalSnapshotRecord).data as MutationData, {
+        adds: [
+          { parent: sandbox, node: span },
+          { parent: span, node: text },
+        ],
+        removes: [{ parent: p, node: span }],
+      })
+
       expectNoExtraEmitCalls(done)
     })
   })
@@ -313,21 +282,4 @@ function createDOMSandbox() {
   sandbox.appendChild(input)
   document.body.appendChild(sandbox)
   return { sandbox, input }
-}
-
-function findNode(
-  root: SerializedNodeWithId,
-  predicate: (node: SerializedNodeWithId) => boolean
-): SerializedNodeWithId | undefined {
-  if (predicate(root)) {
-    return root
-  }
-  if (root.type === NodeType.Document || root.type === NodeType.Element) {
-    for (const child of root.childNodes) {
-      const foundId = findNode(child, predicate)
-      if (foundId) {
-        return foundId
-      }
-    }
-  }
 }
