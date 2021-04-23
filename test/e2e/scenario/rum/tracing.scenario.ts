@@ -68,8 +68,8 @@ describe('tracing', () => {
       (event) => event.resource.type === 'xhr' || event.resource.type === 'fetch'
     )
     expect(requests.length).toBe(1)
-    expect(requests[0]._dd.trace_id).toMatch(/\d+/)
-    expect(requests[0]._dd.span_id).toMatch(/\d+/)
+    expect(requests[0]._dd.trace_id).toMatch(/\d+/) // eslint-disable-line no-underscore-dangle
+    expect(requests[0]._dd.span_id).toMatch(/\d+/) // eslint-disable-line no-underscore-dangle
     expect(requests[0].resource.id).toBeDefined()
   }
 })

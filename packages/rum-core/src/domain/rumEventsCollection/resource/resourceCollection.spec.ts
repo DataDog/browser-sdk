@@ -194,6 +194,7 @@ describe('resourceCollection', () => {
           traceId: '1234',
         })
       )
+      // eslint-disable-next-line no-underscore-dangle
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.trace_id).toBe('1234')
@@ -208,6 +209,7 @@ describe('resourceCollection', () => {
           traceId: new TraceIdentifier(),
         })
       )
+      // eslint-disable-next-line no-underscore-dangle
       const traceInfo = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd!
       expect(traceInfo).toBeDefined()
       expect(traceInfo.trace_id).toBeDefined()

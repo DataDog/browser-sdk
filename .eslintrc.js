@@ -177,6 +177,7 @@ module.exports = {
     'no-throw-literal': 'error',
     'no-trailing-spaces': 'off',
     'no-undef-init': 'error',
+    'no-underscore-dangle': 'error',
     'no-unreachable': 'error',
     'no-unsafe-finally': 'error',
     'no-unused-labels': 'error',

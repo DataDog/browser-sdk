@@ -258,7 +258,7 @@ export function getGlobalObject<T>(): T {
   // @ts-ignore _dd_temp is defined using defineProperty
   let globalObject: unknown = _dd_temp_
   // @ts-ignore _dd_temp is defined using defineProperty
-  delete Object.prototype._dd_temp_
+  delete Object.prototype._dd_temp_ // eslint-disable-line no-underscore-dangle
   if (typeof globalObject !== 'object') {
     // on safari _dd_temp_ is available on window but not globally
     // fallback on other browser globals check
