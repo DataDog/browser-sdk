@@ -89,6 +89,12 @@ describe('serializeNodeWithId', () => {
       }
     })
 
+    it('does not save ignored nodes in the map', () => {
+      const map = {}
+      serializeNodeWithId(document.createElement('script'), { ...defaultOptions, map })
+      expect(map).toEqual({})
+    })
+
     it('sets ignored serialized node id to IGNORED_NODE', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, defaultOptions)
