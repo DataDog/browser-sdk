@@ -12,7 +12,7 @@ import {
   findAllIncrementalSnapshots,
   findMeta,
   findTextContent,
-  validateMutations,
+  createMutationPayloadValidatorFromSegment,
 } from '../../../packages/rum-recorder/test/utils'
 
 const INTEGER_RE = /^\d+$/
@@ -81,16 +81,16 @@ describe('recorder', () => {
 
         const fullSnapshot = findFullSnapshot(events.sessionReplay[0].segment.data)!
 
-        const fooNode = findElementWithIdAttribute(fullSnapshot, 'foo')
+        const fooNode = findElementWithIdAttribute(fullSnapshot.data.node, 'foo')
         expect(fooNode).toBeTruthy()
         expect(findTextContent(fooNode!)).toBe('foo')
 
-        const barNode = findElementWithIdAttribute(fullSnapshot, 'bar')
+        const barNode = findElementWithIdAttribute(fullSnapshot.data.node, 'bar')
         expect(barNode).toBeTruthy()
         expect(barNode!.attributes['data-dd-privacy']).toBe('hidden')
         expect(barNode!.childNodes.length).toBe(0)
 
-        const bazNode = findElementWithIdAttribute(fullSnapshot, 'baz')
+        const bazNode = findElementWithIdAttribute(fullSnapshot.data.node, 'baz')
         expect(bazNode).toBeTruthy()
         expect(bazNode!.attributes.class).toBe('dd-privacy-hidden baz')
         expect(bazNode!.attributes['data-dd-privacy']).toBe('hidden')
@@ -125,17 +125,21 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(
+          events.sessionReplay[0].segment.data
+        )
+
+        validate({
           adds: [
             {
-              parent: { tag: 'p' },
-              node: { tagName: 'span' },
+              parent: selectNode({ tag: 'p' }),
+              node: newNode({ type: NodeType.Element, tagName: 'span' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: selectNode({ tag: 'body' }),
+              node: selectNode({ tag: 'ul' }),
             },
           ],
         })
@@ -169,21 +173,25 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(
+          events.sessionReplay[0].segment.data
+        )
+
+        validate({
           adds: [
             {
-              parent: { tag: 'p' },
-              node: { type: NodeType.Text, textContent: 'mutated' },
+              parent: selectNode({ tag: 'p' }),
+              node: newNode({ type: NodeType.Text, textContent: 'mutated' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: selectNode({ tag: 'body' }),
+              node: selectNode({ tag: 'ul' }),
             },
             {
-              parent: { tag: 'p' },
-              node: { text: 'mutation observer' },
+              parent: selectNode({ tag: 'p' }),
+              node: selectNode({ text: 'mutation observer' }),
             },
           ],
         })
@@ -215,17 +223,19 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(events.sessionReplay[0].segment.data)
+
+        validate({
           attributes: [
             {
-              node: { tag: 'body' },
+              node: selectNode({ tag: 'body' }),
               attributes: { test: 'true' },
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: selectNode({ tag: 'body' }),
+              node: selectNode({ tag: 'ul' }),
             },
           ],
         })
@@ -281,49 +291,50 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(events.sessionReplay[0].segment.data)
+        validate({
           adds: [
             {
-              parent: { tag: 'div' },
-              node: { from: { tag: 'span' }, childNodes: [] },
+              parent: selectNode({ tag: 'div' }),
+              node: selectNode({ tag: 'span' }),
             },
             {
-              next: { tag: 'i' },
-              parent: { tag: 'span' },
-              node: { from: { text: 'c' } },
+              next: selectNode({ tag: 'i' }),
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ text: 'c' }),
             },
             {
-              next: { text: 'g' },
-              parent: { tag: 'span' },
-              node: { from: { tag: 'i' }, childNodes: [] },
+              next: selectNode({ text: 'g' }),
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ tag: 'i' }),
             },
             {
-              next: { tag: 'b' },
-              parent: { tag: 'i' },
-              node: { from: { text: 'd' } },
+              next: selectNode({ tag: 'b' }),
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ text: 'd' }),
             },
             {
-              next: { text: 'f' },
-              parent: { tag: 'i' },
-              node: { from: { tag: 'b' }, childNodes: [] },
+              next: selectNode({ text: 'f' }),
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ tag: 'b' }),
             },
             {
-              parent: { tag: 'b' },
-              node: { from: { text: 'e' } },
+              parent: selectNode({ tag: 'b' }),
+              node: selectNode({ text: 'e' }),
             },
             {
-              parent: { tag: 'i' },
-              node: { from: { text: 'f' } },
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ text: 'f' }),
             },
             {
-              parent: { tag: 'span' },
-              node: { from: { text: 'g' } },
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ text: 'g' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'span' },
+              parent: selectNode({ tag: 'body' }),
+              node: selectNode({ tag: 'span' }),
             },
           ],
         })
@@ -348,53 +359,59 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(
+          events.sessionReplay[0].segment.data
+        )
+
+        const div = newNode({ type: NodeType.Element, tagName: 'div' })
+
+        validate({
           adds: [
             {
-              next: { tag: 'i' },
-              parent: { tag: 'span' },
-              node: { from: { text: 'c' } },
+              next: selectNode({ tag: 'i' }),
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ text: 'c' }),
             },
             {
-              next: { text: 'g' },
-              parent: { tag: 'span' },
-              node: { from: { tag: 'i' }, childNodes: [] },
+              next: selectNode({ text: 'g' }),
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ tag: 'i' }),
             },
             {
-              next: { tag: 'b' },
-              parent: { tag: 'i' },
-              node: { from: { text: 'd' } },
+              next: selectNode({ tag: 'b' }),
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ text: 'd' }),
             },
             {
-              next: { text: 'f' },
-              parent: { tag: 'i' },
-              node: { from: { tag: 'b' }, childNodes: [] },
+              next: selectNode({ text: 'f' }),
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ tag: 'b' }),
             },
             {
-              parent: { tag: 'b' },
-              node: { from: { text: 'e' } },
+              parent: selectNode({ tag: 'b' }),
+              node: selectNode({ text: 'e' }),
             },
             {
-              parent: { tag: 'i' },
-              node: { from: { text: 'f' } },
+              parent: selectNode({ tag: 'i' }),
+              node: selectNode({ text: 'f' }),
             },
             {
-              parent: { tag: 'span' },
-              node: { from: { text: 'g' } },
+              parent: selectNode({ tag: 'span' }),
+              node: selectNode({ text: 'g' }),
             },
             {
-              parent: { tag: 'body' },
-              node: { tagName: 'div' },
+              parent: selectNode({ tag: 'body' }),
+              node: div,
             },
             {
-              parent: { created: 0 },
-              node: { from: { tag: 'span' }, childNodes: [] },
+              parent: div,
+              node: selectNode({ tag: 'span' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'span' },
+              parent: selectNode({ tag: 'body' }),
+              node: selectNode({ tag: 'span' }),
             },
           ],
         })
@@ -422,21 +439,30 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events.sessionReplay[0].segment.data, {
+        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(
+          events.sessionReplay[0].segment.data
+        )
+
+        const ul = selectNode({ tag: 'ul' })
+        const li1 = newNode({ type: NodeType.Element, tagName: 'li' })
+        const li2 = newNode({ type: NodeType.Element, tagName: 'li' })
+        const li3 = newNode({ type: NodeType.Element, tagName: 'li' })
+
+        validate({
           adds: [
             {
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              parent: ul,
+              node: li1,
             },
             {
-              next: { created: 0 },
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              next: li1,
+              parent: ul,
+              node: li2,
             },
             {
-              next: { created: 1 },
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              next: li2,
+              parent: ul,
+              node: li3,
             },
           ],
         })
@@ -517,7 +543,7 @@ describe('recorder', () => {
 
         function filterRecordsByIdAttribute(segment: Segment, idAttribute: string) {
           const fullSnapshot = findFullSnapshot(segment)!
-          const id = findElementWithIdAttribute(fullSnapshot, idAttribute)!.id
+          const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
           const records = findAllIncrementalSnapshots(segment, IncrementalSource.Input) as Array<{ data: InputData }>
           return records.filter((record) => record.data.id === id)
         }

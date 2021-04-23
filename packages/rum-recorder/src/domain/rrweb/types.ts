@@ -18,7 +18,7 @@ export enum IncrementalSource {
 
 export type MutationData = {
   source: IncrementalSource.Mutation
-} & MutationCallbackParam
+} & MutationPayload
 
 export interface MousemoveData {
   source: IncrementalSource.MouseMove | IncrementalSource.TouchMove
@@ -127,14 +127,14 @@ export interface AddedNodeMutation {
   node: SerializedNodeWithId
 }
 
-interface MutationCallbackParam {
+export interface MutationPayload {
   texts: TextMutation[]
   attributes: AttributeMutation[]
   removes: RemovedNodeMutation[]
   adds: AddedNodeMutation[]
 }
 
-export type MutationCallBack = (m: MutationCallbackParam) => void
+export type MutationCallBack = (m: MutationPayload) => void
 
 export type MousemoveCallBack = (
   p: MousePosition[],

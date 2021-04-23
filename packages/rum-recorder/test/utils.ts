@@ -1,6 +1,6 @@
 import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
 import { ElementNode, NodeType, SerializedNode, SerializedNodeWithId, TextNode } from '../src/domain/rrweb-snapshot'
-import { IncrementalSource, MutationData } from '../src/domain/rrweb/types'
+import { IncrementalSource, MutationPayload, MutationData } from '../src/domain/rrweb/types'
 import { FullSnapshotRecord, IncrementalSnapshotRecord, MetaRecord, RecordType, Segment } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
@@ -153,18 +153,18 @@ export function findTextContent(elem: ElementNode): string | null {
 }
 
 // Returns the first ElementNode with the given ID attribute from a FullSnapshotRecord, if any.
-export function findElementWithIdAttribute(fullSnapshot: FullSnapshotRecord, id: string) {
-  return findElement(fullSnapshot.data.node, (node) => node.attributes.id === id)
+export function findElementWithIdAttribute(root: SerializedNodeWithId, id: string) {
+  return findElement(root, (node) => node.attributes.id === id)
 }
 
 // Returns the first ElementNode with the given tag name from a FullSnapshotRecord, if any.
-export function findElementWithTagName(fullSnapshot: FullSnapshotRecord, tagName: string) {
-  return findElement(fullSnapshot.data.node, (node) => node.tagName === tagName)
+export function findElementWithTagName(root: SerializedNodeWithId, tagName: string) {
+  return findElement(root, (node) => node.tagName === tagName)
 }
 
 // Returns the first TextNode with the given content from a FullSnapshotRecord, if any.
-export function findTextNode(fullSnapshot: FullSnapshotRecord, textContent: string) {
-  return findNode(fullSnapshot.data.node, (node) => isTextNode(node) && node.textContent === textContent) as
+export function findTextNode(root: SerializedNodeWithId, textContent: string) {
+  return findNode(root, (node) => isTextNode(node) && node.textContent === textContent) as
     | (TextNode & { id: number })
     | null
 }
@@ -209,21 +209,18 @@ interface NodeSelector {
   idAttribute?: string
   // Select the first node with the given text content from the initial full snapshot
   text?: string
-  // Select a node created by a previous 'AddedNodeMutation' (0 being the first node created, 1 the
-  // second one, etc.)
-  created?: number
 }
 
 interface ExpectedTextMutation {
   // Reference to the node where the mutation happens
-  node: NodeSelector
+  node: ExpectedNode
   // New text value
   value: string
 }
 
 interface ExpectedAttributeMutation {
   // Reference to the node where the mutation happens
-  node: NodeSelector
+  node: ExpectedNode
   // Updated attributes
   attributes: {
     [key: string]: string | null
@@ -232,20 +229,18 @@ interface ExpectedAttributeMutation {
 
 interface ExpectedRemoveMutation {
   // Reference to the removed node
-  node: NodeSelector
+  node: ExpectedNode
   // Reference to the parent of the removed node
-  parent: NodeSelector
+  parent: ExpectedNode
 }
 
 interface ExpectedAddMutation {
-  // Partially check for the added node properties. The 'id' is always checked automatically. If
-  // 'from' is specified, it will base the assertion on a node from the initial full snapshot or a
-  // previously created node. Else, it will consider this node as a newly created node.
-  node: { from?: NodeSelector } & Partial<SerializedNode>
+  // Partially check for the added node properties.
+  node: ExpectedNode
   // Reference to the parent of the added node
-  parent: NodeSelector
+  parent: ExpectedNode
   // Reference to the sibling of the added node
-  next?: NodeSelector
+  next?: ExpectedNode
 }
 
 interface ExpectedMutationsPayload {
@@ -256,80 +251,116 @@ interface ExpectedMutationsPayload {
 }
 
 /**
- * Validate the first and only mutation record of a segment against the expected text, attribute,
- * add and remove mutations.
+ * ExpectedNode is a helper class to build a serialized Node tree to be used to validate mutations.
+ * For now, its purpose is limited to specifying child nodes.
  */
-export function validateMutations(segment: Segment, expected: ExpectedMutationsPayload) {
-  const fullSnapshot = findFullSnapshot(segment)!
-  expect(fullSnapshot).toBeTruthy()
+class ExpectedNode {
+  constructor(private node: Omit<SerializedNodeWithId, 'childNodes'> & { childNodes?: ExpectedNode[] }) {}
 
-  const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
-    data: MutationData
-  }>
+  withChildren(...childNodes: ExpectedNode[]): ExpectedNode {
+    return new ExpectedNode({ ...this.node, childNodes })
+  }
 
-  expect(mutations.length).toBe(1)
+  getId() {
+    return this.node.id
+  }
 
-  const createdNodes: SerializedNodeWithId[] = []
-  const maxNodeIdFromFullSnapshot = findMaxNodeId(fullSnapshot.data.node)
-  expect(mutations[0].data.adds).toEqual(
-    (expected.adds || []).map(({ node: { from, ...partialNode }, parent, next }, index) => {
-      let expectedNode: SerializedNodeWithId | jasmine.ObjectContaining<Partial<SerializedNodeWithId>>
+  toSerializedNodeWithId() {
+    const { childNodes, ...result } = this.node
+    if (childNodes) {
+      ;(result as any).childNodes = childNodes.map((node) => node.toSerializedNodeWithId())
+    }
+    return result as SerializedNodeWithId
+  }
+}
 
-      if (from) {
-        // Add a previously created node
-        expectedNode = { ...selectNode(from), ...partialNode } as SerializedNodeWithId
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
+
+/**
+ * Based on an serialized initial document, it returns:
+ *
+ * * a set of utilities functions to select existing nodes (selectNode) or create new nodes
+ * (newNode) to help build the expected mutations object
+ *
+ * * a 'validate' function to actually validate a mutation payload against an expected mutation
+ * object.
+ */
+export function createMutationPayloadValidator(initialDocument: SerializedNodeWithId) {
+  let maxNodeId = findMaxNodeId(initialDocument)
+
+  /**
+   * Creates a new node based on input parameter, with sensible default properties, and an
+   * automatically computed 'id' attribute based on the previously created nodes.
+   */
+  function newNode(node: Optional<ElementNode, 'childNodes' | 'attributes'>): ExpectedNode
+  function newNode(node: TextNode): ExpectedNode
+  function newNode(node: Partial<SerializedNode>) {
+    maxNodeId += 1
+    if (node.type === NodeType.Element) {
+      node.attributes ||= {}
+      node.childNodes = []
+    }
+    return new ExpectedNode({
+      ...node,
+      id: maxNodeId,
+    } as any)
+  }
+
+  return {
+    /**
+     * Validates the mutation payload against the expected text, attribute, add and remove mutations.
+     */
+    validate: (payload: MutationPayload, expected: ExpectedMutationsPayload) => {
+      expect(payload.adds).toEqual(
+        (expected.adds || []).map(({ node, parent, next }) => ({
+          node: node.toSerializedNodeWithId(),
+          parentId: parent.getId(),
+          nextId: next ? next.getId() : null,
+        }))
+      )
+      expect(payload.texts).toEqual((expected.texts || []).map(({ node, value }) => ({ id: node.getId(), value })))
+      expect(payload.removes).toEqual(
+        (expected.removes || []).map(({ node, parent }) => ({
+          id: node.getId(),
+          parentId: parent.getId(),
+        }))
+      )
+      expect(payload.attributes).toEqual(
+        (expected.attributes || []).map(({ node, attributes }) => ({
+          id: node.getId(),
+          attributes,
+        }))
+      )
+    },
+
+    newNode,
+
+    /**
+     * Selects a node from the initially serialized document. Nodes can be selected via their 'tag'
+     * name, 'id' attribute or 'text' content.
+     */
+    selectNode: (selector: NodeSelector) => {
+      let node
+      if (selector.text) {
+        node = findTextNode(initialDocument, selector.text)
+      } else if (selector.idAttribute) {
+        node = findElementWithIdAttribute(initialDocument, selector.idAttribute)
+      } else if (selector.tag) {
+        node = findElementWithTagName(initialDocument, selector.tag)
       } else {
-        // Add a new node
-        expectedNode = jasmine.objectContaining<Partial<SerializedNodeWithId>>({
-          ...partialNode,
-          id: maxNodeIdFromFullSnapshot + createdNodes.length + 1,
-        })
-        // Register the newly created node for future reference
-        createdNodes.push(mutations[0].data.adds[index].node)
+        throw new Error('Empty selector')
       }
 
-      return {
-        node: expectedNode,
-        parentId: selectNode(parent).id,
-        nextId: next ? selectNode(next).id : null,
+      if (!node) {
+        throw new Error(`Cannot find node from selector ${JSON.stringify(selector)}`)
       }
-    })
-  )
-  expect(mutations[0].data.texts).toEqual(
-    (expected.texts || []).map(({ node, value }) => ({ id: selectNode(node).id, value }))
-  )
-  expect(mutations[0].data.removes).toEqual(
-    (expected.removes || []).map(({ node, parent }) => ({
-      id: selectNode(node).id,
-      parentId: selectNode(parent).id,
-    }))
-  )
-  expect(mutations[0].data.attributes).toEqual(
-    (expected.attributes || []).map(({ node, attributes }) => ({
-      id: selectNode(node).id,
-      attributes,
-    }))
-  )
 
-  function selectNode(selector: NodeSelector) {
-    let node
-    if (selector.text) {
-      node = findTextNode(fullSnapshot, selector.text)
-    } else if (selector.idAttribute) {
-      node = findElementWithIdAttribute(fullSnapshot, selector.idAttribute)
-    } else if (selector.tag) {
-      node = findElementWithTagName(fullSnapshot, selector.tag)
-    } else if (selector.created !== undefined) {
-      node = createdNodes[selector.created]
-    } else {
-      throw new Error('Empty selector')
-    }
+      if ('childNodes' in node) {
+        return new ExpectedNode({ ...node, childNodes: [] })
+      }
 
-    if (!node) {
-      throw new Error(`Cannot find node from selector ${JSON.stringify(selector)}`)
-    }
-
-    return node
+      return new ExpectedNode(node)
+    },
   }
 
   function findMaxNodeId(root: SerializedNodeWithId): number {
@@ -338,5 +369,25 @@ export function validateMutations(segment: Segment, expected: ExpectedMutationsP
     }
 
     return root.id
+  }
+}
+
+/**
+ * Validate the first and only mutation record of a segment against the expected text, attribute,
+ * add and remove mutations.
+ */
+export function createMutationPayloadValidatorFromSegment(segment: Segment) {
+  const fullSnapshot = findFullSnapshot(segment)!
+  expect(fullSnapshot).toBeTruthy()
+
+  const mutations = findAllIncrementalSnapshots(segment, IncrementalSource.Mutation) as Array<{
+    data: MutationData
+  }>
+  expect(mutations.length).toBe(1)
+
+  const mutationPayloadValidator = createMutationPayloadValidator(fullSnapshot.data.node)
+  return {
+    ...mutationPayloadValidator,
+    validate: (expected: ExpectedMutationsPayload) => mutationPayloadValidator.validate(mutations[0].data, expected),
   }
 }
