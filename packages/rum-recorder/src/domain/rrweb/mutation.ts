@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { IGNORED_NODE, INode, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
+import { IGNORED_NODE_ID, INode, nodeIsIgnored, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -9,7 +9,7 @@ import {
   RemovedNodeMutation,
   TextCursor,
 } from './types'
-import { forEach, isAncestorRemoved, isIgnored, mirror } from './utils'
+import { forEach, isAncestorRemoved, mirror } from './utils'
 
 interface DoubleLinkedListNode {
   previous: DoubleLinkedListNode | null
@@ -184,8 +184,8 @@ export class MutationObserverWrapper {
     const addList = new DoubleLinkedList()
     const getNextId = (n: Node): number | null => {
       let ns: Node | null = n
-      let nextId: number | null = IGNORED_NODE
-      while (nextId === IGNORED_NODE) {
+      let nextId: number | null = IGNORED_NODE_ID
+      while (nextId === IGNORED_NODE_ID) {
         ns = ns && ns.nextSibling
         nextId = ns && mirror.getId((ns as unknown) as INode)
       }
@@ -308,7 +308,7 @@ export class MutationObserverWrapper {
   }
 
   private processMutation = (m: MutationRecord) => {
-    if (isIgnored(m.target)) {
+    if (nodeIsIgnored(m.target)) {
       return
     }
     switch (m.type) {
@@ -344,7 +344,7 @@ export class MutationObserverWrapper {
         forEach(m.removedNodes, (n: Node) => {
           const nodeId = mirror.getId(n as INode)
           const parentId = mirror.getId(m.target as INode)
-          if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || isIgnored(n)) {
+          if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || nodeIsIgnored(n)) {
             return
           }
           // removed node has not been serialized yet, just remove it from the Set
@@ -388,7 +388,7 @@ export class MutationObserverWrapper {
       return
     }
     if (isINode(n)) {
-      if (isIgnored(n)) {
+      if (nodeIsIgnored(n)) {
         return
       }
       this.movedSet.add(n)

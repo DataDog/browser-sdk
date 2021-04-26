@@ -1,5 +1,5 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { INode } from '../rrweb-snapshot'
+import { getSerializedNodeId, hasSerializedNode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
 import { MutationObserverWrapper, MutationController } from './mutation'
 import {
@@ -20,7 +20,7 @@ import {
   StyleSheetRuleCallback,
   ViewportResizeCallback,
 } from './types'
-import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent, mirror } from './utils'
+import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -56,16 +56,18 @@ function initMutationObserver(mutationController: MutationController, cb: Mutati
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
   const { throttled: updatePosition } = throttle(
-    monitor((evt: MouseEvent | TouchEvent) => {
-      const { target } = evt
-      const { clientX, clientY } = isTouchEvent(evt) ? evt.changedTouches[0] : evt
-      const position = {
-        id: mirror.getId(target as INode),
-        timeOffset: 0,
-        x: clientX,
-        y: clientY,
+    monitor((event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node
+      if (hasSerializedNode(target)) {
+        const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
+        const position = {
+          id: getSerializedNodeId(target),
+          timeOffset: 0,
+          x: clientX,
+          y: clientY,
+        }
+        cb([position], isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
       }
-      cb([position], isTouchEvent(evt) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove)
     }),
     MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
@@ -92,13 +94,13 @@ const eventTypeToMouseInteraction = {
 }
 function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
-    if (nodeOrAncestorsShouldBeHidden(event.target as Node)) {
+    const target = event.target as Node
+    if (nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
       return
     }
-    const id = mirror.getId(event.target as INode)
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
     cb({
-      id,
+      id: getSerializedNodeId(target),
       type: eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction],
       x: clientX,
       y: clientY,
@@ -112,12 +114,13 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
 
 function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
-    monitor((evt: UIEvent) => {
-      if (!evt.target || nodeOrAncestorsShouldBeHidden(evt.target as Node)) {
+    monitor((event: UIEvent) => {
+      const target = event.target as HTMLElement | Document
+      if (!target || nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
         return
       }
-      const id = mirror.getId(evt.target as INode)
-      if (evt.target === document) {
+      const id = getSerializedNodeId(target)
+      if (target === document) {
         const scrollEl = (document.scrollingElement || document.documentElement)!
         cb({
           id,
@@ -127,8 +130,8 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
       } else {
         cb({
           id,
-          x: (evt.target as HTMLElement).scrollLeft,
-          y: (evt.target as HTMLElement).scrollTop,
+          x: (target as HTMLElement).scrollLeft,
+          y: (target as HTMLElement).scrollTop,
         })
       }
     }),
@@ -156,14 +159,14 @@ export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
-    const { target } = event
+    const target = event.target as Node
 
     if (
       !target ||
       !(target as Element).tagName ||
       INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      nodeOrAncestorsShouldBeHidden(target as Node) ||
-      nodeOrAncestorsShouldHaveInputIgnored(target as Node)
+      nodeOrAncestorsShouldBeHidden(target) ||
+      nodeOrAncestorsShouldHaveInputIgnored(target)
     ) {
       return
     }
@@ -193,14 +196,16 @@ function initInputObserver(cb: InputCallback): ListenerHandler {
     }
   }
 
-  function cbWithDedup(target: EventTarget, v: InputValue) {
+  function cbWithDedup(target: Node, v: InputValue) {
+    if (!hasSerializedNode(target)) {
+      return
+    }
     const lastInputValue = lastInputValueMap.get(target)
     if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
       lastInputValueMap.set(target, v)
-      const id = mirror.getId(target as INode)
       cb({
         ...v,
-        id,
+        id: getSerializedNodeId(target),
       })
     }
   }
@@ -245,10 +250,9 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const insertRule = CSSStyleSheet.prototype.insertRule
   CSSStyleSheet.prototype.insertRule = function (this: CSSStyleSheet, rule: string, index?: number) {
     callMonitored(() => {
-      const id = mirror.getId((this.ownerNode as unknown) as INode)
-      if (id !== -1) {
+      if (hasSerializedNode(this.ownerNode!)) {
         cb({
-          id,
+          id: getSerializedNodeId(this.ownerNode),
           adds: [{ rule, index }],
         })
       }
@@ -260,10 +264,9 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
   const deleteRule = CSSStyleSheet.prototype.deleteRule
   CSSStyleSheet.prototype.deleteRule = function (this: CSSStyleSheet, index: number) {
     callMonitored(() => {
-      const id = mirror.getId((this.ownerNode as unknown) as INode)
-      if (id !== -1) {
+      if (hasSerializedNode(this.ownerNode!)) {
         cb({
-          id,
+          id: getSerializedNodeId(this.ownerNode),
           removes: [{ index }],
         })
       }
@@ -279,12 +282,12 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (event: Event) => {
-    const { target } = event
-    if (!target || nodeOrAncestorsShouldBeHidden(target as Node)) {
+    const target = event.target as Node
+    if (!target || nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
       return
     }
     mediaInteractionCb({
-      id: mirror.getId(target as INode),
+      id: getSerializedNodeId(target),
       type: event.type === DOM_EVENT.PLAY ? MediaInteractions.Play : MediaInteractions.Pause,
     })
   }
