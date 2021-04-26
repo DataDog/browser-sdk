@@ -1,9 +1,9 @@
-import { Duration, noop, relativeNow, elapsed, round } from '@datadog/browser-core'
-import { EventCounts, trackEventCounts } from '../../trackEventCounts'
-import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { waitIdlePageActivity } from '../../trackPageActivities'
+import { Duration, noop, elapsed, round, preferredNow } from '@datadog/browser-core'
 import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
+import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { EventCounts, trackEventCounts } from '../../trackEventCounts'
+import { waitIdlePageActivity } from '../../trackPageActivities'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -85,10 +85,10 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
 }
 
 function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: Duration | undefined) => void) {
-  const startTime = relativeNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-    if (hadActivity) {
-      callback(elapsed(startTime, endTime))
+  const startTime = preferredNow()
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (params) => {
+    if (params.hadActivity) {
+      callback(elapsed(startTime, params.endTime))
     } else {
       callback(undefined)
     }

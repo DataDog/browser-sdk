@@ -2,7 +2,7 @@ import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../brows
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
 import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
-import { relativeNow } from '../tools/timeUtils'
+import { clocksNow } from '../tools/timeUtils'
 import { jsonStringify, ONE_MINUTE, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
@@ -34,7 +34,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
       filteredErrorObservable.notify({
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
         source: ErrorSource.AGENT,
-        startTime: relativeNow(),
+        startClocks: clocksNow(),
       })
     }
   })
@@ -51,7 +51,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
     errorObservable.notify({
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
-      startTime: relativeNow(),
+      startClocks: clocksNow(),
     })
   })
 }
@@ -88,7 +88,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       stack,
       type,
       source: ErrorSource.SOURCE,
-      startTime: relativeNow(),
+      startClocks: clocksNow(),
     })
   }
   subscribe(traceKitReportHandler)
@@ -117,7 +117,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
         },
         source: ErrorSource.NETWORK,
         stack: truncateResponse(request.response, configuration) || 'Failed to load',
-        startTime: request.startTime,
+        startClocks: request.startClocks,
       })
     }
   }

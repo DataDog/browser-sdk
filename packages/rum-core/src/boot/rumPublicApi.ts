@@ -10,9 +10,9 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
-  relativeNow,
-  RelativeTime,
   UserConfiguration,
+  clocksNow,
+  ClocksState,
 } from '@datadog/browser-core'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
 import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
@@ -42,9 +42,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, RelativeTime]>()
+  const beforeInitAddTiming = new BoundedBuffer<[string, ClocksState]>()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, relativeNow()])
+    beforeInitAddTiming.add([name, clocksNow()])
   }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
@@ -88,7 +88,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
+      beforeInitAddTiming.drain(([name, endClocks]) => addTimingStrategy(name, endClocks))
 
       isAlreadyInitialized = true
     }),
@@ -106,7 +106,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       addActionStrategy({
         name,
         context: deepClone(context as Context),
-        startTime: relativeNow(),
+        startClocks: clocksNow(),
         type: ActionType.CUSTOM,
       })
     }),
@@ -130,7 +130,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         error,
         context: deepClone(context as Context),
         source: checkedSource,
-        startTime: relativeNow(),
+        startClocks: clocksNow(),
       })
     }),
 

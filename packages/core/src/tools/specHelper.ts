@@ -1,4 +1,5 @@
 import { Configuration } from '../domain/configuration'
+import { RelativeTime, TimeStamp } from './timeUtils'
 import { noop, objectEntries } from './utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -225,4 +226,8 @@ export function setPageVisibility(visibility: 'visible' | 'hidden') {
 
 export function restorePageVisibility() {
   delete (document as any).visibilityState
+}
+
+export function clocksWith(relative: number) {
+  return { relative: relative as RelativeTime, timeStamp: -1 as TimeStamp }
 }

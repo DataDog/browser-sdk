@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
@@ -15,7 +15,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
-describe('rum entry', () => {
+describe('rum public api', () => {
   describe('configuration validation', () => {
     let rumPublicApi: RumPublicApi
     let errorSpy: jasmine.Spy
@@ -169,7 +169,7 @@ describe('rum entry', () => {
         {
           context: { bar: 'baz' },
           name: 'foo',
-          startTime: jasmine.any(Number),
+          startClocks: jasmine.any(Object),
           type: ActionType.CUSTOM,
         },
         { context: {}, user: {} },
@@ -186,7 +186,7 @@ describe('rum entry', () => {
         clock.tick(ONE_SECOND)
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addActionSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
+        expect(addActionSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
@@ -258,7 +258,7 @@ describe('rum entry', () => {
           context: undefined,
           error: new Error('foo'),
           source: ErrorSource.CUSTOM,
-          startTime: jasmine.any(Number),
+          startClocks: jasmine.any(Object),
         },
         { context: {}, user: {} },
       ])
@@ -288,7 +288,7 @@ describe('rum entry', () => {
         clock.tick(ONE_SECOND)
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
-        expect(addErrorSpy.calls.argsFor(0)[0].startTime as number).toEqual(ONE_SECOND)
+        expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(ONE_SECOND)
       })
 
       it('stores a deep copy of the global context', () => {
@@ -421,7 +421,10 @@ describe('rum entry', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(10 as RelativeTime)
+      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual({
+        relative: 10 as RelativeTime,
+        timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
+      })
     })
 
     it('should add custom timings', () => {

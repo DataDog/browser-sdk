@@ -3,12 +3,12 @@ import {
   Duration,
   FetchCompleteContext,
   FetchStartContext,
-  RelativeTime,
   RequestType,
   startFetchProxy,
   startXhrProxy,
   XhrCompleteContext,
   XhrStartContext,
+  ClocksState,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { isAllowedRequestUrl } from './rumEventsCollection/resource/resourceUtils'
@@ -36,7 +36,7 @@ export interface RequestCompleteEvent {
   status: number
   response?: string
   responseType?: string
-  startTime: RelativeTime
+  startClocks: ClocksState
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
@@ -71,7 +71,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
         requestIndex: context.requestIndex,
         response: context.response,
         spanId: context.spanId,
-        startTime: context.startTime,
+        startClocks: context.startClocks,
         status: context.status,
         traceId: context.traceId,
         type: RequestType.XHR,
@@ -104,7 +104,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         response: context.response,
         responseType: context.responseType,
         spanId: context.spanId,
-        startTime: context.startTime,
+        startClocks: context.startClocks,
         status: context.status,
         traceId: context.traceId,
         type: RequestType.FETCH,

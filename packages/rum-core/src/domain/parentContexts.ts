@@ -1,4 +1,11 @@
-import { monitor, ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import {
+  monitor,
+  ONE_MINUTE,
+  RelativeTime,
+  SESSION_TIME_OUT_DELAY,
+  relativeNow,
+  ClocksState,
+} from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -33,8 +40,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     if (currentView) {
       previousViews.unshift({
         context: buildCurrentViewContext(),
-        endTime: currentContext.startTime,
-        startTime: currentView.startTime,
+        endTime: currentContext.startClocks.relative,
+        startTime: currentView.startClocks.relative,
       })
     }
     currentView = currentContext
@@ -58,8 +65,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       previousActions.unshift({
         context: buildCurrentActionContext(),
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (currentAction.startTime + action.duration) as RelativeTime,
-        startTime: currentAction.startTime,
+        endTime: (currentAction.startClocks.relative + action.duration) as RelativeTime,
+        startTime: currentAction.startClocks.relative,
       })
     }
     currentAction = undefined
@@ -85,7 +92,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   )
 
   function clearOldContexts(previousContexts: Array<PreviousContext<unknown>>, timeOutDelay: number) {
-    const oldTimeThreshold = performance.now() - timeOutDelay
+    const oldTimeThreshold = relativeNow() - timeOutDelay
     while (previousContexts.length > 0 && previousContexts[previousContexts.length - 1].startTime < oldTimeThreshold) {
       previousContexts.pop()
     }
@@ -112,13 +119,13 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
-    currentContext?: { startTime: RelativeTime },
+    currentContext?: { startClocks: ClocksState },
     startTime?: RelativeTime
   ) {
     if (startTime === undefined) {
       return currentContext ? buildContext() : undefined
     }
-    if (currentContext && startTime >= currentContext.startTime) {
+    if (currentContext && startTime >= currentContext.startClocks.relative) {
       return buildContext()
     }
     for (const previousContext of previousContexts) {

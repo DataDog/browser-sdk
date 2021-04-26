@@ -1,4 +1,12 @@
-import { combine, generateUUID, getTimeStamp, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
+import {
+  combine,
+  generateUUID,
+  RequestType,
+  ResourceType,
+  toServerDuration,
+  relativeToClocks,
+  preferredTimeStamp,
+} from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -31,14 +39,14 @@ function processRequest(request: RequestCompleteEvent) {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
-  const startTime = matchingTiming ? matchingTiming.startTime : request.startTime
+  const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const correspondingTimingOverrides = matchingTiming ? computePerformanceEntryMetrics(matchingTiming) : undefined
 
   const tracingInfo = computeRequestTracingInfo(request)
 
   const resourceEvent = combine(
     {
-      date: getTimeStamp(startTime),
+      date: preferredTimeStamp(startClocks),
       resource: {
         type,
         duration: toServerDuration(request.duration),
@@ -51,7 +59,7 @@ function processRequest(request: RequestCompleteEvent) {
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime, rawRumEvent: resourceEvent as RawRumResourceEvent }
+  return { startTime: startClocks.relative, rawRumEvent: resourceEvent as RawRumResourceEvent }
 }
 
 function processResourceEntry(entry: RumPerformanceResourceTiming) {
@@ -59,9 +67,10 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
   const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry)
 
+  const startClocks = relativeToClocks(entry.startTime)
   const resourceEvent = combine(
     {
-      date: getTimeStamp(entry.startTime),
+      date: preferredTimeStamp(startClocks),
       resource: {
         type,
         url: entry.name,
@@ -71,7 +80,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
     tracingInfo,
     entryMetrics
   )
-  return { startTime: entry.startTime, rawRumEvent: resourceEvent as RawRumResourceEvent }
+  return { startTime: startClocks.relative, rawRumEvent: resourceEvent as RawRumResourceEvent }
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {

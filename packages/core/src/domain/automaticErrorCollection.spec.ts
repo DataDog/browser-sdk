@@ -1,4 +1,4 @@
-import { RelativeTime } from '@datadog/browser-core'
+import { ClocksState } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
@@ -43,7 +43,7 @@ describe('console tracker', () => {
       ...CONSOLE_CONTEXT,
       message: 'console error: foo bar',
       stack: undefined,
-      startTime: jasmine.any(Number),
+      startClocks: jasmine.any(Object),
     })
   })
 
@@ -53,7 +53,7 @@ describe('console tracker', () => {
       ...CONSOLE_CONTEXT,
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
-      startTime: jasmine.any(Number),
+      startClocks: jasmine.any(Object),
     })
   })
 
@@ -187,7 +187,7 @@ describe('network error tracker', () => {
         },
         source: 'network',
         stack: 'Server error',
-        startTime: jasmine.any(Number),
+        startClocks: jasmine.any(Object),
       })
       done()
     })
@@ -283,7 +283,7 @@ describe('error limitation', () => {
   let filteredSubscriber: jasmine.Spy
   const CONTEXT = {
     source: ErrorSource.SOURCE,
-    startTime: 100 as RelativeTime,
+    startClocks: (jasmine.any(Object) as unknown) as ClocksState,
   }
 
   beforeEach(() => {
@@ -317,7 +317,7 @@ describe('error limitation', () => {
     expect(filteredSubscriber).toHaveBeenCalledWith({
       message: 'Reached max number of errors by minute: 2',
       source: ErrorSource.AGENT,
-      startTime: jasmine.any(Number),
+      startClocks: jasmine.any(Object),
     })
   })
 

@@ -1,10 +1,10 @@
 import {
   Duration,
-  getTimeStamp,
   isEmptyObject,
   mapValues,
   ServerDuration,
   toServerDuration,
+  preferredTimeStamp,
 } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -23,7 +23,7 @@ function processViewUpdate(view: ViewEvent) {
     _dd: {
       document_version: view.documentVersion,
     },
-    date: getTimeStamp(view.startTime),
+    date: preferredTimeStamp(view.startClocks),
     type: RumEventType.VIEW,
     view: {
       action: {
@@ -65,6 +65,6 @@ function processViewUpdate(view: ViewEvent) {
   }
   return {
     rawRumEvent: viewEvent,
-    startTime: view.startTime,
+    startTime: view.startClocks.relative,
   }
 }

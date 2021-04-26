@@ -61,7 +61,7 @@ describe('resourceCollection', () => {
         createCompletedRequest({
           duration: 100 as Duration,
           method: 'GET',
-          startTime: 1234 as RelativeTime,
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           status: 200,
           type: RequestType.XHR,
           url: 'https://resource.com/valid',
@@ -70,7 +70,7 @@ describe('resourceCollection', () => {
 
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: (jasmine.any(Number) as unknown) as TimeStamp,
+        date: jasmine.any(Number),
         resource: {
           duration: (100 * 1e6) as ServerDuration,
           method: 'GET',
@@ -220,7 +220,7 @@ function createCompletedRequest(details?: Partial<RequestCompleteEvent>): Reques
   const request: Partial<RequestCompleteEvent> = {
     duration: 100 as Duration,
     method: 'GET',
-    startTime: 1234 as RelativeTime,
+    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
     status: 200,
     type: RequestType.XHR,
     url: 'https://resource.com/valid',
