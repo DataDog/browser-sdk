@@ -150,17 +150,17 @@ export function findTextContent(elem: ElementNode): string | null {
   return text ? text.textContent : null
 }
 
-// Returns the first ElementNode with the given ID attribute from a FullSnapshotRecord, if any.
+// Returns the first ElementNode with the given ID attribute contained in a node, if any.
 export function findElementWithIdAttribute(root: SerializedNodeWithId, id: string) {
   return findElement(root, (node) => node.attributes.id === id)
 }
 
-// Returns the first ElementNode with the given tag name from a FullSnapshotRecord, if any.
+// Returns the first ElementNode with the given tag name contained in a node, if any.
 export function findElementWithTagName(root: SerializedNodeWithId, tagName: string) {
   return findElement(root, (node) => node.tagName === tagName)
 }
 
-// Returns the first TextNode with the given content from a FullSnapshotRecord, if any.
+// Returns the first TextNode with the given content contained in a node, if any.
 export function findTextNode(root: SerializedNodeWithId, textContent: string) {
   return findNode(root, (node) => isTextNode(node) && node.textContent === textContent) as
     | (TextNode & { id: number })
