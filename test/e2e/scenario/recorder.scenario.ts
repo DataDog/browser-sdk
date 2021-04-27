@@ -2,7 +2,7 @@ import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum
 import { InputData, StyleSheetRuleData } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
 
 import { NodeType } from '@datadog/browser-rum-recorder/cjs/domain/rrweb-snapshot'
-import { createTest, bundleSetup, html } from '../lib/framework'
+import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
 import {
@@ -79,7 +79,7 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(events.sessionReplay[0].segment.data)!
+        const fullSnapshot = findFullSnapshot(getFirstSegment(events))!
 
         const fooNode = findElementWithIdAttribute(fullSnapshot.data.node, 'foo')
         expect(fooNode).toBeTruthy()
@@ -125,9 +125,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
-        )
+        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         validate({
           adds: [
@@ -173,9 +171,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
-        )
+        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         validate({
           adds: [
@@ -223,7 +219,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(events.sessionReplay[0].segment.data)
+        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         validate({
           attributes: [
@@ -263,7 +259,7 @@ describe('recorder', () => {
         await flushEvents()
 
         expect(events.sessionReplay.length).toBe(1)
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
@@ -291,7 +287,8 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(events.sessionReplay[0].segment.data)
+        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+
         validate({
           adds: [
             {
@@ -359,9 +356,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
-        )
+        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         const div = newNode({ type: NodeType.Element, tagName: 'div' })
 
@@ -439,9 +434,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
-        )
+        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         const ul = selectNode({ tag: 'ul' })
         const li1 = newNode({ type: NodeType.Element, tagName: 'li' })
@@ -517,7 +510,7 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
@@ -576,9 +569,10 @@ describe('recorder', () => {
         await flushEvents()
 
         expect(events.sessionReplay.length).toBe(1)
-        const { segment } = events.sessionReplay[0]
 
-        const inputRecords = findAllIncrementalSnapshots(segment.data, IncrementalSource.Input)
+        const segment = getFirstSegment(events)
+
+        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
         expect((inputRecords[inputRecords.length - 1].data as InputData).text).toBe('foo')
@@ -609,7 +603,7 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -621,3 +615,7 @@ describe('recorder', () => {
       })
   })
 })
+
+function getFirstSegment(events: EventRegistry) {
+  return events.sessionReplay[0].segment.data
+}
