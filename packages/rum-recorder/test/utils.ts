@@ -120,26 +120,24 @@ export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
   }
 }
 
-// Returns this first MetaRecord in a Segment, if any.
+// Returns the first MetaRecord in a Segment, if any.
 export function findMeta(segment: Segment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
 }
 
-// Returns this first FullSnapshotRecord in a Segment, if any.
+// Returns the first FullSnapshotRecord in a Segment, if any.
 export function findFullSnapshot(segment: Segment): FullSnapshotRecord | null {
   return segment.records.find((record) => record.type === RecordType.FullSnapshot) as FullSnapshotRecord
 }
 
-// Returns the first IncrementalSnapshotRecord of a given source in a
-// Segment, if any.
+// Returns the first IncrementalSnapshotRecord of a given source in a Segment, if any.
 export function findIncrementalSnapshot(segment: Segment, source: IncrementalSource): IncrementalSnapshotRecord | null {
   return segment.records.find(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
   ) as IncrementalSnapshotRecord
 }
 
-// Returns all the IncrementalSnapshotRecord of a given source in a
-// Segment, if any.
+// Returns all the IncrementalSnapshotRecord of a given source in a Segment, if any.
 export function findAllIncrementalSnapshots(segment: Segment, source: IncrementalSource): IncrementalSnapshotRecord[] {
   return segment.records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
