@@ -64,6 +64,9 @@ function processError(error: RawError) {
       stack: error.stack,
       type: error.type,
     },
+    focus: {
+      start_focused: document.hasFocus(),
+    },
     type: RumEventType.ERROR as const,
   }
 

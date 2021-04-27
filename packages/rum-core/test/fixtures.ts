@@ -43,6 +43,9 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         {
           type,
           date: 0 as TimeStamp,
+          focus: {
+            start_focused: true,
+          },
           error: {
             message: 'oh snap',
             source: ErrorSource.SOURCE,

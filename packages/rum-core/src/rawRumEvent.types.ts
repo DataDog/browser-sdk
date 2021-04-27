@@ -40,6 +40,9 @@ export interface PerformanceResourceDetailsElement {
 export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
+  focus: {
+    start_focused: boolean
+  }
   error: {
     resource?: {
       url: string
