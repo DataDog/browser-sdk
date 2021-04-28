@@ -2,7 +2,7 @@ import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum
 import { InputData, StyleSheetRuleData } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
 
 import { NodeType } from '@datadog/browser-rum-recorder/cjs/domain/rrweb-snapshot'
-import { createTest, bundleSetup, html } from '../lib/framework'
+import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
 import { flushEvents } from '../lib/helpers/sdk'
 import {
@@ -12,8 +12,8 @@ import {
   findAllIncrementalSnapshots,
   findMeta,
   findTextContent,
-  validateMutations,
-} from '../lib/helpers/recorder'
+  createMutationPayloadValidatorFromSegment,
+} from '../../../packages/rum-recorder/test/utils'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -79,18 +79,18 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const fullSnapshot = findFullSnapshot(events.sessionReplay[0].segment.data)!
+        const fullSnapshot = findFullSnapshot(getFirstSegment(events))!
 
-        const fooNode = findElementWithIdAttribute(fullSnapshot, 'foo')
+        const fooNode = findElementWithIdAttribute(fullSnapshot.data.node, 'foo')
         expect(fooNode).toBeTruthy()
         expect(findTextContent(fooNode!)).toBe('foo')
 
-        const barNode = findElementWithIdAttribute(fullSnapshot, 'bar')
+        const barNode = findElementWithIdAttribute(fullSnapshot.data.node, 'bar')
         expect(barNode).toBeTruthy()
         expect(barNode!.attributes['data-dd-privacy']).toBe('hidden')
         expect(barNode!.childNodes.length).toBe(0)
 
-        const bazNode = findElementWithIdAttribute(fullSnapshot, 'baz')
+        const bazNode = findElementWithIdAttribute(fullSnapshot.data.node, 'baz')
         expect(bazNode).toBeTruthy()
         expect(bazNode!.attributes.class).toBe('dd-privacy-hidden baz')
         expect(bazNode!.attributes['data-dd-privacy']).toBe('hidden')
@@ -125,17 +125,21 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
+
+        validate({
           adds: [
             {
-              parent: { tag: 'p' },
-              node: { tagName: 'span' },
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectNewNode({ type: NodeType.Element, tagName: 'span' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
           ],
         })
@@ -169,21 +173,25 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
+
+        validate({
           adds: [
             {
-              parent: { tag: 'p' },
-              node: { type: NodeType.Text, textContent: 'mutated' },
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectNewNode({ type: NodeType.Text, textContent: 'mutated' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
             {
-              parent: { tag: 'p' },
-              node: { text: 'mutation observer' },
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectInitialNode({ text: 'mutation observer' }),
             },
           ],
         })
@@ -215,17 +223,19 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+
+        validate({
           attributes: [
             {
-              node: { tag: 'body' },
+              node: expectInitialNode({ tag: 'body' }),
               attributes: { test: 'true' },
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'ul' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
           ],
         })
@@ -253,7 +263,7 @@ describe('recorder', () => {
         await flushEvents()
 
         expect(events.sessionReplay.length).toBe(1)
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
@@ -281,49 +291,51 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+
+        validate({
           adds: [
             {
-              parent: { tag: 'div' },
-              node: { from: { tag: 'span' }, childNodes: [] },
+              parent: expectInitialNode({ tag: 'div' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
             {
-              next: { tag: 'i' },
-              parent: { tag: 'span' },
-              node: { from: { text: 'c' } },
+              next: expectInitialNode({ tag: 'i' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'c' }),
             },
             {
-              next: { text: 'g' },
-              parent: { tag: 'span' },
-              node: { from: { tag: 'i' }, childNodes: [] },
+              next: expectInitialNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ tag: 'i' }),
             },
             {
-              next: { tag: 'b' },
-              parent: { tag: 'i' },
-              node: { from: { text: 'd' } },
+              next: expectInitialNode({ tag: 'b' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'd' }),
             },
             {
-              next: { text: 'f' },
-              parent: { tag: 'i' },
-              node: { from: { tag: 'b' }, childNodes: [] },
+              next: expectInitialNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ tag: 'b' }),
             },
             {
-              parent: { tag: 'b' },
-              node: { from: { text: 'e' } },
+              parent: expectInitialNode({ tag: 'b' }),
+              node: expectInitialNode({ text: 'e' }),
             },
             {
-              parent: { tag: 'i' },
-              node: { from: { text: 'f' } },
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'f' }),
             },
             {
-              parent: { tag: 'span' },
-              node: { from: { text: 'g' } },
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'g' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'span' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
         })
@@ -348,53 +360,59 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
+
+        const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
+
+        validate({
           adds: [
             {
-              next: { tag: 'i' },
-              parent: { tag: 'span' },
-              node: { from: { text: 'c' } },
+              next: expectInitialNode({ tag: 'i' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'c' }),
             },
             {
-              next: { text: 'g' },
-              parent: { tag: 'span' },
-              node: { from: { tag: 'i' }, childNodes: [] },
+              next: expectInitialNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ tag: 'i' }),
             },
             {
-              next: { tag: 'b' },
-              parent: { tag: 'i' },
-              node: { from: { text: 'd' } },
+              next: expectInitialNode({ tag: 'b' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'd' }),
             },
             {
-              next: { text: 'f' },
-              parent: { tag: 'i' },
-              node: { from: { tag: 'b' }, childNodes: [] },
+              next: expectInitialNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ tag: 'b' }),
             },
             {
-              parent: { tag: 'b' },
-              node: { from: { text: 'e' } },
+              parent: expectInitialNode({ tag: 'b' }),
+              node: expectInitialNode({ text: 'e' }),
             },
             {
-              parent: { tag: 'i' },
-              node: { from: { text: 'f' } },
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'f' }),
             },
             {
-              parent: { tag: 'span' },
-              node: { from: { text: 'g' } },
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'g' }),
             },
             {
-              parent: { tag: 'body' },
-              node: { tagName: 'div' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: div,
             },
             {
-              parent: { created: 0 },
-              node: { from: { tag: 'span' }, childNodes: [] },
+              parent: div,
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
           removes: [
             {
-              parent: { tag: 'body' },
-              node: { tag: 'span' },
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
         })
@@ -422,21 +440,30 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        validateMutations(events, {
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
+
+        const ul = expectInitialNode({ tag: 'ul' })
+        const li1 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
+        const li2 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
+        const li3 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
+
+        validate({
           adds: [
             {
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              parent: ul,
+              node: li1,
             },
             {
-              next: { created: 0 },
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              next: li1,
+              parent: ul,
+              node: li2,
             },
             {
-              next: { created: 1 },
-              parent: { tag: 'ul' },
-              node: { tagName: 'li' },
+              next: li2,
+              parent: ul,
+              node: li3,
             },
           ],
         })
@@ -491,7 +518,7 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
@@ -517,7 +544,7 @@ describe('recorder', () => {
 
         function filterRecordsByIdAttribute(segment: Segment, idAttribute: string) {
           const fullSnapshot = findFullSnapshot(segment)!
-          const id = findElementWithIdAttribute(fullSnapshot, idAttribute)!.id
+          const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
           const records = findAllIncrementalSnapshots(segment, IncrementalSource.Input) as Array<{ data: InputData }>
           return records.filter((record) => record.data.id === id)
         }
@@ -550,9 +577,10 @@ describe('recorder', () => {
         await flushEvents()
 
         expect(events.sessionReplay.length).toBe(1)
-        const { segment } = events.sessionReplay[0]
 
-        const inputRecords = findAllIncrementalSnapshots(segment.data, IncrementalSource.Input)
+        const segment = getFirstSegment(events)
+
+        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
         expect((inputRecords[inputRecords.length - 1].data as InputData).text).toBe('foo')
@@ -583,7 +611,7 @@ describe('recorder', () => {
 
         expect(events.sessionReplay.length).toBe(1)
 
-        const segment = events.sessionReplay[0].segment.data
+        const segment = getFirstSegment(events)
 
         const styleSheetRules = findAllIncrementalSnapshots(segment, IncrementalSource.StyleSheetRule) as Array<{
           data: StyleSheetRuleData
@@ -595,3 +623,7 @@ describe('recorder', () => {
       })
   })
 })
+
+function getFirstSegment(events: EventRegistry) {
+  return events.sessionReplay[0].segment.data
+}
