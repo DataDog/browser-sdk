@@ -9,13 +9,17 @@ describe('startMutationCollection', () => {
   let sandbox: HTMLElement
   let stopMutationCollection: () => void
 
-  function start() {
-    const callbackSpy = jasmine.createSpy<MutationCallBack>()
-    const controller = new MutationController()
+  function startMutationCollection() {
+    const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
+    const mutationController = new MutationController()
 
-    ;({ stop: stopMutationCollection } = startMutationObserver(controller, callbackSpy))
+    ;({ stop: stopMutationCollection } = startMutationObserver(mutationController, mutationCallbackSpy))
 
-    return { controller, callbackSpy, getLatestMutationPayload: () => callbackSpy.calls.mostRecent()?.args[0] }
+    return {
+      mutationController,
+      mutationCallbackSpy,
+      getLatestMutationPayload: () => mutationCallbackSpy.calls.mostRecent()?.args[0],
+    }
   }
 
   beforeEach(() => {
@@ -36,12 +40,12 @@ describe('startMutationCollection', () => {
   describe('childList mutation records', () => {
     it('emits a mutation when a node is appended to a known node', () => {
       const serializedDocument = snapshot(document)[0]!
-      const { controller, callbackSpy, getLatestMutationPayload } = start()
+      const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('div'))
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
       const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -56,25 +60,25 @@ describe('startMutationCollection', () => {
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
       // Here, we don't call snapshot(), so the sandbox is 'unknown'.
-      const { controller, callbackSpy } = start()
+      const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('div'))
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).not.toHaveBeenCalled()
+      expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
 
     it('emits buffered mutation records on flush', () => {
       snapshot(document)
-      const { controller, callbackSpy } = start()
+      const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('div'))
 
-      expect(callbackSpy).toHaveBeenCalledTimes(0)
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(0)
 
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
     })
 
     describe('does not emit mutations on removed nodes and their descendants', () => {
@@ -83,11 +87,11 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(element)
         snapshot(document)
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         element.setAttribute('foo', 'bar')
         sandbox.remove()
-        controller.flush()
+        mutationController.flush()
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -97,11 +101,11 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(textNode)
         snapshot(document)
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         textNode.data = 'bar'
         sandbox.remove()
-        controller.flush()
+        mutationController.flush()
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
@@ -109,11 +113,11 @@ describe('startMutationCollection', () => {
       it('add mutations', () => {
         snapshot(document)
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         sandbox.appendChild(document.createElement('div'))
         sandbox.remove()
-        controller.flush()
+        mutationController.flush()
 
         expect(getLatestMutationPayload().adds).toEqual([])
       })
@@ -123,11 +127,11 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(element)
         const serializedDocument = snapshot(document)[0]!
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         element.remove()
         sandbox.remove()
-        controller.flush()
+        mutationController.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -147,13 +151,13 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(element)
         snapshot(document)
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         element.remove()
         sandbox.appendChild(element)
 
         element.setAttribute('foo', 'bar')
-        controller.flush()
+        mutationController.flush()
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -163,13 +167,13 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(textNode)
         snapshot(document)
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         textNode.remove()
         sandbox.appendChild(textNode)
 
         textNode.data = 'bar'
-        controller.flush()
+        mutationController.flush()
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
@@ -181,7 +185,7 @@ describe('startMutationCollection', () => {
         parent.appendChild(child)
         const serializedDocument = snapshot(document)[0]!
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         // Generate a mutation on 'child'
         child.remove()
@@ -189,7 +193,7 @@ describe('startMutationCollection', () => {
         // Generate a mutation on 'parent'
         parent.remove()
         sandbox.appendChild(parent)
-        controller.flush()
+        mutationController.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
@@ -218,7 +222,7 @@ describe('startMutationCollection', () => {
       it('remove mutations', () => {
         const serializedDocument = snapshot(document)[0]!
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         const parent = document.createElement('a')
         const child = document.createElement('b')
@@ -226,7 +230,7 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(parent)
 
         child.remove()
-        controller.flush()
+        mutationController.flush()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -244,13 +248,13 @@ describe('startMutationCollection', () => {
       const element = document.createElement('a')
       const serializedDocument = snapshot(document)[0]!
 
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.appendChild(element)
       element.remove()
       sandbox.appendChild(element)
 
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -270,12 +274,12 @@ describe('startMutationCollection', () => {
       sandbox.appendChild(elementB)
       const serializedDocument = snapshot(document)[0]!
 
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       // Moves 'a' after 'b'
       sandbox.appendChild(elementA)
 
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -301,14 +305,14 @@ describe('startMutationCollection', () => {
       sandbox.appendChild(parent)
       const serializedDocument = snapshot(document)[0]!
 
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       // Move child into sandbox
       sandbox.appendChild(child)
       // Move child back into parent
       parent.appendChild(child)
 
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -330,13 +334,13 @@ describe('startMutationCollection', () => {
     it('keep nodes order when adding multiple sibling nodes', () => {
       const serializedDocument = snapshot(document)[0]!
 
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('a'))
       sandbox.appendChild(document.createElement('b'))
       sandbox.appendChild(document.createElement('c'))
 
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       const c = expectNewNode({ type: NodeType.Element, tagName: 'c' })
@@ -373,12 +377,12 @@ describe('startMutationCollection', () => {
 
     it('emits a mutation when a text node is changed', () => {
       const serializedDocument = snapshot(document)[0]!
-      const { controller, callbackSpy, getLatestMutationPayload } = start()
+      const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       textNode.data = 'bar'
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -393,25 +397,25 @@ describe('startMutationCollection', () => {
 
     it('does not emit a mutation when a text node keeps the same value', () => {
       snapshot(document)
-      const { controller, callbackSpy } = start()
+      const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       textNode.data = 'bar'
       textNode.data = 'foo'
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).not.toHaveBeenCalled()
+      expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
   })
 
   describe('attributes mutations', () => {
     it('emits a mutation when an attribute is changed', () => {
       const serializedDocument = snapshot(document)[0]!
-      const { controller, callbackSpy, getLatestMutationPayload } = start()
+      const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo', 'bar')
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -427,22 +431,22 @@ describe('startMutationCollection', () => {
     it('does not emit a mutation when an attribute keeps the same value', () => {
       sandbox.setAttribute('foo', 'bar')
       snapshot(document)
-      const { controller, callbackSpy } = start()
+      const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       sandbox.setAttribute('foo', 'biz')
       sandbox.setAttribute('foo', 'bar')
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).not.toHaveBeenCalled()
+      expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
 
     it('reuse the same mutation when multiple attributes are changed', () => {
       const serializedDocument = snapshot(document)[0]!
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo1', 'biz')
       sandbox.setAttribute('foo2', 'bar')
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -467,11 +471,11 @@ describe('startMutationCollection', () => {
     it('skips ignored nodes when looking for the next id', () => {
       const serializedDocument = snapshot(document)[0]!
 
-      const { controller, getLatestMutationPayload } = start()
+      const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.insertBefore(document.createElement('a'), ignoredElement)
 
-      controller.flush()
+      mutationController.flush()
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -489,37 +493,37 @@ describe('startMutationCollection', () => {
         ignoredElement.remove()
         snapshot(document)[0]!
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         sandbox.appendChild(ignoredElement)
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when changing the attributes of an ignored node', () => {
         snapshot(document)[0]!
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         ignoredElement.setAttribute('foo', 'bar')
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when adding a new child node', () => {
         snapshot(document)[0]!
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         ignoredElement.appendChild(document.createTextNode('function foo() {}'))
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when mutating a known child node', () => {
@@ -528,13 +532,13 @@ describe('startMutationCollection', () => {
         snapshot(document)[0]!
         ignoredElement.appendChild(textNode)
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         textNode.data = 'function bar() {}'
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when adding a known child node', () => {
@@ -542,11 +546,11 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(textNode)
         const serializedDocument = snapshot(document)[0]!
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         ignoredElement.appendChild(textNode)
 
-        controller.flush()
+        mutationController.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -572,26 +576,26 @@ describe('startMutationCollection', () => {
     it('does not emit attribute mutations on hidden nodes', () => {
       snapshot(document)[0]!
 
-      const { controller, callbackSpy } = start()
+      const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       hiddenElement.setAttribute('foo', 'bar')
 
-      controller.flush()
+      mutationController.flush()
 
-      expect(callbackSpy).not.toHaveBeenCalled()
+      expect(mutationCallbackSpy).not.toHaveBeenCalled()
     })
 
     describe('does not emit mutations occurring in hidden node', () => {
       it('when adding a new node', () => {
         snapshot(document)[0]!
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         hiddenElement.appendChild(document.createTextNode('function foo() {}'))
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when mutating a known child node', () => {
@@ -600,13 +604,13 @@ describe('startMutationCollection', () => {
         snapshot(document)[0]!
         hiddenElement.appendChild(textNode)
 
-        const { controller, callbackSpy } = start()
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
         textNode.data = 'function bar() {}'
 
-        controller.flush()
+        mutationController.flush()
 
-        expect(callbackSpy).not.toHaveBeenCalled()
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
       })
 
       it('when moving a known node into an hidden node', () => {
@@ -614,11 +618,11 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(textNode)
         const serializedDocument = snapshot(document)[0]!
 
-        const { controller, getLatestMutationPayload } = start()
+        const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
         hiddenElement.appendChild(textNode)
 
-        controller.flush()
+        mutationController.flush()
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
