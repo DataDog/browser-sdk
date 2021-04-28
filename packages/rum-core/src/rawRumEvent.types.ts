@@ -125,6 +125,9 @@ export interface RawRumActionEvent {
       name: string
     }
   }
+  focus: {
+    start_focused: boolean
+  }
 }
 
 export enum ActionType {

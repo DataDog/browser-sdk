@@ -159,6 +159,7 @@ describe('rum public api', () => {
     })
 
     it('allows sending actions before init', () => {
+      spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
       rumPublicApi.addAction('foo', { bar: 'baz' })
 
       expect(addActionSpy).not.toHaveBeenCalled()
@@ -171,6 +172,7 @@ describe('rum public api', () => {
           name: 'foo',
           startClocks: jasmine.any(Object),
           type: ActionType.CUSTOM,
+          startFocused: false,
         },
         { context: {}, user: {} },
       ])

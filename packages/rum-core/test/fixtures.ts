@@ -24,6 +24,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ActionType.CUSTOM,
           },
           date: 0 as TimeStamp,
+          focus: { start_focused: true },
         },
         overrides
       )

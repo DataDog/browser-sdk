@@ -51,6 +51,9 @@ function processAction(action: AutoAction | CustomAction) {
       },
       date: preferredTimeStamp(action.startClocks),
       type: RumEventType.ACTION as const,
+      focus: {
+        start_focused: action.startFocused,
+      },
     },
     autoActionProperties
   )

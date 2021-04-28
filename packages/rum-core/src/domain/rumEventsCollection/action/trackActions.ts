@@ -29,6 +29,7 @@ export interface CustomAction {
   name: string
   startClocks: ClocksState
   context?: Context
+  startFocused: boolean
 }
 
 export interface AutoAction {
@@ -38,6 +39,7 @@ export interface AutoAction {
   startClocks: ClocksState
   duration: Duration
   counts: ActionCounts
+  startFocused: boolean
 }
 
 export interface AutoActionCreatedEvent {
@@ -114,12 +116,17 @@ class PendingAutoAction {
   private id: string
   private startClocks: ClocksState
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
+  private startFocused: boolean
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
     this.startClocks = clocksNow()
+    this.startFocused = document.hasFocus()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
+      id: this.id,
+      startClocks: this.startClocks,
+    })
   }
 
   complete(endTime: PreferredTime) {
@@ -135,6 +142,7 @@ class PendingAutoAction {
       name: this.name,
       startClocks: this.startClocks,
       type: this.type,
+      startFocused: this.startFocused,
     })
     this.eventCountsSubscription.stop()
   }

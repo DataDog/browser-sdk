@@ -34,6 +34,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
+      startFocused: true,
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234)
@@ -55,6 +56,9 @@ describe('actionCollection', () => {
         },
         type: ActionType.CLICK,
       },
+      focus: {
+        start_focused: true,
+      },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
     })
@@ -66,6 +70,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
+      startFocused: true,
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234)
@@ -78,6 +83,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      focus: {
+        start_focused: true,
+      },
     })
   })
 })

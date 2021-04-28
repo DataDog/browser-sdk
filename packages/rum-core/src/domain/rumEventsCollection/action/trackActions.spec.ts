@@ -33,6 +33,7 @@ describe('trackActions', () => {
   let setupBuilder: TestSetupBuilder
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
+  let hasFocus = false
 
   function mockValidatedClickAction(lifeCycle: LifeCycle, clock: jasmine.Clock, target: HTMLElement) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
@@ -46,6 +47,8 @@ describe('trackActions', () => {
   }
 
   beforeEach(() => {
+    hasFocus = false
+    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
     button = document.createElement('button')
     button.type = 'button'
     button.appendChild(document.createTextNode('Click me'))
@@ -107,6 +110,7 @@ describe('trackActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
+        startFocused: false,
       },
     ])
   })
@@ -128,6 +132,34 @@ describe('trackActions', () => {
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
+  })
+
+  describe('when the user has focus on the document', () => {
+    beforeEach(() => {
+      hasFocus = true
+    })
+
+    it('starts a action when clicking on an element with focus', () => {
+      const { lifeCycle, clock } = setupBuilder.build()
+      mockValidatedClickAction(lifeCycle, clock, button)
+      expect(createSpy).toHaveBeenCalled()
+      clock.tick(EXPIRE_DELAY)
+      expect(events).toEqual([
+        {
+          counts: {
+            errorCount: 0,
+            longTaskCount: 0,
+            resourceCount: 0,
+          },
+          duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
+          id: jasmine.any(String),
+          name: 'Click me',
+          startClocks: jasmine.any(Object),
+          type: ActionType.CLICK,
+          startFocused: true,
+        },
+      ])
+    })
   })
 })
 
