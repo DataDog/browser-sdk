@@ -496,7 +496,7 @@ describe('startMutationCollection', () => {
     describe('does not emit mutations occurring in ignored node', () => {
       it('when adding an ignored node', () => {
         ignoredElement.remove()
-        snapshot(document)[0]!
+        snapshot(document)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -508,7 +508,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when changing the attributes of an ignored node', () => {
-        snapshot(document)[0]!
+        snapshot(document)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -520,7 +520,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when adding a new child node', () => {
-        snapshot(document)[0]!
+        snapshot(document)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -534,7 +534,7 @@ describe('startMutationCollection', () => {
       it('when mutating a known child node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        snapshot(document)[0]!
+        snapshot(document)
         ignoredElement.appendChild(textNode)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
@@ -579,7 +579,7 @@ describe('startMutationCollection', () => {
     })
 
     it('does not emit attribute mutations on hidden nodes', () => {
-      snapshot(document)[0]!
+      snapshot(document)
 
       const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -592,7 +592,7 @@ describe('startMutationCollection', () => {
 
     describe('does not emit mutations occurring in hidden node', () => {
       it('when adding a new node', () => {
-        snapshot(document)[0]!
+        snapshot(document)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -606,7 +606,7 @@ describe('startMutationCollection', () => {
       it('when mutating a known child node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        snapshot(document)[0]!
+        snapshot(document)
         hiddenElement.appendChild(textNode)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
