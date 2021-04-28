@@ -1,5 +1,12 @@
 import { monitor } from '@datadog/browser-core'
-import { IGNORED_NODE_ID, INode, nodeIsIgnored, serializeNodeWithId, transformAttribute } from '../rrweb-snapshot'
+import {
+  hasSerializedNode,
+  IGNORED_NODE_ID,
+  INode,
+  nodeIsIgnored,
+  serializeNodeWithId,
+  transformAttribute,
+} from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   AddedNodeMutation,
@@ -308,7 +315,7 @@ export class MutationObserverWrapper {
   }
 
   private processMutation = (m: MutationRecord) => {
-    if (nodeIsIgnored(m.target)) {
+    if (hasSerializedNode(m.target) && nodeIsIgnored(m.target)) {
       return
     }
     switch (m.type) {
@@ -344,7 +351,11 @@ export class MutationObserverWrapper {
         forEach(m.removedNodes, (n: Node) => {
           const nodeId = mirror.getId(n as INode)
           const parentId = mirror.getId(m.target as INode)
-          if (nodeOrAncestorsShouldBeHidden(n) || nodeOrAncestorsShouldBeHidden(m.target) || nodeIsIgnored(n)) {
+          if (
+            nodeOrAncestorsShouldBeHidden(n) ||
+            nodeOrAncestorsShouldBeHidden(m.target) ||
+            (hasSerializedNode(n) && nodeIsIgnored(n))
+          ) {
             return
           }
           // removed node has not been serialized yet, just remove it from the Set

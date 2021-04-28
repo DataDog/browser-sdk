@@ -20,17 +20,19 @@ export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) 
   ;(n as Partial<NodeWithSerializedNode>).__sn = serializeNode
 }
 
-export function nodeIsIgnored(n: Node): boolean {
+export function nodeIsIgnored(n: NodeWithSerializedNode): boolean {
   return getSerializedNodeId(n) === IGNORED_NODE_ID
 }
 
-export function nodeOrAncestorsIsIgnored(n: Node) {
-  let current: Node | null = n
+export function nodeOrAncestorsIsIgnored(n: NodeWithSerializedNode) {
+  let current: NodeWithSerializedNode | null = n
   while (current) {
     if (nodeIsIgnored(current)) {
       return true
     }
-    current = current.parentNode
+    // Since we serialize the document from the root, and any new node is only serialized if they
+    // are added in a serialized node, we are guaranteed to have a serialized parent node here.
+    current = current.parentNode as NodeWithSerializedNode | null
   }
   return false
 }
