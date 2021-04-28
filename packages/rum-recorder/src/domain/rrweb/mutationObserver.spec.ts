@@ -145,7 +145,12 @@ describe('startMutationCollection', () => {
       })
     })
 
-    describe('does not emit mutations on freshly serialized nodes and their descendants', () => {
+    describe('does not emit mutations on freshly re-serialized nodes and their descendants', () => {
+      // Note about those tests: any mutation with a not-yet-serialized 'target' will be trivially
+      // ignored. We want to focus on mutations with a 'target' that have already been serialized
+      // (during the document snapshot for example), and re-serialized (by being added in the
+      // document) during the processed mutation batched.
+
       it('attribute mutations', () => {
         const element = document.createElement('div')
         sandbox.appendChild(element)
@@ -299,18 +304,18 @@ describe('startMutationCollection', () => {
     })
 
     it('uses the initial parent id when removing a node from multiple places', () => {
-      const parent = document.createElement('a')
-      const child = document.createElement('b')
-      parent.appendChild(child)
-      sandbox.appendChild(parent)
+      const container1 = document.createElement('a')
+      const container2 = document.createElement('b')
+      const element = document.createElement('span')
+      sandbox.appendChild(element)
+      sandbox.appendChild(container1)
+      sandbox.appendChild(container2)
       const serializedDocument = snapshot(document)[0]!
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
-      // Move child into sandbox
-      sandbox.appendChild(child)
-      // Move child back into parent
-      parent.appendChild(child)
+      container1.appendChild(element)
+      container2.appendChild(element)
 
       mutationController.flush()
 
@@ -318,14 +323,14 @@ describe('startMutationCollection', () => {
       validate(getLatestMutationPayload(), {
         adds: [
           {
-            parent: expectInitialNode({ tag: 'a' }),
-            node: expectInitialNode({ tag: 'b' }),
+            parent: expectInitialNode({ tag: 'b' }),
+            node: expectInitialNode({ tag: 'span' }),
           },
         ],
         removes: [
           {
-            parent: expectInitialNode({ tag: 'a' }),
-            node: expectInitialNode({ tag: 'b' }),
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
+            node: expectInitialNode({ tag: 'span' }),
           },
         ],
       })
