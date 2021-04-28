@@ -8,8 +8,6 @@ import {
   ClocksState,
   clocksNow,
   preferredClock,
-  preferredNow,
-  PreferredTime,
   clocksOrigin,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
@@ -44,6 +42,11 @@ export interface ViewCreatedEvent {
   location: Location
   referrer: string
   startClocks: ClocksState
+}
+
+export interface ViewEndedEvent {
+  id: string
+  endClocks: ClocksState
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -144,7 +147,7 @@ function newView(
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let endTime: PreferredTime | undefined
+  let endClocks: ClocksState | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
@@ -182,17 +185,17 @@ function newView(
       referrer,
       startClocks,
       timings,
-      duration: elapsed(preferredClock(startClocks), endTime === undefined ? preferredNow() : endTime),
-      isActive: endTime === undefined,
+      duration: elapsed(preferredClock(startClocks), preferredClock(endClocks === undefined ? clocksNow() : endClocks)),
+      isActive: endClocks === undefined,
     })
   }
 
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = preferredNow()
+      endClocks = clocksNow()
       stopViewMetricsTracking()
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { id, endClocks })
     },
     getLocation() {
       return location

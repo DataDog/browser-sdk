@@ -153,7 +153,7 @@ describe('startRecording', () => {
   it('adds a ViewEnd snapshot when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
     viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
     flushSegment(lifeCycle)
