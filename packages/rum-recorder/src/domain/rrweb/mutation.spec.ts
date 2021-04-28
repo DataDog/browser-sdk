@@ -39,12 +39,12 @@ describe('MutationObserverWrapper', () => {
 
     expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
 
-    const { validate, newNode, selectNode } = createMutationPayloadValidator(serializedDocument)
+    const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
     validate(mutationCallbackSpy.calls.mostRecent().args[0], {
       adds: [
         {
-          parent: selectNode({ idAttribute: 'sandbox' }),
-          node: newNode({ type: NodeType.Element, tagName: 'div' }),
+          parent: expectInitialNode({ idAttribute: 'sandbox' }),
+          node: expectNewNode({ type: NodeType.Element, tagName: 'div' }),
         },
       ],
     })

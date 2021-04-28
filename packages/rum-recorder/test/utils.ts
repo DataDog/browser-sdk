@@ -277,8 +277,8 @@ type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
 /**
  * Based on an serialized initial document, it returns:
  *
- * * a set of utilities functions to select existing nodes (selectNode) or create new nodes
- * (newNode) to help build the expected mutations object
+ * * a set of utilities functions to expect nodes by selecting initial nodes from the initial
+ * document (expectInitialNode) or creating new nodes (expectNewNode)
  *
  * * a 'validate' function to actually validate a mutation payload against an expected mutation
  * object.
@@ -290,9 +290,9 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
    * Creates a new node based on input parameter, with sensible default properties, and an
    * automatically computed 'id' attribute based on the previously created nodes.
    */
-  function newNode(node: Optional<ElementNode, 'childNodes' | 'attributes'>): ExpectedNode
-  function newNode(node: TextNode): ExpectedNode
-  function newNode(node: Partial<SerializedNode>) {
+  function expectNewNode(node: Optional<ElementNode, 'childNodes' | 'attributes'>): ExpectedNode
+  function expectNewNode(node: TextNode): ExpectedNode
+  function expectNewNode(node: Partial<SerializedNode>) {
     maxNodeId += 1
     if (node.type === NodeType.Element) {
       node.attributes ||= {}
@@ -339,13 +339,13 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
       )
     },
 
-    newNode,
+    expectNewNode,
 
     /**
      * Selects a node from the initially serialized document. Nodes can be selected via their 'tag'
      * name, 'id' attribute or 'text' content.
      */
-    selectNode: (selector: NodeSelector) => {
+    expectInitialNode: (selector: NodeSelector) => {
       let node
       if (selector.text) {
         node = findTextNode(initialDocument, selector.text)

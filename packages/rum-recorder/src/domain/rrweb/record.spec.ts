@@ -83,21 +83,21 @@ describe('record', () => {
 
       expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
 
-      const { validate: validateMutationPayload, newNode, selectNode } = createMutationPayloadValidator(
+      const { validate: validateMutationPayload, expectNewNode, expectInitialNode } = createMutationPayloadValidator(
         (records[2] as FullSnapshotRecord).data.node
       )
 
-      const p = newNode({ type: NodeType.Element, tagName: 'p' })
-      const span = newNode({ type: NodeType.Element, tagName: 'span' })
-      const text = newNode({ type: NodeType.Text, textContent: 'test' })
-      const sandbox = selectNode({ idAttribute: 'sandbox' })
+      const p = expectNewNode({ type: NodeType.Element, tagName: 'p' })
+      const span = expectNewNode({ type: NodeType.Element, tagName: 'span' })
+      const text = expectNewNode({ type: NodeType.Text, textContent: 'test' })
+      const sandbox = expectInitialNode({ idAttribute: 'sandbox' })
 
       validateMutationPayload((records[3] as IncrementalSnapshotRecord).data as MutationData, {
         adds: [
           { parent: sandbox, node: p },
           { parent: p, node: span },
         ],
-        removes: [{ node: selectNode({ tag: 'input' }), parent: sandbox }],
+        removes: [{ node: expectInitialNode({ tag: 'input' }), parent: sandbox }],
       })
 
       expect(records[4].type).toBe(RecordType.IncrementalSnapshot)

@@ -125,19 +125,21 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
 
         validate({
           adds: [
             {
-              parent: selectNode({ tag: 'p' }),
-              node: newNode({ type: NodeType.Element, tagName: 'span' }),
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectNewNode({ type: NodeType.Element, tagName: 'span' }),
             },
           ],
           removes: [
             {
-              parent: selectNode({ tag: 'body' }),
-              node: selectNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
           ],
         })
@@ -171,23 +173,25 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, newNode, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
 
         validate({
           adds: [
             {
-              parent: selectNode({ tag: 'p' }),
-              node: newNode({ type: NodeType.Text, textContent: 'mutated' }),
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectNewNode({ type: NodeType.Text, textContent: 'mutated' }),
             },
           ],
           removes: [
             {
-              parent: selectNode({ tag: 'body' }),
-              node: selectNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
             {
-              parent: selectNode({ tag: 'p' }),
-              node: selectNode({ text: 'mutation observer' }),
+              parent: expectInitialNode({ tag: 'p' }),
+              node: expectInitialNode({ text: 'mutation observer' }),
             },
           ],
         })
@@ -219,19 +223,19 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         validate({
           attributes: [
             {
-              node: selectNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'body' }),
               attributes: { test: 'true' },
             },
           ],
           removes: [
             {
-              parent: selectNode({ tag: 'body' }),
-              node: selectNode({ tag: 'ul' }),
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'ul' }),
             },
           ],
         })
@@ -287,51 +291,51 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
 
         validate({
           adds: [
             {
-              parent: selectNode({ tag: 'div' }),
-              node: selectNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'div' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
             {
-              next: selectNode({ tag: 'i' }),
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ text: 'c' }),
+              next: expectInitialNode({ tag: 'i' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'c' }),
             },
             {
-              next: selectNode({ text: 'g' }),
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ tag: 'i' }),
+              next: expectInitialNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ tag: 'i' }),
             },
             {
-              next: selectNode({ tag: 'b' }),
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ text: 'd' }),
+              next: expectInitialNode({ tag: 'b' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'd' }),
             },
             {
-              next: selectNode({ text: 'f' }),
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ tag: 'b' }),
+              next: expectInitialNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ tag: 'b' }),
             },
             {
-              parent: selectNode({ tag: 'b' }),
-              node: selectNode({ text: 'e' }),
+              parent: expectInitialNode({ tag: 'b' }),
+              node: expectInitialNode({ text: 'e' }),
             },
             {
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'f' }),
             },
             {
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'g' }),
             },
           ],
           removes: [
             {
-              parent: selectNode({ tag: 'body' }),
-              node: selectNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
         })
@@ -356,57 +360,59 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
 
-        const div = newNode({ type: NodeType.Element, tagName: 'div' })
+        const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
 
         validate({
           adds: [
             {
-              next: selectNode({ tag: 'i' }),
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ text: 'c' }),
+              next: expectInitialNode({ tag: 'i' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'c' }),
             },
             {
-              next: selectNode({ text: 'g' }),
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ tag: 'i' }),
+              next: expectInitialNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ tag: 'i' }),
             },
             {
-              next: selectNode({ tag: 'b' }),
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ text: 'd' }),
+              next: expectInitialNode({ tag: 'b' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'd' }),
             },
             {
-              next: selectNode({ text: 'f' }),
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ tag: 'b' }),
+              next: expectInitialNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ tag: 'b' }),
             },
             {
-              parent: selectNode({ tag: 'b' }),
-              node: selectNode({ text: 'e' }),
+              parent: expectInitialNode({ tag: 'b' }),
+              node: expectInitialNode({ text: 'e' }),
             },
             {
-              parent: selectNode({ tag: 'i' }),
-              node: selectNode({ text: 'f' }),
+              parent: expectInitialNode({ tag: 'i' }),
+              node: expectInitialNode({ text: 'f' }),
             },
             {
-              parent: selectNode({ tag: 'span' }),
-              node: selectNode({ text: 'g' }),
+              parent: expectInitialNode({ tag: 'span' }),
+              node: expectInitialNode({ text: 'g' }),
             },
             {
-              parent: selectNode({ tag: 'body' }),
+              parent: expectInitialNode({ tag: 'body' }),
               node: div,
             },
             {
               parent: div,
-              node: selectNode({ tag: 'span' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
           removes: [
             {
-              parent: selectNode({ tag: 'body' }),
-              node: selectNode({ tag: 'span' }),
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
             },
           ],
         })
@@ -434,12 +440,14 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, selectNode, newNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
 
-        const ul = selectNode({ tag: 'ul' })
-        const li1 = newNode({ type: NodeType.Element, tagName: 'li' })
-        const li2 = newNode({ type: NodeType.Element, tagName: 'li' })
-        const li3 = newNode({ type: NodeType.Element, tagName: 'li' })
+        const ul = expectInitialNode({ tag: 'ul' })
+        const li1 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
+        const li2 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
+        const li3 = expectNewNode({ type: NodeType.Element, tagName: 'li' })
 
         validate({
           adds: [
