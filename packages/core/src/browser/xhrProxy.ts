@@ -1,5 +1,14 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
-import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
+import {
+  Duration,
+  elapsed,
+  relativeNow,
+  RelativeTime,
+  preferredNow,
+  ClocksState,
+  clocksNow,
+  preferredClock,
+} from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -17,7 +26,8 @@ export interface XhrProxy<
 export interface XhrStartContext {
   method: string
   url: string
-  startTime: RelativeTime
+  startTime: RelativeTime // deprecated
+  startClocks: ClocksState
 
   /**
    * allow clients to enhance the context
@@ -81,9 +91,8 @@ function proxyXhr() {
       // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
       // and can be used by different code versions depending on customer setup
       // so it should stay compatible with older versions
-      this._datadog_xhr = {
+      ;(this._datadog_xhr as Pick<XhrStartContext, 'method' | 'url'>) = {
         method,
-        startTime: -1 as RelativeTime, // computed in send call
         url: normalizeUrl(url),
       }
     })
@@ -96,6 +105,7 @@ function proxyXhr() {
         const xhrPendingContext = this._datadog_xhr as XhrStartContext &
           Pick<XhrCompleteContext, 'startTime' | 'isAborted'>
         xhrPendingContext.startTime = relativeNow()
+        xhrPendingContext.startClocks = clocksNow()
         xhrPendingContext.isAborted = false
 
         const originalOnreadystatechange = this.onreadystatechange
@@ -124,7 +134,7 @@ function proxyXhr() {
 
           const xhrCompleteContext: XhrCompleteContext = {
             ...xhrPendingContext,
-            duration: elapsed(xhrPendingContext.startTime, relativeNow()),
+            duration: elapsed(preferredClock(xhrPendingContext.startClocks), preferredNow()),
             response: this.response as string | undefined,
             status: this.status,
           }

@@ -6,7 +6,6 @@ import {
   Configuration,
   Context,
   ErrorObservable,
-  getTimeStamp,
   HttpRequest,
   InternalMonitoring,
   limitModification,
@@ -62,7 +61,7 @@ export function doStartLogs(
       error.message,
       combine(
         {
-          date: getTimeStamp(error.startTime),
+          date: error.startClocks.timeStamp,
           error: {
             kind: error.type,
             origin: error.source,
@@ -78,7 +77,7 @@ export function doStartLogs(
               },
             }
           : undefined,
-        getRUMInternalContext(error.startTime)
+        getRUMInternalContext(error.startClocks.relative)
       )
     )
   })

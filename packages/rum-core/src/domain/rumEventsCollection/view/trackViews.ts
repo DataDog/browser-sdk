@@ -4,17 +4,21 @@ import {
   generateUUID,
   monitor,
   ONE_MINUTE,
-  relativeNow,
-  RelativeTime,
   throttle,
+  ClocksState,
+  clocksNow,
+  preferredClock,
+  preferredNow,
+  PreferredTime,
+  clocksOrigin,
 } from '@datadog/browser-core'
+import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
-import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
-import { trackViewMetrics } from './trackViewMetrics'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
+import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {
   id: string
@@ -25,7 +29,7 @@ export interface ViewEvent {
   customTimings: ViewCustomTimings
   eventCounts: EventCounts
   documentVersion: number
-  startTime: RelativeTime
+  startClocks: ClocksState
   duration: Duration
   isActive: boolean
   loadingTime?: Duration
@@ -39,7 +43,7 @@ export interface ViewCreatedEvent {
   name?: string
   location: Location
   referrer: string
-  startTime: RelativeTime
+  startClocks: ClocksState
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -93,14 +97,13 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   )
 
   function trackInitialView() {
-    const startOrigin = 0 as RelativeTime
     const initialView = newView(
       lifeCycle,
       location,
       isRecording,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
-      startOrigin
+      clocksOrigin()
     )
     const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
       initialView.updateTimings(timings)
@@ -114,8 +117,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   }
 
   return {
-    addTiming: (name: string, time = relativeNow()) => {
-      currentView.addTiming(name, time)
+    addTiming: (name: string, endClocks = clocksNow()) => {
+      currentView.addTiming(name, endClocks)
       currentView.triggerUpdate()
     },
     stop: () => {
@@ -133,7 +136,7 @@ function newView(
   initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
-  startTime = relativeNow(),
+  startClocks: ClocksState = clocksNow(),
   name?: string
 ) {
   // Setup initial values
@@ -141,11 +144,11 @@ function newView(
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let endTime: RelativeTime | undefined
+  let endTime: PreferredTime | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startTime, location, referrer })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -177,9 +180,9 @@ function newView(
       location,
       hasReplay,
       referrer,
-      startTime,
+      startClocks,
       timings,
-      duration: elapsed(startTime, endTime === undefined ? relativeNow() : endTime),
+      duration: elapsed(preferredClock(startClocks), endTime === undefined ? preferredNow() : endTime),
       isActive: endTime === undefined,
     })
   }
@@ -187,7 +190,7 @@ function newView(
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = relativeNow()
+      endTime = preferredNow()
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
@@ -205,8 +208,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, endTime: RelativeTime) {
-      customTimings[sanitizeTiming(name)] = elapsed(startTime, endTime)
+    addTiming(name: string, endClocks: ClocksState) {
+      customTimings[sanitizeTiming(name)] = elapsed(preferredClock(startClocks), preferredClock(endClocks))
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }

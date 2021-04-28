@@ -5,13 +5,15 @@ import {
   Duration,
   elapsed,
   generateUUID,
-  relativeNow,
-  RelativeTime,
+  ClocksState,
+  clocksNow,
+  PreferredTime,
+  preferredClock,
 } from '@datadog/browser-core'
+import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
-import { ActionType } from '../../../rawRumEvent.types'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -25,7 +27,7 @@ export interface ActionCounts {
 export interface CustomAction {
   type: ActionType.CUSTOM
   name: string
-  startTime: RelativeTime
+  startClocks: ClocksState
   context?: Context
 }
 
@@ -33,14 +35,14 @@ export interface AutoAction {
   type: AutoActionType
   id: string
   name: string
-  startTime: RelativeTime
+  startClocks: ClocksState
   duration: Duration
   counts: ActionCounts
 }
 
 export interface AutoActionCreatedEvent {
   id: string
-  startTime: RelativeTime
+  startClocks: ClocksState
 }
 
 export function trackActions(lifeCycle: LifeCycle) {
@@ -89,9 +91,9 @@ function startActionManagement(lifeCycle: LifeCycle) {
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name)
 
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (hadActivity, endTime) => {
-        if (hadActivity) {
-          pendingAutoAction.complete(endTime)
+      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (params) => {
+        if (params.hadActivity) {
+          pendingAutoAction.complete(params.endTime)
         } else {
           pendingAutoAction.discard()
         }
@@ -110,17 +112,17 @@ function startActionManagement(lifeCycle: LifeCycle) {
 
 class PendingAutoAction {
   private id: string
-  private startTime: RelativeTime
+  private startClocks: ClocksState
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
   constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
     this.id = generateUUID()
-    this.startTime = relativeNow()
+    this.startClocks = clocksNow()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
-    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startTime: this.startTime })
+    this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(endTime: RelativeTime) {
+  complete(endTime: PreferredTime) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -128,10 +130,10 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: elapsed(this.startTime, endTime),
+      duration: elapsed(preferredClock(this.startClocks), endTime),
       id: this.id,
       name: this.name,
-      startTime: this.startTime,
+      startClocks: this.startClocks,
       type: this.type,
     })
     this.eventCountsSubscription.stop()

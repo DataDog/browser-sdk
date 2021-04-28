@@ -26,6 +26,7 @@ module.exports = ({ entry, mode, filename, datacenter, types }) => ({
             { search: '<<< TARGET_DATACENTER >>>', replace: datacenter || 'us' },
             { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
             { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
+            { search: '<<< SYSTEM_CLOCK >>>', replace: buildEnv.SYSTEM_CLOCK || 'false' },
           ],
         },
       },

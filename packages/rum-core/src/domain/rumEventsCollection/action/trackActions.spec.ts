@@ -1,4 +1,4 @@
-import { Context, DOM_EVENT, RelativeTime } from '@datadog/browser-core'
+import { Context, DOM_EVENT, ClocksState } from '@datadog/browser-core'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
@@ -82,7 +82,7 @@ describe('trackActions', () => {
       location,
       id: 'fake',
       referrer: 'http://foo.com',
-      startTime: 0 as RelativeTime,
+      startClocks: (jasmine.any(Object) as unknown) as ClocksState,
     })
     clock.tick(EXPIRE_DELAY)
 
@@ -105,7 +105,7 @@ describe('trackActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
         id: jasmine.any(String),
         name: 'Click me',
-        startTime: jasmine.any(Number),
+        startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
       },
     ])

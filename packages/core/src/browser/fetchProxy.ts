@@ -1,7 +1,7 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
-import { Duration, elapsed, relativeNow, RelativeTime } from '../tools/timeUtils'
+import { Duration, elapsed, preferredNow, ClocksState, clocksNow, preferredClock } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<
@@ -14,7 +14,7 @@ export interface FetchProxy<
 
 export interface FetchStartContext {
   method: string
-  startTime: RelativeTime
+  startClocks: ClocksState
   input: RequestInfo
   init?: RequestInit
   url: string
@@ -90,13 +90,13 @@ function proxyFetch() {
 function beforeSend(input: RequestInfo, init?: RequestInit) {
   const method = (init && init.method) || (typeof input === 'object' && input.method) || 'GET'
   const url = normalizeUrl((typeof input === 'object' && input.url) || (input as string))
-  const startTime = relativeNow()
+  const startClocks = clocksNow()
 
   const context: FetchStartContext = {
     init,
     input,
     method,
-    startTime,
+    startClocks,
     url,
   }
 
@@ -107,7 +107,7 @@ function beforeSend(input: RequestInfo, init?: RequestInit) {
 
 function afterSend(responsePromise: Promise<Response>, context: FetchStartContext & Partial<FetchCompleteContext>) {
   const reportFetch = async (response: Response | Error) => {
-    context.duration = elapsed(context.startTime, relativeNow())
+    context.duration = elapsed(preferredClock(context.startClocks), preferredNow())
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0
