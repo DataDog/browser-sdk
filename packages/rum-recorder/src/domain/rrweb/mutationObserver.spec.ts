@@ -55,7 +55,7 @@ describe('startMutationCollection', () => {
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
-      // Here, we don't call snapshot(), so the sandbox in 'unknown'.
+      // Here, we don't call snapshot(), so the sandbox is 'unknown'.
       const { controller, callbackSpy } = start()
 
       sandbox.appendChild(document.createElement('div'))
@@ -327,7 +327,7 @@ describe('startMutationCollection', () => {
       })
     })
 
-    it('sets a correct nextId when adding multiple sibling nodes', () => {
+    it('keep nodes order when adding multiple sibling nodes', () => {
       const serializedDocument = snapshot(document)[0]!
 
       const { controller, getLatestMutationPayload } = start()
@@ -484,7 +484,7 @@ describe('startMutationCollection', () => {
       })
     })
 
-    describe('does not emit mutations', () => {
+    describe('does not emit mutations occurring in ignored node', () => {
       it('when adding an ignored node', () => {
         ignoredElement.remove()
         snapshot(document)[0]!

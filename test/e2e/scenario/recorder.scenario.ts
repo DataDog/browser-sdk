@@ -364,9 +364,7 @@ describe('recorder', () => {
 
         await flushEvents()
 
-        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
-        )
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
         validate({
           adds: [
             {
@@ -487,7 +485,7 @@ describe('recorder', () => {
         await flushEvents()
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
-          events.sessionReplay[0].segment.data
+          getFirstSegment(events)
         )
 
         const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
