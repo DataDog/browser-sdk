@@ -4,6 +4,7 @@ import { formatProfilingResults } from './format'
 import { startProfiling } from './profiling'
 import { trackNetwork } from './trackNetwork'
 import { ProfilingResults, ProfilingOptions } from './types'
+import { startProxy } from './proxy'
 
 main().catch((error) => {
   console.error(error)
@@ -11,13 +12,14 @@ main().catch((error) => {
 })
 
 async function main() {
+  const proxy = await startProxy()
+
   const options: ProfilingOptions = {
     bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
-    proxyHost: 'datadog-browser-sdk-profiling-proxy',
+    proxy,
   }
 
   const wikipediaResults = await profileScenario(options, runWikipediaScenario)
-  const twitterResults = await profileScenario(options, runTwitterScenario)
 
   console.log(`
 # Wikipedia
@@ -27,9 +29,11 @@ Illustrates a mostly static site scenario.
 * Navigate on three Wikipedia articles
 * Do a search (with dynamic autocompletion) and go to the first result
 
-${formatProfilingResults(wikipediaResults)}
+${formatProfilingResults(wikipediaResults)}`)
 
+  const twitterResults = await profileScenario(options, runTwitterScenario)
 
+  console.log(`
 # Twitter
 
 Illustrates a SPA scenario.
@@ -40,8 +44,9 @@ Illustrates a SPA scenario.
 * Navigate to the Settings page
 * Click on a few checkboxes
 
-${formatProfilingResults(twitterResults)}
-`)
+${formatProfilingResults(twitterResults)}`)
+
+  proxy.stop()
 }
 
 async function profileScenario(
@@ -52,6 +57,7 @@ async function profileScenario(
     defaultViewport: { width: 1366, height: 768 },
     // Twitter detects headless browsing and refuses to load
     headless: false,
+    args: [`--ignore-certificate-errors-spki-list=${options.proxy.spkiFingerprint}`],
   })
   let result: ProfilingResults
   try {
@@ -138,7 +144,7 @@ async function setupSDK(page: Page, options: ProfilingOptions) {
             applicationId: 'xxx',
             site: 'datadoghq.com',
             trackInteractions: true,
-            proxyHost: ${JSON.stringify(options.proxyHost)}
+            proxyHost: ${JSON.stringify(options.proxy.host)}
           })
         })
     }

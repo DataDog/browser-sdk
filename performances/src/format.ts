@@ -5,12 +5,36 @@ const DURATION_UNITS = ['μs', 'ms', 's']
 const BYTES_UNITS = ['B', 'kB', 'MB']
 
 export function formatProfilingResults(results: ProfilingResults) {
+  const hostsMaxWidth = Math.max(...results.upload.map(({ host }) => host.length))
+
+  const memorySize = formatNumberWithUnit(results.memory.sdk, BYTES_UNITS)
+  const memoryPercent = formatPercent(results.memory)
+  const cpuTime = formatNumberWithUnit(results.cpu.sdk, DURATION_UNITS)
+  const cpuPercent = formatPercent(results.cpu)
+  const uploadSize = formatNumberWithUnit(
+    results.upload.reduce((total, { requestsSize }) => total + requestsSize, 0),
+    BYTES_UNITS
+  )
+  const uploadDetails = results.upload.map(
+    ({ host, requestsSize, requestsCount }) =>
+      `* ${host.padEnd(hostsMaxWidth, ' ')} ${formatNumberWithUnit(requestsSize, BYTES_UNITS)} (${formatNumber(
+        requestsCount
+      )} requests)`
+  )
+  const downloadSize = formatNumberWithUnit(results.download, BYTES_UNITS)
+
   return `\
-Memory (median): ${formatNumberWithUnit(results.memory.sdk, BYTES_UNITS)} ${formatPercent(results.memory)}
-CPU: ${formatNumberWithUnit(results.cpu.sdk, DURATION_UNITS)} ${formatPercent(results.cpu)}
-Bandwidth:
-  upload: ${formatNumberWithUnit(results.upload.sdk, BYTES_UNITS)}
-  download: ${formatNumberWithUnit(results.download.sdk, BYTES_UNITS)}`
+**Memory** (median): ${memorySize} ${memoryPercent}
+
+**CPU**: ${cpuTime} ${cpuPercent}
+
+**Bandwidth**:
+
+  * upload: ${uploadSize}
+    ${uploadDetails.join('\n    ')}
+
+  * download: ${downloadSize}
+`
 }
 
 function formatNumberWithUnit(n: number, units: string[]) {

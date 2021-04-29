@@ -6,6 +6,9 @@
     "start": "ts-node ./src/main.ts"
   },
   "dependencies": {
+    "@types/node": "15.0.1",
+    "@types/node-forge": "0.9.7",
+    "node-forge": "0.10.0",
     "puppeteer": "8.0.0"
   }
 }
