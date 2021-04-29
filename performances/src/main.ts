@@ -12,10 +12,25 @@ main().catch((error) => {
 })
 
 async function main() {
+  const useRecorder = process.argv.includes('--recorder')
+  const displayHelp = process.argv.includes('-h') || process.argv.includes('--help')
+
+  if (displayHelp) {
+    console.log(`Usage: yarn start [options]
+
+This tool runs various scenarios in a browser and profile the impact of the Browser SDK.
+
+Options:
+  --help, -h: display this help and exit
+  --recorder: use datadog-rum-recorder.js instead of datadog-rum.js
+`)
+    return
+  }
+
   const proxy = await startProxy()
 
   const options: ProfilingOptions = {
-    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
+    bundleUrl: `https://www.datadoghq-browser-agent.com/${useRecorder ? 'datadog-rum-recorder.js' : 'datadog-rum.js'}`,
     proxy,
   }
 
