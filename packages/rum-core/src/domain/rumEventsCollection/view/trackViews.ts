@@ -45,7 +45,6 @@ export interface ViewCreatedEvent {
 }
 
 export interface ViewEndedEvent {
-  id: string
   endClocks: ClocksState
 }
 
@@ -195,7 +194,7 @@ function newView(
     end() {
       endClocks = clocksNow()
       stopViewMetricsTracking()
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { id, endClocks })
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },
     getLocation() {
       return location

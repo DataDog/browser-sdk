@@ -49,8 +49,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     }
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ id, endClocks }) => {
-    if (currentView && currentView.id === id) {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+    if (currentView) {
       previousViews.unshift({
         endTime: endClocks.relative,
         context: buildCurrentViewContext(),
