@@ -89,21 +89,3 @@ export function forEach<List extends { [index: number]: any }>(
 ) {
   Array.prototype.forEach.call(list, callback as any)
 }
-
-export function sortNodesByTopologicalOrder(nodes: Node[]) {
-  nodes.sort((a, b) => {
-    const position = a.compareDocumentPosition(b)
-    /* eslint-disable no-bitwise */
-    if (position & Node.DOCUMENT_POSITION_CONTAINED_BY) {
-      return -1
-    } else if (position & Node.DOCUMENT_POSITION_CONTAINS) {
-      return 1
-    } else if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
-      return 1
-    } else if (position & Node.DOCUMENT_POSITION_PRECEDING) {
-      return -1
-    }
-    /* eslint-enable no-bitwise */
-    return 0
-  })
-}

@@ -21,7 +21,7 @@ import {
   RemovedNodeMutation,
   TextMutation,
 } from './types'
-import { forEach, sortNodesByTopologicalOrder } from './utils'
+import { forEach } from './utils'
 import { MutationController } from './mutation'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
@@ -130,7 +130,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
   // siblings, we want to iterate from last to first. This will ensure that any "next" node is
   // already serialized and have an id.
   const sortedAddedAndMovedNodes = Array.from(addedAndMovedNodes)
-  sortNodesByTopologicalOrder(sortedAddedAndMovedNodes)
+  sortAddedAndMovedNodes(sortedAddedAndMovedNodes)
 
   // Then, we iterate over our sorted node sets to emit mutations. We collect the newly serialized
   // node ids in a map to be able to skip subsequent related mutations.
@@ -253,4 +253,22 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<Attrib
   }
 
   return attributeMutations
+}
+
+export function sortAddedAndMovedNodes(nodes: Node[]) {
+  nodes.sort((a, b) => {
+    const position = a.compareDocumentPosition(b)
+    /* eslint-disable no-bitwise */
+    if (position & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+      return -1
+    } else if (position & Node.DOCUMENT_POSITION_CONTAINS) {
+      return 1
+    } else if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+      return 1
+    } else if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+      return -1
+    }
+    /* eslint-enable no-bitwise */
+    return 0
+  })
 }
