@@ -213,7 +213,7 @@ describe('computeSegmentContext', () => {
   }
 
   const DEFAULT_SESSION: RumSession = {
-    getId: () => 'session-id',
+    getId: () => '456',
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }
@@ -238,6 +238,19 @@ describe('computeSegmentContext', () => {
         mockParentContexts({
           ...DEFAULT_VIEW_CONTEXT,
           session: { id: undefined },
+        })
+      )
+    ).toBeUndefined()
+  })
+
+  it('returns undefined if the session id is not the one of the current session', () => {
+    expect(
+      computeSegmentContext(
+        'appid',
+        DEFAULT_SESSION,
+        mockParentContexts({
+          ...DEFAULT_VIEW_CONTEXT,
+          session: { id: 'expired-session' },
         })
       )
     ).toBeUndefined()

@@ -40,6 +40,11 @@ describe('startRecording', () => {
           }
         },
       })
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => true,
+        isTrackedWithResource: () => true,
+      })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
         startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
       )
