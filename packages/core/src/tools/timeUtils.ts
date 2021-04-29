@@ -34,7 +34,7 @@ export function relativeToClocks(relative: RelativeTime) {
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
   const correctedOrigin = Date.now() - performance.now()
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return Math.floor(correctedOrigin + relativeTime) as TimeStamp
+  return Math.round(correctedOrigin + relativeTime) as TimeStamp
 }
 
 export function toServerDuration(duration: Duration): ServerDuration
@@ -82,7 +82,7 @@ export function getRelativeTime(timestamp: TimeStamp) {
 
 export function getTimeStamp(relativeTime: RelativeTime) {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return Math.floor(getNavigationStart() + relativeTime) as TimeStamp
+  return Math.round(getNavigationStart() + relativeTime) as TimeStamp
 }
 
 /**
