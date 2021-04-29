@@ -85,6 +85,9 @@ export interface RawRumViewEvent {
   session: {
     has_replay: true | undefined
   }
+  focus: {
+    start_focused: boolean
+  }
   _dd: {
     document_version: number
   }

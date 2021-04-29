@@ -36,6 +36,7 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   hasReplay: boolean
+  startFocused: boolean
 }
 
 export interface ViewCreatedEvent {
@@ -44,6 +45,7 @@ export interface ViewCreatedEvent {
   location: Location
   referrer: string
   startClocks: ClocksState
+  startFocused: boolean
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -147,8 +149,9 @@ function newView(
   let endTime: PreferredTime | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
+  const startFocused = document.hasFocus()
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer, startFocused })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -184,6 +187,7 @@ function newView(
       timings,
       duration: elapsed(preferredClock(startClocks), endTime === undefined ? preferredNow() : endTime),
       isActive: endTime === undefined,
+      startFocused,
     })
   }
 

@@ -53,6 +53,9 @@ function processViewUpdate(view: ViewEvent) {
       },
       time_spent: toServerDuration(view.duration),
     },
+    focus: {
+      start_focused: view.startFocused,
+    },
     session: {
       has_replay: view.hasReplay || undefined,
     },

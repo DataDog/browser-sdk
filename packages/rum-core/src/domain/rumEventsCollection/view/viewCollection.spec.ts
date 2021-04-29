@@ -58,6 +58,7 @@ describe('viewCollection', () => {
         largestContentfulPaint: 10 as Duration,
         loadEvent: 10 as Duration,
       },
+      startFocused: true,
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
@@ -99,6 +100,9 @@ describe('viewCollection', () => {
           count: 10,
         },
         time_spent: (100 * 1e6) as ServerDuration,
+      },
+      focus: {
+        start_focused: true,
       },
       session: {
         has_replay: undefined,
