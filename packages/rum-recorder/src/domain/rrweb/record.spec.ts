@@ -23,14 +23,12 @@ describe('record', () => {
   let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
-  let useNewMutationObserver: boolean
 
   beforeEach(() => {
     if (isIE()) {
       pending('IE not supported')
     }
 
-    useNewMutationObserver = false
     emitSpy = jasmine.createSpy()
     ;({ waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(emitSpy))
     ;({ sandbox, input } = createDOMSandbox())
@@ -118,72 +116,6 @@ describe('record', () => {
           { parent: sandbox, node: span },
           { parent: span, node: text },
         ],
-        removes: [{ parent: p, node: span }],
-      })
-
-      expectNoExtraEmitCalls(done)
-    })
-  })
-
-  it('is safe to checkout during async callbacks (new mutation observer)', (done) => {
-    useNewMutationObserver = true
-    startRecording()
-
-    const p = document.createElement('p')
-    const span = document.createElement('span')
-
-    setTimeout(() => {
-      sandbox.appendChild(p)
-      p.appendChild(span)
-      sandbox.removeChild(document.querySelector('input')!)
-    }, 0)
-
-    setTimeout(() => {
-      span.innerText = 'test'
-      recordApi.takeFullSnapshot()
-    }, 10)
-
-    setTimeout(() => {
-      p.removeChild(span)
-      sandbox.appendChild(span)
-    }, 10)
-
-    waitEmitCalls(9, () => {
-      const records = getEmittedRecords()
-      expect(records[0].type).toBe(RecordType.Meta)
-      expect(records[1].type).toBe(RecordType.Focus)
-
-      expect(records[2].type).toBe(RecordType.FullSnapshot)
-
-      expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
-
-      const { validate: validateMutationPayload, expectNewNode, expectInitialNode } = createMutationPayloadValidator(
-        (records[2] as FullSnapshotRecord).data.node
-      )
-
-      const p = expectNewNode({ type: NodeType.Element, tagName: 'p' })
-      const span = expectNewNode({ type: NodeType.Element, tagName: 'span' })
-      const text = expectNewNode({ type: NodeType.Text, textContent: 'test' })
-      const sandbox = expectInitialNode({ idAttribute: 'sandbox' })
-
-      validateMutationPayload((records[3] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [{ parent: sandbox, node: p.withChildren(span) }],
-        removes: [{ node: expectInitialNode({ tag: 'input' }), parent: sandbox }],
-      })
-
-      expect(records[4].type).toBe(RecordType.IncrementalSnapshot)
-      validateMutationPayload((records[4] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [{ parent: span, node: text }],
-      })
-
-      expect(records[5].type).toBe(RecordType.Meta)
-      expect(records[6].type).toBe(RecordType.Focus)
-
-      expect(records[7].type).toBe(RecordType.FullSnapshot)
-
-      expect(records[8].type).toBe(RecordType.IncrementalSnapshot)
-      validateMutationPayload((records[8] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [{ parent: sandbox, node: span.withChildren(text) }],
         removes: [{ parent: p, node: span }],
       })
 
@@ -328,7 +260,7 @@ describe('record', () => {
   function startRecording() {
     recordApi = record({
       emit: emitSpy,
-      useNewMutationObserver,
+      useNewMutationObserver: false,
     })
   }
 
