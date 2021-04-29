@@ -7,7 +7,6 @@ variables:
 stages:
   - ci-image
   - test
-  - browserstack
   - pre-deploy-notify
   - deploy
   - notify
@@ -22,74 +21,52 @@ ci-image:
     - docker build --tag $CI_IMAGE .
     - docker push $CI_IMAGE
 
-format:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn format
-
-typecheck:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn typecheck
-
-build-and-lint:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn build
-    - yarn lint
-    - scripts/cli typecheck test/app
-    - scripts/cli typecheck test/e2e
-
-build-bundle:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn build:bundle
-
-compatibility:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - yarn
-    - yarn test:compat:tsc
-    - yarn test:compat:ssr
-
-unit:
+e2e_1:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
     reports:
-      junit: test-report/unit/*.xml
+      junit: test-report/e2e/*.xml
   script:
     - yarn
-    - yarn test:unit
-    - ./scripts/codecov.sh
+    - BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
 
-unit_system_clock:
+e2e_2:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
   artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
     reports:
-      junit: test-report/unit/*.xml
+      junit: test-report/e2e/*.xml
   script:
     - yarn
-    - SYSTEM_CLOCK=true yarn test:unit
+    - BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
 
-e2e:
+e2e_3:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
+
+e2e_4:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -102,8 +79,54 @@ e2e:
   script:
     - yarn
     - yarn test:e2e
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
 
-e2e_system_clock:
+e2e_system_clock_1:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - SYSTEM_CLOCK=true BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
+
+e2e_system_clock_2:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - SYSTEM_CLOCK=true BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
+
+e2e_system_clock_3:
+  stage: test
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - test-report/e2e/specs.log
+    reports:
+      junit: test-report/e2e/*.xml
+  script:
+    - yarn
+    - SYSTEM_CLOCK=true BUILD_MODE=e2e-test yarn build && (cd test/app && rm -rf node_modules && yarn && yarn build)
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
+
+e2e_system_clock_4:
   stage: test
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -116,48 +139,7 @@ e2e_system_clock:
   script:
     - yarn
     - SYSTEM_CLOCK=true yarn test:e2e
-
-check-licenses:
-  stage: test
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  script:
-    - node --no-warnings scripts/check-licenses.js
-
-unit-bs:
-  except:
-    refs:
-      - master
-      - tags
-  stage: browserstack
-  resource_group: browserstack
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  artifacts:
-    reports:
-      junit: test-report/unit-bs/*.xml
-  script:
-    - yarn
-    - ./scripts/ci-bs.sh test:unit
-
-e2e-bs:
-  except:
-    refs:
-      - master
-      - tags
-  stage: browserstack
-  resource_group: browserstack
-  tags: ['runner:main', 'size:large']
-  image: $CI_IMAGE
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e-bs/*.xml
-    paths:
-      - test-report/e2e-bs/specs.log
-  script:
-    - yarn
-    - ./scripts/ci-bs.sh test:e2e
+    - while [ $? -eq 0 ]; do yarn wdio test/e2e/wdio.local.conf.js; done;
 
 deploy-staging:
   only:
