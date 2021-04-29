@@ -76,10 +76,14 @@ describe('parentContexts', () => {
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
+
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(20 as RelativeTime), id: 'view 2' })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(30 as RelativeTime) })
+
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(30 as RelativeTime), id: 'view 3' })
@@ -97,15 +101,17 @@ describe('parentContexts', () => {
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(10 as RelativeTime), id: 'view 1' })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks(20 as RelativeTime), id: 'view 2' })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
 
       expect(parentContexts.findView(5 as RelativeTime)).not.toBeDefined()
     })
 
-    it('should replace the current view context on VIEW_CREATED', () => {
+    it('should set the current view context on VIEW_CREATED', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
@@ -236,6 +242,7 @@ describe('parentContexts', () => {
           startClocks: relativeToClocks(10 as RelativeTime),
         })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks: relativeToClocks(20 as RelativeTime) })
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({
@@ -280,6 +287,9 @@ describe('parentContexts', () => {
           startClocks: originalClocks,
         })
       )
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {
+        endClocks: relativeToClocks((originalTime + 10) as RelativeTime),
+      })
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
         startClocks: originalClocks,
         id: 'action 1',
