@@ -86,6 +86,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           },
           focus: {
             start_focused: true,
+            focused_times: [],
           },
           session: {
             has_replay: undefined,

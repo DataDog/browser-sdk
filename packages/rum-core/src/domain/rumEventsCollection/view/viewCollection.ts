@@ -55,6 +55,7 @@ function processViewUpdate(view: ViewEvent) {
     },
     focus: {
       start_focused: view.startFocused,
+      focused_times: view.focusedTimes,
     },
     session: {
       has_replay: view.hasReplay || undefined,

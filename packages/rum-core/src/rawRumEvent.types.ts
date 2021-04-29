@@ -1,4 +1,12 @@
-import { Context, Duration, ErrorSource, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import {
+  Context,
+  Duration,
+  ErrorSource,
+  ResourceType,
+  ServerDuration,
+  TimeStamp,
+  RelativeTime,
+} from '@datadog/browser-core'
 
 export enum RumEventType {
   ACTION = 'action',
@@ -87,10 +95,16 @@ export interface RawRumViewEvent {
   }
   focus: {
     start_focused: boolean
+    focused_times: FocusTime[]
   }
   _dd: {
     document_version: number
   }
+}
+export interface FocusTime {
+  start: RelativeTime
+  duration: ServerDuration
+  currently_focused?: true
 }
 
 export enum ViewLoadingType {

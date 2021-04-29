@@ -26,7 +26,6 @@ describe('parentContexts', () => {
       startClocks,
       id: FAKE_ID,
       referrer: 'http://foo.com',
-      startFocused: true,
       ...partialViewCreatedEvent,
     }
   }

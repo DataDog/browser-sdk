@@ -226,60 +226,6 @@ describe('rum track view is active', () => {
   })
 })
 
-describe('the user focus the document', () => {
-  let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-
-  beforeEach(() => {
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => true)
-    ;({ handler, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should set initial view as focused', () => {
-    setupBuilder.build()
-    expect(getViewEvent(0).startFocused).toBe(true)
-  })
-})
-
-describe('the user doest not focus the document', () => {
-  let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-
-  beforeEach(() => {
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
-    ;({ handler, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should set initial view as not focused', () => {
-    setupBuilder.build()
-    expect(getViewEvent(0).startFocused).toBe(false)
-  })
-})
-
 describe('rum view timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy

@@ -59,6 +59,7 @@ describe('viewCollection', () => {
         loadEvent: 10 as Duration,
       },
       startFocused: true,
+      focusedTimes: [],
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
@@ -103,6 +104,7 @@ describe('viewCollection', () => {
       },
       focus: {
         start_focused: true,
+        focused_times: [],
       },
       session: {
         has_replay: undefined,

@@ -43,7 +43,16 @@ export function toServerDuration(duration: Duration | undefined) {
   if (!isNumber(duration)) {
     return duration
   }
-  return round(duration * 1e6, 0) as ServerDuration
+  return toNs(duration) as ServerDuration
+}
+
+export function toServerRelativeTime(relativeTime: RelativeTime): RelativeTime
+export function toServerRelativeTime(relativeTime: number): number {
+  return toNs(relativeTime)
+}
+
+function toNs(time: number): number {
+  return round(time * 1e6, 0)
 }
 
 export function timeStampNow() {

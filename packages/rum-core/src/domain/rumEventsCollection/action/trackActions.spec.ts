@@ -86,7 +86,6 @@ describe('trackActions', () => {
       id: 'fake',
       referrer: 'http://foo.com',
       startClocks: (jasmine.any(Object) as unknown) as ClocksState,
-      startFocused: true,
     })
     clock.tick(EXPIRE_DELAY)
 

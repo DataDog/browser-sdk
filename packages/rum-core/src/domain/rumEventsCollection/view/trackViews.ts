@@ -8,17 +8,16 @@ import {
   ClocksState,
   clocksNow,
   preferredClock,
-  preferredNow,
-  PreferredTime,
   clocksOrigin,
 } from '@datadog/browser-core'
-import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
+import { ViewLoadingType, ViewCustomTimings, FocusTime } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
+import { trackViewFocus } from './trackViewFocus'
 
 export interface ViewEvent {
   id: string
@@ -37,6 +36,7 @@ export interface ViewEvent {
   cumulativeLayoutShift?: number
   hasReplay: boolean
   startFocused: boolean
+  focusedTimes: FocusTime[]
 }
 
 export interface ViewCreatedEvent {
@@ -45,7 +45,6 @@ export interface ViewCreatedEvent {
   location: Location
   referrer: string
   startClocks: ClocksState
-  startFocused: boolean
 }
 
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
@@ -146,12 +145,10 @@ function newView(
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let endTime: PreferredTime | undefined
+  let endClock: ClocksState | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
-  const startFocused = document.hasFocus()
-
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer, startFocused })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -168,13 +165,20 @@ function newView(
     loadingType
   )
 
+  const { stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
+    startClocks,
+    scheduleViewUpdate
+  )
   // Initial view update
   triggerViewUpdate()
 
   function triggerViewUpdate() {
     documentVersion += 1
+    const currentEndClock = endClock === undefined ? clocksNow() : endClock
+    updateCurrentFocusDuration(currentEndClock.relative)
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
+      ...viewFocus,
       customTimings,
       documentVersion,
       id,
@@ -185,17 +189,17 @@ function newView(
       referrer,
       startClocks,
       timings,
-      duration: elapsed(preferredClock(startClocks), endTime === undefined ? preferredNow() : endTime),
-      isActive: endTime === undefined,
-      startFocused,
+      duration: elapsed(preferredClock(startClocks), preferredClock(currentEndClock)),
+      isActive: endClock === undefined,
     })
   }
 
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endTime = preferredNow()
+      endClock = clocksNow()
       stopViewMetricsTracking()
+      stopViewFocusTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
     },
     getLocation() {
