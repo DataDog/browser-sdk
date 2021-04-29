@@ -8,7 +8,7 @@ export interface ProfilingOptions {
 export interface ProfilingResults {
   memory: ProfilingResult
   cpu: ProfilingResult
-  download: number
+  download: { sdk: number; appByType: Array<{ type: string; responsesSize: number }> }
   upload: RequestStatsForHost[]
 }
 

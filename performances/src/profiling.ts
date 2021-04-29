@@ -95,6 +95,8 @@ async function startNetworkProfiling(options: ProfilingOptions, client: CDPSessi
   let sdkDownload = 0
 
   const sdkRequestIds = new Set<string>()
+  const typeByRequestId = new Map<string, string>()
+  const appByType = new Map<string, number>()
 
   const requestListener = ({ request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
     if (isSdkBundleUrl(options, request.url)) {
@@ -102,21 +104,33 @@ async function startNetworkProfiling(options: ProfilingOptions, client: CDPSessi
     }
   }
 
+  const responseListener = ({ type, requestId }: Protocol.Network.ResponseReceivedEvent) => {
+    typeByRequestId.set(requestId, type)
+  }
+
   const loadingFinishedListener = ({ requestId, encodedDataLength }: Protocol.Network.LoadingFinishedEvent) => {
     if (sdkRequestIds.has(requestId)) {
       sdkDownload += encodedDataLength
+    } else {
+      const type = typeByRequestId.get(requestId)!
+      appByType.set(type, (appByType.get(type) || 0) + encodedDataLength)
     }
   }
 
   client.on('Network.requestWillBeSent', requestListener)
+  client.on('Network.responseReceived', responseListener)
   client.on('Network.loadingFinished', loadingFinishedListener)
   return () => {
     client.off('Network.requestWillBeSent', requestListener)
+    client.off('Network.responseReceived', responseListener)
     client.off('Network.loadingFinishedListener', loadingFinishedListener)
 
     return {
       upload: options.proxy.stats.getStatsByHost(),
-      download: sdkDownload,
+      download: {
+        sdk: sdkDownload,
+        appByType: Array.from(appByType, ([type, responsesSize]) => ({ type, responsesSize })),
+      },
     }
   }
 }

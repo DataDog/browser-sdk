@@ -6,6 +6,7 @@ const BYTES_UNITS = ['B', 'kB', 'MB']
 
 export function formatProfilingResults(results: ProfilingResults) {
   const hostsMaxWidth = Math.max(...results.upload.map(({ host }) => host.length))
+  const typeMaxWidth = Math.max(...results.download.appByType.map(({ type }) => type.length))
 
   const memorySize = formatNumberWithUnit(results.memory.sdk, BYTES_UNITS)
   const memoryPercent = formatPercent(results.memory)
@@ -15,13 +16,19 @@ export function formatProfilingResults(results: ProfilingResults) {
     results.upload.reduce((total, { requestsSize }) => total + requestsSize, 0),
     BYTES_UNITS
   )
-  const uploadDetails = results.upload.map(
-    ({ host, requestsSize, requestsCount }) =>
-      `* ${host.padEnd(hostsMaxWidth, ' ')} ${formatNumberWithUnit(requestsSize, BYTES_UNITS)} (${formatNumber(
-        requestsCount
-      )} requests)`
-  )
-  const downloadSize = formatNumberWithUnit(results.download, BYTES_UNITS)
+  const uploadDetails = results.upload.map((requestStatsForHost) => {
+    const host = requestStatsForHost.host.padEnd(hostsMaxWidth, ' ')
+    const requestsSize = formatNumberWithUnit(requestStatsForHost.requestsSize, BYTES_UNITS)
+    const requestsCount = formatNumber(requestStatsForHost.requestsCount)
+    return `* ${host} ${requestsSize} (${requestsCount} requests)`
+  })
+
+  const appDownloadDetails = results.download.appByType.map((responseStatsByType) => {
+    const type = responseStatsByType.type.padEnd(typeMaxWidth, ' ')
+    const responsesSize = formatNumberWithUnit(responseStatsByType.responsesSize, BYTES_UNITS)
+    return `* ${type} ${responsesSize}`
+  })
+  const downloadSize = formatNumberWithUnit(results.download.sdk, BYTES_UNITS)
 
   return `\
 **Memory** (median): ${memorySize} ${memoryPercent}
@@ -30,10 +37,13 @@ export function formatProfilingResults(results: ProfilingResults) {
 
 **Bandwidth**:
 
-  * upload: ${uploadSize}
+  * upload by the SDK: ${uploadSize}
     ${uploadDetails.join('\n    ')}
 
-  * download: ${downloadSize}
+  * download by the SDK: ${downloadSize}
+
+  * download by the app:
+    ${appDownloadDetails.join('\n    ')}
 `
 }
 
