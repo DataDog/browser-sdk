@@ -52,7 +52,7 @@ describe('record', () => {
     expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toEqual(1)
   })
 
-  it('is safe to checkout during async callbacks (old mutation observer)', (done) => {
+  it('is safe to checkout during async callbacks', (done) => {
     startRecording()
 
     const p = document.createElement('p')
