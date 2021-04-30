@@ -1,10 +1,9 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
+import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE_ID, setSerializedNode } from './serializationUtils'
 
 const tagNameRegex = /[^a-z1-6-_]/
-
-export const IGNORED_NODE = -2
 
 let nextId = 1
 function genId(): number {
@@ -288,7 +287,7 @@ function lowerIfExists(maybeAttr: string | number | boolean): string {
   return (maybeAttr as string).toLowerCase()
 }
 
-function isNodeIgnored(sn: SerializedNode): boolean {
+function nodeShouldBeIgnored(sn: SerializedNode): boolean {
   if (sn.type === NodeType.Comment) {
     // TODO: convert IE conditional comments to real nodes
     return true
@@ -369,10 +368,10 @@ export function serializeNodeWithId(
 ): SerializedNodeWithId | null {
   const { doc, map, skipChild = false } = options
   let { preserveWhiteSpace = true } = options
-  const _serializedNode = serializeNode(n, {
+  const serializedNode = serializeNode(n, {
     doc,
   })
-  if (!_serializedNode) {
+  if (!serializedNode) {
     // TODO: dev only
     console.warn(n, 'not serialized')
     return null
@@ -380,22 +379,23 @@ export function serializeNodeWithId(
 
   let id
   // Try to reuse the previous id
-  if ('__sn' in n) {
-    id = n.__sn.id
+  if (hasSerializedNode(n)) {
+    id = getSerializedNodeId(n)
   } else if (
-    isNodeIgnored(_serializedNode) ||
+    nodeShouldBeIgnored(serializedNode) ||
     (!preserveWhiteSpace &&
-      _serializedNode.type === NodeType.Text &&
-      !_serializedNode.isStyle &&
-      !_serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
+      serializedNode.type === NodeType.Text &&
+      !serializedNode.isStyle &&
+      !serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
   ) {
-    id = IGNORED_NODE
+    id = IGNORED_NODE_ID
   } else {
     id = genId()
   }
-  const serializedNode = Object.assign(_serializedNode, { id })
-  ;(n as INode).__sn = serializedNode
-  if (id === IGNORED_NODE) {
+  const serializedNodeWithId = serializedNode as SerializedNodeWithId
+  serializedNodeWithId.id = id
+  setSerializedNode(n, serializedNodeWithId)
+  if (id === IGNORED_NODE_ID) {
     return null
   }
   map[id] = n as INode
@@ -407,8 +407,8 @@ export function serializeNodeWithId(
   }
   if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
     if (
-      _serializedNode.type === NodeType.Element &&
-      _serializedNode.tagName === 'head'
+      serializedNode.type === NodeType.Element &&
+      serializedNode.tagName === 'head'
       // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
     ) {
       preserveWhiteSpace = false
@@ -425,7 +425,7 @@ export function serializeNodeWithId(
       }
     }
   }
-  return serializedNode
+  return serializedNodeWithId
 }
 
 export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] {

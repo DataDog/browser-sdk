@@ -6,8 +6,8 @@ import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './
 import { getWindowHeight, getWindowWidth, mirror } from './utils'
 import { MutationController } from './mutation'
 
-export function record(options: RecordOptions = {}): RecordAPI {
-  const { emit } = options
+export function record(options: RecordOptions): RecordAPI {
+  const { emit, useNewMutationObserver } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -15,30 +15,24 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
   const mutationController = new MutationController()
 
-  const takeFullSnapshot = (isCheckout = false) => {
+  const takeFullSnapshot = () => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
 
-    emit(
-      {
-        data: {
-          height: getWindowHeight(),
-          href: window.location.href,
-          width: getWindowWidth(),
-        },
-        type: RecordType.Meta,
+    emit({
+      data: {
+        height: getWindowHeight(),
+        href: window.location.href,
+        width: getWindowWidth(),
       },
-      isCheckout
-    )
+      type: RecordType.Meta,
+    })
 
-    emit(
-      {
-        data: {
-          has_focus: document.hasFocus(),
-        },
-        type: RecordType.Focus,
+    emit({
+      data: {
+        has_focus: document.hasFocus(),
       },
-      isCheckout
-    )
+      type: RecordType.Focus,
+    })
 
     const [node, idNodeMap] = snapshot(document)
 
@@ -77,6 +71,7 @@ export function record(options: RecordOptions = {}): RecordAPI {
 
     handlers.push(
       initObservers({
+        useNewMutationObserver,
         mutationController,
         inputCb: (v) =>
           emit({

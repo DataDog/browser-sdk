@@ -17,6 +17,8 @@ describe('startRecording', () => {
     expectedCallsCount: number,
     callback: (calls: jasmine.Calls<HttpRequest['send']>) => void
   ) => void
+  let sandbox: HTMLElement
+  let textField: HTMLInputElement
   let expectNoExtraRequestSendCalls: (done: () => void) => void
 
   beforeEach(() => {
@@ -25,6 +27,12 @@ describe('startRecording', () => {
     }
     sessionId = 'session-id'
     viewId = 'view-id'
+
+    sandbox = document.createElement('div')
+    document.body.appendChild(sandbox)
+    textField = document.createElement('input')
+    sandbox.appendChild(textField)
+
     setupBuilder = setup()
       .withParentContexts({
         findView() {
@@ -40,6 +48,11 @@ describe('startRecording', () => {
           }
         },
       })
+      .withSession({
+        getId: () => sessionId,
+        isTracked: () => true,
+        isTrackedWithResource: () => true,
+      })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
         startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
       )
@@ -52,6 +65,7 @@ describe('startRecording', () => {
   })
 
   afterEach(() => {
+    sandbox.remove()
     setMaxSegmentSize()
     setupBuilder.cleanup()
   })
@@ -80,7 +94,6 @@ describe('startRecording', () => {
   it('flushes the segment when its compressed data is getting too large', (done) => {
     setupBuilder.build()
     const inputCount = 150
-    const textField = document.createElement('input')
     const inputEvent = createNewEvent('input', { target: textField })
     for (let i = 0; i < inputCount; i += 1) {
       // Create a random value harder to deflate, so we don't have to send too many events to reach
@@ -148,7 +161,7 @@ describe('startRecording', () => {
   it('adds a ViewEnd snapshot when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
     viewId = 'view-id-2'
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
     flushSegment(lifeCycle)
