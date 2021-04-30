@@ -61,7 +61,7 @@ export type IncrementalData =
   | StyleSheetRuleData
 
 export interface RecordOptions {
-  emit?: (record: RawRecord, isCheckout?: boolean) => void
+  emit?: (record: RawRecord) => void
   useNewMutationObserver: boolean
 }
 

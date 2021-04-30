@@ -15,30 +15,24 @@ export function record(options: RecordOptions): RecordAPI {
 
   const mutationController = new MutationController()
 
-  const takeFullSnapshot = (isCheckout = false) => {
+  const takeFullSnapshot = () => {
     mutationController.flush() // process any pending mutation before taking a full snapshot
 
-    emit(
-      {
-        data: {
-          height: getWindowHeight(),
-          href: window.location.href,
-          width: getWindowWidth(),
-        },
-        type: RecordType.Meta,
+    emit({
+      data: {
+        height: getWindowHeight(),
+        href: window.location.href,
+        width: getWindowWidth(),
       },
-      isCheckout
-    )
+      type: RecordType.Meta,
+    })
 
-    emit(
-      {
-        data: {
-          has_focus: document.hasFocus(),
-        },
-        type: RecordType.Focus,
+    emit({
+      data: {
+        has_focus: document.hasFocus(),
       },
-      isCheckout
-    )
+      type: RecordType.Focus,
+    })
 
     const [node, idNodeMap] = snapshot(document)
 
