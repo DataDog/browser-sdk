@@ -34,7 +34,13 @@ export function matchRequestTiming(request: RequestCompleteEvent) {
   const candidates = sameNameEntries
     .map((entry) => entry.toJSON() as RumPerformanceResourceTiming)
     .filter(toValidEntry)
-    .filter((entry) => isBetween(entry, request.startTime, endTime(request)))
+    .filter((entry) =>
+      isBetween(
+        entry,
+        request.startClocks.relative,
+        endTime({ startTime: request.startClocks.relative, duration: request.duration })
+      )
+    )
 
   if (candidates.length === 1) {
     return candidates[0]

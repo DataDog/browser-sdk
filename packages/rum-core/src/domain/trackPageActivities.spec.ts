@@ -1,4 +1,4 @@
-import { noop, Observable, RelativeTime } from '@datadog/browser-core'
+import { noop, Observable, PreferredTime } from '@datadog/browser-core'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent } from './requestCollection'
@@ -85,7 +85,7 @@ describe('trackPagePageActivities', () => {
     expect(events).toEqual([])
   })
 
-  it('stops emiting activities after calling stop()', () => {
+  it('stops emitting activities after calling stop()', () => {
     const lifeCycle = new LifeCycle()
     const { stop, observable } = trackPageActivities(lifeCycle)
     observable.subscribe(pushEvent)
@@ -131,7 +131,7 @@ describe('trackPagePageActivities', () => {
       expect(events).toEqual([])
     })
 
-    it('keeps emiting busy events while all requests are not completed', () => {
+    it('keeps emitting busy events while all requests are not completed', () => {
       const lifeCycle = new LifeCycle()
       trackPageActivities(lifeCycle).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
@@ -152,9 +152,9 @@ describe('waitPageActivitiesCompletion', () => {
   const clock = mockClock()
 
   it('should not collect an event that is not followed by page activity', (done) => {
-    waitPageActivitiesCompletion(new Observable(), noop, (hadActivity, endTime) => {
-      expect(hadActivity).toBeFalse()
-      expect(endTime).toBeFalsy()
+    waitPageActivitiesCompletion(new Observable(), noop, (params) => {
+      expect(params.hadActivity).toBeFalse()
+      expect((params as any).endTime).toBeUndefined()
       done()
     })
 
@@ -165,9 +165,11 @@ describe('waitPageActivitiesCompletion', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = performance.now()
-    waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-      expect(hadActivity).toBeTrue()
-      expect(endTime).toEqual((startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as RelativeTime)
+    waitPageActivitiesCompletion(activityObservable, noop, (params) => {
+      expect(params.hadActivity).toBeTrue()
+      expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toEqual(
+        (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as PreferredTime
+      )
       done()
     })
 
@@ -185,9 +187,11 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe((startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as RelativeTime)
+      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
+        expect(params.hadActivity).toBeTrue()
+        expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          (startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as PreferredTime
+        )
         done()
       })
 
@@ -207,9 +211,11 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the action until it's more than PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe((startTime + PAGE_ACTIVITY_MAX_DURATION) as RelativeTime)
+      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
+        expect(params.hadActivity).toBeTrue()
+        expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          (startTime + PAGE_ACTIVITY_MAX_DURATION) as PreferredTime
+        )
         stop = true
         done()
       })
@@ -227,10 +233,10 @@ describe('waitPageActivitiesCompletion', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe(
-          (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as RelativeTime
+      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
+        expect(params.hadActivity).toBeTrue()
+        expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as PreferredTime
         )
         done()
       })
@@ -247,9 +253,11 @@ describe('waitPageActivitiesCompletion', () => {
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = performance.now()
-      waitPageActivitiesCompletion(activityObservable, noop, (hadActivity, endTime) => {
-        expect(hadActivity).toBeTrue()
-        expect(endTime).toBe((startTime + PAGE_ACTIVITY_MAX_DURATION) as RelativeTime)
+      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
+        expect(params.hadActivity).toBeTrue()
+        expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          (startTime + PAGE_ACTIVITY_MAX_DURATION) as PreferredTime
+        )
         done()
       })
 

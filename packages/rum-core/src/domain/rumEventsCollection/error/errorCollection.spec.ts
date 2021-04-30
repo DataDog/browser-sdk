@@ -1,4 +1,4 @@
-import { ErrorSource, Observable, RawError, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, Observable, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { doStartErrorCollection } from './errorCollection'
@@ -28,7 +28,7 @@ describe('error collection', () => {
       addError({
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
-        startTime: 12 as RelativeTime,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
       expect(rawRumEvents.length).toBe(1)
@@ -46,7 +46,7 @@ describe('error collection', () => {
           type: RumEventType.ERROR,
         },
         savedCommonContext: undefined,
-        startTime: 12,
+        startTime: 1234,
       })
     })
 
@@ -56,7 +56,7 @@ describe('error collection', () => {
         context: { foo: 'bar' },
         error: new Error('foo'),
         source: ErrorSource.CUSTOM,
-        startTime: 12 as RelativeTime,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
       expect(rawRumEvents[0].customerContext).toEqual({
         foo: 'bar',
@@ -69,7 +69,7 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           source: ErrorSource.CUSTOM,
-          startTime: 12 as RelativeTime,
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
         { context: { foo: 'bar' }, user: {} }
       )
@@ -84,7 +84,7 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           source: ErrorSource.CUSTOM,
-          startTime: 12 as RelativeTime,
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
         { context: {}, user: { id: 'foo' } }
       )
@@ -106,7 +106,7 @@ describe('error collection', () => {
         },
         source: ErrorSource.NETWORK,
         stack: 'bar',
-        startTime: 1234 as RelativeTime,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         type: 'foo',
       })
 

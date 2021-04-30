@@ -3,17 +3,17 @@ import {
   Configuration,
   Context,
   formatUnknownError,
-  getTimeStamp,
   Observable,
   RawError,
-  RelativeTime,
   startAutomaticErrorCollection,
+  ClocksState,
+  preferredTimeStamp,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 
 export interface ProvidedError {
-  startTime: RelativeTime
+  startClocks: ClocksState
   error: unknown
   context?: Context
   source: ProvidedSource
@@ -30,10 +30,10 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observa
 
   return {
     addError: (
-      { error, startTime, context: customerContext, source }: ProvidedError,
+      { error, startClocks, context: customerContext, source }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const rawError = computeRawError(error, startTime, source)
+      const rawError = computeRawError(error, startClocks, source)
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
         savedCommonContext,
@@ -43,14 +43,14 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observa
   }
 }
 
-function computeRawError(error: unknown, startTime: RelativeTime, source: ProvidedSource): RawError {
+function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-  return { startTime, source, ...formatUnknownError(stackTrace, error, 'Provided') }
+  return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
 function processError(error: RawError) {
   const rawRumEvent: RawRumErrorEvent = {
-    date: getTimeStamp(error.startTime),
+    date: preferredTimeStamp(error.startClocks),
     error: {
       message: error.message,
       resource: error.resource
@@ -69,6 +69,6 @@ function processError(error: RawError) {
 
   return {
     rawRumEvent,
-    startTime: error.startTime,
+    startTime: error.startClocks.relative,
   }
 }

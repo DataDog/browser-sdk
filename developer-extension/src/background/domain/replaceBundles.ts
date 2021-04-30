@@ -24,10 +24,9 @@ chrome.webRequest.onBeforeRequest.addListener(
   {
     types: ['script'],
     urls: [
-      // TODO: implement a configuration page to add more URLs in this list.
-      'https://www.datadoghq-browser-agent.com/datadog-logs.js',
-      'https://www.datadoghq-browser-agent.com/datadog-rum.js',
-      'https://www.datadoghq-browser-agent.com/datadog-rum-recorder.js',
+      'https://*/datadog-logs.js',
+      'https://*/datadog-rum.js',
+      'https://*/datadog-rum-recorder.js',
       'https://localhost:8443/static/datadog-rum-hotdog.js',
     ],
   },

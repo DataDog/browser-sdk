@@ -1,7 +1,6 @@
 import { combine, Context } from '../tools/context'
 import { toStackTraceString } from '../tools/error'
-import { assign, jsonStringify, ONE_MINUTE, ONE_SECOND, Parameters, ThisParameterType } from '../tools/utils'
-import { getTimeStamp, relativeNow, RelativeTime } from '../tools/timeUtils'
+import { assign, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
 import { Batch, HttpRequest } from '../transport/transport'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
@@ -42,8 +41,6 @@ export function startInternalMonitoring(configuration: Configuration): InternalM
       maxMessagesPerPage: configuration.maxInternalMonitoringMessagesPerPage,
       sentMessageCount: 0,
     })
-
-    startMonitoringClockDrift()
   }
   return {
     setExternalContextProvider: (provider: () => Context) => {
@@ -96,26 +93,6 @@ function startMonitoringBatch(configuration: Configuration) {
 
 export function resetInternalMonitoring() {
   monitoringConfiguration.batch = undefined
-}
-
-function startMonitoringClockDrift() {
-  const interval = setInterval(
-    monitor(() => {
-      const drift = Date.now() - getTimeStamp(relativeNow())
-      if (Math.abs(drift) > ONE_SECOND) {
-        clearInterval(interval)
-        const navigationStart = getTimeStamp(0 as RelativeTime)
-        addMonitoringMessage('clock drift detected', {
-          debug: {
-            navigationStartUTC: new Date(navigationStart).toUTCString(),
-            timeSpent: Date.now() - navigationStart,
-            drift,
-          },
-        })
-      }
-    }),
-    ONE_MINUTE
-  )
 }
 
 export function monitored<T extends (...params: any[]) => unknown>(

@@ -8,6 +8,7 @@ import {
   Observable,
   RawError,
   RelativeTime,
+  TimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 
@@ -254,14 +255,14 @@ describe('logs', () => {
       errorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
-        startTime: 1234 as RelativeTime,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         type: 'Error',
       })
 
       expect(sendLogSpy).toHaveBeenCalled()
       expect(sendLogSpy.calls.first().args).toEqual([
         {
-          date: jasmine.any(Number),
+          date: 123456789 as TimeStamp,
           error: { origin: ErrorSource.SOURCE, kind: 'Error', stack: undefined },
           message: 'error!',
           status: StatusType.error,
@@ -283,7 +284,7 @@ describe('logs', () => {
       errorObservable.notify({
         message: 'error!',
         source: ErrorSource.SOURCE,
-        startTime: 1234 as RelativeTime,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: -1 as TimeStamp },
         type: 'Error',
       })
 
