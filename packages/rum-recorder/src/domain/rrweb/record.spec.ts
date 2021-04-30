@@ -260,6 +260,7 @@ describe('record', () => {
   function startRecording() {
     recordApi = record({
       emit: emitSpy,
+      useNewMutationObserver: false,
     })
   }
 

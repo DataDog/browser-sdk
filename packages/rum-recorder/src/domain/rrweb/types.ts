@@ -62,6 +62,7 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord, isCheckout?: boolean) => void
+  useNewMutationObserver: boolean
 }
 
 export interface RecordAPI {
@@ -70,6 +71,7 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
+  useNewMutationObserver: boolean
   mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -83,14 +85,27 @@ export interface ObserverParam {
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
-export interface MutationRecord {
-  type: string
+export interface CharacterDataMutationRecord {
+  type: 'characterData'
   target: Node
   oldValue: string | null
-  addedNodes: NodeList
-  removedNodes: NodeList
+}
+
+export interface AttributesMutationRecord {
+  type: 'attributes'
+  target: Node
+  oldValue: string | null
   attributeName: string | null
 }
+
+export interface ChildListMutationRecord {
+  type: 'childList'
+  target: Node
+  addedNodes: NodeList
+  removedNodes: NodeList
+}
+
+export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
 
 export interface TextCursor {
   node: Node

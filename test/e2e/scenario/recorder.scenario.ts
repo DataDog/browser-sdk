@@ -268,7 +268,7 @@ describe('recorder', () => {
         expect(findAllIncrementalSnapshots(segment, IncrementalSource.Mutation)).toEqual([])
       })
 
-    createTest('record DOM node movement 1')
+    createTest('record DOM node movement 1 (old mutation observer)')
       .withSetup(bundleSetup)
       .withRumRecorder()
       .withBody(
@@ -341,7 +341,55 @@ describe('recorder', () => {
         })
       })
 
-    createTest('record DOM node movement 2')
+    createTest('record DOM node movement 1 (new mutation observer)')
+      .withSetup(bundleSetup)
+      .withRumRecorder({ enableExperimentalFeatures: ['new-mutation-observer'] })
+      .withBody(
+        // prettier-ignore
+        html`
+          <div>a<p></p>b</div>
+          <span>c<i>d<b>e</b>f</i>g</span>
+        `
+      )
+      .run(async ({ events }) => {
+        await browserExecute(() => {
+          const div = document.querySelector('div')!
+          const p = document.querySelector('p')!
+          const span = document.querySelector('span')!
+          document.body.removeChild(span)
+          p.appendChild(span)
+          p.removeChild(span)
+          div.appendChild(span)
+        })
+
+        await flushEvents()
+
+        const { validate, expectInitialNode } = createMutationPayloadValidatorFromSegment(getFirstSegment(events))
+        validate({
+          adds: [
+            {
+              parent: expectInitialNode({ tag: 'div' }),
+              node: expectInitialNode({ tag: 'span' }).withChildren(
+                expectInitialNode({ text: 'c' }),
+                expectInitialNode({ tag: 'i' }).withChildren(
+                  expectInitialNode({ text: 'd' }),
+                  expectInitialNode({ tag: 'b' }).withChildren(expectInitialNode({ text: 'e' })),
+                  expectInitialNode({ text: 'f' })
+                ),
+                expectInitialNode({ text: 'g' })
+              ),
+            },
+          ],
+          removes: [
+            {
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
+            },
+          ],
+        })
+      })
+
+    createTest('record DOM node movement 2 (old mutation observer)')
       .withSetup(bundleSetup)
       .withRumRecorder()
       .withBody(
@@ -407,6 +455,56 @@ describe('recorder', () => {
             {
               parent: div,
               node: expectInitialNode({ tag: 'span' }),
+            },
+          ],
+          removes: [
+            {
+              parent: expectInitialNode({ tag: 'body' }),
+              node: expectInitialNode({ tag: 'span' }),
+            },
+          ],
+        })
+      })
+    createTest('record DOM node movement 2 (new mutation observer)')
+      .withSetup(bundleSetup)
+      .withRumRecorder({ enableExperimentalFeatures: ['new-mutation-observer'] })
+      .withBody(
+        // prettier-ignore
+        html`
+          <span>c<i>d<b>e</b>f</i>g</span>
+        `
+      )
+      .run(async ({ events }) => {
+        await browserExecute(() => {
+          const div = document.createElement('div')
+          const span = document.querySelector('span')!
+          document.body.appendChild(div)
+          div.appendChild(span)
+        })
+
+        await flushEvents()
+
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidatorFromSegment(
+          getFirstSegment(events)
+        )
+
+        const div = expectNewNode({ type: NodeType.Element, tagName: 'div' })
+
+        validate({
+          adds: [
+            {
+              parent: expectInitialNode({ tag: 'body' }),
+              node: div.withChildren(
+                expectInitialNode({ tag: 'span' }).withChildren(
+                  expectInitialNode({ text: 'c' }),
+                  expectInitialNode({ tag: 'i' }).withChildren(
+                    expectInitialNode({ text: 'd' }),
+                    expectInitialNode({ tag: 'b' }).withChildren(expectInitialNode({ text: 'e' })),
+                    expectInitialNode({ text: 'f' })
+                  ),
+                  expectInitialNode({ text: 'g' })
+                )
+              ),
             },
           ],
           removes: [

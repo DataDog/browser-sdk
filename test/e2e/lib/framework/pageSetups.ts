@@ -5,6 +5,7 @@ export interface RumSetupOptions {
   allowedTracingOrigins?: string[]
   service?: string
   trackInteractions?: boolean
+  enableExperimentalFeatures?: string[]
 }
 
 export interface LogsSetupOptions {
