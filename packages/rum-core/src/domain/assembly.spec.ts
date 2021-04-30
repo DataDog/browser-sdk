@@ -327,7 +327,7 @@ describe('rum assembly', () => {
       expect(serverRumEvents.length).toBe(0)
     })
 
-    it('when view context has session id, it should generate event', () => {
+    it('when view context has current session id, it should generate event', () => {
       viewSessionId = '1234'
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -335,6 +335,16 @@ describe('rum assembly', () => {
         startTime: 0 as RelativeTime,
       })
       expect(serverRumEvents.length).toBe(1)
+    })
+
+    it('when view context has not the current session id, it should not generate event', () => {
+      viewSessionId = '6789'
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents.length).toBe(0)
     })
 
     it('when view context has no session id, it should not generate event', () => {

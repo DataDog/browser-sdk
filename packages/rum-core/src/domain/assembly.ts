@@ -45,7 +45,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
-      if (session.isTracked() && viewContext && viewContext.session.id) {
+      if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {

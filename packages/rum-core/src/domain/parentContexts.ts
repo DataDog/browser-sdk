@@ -37,13 +37,6 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   let previousActions: Array<PreviousContext<ActionContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
-    if (currentView) {
-      previousViews.unshift({
-        context: buildCurrentViewContext(),
-        endTime: currentContext.startClocks.relative,
-        startTime: currentView.startClocks.relative,
-      })
-    }
     currentView = currentContext
     currentSessionId = session.getId()
   })
@@ -51,8 +44,19 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (currentContext) => {
     // A view can be updated after its end.  We have to ensure that the view being updated is the
     // most recently created.
-    if (currentView!.id === currentContext.id) {
+    if (currentView && currentView.id === currentContext.id) {
       currentView = currentContext
+    }
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
+    if (currentView) {
+      previousViews.unshift({
+        endTime: endClocks.relative,
+        context: buildCurrentViewContext(),
+        startTime: currentView.startClocks.relative,
+      })
+      currentView = undefined
     }
   })
 
