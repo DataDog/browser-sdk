@@ -13,6 +13,8 @@ import {
 } from './automaticErrorCollection'
 import { Configuration } from './configuration'
 
+const defaultConfiguration: Partial<Configuration> = { isEnabled: () => true }
+
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
@@ -25,7 +27,7 @@ describe('console tracker', () => {
     notifyError = jasmine.createSpy('notifyError')
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe(notifyError)
-    startConsoleTracking(errorObservable)
+    startConsoleTracking(defaultConfiguration as Configuration, errorObservable)
   })
 
   afterEach(() => {
@@ -44,6 +46,7 @@ describe('console tracker', () => {
       message: 'console error: foo bar',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      startFocused: false,
     })
   })
 
@@ -54,6 +57,7 @@ describe('console tracker', () => {
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      startFocused: false,
     })
   })
 
@@ -88,7 +92,7 @@ describe('runtime error tracker', () => {
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe((e: RawError) => notifyError(e) as void)
 
-    startRuntimeErrorTracking(errorObservable)
+    startRuntimeErrorTracking(defaultConfiguration as Configuration, errorObservable)
   })
 
   afterEach(() => {
@@ -152,7 +156,7 @@ describe('network error tracker', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    enabledExperimentalFeatures = []
+    enabledExperimentalFeatures = ['track-focus']
 
     const errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')
@@ -188,6 +192,7 @@ describe('network error tracker', () => {
         source: 'network',
         stack: 'Server error',
         startClocks: jasmine.any(Object),
+        startFocused: false,
       })
       done()
     })
@@ -288,7 +293,7 @@ describe('error limitation', () => {
 
   beforeEach(() => {
     errorObservable = new Observable<RawError>()
-    const configuration: Partial<Configuration> = { maxErrorsByMinute: 2 }
+    const configuration: Partial<Configuration> = { maxErrorsByMinute: 2, isEnabled: () => true }
     jasmine.clock().install()
     const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
     filteredSubscriber = jasmine.createSpy()
@@ -318,6 +323,7 @@ describe('error limitation', () => {
       message: 'Reached max number of errors by minute: 2',
       source: ErrorSource.AGENT,
       startClocks: jasmine.any(Object),
+      startFocused: false,
     })
   })
 

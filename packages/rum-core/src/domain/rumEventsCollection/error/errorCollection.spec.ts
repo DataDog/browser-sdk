@@ -143,6 +143,7 @@ describe('error collection', () => {
           statusCode: 500,
           url: 'url',
         },
+        startFocused: false,
         source: ErrorSource.NETWORK,
         stack: 'bar',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },

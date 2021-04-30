@@ -30,31 +30,40 @@ export function doStartErrorCollection(
   observable: Observable<RawError>,
   configuration: Configuration
 ) {
-  observable.subscribe((error) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error, configuration))
-  )
+  observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
 
   return {
     addError: (
       { error, startClocks, context: customerContext, source }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const rawError = computeRawError(error, startClocks, source)
+      const rawError = computeRawError(error, startClocks, source, configuration)
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
         savedCommonContext,
-        ...processError(rawError, configuration),
+        ...processError(rawError),
       })
     },
   }
 }
 
-function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {
+function computeRawError(
+  error: unknown,
+  startClocks: ClocksState,
+  source: ProvidedSource,
+  configuration: Configuration
+): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-  return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
+  const err: RawError = {
+    startClocks,
+    source,
+    ...formatUnknownError(stackTrace, error, 'Provided'),
+    startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+  }
+  return err
 }
 
-function processError(error: RawError, configuration: Configuration) {
+function processError(error: RawError) {
   const rawRumEvent: RawRumErrorEvent = {
     date: preferredTimeStamp(error.startClocks),
     error: {
@@ -70,12 +79,12 @@ function processError(error: RawError, configuration: Configuration) {
       stack: error.stack,
       type: error.type,
     },
-    focus: configuration.isEnabled('track-focus')
-      ? {
-          start_focused: document.hasFocus(),
-        }
-      : undefined,
     type: RumEventType.ERROR as const,
+  }
+  if (error.startFocused != null) {
+    rawRumEvent.focus = {
+      start_focused: error.startFocused,
+    }
   }
 
   return {

@@ -1,5 +1,5 @@
-import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
-import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
+import { FetchCompleteContext, resetFetchProxy, startFetchProxy, FetchStartContext } from '../browser/fetchProxy'
+import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrStartContext } from '../browser/xhrProxy'
 import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/timeUtils'
@@ -15,8 +15,8 @@ export function startAutomaticErrorCollection(configuration: Configuration) {
   if (!filteredErrorsObservable) {
     const errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)
-    startConsoleTracking(errorObservable)
-    startRuntimeErrorTracking(errorObservable)
+    startConsoleTracking(configuration, errorObservable)
+    startRuntimeErrorTracking(configuration, errorObservable)
     filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
   return filteredErrorsObservable
@@ -35,6 +35,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
         source: ErrorSource.AGENT,
         startClocks: clocksNow(),
+        startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
       })
     }
   })
@@ -44,7 +45,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
 
 let originalConsoleError: (...params: unknown[]) => void
 
-export function startConsoleTracking(errorObservable: ErrorObservable) {
+export function startConsoleTracking(configuration: Configuration, errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = monitor((...params: unknown[]) => {
     originalConsoleError.apply(console, params)
@@ -52,6 +53,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startClocks: clocksNow(),
+      startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
     })
   })
 }
@@ -80,16 +82,20 @@ function formatConsoleParameters(param: unknown) {
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
 
-export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
+export function startRuntimeErrorTracking(configuration: Configuration, errorObservable: ErrorObservable) {
   traceKitReportHandler = (stackTrace: StackTrace, _: boolean, errorObject?: any) => {
     const { stack, message, type } = formatUnknownError(stackTrace, errorObject, 'Uncaught')
-    errorObservable.notify({
+    const error: RawError = {
       message,
       stack,
       type,
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
-    })
+    }
+    if (configuration.isEnabled('track-focus')) {
+      error.startFocused = document.hasFocus()
+    }
+    errorObservable.notify(error)
   }
   subscribe(traceKitReportHandler)
 }
@@ -99,8 +105,13 @@ export function stopRuntimeErrorTracking() {
 }
 
 export function trackNetworkError(configuration: Configuration, errorObservable: ErrorObservable) {
-  startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
-  startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
+  const xhrProxy = startXhrProxy()
+  xhrProxy.beforeSend(addFocusToContext)
+  xhrProxy.onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
+
+  const fetchProxy = startFetchProxy()
+  fetchProxy.beforeSend(addFocusToContext)
+  fetchProxy.onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
     if (
@@ -118,8 +129,13 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
         source: ErrorSource.NETWORK,
         stack: truncateResponse(request.response, configuration) || 'Failed to load',
         startClocks: request.startClocks,
+        startFocused: request.startFocused as boolean | undefined,
       })
     }
+  }
+
+  function addFocusToContext(context: XhrStartContext | FetchStartContext) {
+    context.startFocused = configuration.isEnabled('track-focus') ? document.hasFocus() : undefined
   }
 
   return {
