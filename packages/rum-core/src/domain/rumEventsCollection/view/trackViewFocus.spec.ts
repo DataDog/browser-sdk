@@ -1,4 +1,4 @@
-import { ServerDuration, RelativeTime, Context } from '@datadog/browser-core'
+import { ServerDuration, RelativeTime, Context, Configuration } from '@datadog/browser-core'
 import { RumEvent } from '@datadog/browser-rum-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -19,7 +19,7 @@ function spyOnViews() {
 
   return { handler, getViewEvent, getHandledCount }
 }
-
+const configuration: Partial<Configuration> = { isEnabled: () => true }
 describe('the user focus the document when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
@@ -36,7 +36,7 @@ describe('the user focus the document when opening the view', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        const result = trackViews(location, lifeCycle)
+        const result = trackViews(location, lifeCycle, configuration as Configuration)
         return result
       })
     ;({ clock, lifeCycle } = setupBuilder.build())
@@ -135,7 +135,7 @@ describe('the user doest not focus the document when opening the view', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, configuration as Configuration)
       })
   })
 

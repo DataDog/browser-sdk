@@ -22,11 +22,17 @@ export interface ProvidedError {
 export type ProvidedSource = 'custom' | 'network' | 'source'
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  return doStartErrorCollection(lifeCycle, startAutomaticErrorCollection(configuration))
+  return doStartErrorCollection(lifeCycle, startAutomaticErrorCollection(configuration), configuration)
 }
 
-export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observable<RawError>) {
-  observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error)))
+export function doStartErrorCollection(
+  lifeCycle: LifeCycle,
+  observable: Observable<RawError>,
+  configuration: Configuration
+) {
+  observable.subscribe((error) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error, configuration))
+  )
 
   return {
     addError: (
@@ -37,7 +43,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observa
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext,
         savedCommonContext,
-        ...processError(rawError),
+        ...processError(rawError, configuration),
       })
     },
   }
@@ -48,7 +54,7 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
   return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
-function processError(error: RawError) {
+function processError(error: RawError, configuration: Configuration) {
   const rawRumEvent: RawRumErrorEvent = {
     date: preferredTimeStamp(error.startClocks),
     error: {
@@ -64,9 +70,11 @@ function processError(error: RawError) {
       stack: error.stack,
       type: error.type,
     },
-    focus: {
-      start_focused: document.hasFocus(),
-    },
+    focus: configuration.isEnabled('track-focus')
+      ? {
+          start_focused: document.hasFocus(),
+        }
+      : undefined,
     type: RumEventType.ERROR as const,
   }
 

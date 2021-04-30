@@ -5,7 +5,7 @@ import { AutoAction, CustomAction, trackActions } from './trackActions'
 
 export function startActionCollection(lifeCycle: LifeCycle, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, configuration))
   )
 
   if (configuration.trackInteractions) {
@@ -16,13 +16,13 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedCommonContext,
-        ...processAction(action),
+        ...processAction(action, configuration),
       })
     },
   }
 }
 
-function processAction(action: AutoAction | CustomAction) {
+function processAction(action: AutoAction | CustomAction, configuration: Configuration) {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -51,9 +51,11 @@ function processAction(action: AutoAction | CustomAction) {
       },
       date: preferredTimeStamp(action.startClocks),
       type: RumEventType.ACTION as const,
-      focus: {
-        start_focused: action.startFocused,
-      },
+      focus: configuration.isEnabled('track-focus')
+        ? {
+            start_focused: action.startFocused,
+          }
+        : undefined,
     },
     autoActionProperties
   )

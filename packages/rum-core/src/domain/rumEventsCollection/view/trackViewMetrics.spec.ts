@@ -1,5 +1,5 @@
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
-import { Context, RelativeTime, Duration } from '@datadog/browser-core'
+import { Context, RelativeTime, Duration, Configuration } from '@datadog/browser-core'
 import { TestSetupBuilder, setup } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
@@ -54,6 +54,7 @@ function spyOnViews() {
   return { handler, getViewEvent, getHandledCount }
 }
 
+const configuration: Partial<Configuration> = { isEnabled: () => false }
 describe('rum track view metrics', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
@@ -67,7 +68,7 @@ describe('rum track view metrics', () => {
       .withFakeLocation('/foo')
       .beforeBuild(({ location, lifeCycle }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, configuration as Configuration)
       })
   })
 

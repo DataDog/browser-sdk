@@ -1,4 +1,6 @@
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import { Configuration } from '@datadog/browser-core'
+
 import { TestSetupBuilder, setup } from '../../../../test/specHelper'
 import { ViewCreatedEvent, trackViews } from './trackViews'
 
@@ -6,6 +8,7 @@ function mockGetElementById() {
   const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
   return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
 }
+const configuration: Partial<Configuration> = { isEnabled: () => true }
 
 describe('rum track location change', () => {
   let setupBuilder: TestSetupBuilder
@@ -20,7 +23,7 @@ describe('rum track location change', () => {
           initialViewId = id
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, configuration as Configuration)
       })
     createSpy = jasmine.createSpy('create')
   })

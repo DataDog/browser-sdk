@@ -5,17 +5,18 @@ import {
   ServerDuration,
   toServerDuration,
   preferredTimeStamp,
+  Configuration,
 } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, ViewEvent } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
+export function startViewCollection(lifeCycle: LifeCycle, location: Location, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   )
 
-  return trackViews(location, lifeCycle)
+  return trackViews(location, lifeCycle, configuration)
 }
 
 function processViewUpdate(view: ViewEvent) {
@@ -53,13 +54,15 @@ function processViewUpdate(view: ViewEvent) {
       },
       time_spent: toServerDuration(view.duration),
     },
-    focus: {
-      start_focused: view.startFocused,
-      focused_times: view.focusedTimes,
-    },
     session: {
       has_replay: view.hasReplay || undefined,
     },
+  }
+  if (view.startFocused && view.focusedTimes) {
+    viewEvent.focus = {
+      start_focused: view.startFocused,
+      focused_times: view.focusedTimes,
+    }
   }
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(

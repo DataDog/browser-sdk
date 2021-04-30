@@ -48,7 +48,7 @@ export interface PerformanceResourceDetailsElement {
 export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
-  focus: {
+  focus?: {
     start_focused: boolean
   }
   error: {
@@ -93,7 +93,7 @@ export interface RawRumViewEvent {
   session: {
     has_replay: true | undefined
   }
-  focus: {
+  focus?: {
     start_focused: boolean
     focused_times: FocusTime[]
   }
@@ -142,7 +142,7 @@ export interface RawRumActionEvent {
       name: string
     }
   }
-  focus: {
+  focus?: {
     start_focused: boolean
   }
 }

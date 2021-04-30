@@ -5,8 +5,10 @@ import {
   monitor,
   ONE_MINUTE,
   throttle,
+  Configuration,
   ClocksState,
   clocksNow,
+  RelativeTime,
   preferredClock,
   clocksOrigin,
 } from '@datadog/browser-core'
@@ -35,8 +37,8 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   hasReplay: boolean
-  startFocused: boolean
-  focusedTimes: FocusTime[]
+  startFocused?: boolean
+  focusedTimes?: FocusTime[]
 }
 
 export interface ViewCreatedEvent {
@@ -50,7 +52,7 @@ export interface ViewCreatedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(location: Location, lifeCycle: LifeCycle, configuration: Configuration) {
   let isRecording = false
 
   // eslint-disable-next-line prefer-const
@@ -104,6 +106,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
       isRecording,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
+      configuration,
       clocksOrigin()
     )
     const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
@@ -114,7 +117,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   }
 
   function trackViewChange() {
-    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url, configuration)
   }
 
   return {
@@ -137,6 +140,7 @@ function newView(
   initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
+  configuration: Configuration,
   startClocks: ClocksState = clocksNow(),
   name?: string
 ) {
@@ -158,17 +162,24 @@ function newView(
       leading: false,
     }
   )
-
   const { setLoadEvent, stop: stopViewMetricsTracking, viewMetrics } = trackViewMetrics(
     lifeCycle,
     scheduleViewUpdate,
     loadingType
   )
 
-  const { stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
-    startClocks,
-    scheduleViewUpdate
-  )
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  let stopViewFocusTracking: () => void = () => {}
+  let viewFocus: Partial<ViewEvent> = {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  let updateCurrentFocusDuration: (endTime: RelativeTime) => void = () => {}
+
+  if (configuration.isEnabled('track-focus')) {
+    ;({ stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
+      startClocks,
+      scheduleViewUpdate
+    ))
+  }
   // Initial view update
   triggerViewUpdate()
 
