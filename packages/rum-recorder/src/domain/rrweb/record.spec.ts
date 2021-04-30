@@ -13,12 +13,8 @@ import { NodeType } from '../rrweb-snapshot/types'
 import { record } from './record'
 import { RecordAPI } from './types'
 
-// Each full snapshot is generating three records: Meta, Focus and FullSnapshot
-const RECORDS_PER_FULL_SNAPSHOTS = 3
-
 describe('record', () => {
   let sandbox: HTMLElement
-  let input: HTMLInputElement
   let recordApi: RecordAPI
   let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
@@ -31,7 +27,7 @@ describe('record', () => {
 
     emitSpy = jasmine.createSpy()
     ;({ waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(emitSpy))
-    ;({ sandbox, input } = createDOMSandbox())
+    sandbox = createDOMSandbox()
   })
 
   afterEach(() => {
@@ -40,19 +36,8 @@ describe('record', () => {
     recordApi?.stop()
   })
 
-  it('will only have one full snapshot without checkout config', () => {
-    startRecording()
-
-    const inputEventCount = 30
-    dispatchInputEvents(inputEventCount)
-
-    const records = getEmittedRecords()
-    expect(records.length).toEqual(inputEventCount + RECORDS_PER_FULL_SNAPSHOTS)
-    expect(records.filter((record) => record.type === RecordType.Meta).length).toEqual(1)
-    expect(records.filter((record) => record.type === RecordType.FullSnapshot).length).toEqual(1)
-  })
-
-  it('is safe to checkout during async callbacks', (done) => {
+  it('records full snapshots and DOM mutations', (done) => {
+    // TODO: remove when new-mutation-observer is enabled
     startRecording()
 
     const p = document.createElement('p')
@@ -267,20 +252,12 @@ describe('record', () => {
   function getEmittedRecords() {
     return emitSpy.calls.allArgs().map(([record]) => record)
   }
-
-  function dispatchInputEvents(count: number) {
-    for (let i = 0; i < count; i += 1) {
-      input.value += 'a'
-      input.dispatchEvent(createNewEvent('input', {}))
-    }
-  }
 })
 
 function createDOMSandbox() {
   const sandbox = document.createElement('div')
   sandbox.id = 'sandbox'
-  const input = document.createElement('input')
-  sandbox.appendChild(input)
   document.body.appendChild(sandbox)
-  return { sandbox, input }
+  sandbox.appendChild(document.createElement('input'))
+  return sandbox
 }
