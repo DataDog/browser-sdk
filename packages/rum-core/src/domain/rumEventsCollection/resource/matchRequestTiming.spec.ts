@@ -29,6 +29,15 @@ describe('matchRequestTiming', () => {
     expect(timing).toEqual(match)
   })
 
+  it('should match single timing nested in the request with error margin', () => {
+    const match = createResourceEntry({ startTime: 99 as RelativeTime, duration: 502 as Duration })
+    entries.push(match)
+
+    const timing = matchRequestTiming(FAKE_REQUEST as RequestCompleteEvent)
+
+    expect(timing).toEqual(match)
+  })
+
   it('should not match single timing outside the request ', () => {
     const match = createResourceEntry({ startTime: 0 as RelativeTime, duration: 300 as Duration })
     entries.push(match)
@@ -69,7 +78,7 @@ describe('matchRequestTiming', () => {
     expect(timing).toEqual(undefined)
   })
 
-  it('should match invalid timing nested in the request ', () => {
+  it('should not match invalid timing nested in the request ', () => {
     const match = createResourceEntry({
       duration: 100 as Duration,
       fetchStart: 0 as RelativeTime,
