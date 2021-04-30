@@ -27,6 +27,7 @@ export function startRecording(
 
   const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRawRecord,
+    useNewMutationObserver: configuration.isEnabled('new-mutation-observer'),
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
