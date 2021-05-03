@@ -16,6 +16,16 @@
 
 ---
 
+## v2.8.0
+
+- ⚗🐛 allow 1 ms error for matching request ([#824](https://github.com/DataDog/browser-sdk/pull/824))
+- ⚗🐛 [RUMF-889] apply correction only for positive drift ([#821](https://github.com/DataDog/browser-sdk/pull/821))
+- ⚗⚡️ [RUMF-902] implement a new mutation observer ([#810](https://github.com/DataDog/browser-sdk/pull/810))
+- 🐛 [RUMF-900] clear parent view context when view end ([#816](https://github.com/DataDog/browser-sdk/pull/816))
+- 🐛 [RUMF-900] prevent events to be sent from expired session ([#814](https://github.com/DataDog/browser-sdk/pull/814))
+- ⚗🐛 [RUMF-889] fix relative time rounding ([#817](https://github.com/DataDog/browser-sdk/pull/817))
+- ⚗ [RUMF-889] use preferred clock ([#809](https://github.com/DataDog/browser-sdk/pull/809))
+
 ## v2.7.4
 
 - [RUMF-868] ignore paramaters stored in the hash ([#792](https://github.com/DataDog/browser-sdk/pull/792))
