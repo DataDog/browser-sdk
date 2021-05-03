@@ -33,8 +33,12 @@ export function relativeToClocks(relative: RelativeTime) {
 
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
   const correctedOrigin = Date.now() - performance.now()
-  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-  return Math.round(correctedOrigin + relativeTime) as TimeStamp
+  // apply correction only for positive drift
+  if (correctedOrigin > getNavigationStart()) {
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    return Math.round(correctedOrigin + relativeTime) as TimeStamp
+  }
+  return getTimeStamp(relativeTime)
 }
 
 export function toServerDuration(duration: Duration): ServerDuration
