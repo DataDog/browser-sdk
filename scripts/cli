@@ -58,4 +58,9 @@ cmd_version () {
   git add yarn.lock
 }
 
+cmd_woke () {
+  command -v woke || yarn fail 'woke not installed, see https://github.com/get-woke/woke#installation'
+  woke --exit-1-on-failure
+}
+
 main "$@"
