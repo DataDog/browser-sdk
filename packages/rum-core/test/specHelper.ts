@@ -7,9 +7,9 @@ import {
   DEFAULT_CONFIGURATION,
   noop,
   resetNavigationStart,
-  SPEC_ENDPOINTS,
   TimeStamp,
 } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS } from '../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'

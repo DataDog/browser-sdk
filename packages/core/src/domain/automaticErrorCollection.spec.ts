@@ -1,7 +1,7 @@
 import { ClocksState } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
-import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
+import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../test/specHelper'
 import { includes, ONE_MINUTE } from '../tools/utils'
 import {
   filterErrors,

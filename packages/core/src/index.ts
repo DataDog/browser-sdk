@@ -48,5 +48,4 @@ export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
 export { limitModification } from './tools/limitModification'
 
-export * from './tools/specHelper'
 export { Datacenter } from './domain/transportConfiguration'

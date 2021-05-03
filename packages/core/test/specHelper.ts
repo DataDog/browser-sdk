@@ -1,5 +1,5 @@
-import { Configuration } from '../domain/configuration'
-import { noop, objectEntries } from './utils'
+import { Configuration } from '../src/domain/configuration'
+import { noop, objectEntries } from '../src/tools/utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',

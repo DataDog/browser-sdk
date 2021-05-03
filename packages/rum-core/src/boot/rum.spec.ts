@@ -1,4 +1,5 @@
-import { isIE, RelativeTime } from '@datadog/browser-core'
+import { RelativeTime } from '@datadog/browser-core'
+import { isIE } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
