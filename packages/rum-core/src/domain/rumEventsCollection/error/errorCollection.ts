@@ -8,6 +8,7 @@ import {
   startAutomaticErrorCollection,
   ClocksState,
   preferredTimeStamp,
+  createErrorFilter,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -41,6 +42,12 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observa
       })
     },
   }
+}
+
+export function createRumErrorFilter(lifeCycle: LifeCycle, configuration: Configuration) {
+  return createErrorFilter(configuration, (error) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
+  })
 }
 
 function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {

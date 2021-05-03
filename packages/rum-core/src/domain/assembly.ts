@@ -1,4 +1,12 @@
-import { combine, Configuration, Context, isEmptyObject, limitModification, timeStampNow } from '@datadog/browser-core'
+import {
+  combine,
+  Configuration,
+  Context,
+  ErrorFilter,
+  isEmptyObject,
+  limitModification,
+  timeStampNow,
+} from '@datadog/browser-core'
 import {
   CommonContext,
   RawRumErrorEvent,
@@ -12,6 +20,7 @@ import {
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
+import { createRumErrorFilter } from './rumEventsCollection/error/errorCollection'
 import { RumSession } from './rumSession'
 
 interface BrowserWindow extends Window {
@@ -41,6 +50,8 @@ export function startRumAssembly(
   parentContexts: ParentContexts,
   getCommonContext: () => CommonContext
 ) {
+  const errorFilter = createRumErrorFilter(lifeCycle, configuration)
+
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
@@ -80,7 +91,7 @@ export function startRumAssembly(
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
-        if (shouldSend(serverRumEvent, configuration.beforeSend)) {
+        if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
       }
@@ -88,7 +99,11 @@ export function startRumAssembly(
   )
 }
 
-function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => unknown) {
+function shouldSend(
+  event: RumEvent & Context,
+  beforeSend: ((event: any) => unknown) | undefined,
+  errorFilter: ErrorFilter
+) {
   if (beforeSend) {
     const result = limitModification(event, FIELDS_WITH_SENSITIVE_DATA, beforeSend)
     if (result === false && event.type !== RumEventType.VIEW) {
@@ -97,6 +112,9 @@ function shouldSend(event: RumEvent & Context, beforeSend?: (event: any) => unkn
     if (result === false) {
       console.warn(`Can't dismiss view events using beforeSend!`)
     }
+  }
+  if (event.type === RumEventType.ERROR) {
+    return errorFilter.shouldSendError()
   }
   return true
 }

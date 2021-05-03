@@ -1,10 +1,10 @@
-import { RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, RelativeTime } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { CommonContext, RumEventType } from '../rawRumEvent.types'
-import { RumActionEvent, RumEvent } from '../rumEvent.types'
+import { CommonContext, RawRumErrorEvent, RumEventType } from '../rawRumEvent.types'
+import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
-import { LifeCycleEventType } from './lifeCycle'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -413,5 +413,70 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
     })
+  })
+
+  describe('error events limitation', () => {
+    it('stops sending error events when reaching the limit', () => {
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 2 }).build()
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      notifyRawRumErrorEvent(lifeCycle, 'bar')
+      notifyRawRumErrorEvent(lifeCycle, 'baz')
+
+      expect(serverRumEvents.length).toBe(2)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect(serverRumEvents[1] as RumErrorEvent).toEqual(
+        jasmine.objectContaining({
+          type: RumEventType.ERROR,
+          error: {
+            message: 'Reached max number of errors by minute: 2',
+            source: ErrorSource.AGENT,
+            resource: undefined,
+            stack: undefined,
+            type: undefined,
+          },
+        })
+      )
+    })
+
+    it('does not take discarded errors into account', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          maxErrorsByMinute: 2,
+          beforeSend: (event) => {
+            if (event.type === RumEventType.ERROR && (event as RumErrorEvent).error.message === 'discard me') {
+              return false
+            }
+          },
+        })
+        .build()
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      expect(serverRumEvents.length).toBe(1)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+    })
+
+    it('allows to send new errors after a minute', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsByMinute: 2 }).build()
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      notifyRawRumErrorEvent(lifeCycle, 'bar')
+      clock.tick(ONE_MINUTE)
+      notifyRawRumErrorEvent(lifeCycle, 'baz')
+
+      expect(serverRumEvents.length).toBe(3)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('Reached max number of errors by minute: 2')
+      expect((serverRumEvents[2] as RumErrorEvent).error.message).toBe('baz')
+    })
+
+    function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message = 'oh snap') {
+      const rawRumEvent = createRawRumEvent(RumEventType.ERROR) as RawRumErrorEvent
+      rawRumEvent.error.message = message
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent,
+        startTime: 0 as RelativeTime,
+      })
+    }
   })
 })
