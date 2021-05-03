@@ -13,10 +13,11 @@ interface Timing {
  *
  * Observations:
  * - Timing (start, end) are nested inside the request (start, end)
+ * - Some timing can be not exactly nested, being off by < 1 ms
  * - Browsers generate a timing entry for OPTIONS request
  *
  * Strategy:
- * - from valid nested entries
+ * - from valid nested entries (with 1 ms error margin)
  * - if a single timing match, return the timing
  * - if two following timings match (OPTIONS request), return the timing for the actual request
  * - otherwise we can't decide, return undefined
@@ -63,5 +64,7 @@ function endTime(timing: Timing) {
 }
 
 function isBetween(timing: Timing, start: RelativeTime, end: RelativeTime) {
-  return timing.startTime >= start && endTime(timing) <= end
+  const errorMargin = 1
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  return timing.startTime >= start - errorMargin && endTime(timing) <= end + errorMargin
 }
