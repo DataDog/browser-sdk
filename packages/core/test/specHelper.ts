@@ -1,4 +1,5 @@
 import { Configuration } from '../src/domain/configuration'
+import { resetNavigationStart } from '../src/tools/timeUtils'
 import { noop, objectEntries } from '../src/tools/utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
@@ -35,6 +36,22 @@ export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
     document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)
   })
+}
+
+export function mockClock() {
+  jasmine.clock().install()
+  jasmine.clock().mockDate()
+  const start = Date.now()
+  spyOn(performance, 'now').and.callFake(() => Date.now() - start)
+  spyOnProperty(performance.timing, 'navigationStart', 'get').and.callFake(() => start)
+  resetNavigationStart()
+  return {
+    clock: jasmine.clock(),
+    stop: () => {
+      jasmine.clock().uninstall()
+      resetNavigationStart()
+    },
+  }
 }
 
 export interface FetchStubManager {
