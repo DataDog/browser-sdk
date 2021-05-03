@@ -6,11 +6,13 @@ import {
   ErrorSource,
   noop,
   Observable,
+  ONE_MINUTE,
   RawError,
   RelativeTime,
   TimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
+import { mockClock } from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
@@ -290,6 +292,75 @@ describe('logs', () => {
 
       expect(sendLogSpy).toHaveBeenCalled()
       expect(sendLogSpy.calls.argsFor(0)[0].foo).toBe('b')
+    })
+  })
+
+  describe('error logs limitation', () => {
+    let clock: jasmine.Clock
+    let cleanupClock: () => void
+
+    beforeEach(() => {
+      ;({ clock, stop: cleanupClock } = mockClock())
+    })
+
+    afterEach(() => {
+      cleanupClock()
+    })
+
+    it('stops sending error logs when reaching the limit', () => {
+      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+      const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsByMinute: 2 } })
+      sendLog({ message: 'foo', status: StatusType.error }, {})
+      sendLog({ message: 'bar', status: StatusType.error }, {})
+      sendLog({ message: 'baz', status: StatusType.error }, {})
+
+      expect(server.requests.length).toEqual(1)
+      expect(getLoggedMessage(server, 0).message).toBe('foo')
+      expect(sendLogSpy).toHaveBeenCalledOnceWith({
+        message: 'Reached max number of errors by minute: 2',
+        status: StatusType.error,
+        error: {
+          origin: ErrorSource.AGENT,
+          kind: undefined,
+          stack: undefined,
+        },
+        date: Date.now(),
+      })
+    })
+
+    it('does not take discarded errors into account', () => {
+      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
+      const sendLog = startLogs({
+        errorLogger: new Logger(sendLogSpy),
+        configuration: {
+          maxErrorsByMinute: 2,
+          beforeSend(event) {
+            if (event.message === 'discard me') {
+              return false
+            }
+          },
+        },
+      })
+      sendLog({ message: 'discard me', status: StatusType.error }, {})
+      sendLog({ message: 'discard me', status: StatusType.error }, {})
+      sendLog({ message: 'discard me', status: StatusType.error }, {})
+      sendLog({ message: 'foo', status: StatusType.error }, {})
+
+      expect(server.requests.length).toEqual(1)
+      expect(getLoggedMessage(server, 0).message).toBe('foo')
+      expect(sendLogSpy).not.toHaveBeenCalled()
+    })
+
+    it('allows to send new errors after a minute', () => {
+      const sendLog = startLogs({ configuration: { maxErrorsByMinute: 2 } })
+      sendLog({ message: 'foo', status: StatusType.error }, {})
+      sendLog({ message: 'bar', status: StatusType.error }, {})
+      clock.tick(ONE_MINUTE)
+      sendLog({ message: 'baz', status: StatusType.error }, {})
+
+      expect(server.requests.length).toEqual(2)
+      expect(getLoggedMessage(server, 0).message).toBe('foo')
+      expect(getLoggedMessage(server, 1).message).toBe('baz')
     })
   })
 })

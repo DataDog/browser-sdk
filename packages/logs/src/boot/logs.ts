@@ -5,6 +5,7 @@ import {
   commonInit,
   Configuration,
   Context,
+  createErrorFilter,
   ErrorObservable,
   HttpRequest,
   InternalMonitoring,
@@ -15,7 +16,7 @@ import {
   startAutomaticErrorCollection,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { Logger, LogsMessage } from '../domain/logger'
+import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
@@ -56,7 +57,7 @@ export function doStartLogs(
   const assemble = buildAssemble(session, configuration)
   const batch = startLoggerBatch(configuration)
 
-  errorObservable.subscribe((error: RawError) => {
+  function reportError(error: RawError) {
     errorLogger.error(
       error.message,
       combine(
@@ -80,11 +81,14 @@ export function doStartLogs(
         getRUMInternalContext(error.startClocks.relative)
       )
     )
-  })
+  }
+  errorObservable.subscribe(reportError)
+
+  const errorFilter = createErrorFilter(configuration, reportError)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
-    if (contextualizedMessage) {
+    if (contextualizedMessage && (contextualizedMessage.status !== StatusType.error || errorFilter.shouldSendError())) {
       batch.add(contextualizedMessage)
     }
   }
