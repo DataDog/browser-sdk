@@ -1,5 +1,5 @@
 import { isIE } from '@datadog/browser-core'
-import { createMutationPayloadValidator } from '../../../test/utils'
+import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import { snapshot, NodeType } from '../rrweb-snapshot'
 import { MutationController } from './mutation'
 import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
@@ -55,6 +55,28 @@ describe('startMutationCollection', () => {
             node: expectNewNode({ type: NodeType.Element, tagName: 'div' }),
           },
         ],
+      })
+    })
+
+    it('processes mutations asynchronously', (done) => {
+      snapshot(document)
+      const { mutationCallbackSpy } = startMutationCollection()
+      const { waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(
+        mutationCallbackSpy
+      )
+
+      const container = document.createElement('div')
+      sandbox.appendChild(container)
+
+      setTimeout(() => {
+        container.appendChild(document.createElement('span'))
+      }, 0)
+
+      expect(mutationCallbackSpy).not.toHaveBeenCalled()
+
+      waitEmitCalls(1, (calls) => {
+        expect(calls.mostRecent().args[0].adds.length).toBe(1)
+        expectNoExtraEmitCalls(done)
       })
     })
 
