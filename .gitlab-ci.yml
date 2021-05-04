@@ -134,7 +134,7 @@ check-licenses:
 unit-bs:
   except:
     refs:
-      - master
+      - main
       - tags
   stage: browserstack
   resource_group: browserstack
@@ -150,7 +150,7 @@ unit-bs:
 e2e-bs:
   except:
     refs:
-      - master
+      - main
       - tags
   stage: browserstack
   resource_group: browserstack
@@ -169,7 +169,7 @@ e2e-bs:
 deploy-staging:
   only:
     refs:
-      - master
+      - main
   stage: deploy
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
@@ -202,14 +202,14 @@ notify-feature-branch-failure:
   extends: .slack-notifier.on-failure
   except:
     refs:
-      - master
+      - main
       - tags
 
-notify-master-success:
+notify-main-success:
   extends: .slack-notifier-base
   only:
     refs:
-      - master
+      - main
   script:
     - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
@@ -217,16 +217,16 @@ notify-master-success:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
 
-notify-master-failure:
+notify-main-failure:
   extends: .slack-notifier-base
   when: on_failure
   only:
     refs:
-      - master
+      - main
   script:
     - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
-    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME master pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
 notify-release-ready:

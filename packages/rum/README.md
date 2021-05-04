@@ -177,4 +177,4 @@ init(configuration: {
 [5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
 [6]: https://docs.datadoghq.com/real_user_monitoring/data_collected/user_action/#automatic-collection-of-user-actions
 [7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
-[8]: https://github.com/DataDog/browser-sdk/blob/master/packages/rum/BROWSER_SUPPORT.md
+[8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
