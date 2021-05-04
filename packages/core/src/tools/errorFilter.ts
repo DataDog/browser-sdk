@@ -18,12 +18,12 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
       }
 
       errorCount += 1
-      if (errorCount < configuration.maxErrorsByMinute || allowNextError) {
+      if (errorCount <= configuration.maxErrorsByMinute || allowNextError) {
         allowNextError = false
         return false
       }
 
-      if (errorCount === configuration.maxErrorsByMinute) {
+      if (errorCount === configuration.maxErrorsByMinute + 1) {
         allowNextError = true
         try {
           onLimitReached({

@@ -5,7 +5,7 @@ import { createErrorFilter, ErrorFilter } from './errorFilter'
 import { RelativeTime, relativeToClocks, resetNavigationStart } from './timeUtils'
 import { noop, ONE_MINUTE } from './utils'
 
-const CONFIGURATION = { maxErrorsByMinute: 2 } as Configuration
+const CONFIGURATION = { maxErrorsByMinute: 1 } as Configuration
 
 describe('errorFilter', () => {
   let errorFilter: ErrorFilter | undefined
@@ -50,7 +50,7 @@ describe('errorFilter', () => {
     errorFilter.isLimitReached()
     errorFilter.isLimitReached()
     expect(onLimitReachedSpy).toHaveBeenCalledOnceWith({
-      message: 'Reached max number of errors by minute: 2',
+      message: 'Reached max number of errors by minute: 1',
       source: 'agent',
       startClocks: relativeToClocks(0 as RelativeTime),
     })

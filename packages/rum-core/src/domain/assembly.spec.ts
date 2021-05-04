@@ -417,7 +417,7 @@ describe('rum assembly', () => {
 
   describe('error events limitation', () => {
     it('stops sending error events when reaching the limit', () => {
-      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 2 }).build()
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
       notifyRawRumErrorEvent(lifeCycle, 'baz')
@@ -428,7 +428,7 @@ describe('rum assembly', () => {
         jasmine.objectContaining({
           type: RumEventType.ERROR,
           error: {
-            message: 'Reached max number of errors by minute: 2',
+            message: 'Reached max number of errors by minute: 1',
             source: ErrorSource.AGENT,
             resource: undefined,
             stack: undefined,
@@ -441,7 +441,7 @@ describe('rum assembly', () => {
     it('does not take discarded errors into account', () => {
       const { lifeCycle } = setupBuilder
         .withConfiguration({
-          maxErrorsByMinute: 2,
+          maxErrorsByMinute: 1,
           beforeSend: (event) => {
             if (event.type === RumEventType.ERROR && (event as RumErrorEvent).error.message === 'discard me') {
               return false
@@ -458,7 +458,7 @@ describe('rum assembly', () => {
     })
 
     it('allows to send new errors after a minute', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsByMinute: 2 }).build()
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsByMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
       clock.tick(ONE_MINUTE)
@@ -466,7 +466,7 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents.length).toBe(3)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('Reached max number of errors by minute: 2')
+      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('Reached max number of errors by minute: 1')
       expect((serverRumEvents[2] as RumErrorEvent).error.message).toBe('baz')
     })
 
