@@ -102,6 +102,7 @@ function reportPotentialSideEffect(context, node) {
       reportPotentialSideEffect(context, node.value)
       return
     case 'BinaryExpression':
+    case 'LogicalExpression':
       reportPotentialSideEffect(context, node.left)
       reportPotentialSideEffect(context, node.right)
       return
@@ -120,6 +121,7 @@ function reportPotentialSideEffect(context, node) {
     case 'TSEnumDeclaration':
     case 'TSInterfaceDeclaration':
     case 'TSTypeAliasDeclaration':
+    case 'TSModuleDeclaration':
     case 'TSDeclareFunction':
     case 'Literal':
     case 'Identifier':
