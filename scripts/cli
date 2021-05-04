@@ -59,8 +59,32 @@ cmd_version () {
 }
 
 cmd_woke () {
-  command -v woke || yarn fail 'woke not installed, see https://github.com/get-woke/woke#installation'
+  command -v woke || fail 'woke not installed, see https://github.com/get-woke/woke#installation'
   woke --exit-1-on-failure
+}
+
+cmd_check_typescript_compatibility () {
+  yarn build
+  cd test/app
+  rm -rf node_modules
+  yarn
+  yarn compat:tsc || fail 'typescript 3.0 compatibility broken'
+}
+
+cmd_check_server_side_rendering_compatibility () {
+  yarn build
+  cd test/app
+  rm -rf node_modules
+  yarn
+  yarn compat:ssr || fail 'server side rendering compatibility broken'
+}
+
+fail () {
+  echo
+  echo "❌ ${1}"
+  echo
+
+  exit 1
 }
 
 main "$@"
