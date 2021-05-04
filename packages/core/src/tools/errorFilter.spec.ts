@@ -7,7 +7,7 @@ import { noop, ONE_MINUTE } from './utils'
 
 const CONFIGURATION = { maxErrorsByMinute: 2 } as Configuration
 
-describe('errorFilter', () => {
+fdescribe('errorFilter', () => {
   let errorFilter: ErrorFilter | undefined
   let clock: jasmine.Clock
   let cleanupClock: () => void
@@ -86,5 +86,25 @@ describe('errorFilter', () => {
     expect(() => errorFilter!.shouldSendError()).toThrow()
     expect(errorFilter.shouldSendError()).toBe(false)
     expect(errorFilter.shouldSendError()).toBe(false)
+  })
+
+  it('filters error even if the "limit" error is not sent (ex: excluded by beforeSend)', () => {
+    errorFilter = createErrorFilter(CONFIGURATION, () => {
+      // do not send the error
+    })
+
+    errorFilter.shouldSendError()
+    errorFilter.shouldSendError()
+    expect(errorFilter.shouldSendError()).toBe(false)
+  })
+
+  it('allows a single error from being sent when the "onLimitReached" callback is called (edge case)', () => {
+    errorFilter = createErrorFilter(CONFIGURATION, () => {
+      expect(errorFilter!.shouldSendError()).toBe(true)
+      expect(errorFilter!.shouldSendError()).toBe(false)
+    })
+
+    errorFilter.shouldSendError()
+    errorFilter.shouldSendError()
   })
 })

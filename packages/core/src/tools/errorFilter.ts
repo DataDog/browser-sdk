@@ -7,7 +7,7 @@ export type ErrorFilter = ReturnType<typeof createErrorFilter>
 
 export function createErrorFilter(configuration: Configuration, onLimitReached: (limitError: RawError) => void) {
   let errorCount = 0
-  let isSendingLimitError = false
+  let allowNextError = false
 
   return {
     shouldSendError() {
@@ -18,12 +18,13 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
       }
 
       errorCount += 1
-      if (errorCount < configuration.maxErrorsByMinute || isSendingLimitError) {
+      if (errorCount < configuration.maxErrorsByMinute || allowNextError) {
+        allowNextError = false
         return true
       }
 
       if (errorCount === configuration.maxErrorsByMinute) {
-        isSendingLimitError = true
+        allowNextError = true
         try {
           onLimitReached({
             message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
@@ -31,7 +32,7 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
             startClocks: clocksNow(),
           })
         } finally {
-          isSendingLimitError = false
+          allowNextError = false
         }
       }
 
