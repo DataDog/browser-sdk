@@ -1,6 +1,7 @@
 import { ErrorSource, Observable, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
@@ -108,6 +109,43 @@ describe('error collection', () => {
         stack: 'bar',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         type: 'foo',
+      })
+
+      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
+        date: jasmine.any(Number),
+        error: {
+          message: 'hello',
+          resource: {
+            method: 'GET',
+            status_code: 500,
+            url: 'url',
+          },
+          source: ErrorSource.NETWORK,
+          stack: 'bar',
+          type: 'foo',
+        },
+        type: RumEventType.ERROR,
+      })
+    })
+  })
+
+  describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
+    it('should create error event from collected error', () => {
+      const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+        error: {
+          message: 'hello',
+          resource: {
+            method: 'GET',
+            statusCode: 500,
+            url: 'url',
+          },
+          source: ErrorSource.NETWORK,
+          stack: 'bar',
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          type: 'foo',
+        },
       })
 
       expect(rawRumEvents[0].startTime).toBe(1234)

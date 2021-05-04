@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_MINUTE, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, RawError, RelativeTime } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../rawRumEvent.types'
@@ -416,24 +416,28 @@ describe('rum assembly', () => {
   })
 
   describe('error events limitation', () => {
+    const notifiedRawErrors: RawError[] = []
+
+    beforeEach(() => {
+      notifiedRawErrors.length = 0
+      setupBuilder.beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => notifiedRawErrors.push(error))
+      })
+    })
+
     it('stops sending error events when reaching the limit', () => {
       const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
       notifyRawRumErrorEvent(lifeCycle, 'baz')
 
-      expect(serverRumEvents.length).toBe(2)
+      expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect(serverRumEvents[1] as RumErrorEvent).toEqual(
+      expect(notifiedRawErrors.length).toBe(1)
+      expect(notifiedRawErrors[0]).toEqual(
         jasmine.objectContaining({
-          type: RumEventType.ERROR,
-          error: {
-            message: 'Reached max number of errors by minute: 1',
-            source: ErrorSource.AGENT,
-            resource: undefined,
-            stack: undefined,
-            type: undefined,
-          },
+          message: 'Reached max number of errors by minute: 1',
+          source: ErrorSource.AGENT,
         })
       )
     })
@@ -455,6 +459,7 @@ describe('rum assembly', () => {
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect(notifiedRawErrors.length).toBe(0)
     })
 
     it('allows to send new errors after a minute', () => {
@@ -464,10 +469,9 @@ describe('rum assembly', () => {
       clock.tick(ONE_MINUTE)
       notifyRawRumErrorEvent(lifeCycle, 'baz')
 
-      expect(serverRumEvents.length).toBe(3)
+      expect(serverRumEvents.length).toBe(2)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
-      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('Reached max number of errors by minute: 1')
-      expect((serverRumEvents[2] as RumErrorEvent).error.message).toBe('baz')
+      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('baz')
     })
 
     function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message = 'oh snap') {

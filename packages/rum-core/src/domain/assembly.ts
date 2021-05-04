@@ -2,6 +2,7 @@ import {
   combine,
   Configuration,
   Context,
+  createErrorFilter,
   ErrorFilter,
   isEmptyObject,
   limitModification,
@@ -20,7 +21,6 @@ import {
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
-import { createRumErrorFilter } from './rumEventsCollection/error/errorCollection'
 import { RumSession } from './rumSession'
 
 interface BrowserWindow extends Window {
@@ -50,7 +50,9 @@ export function startRumAssembly(
   parentContexts: ParentContexts,
   getCommonContext: () => CommonContext
 ) {
-  const errorFilter = createRumErrorFilter(lifeCycle, configuration)
+  const errorFilter = createErrorFilter(configuration, (error) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  })
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
