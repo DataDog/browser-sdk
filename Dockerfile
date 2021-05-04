@@ -1,4 +1,5 @@
-FROM node:12.8.0-slim
+# Use mirror registry to avoid rate limit from Dockerhub
+FROM registry.ddbuild.io/images/mirror/node:12.18.3-buster-slim
 
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
@@ -10,7 +11,10 @@ RUN apt-get update && apt-get install -y -q --no-install-recommends \
         fonts-liberation \
         libappindicator3-1 \
         lsb-release \
-        xdg-utils
+        xdg-utils \
+        curl \
+        ca-certificates \
+        wget
 
 # Download and install Chrome
 # Debian taken from https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
@@ -46,3 +50,7 @@ RUN apt-get install -y -q --no-install-recommends default-jdk
 RUN apt-get -y install git
 
 RUN apt-get -y install procps
+
+# Woke
+RUN curl -sSfL https://git.io/getwoke | \
+  bash -s -- -b /usr/local/bin
