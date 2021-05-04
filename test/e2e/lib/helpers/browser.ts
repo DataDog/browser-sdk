@@ -56,8 +56,11 @@ export async function sendXhr(url: string, headers: string[][] = []): Promise<st
   const result: State = await browserExecuteAsync(
     (url, headers, done) => {
       const xhr = new XMLHttpRequest()
-      xhr.addEventListener('load', () => done({ state: 'success', response: xhr.response as string }))
-      xhr.addEventListener('error', () => done({ state: 'error' }))
+      let state: State = { state: 'error' }
+      xhr.addEventListener('load', () => {
+        state = { state: 'success', response: xhr.response as string }
+      })
+      xhr.addEventListener('loadend', () => done(state))
       xhr.open('GET', url)
       headers.forEach((header) => xhr.setRequestHeader(header[0], header[1]))
       xhr.send()
