@@ -109,10 +109,10 @@ describe('record', () => {
   })
 
   it('captures stylesheet rules', (done) => {
-    startRecording()
-
     const styleElement = document.createElement('style')
     sandbox.appendChild(styleElement)
+
+    startRecording()
 
     const styleSheet = styleElement.sheet as CSSStyleSheet
     const ruleIdx0 = styleSheet.insertRule('body { background: #000; }')
@@ -128,7 +128,7 @@ describe('record', () => {
       styleSheet.insertRule('body { color: #ccc; }')
     }, 10)
 
-    waitEmitCalls(7, () => {
+    waitEmitCalls(9, () => {
       const records = getEmittedRecords()
 
       expect(records[0].type).toEqual(RecordType.Meta)
@@ -136,13 +136,16 @@ describe('record', () => {
       expect(records[2].type).toEqual(RecordType.FullSnapshot)
       expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[3] as IncrementalSnapshotRecord).data).toEqual(
-        jasmine.objectContaining({ source: IncrementalSource.Mutation })
+        jasmine.objectContaining({
+          source: IncrementalSource.StyleSheetRule,
+          adds: [{ rule: 'body { background: #000; }', index: undefined }],
+        })
       )
       expect(records[4].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[4] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
-          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
+          adds: [{ rule: 'body { background: #111; }', index: undefined }],
         })
       )
       expect(records[5].type).toEqual(RecordType.IncrementalSnapshot)
@@ -154,6 +157,20 @@ describe('record', () => {
       )
       expect(records[6].type).toEqual(RecordType.IncrementalSnapshot)
       expect((records[6] as IncrementalSnapshotRecord).data).toEqual(
+        jasmine.objectContaining({
+          source: IncrementalSource.StyleSheetRule,
+          adds: [{ rule: 'body { color: #fff; }', index: undefined }],
+        })
+      )
+      expect(records[7].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[7] as IncrementalSnapshotRecord).data).toEqual(
+        jasmine.objectContaining({
+          source: IncrementalSource.StyleSheetRule,
+          removes: [{ index: 0 }],
+        })
+      )
+      expect(records[8].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[8] as IncrementalSnapshotRecord).data).toEqual(
         jasmine.objectContaining({
           source: IncrementalSource.StyleSheetRule,
           adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
