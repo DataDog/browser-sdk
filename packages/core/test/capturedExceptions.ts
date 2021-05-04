@@ -323,7 +323,7 @@ export const IE_9 = {
 export const IE_10 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
-  number: -2146823281, // eslint-disable-line id-blacklist
+  number: -2146823281, // eslint-disable-line id-denylist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:48:13)
    at foo (http://path/to/file.js:46:9)
@@ -334,7 +334,7 @@ export const IE_11 = {
   description: "Unable to get property 'undef' of undefined or null reference",
   message: "Unable to get property 'undef' of undefined or null reference",
   name: 'TypeError',
-  number: -2146823281, // eslint-disable-line id-blacklist
+  number: -2146823281, // eslint-disable-line id-denylist
   stack: `TypeError: Unable to get property 'undef' of undefined or null reference
    at Anonymous function (http://path/to/file.js:47:21)
    at foo (http://path/to/file.js:45:13)
@@ -345,7 +345,7 @@ export const IE_11_EVAL = {
   description: "'getExceptionProps' is undefined",
   message: "'getExceptionProps' is undefined",
   name: 'ReferenceError',
-  number: -2146823279, // eslint-disable-line id-blacklist
+  number: -2146823279, // eslint-disable-line id-denylist
   stack: `ReferenceError: 'getExceptionProps' is undefined
    at eval code (eval code:1:1)
    at foo (http://path/to/file.js:58:17)
