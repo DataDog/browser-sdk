@@ -137,10 +137,14 @@ describe('logs', () => {
 
     beforeEach(() => {
       beforeSend = noop
-      assemble = buildAssemble(session, {
-        ...(baseConfiguration as Configuration),
-        beforeSend: (x: LogsEvent) => beforeSend(x),
-      })
+      assemble = buildAssemble(
+        session,
+        {
+          ...(baseConfiguration as Configuration),
+          beforeSend: (x: LogsEvent) => beforeSend(x),
+        },
+        { shouldSendError: () => true }
+      )
       window.DD_RUM = {
         getInternalContext: noop,
       }

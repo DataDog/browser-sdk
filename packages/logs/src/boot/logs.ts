@@ -6,6 +6,7 @@ import {
   Configuration,
   Context,
   createErrorFilter,
+  ErrorFilter,
   ErrorObservable,
   HttpRequest,
   InternalMonitoring,
@@ -54,7 +55,8 @@ export function doStartLogs(
     combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
   )
 
-  const assemble = buildAssemble(session, configuration)
+  const errorFilter = createErrorFilter(configuration, reportError)
+  const assemble = buildAssemble(session, configuration, errorFilter)
   const batch = startLoggerBatch(configuration)
 
   function reportError(error: RawError) {
@@ -84,11 +86,9 @@ export function doStartLogs(
   }
   errorObservable.subscribe(reportError)
 
-  const errorFilter = createErrorFilter(configuration, reportError)
-
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
-    if (contextualizedMessage && (contextualizedMessage.status !== StatusType.error || errorFilter.shouldSendError())) {
+    if (contextualizedMessage) {
       batch.add(contextualizedMessage)
     }
   }
@@ -122,7 +122,7 @@ function startLoggerBatch(configuration: Configuration) {
   }
 }
 
-export function buildAssemble(session: LoggerSession, configuration: Configuration) {
+export function buildAssemble(session: LoggerSession, configuration: Configuration, errorFilter: ErrorFilter) {
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined
@@ -142,6 +142,9 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
       if (shouldSend === false) {
         return undefined
       }
+    }
+    if (contextualizedMessage.status === StatusType.error && !errorFilter.shouldSendError()) {
+      return undefined
     }
     return contextualizedMessage as Context
   }
