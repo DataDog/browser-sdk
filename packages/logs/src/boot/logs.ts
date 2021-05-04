@@ -143,7 +143,7 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
         return undefined
       }
     }
-    if (contextualizedMessage.status === StatusType.error && !errorFilter.shouldSendError()) {
+    if (contextualizedMessage.status === StatusType.error && errorFilter.isLimitReached()) {
       return undefined
     }
     return contextualizedMessage as Context

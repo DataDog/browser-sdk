@@ -10,7 +10,7 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
   let allowNextError = false
 
   return {
-    shouldSendError() {
+    isLimitReached() {
       if (errorCount === 0) {
         setTimeout(() => {
           errorCount = 0
@@ -20,7 +20,7 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
       errorCount += 1
       if (errorCount < configuration.maxErrorsByMinute || allowNextError) {
         allowNextError = false
-        return true
+        return false
       }
 
       if (errorCount === configuration.maxErrorsByMinute) {
@@ -36,7 +36,7 @@ export function createErrorFilter(configuration: Configuration, onLimitReached: 
         }
       }
 
-      return false
+      return true
     },
   }
 }

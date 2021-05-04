@@ -114,7 +114,7 @@ function shouldSend(
     }
   }
   if (event.type === RumEventType.ERROR) {
-    return errorFilter.shouldSendError()
+    return !errorFilter.isLimitReached()
   }
   return true
 }
