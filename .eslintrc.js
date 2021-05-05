@@ -44,7 +44,7 @@ module.exports = {
       'error',
       {
         types: {
-          /* eslint-disable id-blacklist */
+          /* eslint-disable id-denylist */
           Object: { message: 'Avoid using the `Object` type. Did you mean `object`?' },
           object: false,
           Function: { message: 'Avoid using the `Function` type. Prefer a specific function type, like `() => void`.' },
@@ -52,7 +52,7 @@ module.exports = {
           Number: { message: 'Avoid using the `Number` type. Did you mean `number`?' },
           String: { message: 'Avoid using the `String` type. Did you mean `string`?' },
           Symbol: { message: 'Avoid using the `Symbol` type. Did you mean `symbol`?' },
-          /* eslint-enable id-blacklist */
+          /* eslint-enable id-denylist */
         },
       },
     ],
@@ -122,7 +122,7 @@ module.exports = {
     'eol-last': 'off',
     eqeqeq: ['error', 'smart'],
     'guard-for-in': 'error',
-    'id-blacklist': [
+    'id-denylist': [
       'error',
       'any',
       'Number',

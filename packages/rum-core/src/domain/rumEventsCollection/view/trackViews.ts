@@ -49,6 +49,10 @@ export interface ViewCreatedEvent {
   startClocks: ClocksState
 }
 
+export interface ViewEndedEvent {
+  endClocks: ClocksState
+}
+
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
@@ -149,7 +153,7 @@ function newView(
   let timings: Timings = {}
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
-  let endClock: ClocksState | undefined
+  let endClocks: ClocksState | undefined
   let location: Location = { ...initialLocation }
   let hasReplay = initialHasReplay
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
@@ -185,7 +189,7 @@ function newView(
 
   function triggerViewUpdate() {
     documentVersion += 1
-    const currentEndClock = endClock === undefined ? clocksNow() : endClock
+    const currentEndClock = endClocks === undefined ? clocksNow() : endClocks
     updateCurrentFocusDuration(currentEndClock.relative)
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
@@ -201,17 +205,17 @@ function newView(
       startClocks,
       timings,
       duration: elapsed(preferredClock(startClocks), preferredClock(currentEndClock)),
-      isActive: endClock === undefined,
+      isActive: endClocks === undefined,
     })
   }
 
   return {
     scheduleUpdate: scheduleViewUpdate,
     end() {
-      endClock = clocksNow()
+      endClocks = clocksNow()
       stopViewMetricsTracking()
       stopViewFocusTracking()
-      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED)
+      lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },
     getLocation() {
       return location

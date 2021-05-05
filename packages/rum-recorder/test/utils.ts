@@ -103,6 +103,8 @@ export function collectAsyncCalls<F extends jasmine.Func>(spy: jasmine.Spy<F>) {
     waitAsyncCalls: (expectedCallsCount: number, callback: (calls: jasmine.Calls<F>) => void) => {
       if (spy.calls.count() === expectedCallsCount) {
         callback(spy.calls)
+      } else if (spy.calls.count() > expectedCallsCount) {
+        fail('Unexpected extra call')
       } else {
         spy.and.callFake((() => {
           if (spy.calls.count() === expectedCallsCount) {
@@ -309,13 +311,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
      * Validates the mutation payload against the expected text, attribute, add and remove mutations.
      */
     validate: (payload: MutationPayload, expected: ExpectedMutationsPayload) => {
-      // When serializing a Node, some properties like 'isSVG' may be undefined, and they are not
-      // sent to the intake.
-      //
-      // To be able to validate mutations from E2E and Unit tests, we prefer to keep a single
-      // format. Thus, we serialize and deserialize the payload before validating it, so undefined
-      // properties are dropped during unit tests.
-      payload = JSON.parse(JSON.stringify(payload))
+      payload = removeUndefinedValues(payload)
 
       expect(payload.adds).toEqual(
         (expected.adds || []).map(({ node, parent, next }) => ({
@@ -362,10 +358,10 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
       }
 
       if ('childNodes' in node) {
-        return new ExpectedNode({ ...node, childNodes: [] })
+        node = { ...node, childNodes: [] }
       }
 
-      return new ExpectedNode(node)
+      return new ExpectedNode(removeUndefinedValues(node))
     },
   }
 
@@ -375,6 +371,18 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     }
 
     return root.id
+  }
+
+  /**
+   * When serializing a Node, some properties like 'isSVG' may be undefined, and they are not
+   * sent to the intake.
+   *
+   * To be able to validate mutations from E2E and Unit tests, we prefer to keep a single
+   * format. Thus, we serialize and deserialize objects to drop undefined
+   * properties, so they don't interferes during unit tests.
+   */
+  function removeUndefinedValues<T>(object: T) {
+    return JSON.parse(JSON.stringify(object)) as T
   }
 }
 

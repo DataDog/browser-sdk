@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import { isIE } from '@datadog/browser-core'
-import { absoluteToStylesheet, IGNORED_NODE, serializeNodeWithId } from './snapshot'
+import { IGNORED_NODE_ID } from './serializationUtils'
+import { absoluteToStylesheet, serializeNodeWithId } from './snapshot'
 
 describe('absolute url to stylesheet', () => {
   const href = 'http://localhost/css/style.css'
@@ -95,10 +96,10 @@ describe('serializeNodeWithId', () => {
       expect(map).toEqual({})
     })
 
-    it('sets ignored serialized node id to IGNORED_NODE', () => {
+    it('sets ignored serialized node id to IGNORED_NODE_ID', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, defaultOptions)
-      expect((scriptElement as any).__sn).toEqual(jasmine.objectContaining({ id: IGNORED_NODE }))
+      expect((scriptElement as any).__sn).toEqual(jasmine.objectContaining({ id: IGNORED_NODE_ID }))
     })
 
     it('ignores script tags', () => {

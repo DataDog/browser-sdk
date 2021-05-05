@@ -36,7 +36,7 @@ async function startCPUProfiling(options: ProfilingOptions, client: CDPSession) 
     for (const node of profile.nodes) {
       const consumption = timeDeltaForNodeId.get(node.id) || 0
       totalConsumption += consumption
-      if (isSdkUrl(options, node.callFrame.url)) {
+      if (isSdkBundleUrl(options, node.callFrame.url)) {
         sdkConsumption += consumption
       }
     }
@@ -70,7 +70,7 @@ async function startMemoryProfiling(options: ProfilingOptions, client: CDPSessio
       for (const node of iterNodes(profile.head)) {
         const consumption = sizeForNodeId.get(node.id) || 0
         totalConsumption += consumption
-        if (isSdkUrl(options, node.callFrame.url)) {
+        if (isSdkBundleUrl(options, node.callFrame.url)) {
           sdkConsumption += consumption
         }
       }
@@ -89,24 +89,20 @@ async function startMemoryProfiling(options: ProfilingOptions, client: CDPSessio
 
 async function startNetworkProfiling(options: ProfilingOptions, client: CDPSession) {
   await client.send('Network.enable')
-  let totalUpload = 0
-  let totalDownload = 0
-  let sdkUpload = 0
+  options.proxy.stats.reset()
+  // Twitter is using a service worker intercepting our requests
+  await client.send('Network.setBypassServiceWorker', { bypass: true })
   let sdkDownload = 0
 
   const sdkRequestIds = new Set<string>()
 
   const requestListener = ({ request, requestId }: Protocol.Network.RequestWillBeSentEvent) => {
-    const size = getRequestApproximateSize(request)
-    totalUpload += size
-    if (isSdkUrl(options, request.url)) {
-      sdkUpload += size
+    if (isSdkBundleUrl(options, request.url)) {
       sdkRequestIds.add(requestId)
     }
   }
 
   const loadingFinishedListener = ({ requestId, encodedDataLength }: Protocol.Network.LoadingFinishedEvent) => {
-    totalDownload += encodedDataLength
     if (sdkRequestIds.has(requestId)) {
       sdkDownload += encodedDataLength
     }
@@ -119,14 +115,14 @@ async function startNetworkProfiling(options: ProfilingOptions, client: CDPSessi
     client.off('Network.loadingFinishedListener', loadingFinishedListener)
 
     return {
-      upload: { total: totalUpload, sdk: sdkUpload },
-      download: { total: totalDownload, sdk: sdkDownload },
+      upload: options.proxy.stats.getStatsByHost(),
+      download: sdkDownload,
     }
   }
 }
 
-function isSdkUrl(options: ProfilingOptions, url: string) {
-  return url === options.bundleUrl || url.startsWith(`https://${options.proxyHost}/`)
+function isSdkBundleUrl(options: ProfilingOptions, url: string) {
+  return url === options.bundleUrl
 }
 
 function* iterNodes<N extends { children?: N[] }>(root: N): Generator<N> {
@@ -136,22 +132,4 @@ function* iterNodes<N extends { children?: N[] }>(root: N): Generator<N> {
       yield* iterNodes(child)
     }
   }
-}
-
-function getRequestApproximateSize(request: Protocol.Network.Request) {
-  let bodySize = 0
-  if (request.postDataEntries) {
-    for (const { bytes } of request.postDataEntries) {
-      if (bytes) {
-        bodySize += Buffer.from(bytes, 'base64').byteLength
-      }
-    }
-  }
-
-  let headerSize = 0
-  for (const [name, value] of Object.entries(request.headers)) {
-    headerSize += name.length + value.length
-  }
-
-  return bodySize + headerSize
 }
