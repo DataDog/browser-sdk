@@ -316,7 +316,6 @@ describe('logs', () => {
       const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsByMinute: 1 } })
       sendLog({ message: 'foo', status: StatusType.error }, {})
       sendLog({ message: 'bar', status: StatusType.error }, {})
-      sendLog({ message: 'baz', status: StatusType.error }, {})
 
       expect(server.requests.length).toEqual(1)
       expect(getLoggedMessage(server, 0).message).toBe('foo')

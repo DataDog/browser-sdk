@@ -429,7 +429,6 @@ describe('rum assembly', () => {
       const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
-      notifyRawRumErrorEvent(lifeCycle, 'baz')
 
       expect(serverRumEvents.length).toBe(1)
       expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
