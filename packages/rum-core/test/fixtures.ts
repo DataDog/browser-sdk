@@ -24,7 +24,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ActionType.CUSTOM,
           },
           date: 0 as TimeStamp,
-          focus: { start_focused: true },
+          view: { in_foreground: true },
         },
         overrides
       )
@@ -44,8 +44,8 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         {
           type,
           date: 0 as TimeStamp,
-          focus: {
-            start_focused: true,
+          view: {
+            in_foreground: true,
           },
           error: {
             message: 'oh snap',
@@ -83,10 +83,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             long_task: { count: 0 },
             resource: { count: 0 },
             time_spent: 0 as ServerDuration,
-          },
-          focus: {
-            start_focused: true,
-            focused_times: [],
+            in_foreground_periods: [],
           },
           session: {
             has_replay: undefined,

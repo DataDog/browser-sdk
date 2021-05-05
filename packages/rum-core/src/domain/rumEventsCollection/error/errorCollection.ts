@@ -58,7 +58,7 @@ function computeRawError(
     startClocks,
     source,
     ...formatUnknownError(stackTrace, error, 'Provided'),
-    startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+    inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
   }
   return err
 }
@@ -79,11 +79,12 @@ function processError(error: RawError) {
       stack: error.stack,
       type: error.type,
     },
+    view: {},
     type: RumEventType.ERROR as const,
   }
-  if (error.startFocused != null) {
-    rawRumEvent.focus = {
-      start_focused: error.startFocused,
+  if (error.inForeground != null) {
+    rawRumEvent.view = {
+      in_foreground: error.inForeground,
     }
   }
 

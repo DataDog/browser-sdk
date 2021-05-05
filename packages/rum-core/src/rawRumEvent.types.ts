@@ -48,8 +48,8 @@ export interface PerformanceResourceDetailsElement {
 export interface RawRumErrorEvent {
   date: TimeStamp
   type: RumEventType.ERROR
-  focus?: {
-    start_focused: boolean
+  view: {
+    in_foreground?: boolean
   }
   error: {
     resource?: {
@@ -89,13 +89,10 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
+    in_foreground_periods?: FocusTime[]
   }
   session: {
     has_replay: true | undefined
-  }
-  focus?: {
-    start_focused: boolean
-    focused_times: FocusTime[]
   }
   _dd: {
     document_version: number
@@ -142,8 +139,8 @@ export interface RawRumActionEvent {
       name: string
     }
   }
-  focus?: {
-    start_focused: boolean
+  view: {
+    in_foreground?: boolean
   }
 }
 

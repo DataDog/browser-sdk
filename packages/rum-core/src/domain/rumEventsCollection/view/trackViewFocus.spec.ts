@@ -47,11 +47,11 @@ describe('the user focus the document when opening the view', () => {
   })
 
   it('should set view as focused when started', () => {
-    expect(getViewEvent(0).startFocused).toBe(true)
+    expect(getViewEvent(0).inForeground).toBe(true)
   })
 
   it('should create a first focused time', () => {
-    expect(getViewEvent(0).focusedTimes).toEqual([
+    expect(getViewEvent(0).inForegroundPeriods).toEqual([
       { start: 0 as RelativeTime, duration: 0 as ServerDuration, currently_focused: true },
     ])
   })
@@ -67,7 +67,7 @@ describe('the user focus the document when opening the view', () => {
       })
 
       it('should update the duration of the currently focused time and close it', () => {
-        expect(getViewEvent(1).focusedTimes).toEqual([
+        expect(getViewEvent(1).inForegroundPeriods).toEqual([
           { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
         ])
       })
@@ -80,7 +80,7 @@ describe('the user focus the document when opening the view', () => {
       })
 
       it('should update the duration of the currently focused time', () => {
-        expect(getViewEvent(1).focusedTimes).toEqual([
+        expect(getViewEvent(1).inForegroundPeriods).toEqual([
           { start: 0 as RelativeTime, duration: 13_000_000_000 as ServerDuration, currently_focused: true },
         ])
       })
@@ -92,11 +92,11 @@ describe('the user focus the document when opening the view', () => {
       })
 
       it('should keep view as focused when started', () => {
-        expect(getViewEvent(1).startFocused).toBe(true)
+        expect(getViewEvent(1).inForeground).toBe(true)
       })
 
       it('should close a first focused time', () => {
-        expect(getViewEvent(1).focusedTimes).toEqual([
+        expect(getViewEvent(1).inForegroundPeriods).toEqual([
           { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
         ])
       })
@@ -111,7 +111,7 @@ describe('the user focus the document when opening the view', () => {
           })
 
           it('should open a second focused time', () => {
-            expect(getViewEvent(2).focusedTimes).toEqual([
+            expect(getViewEvent(2).inForegroundPeriods).toEqual([
               { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
               { start: 15_000_000_000 as RelativeTime, duration: 0 as ServerDuration, currently_focused: true },
             ])
@@ -145,6 +145,6 @@ describe('the user doest not focus the document when opening the view', () => {
 
   it('should set initial view as not focused', () => {
     setupBuilder.build()
-    expect(getViewEvent(0).startFocused).toBe(false)
+    expect(getViewEvent(0).inForeground).toBe(false)
   })
 })

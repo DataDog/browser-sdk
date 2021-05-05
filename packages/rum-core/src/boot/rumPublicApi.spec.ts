@@ -172,7 +172,7 @@ describe('rum public api', () => {
           name: 'foo',
           startClocks: jasmine.any(Object),
           type: ActionType.CUSTOM,
-          startFocused: false,
+          inForeground: false,
         },
         { context: {}, user: {} },
       ])

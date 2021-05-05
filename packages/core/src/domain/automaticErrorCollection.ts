@@ -35,7 +35,7 @@ export function filterErrors(configuration: Configuration, errorObservable: Obse
         message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
         source: ErrorSource.AGENT,
         startClocks: clocksNow(),
-        startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+        inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
       })
     }
   })
@@ -53,7 +53,7 @@ export function startConsoleTracking(configuration: Configuration, errorObservab
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startClocks: clocksNow(),
-      startFocused: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+      inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
     })
   })
 }
@@ -93,7 +93,7 @@ export function startRuntimeErrorTracking(configuration: Configuration, errorObs
       startClocks: clocksNow(),
     }
     if (configuration.isEnabled('track-focus')) {
-      error.startFocused = document.hasFocus()
+      error.inForeground = document.hasFocus()
     }
     errorObservable.notify(error)
   }
@@ -129,13 +129,13 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
         source: ErrorSource.NETWORK,
         stack: truncateResponse(request.response, configuration) || 'Failed to load',
         startClocks: request.startClocks,
-        startFocused: request.startFocused as boolean | undefined,
+        inForeground: request.inForeground as boolean | undefined,
       })
     }
   }
 
   function addFocusToContext(context: XhrStartContext | FetchStartContext) {
-    context.startFocused = configuration.isEnabled('track-focus') ? document.hasFocus() : undefined
+    context.inForeground = configuration.isEnabled('track-focus') ? document.hasFocus() : undefined
   }
 
   return {

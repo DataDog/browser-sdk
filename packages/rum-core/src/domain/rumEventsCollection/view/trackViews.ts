@@ -37,8 +37,8 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   hasReplay: boolean
-  startFocused?: boolean
-  focusedTimes?: FocusTime[]
+  inForeground?: boolean
+  inForegroundPeriods?: FocusTime[]
 }
 
 export interface ViewCreatedEvent {

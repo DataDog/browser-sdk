@@ -12,16 +12,16 @@ import { FocusTime } from '../../../rawRumEvent.types'
 
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 export interface ViewFocus {
-  startFocused: boolean
-  focusedTimes: FocusTime[]
+  inForeground: boolean
+  inForegroundPeriods: FocusTime[]
 }
 
 export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () => void) {
   const viewFocus: ViewFocus = {
-    startFocused: document.hasFocus(),
-    focusedTimes: [],
+    inForeground: document.hasFocus(),
+    inForegroundPeriods: [],
   }
-  if (viewFocus.startFocused) {
+  if (viewFocus.inForeground) {
     addNewFocusTime(startClocks.relative)
   }
 
@@ -35,7 +35,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
       closeLastFocusTime()
     },
     updateCurrentFocusDuration: (endTime: RelativeTime) => {
-      const lastFocusedtime = viewFocus.focusedTimes[viewFocus.focusedTimes.length - 1]
+      const lastFocusedtime = viewFocus.inForegroundPeriods[viewFocus.inForegroundPeriods.length - 1]
       if (lastFocusedtime != null && lastFocusedtime.currently_focused === true) {
         lastFocusedtime.duration = toServerDuration(elapsed(lastFocusedtime.start, endTime))
       }
@@ -46,10 +46,10 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
   function addNewFocusTime(overrideStart?: RelativeTime) {
     const now = relativeNow()
     const start = overrideStart ?? now
-    if (viewFocus.focusedTimes.length > MAX_NUMBER_OF_FOCUSED_TIME) {
+    if (viewFocus.inForegroundPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
       return
     }
-    viewFocus.focusedTimes.push({
+    viewFocus.inForegroundPeriods.push({
       start: toServerRelativeTime(start),
       duration: toServerDuration(elapsed(start, now)),
       currently_focused: true,
@@ -58,12 +58,12 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
   }
 
   function closeLastFocusTime() {
-    const lastIndex = viewFocus.focusedTimes.length - 1
+    const lastIndex = viewFocus.inForegroundPeriods.length - 1
 
-    if (lastIndex >= 0 && viewFocus.focusedTimes[lastIndex].currently_focused) {
-      viewFocus.focusedTimes[lastIndex] = {
-        start: toServerRelativeTime(viewFocus.focusedTimes[lastIndex].start),
-        duration: toServerDuration(elapsed(viewFocus.focusedTimes[lastIndex].start, relativeNow())),
+    if (lastIndex >= 0 && viewFocus.inForegroundPeriods[lastIndex].currently_focused) {
+      viewFocus.inForegroundPeriods[lastIndex] = {
+        start: toServerRelativeTime(viewFocus.inForegroundPeriods[lastIndex].start),
+        duration: toServerDuration(elapsed(viewFocus.inForegroundPeriods[lastIndex].start, relativeNow())),
       }
       scheduleViewUpdate()
     }

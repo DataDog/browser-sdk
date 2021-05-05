@@ -110,7 +110,7 @@ describe('trackActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
-        startFocused: false,
+        inForeground: false,
       },
     ])
   })
@@ -156,7 +156,7 @@ describe('trackActions', () => {
           name: 'Click me',
           startClocks: jasmine.any(Object),
           type: ActionType.CLICK,
-          startFocused: true,
+          inForeground: true,
         },
       ])
     })

@@ -13,7 +13,7 @@ export interface RawError {
     statusCode: number
     method: string
   }
-  startFocused?: boolean
+  inForeground?: boolean
 }
 
 export const ErrorSource = {

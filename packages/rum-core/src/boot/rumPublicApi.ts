@@ -108,7 +108,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         context: deepClone(context as Context),
         startClocks: clocksNow(),
         type: ActionType.CUSTOM,
-        startFocused: document.hasFocus(),
+        inForeground: document.hasFocus(),
       })
     }),
 

@@ -51,11 +51,11 @@ function processAction(action: AutoAction | CustomAction, configuration: Configu
       },
       date: preferredTimeStamp(action.startClocks),
       type: RumEventType.ACTION as const,
-      focus: configuration.isEnabled('track-focus')
+      view: configuration.isEnabled('track-focus')
         ? {
-            start_focused: action.startFocused,
+            in_foreground: action.inForeground,
           }
-        : undefined,
+        : {},
     },
     autoActionProperties
   )

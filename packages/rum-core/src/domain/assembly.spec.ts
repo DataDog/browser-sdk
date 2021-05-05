@@ -301,6 +301,7 @@ describe('rum assembly', () => {
         id: 'abcde',
         referrer: 'url',
         url: 'url',
+        in_foreground: true,
       })
       expect(serverRumEvents[0].session.id).toBe('1234')
     })

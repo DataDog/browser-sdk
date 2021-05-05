@@ -58,10 +58,10 @@ function processViewUpdate(view: ViewEvent) {
       has_replay: view.hasReplay || undefined,
     },
   }
-  if (view.startFocused && view.focusedTimes) {
-    viewEvent.focus = {
-      start_focused: view.startFocused,
-      focused_times: view.focusedTimes,
+  if (view.inForegroundPeriods) {
+    viewEvent.view = {
+      ...viewEvent.view,
+      in_foreground_periods: view.inForegroundPeriods,
     }
   }
   if (!isEmptyObject(view.customTimings)) {

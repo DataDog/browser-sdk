@@ -46,7 +46,7 @@ describe('console tracker', () => {
       message: 'console error: foo bar',
       stack: undefined,
       startClocks: jasmine.any(Object),
-      startFocused: false,
+      inForeground: false,
     })
   })
 
@@ -57,7 +57,7 @@ describe('console tracker', () => {
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
       startClocks: jasmine.any(Object),
-      startFocused: false,
+      inForeground: false,
     })
   })
 
@@ -192,7 +192,7 @@ describe('network error tracker', () => {
         source: 'network',
         stack: 'Server error',
         startClocks: jasmine.any(Object),
-        startFocused: false,
+        inForeground: false,
       })
       done()
     })
@@ -323,7 +323,7 @@ describe('error limitation', () => {
       message: 'Reached max number of errors by minute: 2',
       source: ErrorSource.AGENT,
       startClocks: jasmine.any(Object),
-      startFocused: false,
+      inForeground: false,
     })
   })
 

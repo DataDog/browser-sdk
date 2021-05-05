@@ -42,8 +42,8 @@ describe('error collection', () => {
         customerContext: undefined,
         rawRumEvent: {
           date: jasmine.any(Number),
-          focus: {
-            start_focused: false,
+          view: {
+            in_foreground: false,
           },
           error: {
             message: 'foo',
@@ -117,8 +117,8 @@ describe('error collection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect(rawRumEvents[0].rawRumEvent).toEqual({
           date: jasmine.any(Number),
-          focus: {
-            start_focused: true,
+          view: {
+            in_foreground: true,
           },
           error: {
             message: 'foo',
@@ -143,7 +143,7 @@ describe('error collection', () => {
           statusCode: 500,
           url: 'url',
         },
-        startFocused: false,
+        inForeground: false,
         source: ErrorSource.NETWORK,
         stack: 'bar',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -153,7 +153,7 @@ describe('error collection', () => {
       expect(rawRumEvents[0].startTime).toBe(1234)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
-        focus: { start_focused: false },
+        view: { in_foreground: false },
         error: {
           message: 'hello',
           resource: {
