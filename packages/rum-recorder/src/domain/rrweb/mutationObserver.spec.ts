@@ -65,17 +65,11 @@ describe('startMutationCollection', () => {
         mutationCallbackSpy
       )
 
-      const container = document.createElement('div')
-      sandbox.appendChild(container)
-
-      setTimeout(() => {
-        container.appendChild(document.createElement('span'))
-      }, 0)
+      sandbox.appendChild(document.createElement('div'))
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      waitEmitCalls(1, (calls) => {
-        expect(calls.mostRecent().args[0].adds.length).toBe(1)
+      waitEmitCalls(1, () => {
         expectNoExtraEmitCalls(done)
       })
     })
