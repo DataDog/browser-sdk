@@ -143,7 +143,7 @@ describe('logs', () => {
           ...(baseConfiguration as Configuration),
           beforeSend: (x: LogsEvent) => beforeSend(x),
         },
-        { isLimitReached: () => true }
+        noop
       )
       window.DD_RUM = {
         getInternalContext: noop,

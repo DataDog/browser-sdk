@@ -55,8 +55,7 @@ export function doStartLogs(
     combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
   )
 
-  const errorFilter = createErrorFilter(configuration, reportError)
-  const assemble = buildAssemble(session, configuration, errorFilter)
+  const assemble = buildAssemble(session, configuration, reportError)
   const batch = startLoggerBatch(configuration)
 
   function reportError(error: RawError) {
@@ -122,7 +121,12 @@ function startLoggerBatch(configuration: Configuration) {
   }
 }
 
-export function buildAssemble(session: LoggerSession, configuration: Configuration, errorFilter: ErrorFilter) {
+export function buildAssemble(
+  session: LoggerSession,
+  configuration: Configuration,
+  reportError: (error: RawError) => void
+) {
+  const errorFilter = createErrorFilter(configuration, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined
