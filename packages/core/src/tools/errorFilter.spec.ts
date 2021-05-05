@@ -7,7 +7,7 @@ import { noop, ONE_MINUTE } from './utils'
 
 const CONFIGURATION = { maxErrorsByMinute: 1 } as Configuration
 
-describe('errorFilter', () => {
+describe('errorFilter.isLimitReached', () => {
   let errorFilter: ErrorFilter | undefined
   let clock: jasmine.Clock
   let cleanupClock: () => void
@@ -21,20 +21,20 @@ describe('errorFilter', () => {
     cleanupClock()
   })
 
-  it('allows to send an error', () => {
+  it('returns false if the limit is not reached', () => {
     errorFilter = createErrorFilter(CONFIGURATION, noop)
 
     expect(errorFilter.isLimitReached()).toBe(false)
   })
 
-  it('prevents from sending an error when the limit is reached', () => {
+  it('returns true if the limit is reached', () => {
     errorFilter = createErrorFilter(CONFIGURATION, noop)
 
     errorFilter.isLimitReached()
     expect(errorFilter.isLimitReached()).toBe(true)
   })
 
-  it('allows to send errors again once one minute have passed', () => {
+  it('returns false again when one minute is passed after the first counted error', () => {
     errorFilter = createErrorFilter(CONFIGURATION, noop)
 
     errorFilter.isLimitReached()
@@ -43,7 +43,7 @@ describe('errorFilter', () => {
     expect(errorFilter.isLimitReached()).toBe(false)
   })
 
-  it('calls the "onLimitReached" callback with the raw "limit" error to send when the limit is reached', () => {
+  it('calls the "onLimitReached" callback with the raw "limit reached" error to send when the limit is reached', () => {
     const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
     errorFilter = createErrorFilter(CONFIGURATION, onLimitReachedSpy)
 
@@ -56,7 +56,7 @@ describe('errorFilter', () => {
     })
   })
 
-  it('allows to send the "limit" error when the limit is reached', () => {
+  it('returns false while calling the "onLimitReached" to allow sending the "limit reached" error', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       expect(errorFilter!.isLimitReached()).toBe(false)
     })
@@ -88,7 +88,8 @@ describe('errorFilter', () => {
     expect(errorFilter.isLimitReached()).toBe(true)
   })
 
-  it('filters error even if the "limit" error is not sent (ex: excluded by beforeSend)', () => {
+  // eslint-disable-next-line max-len
+  it('returns true when the limit is reached and the "limit reached" error is not sent (ex: excluded by beforeSend)', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       // do not send the error
     })
@@ -98,7 +99,7 @@ describe('errorFilter', () => {
     expect(errorFilter.isLimitReached()).toBe(true)
   })
 
-  it('allows a single error from being sent when the "onLimitReached" callback is called (edge case)', () => {
+  it('returns false only once when calling the "onLimitReached" callback (edge case)', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       expect(errorFilter!.isLimitReached()).toBe(false)
       expect(errorFilter!.isLimitReached()).toBe(true)
