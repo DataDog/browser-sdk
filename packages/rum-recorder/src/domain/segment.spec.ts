@@ -1,4 +1,5 @@
-import { isIE, noop, setDebugMode } from '@datadog/browser-core'
+import { noop, setDebugMode } from '@datadog/browser-core'
+import { isIE } from '../../../core/test/specHelper'
 import { MockWorker, parseSegment } from '../../test/utils'
 import { Record, RecordType, SegmentContext } from '../types'
 import { Segment } from './segment'

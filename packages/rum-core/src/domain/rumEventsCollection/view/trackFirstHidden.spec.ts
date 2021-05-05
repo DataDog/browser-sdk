@@ -1,10 +1,5 @@
-import {
-  createNewEvent,
-  DOM_EVENT,
-  RelativeTime,
-  restorePageVisibility,
-  setPageVisibility,
-} from '@datadog/browser-core'
+import { DOM_EVENT, RelativeTime } from '@datadog/browser-core'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
 import { resetFirstHidden, trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {

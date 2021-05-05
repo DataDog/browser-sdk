@@ -5,6 +5,7 @@ import {
   commonInit,
   Configuration,
   Context,
+  createErrorFilter,
   ErrorObservable,
   HttpRequest,
   InternalMonitoring,
@@ -15,7 +16,7 @@ import {
   startAutomaticErrorCollection,
   UserConfiguration,
 } from '@datadog/browser-core'
-import { Logger, LogsMessage } from '../domain/logger'
+import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
@@ -53,10 +54,10 @@ export function doStartLogs(
     combine({ session_id: session.getId() }, getGlobalContext(), getRUMInternalContext())
   )
 
-  const assemble = buildAssemble(session, configuration)
+  const assemble = buildAssemble(session, configuration, reportError)
   const batch = startLoggerBatch(configuration)
 
-  errorObservable.subscribe((error: RawError) => {
+  function reportError(error: RawError) {
     errorLogger.error(
       error.message,
       combine(
@@ -80,7 +81,8 @@ export function doStartLogs(
         getRUMInternalContext(error.startClocks.relative)
       )
     )
-  })
+  }
+  errorObservable.subscribe(reportError)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
@@ -118,7 +120,12 @@ function startLoggerBatch(configuration: Configuration) {
   }
 }
 
-export function buildAssemble(session: LoggerSession, configuration: Configuration) {
+export function buildAssemble(
+  session: LoggerSession,
+  configuration: Configuration,
+  reportError: (error: RawError) => void
+) {
+  const errorFilter = createErrorFilter(configuration, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined
@@ -138,6 +145,9 @@ export function buildAssemble(session: LoggerSession, configuration: Configurati
       if (shouldSend === false) {
         return undefined
       }
+    }
+    if (contextualizedMessage.status === StatusType.error && errorFilter.isLimitReached()) {
+      return undefined
     }
     return contextualizedMessage as Context
   }

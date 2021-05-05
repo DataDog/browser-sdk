@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { isIE } from '@datadog/browser-core'
+import { isIE } from '../../../../core/test/specHelper'
 import { IGNORED_NODE_ID } from './serializationUtils'
 import { absoluteToStylesheet, serializeNodeWithId } from './snapshot'
 

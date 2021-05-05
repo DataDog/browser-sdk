@@ -6,10 +6,9 @@ import {
   Context,
   DEFAULT_CONFIGURATION,
   noop,
-  resetNavigationStart,
-  SPEC_ENDPOINTS,
   TimeStamp,
 } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, mockClock } from '../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
@@ -117,18 +116,7 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withFakeClock() {
-      jasmine.clock().install()
-      jasmine.clock().mockDate()
-      const start = Date.now()
-      spyOn(performance, 'now').and.callFake(() => Date.now() - start)
-      resetNavigationStart()
-      Object.defineProperty(performance.timing, 'navigationStart', { value: start, configurable: true })
-      clock = jasmine.clock()
-      cleanupClock = () => {
-        jasmine.clock().uninstall()
-        delete (performance.timing as any).navigationStart
-        resetNavigationStart()
-      }
+      ;({ clock, stop: cleanupClock } = mockClock())
       return setupBuilder
     },
     beforeBuild(callback: BeforeBuildCallback) {

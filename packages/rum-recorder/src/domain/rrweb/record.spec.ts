@@ -1,4 +1,4 @@
-import { createNewEvent, isIE } from '@datadog/browser-core'
+import { createNewEvent, isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
   RecordType,

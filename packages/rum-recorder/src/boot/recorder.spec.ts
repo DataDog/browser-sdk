@@ -1,6 +1,7 @@
-import { createNewEvent, HttpRequest, isIE } from '@datadog/browser-core'
+import { HttpRequest } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
+import { createNewEvent, isIE } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
