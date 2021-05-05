@@ -12,4 +12,4 @@
 
 ---
 
-I have gone over the [contributing](https://github.com/DataDog/browser-sdk/blob/master/CONTRIBUTING.md) documentation.
+I have gone over the [contributing](https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md) documentation.

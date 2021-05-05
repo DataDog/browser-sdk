@@ -8,6 +8,8 @@ prod,bumbag,MIT,Copyright (c) 2020 Bumbag Enterprises
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
+dev,@types/node,MIT,Copyright Microsoft Corporation
+dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
@@ -47,6 +49,7 @@ dev,istanbul-instrumenter-loader,MIT,Copyright JS Foundation and other contribut
 dev,jasmine-core,MIT,Copyright 2008-2017 Pivotal Labs
 dev,js-polyfills,Unlicense,
 dev,json-schema-to-typescript,MIT,
+dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
 dev,karma,MIT,Copyright 2011-2019 Google Inc.
 dev,karma-browserstack-launcher,MIT,Copyright 2011-2013 Google, Inc.
 dev,karma-chrome-launcher,MIT,Copyright 2011-2013 Google Inc.
