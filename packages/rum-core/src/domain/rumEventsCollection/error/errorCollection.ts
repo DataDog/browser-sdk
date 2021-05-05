@@ -3,7 +3,6 @@ import {
   Configuration,
   Context,
   formatUnknownError,
-  Observable,
   RawError,
   startAutomaticErrorCollection,
   ClocksState,
@@ -22,12 +21,14 @@ export interface ProvidedError {
 export type ProvidedSource = 'custom' | 'network' | 'source'
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
-  return doStartErrorCollection(lifeCycle, startAutomaticErrorCollection(configuration))
+  startAutomaticErrorCollection(configuration).subscribe((error) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  )
+
+  return doStartErrorCollection(lifeCycle)
 }
 
-export function doStartErrorCollection(lifeCycle: LifeCycle, observable: Observable<RawError>) {
-  observable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
-
+export function doStartErrorCollection(lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,

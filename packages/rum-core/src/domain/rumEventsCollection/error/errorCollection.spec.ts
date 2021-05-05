@@ -6,7 +6,6 @@ import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
-  const errorObservable = new Observable<RawError>()
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
 
   beforeEach(() => {
@@ -15,7 +14,7 @@ describe('error collection', () => {
         isEnabled: () => true,
       })
       .beforeBuild(({ lifeCycle }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, errorObservable))
+        ;({ addError } = doStartErrorCollection(lifeCycle))
       })
   })
 
@@ -91,41 +90,6 @@ describe('error collection', () => {
       )
       expect(rawRumEvents[0].savedCommonContext!.user).toEqual({
         id: 'foo',
-      })
-    })
-  })
-
-  describe('auto', () => {
-    it('should create error event from collected error', () => {
-      const { rawRumEvents } = setupBuilder.build()
-      errorObservable.notify({
-        message: 'hello',
-        resource: {
-          method: 'GET',
-          statusCode: 500,
-          url: 'url',
-        },
-        source: ErrorSource.NETWORK,
-        stack: 'bar',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        type: 'foo',
-      })
-
-      expect(rawRumEvents[0].startTime).toBe(1234)
-      expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
-        error: {
-          message: 'hello',
-          resource: {
-            method: 'GET',
-            status_code: 500,
-            url: 'url',
-          },
-          source: ErrorSource.NETWORK,
-          stack: 'bar',
-          type: 'foo',
-        },
-        type: RumEventType.ERROR,
       })
     })
   })
