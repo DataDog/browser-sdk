@@ -43,7 +43,7 @@ describe('errorFilter.isLimitReached', () => {
     expect(errorFilter.isLimitReached()).toBe(false)
   })
 
-  it('calls the "onLimitReached" callback with the raw "limit reached" error to send when the limit is reached', () => {
+  it('calls the "onLimitReached" callback with the raw "limit reached" error when the limit is reached', () => {
     const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
     errorFilter = createErrorFilter(CONFIGURATION, onLimitReachedSpy)
 
@@ -56,7 +56,8 @@ describe('errorFilter.isLimitReached', () => {
     })
   })
 
-  it('returns false while calling the "onLimitReached" to allow sending the "limit reached" error', () => {
+  // eslint-disable-next-line max-len
+  it('returns false when called from the "onLimitReached" callback to bypass the limit for the "limit reached" error', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       expect(errorFilter!.isLimitReached()).toBe(false)
     })
@@ -77,7 +78,7 @@ describe('errorFilter.isLimitReached', () => {
     expect(onLimitReachedSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('still works if the "onLimitReached" callback throws', () => {
+  it('returns true after reaching the limit even if the "onLimitReached" callback throws', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       throw new Error('oops')
     })
@@ -89,9 +90,9 @@ describe('errorFilter.isLimitReached', () => {
   })
 
   // eslint-disable-next-line max-len
-  it('returns true when the limit is reached and the "limit reached" error is not sent (ex: excluded by beforeSend)', () => {
+  it('returns true when the limit is reached and the "onLimitReached" callback does not call "isLimitReached" (ex: excluded by beforeSend)', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
-      // do not send the error
+      // do not call isLimitReached
     })
 
     errorFilter.isLimitReached()
@@ -99,7 +100,7 @@ describe('errorFilter.isLimitReached', () => {
     expect(errorFilter.isLimitReached()).toBe(true)
   })
 
-  it('returns false only once when calling the "onLimitReached" callback (edge case)', () => {
+  it('returns false only once when called from the "onLimitReached" callback (edge case)', () => {
     errorFilter = createErrorFilter(CONFIGURATION, () => {
       expect(errorFilter!.isLimitReached()).toBe(false)
       expect(errorFilter!.isLimitReached()).toBe(true)
