@@ -6,7 +6,6 @@ import {
   Configuration,
   Context,
   createErrorFilter,
-  ErrorFilter,
   ErrorObservable,
   HttpRequest,
   InternalMonitoring,

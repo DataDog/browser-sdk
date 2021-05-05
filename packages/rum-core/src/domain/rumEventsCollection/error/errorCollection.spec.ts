@@ -1,4 +1,4 @@
-import { ErrorSource, Observable, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
