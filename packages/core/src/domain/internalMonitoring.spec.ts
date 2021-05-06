@@ -1,4 +1,5 @@
 import sinon from 'sinon'
+import { Clock, mockClock } from '../../test/specHelper'
 
 import { Configuration } from './configuration'
 import {
@@ -173,18 +174,18 @@ describe('internal monitoring', () => {
   describe('request', () => {
     const FAKE_DATE = 123456
     let server: sinon.SinonFakeServer
+    let clock: Clock
 
     beforeEach(() => {
       startInternalMonitoring(configuration as Configuration)
       server = sinon.fakeServer.create()
-      jasmine.clock().install()
-      jasmine.clock().mockDate(new Date(FAKE_DATE))
+      clock = mockClock(new Date(FAKE_DATE))
     })
 
     afterEach(() => {
       resetInternalMonitoring()
       server.restore()
-      jasmine.clock().uninstall()
+      clock.cleanup()
     })
 
     it('should send the needed data', () => {
