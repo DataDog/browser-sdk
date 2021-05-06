@@ -1,4 +1,4 @@
-import { noop, Observable, PreferredTime } from '@datadog/browser-core'
+import { noop, Observable, preferredNow, PreferredTime } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -151,10 +151,11 @@ describe('waitPageActivitiesCompletion', () => {
   it('should collect an event that is followed by page activity', (done) => {
     const activityObservable = new Observable<PageActivityEvent>()
 
-    const startTime = performance.now()
+    const startTime = preferredNow()
     waitPageActivitiesCompletion(activityObservable, noop, (params) => {
       expect(params.hadActivity).toBeTrue()
       expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toEqual(
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
         (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as PreferredTime
       )
       done()
@@ -169,7 +170,7 @@ describe('waitPageActivitiesCompletion', () => {
   describe('extend with activities', () => {
     it('is extended while there is page activities', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
+      const startTime = preferredNow()
 
       // Extend the action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
@@ -177,6 +178,7 @@ describe('waitPageActivitiesCompletion', () => {
       waitPageActivitiesCompletion(activityObservable, noop, (params) => {
         expect(params.hadActivity).toBeTrue()
         expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
           (startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as PreferredTime
         )
         done()
@@ -193,7 +195,7 @@ describe('waitPageActivitiesCompletion', () => {
     it('expires after a limit', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
-      const startTime = performance.now()
+      const startTime = preferredNow()
 
       // Extend the action until it's more than PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
@@ -201,6 +203,7 @@ describe('waitPageActivitiesCompletion', () => {
       waitPageActivitiesCompletion(activityObservable, noop, (params) => {
         expect(params.hadActivity).toBeTrue()
         expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
           (startTime + PAGE_ACTIVITY_MAX_DURATION) as PreferredTime
         )
         stop = true
@@ -219,10 +222,11 @@ describe('waitPageActivitiesCompletion', () => {
   describe('busy activities', () => {
     it('is extended while the page is busy', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
+      const startTime = preferredNow()
       waitPageActivitiesCompletion(activityObservable, noop, (params) => {
         expect(params.hadActivity).toBeTrue()
         expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
           (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as PreferredTime
         )
         done()
@@ -239,10 +243,11 @@ describe('waitPageActivitiesCompletion', () => {
 
     it('expires is the page is busy for too long', (done) => {
       const activityObservable = new Observable<PageActivityEvent>()
-      const startTime = performance.now()
+      const startTime = preferredNow()
       waitPageActivitiesCompletion(activityObservable, noop, (params) => {
         expect(params.hadActivity).toBeTrue()
         expect((params as { hadActivity: true; endTime: PreferredTime }).endTime).toBe(
+          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
           (startTime + PAGE_ACTIVITY_MAX_DURATION) as PreferredTime
         )
         done()
