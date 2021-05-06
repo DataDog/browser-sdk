@@ -61,16 +61,17 @@ describe('startMutationCollection', () => {
     it('processes mutations asynchronously', (done) => {
       snapshot(document)
       const { mutationCallbackSpy } = startMutationCollection()
-      const { waitAsyncCalls: waitEmitCalls, expectNoExtraAsyncCall: expectNoExtraEmitCalls } = collectAsyncCalls(
-        mutationCallbackSpy
-      )
+      const {
+        waitAsyncCalls: waitMutationCallbackCalls,
+        expectNoExtraAsyncCall: expectNoExtraMutationCallbackCalls,
+      } = collectAsyncCalls(mutationCallbackSpy)
 
       sandbox.appendChild(document.createElement('div'))
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
 
-      waitEmitCalls(1, () => {
-        expectNoExtraEmitCalls(done)
+      waitMutationCallbackCalls(1, () => {
+        expectNoExtraMutationCallbackCalls(done)
       })
     })
 
