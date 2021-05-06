@@ -20,11 +20,15 @@ To set up Datadog RUM browser monitoring:
 
 ### Choose the right installation method
 
-| Installation method        | Use case                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| npm (node package manager) | This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. **Note:** it is recommended to use a matching version with logs SDK if used. |
-| CDN async                  | This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.                                                   |
-| CDN sync                   | This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.                                                                                                       |
+npm (node package manager)
+: This method is recommended for modern web applications. The RUM SDK gets packaged with the rest of your front-end javascript code. It has no impact on page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized. **Note:** it is recommended to use a matching version with logs SDK if used.
+
+CDN async
+: This method is recommended for web applications with performance targets. The RUM SDK is loaded from our CDN asynchronously: this method ensures the SDK download does not impact page load performance. However, the SDK might miss errors, resources and user actions triggered before the SDK is initialized.
+
+CDN sync
+: This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.
+
 
 ### npm
 
@@ -126,27 +130,84 @@ window.DD_RUM.init({
 
 The following parameters are available:
 
-| Parameter               | Type    | Required | Default         | Description                                                                                              |
-| ----------------------- | ------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
-| `applicationId`         | String  | Yes      |                 | The RUM application ID.                                                                                  |
-| `clientToken`           | String  | Yes      |                 | A [Datadog client token][5].                                                                             |
-| `site`                  | String  | Yes      | `datadoghq.com` | The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`                           |
-| `service`               | String  | No       |                 | The service name for your application.                                                                   |
-| `env`                   | String  | No       |                 | The application’s environment, for example: prod, pre-prod, staging, etc.                                |
-| `version`               | String  | No       |                 | The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.                                |
-| `trackInteractions`     | Boolean | No       | `false`         | Enables [automatic collection of users actions][6].                                                      |
-| `sampleRate`            | Number  | No       | `100`           | The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events. |
-| `silentMultipleInit`    | Boolean | No       | `false`         | Initialization fails silently if Datadog's RUM is already initialized on the page.                       |
-| `proxyHost`             | String  | No       |                 | Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.       |
-| `allowedTracingOrigins` | List    | No       |                 | A list of request origins used to inject tracing headers.                                                |
+`applicationId`
+: Required<br/>
+**Type**: String<br/>
+The RUM application ID.
+
+`clientToken`
+: Required<br/>
+**Type**: String<br/>
+A [Datadog client token][5].
+
+`site`
+: Required<br/>
+**Type**: String<br/>
+**Default**: `datadoghq.com`<br/>
+The Datadog site of your organization. US: `datadoghq.com`, EU: `datadoghq.eu`
+
+`service`
+: Optional<br/>
+**Type**: String<br/>
+The service name for your application.
+
+`env`
+: Optional<br/>
+**Type**: String<br/>
+The application’s environment, for example: prod, pre-prod, staging, etc.
+
+`version`
+: Optional<br/>
+**Type**: String<br/>
+The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.
+
+`trackInteractions`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Enables [automatic collection of users actions][6].
+
+`sampleRate`
+: Optional<br/>
+**Type**: Number<br/>
+**Default**: `100`<br/>
+The percentage of sessions to track: `100` for all, `0` for none. Only tracked sessions send rum events.
+
+`silentMultipleInit`
+: Optional<br/>
+**Type**: Boolean <br/>
+**Default**: `false`<br/>
+Initialization fails silently if Datadog's RUM is already initialized on the page.
+
+`proxyHost`
+: Optional<br/>
+**Type**: String<br/>
+Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.
+
+`allowedTracingOrigins`
+: Optional<br/>
+**Type**: List<br/>
+A list of request origins used to inject tracing headers.
 
 Options that must have matching configuration when also using `logs` SDK:
 
-| Parameter                      | Type    | Required | Default | Description                                                                                                                                                 |
-| ------------------------------ | ------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `trackSessionAcrossSubdomains` | Boolean | No       | `false` | Preserve the session across subdomains for the same site.                                                                                                   |
-| `useSecureSessionCookie`       | Boolean | No       | `false` | Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.                                                             |
-| `useCrossSiteSessionCookie`    | Boolean | No       | `false` | Use a secure cross-site session cookie. This allows the RUM SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`. |
+`trackSessionAcrossSubdomains`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false`<br/>
+Preserve the session across subdomains for the same site.
+
+`useSecureSessionCookie`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false`<br/>
+Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
+
+`useCrossSiteSessionCookie`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**:`false`<br/>
+Use a secure cross-site session cookie. This allows the RUM SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
 
 #### Example
 
