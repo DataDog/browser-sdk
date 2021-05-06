@@ -38,16 +38,18 @@ export function clearAllCookies() {
   })
 }
 
-export function mockClock() {
+export type Clock = ReturnType<typeof mockClock>
+
+export function mockClock(date?: Date) {
   jasmine.clock().install()
-  jasmine.clock().mockDate()
+  jasmine.clock().mockDate(date)
   const start = Date.now()
   spyOn(performance, 'now').and.callFake(() => Date.now() - start)
   spyOnProperty(performance.timing, 'navigationStart', 'get').and.callFake(() => start)
   resetNavigationStart()
   return {
-    clock: jasmine.clock(),
-    stop: () => {
+    tick: (ms: number) => jasmine.clock().tick(ms),
+    cleanup: () => {
       jasmine.clock().uninstall()
       resetNavigationStart()
     },

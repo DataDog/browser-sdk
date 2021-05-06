@@ -12,7 +12,7 @@ import {
   TimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
-import { mockClock } from '../../../core/test/specHelper'
+import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
@@ -300,15 +300,14 @@ describe('logs', () => {
   })
 
   describe('error logs limitation', () => {
-    let clock: jasmine.Clock
-    let cleanupClock: () => void
+    let clock: Clock
 
     beforeEach(() => {
-      ;({ clock, stop: cleanupClock } = mockClock())
+      clock = mockClock()
     })
 
     afterEach(() => {
-      cleanupClock()
+      clock.cleanup()
     })
 
     it('stops sending error logs when reaching the limit', () => {

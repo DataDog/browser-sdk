@@ -5,10 +5,9 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
-  noop,
   TimeStamp,
 } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockClock } from '../../core/test/specHelper'
+import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
@@ -39,7 +38,7 @@ interface BuildContext {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  clock: jasmine.Clock
+  clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
   rawRumEvents: Array<{
@@ -58,7 +57,6 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-  let cleanupClock = noop
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: Array<{
     startTime: number
@@ -67,7 +65,7 @@ export function setup(): TestSetupBuilder {
     customerContext?: Context
   }> = []
 
-  let clock: jasmine.Clock
+  let clock: Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
   const configuration: Partial<Configuration> = {
@@ -116,7 +114,7 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withFakeClock() {
-      ;({ clock, stop: cleanupClock } = mockClock())
+      clock = mockClock()
       return setupBuilder
     },
     beforeBuild(callback: BeforeBuildCallback) {
@@ -148,7 +146,7 @@ export function setup(): TestSetupBuilder {
     cleanup() {
       cleanupTasks.forEach((task) => task())
       // perform these steps at the end to generate correct events in cleanup and validate them
-      cleanupClock()
+      clock?.cleanup()
       rawRumEventsCollected.unsubscribe()
     },
   }
