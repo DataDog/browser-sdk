@@ -1,4 +1,4 @@
-import { Context, RelativeTime } from '@datadog/browser-core'
+import { Context, RawError, RelativeTime } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -23,6 +23,7 @@ export enum LifeCycleEventType {
   RUM_EVENT_COLLECTED,
   RECORD_STARTED,
   RECORD_STOPPED,
+  RAW_ERROR_COLLECTED,
 }
 
 export interface Subscription {
@@ -40,6 +41,10 @@ export class LifeCycle {
   notify(eventType: LifeCycleEventType.VIEW_CREATED, data: ViewCreatedEvent): void
   notify(eventType: LifeCycleEventType.VIEW_UPDATED, data: ViewEvent): void
   notify(eventType: LifeCycleEventType.VIEW_ENDED, data: ViewEndedEvent): void
+  notify(
+    eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
+    data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }
+  ): void
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
@@ -83,6 +88,10 @@ export class LifeCycle {
   subscribe(eventType: LifeCycleEventType.VIEW_CREATED, callback: (data: ViewCreatedEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_UPDATED, callback: (data: ViewEvent) => void): Subscription
   subscribe(eventType: LifeCycleEventType.VIEW_ENDED, callback: (data: ViewEndedEvent) => void): Subscription
+  subscribe(
+    eventType: LifeCycleEventType.RAW_ERROR_COLLECTED,
+    callback: (data: { error: RawError; savedCommonContext?: CommonContext; customerContext?: Context }) => void
+  ): Subscription
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED

@@ -1,4 +1,4 @@
-import { stubXhr, withXhr } from '../tools/specHelper'
+import { stubXhr, withXhr } from '../../test/specHelper'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrProxy } from './xhrProxy'
 
 describe('xhr proxy', () => {

@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { isIE } from '../../../../core/test/specHelper'
 import { createMutationPayloadValidator } from '../../../test/utils'
 import { snapshot, NodeType } from '../rrweb-snapshot'
 import { MutationObserverWrapper, MutationController } from './mutation'

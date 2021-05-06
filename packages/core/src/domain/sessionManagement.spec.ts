@@ -6,7 +6,7 @@ import {
   getCookie,
   setCookie,
 } from '../browser/cookie'
-import { isIE, restorePageVisibility, setPageVisibility } from '../tools/specHelper'
+import { isIE, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
 import { ONE_HOUR } from '../tools/utils'
 import {
   Session,

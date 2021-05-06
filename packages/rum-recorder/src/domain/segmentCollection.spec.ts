@@ -1,5 +1,6 @@
-import { createNewEvent, DOM_EVENT, isIE, restorePageVisibility, setPageVisibility } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext } from '@datadog/browser-rum-core'
+import { createNewEvent, isIE, restorePageVisibility, setPageVisibility } from '../../../core/test/specHelper'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { MockWorker } from '../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'

@@ -1,11 +1,5 @@
-import {
-  Configuration,
-  DEFAULT_CONFIGURATION,
-  Duration,
-  RelativeTime,
-  ServerDuration,
-  SPEC_ENDPOINTS,
-} from '@datadog/browser-core'
+import { Configuration, DEFAULT_CONFIGURATION, Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS } from '../../../../../core/test/specHelper'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import {
   computePerformanceResourceDetails,

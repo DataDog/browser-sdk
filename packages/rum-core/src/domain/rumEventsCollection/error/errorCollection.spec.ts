@@ -1,11 +1,11 @@
-import { ErrorSource, Observable, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
-  const errorObservable = new Observable<RawError>()
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
 
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe('error collection', () => {
         isEnabled: () => true,
       })
       .beforeBuild(({ lifeCycle }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, errorObservable))
+        ;({ addError } = doStartErrorCollection(lifeCycle))
       })
   })
 
@@ -94,20 +94,22 @@ describe('error collection', () => {
     })
   })
 
-  describe('auto', () => {
+  describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
     it('should create error event from collected error', () => {
-      const { rawRumEvents } = setupBuilder.build()
-      errorObservable.notify({
-        message: 'hello',
-        resource: {
-          method: 'GET',
-          statusCode: 500,
-          url: 'url',
+      const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+        error: {
+          message: 'hello',
+          resource: {
+            method: 'GET',
+            statusCode: 500,
+            url: 'url',
+          },
+          source: ErrorSource.NETWORK,
+          stack: 'bar',
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          type: 'foo',
         },
-        source: ErrorSource.NETWORK,
-        stack: 'bar',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        type: 'foo',
       })
 
       expect(rawRumEvents[0].startTime).toBe(1234)

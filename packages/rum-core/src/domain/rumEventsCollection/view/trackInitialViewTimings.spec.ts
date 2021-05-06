@@ -1,11 +1,5 @@
-import {
-  createNewEvent,
-  DOM_EVENT,
-  Duration,
-  RelativeTime,
-  restorePageVisibility,
-  setPageVisibility,
-} from '@datadog/browser-core'
+import { DOM_EVENT, Duration, RelativeTime } from '@datadog/browser-core'
+import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumFirstInputTiming,
