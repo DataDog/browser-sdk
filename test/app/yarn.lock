@@ -2,35 +2,35 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@2.8.0", "@datadog/browser-core@file:../../packages/core":
-  version "2.8.0"
+"@datadog/browser-core@2.8.1", "@datadog/browser-core@file:../../packages/core":
+  version "2.8.1"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "2.8.0"
+  version "2.8.1"
   dependencies:
-    "@datadog/browser-core" "2.8.0"
+    "@datadog/browser-core" "2.8.1"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@2.8.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "2.8.0"
+"@datadog/browser-rum-core@2.8.1", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "2.8.1"
   dependencies:
-    "@datadog/browser-core" "2.8.0"
+    "@datadog/browser-core" "2.8.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum-recorder@file:../../packages/rum-recorder":
-  version "2.8.0"
+  version "2.8.1"
   dependencies:
-    "@datadog/browser-core" "2.8.0"
-    "@datadog/browser-rum-core" "2.8.0"
+    "@datadog/browser-core" "2.8.1"
+    "@datadog/browser-rum-core" "2.8.1"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "2.8.0"
+  version "2.8.1"
   dependencies:
-    "@datadog/browser-core" "2.8.0"
-    "@datadog/browser-rum-core" "2.8.0"
+    "@datadog/browser-core" "2.8.1"
+    "@datadog/browser-rum-core" "2.8.1"
     tslib "^1.10.0"
 
 "@types/eslint-scope@^3.7.0":
@@ -65,9 +65,9 @@
   integrity sha512-cxWFQVseBm6O9Gbw1IWb8r6OS4OhSt3hPZLkFApLjM8TEXROBuQGLAH2i2gZpcXdLBIrpXuTDhH7Vbm1iXmNGA==
 
 "@types/node@*":
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.1.tgz#ef34dea0881028d11398be5bf4e856743e3dc35a"
-  integrity sha512-TMkXt0Ck1y0KKsGr9gJtWGjttxlZnnvDtphxUOSd0bfaR6Q1jle+sPvrzNR1urqYTWMinoKvjKfXUGsumaO1PA==
+  version "15.0.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.2.tgz#51e9c0920d1b45936ea04341aa3e2e58d339fb67"
+  integrity sha512-p68+a+KoxpoB47015IeYZYRrdqMUcpbK8re/zpFB8Ld46LHC1lPEbp3EXgkEhAYEcPvjJF6ZO+869SQ0aH1dcA==
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
@@ -201,9 +201,9 @@
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
 acorn@^8.0.4:
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.2.2.tgz#c4574e4fea298d6e6ed4b85ab844b06dd59f26d6"
-  integrity sha512-VrMS8kxT0e7J1EX0p6rI/E0FbfOVcvBpbIqHThFv+f8YrZIlMfVotYcXKVPmTvPW8sW5miJzfUFrrvthUZg8VQ==
+  version "8.2.4"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.2.4.tgz#caba24b08185c3b56e3168e97d15ed17f4d31fd0"
+  integrity sha512-Ibt84YwBDDA890eDiDCEqcbwvHlBvzzDkU2cGBBDDI1QWT12jTiXIOn2CIw5KK4i6N5Z2HUxwYjzriDyqaqqZg==
 
 ajv-keywords@^3.5.2:
   version "3.5.2"
@@ -256,9 +256,9 @@ buffer-from@^1.0.0:
   integrity sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
 
 caniuse-lite@^1.0.30001219:
-  version "1.0.30001220"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001220.tgz#c080e1c8eefb99f6cc9685da6313840bdbaf4c36"
-  integrity sha512-pjC2T4DIDyGAKTL4dMvGUQaMUHRmhvPpAgNNTa14jaBWHu+bLQgvpFqElxh9L4829Fdx0PlKiMp3wnYldRtECA==
+  version "1.0.30001223"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001223.tgz#39b49ff0bfb3ee3587000d2f66c47addc6e14443"
+  integrity sha512-k/RYs6zc/fjbxTjaWZemeSmOjO0JJV+KguOBA3NwPup8uzxM1cMhR2BD9XmO86GuqaqTCO8CgkgH9Rz//vdDiA==
 
 chalk@^2.3.0:
   version "2.4.2"
@@ -302,9 +302,9 @@ core-util-is@~1.0.0:
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
 electron-to-chromium@^1.3.723:
-  version "1.3.725"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.725.tgz#04fc83f9189169aff50f0a00c6b4090b910cba85"
-  integrity sha512-2BbeAESz7kc6KBzs7WVrMc1BY5waUphk4D4DX5dSQXJhsc3tP5ZFaiyuL0AB7vUKzDYpIeYwTYlEfxyjsGUrhw==
+  version "1.3.727"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.727.tgz#857e310ca00f0b75da4e1db6ff0e073cc4a91ddf"
+  integrity sha512-Mfz4FIB4FSvEwBpDfdipRIrwd6uo8gUDoRDF4QEYb4h4tSuI3ov594OrjU6on042UlFHouIJpClDODGkPcBSbg==
 
 emojis-list@^3.0.0:
   version "3.0.0"
