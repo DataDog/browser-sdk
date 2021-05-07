@@ -3,44 +3,22 @@ import { resetXhrProxy, startXhrProxy, XhrCompleteContext, XhrStartContext } fro
 import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/timeUtils'
-import { jsonStringify, ONE_MINUTE, RequestType, find } from '../tools/utils'
+import { jsonStringify, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
 import { monitor } from './internalMonitoring'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
 
 export type ErrorObservable = Observable<RawError>
-let filteredErrorsObservable: ErrorObservable
+let errorObservable: ErrorObservable
 
 export function startAutomaticErrorCollection(configuration: Configuration) {
-  if (!filteredErrorsObservable) {
-    const errorObservable = new Observable<RawError>()
+  if (!errorObservable) {
+    errorObservable = new Observable<RawError>()
     trackNetworkError(configuration, errorObservable)
     startConsoleTracking(configuration, errorObservable)
     startRuntimeErrorTracking(configuration, errorObservable)
-    filteredErrorsObservable = filterErrors(configuration, errorObservable)
   }
-  return filteredErrorsObservable
-}
-
-export function filterErrors(configuration: Configuration, errorObservable: Observable<RawError>) {
-  let errorCount = 0
-  const filteredErrorObservable = new Observable<RawError>()
-  errorObservable.subscribe((error: RawError) => {
-    if (errorCount < configuration.maxErrorsByMinute) {
-      errorCount += 1
-      filteredErrorObservable.notify(error)
-    } else if (errorCount === configuration.maxErrorsByMinute) {
-      errorCount += 1
-      filteredErrorObservable.notify({
-        message: `Reached max number of errors by minute: ${configuration.maxErrorsByMinute}`,
-        source: ErrorSource.AGENT,
-        startClocks: clocksNow(),
-        inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
-      })
-    }
-  })
-  setInterval(() => (errorCount = 0), ONE_MINUTE)
-  return filteredErrorObservable
+  return errorObservable
 }
 
 let originalConsoleError: (...params: unknown[]) => void

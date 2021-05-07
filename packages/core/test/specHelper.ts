@@ -1,5 +1,6 @@
-import { Configuration } from '../domain/configuration'
-import { noop, objectEntries } from './utils'
+import { Configuration } from '../src/domain/configuration'
+import { resetNavigationStart } from '../src/tools/timeUtils'
+import { noop, objectEntries } from '../src/tools/utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
@@ -35,6 +36,24 @@ export function clearAllCookies() {
   document.cookie.split(';').forEach((c) => {
     document.cookie = c.replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/;samesite=strict`)
   })
+}
+
+export type Clock = ReturnType<typeof mockClock>
+
+export function mockClock(date?: Date) {
+  jasmine.clock().install()
+  jasmine.clock().mockDate(date)
+  const start = Date.now()
+  spyOn(performance, 'now').and.callFake(() => Date.now() - start)
+  spyOnProperty(performance.timing, 'navigationStart', 'get').and.callFake(() => start)
+  resetNavigationStart()
+  return {
+    tick: (ms: number) => jasmine.clock().tick(ms),
+    cleanup: () => {
+      jasmine.clock().uninstall()
+      resetNavigationStart()
+    },
+  }
 }
 
 export interface FetchStubManager {

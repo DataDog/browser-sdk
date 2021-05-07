@@ -1,10 +1,8 @@
-import { ClocksState } from '@datadog/browser-core'
 import { ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
-import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../tools/specHelper'
-import { includes, ONE_MINUTE } from '../tools/utils'
+import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../test/specHelper'
+import { includes } from '../tools/utils'
 import {
-  filterErrors,
   startConsoleTracking,
   startRuntimeErrorTracking,
   stopConsoleTracking,
@@ -280,76 +278,5 @@ describe('network error tracker', () => {
         done()
       })
     })
-  })
-})
-
-describe('error limitation', () => {
-  let errorObservable: Observable<RawError>
-  let filteredSubscriber: jasmine.Spy
-  const CONTEXT = {
-    source: ErrorSource.SOURCE,
-    startClocks: (jasmine.any(Object) as unknown) as ClocksState,
-  }
-
-  beforeEach(() => {
-    errorObservable = new Observable<RawError>()
-    const configuration: Partial<Configuration> = { maxErrorsByMinute: 2, isEnabled: () => true }
-    jasmine.clock().install()
-    const filteredErrorObservable = filterErrors(configuration as Configuration, errorObservable)
-    filteredSubscriber = jasmine.createSpy()
-    filteredErrorObservable.subscribe(filteredSubscriber)
-  })
-
-  afterEach(() => {
-    jasmine.clock().uninstall()
-  })
-
-  it('should stop send errors if threshold is exceeded', () => {
-    errorObservable.notify({ message: '1', ...CONTEXT })
-    errorObservable.notify({ message: '2', ...CONTEXT })
-    errorObservable.notify({ message: '3', ...CONTEXT })
-
-    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '1', ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledWith({ message: '2', ...CONTEXT })
-    expect(filteredSubscriber).not.toHaveBeenCalledWith({ message: '3', ...CONTEXT })
-  })
-
-  it('should send a threshold reached message', () => {
-    errorObservable.notify({ message: '1', ...CONTEXT })
-    errorObservable.notify({ message: '2', ...CONTEXT })
-    errorObservable.notify({ message: '3', ...CONTEXT })
-
-    expect(filteredSubscriber).toHaveBeenCalledWith({
-      message: 'Reached max number of errors by minute: 2',
-      source: ErrorSource.AGENT,
-      startClocks: jasmine.any(Object),
-      inForeground: false,
-    })
-  })
-
-  it('should reset error count every each minute', () => {
-    errorObservable.notify({ message: '1', ...CONTEXT })
-    errorObservable.notify({ message: '2', ...CONTEXT })
-    errorObservable.notify({ message: '3', ...CONTEXT })
-    errorObservable.notify({ message: '4', ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledTimes(3)
-
-    jasmine.clock().tick(ONE_MINUTE - 1)
-
-    errorObservable.notify({ message: '5', ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledTimes(3)
-
-    jasmine.clock().tick(1)
-
-    errorObservable.notify({ message: '6', ...CONTEXT })
-    errorObservable.notify({ message: '7', ...CONTEXT })
-    errorObservable.notify({ message: '8', ...CONTEXT })
-    errorObservable.notify({ message: '9', ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledTimes(6)
-
-    jasmine.clock().tick(ONE_MINUTE)
-
-    errorObservable.notify({ message: '10', ...CONTEXT })
-    expect(filteredSubscriber).toHaveBeenCalledTimes(7)
   })
 })

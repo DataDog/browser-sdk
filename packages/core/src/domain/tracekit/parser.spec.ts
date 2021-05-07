@@ -1,5 +1,5 @@
 import * as CapturedExceptions from '../../../test/capturedExceptions'
-import { isSafari } from '../../tools/specHelper'
+import { isSafari } from '../../../test/specHelper'
 import { computeStackTrace, computeStackTraceOfCaller } from './computeStackTrace'
 import { BrowserError } from './types'
 

@@ -1,4 +1,5 @@
 import { Context, DOM_EVENT, ClocksState } from '@datadog/browser-core'
+import { Clock } from '../../../../../core/test/specHelper'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
@@ -35,7 +36,7 @@ describe('trackActions', () => {
   let discardSpy: jasmine.Spy
   let hasFocus = false
 
-  function mockValidatedClickAction(lifeCycle: LifeCycle, clock: jasmine.Clock, target: HTMLElement) {
+  function mockValidatedClickAction(lifeCycle: LifeCycle, clock: Clock, target: HTMLElement) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one

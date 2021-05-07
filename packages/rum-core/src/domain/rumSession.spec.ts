@@ -3,11 +3,11 @@ import {
   COOKIE_ACCESS_DELAY,
   DEFAULT_CONFIGURATION,
   getCookie,
-  isIE,
   SESSION_COOKIE_NAME,
   setCookie,
   stopSessionManagement,
 } from '@datadog/browser-core'
+import { Clock, isIE, mockClock } from '../../../core/test/specHelper'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RUM_SESSION_KEY, RumTrackingType, startRumSession } from './rumSession'
@@ -26,13 +26,13 @@ describe('rum session', () => {
   }
   let lifeCycle: LifeCycle
   let renewSessionSpy: jasmine.Spy
+  let clock: Clock
 
   beforeEach(() => {
     if (isIE()) {
       pending('no full rum support')
     }
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
+    clock = mockClock()
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
@@ -42,8 +42,8 @@ describe('rum session', () => {
     // remove intervals first
     stopSessionManagement()
     // flush pending callbacks to avoid random failures
-    jasmine.clock().tick(new Date().getTime())
-    jasmine.clock().uninstall()
+    clock.tick(new Date().getTime())
+    clock.cleanup()
   })
 
   it('when tracked with resources should store session type and id', () => {
@@ -101,7 +101,7 @@ describe('rum session', () => {
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     expect(renewSessionSpy).not.toHaveBeenCalled()
-    jasmine.clock().tick(COOKIE_ACCESS_DELAY)
+    clock.tick(COOKIE_ACCESS_DELAY)
 
     setupDraws({ tracked: true, trackedWithResources: true })
     document.dispatchEvent(new CustomEvent('click'))

@@ -1,38 +1,24 @@
-import { DEFAULT_CONFIGURATION, noop, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, RawError, RelativeTime } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { CommonContext, RumEventType } from '../rawRumEvent.types'
-import { RumActionEvent, RumEvent } from '../rumEvent.types'
+import { CommonContext, RawRumErrorEvent, RumEventType } from '../rawRumEvent.types'
+import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
-  let lifeCycle: LifeCycle
   let commonContext: CommonContext
   let serverRumEvents: RumEvent[]
-  let isTracked: boolean
   let viewSessionId: string | undefined
-  let beforeSend: (event: RumEvent) => void
 
   beforeEach(() => {
-    isTracked = true
     viewSessionId = '1234'
     commonContext = {
       context: {},
       user: {},
     }
-    beforeSend = noop
     setupBuilder = setup()
-      .withSession({
-        getId: () => '1234',
-        isTracked: () => isTracked,
-        isTrackedWithResource: () => true,
-      })
-      .withConfiguration({
-        ...DEFAULT_CONFIGURATION,
-        beforeSend: (x: RumEvent) => beforeSend(x),
-      })
       .withParentContexts({
         findAction: () => ({
           action: {
@@ -50,15 +36,13 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle: localLifeCycle, session, parentContexts }) => {
-        startRumAssembly(applicationId, configuration, localLifeCycle, session, parentContexts, () => commonContext)
+      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts }) => {
+        serverRumEvents = []
+        lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
+          serverRumEvents.push(serverRumEvent)
+        )
+        startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, () => commonContext)
       })
-    ;({ lifeCycle } = setupBuilder.build())
-
-    serverRumEvents = []
-    lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
-      serverRumEvents.push(serverRumEvent)
-    )
   })
 
   afterEach(() => {
@@ -67,7 +51,11 @@ describe('rum assembly', () => {
 
   describe('events', () => {
     it('should allow modification on sensitive field', () => {
-      beforeSend = (event: RumEvent) => (event.view.url = 'modified')
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: (event) => (event.view.url = 'modified'),
+        })
+        .build()
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
@@ -78,7 +66,11 @@ describe('rum assembly', () => {
     })
 
     it('should reject modification on non sensitive field', () => {
-      beforeSend = (event: RumEvent) => ((event.view as any).id = 'modified')
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
+        })
+        .build()
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
@@ -91,7 +83,11 @@ describe('rum assembly', () => {
     })
 
     it('should allow dismissing events other than views', () => {
-      beforeSend = () => false
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: () => false,
+        })
+        .build()
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
@@ -125,7 +121,12 @@ describe('rum assembly', () => {
     })
 
     it('should not allow dismissing view events', () => {
-      beforeSend = () => false
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          beforeSend: () => false,
+        })
+        .build()
+
       const consoleWarnSpy = spyOn(console, 'warn')
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
@@ -141,6 +142,7 @@ describe('rum assembly', () => {
 
   describe('rum context', () => {
     it('should be merged with event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, undefined),
         startTime: 0 as RelativeTime,
@@ -151,6 +153,7 @@ describe('rum assembly', () => {
     })
 
     it('should be overwritten by event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, { date: 10 }),
         startTime: 0 as RelativeTime,
@@ -162,6 +165,7 @@ describe('rum assembly', () => {
 
   describe('rum global context', () => {
     it('should be merged with event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.context = { bar: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -172,6 +176,7 @@ describe('rum assembly', () => {
     })
 
     it('should not be included if empty', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.context = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -182,6 +187,7 @@ describe('rum assembly', () => {
     })
 
     it('should ignore subsequent context mutation', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.context = { bar: 'foo', baz: 'foz' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -198,6 +204,7 @@ describe('rum assembly', () => {
     })
 
     it('should ignore the current global context when a saved global context is provided', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.context = { replacedContext: 'b', addedContext: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -216,6 +223,7 @@ describe('rum assembly', () => {
 
   describe('rum user', () => {
     it('should be included in event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.user = { id: 'foo' }
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -226,6 +234,7 @@ describe('rum assembly', () => {
     })
 
     it('should not be included if empty', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.user = {}
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -236,6 +245,7 @@ describe('rum assembly', () => {
     })
 
     it('should ignore the current user when a saved common context user is provided', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.user = { replacedAttribute: 'b', addedAttribute: 'x' }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -254,6 +264,7 @@ describe('rum assembly', () => {
 
   describe('customer context', () => {
     it('should be merged with event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         customerContext: { foo: 'bar' },
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -266,6 +277,7 @@ describe('rum assembly', () => {
 
   describe('action context', () => {
     it('should be added on some event categories', () => {
+      const { lifeCycle } = setupBuilder.build()
       ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((category) => {
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
           rawRumEvent: createRawRumEvent(category),
@@ -293,6 +305,7 @@ describe('rum assembly', () => {
 
   describe('view context', () => {
     it('should be merged with event attributes', () => {
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 0 as RelativeTime,
@@ -309,8 +322,7 @@ describe('rum assembly', () => {
 
   describe('event generation condition', () => {
     it('when tracked, it should generate event', () => {
-      isTracked = true
-
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0 as RelativeTime,
@@ -319,8 +331,13 @@ describe('rum assembly', () => {
     })
 
     it('when not tracked, it should not generate event', () => {
-      isTracked = false
-
+      const { lifeCycle } = setupBuilder
+        .withSession({
+          getId: () => '1234',
+          isTracked: () => false,
+          isTrackedWithResource: () => false,
+        })
+        .build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0 as RelativeTime,
@@ -329,6 +346,7 @@ describe('rum assembly', () => {
     })
 
     it('when view context has current session id, it should generate event', () => {
+      const { lifeCycle } = setupBuilder.build()
       viewSessionId = '1234'
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -339,6 +357,7 @@ describe('rum assembly', () => {
     })
 
     it('when view context has not the current session id, it should not generate event', () => {
+      const { lifeCycle } = setupBuilder.build()
       viewSessionId = '6789'
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -349,6 +368,7 @@ describe('rum assembly', () => {
     })
 
     it('when view context has no session id, it should not generate event', () => {
+      const { lifeCycle } = setupBuilder.build()
       viewSessionId = undefined
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -361,6 +381,7 @@ describe('rum assembly', () => {
 
   describe('session context', () => {
     it('should include the session type and id', () => {
+      const { lifeCycle } = setupBuilder.build()
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         startTime: 0 as RelativeTime,
@@ -373,6 +394,7 @@ describe('rum assembly', () => {
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.hasReplay = true
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -383,6 +405,7 @@ describe('rum assembly', () => {
     })
 
     it('should not use commonContext.hasReplay on view events', () => {
+      const { lifeCycle } = setupBuilder.build()
       commonContext.hasReplay = true
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
@@ -391,5 +414,73 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
     })
+  })
+
+  describe('error events limitation', () => {
+    const notifiedRawErrors: RawError[] = []
+
+    beforeEach(() => {
+      notifiedRawErrors.length = 0
+      setupBuilder.beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => notifiedRawErrors.push(error))
+      })
+    })
+
+    it('stops sending error events when reaching the limit', () => {
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 1 }).build()
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      notifyRawRumErrorEvent(lifeCycle, 'bar')
+
+      expect(serverRumEvents.length).toBe(1)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect(notifiedRawErrors.length).toBe(1)
+      expect(notifiedRawErrors[0]).toEqual(
+        jasmine.objectContaining({
+          message: 'Reached max number of errors by minute: 1',
+          source: ErrorSource.AGENT,
+        })
+      )
+    })
+
+    it('does not take discarded errors into account', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          maxErrorsByMinute: 1,
+          beforeSend: (event) => {
+            if (event.type === RumEventType.ERROR && (event as RumErrorEvent).error.message === 'discard me') {
+              return false
+            }
+          },
+        })
+        .build()
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'discard me')
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      expect(serverRumEvents.length).toBe(1)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect(notifiedRawErrors.length).toBe(0)
+    })
+
+    it('allows to send new errors after a minute', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsByMinute: 1 }).build()
+      notifyRawRumErrorEvent(lifeCycle, 'foo')
+      notifyRawRumErrorEvent(lifeCycle, 'bar')
+      clock.tick(ONE_MINUTE)
+      notifyRawRumErrorEvent(lifeCycle, 'baz')
+
+      expect(serverRumEvents.length).toBe(2)
+      expect((serverRumEvents[0] as RumErrorEvent).error.message).toBe('foo')
+      expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('baz')
+    })
+
+    function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message = 'oh snap') {
+      const rawRumEvent = createRawRumEvent(RumEventType.ERROR) as RawRumErrorEvent
+      rawRumEvent.error.message = message
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent,
+        startTime: 0 as RelativeTime,
+      })
+    }
   })
 })

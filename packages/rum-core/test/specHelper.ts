@@ -5,11 +5,9 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
-  noop,
-  resetNavigationStart,
-  SPEC_ENDPOINTS,
   TimeStamp,
 } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
@@ -40,7 +38,7 @@ interface BuildContext {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  clock: jasmine.Clock
+  clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
   rawRumEvents: Array<{
@@ -59,7 +57,6 @@ export function setup(): TestSetupBuilder {
   }
   const lifeCycle = new LifeCycle()
   const cleanupTasks: Array<() => void> = []
-  let cleanupClock = noop
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: Array<{
     startTime: number
@@ -68,7 +65,7 @@ export function setup(): TestSetupBuilder {
     customerContext?: Context
   }> = []
 
-  let clock: jasmine.Clock
+  let clock: Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
   const configuration: Partial<Configuration> = {
@@ -117,18 +114,7 @@ export function setup(): TestSetupBuilder {
       return setupBuilder
     },
     withFakeClock() {
-      jasmine.clock().install()
-      jasmine.clock().mockDate()
-      const start = Date.now()
-      spyOn(performance, 'now').and.callFake(() => Date.now() - start)
-      resetNavigationStart()
-      Object.defineProperty(performance.timing, 'navigationStart', { value: start, configurable: true })
-      clock = jasmine.clock()
-      cleanupClock = () => {
-        jasmine.clock().uninstall()
-        delete (performance.timing as any).navigationStart
-        resetNavigationStart()
-      }
+      clock = mockClock()
       return setupBuilder
     },
     beforeBuild(callback: BeforeBuildCallback) {
@@ -160,7 +146,7 @@ export function setup(): TestSetupBuilder {
     cleanup() {
       cleanupTasks.forEach((task) => task())
       // perform these steps at the end to generate correct events in cleanup and validate them
-      cleanupClock()
+      clock?.cleanup()
       rawRumEventsCollected.unsubscribe()
     },
   }

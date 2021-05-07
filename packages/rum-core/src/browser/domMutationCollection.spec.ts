@@ -1,4 +1,4 @@
-import { isIE } from '@datadog/browser-core'
+import { isIE } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startDOMMutationCollection } from './domMutationCollection'
 

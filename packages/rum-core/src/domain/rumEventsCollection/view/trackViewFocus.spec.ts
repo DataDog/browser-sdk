@@ -3,6 +3,7 @@ import { RumEvent } from '@datadog/browser-rum-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 
+import { Clock } from '../../../../../core/test/specHelper'
 import { LifeCycleEventType, LifeCycle } from '../../lifeCycle'
 import { trackViews, ViewEvent, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
@@ -24,7 +25,7 @@ describe('the user focus the document when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
-  let clock: jasmine.Clock
+  let clock: Clock
   let lifeCycle: LifeCycle
 
   beforeEach(() => {

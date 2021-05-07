@@ -6,6 +6,7 @@ import {
   setCookie,
   stopSessionManagement,
 } from '@datadog/browser-core'
+import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { LOGGER_SESSION_KEY, LoggerTrackingType, startLoggerSession } from './loggerSession'
 
@@ -13,19 +14,19 @@ describe('logger session', () => {
   const DURATION = 123456
   const configuration: Partial<Configuration> = { isEnabled: () => true, sampleRate: 0.5 }
   let tracked = true
+  let clock: Clock
 
   beforeEach(() => {
     spyOn(Math, 'random').and.callFake(() => (tracked ? 0 : 1))
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
+    clock = mockClock()
   })
 
   afterEach(() => {
     // remove intervals first
     stopSessionManagement()
     // flush pending callbacks to avoid random failures
-    jasmine.clock().tick(new Date().getTime())
-    jasmine.clock().uninstall()
+    clock.tick(new Date().getTime())
+    clock.cleanup()
   })
 
   it('when tracked should store tracking type and session id', () => {
@@ -68,7 +69,7 @@ describe('logger session', () => {
 
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
     expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
-    jasmine.clock().tick(COOKIE_ACCESS_DELAY)
+    clock.tick(COOKIE_ACCESS_DELAY)
 
     tracked = true
     document.body.click()
