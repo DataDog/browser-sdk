@@ -1,5 +1,5 @@
 import { Configuration } from '../domain/configuration'
-import { mockClock } from '../../../core/test/specHelper'
+import { Clock, mockClock } from '../../../core/test/specHelper'
 import { RawError } from './error'
 import { createErrorFilter, ErrorFilter } from './errorFilter'
 import { RelativeTime, relativeToClocks, resetNavigationStart } from './timeUtils'
@@ -9,16 +9,15 @@ const CONFIGURATION = { maxErrorsByMinute: 1 } as Configuration
 
 describe('errorFilter.isLimitReached', () => {
   let errorFilter: ErrorFilter | undefined
-  let clock: jasmine.Clock
-  let cleanupClock: () => void
+  let clock: Clock
 
   beforeEach(() => {
-    ;({ clock, stop: cleanupClock } = mockClock())
+    clock = mockClock()
     resetNavigationStart()
   })
 
   afterEach(() => {
-    cleanupClock()
+    clock.cleanup()
   })
 
   it('returns false if the limit is not reached', () => {
