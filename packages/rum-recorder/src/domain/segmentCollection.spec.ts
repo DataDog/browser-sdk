@@ -1,6 +1,13 @@
 import { DOM_EVENT } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext } from '@datadog/browser-rum-core'
-import { createNewEvent, isIE, restorePageVisibility, setPageVisibility } from '../../../core/test/specHelper'
+import {
+  Clock,
+  createNewEvent,
+  isIE,
+  mockClock,
+  restorePageVisibility,
+  setPageVisibility,
+} from '../../../core/test/specHelper'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
 import { MockWorker } from '../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
@@ -20,6 +27,7 @@ const BEFORE_MAX_SEGMENT_DURATION = MAX_SEGMENT_DURATION * 0.9
 
 describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
+  let clock: Clock | undefined
 
   function startSegmentCollection(context: SegmentContext | undefined) {
     const lifeCycle = new LifeCycle()
@@ -53,7 +61,7 @@ describe('startSegmentCollection', () => {
   })
 
   afterEach(() => {
-    jasmine.clock().uninstall()
+    clock?.cleanup()
     stopSegmentCollection()
   })
 
@@ -173,23 +181,23 @@ describe('startSegmentCollection', () => {
 
     describe('max_duration flush strategy', () => {
       it('flushes a segment after MAX_SEGMENT_DURATION', () => {
-        jasmine.clock().install()
+        clock = mockClock()
         const { sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
-        jasmine.clock().tick(MAX_SEGMENT_DURATION)
+        clock.tick(MAX_SEGMENT_DURATION)
         worker.processAllMessages()
         expect(sendSpy).toHaveBeenCalledTimes(1)
         expect(sendCurrentSegment().creation_reason).toBe('max_duration')
       })
 
       it('does not flush a segment after MAX_SEGMENT_DURATION if a segment has been created in the meantime', () => {
-        jasmine.clock().install()
+        clock = mockClock()
         const { lifeCycle, sendCurrentSegment, addRecord, sendSpy, worker } = startSegmentCollection(CONTEXT)
         addRecord(RECORD)
-        jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
         lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
         addRecord(RECORD)
-        jasmine.clock().tick(BEFORE_MAX_SEGMENT_DURATION)
+        clock.tick(BEFORE_MAX_SEGMENT_DURATION)
 
         worker.processAllMessages()
         expect(sendSpy).toHaveBeenCalledTimes(1)

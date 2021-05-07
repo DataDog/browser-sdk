@@ -1,4 +1,4 @@
-import { createNewEvent, isIE } from '../../../../core/test/specHelper'
+import { Clock, createNewEvent, isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
   RecordType,
@@ -19,6 +19,7 @@ describe('record', () => {
   let emitSpy: jasmine.Spy<(record: RawRecord) => void>
   let waitEmitCalls: (expectedCallsCount: number, callback: () => void) => void
   let expectNoExtraEmitCalls: (done: () => void) => void
+  let clock: Clock | undefined
 
   beforeEach(() => {
     if (isIE()) {
@@ -31,7 +32,7 @@ describe('record', () => {
   })
 
   afterEach(() => {
-    jasmine.clock().uninstall()
+    clock?.cleanup()
     sandbox.remove()
     recordApi?.stop()
   })

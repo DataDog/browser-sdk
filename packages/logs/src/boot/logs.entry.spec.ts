@@ -1,4 +1,5 @@
 import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
+import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
 import { LogsPublicApi, makeLogsPublicApi, StartLogs } from './logs.entry'
@@ -124,15 +125,15 @@ describe('logs entry', () => {
 
   describe('pre-init API usages', () => {
     let LOGS: LogsPublicApi
+    let clock: Clock
 
     beforeEach(() => {
       LOGS = makeLogsPublicApi(startLogs)
-      jasmine.clock().install()
-      jasmine.clock().mockDate()
+      clock = mockClock()
     })
 
     afterEach(() => {
-      jasmine.clock().uninstall()
+      clock.cleanup()
     })
 
     it('allows sending logs', () => {
@@ -158,7 +159,7 @@ describe('logs entry', () => {
     describe('save context when submiting a log', () => {
       it('saves the date', () => {
         LOGS.logger.log('message')
-        jasmine.clock().tick(ONE_SECOND)
+        clock.tick(ONE_SECOND)
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
 
         expect(getLoggedMessage(0).context.date).toEqual(Date.now() - ONE_SECOND)
