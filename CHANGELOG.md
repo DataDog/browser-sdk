@@ -16,6 +16,11 @@
 
 ---
 
+## v2.8.1
+
+- 🐛 [RUMF-870] Max errors threshold should not take into account errors excluded by beforeSend ([#828](https://github.com/DataDog/browser-sdk/pull/828))
+- ✨ [RUMF-901] allow to run the 'performances' script with rum-recorder ([#818](https://github.com/DataDog/browser-sdk/pull/818))
+
 ## v2.8.0
 
 - ⚗🐛 allow 1 ms error for matching request ([#824](https://github.com/DataDog/browser-sdk/pull/824))
