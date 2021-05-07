@@ -10,11 +10,12 @@ const MUTATION_PROCESS_MAX_DELAY = 100
 
 export function createMutationBatch(processMutationBatch: (mutations: MutationRecord[]) => void) {
   let cancelScheduledFlush = noop
-  const pendingMutations: MutationRecord[] = []
+  let pendingMutations: MutationRecord[] = []
 
   function flush() {
     cancelScheduledFlush()
-    processMutationBatch(pendingMutations.splice(0, pendingMutations.length))
+    processMutationBatch(pendingMutations)
+    pendingMutations = []
   }
 
   return {
