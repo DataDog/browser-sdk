@@ -1,3 +1,4 @@
+import { Clock, mockClock } from '../../test/specHelper'
 import { findCommaSeparatedValue, jsonStringify, performDraw, round, safeTruncate, throttle } from './utils'
 
 describe('utils', () => {
@@ -5,15 +6,15 @@ describe('utils', () => {
     let spy: jasmine.Spy
     let throttled: () => void
     let cancel: () => void
+    let clock: Clock
 
     beforeEach(() => {
-      jasmine.clock().install()
-      jasmine.clock().mockDate()
+      clock = mockClock()
       spy = jasmine.createSpy()
     })
 
     afterEach(() => {
-      jasmine.clock().uninstall()
+      clock.cleanup()
     })
 
     describe('when {leading: false, trailing:false}', () => {
@@ -24,7 +25,7 @@ describe('utils', () => {
       it('should not call throttled function', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(0)
       })
 
@@ -32,30 +33,30 @@ describe('utils', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(0)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(0)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(0)
       })
 
       it('should not called throttled function performed after the wait period', () => {
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(0)
       })
     })
@@ -68,7 +69,7 @@ describe('utils', () => {
       it('should call throttled function after the wait period', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
 
@@ -76,30 +77,30 @@ describe('utils', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(0)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(0)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(1)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(2)
       })
 
       it('should perform calls made after the wait period', () => {
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(2)
       })
     })
@@ -112,7 +113,7 @@ describe('utils', () => {
       it('should call throttled function immediately', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
 
@@ -120,30 +121,30 @@ describe('utils', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(1)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(1)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(2)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(2)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(2)
       })
 
       it('should perform calls made after the wait period', () => {
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(2)
       })
     })
@@ -156,7 +157,7 @@ describe('utils', () => {
       it('should call throttled function immediately', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
 
@@ -164,30 +165,30 @@ describe('utils', () => {
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(1)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(2)
 
         throttled()
         expect(spy).toHaveBeenCalledTimes(3)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(3)
 
-        jasmine.clock().tick(1)
+        clock.tick(1)
         expect(spy).toHaveBeenCalledTimes(3)
       })
 
       it('should perform calls made after the wait period', () => {
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         throttled()
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(2)
       })
     })
@@ -206,7 +207,7 @@ describe('utils', () => {
 
         cancel()
 
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
 
@@ -214,7 +215,7 @@ describe('utils', () => {
         cancel()
         throttled()
         expect(spy).toHaveBeenCalledTimes(1)
-        jasmine.clock().tick(2)
+        clock.tick(2)
         expect(spy).toHaveBeenCalledTimes(1)
       })
     })
@@ -224,7 +225,7 @@ describe('utils', () => {
       throttled(1)
       throttled(2)
       throttled(3)
-      jasmine.clock().tick(2)
+      clock.tick(2)
       expect(spy.calls.allArgs()).toEqual([[1], [3]])
     })
   })

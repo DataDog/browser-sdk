@@ -6,7 +6,7 @@ import {
   getCookie,
   setCookie,
 } from '../browser/cookie'
-import { isIE, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
+import { Clock, isIE, mockClock, restorePageVisibility, setPageVisibility } from '../../test/specHelper'
 import { ONE_HOUR } from '../tools/utils'
 import {
   Session,
@@ -24,14 +24,14 @@ describe('cacheCookieAccess', () => {
   const options: CookieOptions = {}
   const DURATION = 123456
   let cookieCache: CookieCache
+  let clock: Clock
 
   beforeEach(() => {
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
+    clock = mockClock()
     cookieCache = cacheCookieAccess(TEST_COOKIE, options)
   })
 
-  afterEach(() => jasmine.clock().uninstall())
+  afterEach(() => clock.cleanup())
 
   it('should keep cookie value in cache', () => {
     setCookie(TEST_COOKIE, 'foo', DURATION)
@@ -40,7 +40,7 @@ describe('cacheCookieAccess', () => {
     setCookie(TEST_COOKIE, '', DURATION)
     expect(cookieCache.get()).toEqual('foo')
 
-    jasmine.clock().tick(TEST_DELAY)
+    clock.tick(TEST_DELAY)
     expect(cookieCache.get()).toBeUndefined()
   })
 
@@ -62,10 +62,11 @@ describe('startSessionManagement', () => {
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
   const COOKIE_OPTIONS: CookieOptions = {}
+  let clock: Clock
 
   function expireSession() {
     setCookie(SESSION_COOKIE_NAME, '', DURATION)
-    jasmine.clock().tick(COOKIE_ACCESS_DELAY)
+    clock.tick(COOKIE_ACCESS_DELAY)
   }
 
   function expectSessionIdToBe(session: Session<unknown>, sessionId: string) {
@@ -97,16 +98,15 @@ describe('startSessionManagement', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    jasmine.clock().install()
-    jasmine.clock().mockDate(new Date())
+    clock = mockClock()
   })
 
   afterEach(() => {
     // remove intervals first
     stopSessionManagement()
     // flush pending callbacks to avoid random failures
-    jasmine.clock().tick(ONE_HOUR)
-    jasmine.clock().uninstall()
+    clock.tick(ONE_HOUR)
+    clock.cleanup()
   })
 
   describe('cookie management', () => {
@@ -254,7 +254,7 @@ describe('startSessionManagement', () => {
 
       expireSession()
 
-      jasmine.clock().tick(VISIBILITY_CHECK_DELAY)
+      clock.tick(VISIBILITY_CHECK_DELAY)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expectSessionIdToNotBeDefined(session)
@@ -328,7 +328,7 @@ describe('startSessionManagement', () => {
       expect(session.getId()).toBeDefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeDefined()
 
-      jasmine.clock().tick(SESSION_TIME_OUT_DELAY)
+      clock.tick(SESSION_TIME_OUT_DELAY)
       expect(session.getId()).toBeUndefined()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     })
@@ -374,7 +374,7 @@ describe('startSessionManagement', () => {
       }))
       expectSessionIdToBeDefined(session)
 
-      jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
+      clock.tick(SESSION_EXPIRATION_DELAY)
       expectSessionIdToNotBeDefined(session)
     })
 
@@ -385,13 +385,13 @@ describe('startSessionManagement', () => {
       }))
       expectSessionIdToBeDefined(session)
 
-      jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
       document.dispatchEvent(new CustomEvent('click'))
 
-      jasmine.clock().tick(10)
+      clock.tick(10)
       expectSessionIdToBeDefined(session)
 
-      jasmine.clock().tick(SESSION_EXPIRATION_DELAY)
+      clock.tick(SESSION_EXPIRATION_DELAY)
       expectSessionIdToNotBeDefined(session)
     })
 
@@ -403,14 +403,14 @@ describe('startSessionManagement', () => {
         trackingType: FakeTrackingType.TRACKED,
       }))
 
-      jasmine.clock().tick(3 * VISIBILITY_CHECK_DELAY)
+      clock.tick(3 * VISIBILITY_CHECK_DELAY)
       setPageVisibility('hidden')
       expectSessionIdToBeDefined(session)
 
-      jasmine.clock().tick(SESSION_EXPIRATION_DELAY - 10)
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
       expectSessionIdToBeDefined(session)
 
-      jasmine.clock().tick(10)
+      clock.tick(10)
       expectSessionIdToNotBeDefined(session)
     })
   })
