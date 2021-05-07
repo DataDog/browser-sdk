@@ -53,16 +53,11 @@ function processViewUpdate(view: ViewEvent) {
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
+      in_foreground_periods: view.inForegroundPeriods?.map(({ start, duration }) => ({ start, duration })),
     },
     session: {
       has_replay: view.hasReplay || undefined,
     },
-  }
-  if (view.inForegroundPeriods) {
-    viewEvent.view = {
-      ...viewEvent.view,
-      in_foreground_periods: view.inForegroundPeriods,
-    }
   }
   if (!isEmptyObject(view.customTimings)) {
     viewEvent.view.custom_timings = mapValues(

@@ -101,7 +101,6 @@ export interface RawRumViewEvent {
 export interface FocusTime {
   start: RelativeTime
   duration: ServerDuration
-  currently_focused?: true
 }
 
 export enum ViewLoadingType {

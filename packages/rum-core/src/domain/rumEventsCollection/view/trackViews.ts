@@ -12,14 +12,14 @@ import {
   preferredClock,
   clocksOrigin,
 } from '@datadog/browser-core'
-import { ViewLoadingType, ViewCustomTimings, FocusTime } from '../../../rawRumEvent.types'
+import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
-import { trackViewFocus } from './trackViewFocus'
+import { trackViewFocus, FocusTime } from './trackViewFocus'
 
 export interface ViewEvent {
   id: string

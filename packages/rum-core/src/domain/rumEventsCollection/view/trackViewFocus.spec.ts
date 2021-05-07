@@ -52,7 +52,7 @@ describe('the user focus the document when opening the view', () => {
 
   it('should create a first focused time', () => {
     expect(getViewEvent(0).inForegroundPeriods).toEqual([
-      { start: 0 as RelativeTime, duration: 0 as ServerDuration, currently_focused: true },
+      { start: 0 as RelativeTime, duration: 0 as ServerDuration, currentlyFocused: true },
     ])
   })
 
@@ -81,7 +81,7 @@ describe('the user focus the document when opening the view', () => {
 
       it('should update the duration of the currently focused time', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([
-          { start: 0 as RelativeTime, duration: 13_000_000_000 as ServerDuration, currently_focused: true },
+          { start: 0 as RelativeTime, duration: 13_000_000_000 as ServerDuration, currentlyFocused: true },
         ])
       })
     })
@@ -113,7 +113,7 @@ describe('the user focus the document when opening the view', () => {
           it('should open a second focused time', () => {
             expect(getViewEvent(2).inForegroundPeriods).toEqual([
               { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
-              { start: 15_000_000_000 as RelativeTime, duration: 0 as ServerDuration, currently_focused: true },
+              { start: 15_000_000_000 as RelativeTime, duration: 0 as ServerDuration, currentlyFocused: true },
             ])
           })
         })

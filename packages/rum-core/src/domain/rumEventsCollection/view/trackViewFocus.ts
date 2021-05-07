@@ -7,10 +7,17 @@ import {
   RelativeTime,
   toServerRelativeTime,
   toServerDuration,
+  ServerDuration,
 } from '@datadog/browser-core'
-import { FocusTime } from '../../../rawRumEvent.types'
 
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
+
+export interface FocusTime {
+  start: RelativeTime
+  duration: ServerDuration
+  currentlyFocused?: true
+}
+
 export interface ViewFocus {
   inForeground: boolean
   inForegroundPeriods: FocusTime[]
@@ -36,7 +43,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     },
     updateCurrentFocusDuration: (endTime: RelativeTime) => {
       const lastFocusedtime = viewFocus.inForegroundPeriods[viewFocus.inForegroundPeriods.length - 1]
-      if (lastFocusedtime != null && lastFocusedtime.currently_focused === true) {
+      if (lastFocusedtime != null && lastFocusedtime.currentlyFocused === true) {
         lastFocusedtime.duration = toServerDuration(elapsed(lastFocusedtime.start, endTime))
       }
     },
@@ -52,7 +59,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     viewFocus.inForegroundPeriods.push({
       start: toServerRelativeTime(start),
       duration: toServerDuration(elapsed(start, now)),
-      currently_focused: true,
+      currentlyFocused: true,
     })
     scheduleViewUpdate()
   }
@@ -60,7 +67,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
   function closeLastFocusTime() {
     const lastIndex = viewFocus.inForegroundPeriods.length - 1
 
-    if (lastIndex >= 0 && viewFocus.inForegroundPeriods[lastIndex].currently_focused) {
+    if (lastIndex >= 0 && viewFocus.inForegroundPeriods[lastIndex].currentlyFocused) {
       viewFocus.inForegroundPeriods[lastIndex] = {
         start: toServerRelativeTime(viewFocus.inForegroundPeriods[lastIndex].start),
         duration: toServerDuration(elapsed(viewFocus.inForegroundPeriods[lastIndex].start, relativeNow())),
