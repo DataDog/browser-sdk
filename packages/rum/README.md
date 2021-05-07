@@ -29,7 +29,6 @@ CDN async
 CDN sync
 : This method is recommended for collecting all RUM events. The RUM SDK is loaded from our CDN synchronously: this method ensures the SDK is loaded first and collects all errors, resources and user actions. This method might impact page load performance.
 
-
 ### npm
 
 Add [`@datadog/browser-rum`][4] to your `package.json` file, then initialize it with:
