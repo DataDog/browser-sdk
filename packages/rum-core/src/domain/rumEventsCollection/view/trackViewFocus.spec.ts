@@ -21,7 +21,7 @@ function spyOnViews() {
   return { handler, getViewEvent, getHandledCount }
 }
 const configuration: Partial<Configuration> = { isEnabled: () => true }
-describe('the user focus the document when opening the view', () => {
+describe('the user focus the window when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
@@ -87,9 +87,9 @@ describe('the user focus the document when opening the view', () => {
       })
     })
 
-    describe('when the blur event is trigger from the document', () => {
+    describe('when the blur event is trigger from the window', () => {
       beforeEach(() => {
-        document.dispatchEvent(new Event('blur'))
+        window.dispatchEvent(new Event('blur'))
       })
 
       it('should keep view as focused when started', () => {
@@ -106,9 +106,9 @@ describe('the user focus the document when opening the view', () => {
         beforeEach(() => {
           clock.tick(5_000)
         })
-        describe('when the focus event is trigger from the document', () => {
+        describe('when the focus event is trigger from the window', () => {
           beforeEach(() => {
-            document.dispatchEvent(new Event('focus'))
+            window.dispatchEvent(new Event('focus'))
           })
 
           it('should open a second focused time', () => {
@@ -123,7 +123,7 @@ describe('the user focus the document when opening the view', () => {
   })
 })
 
-describe('the user doest not focus the document when opening the view', () => {
+describe('the user doest not focus the window when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent

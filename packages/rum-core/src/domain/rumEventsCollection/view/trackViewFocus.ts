@@ -78,9 +78,9 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
 }
 
 function trackFocus(onFocusChange: () => void) {
-  return addEventListener(document, DOM_EVENT.FOCUS, () => onFocusChange())
+  return addEventListener(window, DOM_EVENT.FOCUS, () => onFocusChange())
 }
 
 function trackBlur(onBlurChange: () => void) {
-  return addEventListener(document, DOM_EVENT.BLUR, () => onBlurChange())
+  return addEventListener(window, DOM_EVENT.BLUR, () => onBlurChange())
 }
