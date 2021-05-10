@@ -8,7 +8,7 @@ import {
   Configuration,
   ClocksState,
   clocksNow,
-  RelativeTime,
+  PreferredTime,
   preferredClock,
   clocksOrigin,
 } from '@datadog/browser-core'
@@ -176,7 +176,7 @@ function newView(
   let stopViewFocusTracking: () => void = () => {}
   let viewFocus: Partial<ViewEvent> = {}
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  let updateCurrentFocusDuration: (endTime: RelativeTime) => void = () => {}
+  let updateCurrentFocusDuration: (endTime: PreferredTime) => void = () => {}
 
   if (configuration.isEnabled('track-focus')) {
     ;({ stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
@@ -190,7 +190,7 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     const currentEndClock = endClocks === undefined ? clocksNow() : endClocks
-    updateCurrentFocusDuration(currentEndClock.relative)
+    updateCurrentFocusDuration(preferredClock(currentEndClock))
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
       ...viewFocus,

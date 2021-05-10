@@ -1,20 +1,20 @@
 import {
   elapsed,
   ClocksState,
-  relativeNow,
+  preferredNow,
   addEventListener,
   DOM_EVENT,
-  RelativeTime,
-  toServerRelativeTime,
-  toServerDuration,
-  ServerDuration,
+  Duration,
+  clocksNow,
+  preferredClock,
+  PreferredTime,
 } from '@datadog/browser-core'
 
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface FocusTime {
-  start: RelativeTime
-  duration: ServerDuration
+  start: PreferredTime
+  duration: Duration
   currentlyFocused?: true
 }
 
@@ -29,7 +29,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     inForegroundPeriods: [],
   }
   if (viewFocus.inForeground) {
-    addNewFocusTime(startClocks.relative)
+    addNewFocusTime(startClocks)
   }
 
   const { stop: stopFocusTracking } = trackFocus(addNewFocusTime)
@@ -41,24 +41,23 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
       stopBlurTracking()
       closeLastFocusTime()
     },
-    updateCurrentFocusDuration: (endTime: RelativeTime) => {
+    updateCurrentFocusDuration: (endTime: PreferredTime) => {
       const lastFocusedtime = viewFocus.inForegroundPeriods[viewFocus.inForegroundPeriods.length - 1]
       if (lastFocusedtime != null && lastFocusedtime.currentlyFocused === true) {
-        lastFocusedtime.duration = toServerDuration(elapsed(lastFocusedtime.start, endTime))
+        lastFocusedtime.duration = computeDuration(endTime)
       }
     },
     viewFocus,
   }
 
-  function addNewFocusTime(overrideStart?: RelativeTime) {
-    const now = relativeNow()
-    const start = overrideStart ?? now
+  function addNewFocusTime(nowOverride?: ClocksState) {
+    const now = nowOverride ?? clocksNow()
     if (viewFocus.inForegroundPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
       return
     }
     viewFocus.inForegroundPeriods.push({
-      start: toServerRelativeTime(start),
-      duration: toServerDuration(elapsed(start, now)),
+      start: preferredClock(now),
+      duration: 0 as Duration,
       currentlyFocused: true,
     })
     scheduleViewUpdate()
@@ -66,14 +65,20 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
 
   function closeLastFocusTime() {
     const lastIndex = viewFocus.inForegroundPeriods.length - 1
-
     if (lastIndex >= 0 && viewFocus.inForegroundPeriods[lastIndex].currentlyFocused) {
+      const { start } = viewFocus.inForegroundPeriods[lastIndex]
       viewFocus.inForegroundPeriods[lastIndex] = {
-        start: toServerRelativeTime(viewFocus.inForegroundPeriods[lastIndex].start),
-        duration: toServerDuration(elapsed(viewFocus.inForegroundPeriods[lastIndex].start, relativeNow())),
+        start,
+        duration: computeDuration(),
       }
       scheduleViewUpdate()
     }
+  }
+
+  function computeDuration(endTime?: PreferredTime) {
+    const lastIndex = viewFocus.inForegroundPeriods.length - 1
+    const { start } = viewFocus.inForegroundPeriods[lastIndex]
+    return elapsed(start, endTime ?? preferredNow())
   }
 }
 

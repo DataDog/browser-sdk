@@ -50,11 +50,6 @@ export function toServerDuration(duration: Duration | undefined) {
   return toNs(duration) as ServerDuration
 }
 
-export function toServerRelativeTime(relativeTime: RelativeTime): RelativeTime
-export function toServerRelativeTime(relativeTime: number): number {
-  return toNs(relativeTime)
-}
-
 function toNs(time: number): number {
   return round(time * 1e6, 0)
 }

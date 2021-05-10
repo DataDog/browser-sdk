@@ -1,4 +1,4 @@
-import { ServerDuration, RelativeTime, Context, Configuration } from '@datadog/browser-core'
+import { Duration, PreferredTime, Context, Configuration } from '@datadog/browser-core'
 import { RumEvent } from '@datadog/browser-rum-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -53,7 +53,7 @@ describe('the document is focused when opening the view', () => {
 
   it('should create a first focused time', () => {
     expect(getViewEvent(0).inForegroundPeriods).toEqual([
-      { start: 0 as RelativeTime, duration: 0 as ServerDuration, currentlyFocused: true },
+      { start: 0 as PreferredTime, duration: 0 as Duration, currentlyFocused: true },
     ])
   })
 
@@ -69,7 +69,7 @@ describe('the document is focused when opening the view', () => {
 
       it('should update the duration of the currently focused time and close it', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([
-          { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
+          { start: 0 as PreferredTime, duration: 10_000 as Duration },
         ])
       })
     })
@@ -82,7 +82,7 @@ describe('the document is focused when opening the view', () => {
 
       it('should update the duration of the currently focused time', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([
-          { start: 0 as RelativeTime, duration: 13_000_000_000 as ServerDuration, currentlyFocused: true },
+          { start: 0 as PreferredTime, duration: 13_000 as Duration, currentlyFocused: true },
         ])
       })
     })
@@ -98,7 +98,7 @@ describe('the document is focused when opening the view', () => {
 
       it('should close a first focused time', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([
-          { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
+          { start: 0 as PreferredTime, duration: 10_000 as Duration },
         ])
       })
 
@@ -113,8 +113,8 @@ describe('the document is focused when opening the view', () => {
 
           it('should open a second focused time', () => {
             expect(getViewEvent(2).inForegroundPeriods).toEqual([
-              { start: 0 as RelativeTime, duration: 10_000_000_000 as ServerDuration },
-              { start: 15_000_000_000 as RelativeTime, duration: 0 as ServerDuration, currentlyFocused: true },
+              { start: 0 as PreferredTime, duration: 10_000 as Duration },
+              { start: 15_000 as PreferredTime, duration: 0 as Duration, currentlyFocused: true },
             ])
           })
         })
