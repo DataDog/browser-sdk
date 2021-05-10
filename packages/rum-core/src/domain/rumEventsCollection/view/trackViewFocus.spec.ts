@@ -1,25 +1,12 @@
 import { Duration, PreferredTime, Context, Configuration } from '@datadog/browser-core'
 import { RumEvent } from '@datadog/browser-rum-core'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { setup, TestSetupBuilder, spyOnViews } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 
 import { Clock } from '../../../../../core/test/specHelper'
 import { LifeCycleEventType, LifeCycle } from '../../lifeCycle'
 import { trackViews, ViewEvent, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
-function spyOnViews() {
-  const handler = jasmine.createSpy()
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
-}
 const configuration: Partial<Configuration> = { isEnabled: () => true }
 describe('the document is focused when opening the view', () => {
   let setupBuilder: TestSetupBuilder

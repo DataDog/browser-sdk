@@ -1,5 +1,5 @@
 import { Duration, RelativeTime, ClocksState, clocksNow, Configuration } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { setup, TestSetupBuilder, spyOnViews } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -24,20 +24,6 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domInteractive: 234 as RelativeTime,
   entryType: 'navigation',
   loadEventEnd: 567 as RelativeTime,
-}
-
-function spyOnViews() {
-  const handler = jasmine.createSpy()
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
 }
 
 const configuration: Partial<Configuration> = { isEnabled: () => true }

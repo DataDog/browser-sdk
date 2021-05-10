@@ -12,6 +12,7 @@ import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -184,4 +185,18 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateFormat(combine(fakeContext, rawRumEvent))
+}
+
+export function spyOnViews() {
+  const handler = jasmine.createSpy()
+
+  function getViewEvent(index: number) {
+    return handler.calls.argsFor(index)[0] as ViewEvent
+  }
+
+  function getHandledCount() {
+    return handler.calls.count()
+  }
+
+  return { handler, getViewEvent, getHandledCount }
 }

@@ -1,6 +1,6 @@
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
 import { Context, RelativeTime, Duration, Configuration } from '@datadog/browser-core'
-import { TestSetupBuilder, setup } from '../../../../test/specHelper'
+import { TestSetupBuilder, setup, spyOnViews } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import {
@@ -38,20 +38,6 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
   domInteractive: 1 as RelativeTime,
   entryType: 'navigation',
   loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
-}
-
-function spyOnViews() {
-  const handler = jasmine.createSpy()
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
 }
 
 const configuration: Partial<Configuration> = { isEnabled: () => false }
