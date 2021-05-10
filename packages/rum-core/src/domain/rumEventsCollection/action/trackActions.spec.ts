@@ -140,7 +140,7 @@ describe('trackActions', () => {
       hasFocus = true
     })
 
-    it('starts a action when clicking on an element with focus', () => {
+    it('started actions should be marked as being in foreground', () => {
       const { lifeCycle, clock } = setupBuilder.build()
       mockValidatedClickAction(lifeCycle, clock, button)
       expect(createSpy).toHaveBeenCalled()
