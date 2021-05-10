@@ -3,7 +3,7 @@ import { RumEvent } from '@datadog/browser-rum-core'
 import { setup, TestSetupBuilder, spyOnViews } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 
-import { Clock } from '../../../../../core/test/specHelper'
+import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
 import { LifeCycleEventType, LifeCycle } from '../../lifeCycle'
 import { trackViews, ViewEvent, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
@@ -76,7 +76,7 @@ describe('the document is focused when opening the view', () => {
 
     describe('when the blur event is trigger from the window', () => {
       beforeEach(() => {
-        window.dispatchEvent(new Event('blur'))
+        window.dispatchEvent(createNewEvent('blur'))
       })
 
       it('should keep view as focused when started', () => {
@@ -95,7 +95,7 @@ describe('the document is focused when opening the view', () => {
         })
         describe('when the focus event is trigger from the window', () => {
           beforeEach(() => {
-            window.dispatchEvent(new Event('focus'))
+            window.dispatchEvent(createNewEvent('focus'))
           })
 
           it('should open a second focused time', () => {
