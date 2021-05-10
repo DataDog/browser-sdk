@@ -13,7 +13,7 @@ import {
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface FocusPeriod {
-  start: PreferredTime
+  start: Duration
   duration: Duration
   currentlyFocused?: true
 }
@@ -56,7 +56,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
       return
     }
     viewFocus.inForegroundPeriods.push({
-      start: preferredClock(now),
+      start: elapsed(preferredClock(startClocks), preferredClock(now)),
       duration: 0 as Duration,
       currentlyFocused: true,
     })
@@ -78,7 +78,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
   function computeDuration(endTime?: PreferredTime) {
     const lastIndex = viewFocus.inForegroundPeriods.length - 1
     const { start } = viewFocus.inForegroundPeriods[lastIndex]
-    return elapsed(start, endTime ?? preferredNow())
+    return (elapsed(preferredClock(startClocks), endTime ?? preferredNow()) - start) as Duration
   }
 }
 

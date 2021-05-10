@@ -5,9 +5,7 @@ import {
   ServerDuration,
   toServerDuration,
   preferredTimeStamp,
-  preferredClock,
   Configuration,
-  elapsed,
 } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -56,7 +54,7 @@ function processViewUpdate(view: ViewEvent) {
       },
       time_spent: toServerDuration(view.duration),
       in_foreground_periods: view.inForegroundPeriods?.map(({ start, duration }) => ({
-        start: toServerDuration(elapsed(preferredClock(view.startClocks), start)),
+        start: toServerDuration(start),
         duration: toServerDuration(duration),
       })),
     },
