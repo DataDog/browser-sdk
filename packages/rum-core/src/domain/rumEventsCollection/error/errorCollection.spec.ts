@@ -106,7 +106,7 @@ describe('error collection', () => {
       beforeEach(() => {
         hasFocus = true
       })
-      it('notifies a raw rum error event with focus', () => {
+      it('notified raw rum errors should be marked as being in foreground', () => {
         const { rawRumEvents } = setupBuilder.build()
         addError({
           error: new Error('foo'),
