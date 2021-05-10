@@ -21,7 +21,7 @@ function spyOnViews() {
   return { handler, getViewEvent, getHandledCount }
 }
 const configuration: Partial<Configuration> = { isEnabled: () => true }
-describe('the user focus the window when opening the view', () => {
+describe('the document is focused when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
