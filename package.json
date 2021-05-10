@@ -18,7 +18,7 @@
     "release": "lerna version --exact",
     "version": "scripts/cli version",
     "publish:npm": "TARGET_DATACENTER=us BUILD_MODE=release yarn build && lerna publish from-package",
-    "test": "yarn test:unit",
+    "test": "yarn test:unit:watch",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:unit:watch": "yarn test:unit --no-single-run",
     "test:unit:bs": "node ./scripts/bs-wrapper.js karma start test/unit/karma.bs.conf.js",
