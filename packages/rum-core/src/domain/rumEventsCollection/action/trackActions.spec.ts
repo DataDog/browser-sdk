@@ -145,21 +145,7 @@ describe('trackActions', () => {
       mockValidatedClickAction(lifeCycle, clock, button)
       expect(createSpy).toHaveBeenCalled()
       clock.tick(EXPIRE_DELAY)
-      expect(events).toEqual([
-        {
-          counts: {
-            errorCount: 0,
-            longTaskCount: 0,
-            resourceCount: 0,
-          },
-          duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY,
-          id: jasmine.any(String),
-          name: 'Click me',
-          startClocks: jasmine.any(Object),
-          type: ActionType.CLICK,
-          inForeground: true,
-        },
-      ])
+      expect((events[0] as AutoAction).inForeground).toBe(true)
     })
   })
 })

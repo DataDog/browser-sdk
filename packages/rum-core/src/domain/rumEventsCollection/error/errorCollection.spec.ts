@@ -1,6 +1,6 @@
 import { ErrorSource, RelativeTime, TimeStamp, Configuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { RumEventType, RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
 
@@ -115,20 +115,7 @@ describe('error collection', () => {
         })
 
         expect(rawRumEvents.length).toBe(1)
-        expect(rawRumEvents[0].rawRumEvent).toEqual({
-          date: jasmine.any(Number),
-          view: {
-            in_foreground: true,
-          },
-          error: {
-            message: 'foo',
-            resource: undefined,
-            source: ErrorSource.CUSTOM,
-            stack: jasmine.stringMatching('Error: foo'),
-            type: 'Error',
-          },
-          type: RumEventType.ERROR,
-        })
+        expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).view.in_foreground).toBe(true)
       })
     })
   })
