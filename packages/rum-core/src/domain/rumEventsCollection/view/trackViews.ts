@@ -11,7 +11,9 @@ import {
   PreferredTime,
   preferredClock,
   clocksOrigin,
+  noop,
 } from '@datadog/browser-core'
+
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -173,10 +175,10 @@ function newView(
   )
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  let stopViewFocusTracking: () => void = () => {}
+  let stopViewFocusTracking: () => void = noop
   let viewFocus: Partial<ViewEvent> = {}
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  let updateCurrentFocusDuration: (endTime: PreferredTime) => void = () => {}
+  let updateCurrentFocusDuration: (endTime: PreferredTime) => void = noop
 
   if (configuration.isEnabled('track-focus')) {
     ;({ stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
