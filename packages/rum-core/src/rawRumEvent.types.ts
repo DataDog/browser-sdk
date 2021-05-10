@@ -81,7 +81,7 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
-    in_foreground_periods?: FocusTime[]
+    in_foreground_periods?: FocusPeriod[]
   }
   session: {
     has_replay: true | undefined
@@ -90,7 +90,7 @@ export interface RawRumViewEvent {
     document_version: number
   }
 }
-export interface FocusTime {
+export interface FocusPeriod {
   start: ServerDuration
   duration: ServerDuration
 }

@@ -21,7 +21,7 @@ import { EventCounts } from '../../trackEventCounts'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
-import { trackViewFocus, FocusTime } from './trackViewFocus'
+import { trackViewFocus, FocusPeriod } from './trackViewFocus'
 
 export interface ViewEvent {
   id: string
@@ -40,7 +40,7 @@ export interface ViewEvent {
   cumulativeLayoutShift?: number
   hasReplay: boolean
   inForeground?: boolean
-  inForegroundPeriods?: FocusTime[]
+  inForegroundPeriods?: FocusPeriod[]
 }
 
 export interface ViewCreatedEvent {

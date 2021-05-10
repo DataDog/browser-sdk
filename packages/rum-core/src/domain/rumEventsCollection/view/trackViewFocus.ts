@@ -12,7 +12,7 @@ import {
 
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
-export interface FocusTime {
+export interface FocusPeriod {
   start: PreferredTime
   duration: Duration
   currentlyFocused?: true
@@ -20,7 +20,7 @@ export interface FocusTime {
 
 export interface ViewFocus {
   inForeground: boolean
-  inForegroundPeriods: FocusTime[]
+  inForegroundPeriods: FocusPeriod[]
 }
 
 export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () => void) {
@@ -29,17 +29,17 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     inForegroundPeriods: [],
   }
   if (viewFocus.inForeground) {
-    addNewFocusTime(startClocks)
+    addNewFocusPeriod(startClocks)
   }
 
-  const { stop: stopFocusTracking } = trackFocus(addNewFocusTime)
-  const { stop: stopBlurTracking } = trackBlur(closeLastFocusTime)
+  const { stop: stopFocusTracking } = trackFocus(addNewFocusPeriod)
+  const { stop: stopBlurTracking } = trackBlur(closeLastFocusPeriod)
 
   return {
     stop: (): void => {
       stopFocusTracking()
       stopBlurTracking()
-      closeLastFocusTime()
+      closeLastFocusPeriod()
     },
     updateCurrentFocusDuration: (endTime: PreferredTime) => {
       const lastFocusedtime = viewFocus.inForegroundPeriods[viewFocus.inForegroundPeriods.length - 1]
@@ -50,7 +50,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     viewFocus,
   }
 
-  function addNewFocusTime(nowOverride?: ClocksState) {
+  function addNewFocusPeriod(nowOverride?: ClocksState) {
     const now = nowOverride ?? clocksNow()
     if (viewFocus.inForegroundPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
       return
@@ -63,7 +63,7 @@ export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () 
     scheduleViewUpdate()
   }
 
-  function closeLastFocusTime() {
+  function closeLastFocusPeriod() {
     const lastIndex = viewFocus.inForegroundPeriods.length - 1
     if (lastIndex >= 0 && viewFocus.inForegroundPeriods[lastIndex].currentlyFocused) {
       const { start } = viewFocus.inForegroundPeriods[lastIndex]
