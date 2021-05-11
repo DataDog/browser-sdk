@@ -1,37 +1,36 @@
 'use strict'
+// This wrapper script ensures that no other test is running in BrowserStack before launching the
+// test command, to avoid overloading the service and making tests more flaky than necessary. This
+// is also handled by the CI (exclusive lock on the "browserstack" resource), but it is helpful when
+// launching tests outside of the CI.
+//
+// It used to re-run the test command based on its output (in particular, when the BrowserStack
+// session failed to be created), but we observed that:
+//
+// * The retry logic of karma and wdio was more efficient to retry this kind of tests (the
+// BrowserStack connection is re-created on each retry)
+//
+// * Aborting the test command via a SIGTERM signal was buggy and the command continued to run even
+// after killing it. There might be a better way of prematurely aborting the test command if we need
+// to in the future.
 
-const exec = require('child_process').exec
+const { spawn } = require('child_process')
 const request = require('request')
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 // eslint-disable-next-line max-len
 const RUNNING_BUILDS_API = `https://${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}@api.browserstack.com/automate/builds.json?status=running`
-const COMMAND = process.argv.slice(2).join(' ')
-const RETRY_DELAY = 30_000
-const MAX_RETRY_COUNT = 3
-
-const TEST_STATUS_DEFINITIVE_FAILURE = 'definitive_failure'
-const TEST_STATUS_RECOVERABLE_FAILURE = 'recoverable_failure'
-const TEST_STATUS_SUCCESS = 'success'
 
 main()
-  .then((status) => process.exit(status === TEST_STATUS_SUCCESS ? 0 : 1))
+  .then((exitCode) => process.exit(exitCode))
   .catch((error) => {
     console.log(error)
     process.exit(1)
   })
 
 async function main() {
-  for (let retryCount = 0; retryCount < MAX_RETRY_COUNT; retryCount += 1) {
-    await waitForAvailability()
-    const status = await runTests()
-    if (status !== TEST_STATUS_RECOVERABLE_FAILURE) {
-      return status
-    }
-    console.log('tests failed, waiting to retry...')
-    await timeout(RETRY_DELAY)
-  }
-  return TEST_STATUS_DEFINITIVE_FAILURE
+  await waitForAvailability()
+  return runTests()
 }
 
 async function waitForAvailability() {
@@ -54,33 +53,10 @@ function hasRunningBuild() {
 
 function runTests() {
   return new Promise((resolve) => {
-    let logs = ''
-    let isKilled = false
-    const current = exec(COMMAND)
-    current.stdout.pipe(process.stdout)
-    current.stdout.on('data', (data) => {
-      logs += data
-
-      if (!isKilled && hasSessionCreationFailure(logs)) {
-        isKilled = true
-        current.kill('SIGTERM')
-      }
-    })
-
-    current.on('exit', (code) => {
-      if (code === 0) {
-        resolve(TEST_STATUS_SUCCESS)
-      } else if (isKilled || hasSessionCreationFailure(logs)) {
-        resolve(TEST_STATUS_RECOVERABLE_FAILURE)
-      } else {
-        resolve(TEST_STATUS_DEFINITIVE_FAILURE)
-      }
-    })
+    const [command, ...args] = process.argv.slice(2)
+    const commandProcess = spawn(command, args, { stdio: 'inherit' })
+    commandProcess.on('exit', resolve)
   })
-}
-
-function hasSessionCreationFailure(logs) {
-  return logs.includes('Failed to create session.')
 }
 
 function timeout(ms) {
