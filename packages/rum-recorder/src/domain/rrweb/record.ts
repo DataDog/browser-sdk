@@ -1,5 +1,5 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { snapshot } from '../rrweb-snapshot'
+import { serializeDocument } from '../rrweb-snapshot'
 import { RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
@@ -34,15 +34,9 @@ export function record(options: RecordOptions): RecordAPI {
       type: RecordType.Focus,
     })
 
-    const [node] = snapshot(document)
-
-    if (!node) {
-      return console.warn('Failed to snapshot the document')
-    }
-
     emit({
       data: {
-        node,
+        node: serializeDocument(document),
         initialOffset: {
           left:
             window.pageXOffset !== undefined

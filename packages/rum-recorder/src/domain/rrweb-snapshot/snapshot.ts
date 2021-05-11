@@ -426,13 +426,10 @@ export function serializeNodeWithId(
   return serializedNodeWithId
 }
 
-export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] {
-  const idNodeMap: IdNodeMap = {}
-  return [
-    serializeNodeWithId(n, {
-      doc: n,
-      map: idNodeMap,
-    }),
-    idNodeMap,
-  ]
+export function serializeDocument(n: Document): SerializedNodeWithId {
+  // We are sure that Documents are never ignored, so this function never returns null
+  return serializeNodeWithId(n, {
+    doc: n,
+    map: {},
+  })!
 }
