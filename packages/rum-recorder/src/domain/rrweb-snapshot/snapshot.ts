@@ -1,6 +1,6 @@
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
 import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE_ID, setSerializedNode } from './serializationUtils'
 
 const tagNameRegex = /[^a-z1-6-_]/
@@ -358,7 +358,7 @@ function nodeShouldBeIgnored(sn: SerializedNode): boolean {
 }
 
 export function serializeNodeWithId(
-  n: Node | INode,
+  n: Node,
   options: {
     doc: Document
     map: IdNodeMap
@@ -398,7 +398,7 @@ export function serializeNodeWithId(
   if (id === IGNORED_NODE_ID) {
     return null
   }
-  map[id] = n as INode
+  map[id] = true
   let recordChild = !skipChild
   if (serializedNode.type === NodeType.Element) {
     recordChild = recordChild && !serializedNode.shouldBeHidden

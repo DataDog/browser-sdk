@@ -3,7 +3,7 @@ import { snapshot } from '../rrweb-snapshot'
 import { RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
-import { getWindowHeight, getWindowWidth, mirror } from './utils'
+import { getWindowHeight, getWindowWidth } from './utils'
 import { MutationController } from './mutationObserver'
 
 export function record(options: RecordOptions): RecordAPI {
@@ -34,13 +34,12 @@ export function record(options: RecordOptions): RecordAPI {
       type: RecordType.Focus,
     })
 
-    const [node, idNodeMap] = snapshot(document)
+    const [node] = snapshot(document)
 
     if (!node) {
       return console.warn('Failed to snapshot the document')
     }
 
-    mirror.map = idNodeMap
     emit({
       data: {
         node,
