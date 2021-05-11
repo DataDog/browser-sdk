@@ -362,11 +362,10 @@ export function serializeNodeWithId(
   options: {
     doc: Document
     map: IdNodeMap
-    skipChild: boolean
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false } = options
+  const { doc, map } = options
   let { preserveWhiteSpace = true } = options
   const serializedNode = serializeNode(n, {
     doc,
@@ -399,7 +398,7 @@ export function serializeNodeWithId(
     return null
   }
   map[id] = true
-  let recordChild = !skipChild
+  let recordChild = true
   if (serializedNode.type === NodeType.Element) {
     recordChild = recordChild && !serializedNode.shouldBeHidden
     // this property was not needed in replay side
@@ -417,7 +416,6 @@ export function serializeNodeWithId(
       const serializedChildNode = serializeNodeWithId(childN, {
         doc,
         map,
-        skipChild,
         preserveWhiteSpace,
       })
       if (serializedChildNode) {
@@ -434,7 +432,6 @@ export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] 
     serializeNodeWithId(n, {
       doc: n,
       map: idNodeMap,
-      skipChild: false,
     }),
     idNodeMap,
   ]
