@@ -7,7 +7,7 @@ import { getWindowHeight, getWindowWidth, mirror } from './utils'
 import { MutationController } from './mutation'
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emit, useNewMutationObserver } = options
+  const { emit } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -71,7 +71,6 @@ export function record(options: RecordOptions): RecordAPI {
 
     handlers.push(
       initObservers({
-        useNewMutationObserver,
         mutationController,
         inputCb: (v) =>
           emit({

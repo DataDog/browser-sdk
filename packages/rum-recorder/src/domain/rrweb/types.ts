@@ -62,7 +62,6 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord) => void
-  useNewMutationObserver: boolean
 }
 
 export interface RecordAPI {
@@ -71,7 +70,6 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
-  useNewMutationObserver: boolean
   mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack

@@ -1,7 +1,7 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
 import { getSerializedNodeId, hasSerializedNode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { MutationObserverWrapper, MutationController } from './mutation'
+import { MutationController } from './mutation'
 import {
   FocusCallback,
   HookResetter,
@@ -27,7 +27,7 @@ const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100
 
 export function initObservers(o: ObserverParam): ListenerHandler {
-  const mutationHandler = initMutationObserver(o.useNewMutationObserver, o.mutationController, o.mutationCb)
+  const mutationHandler = initMutationObserver(o.mutationController, o.mutationCb)
   const mousemoveHandler = initMoveObserver(o.mousemoveCb)
   const mouseInteractionHandler = initMouseInteractionObserver(o.mouseInteractionCb)
   const scrollHandler = initScrollObserver(o.scrollCb)
@@ -50,16 +50,8 @@ export function initObservers(o: ObserverParam): ListenerHandler {
   }
 }
 
-function initMutationObserver(
-  useNewMutationObserver: boolean,
-  mutationController: MutationController,
-  cb: MutationCallBack
-) {
-  if (useNewMutationObserver) {
-    return startMutationObserver(mutationController, cb).stop
-  }
-  const mutationObserverWrapper = new MutationObserverWrapper(mutationController, cb)
-  return () => mutationObserverWrapper.stop()
+function initMutationObserver(mutationController: MutationController, cb: MutationCallBack) {
+  return startMutationObserver(mutationController, cb).stop
 }
 
 function initMoveObserver(cb: MousemoveCallBack): ListenerHandler {
