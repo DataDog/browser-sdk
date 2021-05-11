@@ -381,6 +381,18 @@ describe('rum public api', () => {
       expect(errorSpy).not.toHaveBeenCalled()
     })
 
+    it('should remove the user', () => {
+      const user = { id: 'foo', name: 'bar', email: 'qux' }
+      rumPublicApi.setUser(user)
+      rumPublicApi.removeUser()
+      rumPublicApi.addAction('message')
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(addActionSpy.calls.argsFor(0)[1]!.user).toEqual({})
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
     it('should reject non object input', () => {
       rumPublicApi.setUser(2 as any)
       rumPublicApi.setUser(null as any)
