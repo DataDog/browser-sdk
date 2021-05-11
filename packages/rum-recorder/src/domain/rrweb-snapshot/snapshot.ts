@@ -10,11 +10,6 @@ function genId(): number {
   return nextId++
 }
 
-export function cleanupSnapshot() {
-  // allow a new recording to start numbering nodes from scratch
-  nextId = 1
-}
-
 function getValidTagName(tagName: string): string {
   const processedTagName = tagName.toLowerCase().trim()
 
