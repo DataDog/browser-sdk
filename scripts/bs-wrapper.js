@@ -54,8 +54,8 @@ function hasRunningBuild() {
 function runTests() {
   return new Promise((resolve) => {
     const [command, ...args] = process.argv.slice(2)
-    const process = spawn(command, args, { stdio: 'inherit' })
-    process.on('exit', resolve)
+    const commandProcess = spawn(command, args, { stdio: 'inherit' })
+    commandProcess.on('exit', resolve)
   })
 }
 
