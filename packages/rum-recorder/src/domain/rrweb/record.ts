@@ -4,7 +4,7 @@ import { RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth, mirror } from './utils'
-import { MutationController } from './mutation'
+import { MutationController } from './mutationObserver'
 
 export function record(options: RecordOptions): RecordAPI {
   const { emit } = options

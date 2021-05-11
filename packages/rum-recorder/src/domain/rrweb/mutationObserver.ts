@@ -22,7 +22,6 @@ import {
   TextMutation,
 } from './types'
 import { forEach } from './utils'
-import { MutationController } from './mutation'
 import { createMutationBatch } from './mutationBatch'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
@@ -52,6 +51,21 @@ export function startMutationObserver(controller: MutationController, mutationCa
       observer.disconnect()
       mutationBatch.stop()
     },
+  }
+}
+
+/**
+ * Controls how mutations are processed, allowing to flush pending mutations.
+ */
+export class MutationController {
+  private flushListener?: () => void
+
+  public flush() {
+    this.flushListener?.()
+  }
+
+  public onFlush(listener: () => void) {
+    this.flushListener = listener
   }
 }
 

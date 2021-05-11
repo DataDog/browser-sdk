@@ -1,7 +1,6 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
 import { getSerializedNodeId, hasSerializedNode } from '../rrweb-snapshot'
 import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from '../privacy'
-import { MutationController } from './mutation'
 import {
   FocusCallback,
   HookResetter,
@@ -21,7 +20,7 @@ import {
   ViewportResizeCallback,
 } from './types'
 import { forEach, getWindowHeight, getWindowWidth, hookSetter, isTouchEvent } from './utils'
-import { startMutationObserver } from './mutationObserver'
+import { startMutationObserver, MutationController } from './mutationObserver'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 const SCROLL_OBSERVER_THRESHOLD = 100

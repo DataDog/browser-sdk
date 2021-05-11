@@ -1,8 +1,7 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import { snapshot, NodeType } from '../rrweb-snapshot'
-import { MutationController } from './mutation'
-import { sortAddedAndMovedNodes, startMutationObserver } from './mutationObserver'
+import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
 import { MutationCallBack } from './types'
 
 describe('startMutationCollection', () => {
