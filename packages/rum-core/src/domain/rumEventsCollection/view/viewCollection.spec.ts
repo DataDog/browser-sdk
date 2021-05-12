@@ -58,7 +58,6 @@ describe('viewCollection', () => {
         largestContentfulPaint: 10 as Duration,
         loadEvent: 10 as Duration,
       },
-      inForeground: true,
       inForegroundPeriods: [],
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)

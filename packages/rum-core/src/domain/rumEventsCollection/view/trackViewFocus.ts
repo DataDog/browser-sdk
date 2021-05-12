@@ -20,16 +20,14 @@ export interface FocusPeriod {
 }
 
 export interface ViewFocus {
-  inForeground: boolean
   inForegroundPeriods: FocusPeriod[]
 }
 
 export function trackViewFocus(startClocks: ClocksState, scheduleViewUpdate: () => void) {
   const viewFocus: ViewFocus = {
-    inForeground: document.hasFocus(),
     inForegroundPeriods: [],
   }
-  if (viewFocus.inForeground) {
+  if (document.hasFocus()) {
     addNewFocusPeriod(startClocks)
   }
 

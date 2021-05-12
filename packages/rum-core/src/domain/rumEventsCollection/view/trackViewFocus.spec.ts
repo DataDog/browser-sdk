@@ -34,10 +34,6 @@ describe('the document is focused when opening the view', () => {
     setupBuilder.cleanup()
   })
 
-  it('should set view as focused when started', () => {
-    expect(getViewEvent(0).inForeground).toBe(true)
-  })
-
   it('should create a first focused time', () => {
     expect(getViewEvent(0).inForegroundPeriods).toEqual([
       { start: 0 as Duration, duration: 0 as Duration, currentlyFocused: true },
@@ -75,10 +71,6 @@ describe('the document is focused when opening the view', () => {
     describe('when the blur event is trigger from the window', () => {
       beforeEach(() => {
         window.dispatchEvent(createNewEvent('blur'))
-      })
-
-      it('should keep view as focused when started', () => {
-        expect(getViewEvent(1).inForeground).toBe(true)
       })
 
       it('should close a first focused time', () => {
@@ -130,6 +122,6 @@ describe('the user doest not focus the window when opening the view', () => {
 
   it('should set initial view as not focused', () => {
     setupBuilder.build()
-    expect(getViewEvent(0).inForeground).toBe(false)
+    expect(getViewEvent(0).inForegroundPeriods).toEqual([])
   })
 })
