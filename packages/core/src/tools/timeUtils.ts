@@ -41,6 +41,11 @@ function getCorrectedTimeStamp(relativeTime: RelativeTime) {
   return getTimeStamp(relativeTime)
 }
 
+export function currentDrift() {
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  return Math.round(Date.now() - (getNavigationStart() + performance.now()))
+}
+
 export function toServerDuration(duration: Duration): ServerDuration
 export function toServerDuration(duration: Duration | undefined): ServerDuration | undefined
 export function toServerDuration(duration: Duration | undefined) {

@@ -146,6 +146,10 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         console.error('Unsupported user:', newUser)
       }
     }),
+
+    removeUser: monitor(() => {
+      user = {}
+    }),
   })
   return rumPublicApi
 
