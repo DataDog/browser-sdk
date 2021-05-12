@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, ClocksState, clocksNow, Configuration } from '@datadog/browser-core'
+import { Duration, RelativeTime, ClocksState, clocksNow } from '@datadog/browser-core'
 import { setup, TestSetupBuilder, spyOnViews } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -26,8 +26,6 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   loadEventEnd: 567 as RelativeTime,
 }
 
-const configuration: Partial<Configuration> = { isEnabled: () => true }
-
 describe('rum view referrer', () => {
   let setupBuilder: TestSetupBuilder
   let initialViewCreatedEvent: ViewCreatedEvent
@@ -36,12 +34,13 @@ describe('rum view referrer', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
           initialViewCreatedEvent = event
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
     createSpy = jasmine.createSpy('create')
   })
@@ -102,13 +101,14 @@ describe('rum track renew session', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ lifeCycle, location }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ lifeCycle, location, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 
@@ -149,9 +149,10 @@ describe('rum track loading type', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 
@@ -185,9 +186,10 @@ describe('rum track view is active', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 
@@ -225,9 +227,10 @@ describe('rum view timings', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 
@@ -353,9 +356,10 @@ describe('rum track custom timings', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        ;({ addTiming } = trackViews(location, lifeCycle, configuration as Configuration))
+        ;({ addTiming } = trackViews(location, lifeCycle, configuration))
       })
   })
 
@@ -450,9 +454,10 @@ describe('track hasReplay', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 

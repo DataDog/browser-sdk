@@ -1,10 +1,8 @@
-import { ErrorSource, RelativeTime, TimeStamp, Configuration } from '@datadog/browser-core'
+import { ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, RawRumErrorEvent } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { doStartErrorCollection } from './errorCollection'
-
-const configuration: Partial<Configuration> = { isEnabled: () => true }
 
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
@@ -19,8 +17,8 @@ describe('error collection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle, configuration as Configuration))
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, configuration))
       })
   })
 

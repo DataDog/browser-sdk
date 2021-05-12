@@ -1,4 +1,4 @@
-import { Duration, Context, Configuration } from '@datadog/browser-core'
+import { Duration, Context } from '@datadog/browser-core'
 import { RumEvent } from '@datadog/browser-rum-core'
 import { setup, TestSetupBuilder, spyOnViews } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
@@ -7,7 +7,6 @@ import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
 import { LifeCycleEventType, LifeCycle } from '../../lifeCycle'
 import { trackViews, ViewEvent, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
-const configuration: Partial<Configuration> = { isEnabled: () => true }
 describe('the document is focused when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
@@ -21,10 +20,11 @@ describe('the document is focused when opening the view', () => {
 
     setupBuilder = setup()
       .withFakeClock()
+      .withConfiguration({ isEnabled: () => true })
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        const result = trackViews(location, lifeCycle, configuration as Configuration)
+        const result = trackViews(location, lifeCycle, configuration)
         return result
       })
     ;({ clock, lifeCycle } = setupBuilder.build())
@@ -117,9 +117,10 @@ describe('the user doest not focus the window when opening the view', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => true })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 

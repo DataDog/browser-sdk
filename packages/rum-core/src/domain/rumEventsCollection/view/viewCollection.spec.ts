@@ -1,11 +1,10 @@
-import { Duration, RelativeTime, ServerDuration, TimeStamp, Configuration } from '@datadog/browser-core'
+import { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
-const configuration: Partial<Configuration> = { isEnabled: () => true }
 describe('viewCollection', () => {
   let setupBuilder: TestSetupBuilder
 
@@ -14,8 +13,8 @@ describe('viewCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle }) => {
-        startViewCollection(lifeCycle, location, configuration as Configuration)
+      .beforeBuild(({ lifeCycle, configuration }) => {
+        startViewCollection(lifeCycle, location, configuration)
       })
   })
 

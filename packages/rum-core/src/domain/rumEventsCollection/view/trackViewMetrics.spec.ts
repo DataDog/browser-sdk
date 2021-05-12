@@ -1,5 +1,5 @@
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
-import { Context, RelativeTime, Duration, Configuration } from '@datadog/browser-core'
+import { Context, RelativeTime, Duration } from '@datadog/browser-core'
 import { TestSetupBuilder, setup, spyOnViews } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
@@ -40,7 +40,6 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
   loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
 }
 
-const configuration: Partial<Configuration> = { isEnabled: () => false }
 describe('rum track view metrics', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
@@ -52,9 +51,10 @@ describe('rum track view metrics', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .withConfiguration({ isEnabled: () => false })
+      .beforeBuild(({ location, lifeCycle, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, configuration as Configuration)
+        return trackViews(location, lifeCycle, configuration)
       })
   })
 
