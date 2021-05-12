@@ -1,5 +1,4 @@
 import { Context } from '../tools/context'
-import { getTimeStamp, relativeNow } from '../tools/timeUtils'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 import { monitor, addErrorToMonitoringBatch } from '../domain/internalMonitoring'
 
@@ -36,9 +35,7 @@ export class HttpRequest {
 }
 
 function addBatchTime(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}&m_time=${getTimeStamp(
-    relativeNow()
-  )}`
+  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
 }
 
 let hasReportedBeaconError = false

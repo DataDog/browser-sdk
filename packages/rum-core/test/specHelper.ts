@@ -169,6 +169,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeContext: RumContext & ViewContext = {
     _dd: {
       format_version: 2,
+      drift: 0,
     },
     application: {
       id: fakeId,

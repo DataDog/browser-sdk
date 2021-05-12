@@ -7,6 +7,7 @@ import {
   isEmptyObject,
   limitModification,
   timeStampNow,
+  currentDrift,
 } from '@datadog/browser-core'
 import {
   CommonContext,
@@ -64,6 +65,7 @@ export function startRumAssembly(
         const rumContext: RumContext = {
           _dd: {
             format_version: 2,
+            drift: currentDrift(),
           },
           application: {
             id: applicationId,
