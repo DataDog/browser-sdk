@@ -8,6 +8,8 @@ import {
   ClocksState,
   clocksNow,
   clocksOrigin,
+  timeStampNow,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
@@ -118,8 +120,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   }
 
   return {
-    addTiming: (name: string, endClocks = clocksNow()) => {
-      currentView.addTiming(name, endClocks)
+    addTiming: (name: string, time = timeStampNow()) => {
+      currentView.addTiming(name, time)
       currentView.triggerUpdate()
     },
     stop: () => {
@@ -171,7 +173,7 @@ function newView(
 
   function triggerViewUpdate() {
     documentVersion += 1
-    const currentEndClocks = endClocks === undefined ? clocksNow() : endClocks
+    const currentEnd = endClocks === undefined ? timeStampNow() : endClocks.timeStamp
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
       customTimings,
@@ -184,7 +186,7 @@ function newView(
       referrer,
       startClocks,
       timings,
-      duration: elapsed(startClocks.timeStamp, currentEndClocks.timeStamp),
+      duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
     })
   }
@@ -210,8 +212,8 @@ function newView(
         setLoadEvent(newTimings.loadEvent)
       }
     },
-    addTiming(name: string, endClocks: ClocksState) {
-      customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, endClocks.timeStamp)
+    addTiming(name: string, time: TimeStamp) {
+      customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }

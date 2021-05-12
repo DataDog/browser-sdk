@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, ClocksState, clocksNow } from '@datadog/browser-core'
+import { Duration, RelativeTime, TimeStamp, timeStampNow } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -357,7 +357,7 @@ describe('rum track custom timings', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
-  let addTiming: (name: string, endClocks?: ClocksState) => void
+  let addTiming: (name: string, time?: TimeStamp) => void
 
   beforeEach(() => {
     ;({ handler, getViewEvent } = spyOnViews())
@@ -430,7 +430,7 @@ describe('rum track custom timings', () => {
     const { clock } = setupBuilder.build()
 
     clock.tick(1234)
-    addTiming('foo', clocksNow())
+    addTiming('foo', timeStampNow())
 
     expect(getViewEvent(1).customTimings).toEqual({
       foo: 1234 as Duration,
@@ -442,7 +442,7 @@ describe('rum track custom timings', () => {
     const warnSpy = spyOn(console, 'warn')
 
     clock.tick(1234)
-    addTiming('foo bar-qux.@zip_21%$*€👋', clocksNow())
+    addTiming('foo bar-qux.@zip_21%$*€👋', timeStampNow())
 
     expect(getViewEvent(1).customTimings).toEqual({
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
