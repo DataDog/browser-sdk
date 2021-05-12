@@ -10,6 +10,7 @@ import {
   PreferredTime,
 } from '@datadog/browser-core'
 
+// Arbitrary value to cap number of element (mostly for backend)
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface FocusPeriod {
