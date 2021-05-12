@@ -102,5 +102,25 @@ describe('Logger', () => {
       expect(sendLogSpy).not.toHaveBeenCalled()
       expect(console.log).not.toHaveBeenCalled()
     })
+
+    it('should be configurable to "console" and "http"', () => {
+      logger.setHandler([HandlerType.console, HandlerType.http])
+      logger.setContext({ foo: 'bar' })
+
+      logger.debug('message')
+
+      expect(sendLogSpy).toHaveBeenCalled()
+      expect(console.log).toHaveBeenCalled()
+    })
+
+    it('should be configurable to "silent" and "console"', () => {
+      logger.setHandler([HandlerType.silent, HandlerType.console])
+      logger.setContext({ foo: 'bar' })
+
+      logger.debug('message')
+
+      expect(sendLogSpy).not.toHaveBeenCalled()
+      expect(console.log).toHaveBeenCalled()
+    })
   })
 })
