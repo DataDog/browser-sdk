@@ -395,7 +395,7 @@ export function serializeNodeWithId(
   map[id] = true
   let recordChild = true
   if (serializedNode.type === NodeType.Element) {
-    recordChild = recordChild && !serializedNode.shouldBeHidden
+    recordChild = !serializedNode.shouldBeHidden
     // this property was not needed in replay side
     delete serializedNode.shouldBeHidden
   }
