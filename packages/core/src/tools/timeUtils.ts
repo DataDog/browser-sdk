@@ -1,4 +1,3 @@
-import { buildEnv } from '../boot/buildEnv'
 import { isNumber, round } from './utils'
 
 export type Duration = number & { d: 'Duration in ms' }
@@ -9,7 +8,7 @@ export type ClocksState = { relative: RelativeTime; timeStamp: TimeStamp }
 
 export type PreferredTime = (TimeStamp | RelativeTime) & { p: 'preferred time' }
 
-let isSystemClockPreferred = buildEnv.systemClock
+let isSystemClockPreferred = true
 
 export function preferSystemClock() {
   isSystemClockPreferred = true
