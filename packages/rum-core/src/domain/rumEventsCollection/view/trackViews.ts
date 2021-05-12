@@ -174,10 +174,8 @@ function newView(
     loadingType
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   let stopViewFocusTracking: () => void = noop
   let viewFocus: Partial<ViewEvent> = {}
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   let updateCurrentFocusDuration: (endTime: PreferredTime) => void = noop
 
   if (configuration.isEnabled('track-focus')) {
