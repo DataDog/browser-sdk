@@ -6,7 +6,6 @@ import {
   RawError,
   startAutomaticErrorCollection,
   ClocksState,
-  preferredTimeStamp,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -59,7 +58,7 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
 
 function processError(error: RawError) {
   const rawRumEvent: RawRumErrorEvent = {
-    date: preferredTimeStamp(error.startClocks),
+    date: error.startClocks.timeStamp,
     error: {
       message: error.message,
       resource: error.resource

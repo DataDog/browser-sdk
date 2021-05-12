@@ -7,7 +7,6 @@ import {
   throttle,
   ClocksState,
   clocksNow,
-  preferredClock,
   clocksOrigin,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
@@ -172,6 +171,7 @@ function newView(
 
   function triggerViewUpdate() {
     documentVersion += 1
+    const currentEndClocks = endClocks === undefined ? clocksNow() : endClocks
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
       customTimings,
@@ -184,7 +184,7 @@ function newView(
       referrer,
       startClocks,
       timings,
-      duration: elapsed(preferredClock(startClocks), preferredClock(endClocks === undefined ? clocksNow() : endClocks)),
+      duration: elapsed(startClocks.timeStamp, currentEndClocks.timeStamp),
       isActive: endClocks === undefined,
     })
   }
@@ -211,7 +211,7 @@ function newView(
       }
     },
     addTiming(name: string, endClocks: ClocksState) {
-      customTimings[sanitizeTiming(name)] = elapsed(preferredClock(startClocks), preferredClock(endClocks))
+      customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, endClocks.timeStamp)
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }

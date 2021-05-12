@@ -3,7 +3,6 @@ import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Datacenter } from '../domain/transportConfiguration'
 import { catchUserErrors } from '../tools/catchUserErrors'
-import { preferSystemClock } from '../tools/timeUtils'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
   const publicApi = {
@@ -51,9 +50,6 @@ export interface BuildEnv {
 
 export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
   const configuration = buildConfiguration(userConfiguration, buildEnv)
-  if (configuration.isEnabled('system-clock')) {
-    preferSystemClock()
-  }
   const internalMonitoring = startInternalMonitoring(configuration)
 
   return {

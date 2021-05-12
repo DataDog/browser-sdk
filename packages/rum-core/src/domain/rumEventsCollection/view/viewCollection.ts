@@ -1,11 +1,4 @@
-import {
-  Duration,
-  isEmptyObject,
-  mapValues,
-  ServerDuration,
-  toServerDuration,
-  preferredTimeStamp,
-} from '@datadog/browser-core'
+import { Duration, isEmptyObject, mapValues, ServerDuration, toServerDuration } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackViews, ViewEvent } from './trackViews'
@@ -23,7 +16,7 @@ function processViewUpdate(view: ViewEvent) {
     _dd: {
       document_version: view.documentVersion,
     },
-    date: preferredTimeStamp(view.startClocks),
+    date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
     view: {
       action: {

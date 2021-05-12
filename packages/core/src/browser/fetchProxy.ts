@@ -1,7 +1,7 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { computeStackTrace } from '../domain/tracekit'
 import { toStackTraceString } from '../tools/error'
-import { Duration, elapsed, preferredNow, ClocksState, clocksNow, preferredClock } from '../tools/timeUtils'
+import { Duration, elapsed, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 export interface FetchProxy<
@@ -107,7 +107,7 @@ function beforeSend(input: RequestInfo, init?: RequestInit) {
 
 function afterSend(responsePromise: Promise<Response>, context: FetchStartContext & Partial<FetchCompleteContext>) {
   const reportFetch = async (response: Response | Error) => {
-    context.duration = elapsed(preferredClock(context.startClocks), preferredNow())
+    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0

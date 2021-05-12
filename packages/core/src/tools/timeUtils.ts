@@ -6,28 +6,8 @@ export type TimeStamp = number & { t: 'Epoch time' }
 export type RelativeTime = number & { r: 'Time relative to navigation start' } & { d: 'Duration in ms' }
 export type ClocksState = { relative: RelativeTime; timeStamp: TimeStamp }
 
-export type PreferredTime = (TimeStamp | RelativeTime) & { p: 'preferred time' }
-
-let isSystemClockPreferred = true
-
-export function preferSystemClock() {
-  isSystemClockPreferred = true
-}
-
-export function preferredNow(): PreferredTime {
-  return (isSystemClockPreferred ? timeStampNow() : relativeNow()) as PreferredTime
-}
-
-export function preferredTimeStamp(clocks: ClocksState) {
-  return isSystemClockPreferred ? clocks.timeStamp : getTimeStamp(clocks.relative)
-}
-
-export function preferredClock(clocks: ClocksState): PreferredTime {
-  return (isSystemClockPreferred ? clocks.timeStamp : clocks.relative) as PreferredTime
-}
-
 export function relativeToClocks(relative: RelativeTime) {
-  return { relative, timeStamp: isSystemClockPreferred ? getCorrectedTimeStamp(relative) : getTimeStamp(relative) }
+  return { relative, timeStamp: getCorrectedTimeStamp(relative) }
 }
 
 function getCorrectedTimeStamp(relativeTime: RelativeTime) {
@@ -70,7 +50,6 @@ export function clocksOrigin() {
   return { relative: 0 as RelativeTime, timeStamp: getNavigationStart() }
 }
 
-export function elapsed(start: PreferredTime, end: PreferredTime): Duration
 export function elapsed(start: TimeStamp, end: TimeStamp): Duration
 export function elapsed(start: RelativeTime, end: RelativeTime): Duration
 export function elapsed(start: number, end: number) {
