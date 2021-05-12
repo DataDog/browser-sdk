@@ -47,11 +47,7 @@ export function toServerDuration(duration: Duration | undefined) {
   if (!isNumber(duration)) {
     return duration
   }
-  return toNs(duration) as ServerDuration
-}
-
-function toNs(time: number): number {
-  return round(time * 1e6, 0)
+  return round(duration * 1e6, 0) as ServerDuration
 }
 
 export function timeStampNow() {
