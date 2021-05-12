@@ -31,7 +31,7 @@ export function startConsoleTracking(configuration: Configuration, errorObservab
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startClocks: clocksNow(),
-      inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+      inForeground: configuration.isEnabled('track-foreground') ? document.hasFocus() : undefined,
     })
   })
 }
@@ -70,7 +70,7 @@ export function startRuntimeErrorTracking(configuration: Configuration, errorObs
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
     }
-    if (configuration.isEnabled('track-focus')) {
+    if (configuration.isEnabled('track-foreground')) {
       error.inForeground = document.hasFocus()
     }
     errorObservable.notify(error)
@@ -113,7 +113,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
   }
 
   function addFocusToContext(context: XhrStartContext | FetchStartContext) {
-    context.inForeground = configuration.isEnabled('track-focus') ? document.hasFocus() : undefined
+    context.inForeground = configuration.isEnabled('track-foreground') ? document.hasFocus() : undefined
   }
 
   return {

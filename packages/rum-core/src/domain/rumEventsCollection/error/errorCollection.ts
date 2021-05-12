@@ -63,7 +63,7 @@ function computeRawError(
     startClocks,
     source,
     ...formatUnknownError(stackTrace, error, 'Provided'),
-    inForeground: configuration.isEnabled('track-focus') ? document.hasFocus() : undefined,
+    inForeground: configuration.isEnabled('track-foreground') ? document.hasFocus() : undefined,
   }
   return err
 }

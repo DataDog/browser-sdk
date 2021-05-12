@@ -7,7 +7,7 @@ import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
 import { LifeCycleEventType, LifeCycle } from '../../lifeCycle'
 import { trackViews, ViewEvent, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
 
-describe('the document is focused when opening the view', () => {
+describe('the window is in foreground when opening the view', () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
@@ -34,9 +34,9 @@ describe('the document is focused when opening the view', () => {
     setupBuilder.cleanup()
   })
 
-  it('should create a first focused time', () => {
+  it('should create a first in foreground period', () => {
     expect(getViewEvent(0).inForegroundPeriods).toEqual([
-      { start: 0 as Duration, duration: 0 as Duration, currentlyFocused: true },
+      { start: 0 as Duration, duration: 0 as Duration, currentInForeground: true },
     ])
   })
 
@@ -50,7 +50,7 @@ describe('the document is focused when opening the view', () => {
         history.pushState({}, '', '/bar')
       })
 
-      it('should update the duration of the currently focused time and close it', () => {
+      it('should update the duration of the currently in foreground & close it', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([{ start: 0 as Duration, duration: 10_000 as Duration }])
       })
     })
@@ -61,9 +61,9 @@ describe('the document is focused when opening the view', () => {
         clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       })
 
-      it('should update the duration of the currently focused time', () => {
+      it('should update the duration of the current period', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([
-          { start: 0 as Duration, duration: 13_000 as Duration, currentlyFocused: true },
+          { start: 0 as Duration, duration: 13_000 as Duration, currentInForeground: true },
         ])
       })
     })
@@ -73,7 +73,7 @@ describe('the document is focused when opening the view', () => {
         window.dispatchEvent(createNewEvent('blur'))
       })
 
-      it('should close a first focused time', () => {
+      it('should close the first in foreground period', () => {
         expect(getViewEvent(1).inForegroundPeriods).toEqual([{ start: 0 as Duration, duration: 10_000 as Duration }])
       })
 
@@ -86,10 +86,10 @@ describe('the document is focused when opening the view', () => {
             window.dispatchEvent(createNewEvent('focus'))
           })
 
-          it('should open a second focused time', () => {
+          it('should open a second in foreground period', () => {
             expect(getViewEvent(2).inForegroundPeriods).toEqual([
               { start: 0 as Duration, duration: 10_000 as Duration },
-              { start: 15_000 as Duration, duration: 0 as Duration, currentlyFocused: true },
+              { start: 15_000 as Duration, duration: 0 as Duration, currentInForeground: true },
             ])
           })
         })
@@ -98,7 +98,7 @@ describe('the document is focused when opening the view', () => {
   })
 })
 
-describe('the user doest not focus the window when opening the view', () => {
+describe("the user doesn't not focus the window when opening the view", () => {
   let setupBuilder: TestSetupBuilder
   let handler: jasmine.Spy
   let getViewEvent: (index: number) => ViewEvent
@@ -120,7 +120,7 @@ describe('the user doest not focus the window when opening the view', () => {
     setupBuilder.cleanup()
   })
 
-  it('should set initial view as not focused', () => {
+  it('should set initial view with any foreground period', () => {
     setupBuilder.build()
     expect(getViewEvent(0).inForegroundPeriods).toEqual([])
   })

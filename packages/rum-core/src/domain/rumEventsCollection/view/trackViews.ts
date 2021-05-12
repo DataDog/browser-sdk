@@ -21,7 +21,7 @@ import { EventCounts } from '../../trackEventCounts'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
-import { trackViewFocus, FocusPeriod } from './trackViewFocus'
+import { trackViewForeground, InForegroundPeriod } from './trackViewForeground'
 
 export interface ViewEvent {
   id: string
@@ -39,7 +39,7 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   hasReplay: boolean
-  inForegroundPeriods?: FocusPeriod[]
+  inForegroundPeriods?: InForegroundPeriod[]
 }
 
 export interface ViewCreatedEvent {
@@ -173,12 +173,12 @@ function newView(
     loadingType
   )
 
-  let stopViewFocusTracking: () => void = noop
-  let viewFocus: Partial<ViewEvent> = {}
-  let updateCurrentFocusDuration: (endTime: PreferredTime) => void = noop
+  let stopViewForegroundTracking: () => void = noop
+  let viewForeground: Partial<ViewEvent> = {}
+  let updateCurrentForegroundDuration: (endTime: PreferredTime) => void = noop
 
-  if (configuration.isEnabled('track-focus')) {
-    ;({ stop: stopViewFocusTracking, viewFocus, updateCurrentFocusDuration } = trackViewFocus(
+  if (configuration.isEnabled('track-foreground')) {
+    ;({ stop: stopViewForegroundTracking, viewForeground, updateCurrentForegroundDuration } = trackViewForeground(
       startClocks,
       scheduleViewUpdate
     ))
@@ -189,10 +189,10 @@ function newView(
   function triggerViewUpdate() {
     documentVersion += 1
     const currentEndClock = endClocks === undefined ? clocksNow() : endClocks
-    updateCurrentFocusDuration(preferredClock(currentEndClock))
+    updateCurrentForegroundDuration(preferredClock(currentEndClock))
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
       ...viewMetrics,
-      ...viewFocus,
+      ...viewForeground,
       customTimings,
       documentVersion,
       id,
@@ -213,7 +213,7 @@ function newView(
     end() {
       endClocks = clocksNow()
       stopViewMetricsTracking()
-      stopViewFocusTracking()
+      stopViewForegroundTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },
     getLocation() {

@@ -34,7 +34,7 @@ describe('trackActions', () => {
   let setupBuilder: TestSetupBuilder
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
-  let hasFocus = false
+  let isInForeground = false
 
   function mockValidatedClickAction(lifeCycle: LifeCycle, clock: Clock, target: HTMLElement) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
@@ -48,8 +48,8 @@ describe('trackActions', () => {
   }
 
   beforeEach(() => {
-    hasFocus = false
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
+    isInForeground = false
+    spyOn(Document.prototype, 'hasFocus').and.callFake(() => isInForeground)
     button = document.createElement('button')
     button.type = 'button'
     button.appendChild(document.createTextNode('Click me'))
@@ -135,9 +135,9 @@ describe('trackActions', () => {
     expect(events).toEqual([])
   })
 
-  describe('when the user has focus on the document', () => {
+  describe('when the window is in foreground on the document', () => {
     beforeEach(() => {
-      hasFocus = true
+      isInForeground = true
     })
 
     it('started actions should be marked as being in foreground', () => {

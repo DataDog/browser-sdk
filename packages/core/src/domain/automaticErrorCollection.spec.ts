@@ -154,7 +154,7 @@ describe('network error tracker', () => {
     if (isIE()) {
       pending('no fetch support')
     }
-    enabledExperimentalFeatures = ['track-focus']
+    enabledExperimentalFeatures = ['track-foreground']
 
     const errorObservable = new Observable<RawError>()
     errorObservableSpy = spyOn(errorObservable, 'notify')

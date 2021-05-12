@@ -7,11 +7,11 @@ import { doStartErrorCollection } from './errorCollection'
 describe('error collection', () => {
   let setupBuilder: TestSetupBuilder
   let addError: ReturnType<typeof doStartErrorCollection>['addError']
-  let hasFocus = false
+  let isInForeground = false
 
   beforeEach(() => {
-    hasFocus = false
-    spyOn(Document.prototype, 'hasFocus').and.callFake(() => hasFocus)
+    isInForeground = false
+    spyOn(Document.prototype, 'hasFocus').and.callFake(() => isInForeground)
 
     setupBuilder = setup()
       .withConfiguration({
@@ -100,9 +100,9 @@ describe('error collection', () => {
       })
     })
 
-    describe('when the user focus the document', () => {
+    describe('when the window is in foreground', () => {
       beforeEach(() => {
-        hasFocus = true
+        isInForeground = true
       })
       it('notified raw rum errors should be marked as being in foreground', () => {
         const { rawRumEvents } = setupBuilder.build()

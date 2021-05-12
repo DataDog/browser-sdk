@@ -51,7 +51,7 @@ function processAction(action: AutoAction | CustomAction, configuration: Configu
       },
       date: preferredTimeStamp(action.startClocks),
       type: RumEventType.ACTION as const,
-      view: configuration.isEnabled('track-focus')
+      view: configuration.isEnabled('track-foreground')
         ? {
             in_foreground: action.inForeground,
           }
