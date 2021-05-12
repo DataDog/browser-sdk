@@ -216,8 +216,8 @@ export interface ViewportResizeDimention {
 export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
 
 export interface InputValue {
-  text: string
-  isChecked: boolean
+  text?: string
+  isChecked?: boolean
 }
 
 export type InputCallback = (v: InputValue & { id: number }) => void

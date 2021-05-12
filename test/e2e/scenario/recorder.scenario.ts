@@ -474,12 +474,12 @@ describe('recorder', () => {
 
         const radioInputRecords = filterRecordsByIdAttribute(segment, 'radio-input')
         expect(radioInputRecords.length).toBe(1)
-        expect(radioInputRecords[0].data.text).toBe('on')
+        expect(radioInputRecords[0].data.text).toBe(undefined)
         expect(radioInputRecords[0].data.isChecked).toBe(true)
 
         const checkboxInputRecords = filterRecordsByIdAttribute(segment, 'checkbox-input')
         expect(checkboxInputRecords.length).toBe(1)
-        expect(checkboxInputRecords[0].data.text).toBe('on')
+        expect(checkboxInputRecords[0].data.text).toBe(undefined)
         expect(checkboxInputRecords[0].data.isChecked).toBe(true)
 
         const textareaRecords = filterRecordsByIdAttribute(segment, 'textarea')

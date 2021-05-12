@@ -158,38 +158,35 @@ export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
 function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
-    const target = event.target as Node
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement
 
     if (
       !target ||
-      !(target as Element).tagName ||
-      INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
+      !target.tagName ||
+      INPUT_TAGS.indexOf(target.tagName) < 0 ||
       nodeOrAncestorsShouldBeHidden(target) ||
       nodeOrAncestorsShouldHaveInputIgnored(target)
     ) {
       return
     }
 
-    const type: string | undefined = (target as HTMLInputElement).type
-    const text = (target as HTMLInputElement).value
-    let isChecked = false
+    const type = target.type
 
+    let inputValue: InputValue
     if (type === 'radio' || type === 'checkbox') {
-      isChecked = (target as HTMLInputElement).checked
+      inputValue = { isChecked: (target as HTMLInputElement).checked }
+    } else {
+      inputValue = { text: target.value }
     }
 
-    cbWithDedup(target, { text, isChecked })
+    cbWithDedup(target, inputValue)
 
-    // if a radio was checked
-    // the other radios with the same name attribute will be unchecked.
-    const name: string | undefined = (target as HTMLInputElement).name
-    if (type === 'radio' && name && isChecked) {
+    // If a radio was checked, other radios with the same name attribute will be unchecked.
+    const name = target.name
+    if (type === 'radio' && name && (target as HTMLInputElement).checked) {
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
-          cbWithDedup(el, {
-            isChecked: !isChecked,
-            text: (el as HTMLInputElement).value,
-          })
+          cbWithDedup(el, { isChecked: false })
         }
       })
     }
