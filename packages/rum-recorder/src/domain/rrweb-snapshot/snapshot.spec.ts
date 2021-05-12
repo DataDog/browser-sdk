@@ -80,7 +80,6 @@ describe('serializeNodeWithId', () => {
   describe('ignores some nodes', () => {
     const defaultOptions = {
       doc: document,
-      skipChild: false,
       map: {},
     }
 

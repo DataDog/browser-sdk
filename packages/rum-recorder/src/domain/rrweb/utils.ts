@@ -1,30 +1,4 @@
-import { INode } from '../rrweb-snapshot'
-import { HookResetter, Mirror } from './types'
-
-export const mirror: Mirror = {
-  map: {},
-  getId(n) {
-    // if n is not a serialized INode, use -1 as its id.
-    if (!n.__sn) {
-      return -1
-    }
-    return n.__sn.id
-  },
-  getNode(id) {
-    return mirror.map[id] || null
-  },
-  // TODO: use a weakmap to get rid of manually memory management
-  removeNodeFromMap(n) {
-    const id = n.__sn && n.__sn.id
-    delete mirror.map[id]
-    if (n.childNodes) {
-      forEach(n.childNodes, (child: ChildNode) => mirror.removeNodeFromMap((child as Node) as INode))
-    }
-  },
-  has(id) {
-    return mirror.map.hasOwnProperty(id)
-  },
-}
+import { HookResetter } from './types'
 
 export function hookSetter<T>(
   target: T,
@@ -62,21 +36,6 @@ export function getWindowWidth(): number {
     (document.documentElement && document.documentElement.clientWidth) ||
     (document.body && document.body.clientWidth)
   )
-}
-
-export function isAncestorRemoved(target: INode): boolean {
-  const id = mirror.getId(target)
-  if (!mirror.has(id)) {
-    return true
-  }
-  if (target.parentNode && target.parentNode.nodeType === target.DOCUMENT_NODE) {
-    return false
-  }
-  // if the root is not document, it means the node is not in the DOM tree anymore
-  if (!target.parentNode) {
-    return true
-  }
-  return isAncestorRemoved((target.parentNode as unknown) as INode)
 }
 
 export function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
