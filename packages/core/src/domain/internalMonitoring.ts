@@ -1,4 +1,5 @@
 import { combine, Context } from '../tools/context'
+import { display } from '../tools/display'
 import { toStackTraceString } from '../tools/error'
 import { assign, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
 import { Batch, HttpRequest } from '../transport/transport'
@@ -191,12 +192,12 @@ export function setDebugMode(debugMode: boolean) {
 function logErrorIfDebug(e: any) {
   if (monitoringConfiguration.debugMode) {
     // Log as warn to not forward the logs.
-    console.warn('[INTERNAL ERROR]', e)
+    display.warn('[INTERNAL ERROR]', e)
   }
 }
 
 function logMessageIfDebug(message: any) {
   if (monitoringConfiguration.debugMode) {
-    console.log('[MONITORING MESSAGE]', message)
+    display.log('[MONITORING MESSAGE]', message)
   }
 }

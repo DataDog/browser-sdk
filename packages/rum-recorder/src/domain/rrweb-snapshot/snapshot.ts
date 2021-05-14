@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
@@ -367,7 +368,7 @@ export function serializeNodeWithId(
   })
   if (!serializedNode) {
     // TODO: dev only
-    console.warn(n, 'not serialized')
+    display.warn(n, 'not serialized')
     return null
   }
 

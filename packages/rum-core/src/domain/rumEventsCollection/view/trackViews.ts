@@ -9,6 +9,7 @@ import {
   clocksNow,
   preferredClock,
   clocksOrigin,
+  display,
 } from '@datadog/browser-core'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
@@ -231,7 +232,7 @@ function newView(
 function sanitizeTiming(name: string) {
   const sanitized = name.replace(/[^a-zA-Z0-9-_.@$]/g, '_')
   if (sanitized !== name) {
-    console.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
+    display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
 }

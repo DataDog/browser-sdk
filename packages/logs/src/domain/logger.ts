@@ -6,6 +6,7 @@ import {
   ErrorSource,
   includes,
   monitored,
+  display,
 } from '@datadog/browser-core'
 
 export const StatusType = {
@@ -62,7 +63,7 @@ export class Logger {
       }
 
       if (includes(handlers, HandlerType.console)) {
-        console.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
+        display.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
       }
     }
   }
