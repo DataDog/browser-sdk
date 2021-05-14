@@ -5,7 +5,7 @@ import { serializeNodeWithId } from './serialize'
 describe('serializeNodeWithId', () => {
   describe('ignores some nodes', () => {
     const defaultOptions = {
-      doc: document,
+      document,
       map: {},
     }
 

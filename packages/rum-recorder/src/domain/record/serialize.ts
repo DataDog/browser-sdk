@@ -11,27 +11,22 @@ import {
   transformAttribute,
 } from './serializationUtils'
 
-export function serializeDocument(n: Document): SerializedNodeWithId {
+interface SerializeOptions {
+  document: Document
+  map: IdNodeMap
+  ignoreWhiteSpace?: boolean
+}
+
+export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
-  return serializeNodeWithId(n, {
-    doc: n,
+  return serializeNodeWithId(document, {
+    document,
     map: {},
   })!
 }
 
-export function serializeNodeWithId(
-  n: Node,
-  options: {
-    doc: Document
-    map: IdNodeMap
-    preserveWhiteSpace?: boolean
-  }
-): SerializedNodeWithId | null {
-  const { doc, map } = options
-  let { preserveWhiteSpace = true } = options
-  const serializedNode = serializeNode(n, {
-    doc,
-  })
+export function serializeNodeWithId(n: Node, options: SerializeOptions): SerializedNodeWithId | null {
+  const serializedNode = serializeNode(n, options)
   if (!serializedNode) {
     // TODO: dev only
     display.warn(n, 'not serialized')
@@ -44,7 +39,7 @@ export function serializeNodeWithId(
     id = getSerializedNodeId(n)
   } else if (
     nodeShouldBeIgnored(serializedNode) ||
-    (!preserveWhiteSpace &&
+    (options.ignoreWhiteSpace &&
       serializedNode.type === NodeType.Text &&
       !serializedNode.isStyle &&
       !serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
@@ -59,7 +54,7 @@ export function serializeNodeWithId(
   if (id === IGNORED_NODE_ID) {
     return null
   }
-  map[id] = true
+  options.map[id] = true
   let recordChild = true
   if (serializedNode.type === NodeType.Element) {
     recordChild = !serializedNode.shouldBeHidden
@@ -67,19 +62,16 @@ export function serializeNodeWithId(
     delete serializedNode.shouldBeHidden
   }
   if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
+    let childrenOptions = options
     if (
       serializedNode.type === NodeType.Element &&
       serializedNode.tagName === 'head'
       // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
     ) {
-      preserveWhiteSpace = false
+      childrenOptions = { ...childrenOptions, ignoreWhiteSpace: true }
     }
     for (const childN of Array.from(n.childNodes)) {
-      const serializedChildNode = serializeNodeWithId(childN, {
-        doc,
-        map,
-        preserveWhiteSpace,
-      })
+      const serializedChildNode = serializeNodeWithId(childN, childrenOptions)
       if (serializedChildNode) {
         serializedNode.childNodes.push(serializedChildNode)
       }
@@ -88,13 +80,7 @@ export function serializeNodeWithId(
   return serializedNodeWithId
 }
 
-function serializeNode(
-  n: Node,
-  options: {
-    doc: Document
-  }
-): SerializedNode | false {
-  const { doc } = options
+function serializeNode(n: Node, options: SerializeOptions): SerializedNode | false {
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
       return {
@@ -113,11 +99,11 @@ function serializeNode(
       const tagName = getValidTagName((n as HTMLElement).tagName)
       let attributes: Attributes = {}
       for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
-        attributes[name] = transformAttribute(doc, name, value)
+        attributes[name] = transformAttribute(options.document, name, value)
       }
       // remote css
       if (tagName === 'link') {
-        const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
+        const stylesheet = Array.from(options.document.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
         const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
         if (cssText) {
           delete attributes.rel

@@ -163,7 +163,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, { doc: document, map: serializedNodesIdMap })
+    const serializedNode = serializeNodeWithId(node, { document, map: serializedNodesIdMap })
     if (!serializedNode) {
       continue
     }
