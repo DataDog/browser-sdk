@@ -11,45 +11,81 @@ import {
   transformAttribute,
 } from './serializationUtils'
 
-const tagNameRegex = /[^a-z1-6-_]/
-
-let nextId = 1
-function generateNextId(): number {
-  return nextId++
+export function serializeDocument(n: Document): SerializedNodeWithId {
+  // We are sure that Documents are never ignored, so this function never returns null
+  return serializeNodeWithId(n, {
+    doc: n,
+    map: {},
+  })!
 }
 
-function getValidTagName(tagName: string): string {
-  const processedTagName = tagName.toLowerCase().trim()
-
-  if (tagNameRegex.test(processedTagName)) {
-    // if the tag name is odd and we cannot extract
-    // anything from the string, then we return a
-    // generic div
-    return 'div'
+export function serializeNodeWithId(
+  n: Node,
+  options: {
+    doc: Document
+    map: IdNodeMap
+    preserveWhiteSpace?: boolean
   }
-
-  return processedTagName
-}
-
-function getCssRulesString(s: CSSStyleSheet): string | null {
-  try {
-    const rules = s.rules || s.cssRules
-    return rules ? Array.from(rules).map(getCssRuleString).join('') : null
-  } catch (error) {
+): SerializedNodeWithId | null {
+  const { doc, map } = options
+  let { preserveWhiteSpace = true } = options
+  const serializedNode = serializeNode(n, {
+    doc,
+  })
+  if (!serializedNode) {
+    // TODO: dev only
+    display.warn(n, 'not serialized')
     return null
   }
-}
 
-function getCssRuleString(rule: CSSRule): string {
-  return isCSSImportRule(rule) ? getCssRulesString(rule.styleSheet) || '' : rule.cssText
-}
-
-function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
-  return 'styleSheet' in rule
-}
-
-function isSVGElement(el: Element): boolean {
-  return el.tagName === 'svg' || el instanceof SVGElement
+  let id
+  // Try to reuse the previous id
+  if (hasSerializedNode(n)) {
+    id = getSerializedNodeId(n)
+  } else if (
+    nodeShouldBeIgnored(serializedNode) ||
+    (!preserveWhiteSpace &&
+      serializedNode.type === NodeType.Text &&
+      !serializedNode.isStyle &&
+      !serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
+  ) {
+    id = IGNORED_NODE_ID
+  } else {
+    id = generateNextId()
+  }
+  const serializedNodeWithId = serializedNode as SerializedNodeWithId
+  serializedNodeWithId.id = id
+  setSerializedNode(n, serializedNodeWithId)
+  if (id === IGNORED_NODE_ID) {
+    return null
+  }
+  map[id] = true
+  let recordChild = true
+  if (serializedNode.type === NodeType.Element) {
+    recordChild = !serializedNode.shouldBeHidden
+    // this property was not needed in replay side
+    delete serializedNode.shouldBeHidden
+  }
+  if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
+    if (
+      serializedNode.type === NodeType.Element &&
+      serializedNode.tagName === 'head'
+      // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
+    ) {
+      preserveWhiteSpace = false
+    }
+    for (const childN of Array.from(n.childNodes)) {
+      const serializedChildNode = serializeNodeWithId(childN, {
+        doc,
+        map,
+        preserveWhiteSpace,
+      })
+      if (serializedChildNode) {
+        serializedNode.childNodes.push(serializedChildNode)
+      }
+    }
+  }
+  return serializedNodeWithId
 }
 
 function serializeNode(
@@ -183,6 +219,46 @@ function serializeNode(
   }
 }
 
+let nextId = 1
+function generateNextId(): number {
+  return nextId++
+}
+
+const TAG_NAME_REGEX = /[^a-z1-6-_]/
+function getValidTagName(tagName: string): string {
+  const processedTagName = tagName.toLowerCase().trim()
+
+  if (TAG_NAME_REGEX.test(processedTagName)) {
+    // if the tag name is odd and we cannot extract
+    // anything from the string, then we return a
+    // generic div
+    return 'div'
+  }
+
+  return processedTagName
+}
+
+function getCssRulesString(s: CSSStyleSheet): string | null {
+  try {
+    const rules = s.rules || s.cssRules
+    return rules ? Array.from(rules).map(getCssRuleString).join('') : null
+  } catch (error) {
+    return null
+  }
+}
+
+function getCssRuleString(rule: CSSRule): string {
+  return isCSSImportRule(rule) ? getCssRulesString(rule.styleSheet) || '' : rule.cssText
+}
+
+function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
+  return 'styleSheet' in rule
+}
+
+function isSVGElement(el: Element): boolean {
+  return el.tagName === 'svg' || el instanceof SVGElement
+}
+
 function lowerIfExists(maybeAttr: string | number | boolean): string {
   if (maybeAttr === undefined) {
     return ''
@@ -258,81 +334,4 @@ function nodeShouldBeIgnored(sn: SerializedNode): boolean {
   }
 
   return false
-}
-
-export function serializeNodeWithId(
-  n: Node,
-  options: {
-    doc: Document
-    map: IdNodeMap
-    preserveWhiteSpace?: boolean
-  }
-): SerializedNodeWithId | null {
-  const { doc, map } = options
-  let { preserveWhiteSpace = true } = options
-  const serializedNode = serializeNode(n, {
-    doc,
-  })
-  if (!serializedNode) {
-    // TODO: dev only
-    display.warn(n, 'not serialized')
-    return null
-  }
-
-  let id
-  // Try to reuse the previous id
-  if (hasSerializedNode(n)) {
-    id = getSerializedNodeId(n)
-  } else if (
-    nodeShouldBeIgnored(serializedNode) ||
-    (!preserveWhiteSpace &&
-      serializedNode.type === NodeType.Text &&
-      !serializedNode.isStyle &&
-      !serializedNode.textContent.replace(/^\s+|\s+$/gm, '').length)
-  ) {
-    id = IGNORED_NODE_ID
-  } else {
-    id = generateNextId()
-  }
-  const serializedNodeWithId = serializedNode as SerializedNodeWithId
-  serializedNodeWithId.id = id
-  setSerializedNode(n, serializedNodeWithId)
-  if (id === IGNORED_NODE_ID) {
-    return null
-  }
-  map[id] = true
-  let recordChild = true
-  if (serializedNode.type === NodeType.Element) {
-    recordChild = !serializedNode.shouldBeHidden
-    // this property was not needed in replay side
-    delete serializedNode.shouldBeHidden
-  }
-  if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
-    if (
-      serializedNode.type === NodeType.Element &&
-      serializedNode.tagName === 'head'
-      // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
-    ) {
-      preserveWhiteSpace = false
-    }
-    for (const childN of Array.from(n.childNodes)) {
-      const serializedChildNode = serializeNodeWithId(childN, {
-        doc,
-        map,
-        preserveWhiteSpace,
-      })
-      if (serializedChildNode) {
-        serializedNode.childNodes.push(serializedChildNode)
-      }
-    }
-  }
-  return serializedNodeWithId
-}
-
-export function serializeDocument(n: Document): SerializedNodeWithId {
-  // We are sure that Documents are never ignored, so this function never returns null
-  return serializeNodeWithId(n, {
-    doc: n,
-    map: {},
-  })!
 }
