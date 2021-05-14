@@ -148,6 +148,7 @@ export interface RumContext {
   }
   _dd: {
     format_version: 2
+    drift: number
   }
 }
 

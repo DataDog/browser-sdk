@@ -1,15 +1,6 @@
 import { Clock, createNewEvent, isIE } from '../../../../core/test/specHelper'
-import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
-import {
-  RecordType,
-  IncrementalSource,
-  MutationData,
-  FullSnapshotRecord,
-  RawRecord,
-  IncrementalSnapshotRecord,
-  FocusRecord,
-} from '../../types'
-import { NodeType } from '../rrweb-snapshot/types'
+import { collectAsyncCalls } from '../../../test/utils'
+import { RecordType, IncrementalSource, RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
 import { record } from './record'
 import { RecordAPI } from './types'
 
@@ -35,78 +26,6 @@ describe('record', () => {
     clock?.cleanup()
     sandbox.remove()
     recordApi?.stop()
-  })
-
-  it('records full snapshots and DOM mutations', (done) => {
-    // TODO: remove when new-mutation-observer is enabled
-    startRecording()
-
-    const p = document.createElement('p')
-    const span = document.createElement('span')
-
-    setTimeout(() => {
-      sandbox.appendChild(p)
-      p.appendChild(span)
-      sandbox.removeChild(document.querySelector('input')!)
-    }, 0)
-
-    setTimeout(() => {
-      span.innerText = 'test'
-      recordApi.takeFullSnapshot()
-    }, 10)
-
-    setTimeout(() => {
-      p.removeChild(span)
-      sandbox.appendChild(span)
-    }, 10)
-
-    waitEmitCalls(9, () => {
-      const records = getEmittedRecords()
-      expect(records[0].type).toBe(RecordType.Meta)
-      expect(records[1].type).toBe(RecordType.Focus)
-
-      expect(records[2].type).toBe(RecordType.FullSnapshot)
-
-      expect(records[3].type).toBe(RecordType.IncrementalSnapshot)
-
-      const { validate: validateMutationPayload, expectNewNode, expectInitialNode } = createMutationPayloadValidator(
-        (records[2] as FullSnapshotRecord).data.node
-      )
-
-      const p = expectNewNode({ type: NodeType.Element, tagName: 'p' })
-      const span = expectNewNode({ type: NodeType.Element, tagName: 'span' })
-      const text = expectNewNode({ type: NodeType.Text, textContent: 'test' })
-      const sandbox = expectInitialNode({ idAttribute: 'sandbox' })
-
-      validateMutationPayload((records[3] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [
-          { parent: sandbox, node: p },
-          { parent: p, node: span },
-        ],
-        removes: [{ node: expectInitialNode({ tag: 'input' }), parent: sandbox }],
-      })
-
-      expect(records[4].type).toBe(RecordType.IncrementalSnapshot)
-      validateMutationPayload((records[4] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [{ parent: span, node: text }],
-      })
-
-      expect(records[5].type).toBe(RecordType.Meta)
-      expect(records[6].type).toBe(RecordType.Focus)
-
-      expect(records[7].type).toBe(RecordType.FullSnapshot)
-
-      expect(records[8].type).toBe(RecordType.IncrementalSnapshot)
-      validateMutationPayload((records[8] as IncrementalSnapshotRecord).data as MutationData, {
-        adds: [
-          { parent: sandbox, node: span },
-          { parent: span, node: text },
-        ],
-        removes: [{ parent: p, node: span }],
-      })
-
-      expectNoExtraEmitCalls(done)
-    })
   })
 
   it('captures stylesheet rules', (done) => {
@@ -263,7 +182,6 @@ describe('record', () => {
   function startRecording() {
     recordApi = record({
       emit: emitSpy,
-      useNewMutationObserver: false,
     })
   }
 
@@ -276,6 +194,5 @@ function createDOMSandbox() {
   const sandbox = document.createElement('div')
   sandbox.id = 'sandbox'
   document.body.appendChild(sandbox)
-  sandbox.appendChild(document.createElement('input'))
   return sandbox
 }

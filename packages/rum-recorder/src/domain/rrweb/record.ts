@@ -1,13 +1,13 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { snapshot } from '../rrweb-snapshot'
+import { serializeDocument } from '../rrweb-snapshot'
 import { RecordType } from '../../types'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
-import { getWindowHeight, getWindowWidth, mirror } from './utils'
-import { MutationController } from './mutation'
+import { getWindowHeight, getWindowWidth } from './utils'
+import { MutationController } from './mutationObserver'
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emit, useNewMutationObserver } = options
+  const { emit } = options
   // runtime checks for user options
   if (!emit) {
     throw new Error('emit function is required')
@@ -34,16 +34,9 @@ export function record(options: RecordOptions): RecordAPI {
       type: RecordType.Focus,
     })
 
-    const [node, idNodeMap] = snapshot(document)
-
-    if (!node) {
-      return console.warn('Failed to snapshot the document')
-    }
-
-    mirror.map = idNodeMap
     emit({
       data: {
-        node,
+        node: serializeDocument(document),
         initialOffset: {
           left:
             window.pageXOffset !== undefined
@@ -71,7 +64,6 @@ export function record(options: RecordOptions): RecordAPI {
 
     handlers.push(
       initObservers({
-        useNewMutationObserver,
         mutationController,
         inputCb: (v) =>
           emit({
