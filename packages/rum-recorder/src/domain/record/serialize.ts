@@ -1,7 +1,19 @@
 import { display } from '@datadog/browser-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { nodeShouldBeHidden } from './privacy'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
+import {
+  SerializedNode,
+  SerializedNodeWithId,
+  NodeType,
+  Attributes,
+  IdNodeMap,
+  DocumentNode,
+  DocumentTypeNode,
+  ElementNode,
+  TextNode,
+  CDataNode,
+  CommentNode,
+} from './types'
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
@@ -83,125 +95,151 @@ export function serializeNodeWithId(n: Node, options: SerializeOptions): Seriali
 function serializeNode(n: Node, options: SerializeOptions): SerializedNode | false {
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
-      return {
-        type: NodeType.Document,
-        childNodes: [],
-      }
+      return serializeDocumentNode()
     case n.DOCUMENT_TYPE_NODE:
-      return {
-        type: NodeType.DocumentType,
-        name: (n as DocumentType).name,
-        publicId: (n as DocumentType).publicId,
-        systemId: (n as DocumentType).systemId,
-      }
+      return serializeDocumentTypeNode(n as DocumentType)
     case n.ELEMENT_NODE:
-      const shouldBeHidden = nodeShouldBeHidden(n)
-      const tagName = getValidTagName((n as HTMLElement).tagName)
-      let attributes: Attributes = {}
-      for (const { name, value } of Array.from((n as HTMLElement).attributes)) {
-        attributes[name] = transformAttribute(options.document, name, value)
-      }
-      // remote css
-      if (tagName === 'link') {
-        const stylesheet = Array.from(options.document.styleSheets).find((s) => s.href === (n as HTMLLinkElement).href)
-        const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
-        if (cssText) {
-          delete attributes.rel
-          delete attributes.href
-          attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
-        }
-      }
-      // dynamic stylesheet
-      if (
-        tagName === 'style' &&
-        (n as HTMLStyleElement).sheet &&
-        // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
-        !((n as HTMLElement).innerText || (n as HTMLElement).textContent || '').trim().length
-      ) {
-        const cssText = getCssRulesString((n as HTMLStyleElement).sheet as CSSStyleSheet)
-        if (cssText) {
-          attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
-        }
-      }
-      // form fields
-      if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
-        const value = (n as HTMLInputElement | HTMLTextAreaElement).value
-        if (
-          attributes.type !== 'radio' &&
-          attributes.type !== 'checkbox' &&
-          attributes.type !== 'submit' &&
-          attributes.type !== 'button' &&
-          value
-        ) {
-          attributes.value = value
-        } else if ((n as HTMLInputElement).checked) {
-          attributes.checked = (n as HTMLInputElement).checked
-        }
-      }
-      if (tagName === 'option') {
-        const selectValue = (n as HTMLOptionElement).parentElement
-        if (attributes.value === (selectValue as HTMLSelectElement).value) {
-          attributes.selected = (n as HTMLOptionElement).selected
-        }
-      }
-      // media elements
-      if (tagName === 'audio' || tagName === 'video') {
-        attributes.rr_mediaState = (n as HTMLMediaElement).paused ? 'paused' : 'played'
-      }
-      // scroll
-      if ((n as HTMLElement).scrollLeft) {
-        attributes.rr_scrollLeft = (n as HTMLElement).scrollLeft
-      }
-      if ((n as HTMLElement).scrollTop) {
-        attributes.rr_scrollTop = (n as HTMLElement).scrollTop
-      }
-      if (shouldBeHidden) {
-        const { width, height } = (n as HTMLElement).getBoundingClientRect()
-        attributes = {
-          id: attributes.id,
-          class: attributes.class,
-          rr_width: `${width}px`,
-          rr_height: `${height}px`,
-          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
-        }
-      }
-      return {
-        type: NodeType.Element,
-        tagName,
-        attributes,
-        childNodes: [],
-        isSVG: isSVGElement(n as Element) || undefined,
-        shouldBeHidden,
-      }
+      return serializeElementNode(n as Element, options)
     case n.TEXT_NODE:
-      // The parent node may not be a html element which has a tagName attribute.
-      // So just let it be undefined which is ok in this use case.
-      const parentTagName = n.parentNode && (n.parentNode as HTMLElement).tagName
-      let textContent = (n as Text).textContent
-      const isStyle = parentTagName === 'STYLE' ? true : undefined
-      if (isStyle && textContent) {
-        textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
-      }
-      if (parentTagName === 'SCRIPT') {
-        textContent = 'SCRIPT_PLACEHOLDER'
-      }
-      return {
-        type: NodeType.Text,
-        textContent: textContent || '',
-        isStyle,
-      }
+      return serializeTextNode(n as Text)
     case n.CDATA_SECTION_NODE:
-      return {
-        type: NodeType.CDATA,
-        textContent: '',
-      }
+      return serializeCDataNode()
     case n.COMMENT_NODE:
-      return {
-        type: NodeType.Comment,
-        textContent: (n as Comment).textContent || '',
-      }
+      return serializeCommentNode(n as Comment)
     default:
       return false
+  }
+}
+
+function serializeDocumentNode(): DocumentNode {
+  return {
+    type: NodeType.Document,
+    childNodes: [],
+  }
+}
+
+function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode {
+  return {
+    type: NodeType.DocumentType,
+    name: documentType.name,
+    publicId: documentType.publicId,
+    systemId: documentType.systemId,
+  }
+}
+
+function serializeElementNode(element: Element, options: SerializeOptions): ElementNode {
+  const shouldBeHidden = nodeShouldBeHidden(element)
+  const tagName = getValidTagName(element.tagName)
+  let attributes: Attributes = {}
+  for (const { name, value } of Array.from(element.attributes)) {
+    attributes[name] = transformAttribute(options.document, name, value)
+  }
+  // remote css
+  if (tagName === 'link') {
+    const stylesheet = Array.from(options.document.styleSheets).find(
+      (s) => s.href === (element as HTMLLinkElement).href
+    )
+    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
+    if (cssText) {
+      delete attributes.rel
+      delete attributes.href
+      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
+    }
+  }
+  // dynamic stylesheet
+  if (
+    tagName === 'style' &&
+    (element as HTMLStyleElement).sheet &&
+    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
+    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
+  ) {
+    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
+    if (cssText) {
+      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
+    }
+  }
+  // form fields
+  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    const value = (element as HTMLInputElement | HTMLTextAreaElement).value
+    if (
+      attributes.type !== 'radio' &&
+      attributes.type !== 'checkbox' &&
+      attributes.type !== 'submit' &&
+      attributes.type !== 'button' &&
+      value
+    ) {
+      attributes.value = value
+    } else if ((element as HTMLInputElement).checked) {
+      attributes.checked = (element as HTMLInputElement).checked
+    }
+  }
+  if (tagName === 'option') {
+    const selectValue = (element as HTMLOptionElement).parentElement
+    if (attributes.value === (selectValue as HTMLSelectElement).value) {
+      attributes.selected = (element as HTMLOptionElement).selected
+    }
+  }
+  // media elements
+  if (tagName === 'audio' || tagName === 'video') {
+    attributes.rr_mediaState = (element as HTMLMediaElement).paused ? 'paused' : 'played'
+  }
+  // scroll
+  if (element.scrollLeft) {
+    attributes.rr_scrollLeft = element.scrollLeft
+  }
+  if (element.scrollTop) {
+    attributes.rr_scrollTop = element.scrollTop
+  }
+  if (shouldBeHidden) {
+    const { width, height } = element.getBoundingClientRect()
+    attributes = {
+      id: attributes.id,
+      class: attributes.class,
+      rr_width: `${width}px`,
+      rr_height: `${height}px`,
+      [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
+    }
+  }
+  return {
+    type: NodeType.Element,
+    tagName,
+    attributes,
+    childNodes: [],
+    isSVG: isSVGElement(element) || undefined,
+    shouldBeHidden,
+  }
+}
+
+function serializeTextNode(text: Text): TextNode {
+  // The parent node may not be a html element which has a tagName attribute.
+  // So just let it be undefined which is ok in this use case.
+  const parentTagName = text.parentNode && (text.parentNode as HTMLElement).tagName
+  let textContent = text.textContent
+  const isStyle = parentTagName === 'STYLE' ? true : undefined
+  if (isStyle && textContent) {
+    textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
+  }
+  if (parentTagName === 'SCRIPT') {
+    textContent = 'SCRIPT_PLACEHOLDER'
+  }
+  return {
+    type: NodeType.Text,
+    textContent: textContent || '',
+    isStyle,
+  }
+}
+
+function serializeCDataNode(): CDataNode {
+  return {
+    type: NodeType.CDATA,
+    textContent: '',
+  }
+}
+
+function serializeCommentNode(comment: Comment): CommentNode {
+  return {
+    type: NodeType.Comment,
+    textContent: comment.textContent || '',
   }
 }
 
