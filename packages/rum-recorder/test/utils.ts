@@ -1,4 +1,8 @@
-import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
+import {
+  DeflateWorker,
+  DeflateWorkerAction,
+  DeflateWorkerListener,
+} from '../src/domain/segmentCollection/deflateWorker'
 import {
   IncrementalSource,
   MutationPayload,

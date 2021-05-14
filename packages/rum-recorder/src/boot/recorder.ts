@@ -2,7 +2,7 @@ import { Configuration } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
 
 import { record } from '../domain/record'
-import { startSegmentCollection } from '../domain/segmentCollection'
+import { startSegmentCollection } from '../domain/segmentCollection/segmentCollection'
 import { send } from '../transport/send'
 import { RawRecord, RecordType } from '../types'
 

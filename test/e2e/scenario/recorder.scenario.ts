@@ -1,5 +1,5 @@
 import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum-recorder/cjs/types'
-import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum-recorder/cjs/domain/rrweb/types'
+import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum-recorder/cjs/domain/record/types'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
