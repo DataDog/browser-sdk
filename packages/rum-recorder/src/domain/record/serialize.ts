@@ -1,6 +1,6 @@
 import { display } from '@datadog/browser-core'
-import { nodeShouldBeHidden } from '../privacy'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
+import { nodeShouldBeHidden } from './privacy'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
 import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE_ID, setSerializedNode } from './serializationUtils'
 

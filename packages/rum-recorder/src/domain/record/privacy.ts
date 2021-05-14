@@ -4,7 +4,7 @@ import {
   PRIVACY_CLASS_HIDDEN,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_CLASS_INPUT_IGNORED,
-} from '../constants'
+} from '../../constants'
 
 // PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
 // events we want to ignore by default, as they often contain PII.

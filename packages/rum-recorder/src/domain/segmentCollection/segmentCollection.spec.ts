@@ -7,10 +7,10 @@ import {
   mockClock,
   restorePageVisibility,
   setPageVisibility,
-} from '../../../core/test/specHelper'
-import { Record, RecordType, SegmentContext, SegmentMeta } from '../types'
-import { MockWorker } from '../../test/utils'
-import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../transport/send'
+} from '@datadog/browser-core/test/specHelper'
+import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
+import { MockWorker } from '../../../test/utils'
+import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
