@@ -66,17 +66,17 @@ describe('logs entry', () => {
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
-      spyOn(display, 'warn')
+      spyOn(display, 'error')
       monitor(() => {
         throw new Error()
       })()
-      expect(display.warn).toHaveBeenCalledTimes(0)
+      expect(display.error).toHaveBeenCalledTimes(0)
 
       setDebug(true)
       monitor(() => {
         throw new Error()
       })()
-      expect(display.warn).toHaveBeenCalledTimes(1)
+      expect(display.error).toHaveBeenCalledTimes(1)
 
       setDebug(false)
     })
