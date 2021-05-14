@@ -14,7 +14,7 @@ import { startLogs, LogsUserConfiguration } from './logs'
 
 export interface LoggerConfiguration {
   level?: StatusType
-  handler?: HandlerType
+  handler?: HandlerType | HandlerType[]
   context?: object
 }
 

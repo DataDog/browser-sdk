@@ -1,4 +1,12 @@
-import { combine, Context, ContextValue, createContextManager, ErrorSource, monitored } from '@datadog/browser-core'
+import {
+  combine,
+  Context,
+  ContextValue,
+  createContextManager,
+  ErrorSource,
+  includes,
+  monitored,
+} from '@datadog/browser-core'
 
 export const StatusType = {
   debug: 'debug',
@@ -37,7 +45,7 @@ export class Logger {
 
   constructor(
     private sendLog: (message: LogsMessage) => void,
-    private handlerType: HandlerType = HandlerType.http,
+    private handlerType: HandlerType | HandlerType[] = HandlerType.http,
     private level: StatusType = StatusType.debug,
     loggerContext: Context = {}
   ) {
@@ -47,19 +55,14 @@ export class Logger {
   @monitored
   log(message: string, messageContext?: object, status: StatusType = StatusType.info) {
     if (STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[this.level]) {
-      switch (this.handlerType) {
-        case HandlerType.http:
-          this.sendLog({
-            message,
-            status,
-            ...combine(this.contextManager.get(), messageContext),
-          })
-          break
-        case HandlerType.console:
-          console.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
-          break
-        case HandlerType.silent:
-          break
+      const handlers = Array.isArray(this.handlerType) ? this.handlerType : [this.handlerType]
+
+      if (includes(handlers, HandlerType.http)) {
+        this.sendLog({ message, status, ...combine(this.contextManager.get(), messageContext) })
+      }
+
+      if (includes(handlers, HandlerType.console)) {
+        console.log(`${status}: ${message}`, combine(this.contextManager.get(), messageContext))
       }
     }
   }
@@ -97,7 +100,7 @@ export class Logger {
     this.contextManager.remove(key)
   }
 
-  setHandler(handler: HandlerType) {
+  setHandler(handler: HandlerType | HandlerType[]) {
     this.handlerType = handler
   }
 

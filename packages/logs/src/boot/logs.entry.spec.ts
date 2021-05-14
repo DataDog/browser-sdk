@@ -278,6 +278,18 @@ describe('logs entry', () => {
         })
       })
 
+      it('should be configurable with multiple handlers', () => {
+        const logger = LOGS.createLogger('foo', {
+          handler: [HandlerType.console, HandlerType.http],
+          level: StatusType.debug,
+        })
+
+        logger.debug('message')
+
+        expect(sendLogsSpy).toHaveBeenCalled()
+        expect(console.log).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
+      })
+
       it('should have their name in their context', () => {
         const logger = LOGS.createLogger('foo')
 
