@@ -3,9 +3,8 @@ import { nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,
+  nodeAndAncestorsHaveSerializedNode,
   NodeWithSerializedNode,
-  nodeIsIgnored,
-  nodeOrAncestorsIsIgnored,
   transformAttribute,
 } from './serializationUtils'
 import { serializeNodeWithId } from './serialize'
@@ -77,8 +76,7 @@ function processMutations(mutations: MutationRecord[], mutationCallback: Mutatio
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<MutationRecord> =>
       document.contains(mutation.target) &&
-      hasSerializedNode(mutation.target) &&
-      !nodeOrAncestorsIsIgnored(mutation.target) &&
+      nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       !nodeOrAncestorsShouldBeHidden(mutation.target)
   )
 
@@ -195,7 +193,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
   function getNextSibling(node: Node): null | number {
     let nextSibling = node.nextSibling
     while (nextSibling) {
-      if (hasSerializedNode(nextSibling) && !nodeIsIgnored(nextSibling)) {
+      if (hasSerializedNode(nextSibling)) {
         return getSerializedNodeId(nextSibling)
       }
       nextSibling = nextSibling.nextSibling

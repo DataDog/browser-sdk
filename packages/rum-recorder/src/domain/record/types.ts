@@ -284,12 +284,7 @@ export type CDataNode = {
   textContent: ''
 }
 
-export type CommentNode = {
-  type: NodeType.Comment
-  textContent: string
-}
-
-export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode | CommentNode
+export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode
 
 export type SerializedNodeWithId = SerializedNode & { id: number }
 

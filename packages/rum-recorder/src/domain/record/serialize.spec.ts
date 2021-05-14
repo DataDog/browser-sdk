@@ -1,5 +1,5 @@
 import { isIE } from '../../../../core/test/specHelper'
-import { IGNORED_NODE_ID } from './serializationUtils'
+import { hasSerializedNode } from './serializationUtils'
 import { serializeNodeWithId } from './serialize'
 
 describe('serializeNodeWithId', () => {
@@ -21,10 +21,10 @@ describe('serializeNodeWithId', () => {
       expect(map).toEqual({})
     })
 
-    it('sets ignored serialized node id to IGNORED_NODE_ID', () => {
+    it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, defaultOptions)
-      expect((scriptElement as any).__sn).toEqual(jasmine.objectContaining({ id: IGNORED_NODE_ID }))
+      expect(hasSerializedNode(scriptElement)).toBe(false)
     })
 
     it('ignores script tags', () => {
