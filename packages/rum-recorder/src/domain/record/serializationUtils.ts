@@ -1,3 +1,4 @@
+import { buildUrl } from '@datadog/browser-core'
 import { SerializedNodeWithId } from './types'
 
 export const IGNORED_NODE_ID = -2
@@ -38,101 +39,45 @@ export function nodeOrAncestorsIsIgnored(n: NodeWithSerializedNode) {
 }
 
 export function transformAttribute(doc: Document, name: string, value: string): string {
-  // relative path in attribute
-  if (name === 'src' || (name === 'href' && value)) {
-    return makeUrlAbsolute(doc, value)
-  }
-  if (name === 'srcset' && value) {
-    return makeSrcsetUrlsAbsolute(doc, value)
-  }
-  if (name === 'style' && value) {
-    return makeStylesheetUrlsAbsolute(value, location.href)
+  if (value) {
+    if (name === 'src' || name === 'href') {
+      return makeUrlAbsolute(value, doc.location.href)
+    }
+    if (name === 'srcset') {
+      return makeSrcsetUrlsAbsolute(value, doc.location.href)
+    }
+    if (name === 'style') {
+      return makeStylesheetUrlsAbsolute(value, doc.location.href)
+    }
   }
   return value
 }
 
 const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
-const RELATIVE_PATH = /^(?!www\.|(?:http|ftp)s?:\/\/|[A-Za-z]:\\|\/\/).*/
-const DATA_URI = /^(data:)([^,]*),(.*)/i
-export function makeStylesheetUrlsAbsolute(cssText: string | null, href: string): string {
-  return (cssText || '').replace(
+const ABSOLUTE_URL = /^[A-Za-z]:|^\/\//
+const DATA_URI = /^data:.*,/i
+export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): string {
+  return cssText.replace(
     URL_IN_CSS_REF,
     (origin: string, quote1: string, path1: string, quote2: string, path2: string, path3: string) => {
       const filePath = path1 || path2 || path3
-      const maybeQuote = quote1 || quote2 || ''
-      if (!filePath) {
+      if (!filePath || ABSOLUTE_URL.test(filePath) || DATA_URI.test(filePath)) {
         return origin
       }
-      if (!RELATIVE_PATH.test(filePath)) {
-        return `url(${maybeQuote}${filePath}${maybeQuote})`
-      }
-      if (DATA_URI.test(filePath)) {
-        return `url(${maybeQuote}${filePath}${maybeQuote})`
-      }
-      if (filePath[0] === '/') {
-        return `url(${maybeQuote}${extractOrigin(href)}${filePath}${maybeQuote})`
-      }
-      const stack = href.split('/')
-      const parts = filePath.split('/')
-      stack.pop()
-      for (const part of parts) {
-        if (part === '.') {
-          continue
-        } else if (part === '..') {
-          stack.pop()
-        } else {
-          stack.push(part)
-        }
-      }
-      return `url(${maybeQuote}${stack.join('/')}${maybeQuote})`
+      const maybeQuote = quote1 || quote2 || ''
+      return `url(${maybeQuote}${makeUrlAbsolute(filePath, baseUrl)}${maybeQuote})`
     }
   )
 }
 
-function extractOrigin(url: string): string {
-  let origin
-  if (url.indexOf('//') > -1) {
-    origin = url.split('/').slice(0, 3).join('/')
-  } else {
-    origin = url.split('/')[0]
-  }
-  origin = origin.split('?')[0]
-  return origin
+const SRCSET_URLS = /(^\s*|,\s*)([^\s,]+)/g
+export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) {
+  return attributeValue.replace(
+    SRCSET_URLS,
+    (_, prefix: string, url: string) => `${prefix}${makeUrlAbsolute(url, baseUrl)}`
+  )
 }
 
-function makeSrcsetUrlsAbsolute(doc: Document, attributeValue: string) {
-  if (attributeValue.trim() === '') {
-    return attributeValue
-  }
-
-  const srcsetValues = attributeValue.split(',')
-  // srcset attributes is defined as such:
-  // srcset = "url size,url1 size1"
-  const resultingSrcsetString = srcsetValues
-    .map((srcItem) => {
-      // removing all but middle spaces
-      const trimmedSrcItem = srcItem.replace(/^\s+/, '').replace(/\s+$/, '')
-      const urlAndSize = trimmedSrcItem.split(' ')
-      // this means we have both 0:url and 1:size
-      if (urlAndSize.length === 2) {
-        const absUrl = makeUrlAbsolute(doc, urlAndSize[0])
-        return `${absUrl} ${urlAndSize[1]}`
-      } else if (urlAndSize.length === 1) {
-        const absUrl = makeUrlAbsolute(doc, urlAndSize[0])
-        return `${absUrl}`
-      }
-      return ''
-    })
-    .join(', ')
-
-  return resultingSrcsetString
-}
-
-function makeUrlAbsolute(doc: Document, attributeValue: string): string {
-  if (!attributeValue || attributeValue.trim() === '') {
-    return attributeValue
-  }
-  const a: HTMLAnchorElement = doc.createElement('a')
-  a.href = attributeValue
-  return a.href
+export function makeUrlAbsolute(url: string, baseUrl: string): string {
+  return buildUrl(url.trim(), baseUrl).href
 }

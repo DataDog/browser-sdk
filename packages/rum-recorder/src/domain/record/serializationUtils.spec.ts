@@ -3,6 +3,7 @@ import {
   getSerializedNodeId,
   hasSerializedNode,
   setSerializedNode,
+  makeSrcsetUrlsAbsolute,
 } from './serializationUtils'
 
 describe('serialized Node storage in DOM Nodes', () => {
@@ -105,5 +106,23 @@ describe('absolute url to stylesheet', () => {
   })
   it('can handle empty path', () => {
     expect(makeStylesheetUrlsAbsolute(`url('')`, href)).toEqual(`url('')`)
+  })
+})
+
+describe('makeSrcsetUrlsAbsolute', () => {
+  it('returns an empty string if the value is empty', () => {
+    expect(makeSrcsetUrlsAbsolute('', 'https://example.org')).toBe('')
+  })
+
+  it('replaces urls in all image sources', () => {
+    expect(makeSrcsetUrlsAbsolute('elva-fairy-480w.jpg 480w, elva-fairy-800w.jpg 800w', 'https://example.org')).toBe(
+      'https://example.org/elva-fairy-480w.jpg 480w, https://example.org/elva-fairy-800w.jpg 800w'
+    )
+  })
+
+  it('works with image sources without a descriptor', () => {
+    expect(makeSrcsetUrlsAbsolute('elva-fairy-480w.jpg, elva-fairy-800w.jpg', 'https://example.org')).toBe(
+      'https://example.org/elva-fairy-480w.jpg, https://example.org/elva-fairy-800w.jpg'
+    )
   })
 })
