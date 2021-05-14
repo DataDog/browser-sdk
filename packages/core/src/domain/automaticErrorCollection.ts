@@ -23,6 +23,7 @@ export function startAutomaticErrorCollection(configuration: Configuration) {
 
 let originalConsoleError: (...params: unknown[]) => void
 
+/* eslint-disable no-console */
 export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
   console.error = monitor((...params: unknown[]) => {
@@ -35,16 +36,17 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   })
 }
 
+export function stopConsoleTracking() {
+  console.error = originalConsoleError
+}
+/* eslint-enable no-console */
+
 function buildErrorFromParams(params: unknown[]) {
   const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
   return {
     message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
   }
-}
-
-export function stopConsoleTracking() {
-  console.error = originalConsoleError
 }
 
 function formatConsoleParameters(param: unknown) {

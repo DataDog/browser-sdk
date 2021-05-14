@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Keep references on console methods to avoid triggering patched behaviors
  *
