@@ -1,6 +1,6 @@
-import { IncrementalData, SerializedNodeWithId } from './domain/rrweb/types'
+import { IncrementalData, SerializedNodeWithId } from './domain/record/types'
 
-export { IncrementalSource, MutationData } from './domain/rrweb/types'
+export { IncrementalSource, MutationData } from './domain/record/types'
 
 export interface Segment extends SegmentMeta {
   records: Record[]

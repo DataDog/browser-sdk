@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { nodeOrAncestorsShouldBeHidden } from '../privacy'
+import { nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,

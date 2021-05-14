@@ -8,7 +8,7 @@ import {
   SerializedNode,
   SerializedNodeWithId,
   TextNode,
-} from '../src/domain/rrweb/types'
+} from '../src/domain/record/types'
 import { FullSnapshotRecord, IncrementalSnapshotRecord, MetaRecord, RecordType, Segment } from '../src/types'
 
 export class MockWorker implements DeflateWorker {
