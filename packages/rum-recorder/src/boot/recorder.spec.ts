@@ -5,7 +5,7 @@ import { createNewEvent, isIE } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { collectAsyncCalls } from '../../test/utils'
-import { setMaxSegmentSize } from '../domain/segmentCollection'
+import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
 import { startRecording } from './recorder'
@@ -159,7 +159,7 @@ describe('startRecording', () => {
     })
   })
 
-  it('adds a ViewEnd snapshot when the view ends', (done) => {
+  it('adds a ViewEnd record when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)

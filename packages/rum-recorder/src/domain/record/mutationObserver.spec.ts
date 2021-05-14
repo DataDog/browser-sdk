@@ -1,8 +1,8 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
-import { serializeDocument, NodeType } from '../rrweb-snapshot'
+import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
-import { MutationCallBack } from './types'
+import { MutationCallBack, NodeType } from './types'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -164,7 +164,7 @@ describe('startMutationCollection', () => {
     describe('does not emit mutations on freshly re-serialized nodes and their descendants', () => {
       // Note about those tests: any mutation with a not-yet-serialized 'target' will be trivially
       // ignored. We want to focus on mutations with a 'target' that have already been serialized
-      // (during the document snapshot for example), and re-serialized (by being added in the
+      // (during the document serialization for example), and re-serialized (by being added in the
       // document) during the processed mutation batched.
 
       it('attribute mutations', () => {
@@ -219,7 +219,7 @@ describe('startMutationCollection', () => {
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
         // Even if the mutation on 'child' comes first, we only take the 'parent' mutation into
-        // account since it is embeds an up-to-date snapshot of 'parent'
+        // account since it is embeds an up-to-date serialization of 'parent'
         validate(getLatestMutationPayload(), {
           adds: [
             {
