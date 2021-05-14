@@ -6,7 +6,6 @@ describe('serializeNodeWithId', () => {
   describe('ignores some nodes', () => {
     const defaultOptions = {
       document,
-      map: {},
     }
 
     beforeEach(() => {
@@ -15,10 +14,10 @@ describe('serializeNodeWithId', () => {
       }
     })
 
-    it('does not save ignored nodes in the map', () => {
-      const map = {}
-      serializeNodeWithId(document.createElement('script'), { ...defaultOptions, map })
-      expect(map).toEqual({})
+    it('does not save ignored nodes in the serializedNodeIds set', () => {
+      const serializedNodeIds = new Set<number>()
+      serializeNodeWithId(document.createElement('script'), { ...defaultOptions, serializedNodeIds })
+      expect(serializedNodeIds.size).toBe(0)
     })
 
     it('does not serialize ignored nodes', () => {

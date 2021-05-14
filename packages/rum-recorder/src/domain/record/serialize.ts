@@ -5,7 +5,6 @@ import {
   SerializedNodeWithId,
   NodeType,
   Attributes,
-  IdNodeMap,
   DocumentNode,
   DocumentTypeNode,
   ElementNode,
@@ -22,7 +21,7 @@ import { forEach } from './utils'
 
 interface SerializeOptions {
   document: Document
-  map: IdNodeMap
+  serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
 }
 
@@ -30,7 +29,6 @@ export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    map: {},
   })!
 }
 
@@ -45,7 +43,9 @@ export function serializeNodeWithId(n: Node, options: SerializeOptions): Seriali
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
   setSerializedNode(n, serializedNodeWithId)
-  options.map[id] = true
+  if (options.serializedNodeIds) {
+    options.serializedNodeIds.add(id)
+  }
   return serializedNodeWithId
 }
 

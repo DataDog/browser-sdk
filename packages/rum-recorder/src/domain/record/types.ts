@@ -287,7 +287,3 @@ export type CDataNode = {
 export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode
 
 export type SerializedNodeWithId = SerializedNode & { id: number }
-
-export type IdNodeMap = {
-  [key: number]: true
-}
