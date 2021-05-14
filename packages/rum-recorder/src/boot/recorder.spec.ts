@@ -159,7 +159,7 @@ describe('startRecording', () => {
     })
   })
 
-  it('adds a ViewEnd snapshot when the view ends', (done) => {
+  it('adds a ViewEnd record when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)

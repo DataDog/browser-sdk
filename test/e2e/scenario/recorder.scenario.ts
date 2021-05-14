@@ -62,7 +62,7 @@ describe('recorder', () => {
       )
     })
 
-  describe('snapshot', () => {
+  describe('full snapshot', () => {
     createTest('obfuscate blocks')
       .withSetup(bundleSetup)
       .withRumRecorder()
