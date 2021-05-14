@@ -22,6 +22,7 @@ import {
   setSerializedNode,
   transformAttribute,
 } from './serializationUtils'
+import { forEach } from './utils'
 
 interface SerializeOptions {
   document: Document
@@ -67,35 +68,13 @@ export function serializeNodeWithId(n: Node, options: SerializeOptions): Seriali
     return null
   }
   options.map[id] = true
-  let recordChild = true
-  if (serializedNode.type === NodeType.Element) {
-    recordChild = !serializedNode.shouldBeHidden
-    // this property was not needed in replay side
-    delete serializedNode.shouldBeHidden
-  }
-  if ((serializedNode.type === NodeType.Document || serializedNode.type === NodeType.Element) && recordChild) {
-    let childrenOptions = options
-    if (
-      serializedNode.type === NodeType.Element &&
-      serializedNode.tagName === 'head'
-      // would impede performance: || getComputedStyle(n)['white-space'] === 'normal'
-    ) {
-      childrenOptions = { ...childrenOptions, ignoreWhiteSpace: true }
-    }
-    for (const childN of Array.from(n.childNodes)) {
-      const serializedChildNode = serializeNodeWithId(childN, childrenOptions)
-      if (serializedChildNode) {
-        serializedNode.childNodes.push(serializedChildNode)
-      }
-    }
-  }
   return serializedNodeWithId
 }
 
 function serializeNode(n: Node, options: SerializeOptions): SerializedNode | false {
   switch (n.nodeType) {
     case n.DOCUMENT_NODE:
-      return serializeDocumentNode()
+      return serializeDocumentNode(n as Document, options)
     case n.DOCUMENT_TYPE_NODE:
       return serializeDocumentTypeNode(n as DocumentType)
     case n.ELEMENT_NODE:
@@ -111,10 +90,10 @@ function serializeNode(n: Node, options: SerializeOptions): SerializedNode | fal
   }
 }
 
-function serializeDocumentNode(): DocumentNode {
+function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
   return {
     type: NodeType.Document,
-    childNodes: [],
+    childNodes: serializeChildNodes(document, options),
   }
 }
 
@@ -128,9 +107,27 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 }
 
 function serializeElementNode(element: Element, options: SerializeOptions): ElementNode {
-  const shouldBeHidden = nodeShouldBeHidden(element)
   const tagName = getValidTagName(element.tagName)
-  let attributes: Attributes = {}
+  const isSVG = isSVGElement(element) || undefined
+
+  if (nodeShouldBeHidden(element)) {
+    const { width, height } = element.getBoundingClientRect()
+    return {
+      type: NodeType.Element,
+      tagName,
+      attributes: {
+        id: element.id,
+        class: element.className,
+        rr_width: `${width}px`,
+        rr_height: `${height}px`,
+        [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
+      },
+      childNodes: [],
+      isSVG,
+    }
+  }
+
+  const attributes: Attributes = {}
   for (const { name, value } of Array.from(element.attributes)) {
     attributes[name] = transformAttribute(options.document, name, value)
   }
@@ -190,23 +187,13 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   if (element.scrollTop) {
     attributes.rr_scrollTop = element.scrollTop
   }
-  if (shouldBeHidden) {
-    const { width, height } = element.getBoundingClientRect()
-    attributes = {
-      id: attributes.id,
-      class: attributes.class,
-      rr_width: `${width}px`,
-      rr_height: `${height}px`,
-      [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
-    }
-  }
+
   return {
     type: NodeType.Element,
     tagName,
     attributes,
-    childNodes: [],
-    isSVG: isSVGElement(element) || undefined,
-    shouldBeHidden,
+    childNodes: serializeChildNodes(element, tagName === 'head' ? { ...options, ignoreWhiteSpace: true } : options),
+    isSVG,
   }
 }
 
@@ -241,6 +228,17 @@ function serializeCommentNode(comment: Comment): CommentNode {
     type: NodeType.Comment,
     textContent: comment.textContent || '',
   }
+}
+
+function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+  const result: SerializedNodeWithId[] = []
+  forEach(node.childNodes, (childNode) => {
+    const serializedChildNode = serializeNodeWithId(childNode, options)
+    if (serializedChildNode) {
+      result.push(serializedChildNode)
+    }
+  })
+  return result
 }
 
 let nextId = 1

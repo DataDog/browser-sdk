@@ -271,7 +271,6 @@ export type ElementNode = {
   attributes: Attributes
   childNodes: SerializedNodeWithId[]
   isSVG?: true
-  shouldBeHidden?: boolean
 }
 
 export type TextNode = {
