@@ -1,6 +1,14 @@
 import { DeflateWorker, DeflateWorkerAction, DeflateWorkerListener } from '../src/domain/deflateWorker'
-import { ElementNode, NodeType, SerializedNode, SerializedNodeWithId, TextNode } from '../src/domain/rrweb-snapshot'
-import { IncrementalSource, MutationPayload, MutationData } from '../src/domain/rrweb/types'
+import {
+  IncrementalSource,
+  MutationPayload,
+  MutationData,
+  ElementNode,
+  NodeType,
+  SerializedNode,
+  SerializedNodeWithId,
+  TextNode,
+} from '../src/domain/rrweb/types'
 import { FullSnapshotRecord, IncrementalSnapshotRecord, MetaRecord, RecordType, Segment } from '../src/types'
 
 export class MockWorker implements DeflateWorker {

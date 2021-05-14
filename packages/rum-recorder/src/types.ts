@@ -1,5 +1,4 @@
-import { SerializedNodeWithId } from './domain/rrweb-snapshot/types'
-import { IncrementalData } from './domain/rrweb/types'
+import { IncrementalData, SerializedNodeWithId } from './domain/rrweb/types'
 
 export { IncrementalSource, MutationData } from './domain/rrweb/types'
 

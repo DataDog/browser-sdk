@@ -1,6 +1,6 @@
 import { runOnReadyState } from '@datadog/browser-core'
-import { serializeDocument } from '../rrweb-snapshot'
 import { RecordType } from '../../types'
+import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
 import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth } from './utils'

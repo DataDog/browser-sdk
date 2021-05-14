@@ -1,8 +1,8 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
-import { serializeDocument, NodeType } from '../rrweb-snapshot'
+import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
-import { MutationCallBack } from './types'
+import { MutationCallBack, NodeType } from './types'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement

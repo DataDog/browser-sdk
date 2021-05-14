@@ -1,15 +1,13 @@
 import { monitor } from '@datadog/browser-core'
+import { nodeOrAncestorsShouldBeHidden } from '../privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,
-  transformAttribute,
   NodeWithSerializedNode,
   nodeIsIgnored,
-  serializeNodeWithId,
-  IdNodeMap,
   nodeOrAncestorsIsIgnored,
-} from '../rrweb-snapshot'
-import { nodeOrAncestorsShouldBeHidden } from '../privacy'
+} from './serializationUtils'
+import { transformAttribute, serializeNodeWithId } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
@@ -20,6 +18,7 @@ import {
   MutationRecord,
   RemovedNodeMutation,
   TextMutation,
+  IdNodeMap,
 } from './types'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
