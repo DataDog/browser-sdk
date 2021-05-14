@@ -6,8 +6,9 @@ import {
   NodeWithSerializedNode,
   nodeIsIgnored,
   nodeOrAncestorsIsIgnored,
+  transformAttribute,
 } from './serializationUtils'
-import { transformAttribute, serializeNodeWithId } from './serialize'
+import { serializeNodeWithId } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
