@@ -40,32 +40,21 @@ export function nodeOrAncestorsIsIgnored(n: NodeWithSerializedNode) {
 export function transformAttribute(doc: Document, name: string, value: string): string {
   // relative path in attribute
   if (name === 'src' || (name === 'href' && value)) {
-    return absoluteToDoc(doc, value)
+    return makeUrlAbsolute(doc, value)
   }
   if (name === 'srcset' && value) {
-    return getAbsoluteSrcsetString(doc, value)
+    return makeSrcsetUrlsAbsolute(doc, value)
   }
   if (name === 'style' && value) {
-    return absoluteToStylesheet(value, location.href)
+    return makeStylesheetUrlsAbsolute(value, location.href)
   }
   return value
-}
-
-function extractOrigin(url: string): string {
-  let origin
-  if (url.indexOf('//') > -1) {
-    origin = url.split('/').slice(0, 3).join('/')
-  } else {
-    origin = url.split('/')[0]
-  }
-  origin = origin.split('?')[0]
-  return origin
 }
 
 const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
 const RELATIVE_PATH = /^(?!www\.|(?:http|ftp)s?:\/\/|[A-Za-z]:\\|\/\/).*/
 const DATA_URI = /^(data:)([^,]*),(.*)/i
-export function absoluteToStylesheet(cssText: string | null, href: string): string {
+export function makeStylesheetUrlsAbsolute(cssText: string | null, href: string): string {
   return (cssText || '').replace(
     URL_IN_CSS_REF,
     (origin: string, quote1: string, path1: string, quote2: string, path2: string, path3: string) => {
@@ -100,7 +89,18 @@ export function absoluteToStylesheet(cssText: string | null, href: string): stri
   )
 }
 
-function getAbsoluteSrcsetString(doc: Document, attributeValue: string) {
+function extractOrigin(url: string): string {
+  let origin
+  if (url.indexOf('//') > -1) {
+    origin = url.split('/').slice(0, 3).join('/')
+  } else {
+    origin = url.split('/')[0]
+  }
+  origin = origin.split('?')[0]
+  return origin
+}
+
+function makeSrcsetUrlsAbsolute(doc: Document, attributeValue: string) {
   if (attributeValue.trim() === '') {
     return attributeValue
   }
@@ -115,10 +115,10 @@ function getAbsoluteSrcsetString(doc: Document, attributeValue: string) {
       const urlAndSize = trimmedSrcItem.split(' ')
       // this means we have both 0:url and 1:size
       if (urlAndSize.length === 2) {
-        const absUrl = absoluteToDoc(doc, urlAndSize[0])
+        const absUrl = makeUrlAbsolute(doc, urlAndSize[0])
         return `${absUrl} ${urlAndSize[1]}`
       } else if (urlAndSize.length === 1) {
-        const absUrl = absoluteToDoc(doc, urlAndSize[0])
+        const absUrl = makeUrlAbsolute(doc, urlAndSize[0])
         return `${absUrl}`
       }
       return ''
@@ -128,7 +128,7 @@ function getAbsoluteSrcsetString(doc: Document, attributeValue: string) {
   return resultingSrcsetString
 }
 
-export function absoluteToDoc(doc: Document, attributeValue: string): string {
+function makeUrlAbsolute(doc: Document, attributeValue: string): string {
   if (!attributeValue || attributeValue.trim() === '') {
     return attributeValue
   }

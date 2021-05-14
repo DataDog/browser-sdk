@@ -3,7 +3,7 @@ import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
 import { nodeShouldBeHidden } from './privacy'
 import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
 import {
-  absoluteToStylesheet,
+  makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
   hasSerializedNode,
   IGNORED_NODE_ID,
@@ -14,7 +14,7 @@ import {
 const tagNameRegex = /[^a-z1-6-_]/
 
 let nextId = 1
-function genId(): number {
+function generateNextId(): number {
   return nextId++
 }
 
@@ -86,7 +86,7 @@ function serializeNode(
         if (cssText) {
           delete attributes.rel
           delete attributes.href
-          attributes._cssText = absoluteToStylesheet(cssText, stylesheet!.href!)
+          attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
         }
       }
       // dynamic stylesheet
@@ -98,7 +98,7 @@ function serializeNode(
       ) {
         const cssText = getCssRulesString((n as HTMLStyleElement).sheet as CSSStyleSheet)
         if (cssText) {
-          attributes._cssText = absoluteToStylesheet(cssText, location.href)
+          attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
         }
       }
       // form fields
@@ -158,7 +158,7 @@ function serializeNode(
       let textContent = (n as Text).textContent
       const isStyle = parentTagName === 'STYLE' ? true : undefined
       if (isStyle && textContent) {
-        textContent = absoluteToStylesheet(textContent, location.href)
+        textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
       }
       if (parentTagName === 'SCRIPT') {
         textContent = 'SCRIPT_PLACEHOLDER'
@@ -292,7 +292,7 @@ export function serializeNodeWithId(
   ) {
     id = IGNORED_NODE_ID
   } else {
-    id = genId()
+    id = generateNextId()
   }
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
