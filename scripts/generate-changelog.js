@@ -14,6 +14,11 @@ const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 
 async function main() {
+  if (!process.env.EDITOR) {
+    console.error('Please configure your environment variable EDITOR')
+    process.exit(1)
+  }
+
   const emojisLegend = await getEmojisLegend()
   const changesList = await getChangesList()
 
