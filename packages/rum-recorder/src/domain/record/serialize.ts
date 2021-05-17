@@ -160,10 +160,10 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   }
   // scroll
   if (element.scrollLeft) {
-    attributes.rr_scrollLeft = element.scrollLeft
+    attributes.rr_scrollLeft = Math.round(element.scrollLeft)
   }
   if (element.scrollTop) {
-    attributes.rr_scrollTop = element.scrollTop
+    attributes.rr_scrollTop = Math.round(element.scrollTop)
   }
 
   return {
