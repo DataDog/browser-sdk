@@ -44,7 +44,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming } = startViewCollection(lifeCycle, location)
+  const { addTiming, startView } = startViewCollection(lifeCycle, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
   const { addAction } = startActionCollection(lifeCycle, configuration)
 
@@ -58,6 +58,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addAction,
     addError,
     addTiming,
+    startView,
     configuration,
     lifeCycle,
     parentContexts,

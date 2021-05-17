@@ -48,6 +48,11 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     beforeInitAddTiming.add([name, clocksNow()])
   }
 
+  const beforeInitStartView = new BoundedBuffer<[string | undefined, ClocksState]>()
+  let startViewStrategy: StartRumResult['startView'] = (name) => {
+    beforeInitStartView.add([name, clocksNow()])
+  }
+
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: StartRumResult['addAction'] = (action) => {
     beforeInitAddAction.add([action, clonedCommonContext()])
@@ -78,7 +83,11 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
+      let configuration
+      let startView
       ;({
+        configuration,
+        startView,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         addTiming: addTimingStrategy,
@@ -90,6 +99,10 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
       beforeInitAddTiming.drain(([name, endClocks]) => addTimingStrategy(name, endClocks))
+      if (configuration.isEnabled('view-renaming')) {
+        startViewStrategy = startView
+        beforeInitStartView.drain(([name, startClocks]) => startViewStrategy(name, startClocks))
+      }
 
       isAlreadyInitialized = true
     }),
@@ -151,6 +164,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     removeUser: monitor(() => {
       user = {}
     }),
+  })
+  ;(rumPublicApi as any)['startView'] = monitor((name?: string) => {
+    startViewStrategy(name)
   })
   return rumPublicApi
 

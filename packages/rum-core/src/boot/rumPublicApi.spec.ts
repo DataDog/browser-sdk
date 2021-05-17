@@ -7,7 +7,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
   addTiming: () => undefined,
-  configuration: {} as any,
+  startView: () => undefined,
+  configuration: { isEnabled: () => true } as any,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
@@ -446,6 +447,57 @@ describe('rum public api', () => {
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('startView', () => {
+    let startViewSpy: jasmine.Spy<ReturnType<StartRum>['startView']>
+    let displaySpy: jasmine.Spy<() => void>
+    let rumPublicApi: RumPublicApi
+    let setupBuilder: TestSetupBuilder
+
+    beforeEach(() => {
+      startViewSpy = jasmine.createSpy()
+      displaySpy = spyOn(display, 'error')
+      rumPublicApi = makeRumPublicApi(() => ({
+        ...noopStartRum(),
+        startView: startViewSpy,
+      }))
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('should allow to start view before init', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
+
+      clock.tick(10)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).startView('foo')
+
+      expect(startViewSpy).not.toHaveBeenCalled()
+
+      clock.tick(20)
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
+        relative: 10 as RelativeTime,
+        timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
+      })
+    })
+
+    it('should to start view', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      ;(rumPublicApi as any).startView('foo')
+
+      expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })

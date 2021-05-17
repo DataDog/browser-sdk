@@ -519,3 +519,52 @@ describe('track hasReplay', () => {
     expect(getViewEvent(2).hasReplay).toBe(false)
   })
 })
+
+describe('rum start view', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => ViewEvent
+  let getHandledCount: () => number
+  let startView: (name?: string, endClocks?: ClocksState) => void
+
+  beforeEach(() => {
+    ;({ getHandledCount, getViewEvent, handler } = spyOnViews())
+
+    setupBuilder = setup().beforeBuild(({ location, lifeCycle }) => {
+      lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      ;({ startView } = trackViews(location, lifeCycle))
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should start a new view', () => {
+    setupBuilder.build()
+    expect(getHandledCount()).toBe(1)
+    const initialViewId = getViewEvent(0).id
+
+    startView()
+
+    expect(getHandledCount()).toBe(3)
+
+    expect(getViewEvent(1).id).toBe(initialViewId)
+    expect(getViewEvent(1).isActive).toBe(false)
+
+    expect(getViewEvent(2).id).not.toBe(initialViewId)
+    expect(getViewEvent(2).isActive).toBe(true)
+  })
+
+  it('should name the view', () => {
+    setupBuilder.build()
+
+    startView()
+    startView('foo')
+    startView('bar')
+
+    expect(getViewEvent(2).name).toBeUndefined()
+    expect(getViewEvent(4).name).toBe('foo')
+    expect(getViewEvent(6).name).toBe('bar')
+  })
+})
