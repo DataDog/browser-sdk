@@ -11,6 +11,7 @@ import {
 } from './automaticErrorCollection'
 import { Configuration } from './configuration'
 
+/* eslint-disable no-console */
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
@@ -70,6 +71,7 @@ describe('console tracker', () => {
     }
   })
 })
+/* eslint-enable no-console */
 
 describe('runtime error tracker', () => {
   const ERROR_MESSAGE = 'foo'

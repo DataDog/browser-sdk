@@ -8,6 +8,7 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
+  display,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
 import { startLogs, LogsUserConfiguration } from './logs'
@@ -51,7 +52,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
       if (userConfiguration.publicApiKey) {
         userConfiguration.clientToken = userConfiguration.publicApiKey
-        console.warn('Public API Key is deprecated. Please use Client Token instead.')
+        display.warn('Public API Key is deprecated. Please use Client Token instead.')
       }
 
       sendLogStrategy = startLogsImpl(userConfiguration, logger, globalContextManager.get)
@@ -81,16 +82,16 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
     if (isAlreadyInitialized) {
       if (!userConfiguration.silentMultipleInit) {
-        console.error('DD_LOGS is already initialized.')
+        display.error('DD_LOGS is already initialized.')
       }
       return false
     }
     if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
-      console.error('Client Token is not configured, we will not send any data.')
+      display.error('Client Token is not configured, we will not send any data.')
       return false
     }
     if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
-      console.error('Sample Rate should be a number between 0 and 100')
+      display.error('Sample Rate should be a number between 0 and 100')
       return false
     }
     return true

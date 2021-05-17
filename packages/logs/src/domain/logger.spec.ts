@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, STATUSES, StatusType } from './logger'
 
 describe('Logger', () => {
@@ -70,14 +71,14 @@ describe('Logger', () => {
 
   describe('handler type', () => {
     beforeEach(() => {
-      spyOn(console, 'log')
+      spyOn(display, 'log')
     })
 
     it('should be "http" by default', () => {
       logger.debug('message')
 
       expect(sendLogSpy).toHaveBeenCalled()
-      expect(console.log).not.toHaveBeenCalled()
+      expect(display.log).not.toHaveBeenCalled()
     })
 
     it('should be configurable to "console"', () => {
@@ -87,7 +88,7 @@ describe('Logger', () => {
       logger.error('message', { lorem: 'ipsum' })
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(console.log).toHaveBeenCalledWith('error: message', {
+      expect(display.log).toHaveBeenCalledWith('error: message', {
         error: { origin: 'logger' },
         foo: 'bar',
         lorem: 'ipsum',
@@ -100,7 +101,7 @@ describe('Logger', () => {
       logger.error('message')
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(console.log).not.toHaveBeenCalled()
+      expect(display.log).not.toHaveBeenCalled()
     })
 
     it('should be configurable to "console" and "http"', () => {
@@ -110,7 +111,7 @@ describe('Logger', () => {
       logger.debug('message')
 
       expect(sendLogSpy).toHaveBeenCalled()
-      expect(console.log).toHaveBeenCalled()
+      expect(display.log).toHaveBeenCalled()
     })
 
     it('should be configurable to "silent" and "console"', () => {
@@ -120,7 +121,7 @@ describe('Logger', () => {
       logger.debug('message')
 
       expect(sendLogSpy).not.toHaveBeenCalled()
-      expect(console.log).toHaveBeenCalled()
+      expect(display.log).toHaveBeenCalled()
     })
   })
 })

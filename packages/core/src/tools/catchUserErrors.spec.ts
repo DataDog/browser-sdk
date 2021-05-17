@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { catchUserErrors } from './catchUserErrors'
 
 describe('catchUserErrors', () => {
@@ -7,12 +8,12 @@ describe('catchUserErrors', () => {
   })
 
   it('logs errors using console.error and returns undefined', () => {
-    const consoleErrorSpy = spyOn(console, 'error')
+    const displaySpy = spyOn(display, 'error')
     const myError = 'Ooops!'
     const wrappedFn = catchUserErrors(() => {
       throw myError
     }, 'Error during callback')
     expect(wrappedFn()).toBe(undefined)
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error during callback', myError)
+    expect(displaySpy).toHaveBeenCalledWith('Error during callback', myError)
   })
 })

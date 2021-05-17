@@ -3,6 +3,7 @@ import { buildConfiguration, UserConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Datacenter } from '../domain/transportConfiguration'
 import { catchUserErrors } from '../tools/catchUserErrors'
+import { display } from '../tools/display'
 import { preferSystemClock } from '../tools/timeUtils'
 
 export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): void } {
@@ -11,7 +12,7 @@ export function makePublicApi<T>(stub: T): T & { onReady(callback: () => void): 
 
     // This API method is intentionally not monitored, since the only thing executed is the
     // user-provided 'callback'.  All SDK usages executed in the callback should be monitored, and
-    // we don't want to interfer with the user uncaught exceptions.
+    // we don't want to interfere with the user uncaught exceptions.
     onReady(callback: () => void) {
       callback()
     },
@@ -64,7 +65,7 @@ export function commonInit(userConfiguration: UserConfiguration, buildEnv: Build
 
 export function checkCookiesAuthorized(options: CookieOptions) {
   if (!areCookiesAuthorized(options)) {
-    console.warn('Cookies are not authorized, we will not send any data.')
+    display.warn('Cookies are not authorized, we will not send any data.')
     return false
   }
   return true
@@ -72,7 +73,7 @@ export function checkCookiesAuthorized(options: CookieOptions) {
 
 export function checkIsNotLocalFile() {
   if (isLocalFile()) {
-    console.error('Execution is not allowed in the current context.')
+    display.error('Execution is not allowed in the current context.')
     return false
   }
   return true

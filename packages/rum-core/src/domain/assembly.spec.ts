@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_MINUTE, RawError, RelativeTime } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../rawRumEvent.types'
@@ -127,7 +127,7 @@ describe('rum assembly', () => {
         })
         .build()
 
-      const consoleWarnSpy = spyOn(console, 'warn')
+      const displaySpy = spyOn(display, 'warn')
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
           view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
@@ -136,7 +136,7 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-      expect(consoleWarnSpy).toHaveBeenCalledWith(`Can't dismiss view events using beforeSend!`)
+      expect(displaySpy).toHaveBeenCalledWith(`Can't dismiss view events using beforeSend!`)
     })
   })
 
