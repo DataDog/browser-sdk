@@ -1,4 +1,4 @@
-import { Context, monitor, ONE_SECOND } from '@datadog/browser-core'
+import { Context, monitor, ONE_SECOND, display } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { HandlerType, LogsMessage, StatusType } from '../domain/logger'
@@ -43,83 +43,83 @@ describe('logs entry', () => {
     })
 
     it('init should log an error with no public api key', () => {
-      const errorSpy = spyOn(console, 'error')
+      const displaySpy = spyOn(display, 'error')
 
       LOGS.init(undefined as any)
-      expect(console.error).toHaveBeenCalledTimes(1)
+      expect(display.error).toHaveBeenCalledTimes(1)
 
       LOGS.init({ stillNoApiKey: true } as any)
-      expect(console.error).toHaveBeenCalledTimes(2)
+      expect(display.error).toHaveBeenCalledTimes(2)
 
       LOGS.init({ clientToken: 'yeah' })
-      expect(errorSpy).toHaveBeenCalledTimes(2)
+      expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
     it('should warn if now deprecated publicApiKey is used', () => {
-      spyOn(console, 'warn')
+      spyOn(display, 'warn')
 
       LOGS.init({ publicApiKey: 'yo' } as any)
-      expect(console.warn).toHaveBeenCalledTimes(1)
+      expect(display.warn).toHaveBeenCalledTimes(1)
     })
 
     it('should add a `_setDebug` that works', () => {
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
 
-      spyOn(console, 'warn')
+      spyOn(display, 'error')
       monitor(() => {
         throw new Error()
       })()
-      expect(console.warn).toHaveBeenCalledTimes(0)
+      expect(display.error).toHaveBeenCalledTimes(0)
 
       setDebug(true)
       monitor(() => {
         throw new Error()
       })()
-      expect(console.warn).toHaveBeenCalledTimes(1)
+      expect(display.error).toHaveBeenCalledTimes(1)
 
       setDebug(false)
     })
 
     it('init should log an error if sampleRate is invalid', () => {
-      const errorSpy = spyOn(console, 'error')
+      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 'foo' as any })
-      expect(errorSpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
 
       LOGS.init({ clientToken: 'yes', sampleRate: 200 })
-      expect(errorSpy).toHaveBeenCalledTimes(2)
+      expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
     it('should log an error if init is called several times', () => {
-      const errorSpy = spyOn(console, 'error')
+      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(errorSpy).toHaveBeenCalledTimes(0)
+      expect(displaySpy).toHaveBeenCalledTimes(0)
 
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(errorSpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledTimes(1)
     })
 
     it('should not log an error if init is called several times and silentMultipleInit is true', () => {
-      const errorSpy = spyOn(console, 'error')
+      const displaySpy = spyOn(display, 'error')
       LOGS.init({
         clientToken: 'yes',
         sampleRate: 1,
         silentMultipleInit: true,
       })
-      expect(errorSpy).toHaveBeenCalledTimes(0)
+      expect(displaySpy).toHaveBeenCalledTimes(0)
 
       LOGS.init({
         clientToken: 'yes',
         sampleRate: 1,
         silentMultipleInit: true,
       })
-      expect(errorSpy).toHaveBeenCalledTimes(0)
+      expect(displaySpy).toHaveBeenCalledTimes(0)
     })
 
-    it("shouldn't trigger any console.log if the configuration is correct", () => {
-      const errorSpy = spyOn(console, 'error')
+    it("shouldn't trigger any console.error if the configuration is correct", () => {
+      const displaySpy = spyOn(display, 'error')
       LOGS.init({ clientToken: 'yes', sampleRate: 1 })
-      expect(errorSpy).toHaveBeenCalledTimes(0)
+      expect(displaySpy).toHaveBeenCalledTimes(0)
     })
   })
 
@@ -250,7 +250,7 @@ describe('logs entry', () => {
 
     describe('custom loggers', () => {
       beforeEach(() => {
-        spyOn(console, 'log')
+        spyOn(display, 'log')
       })
 
       it('should have a default configuration', () => {
@@ -259,7 +259,7 @@ describe('logs entry', () => {
         logger.debug('message')
 
         expect(sendLogsSpy.calls.count()).toEqual(1)
-        expect(console.log).not.toHaveBeenCalled()
+        expect(display.log).not.toHaveBeenCalled()
       })
 
       it('should be configurable', () => {
@@ -272,10 +272,22 @@ describe('logs entry', () => {
         logger.error('message')
 
         expect(sendLogsSpy).not.toHaveBeenCalled()
-        expect(console.log).toHaveBeenCalledWith('error: message', {
+        expect(display.log).toHaveBeenCalledWith('error: message', {
           error: { origin: 'logger' },
           logger: { name: 'foo' },
         })
+      })
+
+      it('should be configurable with multiple handlers', () => {
+        const logger = LOGS.createLogger('foo', {
+          handler: [HandlerType.console, HandlerType.http],
+          level: StatusType.debug,
+        })
+
+        logger.debug('message')
+
+        expect(sendLogsSpy).toHaveBeenCalled()
+        expect(display.log).toHaveBeenCalledWith('debug: message', { logger: { name: 'foo' } })
       })
 
       it('should have their name in their context', () => {

@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { Duration, RelativeTime, TimeStamp, timeStampNow, display } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -439,7 +439,7 @@ describe('rum track custom timings', () => {
 
   it('should sanitized timing name', () => {
     const { clock } = setupBuilder.build()
-    const warnSpy = spyOn(console, 'warn')
+    const displaySpy = spyOn(display, 'warn')
 
     clock.tick(1234)
     addTiming('foo bar-qux.@zip_21%$*€👋', timeStampNow())
@@ -447,7 +447,7 @@ describe('rum track custom timings', () => {
     expect(getViewEvent(1).customTimings).toEqual({
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
-    expect(warnSpy).toHaveBeenCalled()
+    expect(displaySpy).toHaveBeenCalled()
   })
 })
 

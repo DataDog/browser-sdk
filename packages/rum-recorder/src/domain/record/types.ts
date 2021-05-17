@@ -1,6 +1,5 @@
-import { IdNodeMap, INode, SerializedNodeWithId } from '../rrweb-snapshot/types'
 import { FocusRecord, RawRecord } from '../../types'
-import { MutationController } from './mutation'
+import { MutationController } from './mutationObserver'
 
 export enum IncrementalSource {
   Mutation = 0,
@@ -62,7 +61,6 @@ export type IncrementalData =
 
 export interface RecordOptions {
   emit?: (record: RawRecord) => void
-  useNewMutationObserver: boolean
 }
 
 export interface RecordAPI {
@@ -71,7 +69,6 @@ export interface RecordAPI {
 }
 
 export interface ObserverParam {
-  useNewMutationObserver: boolean
   mutationController: MutationController
   mutationCb: MutationCallBack
   mousemoveCb: MousemoveCallBack
@@ -241,13 +238,62 @@ export type MediaInteractionCallback = (p: MediaInteractionParam) => void
 
 export type FocusCallback = (data: FocusRecord['data']) => void
 
-export interface Mirror {
-  map: IdNodeMap
-  getId: (n: INode) => number
-  getNode: (id: number) => INode | null
-  removeNodeFromMap: (n: INode) => void
-  has: (id: number) => boolean
-}
-
 export type ListenerHandler = () => void
 export type HookResetter = () => void
+
+export enum NodeType {
+  Document,
+  DocumentType,
+  Element,
+  Text,
+  CDATA,
+  Comment,
+}
+
+export type DocumentNode = {
+  type: NodeType.Document
+  childNodes: SerializedNodeWithId[]
+}
+
+export type DocumentTypeNode = {
+  type: NodeType.DocumentType
+  name: string
+  publicId: string
+  systemId: string
+}
+
+export type Attributes = {
+  [key: string]: string | number | boolean
+}
+export type ElementNode = {
+  type: NodeType.Element
+  tagName: string
+  attributes: Attributes
+  childNodes: SerializedNodeWithId[]
+  isSVG?: true
+  shouldBeHidden?: boolean
+}
+
+export type TextNode = {
+  type: NodeType.Text
+  textContent: string
+  isStyle?: true
+}
+
+export type CDataNode = {
+  type: NodeType.CDATA
+  textContent: ''
+}
+
+export type CommentNode = {
+  type: NodeType.Comment
+  textContent: string
+}
+
+export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode | CommentNode
+
+export type SerializedNodeWithId = SerializedNode & { id: number }
+
+export type IdNodeMap = {
+  [key: number]: true
+}

@@ -29,6 +29,7 @@ export {
   stopSessionManagement,
 } from './domain/sessionManagement'
 export { HttpRequest, Batch } from './transport/transport'
+export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
 export * from './tools/utils'

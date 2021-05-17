@@ -1,3 +1,4 @@
+import { display } from '../tools/display'
 import { findCommaSeparatedValue, generateUUID, ONE_SECOND } from '../tools/utils'
 
 export const COOKIE_ACCESS_DELAY = ONE_SECOND
@@ -69,7 +70,7 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
     setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
     return getCookie(testCookieName) === testCookieValue
   } catch (error) {
-    console.error(error)
+    display.error(error)
     return false
   }
 }

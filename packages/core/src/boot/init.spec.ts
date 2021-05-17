@@ -1,3 +1,4 @@
+import { display } from '../tools/display'
 import { defineGlobal } from './init'
 
 describe('defineGlobal', () => {
@@ -40,9 +41,9 @@ describe('defineGlobal', () => {
         q: [onReady],
       },
     }
-    const consoleErrorSpy = spyOn(console, 'error')
+    const displaySpy = spyOn(display, 'error')
 
     defineGlobal(myGlobal, 'foo', {})
-    expect(consoleErrorSpy).toHaveBeenCalledWith('onReady callback threw an error:', myError)
+    expect(displaySpy).toHaveBeenCalledWith('onReady callback threw an error:', myError)
   })
 })

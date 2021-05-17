@@ -1,7 +1,7 @@
-import { noop, setDebugMode } from '@datadog/browser-core'
-import { isIE } from '../../../core/test/specHelper'
-import { MockWorker, parseSegment } from '../../test/utils'
-import { Record, RecordType, SegmentContext } from '../types'
+import { noop, setDebugMode, display } from '@datadog/browser-core'
+import { isIE } from '@datadog/browser-core/test/specHelper'
+import { MockWorker, parseSegment } from '../../../test/utils'
+import { Record, RecordType, SegmentContext } from '../../types'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -120,7 +120,7 @@ describe('Segment', () => {
   })
 
   it('unsubscribes from the worker if a flush() response fails and another Segment is used', () => {
-    const consoleSpy = spyOn(console, 'log')
+    const displaySpy = spyOn(display, 'log')
     const writer1 = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
     writer1.flush()
     new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
@@ -128,7 +128,7 @@ describe('Segment', () => {
     worker.dropNextMessage() // drop the segment1 flush
     worker.processAllMessages()
     expect(worker.listenersCount).toBe(1)
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(displaySpy).toHaveBeenCalledWith(
       '[MONITORING MESSAGE]',
       "Segment did not receive a 'flush' response before being replaced."
     )

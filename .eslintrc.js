@@ -226,6 +226,12 @@ module.exports = {
     },
     {
       files: ['packages/*/src/**/*.ts'],
+      rules: {
+        'no-console': 'error',
+      },
+    },
+    {
+      files: ['packages/*/src/**/*.ts'],
       excludedFiles: '*.spec.ts',
       rules: {
         'local-rules/disallow-side-effects': 'error',

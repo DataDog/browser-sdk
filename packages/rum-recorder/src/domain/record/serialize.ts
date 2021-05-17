@@ -1,6 +1,7 @@
-import { nodeShouldBeHidden } from '../privacy'
+import { display } from '@datadog/browser-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, INode, IdNodeMap } from './types'
+import { nodeShouldBeHidden } from './privacy'
+import { SerializedNode, SerializedNodeWithId, NodeType, Attributes, IdNodeMap } from './types'
 import { getSerializedNodeId, hasSerializedNode, IGNORED_NODE_ID, setSerializedNode } from './serializationUtils'
 
 const tagNameRegex = /[^a-z1-6-_]/
@@ -8,11 +9,6 @@ const tagNameRegex = /[^a-z1-6-_]/
 let nextId = 1
 function genId(): number {
   return nextId++
-}
-
-export function cleanupSnapshot() {
-  // allow a new recording to start numbering nodes from scratch
-  nextId = 1
 }
 
 function getValidTagName(tagName: string): string {
@@ -358,22 +354,21 @@ function nodeShouldBeIgnored(sn: SerializedNode): boolean {
 }
 
 export function serializeNodeWithId(
-  n: Node | INode,
+  n: Node,
   options: {
     doc: Document
     map: IdNodeMap
-    skipChild: boolean
     preserveWhiteSpace?: boolean
   }
 ): SerializedNodeWithId | null {
-  const { doc, map, skipChild = false } = options
+  const { doc, map } = options
   let { preserveWhiteSpace = true } = options
   const serializedNode = serializeNode(n, {
     doc,
   })
   if (!serializedNode) {
     // TODO: dev only
-    console.warn(n, 'not serialized')
+    display.warn(n, 'not serialized')
     return null
   }
 
@@ -398,10 +393,10 @@ export function serializeNodeWithId(
   if (id === IGNORED_NODE_ID) {
     return null
   }
-  map[id] = n as INode
-  let recordChild = !skipChild
+  map[id] = true
+  let recordChild = true
   if (serializedNode.type === NodeType.Element) {
-    recordChild = recordChild && !serializedNode.shouldBeHidden
+    recordChild = !serializedNode.shouldBeHidden
     // this property was not needed in replay side
     delete serializedNode.shouldBeHidden
   }
@@ -417,7 +412,6 @@ export function serializeNodeWithId(
       const serializedChildNode = serializeNodeWithId(childN, {
         doc,
         map,
-        skipChild,
         preserveWhiteSpace,
       })
       if (serializedChildNode) {
@@ -428,14 +422,10 @@ export function serializeNodeWithId(
   return serializedNodeWithId
 }
 
-export function snapshot(n: Document): [SerializedNodeWithId | null, IdNodeMap] {
-  const idNodeMap: IdNodeMap = {}
-  return [
-    serializeNodeWithId(n, {
-      doc: n,
-      map: idNodeMap,
-      skipChild: false,
-    }),
-    idNodeMap,
-  ]
+export function serializeDocument(n: Document): SerializedNodeWithId {
+  // We are sure that Documents are never ignored, so this function never returns null
+  return serializeNodeWithId(n, {
+    doc: n,
+    map: {},
+  })!
 }

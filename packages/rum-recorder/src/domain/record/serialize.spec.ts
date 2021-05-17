@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { isIE } from '../../../../core/test/specHelper'
 import { IGNORED_NODE_ID } from './serializationUtils'
-import { absoluteToStylesheet, serializeNodeWithId } from './snapshot'
+import { absoluteToStylesheet, serializeNodeWithId } from './serialize'
 
 describe('absolute url to stylesheet', () => {
   const href = 'http://localhost/css/style.css'
@@ -80,7 +80,6 @@ describe('serializeNodeWithId', () => {
   describe('ignores some nodes', () => {
     const defaultOptions = {
       doc: document,
-      skipChild: false,
       map: {},
     }
 

@@ -1,3 +1,4 @@
+import { display } from '../tools/display'
 import { Context } from '../tools/context'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
 import { monitor, addErrorToMonitoringBatch } from '../domain/internalMonitoring'
@@ -99,7 +100,7 @@ export class Batch {
   private addOrUpdate(message: Context, key?: string) {
     const { processedMessage, messageBytesSize } = this.process(message)
     if (messageBytesSize >= this.maxMessageSize) {
-      console.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
+      display.warn(`Discarded a message whose size was bigger than the maximum allowed size ${this.maxMessageSize}KB.`)
       return
     }
     if (this.hasMessageFor(key)) {

@@ -12,7 +12,7 @@ export {
   AddedNodeMutation,
   MousePosition,
   RemovedNodeMutation,
-} from './domain/rrweb/types'
+} from './domain/record/types'
 
 export {
   PRIVACY_ATTR_NAME,

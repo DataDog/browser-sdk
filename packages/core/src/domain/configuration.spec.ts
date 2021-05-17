@@ -1,5 +1,6 @@
 import { RumEvent } from '../../../rum/src'
 import { BuildEnv, BuildMode } from '../boot/init'
+import { display } from '../tools/display'
 import { buildConfiguration } from './configuration'
 import { Datacenter } from './transportConfiguration'
 
@@ -56,9 +57,9 @@ describe('configuration', () => {
         throw myError
       }
       const configuration = buildConfiguration({ clientToken, beforeSend }, usEnv)
-      const consoleErrorSpy = spyOn(console, 'error')
+      const displaySpy = spyOn(display, 'error')
       expect(configuration.beforeSend!(null)).toBeUndefined()
-      expect(consoleErrorSpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
+      expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
     })
   })
 })

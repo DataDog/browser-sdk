@@ -8,6 +8,7 @@ import {
   limitModification,
   timeStampNow,
   currentDrift,
+  display,
 } from '@datadog/browser-core'
 import {
   CommonContext,
@@ -114,7 +115,7 @@ function shouldSend(
       return false
     }
     if (result === false) {
-      console.warn(`Can't dismiss view events using beforeSend!`)
+      display.warn("Can't dismiss view events using beforeSend!")
     }
   }
   if (event.type === RumEventType.ERROR) {

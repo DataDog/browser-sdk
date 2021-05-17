@@ -1,15 +1,13 @@
 import { monitor } from '@datadog/browser-core'
+import { nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,
-  transformAttribute,
   NodeWithSerializedNode,
   nodeIsIgnored,
-  serializeNodeWithId,
-  IdNodeMap,
   nodeOrAncestorsIsIgnored,
-} from '../rrweb-snapshot'
-import { nodeOrAncestorsShouldBeHidden } from '../privacy'
+} from './serializationUtils'
+import { transformAttribute, serializeNodeWithId } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
@@ -20,9 +18,9 @@ import {
   MutationRecord,
   RemovedNodeMutation,
   TextMutation,
+  IdNodeMap,
 } from './types'
 import { forEach } from './utils'
-import { MutationController } from './mutation'
 import { createMutationBatch } from './mutationBatch'
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
@@ -52,6 +50,21 @@ export function startMutationObserver(controller: MutationController, mutationCa
       observer.disconnect()
       mutationBatch.stop()
     },
+  }
+}
+
+/**
+ * Controls how mutations are processed, allowing to flush pending mutations.
+ */
+export class MutationController {
+  private flushListener?: () => void
+
+  public flush() {
+    this.flushListener?.()
+  }
+
+  public onFlush(listener: () => void) {
+    this.flushListener = listener
   }
 }
 
@@ -149,7 +162,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, { doc: document, map: serializedNodesIdMap, skipChild: false })
+    const serializedNode = serializeNodeWithId(node, { doc: document, map: serializedNodesIdMap })
     if (!serializedNode) {
       continue
     }
