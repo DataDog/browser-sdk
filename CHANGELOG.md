@@ -16,6 +16,10 @@
 
 ---
 
+## v2.9.1
+
+- 🐛 [logs] Fix IE11 console.log issue ([#852](https://github.com/DataDog/browser-sdk/pull/852))
+
 ## v2.9.0
 
 - ✨[RUMF-907] Use unaltered console functions when displaying console messages ([#847](https://github.com/DataDog/browser-sdk/pull/847))
