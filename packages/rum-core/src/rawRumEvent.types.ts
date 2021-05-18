@@ -78,6 +78,7 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
+    in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
     has_replay: true | undefined
@@ -85,6 +86,11 @@ export interface RawRumViewEvent {
   _dd: {
     document_version: number
   }
+}
+
+export interface InForegroundPeriod {
+  start: ServerDuration
+  duration: ServerDuration
 }
 
 export enum ViewLoadingType {
@@ -194,4 +200,10 @@ export interface CommonContext {
   user: User
   context: Context
   hasReplay?: true
+}
+
+export interface ForegroundContext {
+  view: {
+    in_foreground?: boolean
+  }
 }

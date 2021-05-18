@@ -83,6 +83,16 @@ export type RumActionEvent = CommonProperties & {
     }
     [k: string]: unknown
   }
+  /**
+   * View properties
+   */
+  readonly view?: {
+    /**
+     * Is the action starting in the foreground (focus in browser)
+     */
+    readonly in_foreground?: boolean
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
@@ -177,6 +187,16 @@ export type RumErrorEvent = CommonProperties & {
      * UUID of the action
      */
     readonly id: string
+    [k: string]: unknown
+  }
+  /**
+   * View properties
+   */
+  readonly view?: {
+    /**
+     * Is the error starting in the foreground (focus in browser)
+     */
+    readonly in_foreground?: boolean
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -523,6 +543,20 @@ export type RumViewEvent = CommonProperties & {
       readonly count: number
       [k: string]: unknown
     }
+    /**
+     * List of the periods of time the user had the view in foreground (focused in the browser)
+     */
+    readonly in_foreground_periods?: {
+      /**
+       * Duration in ns between start of the view and start of foreground period
+       */
+      readonly start: number
+      /**
+       * Duration in ns of the view foreground period
+       */
+      readonly duration: number
+      [k: string]: unknown
+    }[]
     [k: string]: unknown
   }
   /**
@@ -664,6 +698,12 @@ export interface CommonProperties {
      * Version of the RUM event format
      */
     readonly format_version: number
+    [k: string]: unknown
+  }
+  /**
+   * User provided context
+   */
+  context?: {
     [k: string]: unknown
   }
   [k: string]: unknown
