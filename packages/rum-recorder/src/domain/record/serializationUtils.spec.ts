@@ -4,6 +4,7 @@ import {
   hasSerializedNode,
   setSerializedNode,
   makeSrcsetUrlsAbsolute,
+  makeUrlAbsolute,
 } from './serializationUtils'
 
 describe('serialized Node storage in DOM Nodes', () => {
@@ -124,5 +125,19 @@ describe('makeSrcsetUrlsAbsolute', () => {
     expect(makeSrcsetUrlsAbsolute('elva-fairy-480w.jpg, elva-fairy-800w.jpg', 'https://example.org')).toBe(
       'https://example.org/elva-fairy-480w.jpg, https://example.org/elva-fairy-800w.jpg'
     )
+  })
+})
+
+describe('makeUrlAbsolute', () => {
+  it('makes an absolute URL from a relative path', () => {
+    expect(makeUrlAbsolute('bar', 'http://example.org/foo/')).toBe('http://example.org/foo/bar')
+  })
+
+  it('makes an absolute URL from an absolute path', () => {
+    expect(makeUrlAbsolute('/bar', 'http://example.org/foo/')).toBe('http://example.org/bar')
+  })
+
+  it('do not change data URI', () => {
+    expect(makeUrlAbsolute('data:image/gif;base64,ABC', 'http://example.org/foo/')).toBe('data:image/gif;base64,ABC')
   })
 })
