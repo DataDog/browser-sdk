@@ -32,34 +32,34 @@ export function serializeDocument(document: Document): SerializedNodeWithId {
   })!
 }
 
-export function serializeNodeWithId(n: Node, options: SerializeOptions): SerializedNodeWithId | null {
-  const serializedNode = serializeNode(n, options)
+export function serializeNodeWithId(node: Node, options: SerializeOptions): SerializedNodeWithId | null {
+  const serializedNode = serializeNode(node, options)
   if (!serializedNode) {
     return null
   }
 
   // Try to reuse the previous id
-  const id = getSerializedNodeId(n) || generateNextId()
+  const id = getSerializedNodeId(node) || generateNextId()
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
-  setSerializedNode(n, serializedNodeWithId)
+  setSerializedNode(node, serializedNodeWithId)
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
   return serializedNodeWithId
 }
 
-function serializeNode(n: Node, options: SerializeOptions): SerializedNode | undefined {
-  switch (n.nodeType) {
-    case n.DOCUMENT_NODE:
-      return serializeDocumentNode(n as Document, options)
-    case n.DOCUMENT_TYPE_NODE:
-      return serializeDocumentTypeNode(n as DocumentType)
-    case n.ELEMENT_NODE:
-      return serializeElementNode(n as Element, options)
-    case n.TEXT_NODE:
-      return serializeTextNode(n as Text, options)
-    case n.CDATA_SECTION_NODE:
+function serializeNode(node: Node, options: SerializeOptions): SerializedNode | undefined {
+  switch (node.nodeType) {
+    case node.DOCUMENT_NODE:
+      return serializeDocumentNode(node as Document, options)
+    case node.DOCUMENT_TYPE_NODE:
+      return serializeDocumentTypeNode(node as DocumentType)
+    case node.ELEMENT_NODE:
+      return serializeElementNode(node as Element, options)
+    case node.TEXT_NODE:
+      return serializeTextNode(node as Text, options)
+    case node.CDATA_SECTION_NODE:
       return serializeCDataNode()
   }
 }

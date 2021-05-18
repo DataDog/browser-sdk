@@ -5,8 +5,8 @@ export interface NodeWithSerializedNode extends Node {
   __sn: SerializedNodeWithId
 }
 
-export function hasSerializedNode(n: Node): n is NodeWithSerializedNode {
-  return '__sn' in n
+export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
+  return '__sn' in node
 }
 
 export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWithSerializedNode {
@@ -20,27 +20,28 @@ export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWith
   return true
 }
 
-export function getSerializedNodeId(n: NodeWithSerializedNode): number
-export function getSerializedNodeId(n: Node): number | undefined
-export function getSerializedNodeId(n: Node) {
-  return hasSerializedNode(n) ? n.__sn.id : undefined
+export function getSerializedNodeId(node: NodeWithSerializedNode): number
+export function getSerializedNodeId(node: Node): number | undefined
+export function getSerializedNodeId(node: Node) {
+  return hasSerializedNode(node) ? node.__sn.id : undefined
 }
 
-export function setSerializedNode(n: Node, serializeNode: SerializedNodeWithId) {
-  ;(n as Partial<NodeWithSerializedNode>).__sn = serializeNode
+export function setSerializedNode(node: Node, serializeNode: SerializedNodeWithId) {
+  ;(node as Partial<NodeWithSerializedNode>).__sn = serializeNode
 }
 
 export function transformAttribute(doc: Document, name: string, value: string): string {
-  if (value) {
-    if (name === 'src' || name === 'href') {
-      return makeUrlAbsolute(value, doc.location.href)
-    }
-    if (name === 'srcset') {
-      return makeSrcsetUrlsAbsolute(value, doc.location.href)
-    }
-    if (name === 'style') {
-      return makeStylesheetUrlsAbsolute(value, doc.location.href)
-    }
+  if (!value) {
+    return value
+  }
+  if (name === 'src' || name === 'href') {
+    return makeUrlAbsolute(value, doc.location.href)
+  }
+  if (name === 'srcset') {
+    return makeSrcsetUrlsAbsolute(value, doc.location.href)
+  }
+  if (name === 'style') {
+    return makeStylesheetUrlsAbsolute(value, doc.location.href)
   }
   return value
 }
