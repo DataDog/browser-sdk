@@ -6,10 +6,12 @@ import {
   Context,
   DEFAULT_CONFIGURATION,
   TimeStamp,
+  noop,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
+import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
@@ -19,6 +21,7 @@ export interface TestSetupBuilder {
   withSession: (session: RumSession) => TestSetupBuilder
   withConfiguration: (overrides: Partial<Configuration>) => TestSetupBuilder
   withParentContexts: (stub: Partial<ParentContexts>) => TestSetupBuilder
+  withForegroundContexts: (stub: Partial<ForegroundContexts>) => TestSetupBuilder
   withFakeClock: () => TestSetupBuilder
   beforeBuild: (callback: BeforeBuildCallback) => TestSetupBuilder
 
@@ -34,6 +37,7 @@ interface BuildContext {
   location: Location
   applicationId: string
   parentContexts: ParentContexts
+  foregroundContexts: ForegroundContexts
 }
 
 export interface TestIO {
@@ -68,6 +72,11 @@ export function setup(): TestSetupBuilder {
   let clock: Clock
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
+  let foregroundContexts: ForegroundContexts = {
+    getInForeground: () => undefined,
+    getInForegroundPeriods: () => undefined,
+    stop: noop,
+  }
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     ...SPEC_ENDPOINTS,
@@ -113,6 +122,10 @@ export function setup(): TestSetupBuilder {
       parentContexts = stub as ParentContexts
       return setupBuilder
     },
+    withForegroundContexts(stub: Partial<ForegroundContexts>) {
+      foregroundContexts = { ...foregroundContexts, ...stub }
+      return setupBuilder
+    },
     withFakeClock() {
       clock = mockClock()
       return setupBuilder
@@ -126,6 +139,7 @@ export function setup(): TestSetupBuilder {
         const result = task({
           lifeCycle,
           parentContexts,
+          foregroundContexts,
           session,
           applicationId: FAKE_APP_ID,
           configuration: configuration as Configuration,

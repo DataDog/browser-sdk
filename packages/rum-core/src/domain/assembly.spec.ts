@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display, ServerDuration } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../rawRumEvent.types'
@@ -36,12 +36,28 @@ describe('rum assembly', () => {
           },
         }),
       })
-      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts }) => {
+      .withForegroundContexts({
+        getInForeground: () => ({
+          view: {
+            in_foreground: true,
+          },
+        }),
+        getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 15 as ServerDuration }],
+      })
+      .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts, foregroundContexts }) => {
         serverRumEvents = []
         lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) =>
           serverRumEvents.push(serverRumEvent)
         )
-        startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, () => commonContext)
+        startRumAssembly(
+          applicationId,
+          configuration,
+          lifeCycle,
+          session,
+          parentContexts,
+          foregroundContexts,
+          () => commonContext
+        )
       })
   })
 
@@ -314,6 +330,7 @@ describe('rum assembly', () => {
         id: 'abcde',
         referrer: 'url',
         url: 'url',
+        in_foreground: true,
       })
       expect(serverRumEvents[0].session.id).toBe('1234')
     })
@@ -412,6 +429,64 @@ describe('rum assembly', () => {
         startTime: 0 as RelativeTime,
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
+    })
+  })
+
+  describe('foreground context', () => {
+    it('should include the in_foreground_periods in views', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground_periods).toEqual([
+        { start: 0 as ServerDuration, duration: 15 as ServerDuration },
+      ])
+    })
+
+    it('should include the in_foreground in action', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground).toBe(true)
+    })
+
+    it('should include the in_foreground in errors', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.ERROR),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground).toBe(true)
+    })
+
+    it('should not include the in_foreground in long tasks', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground).toBeUndefined()
+    })
+
+    it('should not include the in_foreground in views', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground).toBeUndefined()
+    })
+
+    it('should not include the in_foreground in resource', () => {
+      const { lifeCycle } = setupBuilder.build()
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+        startTime: 0 as RelativeTime,
+      })
+      expect(serverRumEvents[0].view.in_foreground).toBeUndefined()
     })
   })
 
