@@ -583,6 +583,24 @@ describe('startMutationCollection', () => {
           ],
         })
       })
+
+      it('when moving an ignored node', () => {
+        const a = document.createElement('a')
+        const b = document.createElement('b')
+        const script = document.createElement('script')
+
+        sandbox.appendChild(a)
+        sandbox.appendChild(script)
+        sandbox.appendChild(b)
+        serializeDocument(document)
+
+        const { mutationController, mutationCallbackSpy } = startMutationCollection()
+
+        sandbox.appendChild(script)
+        mutationController.flush()
+
+        expect(mutationCallbackSpy).not.toHaveBeenCalled()
+      })
     })
   })
 
