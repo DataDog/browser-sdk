@@ -35,7 +35,7 @@ export interface AutoAction {
   id: string
   name: string
   startClocks: ClocksState
-  duration: Duration
+  duration?: Duration
   counts: ActionCounts
 }
 
@@ -43,6 +43,8 @@ export interface AutoActionCreatedEvent {
   id: string
   startClocks: ClocksState
 }
+
+export type AutoActionNamingStrategy = 'programmatic' | 'inferred'
 
 export function trackActions(lifeCycle: LifeCycle) {
   const action = startActionManagement(lifeCycle)
@@ -59,12 +61,13 @@ export function trackActions(lifeCycle: LifeCycle) {
       if (!(event.target instanceof Element)) {
         return
       }
-      const name = getActionNameFromElement(event.target)
+
+      const [name, namingStrategy] = getActionNameFromElement(event.target)
       if (!name) {
         return
       }
 
-      action.create(ActionType.CLICK, name)
+      action.create(ActionType.CLICK, namingStrategy, name)
     },
     { capture: true }
   )
@@ -82,7 +85,7 @@ function startActionManagement(lifeCycle: LifeCycle) {
   let currentIdlePageActivitySubscription: { stop: () => void }
 
   return {
-    create: (type: AutoActionType, name: string) => {
+    create: (type: AutoActionType, namingStrategy: AutoActionNamingStrategy, name: string) => {
       if (currentAction) {
         // Ignore any new action if another one is already occurring.
         return
@@ -93,6 +96,8 @@ function startActionManagement(lifeCycle: LifeCycle) {
       currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (params) => {
         if (params.hadActivity) {
           pendingAutoAction.complete(params.endTime)
+        } else if (namingStrategy === 'programmatic') {
+          pendingAutoAction.complete()
         } else {
           pendingAutoAction.discard()
         }
@@ -121,7 +126,7 @@ class PendingAutoAction {
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { id: this.id, startClocks: this.startClocks })
   }
 
-  complete(endTime: TimeStamp) {
+  complete(endTime?: TimeStamp) {
     const eventCounts = this.eventCountsSubscription.eventCounts
     this.lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
@@ -129,7 +134,7 @@ class PendingAutoAction {
         longTaskCount: eventCounts.longTaskCount,
         resourceCount: eventCounts.resourceCount,
       },
-      duration: elapsed(this.startClocks.timeStamp, endTime),
+      duration: endTime !== undefined ? elapsed(this.startClocks.timeStamp, endTime) : undefined,
       id: this.id,
       name: this.name,
       startClocks: this.startClocks,

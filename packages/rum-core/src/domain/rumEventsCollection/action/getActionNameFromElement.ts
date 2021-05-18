@@ -1,18 +1,25 @@
 import { safeTruncate } from '@datadog/browser-core'
+import { AutoActionNamingStrategy } from './trackActions'
 
-export function getActionNameFromElement(element: Element): string {
+export function getActionNameFromElement(element: Element): [string, AutoActionNamingStrategy] {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
   //   the element and a few parents, but it's likely that they won't succeed at all.
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
-  return (
-    getActionNameFromElementProgrammatically(element) ||
+
+  const programmaticName = getActionNameFromElementProgrammatically(element)
+  if (programmaticName) {
+    return [programmaticName, 'programmatic']
+  }
+
+  const inferredName =
     getActionNameFromElementForStrategies(element, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, fallbackStrategies) ||
     ''
-  )
+
+  return [inferredName, 'inferred']
 }
 
 /**

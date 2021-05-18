@@ -41,6 +41,34 @@ describe('action collection', () => {
       })
     })
 
+  createTest('track a named click action with no associated dom mutation')
+    .withRum({ trackInteractions: true })
+    .withBody(html` <button data-dd-action-name="thinger">click me</button> `)
+    .run(async ({ events }) => {
+      const button = await $('button')
+      await button.click()
+      await flushEvents()
+      const actionEvents = events.rumActions
+
+      expect(actionEvents.length).toBe(1)
+      expect(actionEvents[0].action).toEqual({
+        error: {
+          count: 0,
+        },
+        id: (jasmine.any(String) as unknown) as string,
+        long_task: {
+          count: (jasmine.any(Number) as unknown) as number,
+        },
+        resource: {
+          count: 0,
+        },
+        target: {
+          name: 'thinger',
+        },
+        type: 'click',
+      })
+    })
+
   createTest('associate a request to its action')
     .withRum({ trackInteractions: true })
     .withBody(

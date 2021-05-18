@@ -69,7 +69,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       previousActions.unshift({
         context: buildCurrentActionContext(),
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (currentAction.startClocks.relative + action.duration) as RelativeTime,
+        endTime: (currentAction.startClocks.relative + (action.duration ?? 0)) as RelativeTime,
         startTime: currentAction.startClocks.relative,
       })
     }

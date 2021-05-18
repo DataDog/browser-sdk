@@ -31,6 +31,7 @@ describe('trackActions', () => {
   const { events, pushEvent } = eventsCollector()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
+  let namedButton: HTMLButtonElement
   let setupBuilder: TestSetupBuilder
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
@@ -54,6 +55,12 @@ describe('trackActions', () => {
 
     emptyElement = document.createElement('hr')
     document.body.appendChild(emptyElement)
+
+    namedButton = document.createElement('button')
+    namedButton.type = 'button'
+    namedButton.setAttribute('data-dd-action-name', 'thinger')
+    namedButton.appendChild(document.createTextNode('Click me too'))
+    document.body.appendChild(namedButton)
 
     createSpy = jasmine.createSpy('create')
     discardSpy = jasmine.createSpy('discard')
@@ -120,6 +127,30 @@ describe('trackActions', () => {
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([])
     expect(discardSpy).toHaveBeenCalled()
+  })
+
+  it('keeps programmatically named actions even if nothing happens', () => {
+    const { clock } = setupBuilder.build()
+
+    clock.tick(SOME_ARBITRARY_DELAY)
+    namedButton.click()
+    clock.tick(EXPIRE_DELAY)
+
+    expect(createSpy).toHaveBeenCalled()
+    expect(events).toEqual([
+      {
+        counts: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
+        duration: undefined,
+        id: jasmine.any(String),
+        name: 'thinger',
+        startClocks: jasmine.any(Object),
+        type: ActionType.CLICK,
+      },
+    ])
   })
 
   it('ignores a actions if it fails to find a name', () => {

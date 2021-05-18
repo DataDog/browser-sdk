@@ -30,7 +30,7 @@ function processAction(action: AutoAction | CustomAction) {
             count: action.counts.errorCount,
           },
           id: action.id,
-          loading_time: toServerDuration(action.duration),
+          loading_time: action.duration !== undefined ? toServerDuration(action.duration) : undefined,
           long_task: {
             count: action.counts.longTaskCount,
           },

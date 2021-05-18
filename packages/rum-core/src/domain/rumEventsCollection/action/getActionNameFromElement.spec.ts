@@ -24,35 +24,35 @@ describe('getActionNameFromElement', () => {
   })
 
   it('extracts the textual content of an element', () => {
-    expect(getActionNameFromElement(element`<div>Foo <div>bar</div></div>`)).toBe('Foo bar')
+    expect(getActionNameFromElement(element`<div>Foo <div>bar</div></div>`)).toEqual(['Foo bar', 'inferred'])
   })
 
   it('extracts the text of an input button', () => {
-    expect(getActionNameFromElement(element`<input type="button" value="Click" />`)).toBe('Click')
+    expect(getActionNameFromElement(element`<input type="button" value="Click" />`)).toEqual(['Click', 'inferred'])
   })
 
   it('extracts the alt text of an image', () => {
-    expect(getActionNameFromElement(element`<img title="foo" alt="bar" />`)).toBe('bar')
+    expect(getActionNameFromElement(element`<img title="foo" alt="bar" />`)).toEqual(['bar', 'inferred'])
   })
 
   it('extracts the title text of an image', () => {
-    expect(getActionNameFromElement(element`<img title="foo" />`)).toBe('foo')
+    expect(getActionNameFromElement(element`<img title="foo" />`)).toEqual(['foo', 'inferred'])
   })
 
   it('extracts the text of an aria-label attribute', () => {
-    expect(getActionNameFromElement(element`<span aria-label="Foo" />`)).toBe('Foo')
+    expect(getActionNameFromElement(element`<span aria-label="Foo" />`)).toEqual(['Foo', 'inferred'])
   })
 
   it('gets the parent element textual content if everything else fails', () => {
-    expect(getActionNameFromElement(element`<div>Foo <img target /></div>`)).toBe('Foo')
+    expect(getActionNameFromElement(element`<div>Foo <img target /></div>`)).toEqual(['Foo', 'inferred'])
   })
 
   it("doesn't get the value of a text input", () => {
-    expect(getActionNameFromElement(element`<input type="text" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(element`<input type="text" value="foo" />`)).toEqual(['', 'inferred'])
   })
 
   it("doesn't get the value of a password input", () => {
-    expect(getActionNameFromElement(element`<input type="password" value="foo" />`)).toBe('')
+    expect(getActionNameFromElement(element`<input type="password" value="foo" />`)).toEqual(['', 'inferred'])
   })
 
   it('limits the name length to a reasonable size', () => {
@@ -61,22 +61,28 @@ describe('getActionNameFromElement', () => {
         // eslint-disable-next-line  max-len
         element`<div>Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz</div>`
       )
-    ).toBe(
+    ).toEqual(
       // eslint-disable-next-line  max-len
-      'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]'
+      [
+        'Foooooooooooooooooo baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [...]',
+        'inferred',
+      ]
     )
   })
 
   it('normalize white spaces', () => {
-    expect(getActionNameFromElement(element`<div>foo\tbar\n\n  baz</div>`)).toBe('foo bar baz')
+    expect(getActionNameFromElement(element`<div>foo\tbar\n\n  baz</div>`)).toEqual(['foo bar baz', 'inferred'])
   })
 
   it('ignores the inline script textual content', () => {
-    expect(getActionNameFromElement(element`<div><script>console.log('toto')</script>b</div>`)).toBe('b')
+    expect(getActionNameFromElement(element`<div><script>console.log('toto')</script>b</div>`)).toEqual([
+      'b',
+      'inferred',
+    ])
   })
 
   it('extracts text from SVG elements', () => {
-    expect(getActionNameFromElement(element`<svg><text>foo  bar</text></svg>`)).toBe('foo bar')
+    expect(getActionNameFromElement(element`<svg><text>foo  bar</text></svg>`)).toEqual(['foo bar', 'inferred'])
   })
 
   it('extracts text from an associated label', () => {
@@ -88,7 +94,7 @@ describe('getActionNameFromElement', () => {
           <input id="toto" target />
         </div>
       `)
-    ).toBe('label text')
+    ).toEqual(['label text', 'inferred'])
   })
 
   it('extracts text from a parent label', () => {
@@ -102,7 +108,7 @@ describe('getActionNameFromElement', () => {
           </div>
         </label>
       `)
-    ).toBe('foo bar')
+    ).toEqual(['foo bar', 'inferred'])
   })
 
   it('extracts text from the first OPTION element when clicking on a SELECT', () => {
@@ -113,7 +119,7 @@ describe('getActionNameFromElement', () => {
           <option>bar</option>
         </select>
       `)
-    ).toBe('foo')
+    ).toEqual(['foo', 'inferred'])
   })
 
   it('extracts text from a aria-labelledby associated element', () => {
@@ -125,7 +131,7 @@ describe('getActionNameFromElement', () => {
           <input aria-labelledby="toto" target />
         </div>
       `)
-    ).toBe('label text')
+    ).toEqual(['label text', 'inferred'])
   })
 
   it('extracts text from multiple aria-labelledby associated elements', () => {
@@ -139,7 +145,7 @@ describe('getActionNameFromElement', () => {
           <label id="toto2">text</label>
         </div>
       `)
-    ).toBe('label text')
+    ).toEqual(['label text', 'inferred'])
   })
 
   it('extracts text from a BUTTON element', () => {
@@ -150,7 +156,7 @@ describe('getActionNameFromElement', () => {
           <button target>foo</button>
         </div>
       `)
-    ).toBe('foo')
+    ).toEqual(['foo', 'inferred'])
   })
 
   it('extracts text from a role=button element', () => {
@@ -161,7 +167,7 @@ describe('getActionNameFromElement', () => {
           <div role="button" target>foo</div>
         </div>
       `)
-    ).toBe('foo')
+    ).toEqual(['foo', 'inferred'])
   })
 
   it('limits the recursion to the 10th parent', () => {
@@ -174,7 +180,7 @@ describe('getActionNameFromElement', () => {
           </i></i></i></i></i></i></i></i></i></i>
         </div>
       `)
-    ).toBe('')
+    ).toEqual(['', 'inferred'])
   })
 
   it('limits the recursion to the BODY element', () => {
@@ -183,7 +189,7 @@ describe('getActionNameFromElement', () => {
         <div>ignored</div>
         <i target></i>
       `)
-    ).toBe('')
+    ).toEqual(['', 'inferred'])
   })
 
   it('limits the recursion to a FORM element', () => {
@@ -196,7 +202,7 @@ describe('getActionNameFromElement', () => {
           </form>
         </div>
       `)
-    ).toBe('')
+    ).toEqual(['', 'inferred'])
   })
 
   it('extracts the name from a parent FORM element', () => {
@@ -209,7 +215,7 @@ describe('getActionNameFromElement', () => {
           </form>
         </div>
       `)
-    ).toBe('foo')
+    ).toEqual(['foo', 'inferred'])
   })
 
   it('extracts the whole textual content of a button', () => {
@@ -220,7 +226,7 @@ describe('getActionNameFromElement', () => {
           <i target>bar</i>
         </button>
       `)
-    ).toBe('foo bar')
+    ).toEqual(['foo bar', 'inferred'])
   })
 
   it('ignores the textual content of contenteditable elements', () => {
@@ -231,7 +237,7 @@ describe('getActionNameFromElement', () => {
           ignored
         </div>
       `)
-    ).toBe('')
+    ).toEqual(['', 'inferred'])
   })
 
   it('extracts the name from attributes of contenteditable elements', () => {
@@ -242,7 +248,7 @@ describe('getActionNameFromElement', () => {
           ignored
         </div>
       `)
-    ).toBe('foo')
+    ).toEqual(['foo', 'inferred'])
   })
 
   describe('programmatically declared action name', () => {
@@ -251,7 +257,7 @@ describe('getActionNameFromElement', () => {
         getActionNameFromElement(element`
           <div data-dd-action-name="foo">ignored</div>
         `)
-      ).toBe('foo')
+      ).toEqual(['foo', 'programmatic'])
     })
 
     it('considers any parent', () => {
@@ -264,7 +270,7 @@ describe('getActionNameFromElement', () => {
       `
       // Set the attribute on the <HTML> element
       target.ownerDocument.documentElement.setAttribute('data-dd-action-name', 'foo')
-      expect(getActionNameFromElement(target)).toBe('foo')
+      expect(getActionNameFromElement(target)).toEqual(['foo', 'programmatic'])
     })
 
     it('normalizes the value', () => {
@@ -272,7 +278,7 @@ describe('getActionNameFromElement', () => {
         getActionNameFromElement(element`
           <div data-dd-action-name="   foo  \t bar  ">ignored</div>
         `)
-      ).toBe('foo bar')
+      ).toEqual(['foo bar', 'programmatic'])
     })
 
     it('fallback on an automatic strategy if the attribute is empty', () => {
@@ -284,7 +290,7 @@ describe('getActionNameFromElement', () => {
             </div>
           </div>
       `)
-      ).toBe('foo')
+      ).toEqual(['foo', 'inferred'])
     })
   })
 })
