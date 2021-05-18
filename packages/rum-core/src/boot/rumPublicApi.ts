@@ -12,7 +12,8 @@ import {
   monitor,
   UserConfiguration,
   clocksNow,
-  ClocksState,
+  TimeStamp,
+  timeStampNow,
   display,
 } from '@datadog/browser-core'
 import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
@@ -43,9 +44,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, ClocksState]>()
+  const beforeInitAddTiming = new BoundedBuffer<[string, TimeStamp]>()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, clocksNow()])
+    beforeInitAddTiming.add([name, timeStampNow()])
   }
 
   const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
@@ -89,7 +90,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, endClocks]) => addTimingStrategy(name, endClocks))
+      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
 
       isAlreadyInitialized = true
     }),
