@@ -46,7 +46,7 @@ export function transformAttribute(doc: Document, name: string, value: string): 
 }
 
 const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
-const ABSOLUTE_URL = /^[A-Za-z]:|^\/\//
+const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
 const DATA_URI = /^data:.*,/i
 export function makeStylesheetUrlsAbsolute(cssText: string, baseUrl: string): string {
   return cssText.replace(
