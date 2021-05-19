@@ -174,6 +174,54 @@ describe('foreground', () => {
         })
       })
     })
+
+    describe('with one missing blur event. with two closed focus period every 5 seconds lasting 10 seconds', () => {
+      /*
+      events         F       F       B
+      periods        <------><------->
+      time       0   5  10  15  20  25
+      */
+      beforeEach(() => {
+        const { clock } = setupBuilder.build()
+        clock.tick(FIVE_SECONDS_MS)
+        window.dispatchEvent(createNewEvent('focus'))
+        clock.tick(TEN_SECONDS_MS)
+        window.dispatchEvent(createNewEvent('focus'))
+        clock.tick(TEN_SECONDS_MS)
+        window.dispatchEvent(createNewEvent('blur'))
+        clock.tick(FIVE_SECONDS_MS)
+      })
+
+      describe('getInForeground', () => {
+        describe('after 2 second', () => {
+          it('should false', () => {
+            expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+          })
+        })
+
+        describe('after 10 second', () => {
+          it('should true', () => {
+            expect(foregroundContext.getInForeground(10_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+          })
+        })
+
+        describe('after 20 second', () => {
+          it('should true', () => {
+            expect(foregroundContext.getInForeground(20_000 as RelativeTime)).toEqual({
+              view: { in_foreground: true },
+            })
+          })
+        })
+
+        describe('after 30 seconds', () => {
+          it('should false', () => {
+            expect(foregroundContext.getInForeground(30_000 as RelativeTime)).toEqual({
+              view: { in_foreground: false },
+            })
+          })
+        })
+      })
+    })
   })
 
   describe('when the page has focus when starting', () => {
@@ -196,6 +244,32 @@ describe('foreground', () => {
         it('should false', () => {
           const { clock } = setupBuilder.build()
           clock.tick(TEN_SECONDS_MS)
+          window.dispatchEvent(createNewEvent('blur'))
+
+          expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+        })
+      })
+    })
+
+    describe('when still getting the first focus event and closing the first periods after 10 seconds', () => {
+      describe('getInForeground after 2 seconds', () => {
+        it('should true', () => {
+          const { clock } = setupBuilder.build()
+          clock.tick(FIVE_SECONDS_MS)
+          window.dispatchEvent(createNewEvent('focus'))
+          clock.tick(FIVE_SECONDS_MS)
+          window.dispatchEvent(createNewEvent('blur'))
+
+          expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+        })
+      })
+
+      describe('getInForeground after 12 seconds', () => {
+        it('should false', () => {
+          const { clock } = setupBuilder.build()
+          clock.tick(FIVE_SECONDS_MS)
+          window.dispatchEvent(createNewEvent('focus'))
+          clock.tick(FIVE_SECONDS_MS)
           window.dispatchEvent(createNewEvent('blur'))
 
           expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })

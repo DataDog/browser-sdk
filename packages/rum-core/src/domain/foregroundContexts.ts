@@ -36,7 +36,7 @@ export function startForegroundContexts(configuration: Configuration) {
     }
   }
   if (document.hasFocus()) {
-    focusPeriods.push({ start: relativeNow() })
+    addNewFocusPeriod()
   }
 
   const { stop: stopFocusTracking } = trackFocus(addNewFocusPeriod)
@@ -56,6 +56,19 @@ function addNewFocusPeriod() {
   const now = relativeNow()
   if (focusPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
     return
+  }
+  const lastIndex = focusPeriods.length - 1
+  if (lastIndex >= 0 && focusPeriods[lastIndex].end == null) {
+    // already here
+    if (focusPeriods[lastIndex].start === now) {
+      return
+    }
+    // close current periods if we miss a blur event
+    const { start } = focusPeriods[lastIndex]
+    focusPeriods[lastIndex] = {
+      start,
+      end: now,
+    }
   }
   focusPeriods.push({
     start: now,
