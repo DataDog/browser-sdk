@@ -39,7 +39,7 @@ describe('viewCollection', () => {
         resourceCount: 10,
         userActionCount: 10,
       },
-      id: 'xxx',
+      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: undefined,
       isActive: false,
       hasReplay: false,
@@ -69,6 +69,7 @@ describe('viewCollection', () => {
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
       view: {
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         action: {
           count: 10,
         },
