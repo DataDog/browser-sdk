@@ -298,7 +298,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 0 as RelativeTime,
       })
-      expect((serverRumEvents[0] as RumActionEvent).action.id).not.toBeDefined()
+      expect((serverRumEvents[0] as RumActionEvent).action.id).toBeDefined()
       serverRumEvents = []
     })
   })
