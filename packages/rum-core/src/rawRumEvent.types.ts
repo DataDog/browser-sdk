@@ -13,7 +13,7 @@ export interface RawRumResourceEvent {
   type: RumEventType.RESOURCE
   resource: {
     type: ResourceType
-    id?: string // only for traced requests
+    id: string
     duration: ServerDuration
     url: string
     method?: string
@@ -46,6 +46,7 @@ export interface RawRumErrorEvent {
       status_code: number
       method: string
     }
+    id: string
     type?: string
     stack?: string
     source: ErrorSource
@@ -57,6 +58,7 @@ export interface RawRumViewEvent {
   date: TimeStamp
   type: RumEventType.VIEW
   view: {
+    id: string
     loading_type: ViewLoadingType
     first_contentful_paint?: ServerDuration
     first_input_delay?: ServerDuration
@@ -104,6 +106,7 @@ export interface RawRumLongTaskEvent {
   date: TimeStamp
   type: RumEventType.LONG_TASK
   long_task: {
+    id: string
     duration: ServerDuration
   }
 }
@@ -112,7 +115,7 @@ export interface RawRumActionEvent {
   date: TimeStamp
   type: RumEventType.ACTION
   action: {
-    id?: string
+    id: string
     type: ActionType
     loading_time?: ServerDuration
     error?: Count
