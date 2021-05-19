@@ -125,7 +125,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
       currentView.triggerUpdate()
     },
     startView: (name?: string, startClocks?: ClocksState) => {
-      currentView.end()
+      currentView.end(startClocks)
       currentView.triggerUpdate()
       currentView = trackViewChange(startClocks, name)
     },
@@ -197,8 +197,8 @@ function newView(
 
   return {
     scheduleUpdate: scheduleViewUpdate,
-    end() {
-      endClocks = clocksNow()
+    end(clocks = clocksNow()) {
+      endClocks = clocks
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },

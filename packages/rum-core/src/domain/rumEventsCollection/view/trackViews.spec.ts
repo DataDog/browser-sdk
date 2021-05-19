@@ -1,4 +1,4 @@
-import { Duration, RelativeTime, ClocksState, clocksNow, display } from '@datadog/browser-core'
+import { Duration, RelativeTime, ClocksState, clocksNow, display, relativeToClocks } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -541,19 +541,23 @@ describe('rum start view', () => {
   })
 
   it('should start a new view', () => {
-    setupBuilder.build()
+    const { clock } = setupBuilder.withFakeClock().build()
     expect(getHandledCount()).toBe(1)
     const initialViewId = getViewEvent(0).id
 
+    clock.tick(10)
     startView()
 
     expect(getHandledCount()).toBe(3)
 
     expect(getViewEvent(1).id).toBe(initialViewId)
     expect(getViewEvent(1).isActive).toBe(false)
+    expect(getViewEvent(1).startClocks.relative).toBe(0 as RelativeTime)
+    expect(getViewEvent(1).duration).toBe(10 as Duration)
 
     expect(getViewEvent(2).id).not.toBe(initialViewId)
     expect(getViewEvent(2).isActive).toBe(true)
+    expect(getViewEvent(2).startClocks.relative).toBe(10 as RelativeTime)
   })
 
   it('should name the view', () => {
@@ -566,5 +570,15 @@ describe('rum start view', () => {
     expect(getViewEvent(2).name).toBeUndefined()
     expect(getViewEvent(4).name).toBe('foo')
     expect(getViewEvent(6).name).toBe('bar')
+  })
+
+  it('should use the provided clock to stop the current view and start the new one', () => {
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(100)
+    startView('foo', relativeToClocks(50 as RelativeTime))
+
+    expect(getViewEvent(1).duration).toBe(50 as Duration)
+    expect(getViewEvent(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 })
