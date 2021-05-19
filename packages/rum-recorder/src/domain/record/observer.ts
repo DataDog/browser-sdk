@@ -1,7 +1,6 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { InputPrivacyMode } from '../../constants'
-import { nodeOrAncestorsShouldBeHidden, getNodeOrAncestorsInputPrivacyMode } from './privacy'
-import { getSerializedNodeId, hasSerializedNode } from './serializationUtils'
+import { nodeOrAncestorsShouldBeHidden } from './privacy'
+import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
   HookResetter,
@@ -157,17 +156,11 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
 const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
-function initInputObserver(cb: InputCallback): ListenerHandler {
+export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
 
-    if (
-      !target ||
-      !target.tagName ||
-      INPUT_TAGS.indexOf(target.tagName) < 0 ||
-      nodeOrAncestorsShouldBeHidden(target) ||
-      getNodeOrAncestorsInputPrivacyMode(target) === InputPrivacyMode.IGNORED
-    ) {
+    if (!target || !target.tagName || INPUT_TAGS.indexOf(target.tagName) < 0 || nodeOrAncestorsShouldBeHidden(target)) {
       return
     }
 
@@ -177,7 +170,11 @@ function initInputObserver(cb: InputCallback): ListenerHandler {
     if (type === 'radio' || type === 'checkbox') {
       inputValue = { isChecked: (target as HTMLInputElement).checked }
     } else {
-      inputValue = { text: target.value }
+      const value = getElementInputValue(target)
+      if (value === undefined) {
+        return
+      }
+      inputValue = { text: value }
     }
 
     cbWithDedup(target, inputValue)

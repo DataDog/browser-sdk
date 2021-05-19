@@ -533,6 +533,35 @@ describe('recorder', () => {
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
         expect((inputRecords[inputRecords.length - 1].data as InputData).text).toBe('foo')
       })
+
+    createTest('replace masked values by asterisks')
+      .withSetup(bundleSetup)
+      .withRumRecorder()
+      .withBody(
+        html`
+          <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
+          <input type="text" id="by-classname" class="dd-privacy-input-masked" />
+        `
+      )
+      .run(async ({ events }) => {
+        const firstInput = await $('#by-data-attribute')
+        await firstInput.setValue('foo')
+
+        const secondInput = await $('#by-classname')
+        await secondInput.setValue('bar')
+
+        await flushEvents()
+
+        expect(events.sessionReplay.length).toBe(1)
+
+        const segment = getFirstSegment(events)
+
+        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
+
+        expect(inputRecords.length).toBeGreaterThan(0)
+
+        expect(inputRecords.every((inputRecord) => /^\**$/.test((inputRecord.data as InputData).text!))).toBe(true)
+      })
   })
 
   describe('stylesheet rules observer', () => {
