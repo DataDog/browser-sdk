@@ -11,11 +11,11 @@ import { serializeNodeWithId } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
-  AttributesMutationRecord,
-  CharacterDataMutationRecord,
-  ChildListMutationRecord,
+  RumAttributesMutationRecord,
+  RumCharacterDataMutationRecord,
+  RumChildListMutationRecord,
   MutationCallBack,
-  MutationRecord,
+  RumMutationRecord,
   RemovedNodeMutation,
   TextMutation,
 } from './types'
@@ -29,10 +29,10 @@ type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
  */
 export function startMutationObserver(controller: MutationController, mutationCallback: MutationCallBack) {
   const mutationBatch = createMutationBatch((mutations) => {
-    processMutations(mutations.concat(observer.takeRecords()), mutationCallback)
+    processMutations(mutations.concat(observer.takeRecords() as RumMutationRecord[]), mutationCallback)
   })
 
-  const observer = new MutationObserver(monitor(mutationBatch.addMutations))
+  const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: MutationRecord[]) => void)
 
   observer.observe(document, {
     attributeOldValue: true,
@@ -67,13 +67,13 @@ export class MutationController {
   }
 }
 
-function processMutations(mutations: MutationRecord[], mutationCallback: MutationCallBack) {
+function processMutations(mutations: RumMutationRecord[], mutationCallback: MutationCallBack) {
   // Discard any mutation with a 'target' node that:
   // * isn't injected in the current document or isn't known/serialized yet: those nodes are likely
   // part of a mutation occurring in a parent Node
   // * should be hidden or ignored
   const filteredMutations = mutations.filter(
-    (mutation): mutation is WithSerializedTarget<MutationRecord> =>
+    (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       document.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       !nodeOrAncestorsShouldBeHidden(mutation.target)
@@ -81,20 +81,20 @@ function processMutations(mutations: MutationRecord[], mutationCallback: Mutatio
 
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
-      (mutation): mutation is WithSerializedTarget<ChildListMutationRecord> => mutation.type === 'childList'
+      (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     )
   )
 
   const texts = processCharacterDataMutations(
     filteredMutations.filter(
-      (mutation): mutation is WithSerializedTarget<CharacterDataMutationRecord> =>
+      (mutation): mutation is WithSerializedTarget<RumCharacterDataMutationRecord> =>
         mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
     )
   )
 
   const attributes = processAttributesMutations(
     filteredMutations.filter(
-      (mutation): mutation is WithSerializedTarget<AttributesMutationRecord> =>
+      (mutation): mutation is WithSerializedTarget<RumAttributesMutationRecord> =>
         mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
     )
   )
@@ -111,7 +111,7 @@ function processMutations(mutations: MutationRecord[], mutationCallback: Mutatio
   })
 }
 
-function processChildListMutations(mutations: Array<WithSerializedTarget<ChildListMutationRecord>>) {
+function processChildListMutations(mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>) {
   // First, we iterate over mutations to collect:
   //
   // * nodes that have been added in the document and not removed by a subsequent mutation
@@ -202,7 +202,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
   }
 }
 
-function processCharacterDataMutations(mutations: Array<WithSerializedTarget<CharacterDataMutationRecord>>) {
+function processCharacterDataMutations(mutations: Array<WithSerializedTarget<RumCharacterDataMutationRecord>>) {
   const textMutations: TextMutation[] = []
 
   // Deduplicate mutations based on their target node
@@ -230,18 +230,18 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Cha
   return textMutations
 }
 
-function processAttributesMutations(mutations: Array<WithSerializedTarget<AttributesMutationRecord>>) {
+function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAttributesMutationRecord>>) {
   const attributeMutations: AttributeMutation[] = []
 
   // Deduplicate mutations based on their target node and changed attribute
-  const handledNodes = new Map<Node, Set<string>>()
+  const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
-    const handledAttributes = handledNodes.get(mutation.target)
+    const handledAttributes = handledElements.get(mutation.target)
     if (handledAttributes?.has(mutation.attributeName!)) {
       return false
     }
     if (!handledAttributes) {
-      handledNodes.set(mutation.target, new Set([mutation.attributeName!]))
+      handledElements.set(mutation.target, new Set([mutation.attributeName!]))
     } else {
       handledAttributes.add(mutation.attributeName!)
     }
@@ -249,9 +249,9 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<Attrib
   })
 
   // Emit mutations
-  const emittedMutations = new Map<Node, AttributeMutation>()
+  const emittedMutations = new Map<Element, AttributeMutation>()
   for (const mutation of filteredMutations) {
-    const value = ((mutation.target as unknown) as HTMLElement).getAttribute(mutation.attributeName!)
+    const value = mutation.target.getAttribute(mutation.attributeName!)
     if (value === mutation.oldValue) {
       continue
     }

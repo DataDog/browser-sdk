@@ -82,27 +82,30 @@ export interface ObserverParam {
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
-export interface CharacterDataMutationRecord {
+export interface RumCharacterDataMutationRecord {
   type: 'characterData'
   target: Node
   oldValue: string | null
 }
 
-export interface AttributesMutationRecord {
+export interface RumAttributesMutationRecord {
   type: 'attributes'
-  target: Node
+  target: Element
   oldValue: string | null
   attributeName: string | null
 }
 
-export interface ChildListMutationRecord {
+export interface RumChildListMutationRecord {
   type: 'childList'
   target: Node
   addedNodes: NodeList
   removedNodes: NodeList
 }
 
-export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
+export type RumMutationRecord =
+  | RumCharacterDataMutationRecord
+  | RumAttributesMutationRecord
+  | RumChildListMutationRecord
 
 export interface TextCursor {
   node: Node
