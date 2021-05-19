@@ -47,6 +47,7 @@ function processRequest(request: RequestCompleteEvent) {
     {
       date: startClocks.timeStamp,
       resource: {
+        id: generateUUID(),
         type,
         duration: toServerDuration(request.duration),
         method: request.method,
@@ -71,6 +72,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
     {
       date: startClocks.timeStamp,
       resource: {
+        id: generateUUID(),
         type,
         url: entry.name,
       },
