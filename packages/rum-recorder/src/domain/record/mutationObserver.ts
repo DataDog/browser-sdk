@@ -1,6 +1,7 @@
 import { monitor } from '@datadog/browser-core'
 import { getNodeOrAncestorsInputPrivacyMode, nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
+  getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
@@ -260,6 +261,19 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
       continue
     }
 
+    let transformedValue: string | null
+    if (mutation.attributeName === 'value') {
+      const inputValue = getElementInputValue(mutation.target)
+      if (inputValue === undefined) {
+        continue
+      }
+      transformedValue = inputValue
+    } else if (value) {
+      transformedValue = transformAttribute(document, mutation.attributeName!, value)
+    } else {
+      transformedValue = null
+    }
+
     let emittedMutation = emittedMutations.get(mutation.target)
     if (!emittedMutation) {
       emittedMutation = {
@@ -270,8 +284,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
       emittedMutations.set(mutation.target, emittedMutation)
     }
 
-    emittedMutation.attributes[mutation.attributeName!] =
-      value && transformAttribute(document, mutation.attributeName!, value)
+    emittedMutation.attributes[mutation.attributeName!] = transformedValue
   }
 
   return attributeMutations
