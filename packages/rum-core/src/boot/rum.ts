@@ -51,7 +51,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
   startDOMMutationCollection(lifeCycle)
-
   const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
 
   return {

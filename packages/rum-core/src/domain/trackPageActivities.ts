@@ -1,4 +1,5 @@
 import { monitor, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { startDOMMutationCollection } from '../browser/domMutationCollection'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -66,6 +67,8 @@ export function trackPageActivities(
   let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
+  const DOMMutationCollection = startDOMMutationCollection(lifeCycle)
+
   subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyPageActivity()))
 
   subscriptions.push(
@@ -108,6 +111,7 @@ export function trackPageActivities(
     observable,
     stop: () => {
       subscriptions.forEach((s) => s.unsubscribe())
+      DOMMutationCollection.stop()
     },
   }
 }

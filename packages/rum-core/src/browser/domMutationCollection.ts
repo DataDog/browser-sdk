@@ -41,11 +41,7 @@ export function startDOMMutationCollection(lifeCycle: LifeCycle) {
   let observer: MutationObserver | undefined
   const MutationObserver = getMutationObserverConstructor()
   if (MutationObserver) {
-    observer = new MutationObserver(
-      monitor(() => {
-        lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
-      })
-    )
+    observer = new MutationObserver(monitor(() => lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)))
 
     observer.observe(document.documentElement, {
       attributes: true,
