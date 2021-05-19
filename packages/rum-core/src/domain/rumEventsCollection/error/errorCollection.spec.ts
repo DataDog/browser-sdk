@@ -37,6 +37,7 @@ describe('error collection', () => {
         rawRumEvent: {
           date: jasmine.any(Number),
           error: {
+            id: jasmine.any(String),
             message: 'foo',
             resource: undefined,
             source: ErrorSource.CUSTOM,
@@ -116,6 +117,7 @@ describe('error collection', () => {
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         error: {
+          id: jasmine.any(String),
           message: 'hello',
           resource: {
             method: 'GET',
