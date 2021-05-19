@@ -1,5 +1,6 @@
 import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from './privacy'
+import { InputPrivacyMode } from '../../constants'
+import { nodeOrAncestorsShouldBeHidden, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
@@ -165,7 +166,7 @@ function initInputObserver(cb: InputCallback): ListenerHandler {
       !target.tagName ||
       INPUT_TAGS.indexOf(target.tagName) < 0 ||
       nodeOrAncestorsShouldBeHidden(target) ||
-      nodeOrAncestorsShouldHaveInputIgnored(target)
+      getNodeOrAncestorsInputPrivacyMode(target) === InputPrivacyMode.IGNORED
     ) {
       return
     }

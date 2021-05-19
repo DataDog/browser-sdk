@@ -1,9 +1,12 @@
 import {
+  InputPrivacyMode,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_CLASS_HIDDEN,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+  PRIVACY_CLASS_HIDDEN,
   PRIVACY_CLASS_INPUT_IGNORED,
+  PRIVACY_CLASS_INPUT_MASKED,
 } from '../../constants'
 
 // PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
@@ -36,30 +39,53 @@ export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
   return nodeOrAncestorsShouldBeHidden(node.parentNode)
 }
 
-// Returns true if the given DOM node should have it's input events
-// ignored. Ancestors are not checked.
-export function nodeShouldHaveInputIgnored(node: Node): boolean {
-  return (
-    isElement(node) &&
-    (node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_INPUT_IGNORED ||
-      node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) ||
-      // if element is an HTMLInputElement, check the type is not to be ignored by default
-      (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type)))
-  )
+/**
+ * Returns the given node input privacy mode without checking the privacy mode on the node
+ * ancestors. Returns 'undefined' if the privacy mode cannot be determined and should be taken from
+ * an ancestor.
+ */
+export function getNodeInputPrivacyMode(node: Node): InputPrivacyMode | undefined {
+  if (!isElement(node)) {
+    return InputPrivacyMode.NONE
+  }
+
+  const attribute = node.getAttribute(PRIVACY_ATTR_NAME)
+  if (attribute === PRIVACY_ATTR_VALUE_INPUT_IGNORED) {
+    return InputPrivacyMode.IGNORED
+  }
+
+  if (attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED) {
+    return InputPrivacyMode.MASKED
+  }
+
+  if (node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED)) {
+    return InputPrivacyMode.IGNORED
+  }
+
+  if (node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)) {
+    return InputPrivacyMode.MASKED
+  }
+
+  if (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type)) {
+    return InputPrivacyMode.IGNORED
+  }
 }
 
-// Returns true if the given DOM node should have it's input events
-// ignored, recursively checking its ancestors.
-export function nodeOrAncestorsShouldHaveInputIgnored(node: Node | null): boolean {
-  if (!node) {
-    return false
+/**
+ * Returns the given node input privacy mode. This function is costly because it checks all of the
+ * node ancestors.
+ */
+export function getNodeOrAncestorsInputPrivacyMode(node: Node): InputPrivacyMode {
+  let currentNode: Node | null = node
+  while (currentNode) {
+    const inputPrivacyMode = getNodeInputPrivacyMode(currentNode)
+    if (inputPrivacyMode) {
+      return inputPrivacyMode
+    }
+    currentNode = currentNode.parentNode
   }
 
-  if (nodeShouldHaveInputIgnored(node)) {
-    return true
-  }
-
-  return nodeOrAncestorsShouldHaveInputIgnored(node.parentNode)
+  return InputPrivacyMode.NONE
 }
 
 function isElement(node: Node): node is Element {

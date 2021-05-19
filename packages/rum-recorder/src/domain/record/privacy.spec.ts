@@ -1,9 +1,10 @@
 import { isIE } from '../../../../core/test/specHelper'
+import { InputPrivacyMode } from '../../constants'
 import {
   nodeShouldBeHidden,
   nodeOrAncestorsShouldBeHidden,
-  nodeShouldHaveInputIgnored,
-  nodeOrAncestorsShouldHaveInputIgnored,
+  getNodeInputPrivacyMode,
+  getNodeOrAncestorsInputPrivacyMode,
 } from './privacy'
 
 describe('privacy helpers', () => {
@@ -57,58 +58,60 @@ describe('privacy helpers', () => {
       expect(nodeOrAncestorsShouldBeHidden(document)).toBeFalsy()
     })
   })
+
   describe('for ignoring input events', () => {
-    it('considers a normal DOM Element as not to be ignored', () => {
+    it('cannot determine the input privacy mode for a normal DOM Element', () => {
       const node = document.createElement('input')
-      expect(nodeShouldHaveInputIgnored(node)).toBeFalsy()
+      expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
     it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'input-ignored')
-      expect(nodeShouldHaveInputIgnored(node)).toBeTruthy()
+      expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
-    it('considers a DOM Element with a data-dd-privacy="foo" attribute as not to be ignored', () => {
+    it('cannot determine the input privacy mode for a DOM Element with a data-dd-privacy="foo" attribute', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'foo')
-      expect(nodeShouldHaveInputIgnored(node)).toBeFalsy()
+      expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
     it('considers a DOM Element with a dd-privacy-input-ignored class to be ignored', () => {
       const node = document.createElement('input')
       node.className = 'dd-privacy-input-ignored'
-      expect(nodeShouldHaveInputIgnored(node)).toBeTruthy()
+      expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
     it('considers a DOM HTMLInputElement with a type of "password" to be ignored', () => {
       const node = document.createElement('input')
       node.type = 'password'
-      expect(nodeShouldHaveInputIgnored(node)).toBeTruthy()
+      expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
-    it('considers a DOM HTMLInputElement with a type of "text" as not to be ignored', () => {
+    it('cannot determine the input privacy mode for a DOM HTMLInputElement with a type of "text"', () => {
       const node = document.createElement('input')
       node.type = 'text'
-      expect(nodeShouldHaveInputIgnored(node)).toBeFalse()
+      expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
+
     it('considers a normal DOM Element with a normal parent as not to be ignored', () => {
       const node = document.createElement('input')
       const parent = document.createElement('form')
       parent.appendChild(node)
-      expect(nodeOrAncestorsShouldHaveInputIgnored(node)).toBeFalsy()
+      expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.NONE)
     })
     it('considers a DOM Element with a parent node with a dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       const parent = document.createElement('form')
       parent.setAttribute('data-dd-privacy', 'input-ignored')
       parent.appendChild(node)
-      expect(nodeOrAncestorsShouldHaveInputIgnored(node)).toBeTruthy()
+      expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
     it('considers a DOM Element with a parent node with a dd-privacy-input-ignored class to be ignored', () => {
       const node = document.createElement('input')
       const parent = document.createElement('form')
       parent.className = 'dd-privacy-input-ignored'
       parent.appendChild(node)
-      expect(nodeOrAncestorsShouldHaveInputIgnored(node)).toBeTruthy()
+      expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
     it('considers a DOM Document as not to be ignored', () => {
-      expect(nodeOrAncestorsShouldHaveInputIgnored(document)).toBeFalsy()
+      expect(getNodeOrAncestorsInputPrivacyMode(document)).toBe(InputPrivacyMode.NONE)
     })
   })
 })
