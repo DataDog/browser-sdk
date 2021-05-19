@@ -1,5 +1,5 @@
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { nodeShouldBeHidden } from './privacy'
+import { InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
+import { getNodeInputPrivacyMode, nodeShouldBeHidden } from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -16,19 +16,22 @@ import {
   getSerializedNodeId,
   setSerializedNode,
   transformAttribute,
+  getElementInputValue,
 } from './serializationUtils'
 import { forEach } from './utils'
 
-interface SerializeOptions {
+export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
+  ancestorInputPrivacyMode: InputPrivacyMode
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
+    ancestorInputPrivacyMode: InputPrivacyMode.NONE,
   })!
 }
 
@@ -107,8 +110,13 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
 
   const attributes: Attributes = {}
   for (const { name, value } of Array.from(element.attributes)) {
+    // Never take those attributes into account, as they will be conditionally set below.
+    if (name === 'value' || name === 'selected' || name === 'checked') {
+      continue
+    }
     attributes[name] = transformAttribute(options.document, name, value)
   }
+
   // remote css
   if (tagName === 'link') {
     const stylesheet = Array.from(options.document.styleSheets).find(
@@ -121,6 +129,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
       attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
     }
   }
+
   // dynamic stylesheet
   if (
     tagName === 'style' &&
@@ -133,31 +142,29 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
       attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
     }
   }
+
   // form fields
-  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
-    const value = (element as HTMLInputElement | HTMLTextAreaElement).value
-    if (
-      attributes.type !== 'radio' &&
-      attributes.type !== 'checkbox' &&
-      attributes.type !== 'submit' &&
-      attributes.type !== 'button' &&
-      value
-    ) {
-      attributes.value = value
-    } else if ((element as HTMLInputElement).checked) {
-      attributes.checked = (element as HTMLInputElement).checked
-    }
+  const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
+  if (value) {
+    attributes.value = value
   }
+
   if (tagName === 'option') {
-    const selectValue = (element as HTMLOptionElement).parentElement
-    if (attributes.value === (selectValue as HTMLSelectElement).value) {
+    const selectElement = (element as HTMLOptionElement).parentElement
+    if ((element as HTMLOptionElement).value === (selectElement as HTMLSelectElement).value) {
       attributes.selected = (element as HTMLOptionElement).selected
     }
   }
+
+  if (tagName === 'input' && (element as HTMLInputElement).checked) {
+    attributes.checked = true
+  }
+
   // media elements
   if (tagName === 'audio' || tagName === 'video') {
     attributes.rr_mediaState = (element as HTMLMediaElement).paused ? 'paused' : 'played'
   }
+
   // scroll
   if (element.scrollLeft) {
     attributes.rr_scrollLeft = Math.round(element.scrollLeft)
@@ -166,11 +173,32 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     attributes.rr_scrollTop = Math.round(element.scrollTop)
   }
 
+  let childNodes: SerializedNodeWithId[]
+
+  if (element.childNodes.length) {
+    let childNodesSerializationOptions = options
+
+    // We should not create a new object systematically as it could impact performances. Try to reuse
+    // the same object as much as possible, and clone it only if we need to.
+    if (tagName === 'head') {
+      childNodesSerializationOptions = { ...childNodesSerializationOptions, ignoreWhiteSpace: true }
+    }
+
+    const inputPrivacyMode = getNodeInputPrivacyMode(element)
+    if (inputPrivacyMode) {
+      childNodesSerializationOptions = { ...childNodesSerializationOptions, ancestorInputPrivacyMode: inputPrivacyMode }
+    }
+
+    childNodes = serializeChildNodes(element, childNodesSerializationOptions)
+  } else {
+    childNodes = []
+  }
+
   return {
     type: NodeType.Element,
     tagName,
     attributes,
-    childNodes: serializeChildNodes(element, tagName === 'head' ? { ...options, ignoreWhiteSpace: true } : options),
+    childNodes,
     isSVG,
   }
 }

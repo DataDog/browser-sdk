@@ -1,8 +1,9 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
-import { MutationCallBack, NodeType } from './types'
+import { Attributes, MutationCallBack, NodeType } from './types'
 
 describe('startMutationCollection', () => {
   let sandbox: HTMLElement
@@ -674,6 +675,72 @@ describe('startMutationCollection', () => {
         })
       })
     })
+  })
+
+  describe('inputs privacy', () => {
+    const testsVariations: Array<{
+      privacyAttributeValue: string
+      privacyAttributeOn: 'input' | 'ancestor'
+      expectedSerializedAttributes: Attributes
+    }> = [
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+        privacyAttributeOn: 'input',
+        expectedSerializedAttributes: { [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+        privacyAttributeOn: 'input',
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+          value: '***',
+        },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+        privacyAttributeOn: 'ancestor',
+        expectedSerializedAttributes: {},
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+        privacyAttributeOn: 'ancestor',
+        expectedSerializedAttributes: { value: '***' },
+      },
+    ]
+
+    for (const { privacyAttributeValue, privacyAttributeOn, expectedSerializedAttributes } of testsVariations) {
+      describe(`${privacyAttributeValue} mode on ${privacyAttributeOn} element`, () => {
+        it(`respects the privacy mode for newly added inputs`, () => {
+          const input = document.createElement('input')
+          input.value = 'foo'
+          if (privacyAttributeOn === 'input') {
+            input.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
+          } else {
+            sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
+          }
+          const serializedDocument = serializeDocument(document)
+
+          const { mutationController, getLatestMutationPayload } = startMutationCollection()
+
+          sandbox.appendChild(input)
+          mutationController.flush()
+
+          const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+          validate(getLatestMutationPayload(), {
+            adds: [
+              {
+                parent: expectInitialNode({ idAttribute: 'sandbox' }),
+                node: expectNewNode({
+                  type: NodeType.Element,
+                  tagName: 'input',
+                  attributes: expectedSerializedAttributes,
+                }),
+              },
+            ],
+          })
+        })
+      })
+    }
   })
 })
 

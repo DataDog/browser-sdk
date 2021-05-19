@@ -1,5 +1,5 @@
 import { monitor } from '@datadog/browser-core'
-import { nodeOrAncestorsShouldBeHidden } from './privacy'
+import { getNodeOrAncestorsInputPrivacyMode, nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,
@@ -160,7 +160,11 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, { document, serializedNodeIds })
+    const serializedNode = serializeNodeWithId(node, {
+      document,
+      serializedNodeIds,
+      ancestorInputPrivacyMode: getNodeOrAncestorsInputPrivacyMode(node.parentNode!),
+    })
     if (!serializedNode) {
       continue
     }
