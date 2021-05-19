@@ -16,6 +16,10 @@
 
 ---
 
+## v2.10.0
+
+- ✨[RUMF-889] enable system clock usages ([#845](https://github.com/DataDog/browser-sdk/pull/845))
+
 ## v2.9.1
 
 - 🐛 [logs] Fix IE11 console.log issue ([#852](https://github.com/DataDog/browser-sdk/pull/852))
