@@ -37,11 +37,7 @@ describe('rum assembly', () => {
         }),
       })
       .withForegroundContexts({
-        getInForeground: () => ({
-          view: {
-            in_foreground: true,
-          },
-        }),
+        getInForeground: () => true,
         getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 15 as ServerDuration }],
       })
       .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts, foregroundContexts }) => {

@@ -66,7 +66,7 @@ export function startRumAssembly(
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
-        const inForegroundContext = foregroundContexts.getInForeground(startTime)
+        const in_foreground = foregroundContexts.getInForeground(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
@@ -89,7 +89,7 @@ export function startRumAssembly(
           : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
 
         if (needToAssembleWithInForeground(rawRumEvent)) {
-          serverRumEvent = combine(serverRumEvent, inForegroundContext)
+          serverRumEvent = combine(serverRumEvent, { view: { in_foreground } })
         }
 
         if (isView(rawRumEvent)) {

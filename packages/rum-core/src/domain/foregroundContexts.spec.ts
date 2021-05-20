@@ -36,7 +36,7 @@ describe('foreground', () => {
 
           clock.tick(1_000)
 
-          expect(foregroundContext.getInForeground(relativeNow())).toEqual({ view: { in_foreground: false } })
+          expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
         })
       })
 
@@ -75,41 +75,37 @@ describe('foreground', () => {
       describe('getInForeground', () => {
         describe('after 2 second', () => {
           it('should false', () => {
-            expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+            expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual(false)
           })
         })
 
         describe('after 10 second', () => {
           it('should true', () => {
-            expect(foregroundContext.getInForeground(10_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+            expect(foregroundContext.getInForeground(10_000 as RelativeTime)).toEqual(true)
           })
         })
 
         describe('after 17 second', () => {
           it('should false', () => {
-            expect(foregroundContext.getInForeground(17_000 as RelativeTime)).toEqual({
-              view: { in_foreground: false },
-            })
+            expect(foregroundContext.getInForeground(17_000 as RelativeTime)).toEqual(false)
           })
         })
 
         describe('after 25 seconds', () => {
           it('should true', () => {
-            expect(foregroundContext.getInForeground(25_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+            expect(foregroundContext.getInForeground(25_000 as RelativeTime)).toEqual(true)
           })
         })
 
         describe('after 32 seconds', () => {
           it('should false', () => {
-            expect(foregroundContext.getInForeground(32_000 as RelativeTime)).toEqual({
-              view: { in_foreground: false },
-            })
+            expect(foregroundContext.getInForeground(32_000 as RelativeTime)).toEqual(false)
           })
         })
 
         describe('after all the events', () => {
           it('should true', () => {
-            expect(foregroundContext.getInForeground(relativeNow())).toEqual({ view: { in_foreground: true } })
+            expect(foregroundContext.getInForeground(relativeNow())).toEqual(true)
           })
         })
       })
@@ -195,29 +191,25 @@ describe('foreground', () => {
       describe('getInForeground', () => {
         describe('after 2 second', () => {
           it('should false', () => {
-            expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+            expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual(false)
           })
         })
 
         describe('after 10 second', () => {
           it('should true', () => {
-            expect(foregroundContext.getInForeground(10_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+            expect(foregroundContext.getInForeground(10_000 as RelativeTime)).toEqual(true)
           })
         })
 
         describe('after 20 second', () => {
           it('should true', () => {
-            expect(foregroundContext.getInForeground(20_000 as RelativeTime)).toEqual({
-              view: { in_foreground: true },
-            })
+            expect(foregroundContext.getInForeground(20_000 as RelativeTime)).toEqual(true)
           })
         })
 
         describe('after 30 seconds', () => {
           it('should false', () => {
-            expect(foregroundContext.getInForeground(30_000 as RelativeTime)).toEqual({
-              view: { in_foreground: false },
-            })
+            expect(foregroundContext.getInForeground(30_000 as RelativeTime)).toEqual(false)
           })
         })
       })
@@ -236,7 +228,7 @@ describe('foreground', () => {
           clock.tick(TEN_SECONDS_MS)
           window.dispatchEvent(createNewEvent('blur'))
 
-          expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+          expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual(true)
         })
       })
 
@@ -246,7 +238,7 @@ describe('foreground', () => {
           clock.tick(TEN_SECONDS_MS)
           window.dispatchEvent(createNewEvent('blur'))
 
-          expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+          expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual(false)
         })
       })
     })
@@ -260,7 +252,7 @@ describe('foreground', () => {
           clock.tick(FIVE_SECONDS_MS)
           window.dispatchEvent(createNewEvent('blur'))
 
-          expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual({ view: { in_foreground: true } })
+          expect(foregroundContext.getInForeground(2_000 as RelativeTime)).toEqual(true)
         })
       })
 
@@ -272,7 +264,7 @@ describe('foreground', () => {
           clock.tick(FIVE_SECONDS_MS)
           window.dispatchEvent(createNewEvent('blur'))
 
-          expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual({ view: { in_foreground: false } })
+          expect(foregroundContext.getInForeground(12_000 as RelativeTime)).toEqual(false)
         })
       })
     })

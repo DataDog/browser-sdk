@@ -10,13 +10,13 @@ import {
   toDuration,
   toServerDuration,
 } from '@datadog/browser-core'
-import { ForegroundContext, InForegroundPeriod } from '../rawRumEvent.types'
+import { InForegroundPeriod } from '../rawRumEvent.types'
 
 // Arbitrary value to cap number of element (mostly for backend)
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface ForegroundContexts {
-  getInForeground: (startTime: RelativeTime) => ForegroundContext | undefined
+  getInForeground: (startTime: RelativeTime) => boolean | undefined
   getInForegroundPeriods: (startTime: RelativeTime, duration: ServerDuration) => InForegroundPeriod[] | undefined
   stop: () => void
 }
@@ -95,11 +95,11 @@ function trackBlur(onBlurChange: () => void) {
   return addEventListener(window, DOM_EVENT.BLUR, () => onBlurChange())
 }
 
-function getInForeground(startTime: RelativeTime): ForegroundContext {
-  const in_foreground = focusPeriods.some(
+function getInForeground(startTime: RelativeTime): boolean {
+  const inForeground = focusPeriods.some(
     (focus) => startTime > focus.start && (focus.end == null || startTime < focus.end)
   )
-  return { view: { in_foreground } }
+  return inForeground
 }
 
 function getInForegroundPeriods(eventStartTime: RelativeTime, duration: ServerDuration): InForegroundPeriod[] {
