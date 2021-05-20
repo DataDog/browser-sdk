@@ -1,4 +1,12 @@
-import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
+import {
+  monitor,
+  callMonitored,
+  throttle,
+  DOM_EVENT,
+  addEventListeners,
+  addEventListener,
+  includes,
+} from '@datadog/browser-core'
 import { nodeOrAncestorsShouldBeHidden } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
@@ -160,7 +168,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
 
-    if (!target || !target.tagName || INPUT_TAGS.indexOf(target.tagName) < 0 || nodeOrAncestorsShouldBeHidden(target)) {
+    if (!target || !target.tagName || !includes(INPUT_TAGS, target.tagName) || nodeOrAncestorsShouldBeHidden(target)) {
       return
     }
 
