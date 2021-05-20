@@ -1,5 +1,5 @@
 import { monitor, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { startDOMMutationCollection } from '../browser/domMutationCollection'
+import { DOMMutation } from '../browser/domMutationObserver'
 import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -17,9 +17,13 @@ type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | 
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
+  DOMMutation: DOMMutation,
   completionCallback: (params: CompletionCallbackParameters) => void
 ) {
-  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
+  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
+    lifeCycle,
+    DOMMutation
+  )
 
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
@@ -60,16 +64,15 @@ export function waitIdlePageActivity(
 // Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
 // after MAX_DURATION, it has been validated.
 export function trackPageActivities(
-  lifeCycle: LifeCycle
+  lifeCycle: LifeCycle,
+  DOMMutation: DOMMutation
 ): { observable: Observable<PageActivityEvent>; stop: () => void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
-  const DOMMutationCollection = startDOMMutationCollection(lifeCycle)
-
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyPageActivity()))
+  subscriptions.push(DOMMutation.subscribe(() => notifyPageActivity()))
 
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
@@ -111,7 +114,6 @@ export function trackPageActivities(
     observable,
     stop: () => {
       subscriptions.forEach((s) => s.unsubscribe())
-      DOMMutationCollection.stop()
     },
   }
 }
