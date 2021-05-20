@@ -17,15 +17,12 @@ import {
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
-  RawRumViewEvent,
-  RawRumActionEvent,
   RumEventType,
   User,
 } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
-import { ForegroundContexts } from './foregroundContexts'
 import { RumSession } from './rumSession'
 
 interface BrowserWindow extends Window {
@@ -53,7 +50,6 @@ export function startRumAssembly(
   lifeCycle: LifeCycle,
   session: RumSession,
   parentContexts: ParentContexts,
-  foregroundContexts: ForegroundContexts,
   getCommonContext: () => CommonContext
 ) {
   const errorFilter = createErrorFilter(configuration, (error) => {
@@ -66,7 +62,6 @@ export function startRumAssembly(
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
-        const in_foreground = foregroundContexts.getInForeground(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
           _dd: {
@@ -84,21 +79,9 @@ export function startRumAssembly(
             type: getSessionType(),
           },
         }
-        let serverRumEvent = (needToAssembleWithAction(rawRumEvent)
+        const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
-
-        if (needToAssembleWithInForeground(rawRumEvent)) {
-          serverRumEvent = combine(serverRumEvent, { view: { in_foreground } })
-        }
-
-        if (isView(rawRumEvent)) {
-          const in_foreground_periods = foregroundContexts.getInForegroundPeriods(
-            startTime,
-            rawRumEvent.view.time_spent
-          )
-          serverRumEvent = combine(serverRumEvent, { view: { in_foreground_periods } })
-        }
 
         const context = combine(commonContext.context, customerContext)
         if (!isEmptyObject(context)) {
@@ -145,14 +128,6 @@ function needToAssembleWithAction(
   event: RawRumEvent
 ): event is RawRumErrorEvent | RawRumResourceEvent | RawRumLongTaskEvent {
   return [RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK].indexOf(event.type) !== -1
-}
-
-function needToAssembleWithInForeground(event: RawRumEvent): event is RawRumErrorEvent | RawRumActionEvent {
-  return [RumEventType.ERROR, RumEventType.ACTION].indexOf(event.type) !== -1
-}
-
-function isView(event: RawRumEvent): event is RawRumViewEvent {
-  return RumEventType.VIEW === event.type
 }
 
 function getSessionType() {

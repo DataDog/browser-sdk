@@ -51,6 +51,9 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
   }
+  view: {
+    in_foreground?: boolean
+  }
 }
 
 export interface RawRumViewEvent {
@@ -128,6 +131,9 @@ export interface RawRumActionEvent {
       name: string
     }
   }
+  view: {
+    in_foreground?: boolean
+  }
 }
 
 export enum ActionType {
@@ -200,10 +206,4 @@ export interface CommonContext {
   user: User
   context: Context
   hasReplay?: true
-}
-
-export interface ForegroundContext {
-  view: {
-    in_foreground?: boolean
-  }
 }

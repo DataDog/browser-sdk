@@ -24,6 +24,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ActionType.CUSTOM,
           },
           date: 0 as TimeStamp,
+          view: {},
         },
         overrides
       )
@@ -47,6 +48,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             message: 'oh snap',
             source: ErrorSource.SOURCE,
           },
+          view: {},
         },
         overrides
       )
