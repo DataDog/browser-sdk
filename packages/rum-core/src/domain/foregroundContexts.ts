@@ -91,30 +91,43 @@ function trackBlur(onBlurChange: () => void) {
 }
 
 function getInForeground(startTime: RelativeTime): boolean {
-  const inForeground = foregroundPeriods.some(
-    (foreground) => startTime > foreground.start && (foreground.end == null || startTime < foreground.end)
-  )
-  return inForeground
+  for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
+    const foregroundPeriod = foregroundPeriods[i]
+    if (foregroundPeriod.end !== undefined && startTime > foregroundPeriod.end) {
+      break
+    }
+    if (startTime > foregroundPeriod.start && (foregroundPeriod.end == null || startTime < foregroundPeriod.end)) {
+      return true
+    }
+  }
+  return false
 }
 
 function getInForegroundPeriods(eventStartTime: RelativeTime, duration: ServerDuration): InForegroundPeriod[] {
   const eventEndTime = ((eventStartTime as number) + (toDuration(duration) as number)) as RelativeTime
-  return foregroundPeriods
-    .filter((foreground) => {
-      const eventEndsBeforeForegroundStart = eventEndTime < foreground.start
-      const eventStartsAfterForegroundEnds = foreground.end == null || eventStartTime > foreground.end
+  const filteredForegroundPeriods: InForegroundPeriod[] = []
 
-      return !eventEndsBeforeForegroundStart || !eventStartsAfterForegroundEnds
+  for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
+    const foregroundPeriod = foregroundPeriods[i]
+    if (foregroundPeriod.end !== undefined && eventStartTime > foregroundPeriod.end) {
+      // event starts after the end of the current focus period
+      // since the array is sorted, we can stop looking for foreground periods
+      break
+    }
+    if (eventEndTime < foregroundPeriod.start) {
+      // event ends before the start of the current focus period
+      // continue to previous one
+      continue
+    }
+    const startTime = eventStartTime > foregroundPeriod.start ? eventStartTime : foregroundPeriod.start
+    const startDuration = elapsed(eventStartTime, startTime)
+    const endTime =
+      foregroundPeriod.end == null || eventEndTime < foregroundPeriod.end ? eventEndTime : foregroundPeriod.end
+    const endDuration = elapsed(startTime, endTime)
+    filteredForegroundPeriods.unshift({
+      start: toServerDuration(startDuration),
+      duration: toServerDuration(endDuration),
     })
-    .map((foregroundPeriod) => {
-      const startTime = eventStartTime > foregroundPeriod.start ? eventStartTime : foregroundPeriod.start
-      const startDuration = elapsed(eventStartTime, startTime)
-      const endTime =
-        foregroundPeriod.end == null || eventEndTime < foregroundPeriod.end ? eventEndTime : foregroundPeriod.end
-      const endDuration = elapsed(startTime, endTime)
-      return {
-        start: toServerDuration(startDuration),
-        duration: toServerDuration(endDuration),
-      }
-    })
+  }
+  return filteredForegroundPeriods
 }
