@@ -69,7 +69,6 @@ describe('viewCollection', () => {
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
       view: {
-        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         action: {
           count: 10,
         },
