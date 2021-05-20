@@ -17,7 +17,6 @@ export enum LifeCycleEventType {
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
-  DOM_MUTATED,
   BEFORE_UNLOAD,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
@@ -48,7 +47,6 @@ export class LifeCycle {
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
       | LifeCycleEventType.RECORD_STARTED
@@ -95,7 +93,6 @@ export class LifeCycle {
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
       | LifeCycleEventType.RECORD_STARTED

@@ -1,5 +1,5 @@
 import { combine, commonInit, Configuration } from '@datadog/browser-core'
-import { startDOMMutationCollection } from '../browser/domMutationCollection'
+import { createDOMMutationObservable } from '../browser/domMutationObserver'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/internalContext'
@@ -20,9 +20,9 @@ import { RumUserConfiguration } from './rumPublicApi'
 
 export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
   const lifeCycle = new LifeCycle()
-
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
+  const domMutation = createDOMMutationObservable()
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -44,13 +44,13 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming, startView } = startViewCollection(lifeCycle, location)
+  const { addTiming, startView } = startViewCollection(lifeCycle, domMutation, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
-  const { addAction } = startActionCollection(lifeCycle, configuration)
+  const { addAction } = startActionCollection(lifeCycle, domMutation, configuration)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
-  startDOMMutationCollection(lifeCycle)
+
   const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
 
   return {
@@ -75,6 +75,7 @@ export function startRumEventCollection(
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
+
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
 
   return {
