@@ -121,5 +121,5 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 }
 
 export function maskValue(value: string) {
-  return value.replace(/./g, () => '*')
+  return value.replace(/./g, '*')
 }
