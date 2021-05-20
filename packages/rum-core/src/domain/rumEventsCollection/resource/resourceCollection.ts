@@ -104,7 +104,6 @@ function computeRequestTracingInfo(request: RequestCompleteEvent) {
       span_id: request.spanId!.toDecimalString(),
       trace_id: request.traceId!.toDecimalString(),
     },
-    resource: { id: generateUUID() },
   }
 }
 
