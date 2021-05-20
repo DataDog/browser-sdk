@@ -105,7 +105,7 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
   }
 
   const inputPrivacyMode = ancestorInputPrivacyMode
-    ? getNodeInputPrivacyMode(element) || ancestorInputPrivacyMode
+    ? getNodeInputPrivacyMode(element, ancestorInputPrivacyMode)
     : getNodeOrAncestorsInputPrivacyMode(element)
 
   if (

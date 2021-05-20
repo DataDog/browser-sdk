@@ -184,8 +184,8 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
       childNodesSerializationOptions = { ...childNodesSerializationOptions, ignoreWhiteSpace: true }
     }
 
-    const inputPrivacyMode = getNodeInputPrivacyMode(element)
-    if (inputPrivacyMode) {
+    const inputPrivacyMode = getNodeInputPrivacyMode(element, options.ancestorInputPrivacyMode)
+    if (inputPrivacyMode !== options.ancestorInputPrivacyMode) {
       childNodesSerializationOptions = { ...childNodesSerializationOptions, ancestorInputPrivacyMode: inputPrivacyMode }
     }
 

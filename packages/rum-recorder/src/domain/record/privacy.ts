@@ -40,17 +40,17 @@ export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
 }
 
 /**
- * Returns the given node input privacy mode without checking the privacy mode on the node
- * ancestors. Returns 'undefined' if the privacy mode cannot be determined and should be taken from
- * an ancestor.
+ * Returns the given node input privacy mode. The ancestor input privacy mode is required to make
+ * sure we respect the privacy mode priorities.
  */
-export function getNodeInputPrivacyMode(node: Node): InputPrivacyMode | undefined {
+export function getNodeInputPrivacyMode(node: Node, ancestorInputPrivacyMode: InputPrivacyMode): InputPrivacyMode {
   if (!isElement(node)) {
     return InputPrivacyMode.NONE
   }
 
   const attribute = node.getAttribute(PRIVACY_ATTR_NAME)
   if (
+    ancestorInputPrivacyMode === InputPrivacyMode.IGNORED ||
     attribute === PRIVACY_ATTR_VALUE_INPUT_IGNORED ||
     node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) ||
     (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type))
@@ -58,9 +58,15 @@ export function getNodeInputPrivacyMode(node: Node): InputPrivacyMode | undefine
     return InputPrivacyMode.IGNORED
   }
 
-  if (attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED || node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)) {
+  if (
+    ancestorInputPrivacyMode === InputPrivacyMode.MASKED ||
+    attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED ||
+    node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)
+  ) {
     return InputPrivacyMode.MASKED
   }
+
+  return InputPrivacyMode.NONE
 }
 
 /**
@@ -68,16 +74,12 @@ export function getNodeInputPrivacyMode(node: Node): InputPrivacyMode | undefine
  * node ancestors.
  */
 export function getNodeOrAncestorsInputPrivacyMode(node: Node): InputPrivacyMode {
-  let currentNode: Node | null = node
-  while (currentNode) {
-    const inputPrivacyMode = getNodeInputPrivacyMode(currentNode)
-    if (inputPrivacyMode) {
-      return inputPrivacyMode
-    }
-    currentNode = currentNode.parentNode
-  }
-
-  return InputPrivacyMode.NONE
+  // We basically iterate ancestors from top (document) to bottom (node). It is way easier to do
+  // recursively.
+  const ancestorInputPrivacyMode = node.parentNode
+    ? getNodeOrAncestorsInputPrivacyMode(node.parentNode)
+    : InputPrivacyMode.NONE
+  return getNodeInputPrivacyMode(node, ancestorInputPrivacyMode)
 }
 
 function isElement(node: Node): node is Element {
