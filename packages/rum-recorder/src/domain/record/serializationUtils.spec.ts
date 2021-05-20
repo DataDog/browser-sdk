@@ -178,7 +178,7 @@ describe('getElementInputValue', () => {
   it('does not return the value of a <input> with a IGNORED privacy mode', () => {
     const input = document.createElement('input')
     input.value = 'foo'
-    wrapInInputIgnored(input)
+    wrapInIgnoredParent(input)
     expect(getElementInputValue(input)).toBeUndefined()
   })
 
@@ -188,14 +188,14 @@ describe('getElementInputValue', () => {
     option.value = 'foo'
     select.appendChild(option)
     select.value = 'foo'
-    wrapInInputIgnored(select)
+    wrapInIgnoredParent(select)
     expect(getElementInputValue(select)).toBe('foo')
   })
 
   it('always returns the value of a <option>', () => {
     const option = document.createElement('option')
     option.value = 'foo'
-    wrapInInputIgnored(option)
+    wrapInIgnoredParent(option)
     expect(getElementInputValue(option)).toBe('foo')
   })
 
@@ -203,7 +203,7 @@ describe('getElementInputValue', () => {
     const input = document.createElement('input')
     input.value = 'foo'
     input.type = 'button'
-    wrapInInputIgnored(input)
+    wrapInIgnoredParent(input)
     expect(getElementInputValue(input)).toBe('foo')
   })
 
@@ -211,7 +211,7 @@ describe('getElementInputValue', () => {
     const input = document.createElement('input')
     input.value = 'foo'
     input.type = 'submit'
-    wrapInInputIgnored(input)
+    wrapInIgnoredParent(input)
     expect(getElementInputValue(input)).toBe('foo')
   })
 
@@ -219,7 +219,7 @@ describe('getElementInputValue', () => {
     const input = document.createElement('input')
     input.value = 'foo'
     input.type = 'reset'
-    wrapInInputIgnored(input)
+    wrapInIgnoredParent(input)
     expect(getElementInputValue(input)).toBe('foo')
   })
 
@@ -236,7 +236,7 @@ describe('getElementInputValue', () => {
     expect(getElementInputValue(input)).toBe('***')
   })
 
-  function wrapInInputIgnored(element: Element) {
+  function wrapInIgnoredParent(element: Element) {
     const parent = document.createElement('div')
     parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
     parent.appendChild(element)
