@@ -49,94 +49,132 @@ describe('rum assembly', () => {
     setupBuilder.cleanup()
   })
 
-  describe('events', () => {
-    it('should allow modification on sensitive field', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          beforeSend: (event) => (event.view.url = 'modified'),
-        })
-        .build()
+  describe('beforeSend', () => {
+    describe('fields modification', () => {
+      it('should allow modification on sensitive field', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => (event.view.url = 'modified'),
+          })
+          .build()
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
-        startTime: 0 as RelativeTime,
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents[0].view.url).toBe('modified')
       })
 
-      expect(serverRumEvents[0].view.url).toBe('modified')
+      it('should reject modification on non sensitive and non context field', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
+          })
+          .build()
+
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      })
+
+      it('should allow modification on context field for events other than views', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.context.foo = 'bar'
+            },
+          })
+          .build()
+
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents[0].context!.foo).toBe('bar')
+      })
+
+      it('should reject modification on context field for view events', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: (event) => {
+              event.context.foo = 'bar'
+            },
+          })
+          .build()
+
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents[0].context).toBeUndefined()
+      })
     })
 
-    it('should reject modification on non sensitive field', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
+    describe('events dismission', () => {
+      it('should allow dismissing events other than views', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: () => false,
+          })
+          .build()
+
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
         })
-        .build()
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-    })
-
-    it('should allow dismissing events other than views', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          beforeSend: () => false,
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
         })
-        .build()
 
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(serverRumEvents.length).toBe(0)
-    })
-
-    it('should not allow dismissing view events', () => {
-      const { lifeCycle } = setupBuilder
-        .withConfiguration({
-          beforeSend: () => false,
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
         })
-        .build()
 
-      const displaySpy = spyOn(display, 'warn')
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
-          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
-        }),
-        startTime: 0 as RelativeTime,
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents.length).toBe(0)
       })
 
-      expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-      expect(displaySpy).toHaveBeenCalledWith(`Can't dismiss view events using beforeSend!`)
+      it('should not allow dismissing view events', () => {
+        const { lifeCycle } = setupBuilder
+          .withConfiguration({
+            beforeSend: () => false,
+          })
+          .build()
+
+        const displaySpy = spyOn(display, 'warn')
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
+            view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+          }),
+          startTime: 0 as RelativeTime,
+        })
+
+        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        expect(displaySpy).toHaveBeenCalledWith(`Can't dismiss view events using beforeSend!`)
+      })
     })
   })
 

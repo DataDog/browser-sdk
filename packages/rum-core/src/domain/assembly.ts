@@ -34,7 +34,8 @@ enum SessionType {
   USER = 'user',
 }
 
-const FIELDS_WITH_SENSITIVE_DATA = [
+const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
+  // Fields with sensitive data
   'view.url',
   'view.referrer',
   'action.target.name',
@@ -42,6 +43,12 @@ const FIELDS_WITH_SENSITIVE_DATA = [
   'error.stack',
   'error.resource.url',
   'resource.url',
+]
+
+const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
+  ...VIEW_EVENTS_MODIFIABLE_FIELD_PATHS,
+  // User-customizable field
+  'context',
 ]
 
 export function startRumAssembly(
@@ -110,7 +117,11 @@ function shouldSend(
   errorFilter: ErrorFilter
 ) {
   if (beforeSend) {
-    const result = limitModification(event, FIELDS_WITH_SENSITIVE_DATA, beforeSend)
+    const result = limitModification(
+      event,
+      event.type === RumEventType.VIEW ? VIEW_EVENTS_MODIFIABLE_FIELD_PATHS : OTHER_EVENTS_MODIFIABLE_FIELD_PATHS,
+      beforeSend
+    )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false
     }
