@@ -137,7 +137,7 @@ describe('makeUrlAbsolute', () => {
     expect(makeUrlAbsolute('/bar', 'http://example.org/foo/')).toBe('http://example.org/bar')
   })
 
-  it('do not change data URI', () => {
+  it('does not change data URIs', () => {
     expect(makeUrlAbsolute('data:image/gif;base64,ABC', 'http://example.org/foo/')).toBe('data:image/gif;base64,ABC')
   })
 })
