@@ -83,10 +83,7 @@ export function startRumAssembly(
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
 
-        const context = combine(commonContext.context, customerContext)
-        if (!isEmptyObject(context)) {
-          serverRumEvent.context = context
-        }
+        serverRumEvent.context = combine(commonContext.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
           ;(serverRumEvent.session as { has_replay?: boolean }).has_replay = commonContext.hasReplay
@@ -97,6 +94,9 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
+          if (isEmptyObject(serverRumEvent.context)) {
+            delete serverRumEvent.context
+          }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
       }
