@@ -16,6 +16,7 @@ import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
+import { DOMMutation } from '../../../browser/domMutationObserver'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
 import { trackViewMetrics } from './trackViewMetrics'
@@ -53,7 +54,7 @@ export interface ViewEndedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle) {
+export function trackViews(location: Location, lifeCycle: LifeCycle, DOMMutation: DOMMutation) {
   let isRecording = false
 
   // eslint-disable-next-line prefer-const
@@ -103,6 +104,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   function trackInitialView() {
     const initialView = newView(
       lifeCycle,
+      DOMMutation,
       location,
       isRecording,
       ViewLoadingType.INITIAL_LOAD,
@@ -117,7 +119,16 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
   }
 
   function trackViewChange(startClocks?: ClocksState, name?: string) {
-    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url, startClocks, name)
+    return newView(
+      lifeCycle,
+      DOMMutation,
+      location,
+      isRecording,
+      ViewLoadingType.ROUTE_CHANGE,
+      currentView.url,
+      startClocks,
+      name
+    )
   }
 
   return {
@@ -141,6 +152,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
 
 function newView(
   lifeCycle: LifeCycle,
+  DOMMutation: DOMMutation,
   initialLocation: Location,
   initialHasReplay: boolean,
   loadingType: ViewLoadingType,
@@ -170,6 +182,7 @@ function newView(
 
   const { setLoadEvent, stop: stopViewMetricsTracking, viewMetrics } = trackViewMetrics(
     lifeCycle,
+    DOMMutation,
     scheduleViewUpdate,
     loadingType
   )

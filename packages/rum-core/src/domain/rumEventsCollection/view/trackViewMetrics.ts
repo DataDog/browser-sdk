@@ -4,6 +4,7 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
+import { DOMMutation } from '../../../browser/domMutationObserver'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -11,7 +12,12 @@ export interface ViewMetrics {
   cumulativeLayoutShift?: number
 }
 
-export function trackViewMetrics(lifeCycle: LifeCycle, scheduleViewUpdate: () => void, loadingType: ViewLoadingType) {
+export function trackViewMetrics(
+  lifeCycle: LifeCycle,
+  DOMMutation: DOMMutation,
+  scheduleViewUpdate: () => void,
+  loadingType: ViewLoadingType
+) {
   const viewMetrics: ViewMetrics = {
     eventCounts: {
       errorCount: 0,
@@ -30,7 +36,11 @@ export function trackViewMetrics(lifeCycle: LifeCycle, scheduleViewUpdate: () =>
     scheduleViewUpdate()
   })
 
-  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(lifeCycle, setActivityLoadingTime)
+  const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(
+    lifeCycle,
+    DOMMutation,
+    setActivityLoadingTime
+  )
 
   let stopCLSTracking: () => void
   if (isLayoutShiftSupported()) {
@@ -84,9 +94,13 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
   }
 }
 
-function trackActivityLoadingTime(lifeCycle: LifeCycle, callback: (loadingTimeValue: Duration | undefined) => void) {
+function trackActivityLoadingTime(
+  lifeCycle: LifeCycle,
+  DOMMutation: DOMMutation,
+  callback: (loadingTimeValue: Duration | undefined) => void
+) {
   const startTime = timeStampNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, (params) => {
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, DOMMutation, (params) => {
     if (params.hadActivity) {
       callback(elapsed(startTime, params.endTime))
     } else {
