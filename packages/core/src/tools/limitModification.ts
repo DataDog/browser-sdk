@@ -15,7 +15,7 @@ export function limitModification<T extends Context, Result>(
   modifiableFieldPaths.forEach((path) => {
     const originalValue = get(object, path)
     const newValue = get(clone, path)
-    if (typeof originalValue === 'string' && typeof newValue === 'string') {
+    if (areSameType(originalValue, newValue)) {
       set(object, path, newValue)
     }
   })
@@ -33,7 +33,7 @@ function get(object: unknown, path: string) {
   return current
 }
 
-function set(object: unknown, path: string, value: string) {
+function set(object: unknown, path: string, value: unknown) {
   let current = object
   const fields = path.split('.')
   for (let i = 0; i < fields.length; i += 1) {
@@ -51,4 +51,16 @@ function set(object: unknown, path: string, value: string) {
 
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
   return typeof object === 'object' && object !== null && field in object
+}
+
+function areSameType(valueA: unknown, valueB: unknown) {
+  if (valueA === null) {
+    return valueB === null
+  }
+
+  if (Array.isArray(valueA)) {
+    return Array.isArray(valueB)
+  }
+
+  return typeof valueA === typeof valueB
 }

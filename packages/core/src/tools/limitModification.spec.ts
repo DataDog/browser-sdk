@@ -1,3 +1,4 @@
+import { Context } from './context'
 import { limitModification } from './limitModification'
 
 describe('limitModification', () => {
@@ -47,7 +48,7 @@ describe('limitModification', () => {
     })
   })
 
-  it('should not allow non string value on modifiable field', () => {
+  it('should not allow changing the type of the value on modifiable field', () => {
     const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {
       candidate.foo.bar = undefined
@@ -75,6 +76,20 @@ describe('limitModification', () => {
     expect(object).toEqual({
       foo: { bar: 'bar' },
       qux: 'qux',
+    })
+  })
+
+  it('should allow modification on sub-fields for object fields', () => {
+    const object: Context = { foo: { bar: 'bar', baz: 'baz' } }
+    const modifier = (candidate: any) => {
+      candidate.foo.bar = { qux: 'qux' }
+      delete candidate.foo.baz
+    }
+
+    limitModification(object, ['foo'], modifier)
+
+    expect(object).toEqual({
+      foo: { bar: { qux: 'qux' } },
     })
   })
 
