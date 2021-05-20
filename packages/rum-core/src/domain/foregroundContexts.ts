@@ -12,6 +12,7 @@ import {
 } from '@datadog/browser-core'
 import { ForegroundContext, InForegroundPeriod } from '../rawRumEvent.types'
 
+// Arbitrary value to cap number of element (mostly for backend)
 const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface ForegroundContexts {
