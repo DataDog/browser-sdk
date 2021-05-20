@@ -3,11 +3,11 @@ import { nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   getSerializedNodeId,
   hasSerializedNode,
+  nodeAndAncestorsHaveSerializedNode,
   NodeWithSerializedNode,
-  nodeIsIgnored,
-  nodeOrAncestorsIsIgnored,
+  transformAttribute,
 } from './serializationUtils'
-import { transformAttribute, serializeNodeWithId } from './serialize'
+import { serializeNodeWithId } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
@@ -18,7 +18,6 @@ import {
   MutationRecord,
   RemovedNodeMutation,
   TextMutation,
-  IdNodeMap,
 } from './types'
 import { forEach } from './utils'
 import { createMutationBatch } from './mutationBatch'
@@ -76,8 +75,7 @@ function processMutations(mutations: MutationRecord[], mutationCallback: Mutatio
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<MutationRecord> =>
       document.contains(mutation.target) &&
-      hasSerializedNode(mutation.target) &&
-      !nodeOrAncestorsIsIgnored(mutation.target) &&
+      nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       !nodeOrAncestorsShouldBeHidden(mutation.target)
   )
 
@@ -153,8 +151,8 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
   sortAddedAndMovedNodes(sortedAddedAndMovedNodes)
 
   // Then, we iterate over our sorted node sets to emit mutations. We collect the newly serialized
-  // node ids in a map to be able to skip subsequent related mutations.
-  const serializedNodesIdMap: IdNodeMap = {}
+  // node ids in a set to be able to skip subsequent related mutations.
+  const serializedNodeIds = new Set<number>()
 
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
@@ -162,7 +160,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, { doc: document, map: serializedNodesIdMap })
+    const serializedNode = serializeNodeWithId(node, { document, serializedNodeIds })
     if (!serializedNode) {
       continue
     }
@@ -188,13 +186,13 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<ChildLi
   return { adds: addedNodeMutations, removes: removedNodeMutations, hasBeenSerialized }
 
   function hasBeenSerialized(node: Node) {
-    return hasSerializedNode(node) && serializedNodesIdMap.hasOwnProperty(getSerializedNodeId(node))
+    return hasSerializedNode(node) && serializedNodeIds.has(getSerializedNodeId(node))
   }
 
   function getNextSibling(node: Node): null | number {
     let nextSibling = node.nextSibling
     while (nextSibling) {
-      if (hasSerializedNode(nextSibling) && !nodeIsIgnored(nextSibling)) {
+      if (hasSerializedNode(nextSibling)) {
         return getSerializedNodeId(nextSibling)
       }
       nextSibling = nextSibling.nextSibling

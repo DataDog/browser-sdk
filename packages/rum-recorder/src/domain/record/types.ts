@@ -271,7 +271,6 @@ export type ElementNode = {
   attributes: Attributes
   childNodes: SerializedNodeWithId[]
   isSVG?: true
-  shouldBeHidden?: boolean
 }
 
 export type TextNode = {
@@ -285,15 +284,6 @@ export type CDataNode = {
   textContent: ''
 }
 
-export type CommentNode = {
-  type: NodeType.Comment
-  textContent: string
-}
-
-export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode | CommentNode
+export type SerializedNode = DocumentNode | DocumentTypeNode | ElementNode | TextNode | CDataNode
 
 export type SerializedNodeWithId = SerializedNode & { id: number }
-
-export type IdNodeMap = {
-  [key: number]: true
-}
