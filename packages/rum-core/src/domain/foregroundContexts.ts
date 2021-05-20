@@ -22,12 +22,12 @@ export interface ForegroundContexts {
   stop: () => void
 }
 
-export interface FocusPeriod {
+export interface ForegroundPeriod {
   start: RelativeTime
   end?: RelativeTime
 }
 
-let focusPeriods: FocusPeriod[] = []
+let foregroundPeriods: ForegroundPeriod[] = []
 
 export function startForegroundContexts(configuration: Configuration) {
   if (!configuration.isEnabled('track-foreground')) {
@@ -38,48 +38,48 @@ export function startForegroundContexts(configuration: Configuration) {
     }
   }
   if (document.hasFocus()) {
-    addNewFocusPeriod()
+    addNewForegroundPeriod()
   }
 
-  const { stop: stopFocusTracking } = trackFocus(addNewFocusPeriod)
-  const { stop: stopBlurTracking } = trackBlur(closeFocusPeriod)
+  const { stop: stopForegroundTracking } = trackFocus(addNewForegroundPeriod)
+  const { stop: stopBlurTracking } = trackBlur(closeForegroundPeriod)
   return {
     getInForeground,
     getInForegroundPeriods,
     stop: () => {
-      focusPeriods = []
-      stopFocusTracking()
+      foregroundPeriods = []
+      stopForegroundTracking()
       stopBlurTracking()
     },
   }
 }
 
-function addNewFocusPeriod() {
-  if (focusPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
-    addMonitoringMessage('Reached maximum of focused time')
+function addNewForegroundPeriod() {
+  if (foregroundPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
+    addMonitoringMessage('Reached maximum of foreground time')
     return
   }
-  const currentFocusPeriod = focusPeriods[focusPeriods.length - 1]
-  if (currentFocusPeriod != null && currentFocusPeriod.end === undefined) {
-    addMonitoringMessage('Previous focus periods not closed. Continuing current one')
+  const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
+  if (currentForegroundPeriod != null && currentForegroundPeriod.end === undefined) {
+    addMonitoringMessage('Previous foreground periods not closed. Continuing current one')
     return
   }
-  focusPeriods.push({
+  foregroundPeriods.push({
     start: relativeNow(),
   })
 }
 
-function closeFocusPeriod() {
-  if (focusPeriods.length === 0) {
-    addMonitoringMessage('No focus period')
+function closeForegroundPeriod() {
+  if (foregroundPeriods.length === 0) {
+    addMonitoringMessage('No foreground period')
     return
   }
-  const currentFocusPeriod = focusPeriods[focusPeriods.length - 1]
-  if (currentFocusPeriod.end !== undefined) {
-    addMonitoringMessage('Current focus period already closed')
+  const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
+  if (currentForegroundPeriod.end !== undefined) {
+    addMonitoringMessage('Current foreground period already closed')
     return
   }
-  currentFocusPeriod.end = relativeNow()
+  currentForegroundPeriod.end = relativeNow()
 }
 
 function trackFocus(onFocusChange: () => void) {
@@ -91,25 +91,26 @@ function trackBlur(onBlurChange: () => void) {
 }
 
 function getInForeground(startTime: RelativeTime): boolean {
-  const inForeground = focusPeriods.some(
-    (focus) => startTime > focus.start && (focus.end == null || startTime < focus.end)
+  const inForeground = foregroundPeriods.some(
+    (foreground) => startTime > foreground.start && (foreground.end == null || startTime < foreground.end)
   )
   return inForeground
 }
 
 function getInForegroundPeriods(eventStartTime: RelativeTime, duration: ServerDuration): InForegroundPeriod[] {
   const eventEndTime = ((eventStartTime as number) + (toDuration(duration) as number)) as RelativeTime
-  return focusPeriods
-    .filter((focus) => {
-      const eventEndsBeforeFocusStart = eventEndTime < focus.start
-      const eventStartsAfterFocusEnds = focus.end == null || eventStartTime > focus.end
+  return foregroundPeriods
+    .filter((foreground) => {
+      const eventEndsBeforeForegroundStart = eventEndTime < foreground.start
+      const eventStartsAfterForegroundEnds = foreground.end == null || eventStartTime > foreground.end
 
-      return !eventEndsBeforeFocusStart || !eventStartsAfterFocusEnds
+      return !eventEndsBeforeForegroundStart || !eventStartsAfterForegroundEnds
     })
-    .map((focusPeriod) => {
-      const startTime = eventStartTime > focusPeriod.start ? eventStartTime : focusPeriod.start
+    .map((foregroundPeriod) => {
+      const startTime = eventStartTime > foregroundPeriod.start ? eventStartTime : foregroundPeriod.start
       const startDuration = elapsed(eventStartTime, startTime)
-      const endTime = focusPeriod.end == null || eventEndTime < focusPeriod.end ? eventEndTime : focusPeriod.end
+      const endTime =
+        foregroundPeriod.end == null || eventEndTime < foregroundPeriod.end ? eventEndTime : foregroundPeriod.end
       const endDuration = elapsed(startTime, endTime)
       return {
         start: toServerDuration(startDuration),
