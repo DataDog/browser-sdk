@@ -1,14 +1,5 @@
 import { monitor, callMonitored } from '../domain/internalMonitoring'
-import {
-  Duration,
-  elapsed,
-  relativeNow,
-  RelativeTime,
-  preferredNow,
-  ClocksState,
-  clocksNow,
-  preferredClock,
-} from '../tools/timeUtils'
+import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR extends XMLHttpRequest {
@@ -134,7 +125,7 @@ function proxyXhr() {
 
           const xhrCompleteContext: XhrCompleteContext = {
             ...xhrPendingContext,
-            duration: elapsed(preferredClock(xhrPendingContext.startClocks), preferredNow()),
+            duration: elapsed(xhrPendingContext.startClocks.timeStamp, timeStampNow()),
             response: this.response as string | undefined,
             status: this.status,
           }

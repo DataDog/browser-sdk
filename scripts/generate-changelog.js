@@ -39,7 +39,7 @@ ${changesList}
 `,
   })
 
-  await executeCommand(`${process.env.EDITOR} ${CHANGELOG_FILE}`)
+  await spawnCommand(process.env.EDITOR, [CHANGELOG_FILE])
 
   await spawnCommand('yarn', ['run', 'prettier', '--write', CHANGELOG_FILE])
 
@@ -94,7 +94,7 @@ async function executeCommand(command) {
 
 function spawnCommand(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' })
+    const child = spawn(command, args, { stdio: 'inherit', shell: true })
     child.on('error', () => reject())
     child.on('close', () => resolve())
     child.on('exit', () => resolve())

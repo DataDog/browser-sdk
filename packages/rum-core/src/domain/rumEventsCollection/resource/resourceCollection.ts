@@ -5,7 +5,6 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  preferredTimeStamp,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
@@ -46,7 +45,7 @@ function processRequest(request: RequestCompleteEvent) {
 
   const resourceEvent = combine(
     {
-      date: preferredTimeStamp(startClocks),
+      date: startClocks.timeStamp,
       resource: {
         type,
         duration: toServerDuration(request.duration),
@@ -70,7 +69,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
   const startClocks = relativeToClocks(entry.startTime)
   const resourceEvent = combine(
     {
-      date: preferredTimeStamp(startClocks),
+      date: startClocks.timeStamp,
       resource: {
         type,
         url: entry.name,
