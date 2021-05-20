@@ -19,7 +19,6 @@ function processViewUpdate(view: ViewEvent) {
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,
     view: {
-      id: view.id,
       action: {
         count: view.eventCounts.userActionCount,
       },
