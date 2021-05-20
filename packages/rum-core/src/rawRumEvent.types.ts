@@ -58,7 +58,6 @@ export interface RawRumViewEvent {
   date: TimeStamp
   type: RumEventType.VIEW
   view: {
-    id: string
     loading_type: ViewLoadingType
     first_contentful_paint?: ServerDuration
     first_input_delay?: ServerDuration
