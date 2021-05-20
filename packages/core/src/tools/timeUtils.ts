@@ -34,15 +34,6 @@ export function toServerDuration(duration: Duration | undefined) {
   return round(duration * 1e6, 0) as ServerDuration
 }
 
-export function toDuration(duration: ServerDuration): Duration
-export function toDuration(duration: ServerDuration | undefined): Duration | undefined
-export function toDuration(duration: ServerDuration | undefined) {
-  if (!isNumber(duration)) {
-    return duration
-  }
-  return round(duration / 1e6, 0) as Duration
-}
-
 export function timeStampNow() {
   return Date.now() as TimeStamp
 }

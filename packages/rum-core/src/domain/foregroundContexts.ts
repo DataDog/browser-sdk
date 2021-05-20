@@ -1,5 +1,4 @@
 import {
-  ServerDuration,
   Configuration,
   noop,
   addEventListener,
@@ -7,7 +6,7 @@ import {
   RelativeTime,
   elapsed,
   relativeNow,
-  toDuration,
+  Duration,
   addMonitoringMessage,
   toServerDuration,
 } from '@datadog/browser-core'
@@ -18,7 +17,7 @@ const MAX_NUMBER_OF_FOCUSED_TIME = 500
 
 export interface ForegroundContexts {
   getInForeground: (startTime: RelativeTime) => boolean | undefined
-  getInForegroundPeriods: (startTime: RelativeTime, duration: ServerDuration) => InForegroundPeriod[] | undefined
+  getInForegroundPeriods: (startTime: RelativeTime, duration: Duration) => InForegroundPeriod[] | undefined
   stop: () => void
 }
 
@@ -29,7 +28,7 @@ export interface ForegroundPeriod {
 
 let foregroundPeriods: ForegroundPeriod[] = []
 
-export function startForegroundContexts(configuration: Configuration) {
+export function startForegroundContexts(configuration: Configuration): ForegroundContexts {
   if (!configuration.isEnabled('track-foreground')) {
     return {
       getInForeground: () => undefined,
@@ -103,8 +102,8 @@ function getInForeground(startTime: RelativeTime): boolean {
   return false
 }
 
-function getInForegroundPeriods(eventStartTime: RelativeTime, duration: ServerDuration): InForegroundPeriod[] {
-  const eventEndTime = ((eventStartTime as number) + (toDuration(duration) as number)) as RelativeTime
+function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration): InForegroundPeriod[] {
+  const eventEndTime = ((eventStartTime as number) + (duration as number)) as RelativeTime
   const filteredForegroundPeriods: InForegroundPeriod[] = []
 
   for (let i = foregroundPeriods.length - 1; i >= 0; i--) {

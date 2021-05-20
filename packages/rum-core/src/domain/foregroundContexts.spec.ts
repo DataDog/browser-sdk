@@ -1,4 +1,4 @@
-import { RelativeTime, relativeNow, ServerDuration, toServerDuration, Duration } from '@datadog/browser-core'
+import { RelativeTime, relativeNow, toServerDuration, Duration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { createNewEvent } from '../../../core/test/specHelper'
 import { InForegroundPeriod } from '../rawRumEvent.types'
@@ -46,7 +46,7 @@ describe('foreground', () => {
 
           clock.tick(1_000)
 
-          expect(foregroundContext.getInForegroundPeriods(relativeNow(), 0 as ServerDuration)).toEqual([])
+          expect(foregroundContext.getInForegroundPeriods(relativeNow(), 0 as Duration)).toEqual([])
         })
       })
     })
@@ -114,7 +114,7 @@ describe('foreground', () => {
         describe('for the whole period', () => {
           let periods: InForegroundPeriod[] | undefined
           beforeEach(() => {
-            periods = foregroundContext.getInForegroundPeriods(0 as RelativeTime, toServerDuration(50_000 as Duration))
+            periods = foregroundContext.getInForegroundPeriods(0 as RelativeTime, 50_000 as Duration)
           })
           it('should have 3 in foreground periods', () => {
             expect(periods).toHaveSize(3)
@@ -145,10 +145,7 @@ describe('foreground', () => {
         describe('when in between the two full periods', () => {
           let periods: InForegroundPeriod[] | undefined
           beforeEach(() => {
-            periods = foregroundContext.getInForegroundPeriods(
-              10_000 as RelativeTime,
-              toServerDuration(15_000 as Duration)
-            )
+            periods = foregroundContext.getInForegroundPeriods(10_000 as RelativeTime, 15_000 as Duration)
           })
           it('should have 2 in foreground periods', () => {
             expect(periods).toHaveSize(2)

@@ -10,7 +10,6 @@ export function startViewCollection(lifeCycle: LifeCycle, location: Location, fo
   )
 
   function processViewUpdate(view: ViewEvent) {
-    const timeSpent = toServerDuration(view.duration)
     const viewEvent: RawRumViewEvent = {
       _dd: {
         document_version: view.documentVersion,
@@ -43,8 +42,8 @@ export function startViewCollection(lifeCycle: LifeCycle, location: Location, fo
         resource: {
           count: view.eventCounts.resourceCount,
         },
-        time_spent: timeSpent,
-        in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, timeSpent),
+        time_spent: toServerDuration(view.duration),
+        in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, view.duration),
       },
       session: {
         has_replay: view.hasReplay || undefined,
