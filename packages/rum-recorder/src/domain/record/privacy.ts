@@ -50,24 +50,16 @@ export function getNodeInputPrivacyMode(node: Node): InputPrivacyMode | undefine
   }
 
   const attribute = node.getAttribute(PRIVACY_ATTR_NAME)
-  if (attribute === PRIVACY_ATTR_VALUE_INPUT_IGNORED) {
+  if (
+    attribute === PRIVACY_ATTR_VALUE_INPUT_IGNORED ||
+    node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) ||
+    (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type))
+  ) {
     return InputPrivacyMode.IGNORED
   }
 
-  if (attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED) {
+  if (attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED || node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)) {
     return InputPrivacyMode.MASKED
-  }
-
-  if (node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED)) {
-    return InputPrivacyMode.IGNORED
-  }
-
-  if (node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)) {
-    return InputPrivacyMode.MASKED
-  }
-
-  if (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type)) {
-    return InputPrivacyMode.IGNORED
   }
 }
 

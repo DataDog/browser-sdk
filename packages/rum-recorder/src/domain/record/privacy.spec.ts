@@ -64,27 +64,39 @@ describe('privacy helpers', () => {
       const node = document.createElement('input')
       expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
+
     it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'input-ignored')
       expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
+
     // eslint-disable-next-line max-len
     it('cannot determine the input privacy mode for a DOM Element with a data-dd-privacy="unknown-mode" attribute', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'unknown-mode')
       expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
+
     it('considers a DOM Element with a dd-privacy-input-ignored class to be ignored', () => {
       const node = document.createElement('input')
       node.className = 'dd-privacy-input-ignored'
       expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
+
+    it('consider a DOM Element to be ignored if both modes can apply', () => {
+      const node = document.createElement('input')
+      node.className = 'dd-privacy-input-ignored'
+      node.setAttribute('data-dd-privacy', 'input-masked')
+      expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
+    })
+
     it('considers a DOM HTMLInputElement with a type of "password" to be ignored', () => {
       const node = document.createElement('input')
       node.type = 'password'
       expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
+
     it('cannot determine the input privacy mode for a DOM HTMLInputElement with a type of "text"', () => {
       const node = document.createElement('input')
       node.type = 'text'
@@ -97,6 +109,7 @@ describe('privacy helpers', () => {
       parent.appendChild(node)
       expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.NONE)
     })
+
     it('considers a DOM Element with a parent node with a dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       const parent = document.createElement('form')
@@ -104,6 +117,7 @@ describe('privacy helpers', () => {
       parent.appendChild(node)
       expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
+
     it('considers a DOM Element with a parent node with a dd-privacy-input-ignored class to be ignored', () => {
       const node = document.createElement('input')
       const parent = document.createElement('form')
@@ -111,6 +125,7 @@ describe('privacy helpers', () => {
       parent.appendChild(node)
       expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
+
     it('considers a DOM Document as not to be ignored', () => {
       expect(getNodeOrAncestorsInputPrivacyMode(document)).toBe(InputPrivacyMode.NONE)
     })
