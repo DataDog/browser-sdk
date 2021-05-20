@@ -3,7 +3,7 @@ import { Clock } from '../../../../../core/test/specHelper'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
 import { DOMMutation } from '../../../browser/domMutationObserver'
 import { AutoAction, trackActions } from './trackActions'
@@ -35,7 +35,6 @@ describe('trackActions', () => {
   let setupBuilder: TestSetupBuilder
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
-  let DOMMutation: DOMMutation
 
   function mockValidatedClickAction(DOMMutation: DOMMutation, clock: Clock, target: HTMLElement) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
@@ -77,7 +76,7 @@ describe('trackActions', () => {
   })
 
   it('discards pending action on view created', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
+    const { lifeCycle, DOMMutation, clock } = setupBuilder.build()
     mockValidatedClickAction(DOMMutation, clock, button)
     expect(createSpy).toHaveBeenCalled()
 
