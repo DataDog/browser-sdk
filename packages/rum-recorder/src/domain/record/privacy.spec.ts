@@ -69,9 +69,10 @@ describe('privacy helpers', () => {
       node.setAttribute('data-dd-privacy', 'input-ignored')
       expect(getNodeInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
     })
-    it('cannot determine the input privacy mode for a DOM Element with a data-dd-privacy="foo" attribute', () => {
+    // eslint-disable-next-line max-len
+    it('cannot determine the input privacy mode for a DOM Element with a data-dd-privacy="unknown-mode" attribute', () => {
       const node = document.createElement('input')
-      node.setAttribute('data-dd-privacy', 'foo')
+      node.setAttribute('data-dd-privacy', 'unknown-mode')
       expect(getNodeInputPrivacyMode(node)).toBeUndefined()
     })
     it('considers a DOM Element with a dd-privacy-input-ignored class to be ignored', () => {
