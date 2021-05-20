@@ -8,6 +8,7 @@ import {
   elapsed,
   relativeNow,
   toDuration,
+  addMonitoringMessage,
   toServerDuration,
 } from '@datadog/browser-core'
 import { InForegroundPeriod } from '../rawRumEvent.types'
@@ -54,37 +55,31 @@ export function startForegroundContexts(configuration: Configuration) {
 }
 
 function addNewFocusPeriod() {
-  const now = relativeNow()
   if (focusPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
+    addMonitoringMessage('Reached maximum of focused time')
     return
   }
-  const lastIndex = focusPeriods.length - 1
-  if (lastIndex >= 0 && focusPeriods[lastIndex].end == null) {
-    // already here
-    if (focusPeriods[lastIndex].start === now) {
-      return
-    }
-    // close current periods if we miss a blur event
-    const { start } = focusPeriods[lastIndex]
-    focusPeriods[lastIndex] = {
-      start,
-      end: now,
-    }
+  const currentFocusPeriod = focusPeriods[focusPeriods.length - 1]
+  if (currentFocusPeriod != null && currentFocusPeriod.end === undefined) {
+    addMonitoringMessage('Previous focus periods not closed. Continuing current one')
+    return
   }
   focusPeriods.push({
-    start: now,
+    start: relativeNow(),
   })
 }
 
 function closeFocusPeriod() {
-  const lastIndex = focusPeriods.length - 1
-  if (lastIndex >= 0 && focusPeriods[lastIndex].end == null) {
-    const { start } = focusPeriods[lastIndex]
-    focusPeriods[lastIndex] = {
-      start,
-      end: relativeNow(),
-    }
+  if (focusPeriods.length === 0) {
+    addMonitoringMessage('No focus period')
+    return
   }
+  const currentFocusPeriod = focusPeriods[focusPeriods.length - 1]
+  if (currentFocusPeriod.end !== undefined) {
+    addMonitoringMessage('Current focus period already closed')
+    return
+  }
+  currentFocusPeriod.end = relativeNow()
 }
 
 function trackFocus(onFocusChange: () => void) {
