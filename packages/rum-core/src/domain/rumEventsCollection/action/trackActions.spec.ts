@@ -5,6 +5,7 @@ import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
+import { DOMMutation } from '../../../browser/domMutationObserver'
 import { AutoAction, trackActions } from './trackActions'
 
 // Used to wait some time after the creation of a action
@@ -34,12 +35,13 @@ describe('trackActions', () => {
   let setupBuilder: TestSetupBuilder
   let createSpy: jasmine.Spy
   let discardSpy: jasmine.Spy
+  let DOMMutation: DOMMutation
 
-  function mockValidatedClickAction(lifeCycle: LifeCycle, clock: Clock, target: HTMLElement) {
+  function mockValidatedClickAction(DOMMutation: DOMMutation, clock: Clock, target: HTMLElement) {
     target.addEventListener(DOM_EVENT.CLICK, () => {
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       // Since we don't collect dom mutations for this test, manually dispatch one
-      lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+      DOMMutation.notify()
     })
 
     clock.tick(SOME_ARBITRARY_DELAY)
@@ -60,11 +62,11 @@ describe('trackActions', () => {
 
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle }) => {
+      .beforeBuild(({ lifeCycle, DOMMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
-        return trackActions(lifeCycle)
+        return trackActions(lifeCycle, DOMMutation)
       })
   })
 
@@ -76,7 +78,7 @@ describe('trackActions', () => {
 
   it('discards pending action on view created', () => {
     const { lifeCycle, clock } = setupBuilder.build()
-    mockValidatedClickAction(lifeCycle, clock, button)
+    mockValidatedClickAction(DOMMutation, clock, button)
     expect(createSpy).toHaveBeenCalled()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
@@ -92,8 +94,8 @@ describe('trackActions', () => {
   })
 
   it('starts a action when clicking on an element', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-    mockValidatedClickAction(lifeCycle, clock, button)
+    const { DOMMutation, clock } = setupBuilder.build()
+    mockValidatedClickAction(DOMMutation, clock, button)
     expect(createSpy).toHaveBeenCalled()
     clock.tick(EXPIRE_DELAY)
     expect(events).toEqual([
@@ -123,8 +125,8 @@ describe('trackActions', () => {
   })
 
   it('ignores a actions if it fails to find a name', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
-    mockValidatedClickAction(lifeCycle, clock, emptyElement)
+    const { DOMMutation, clock } = setupBuilder.build()
+    mockValidatedClickAction(DOMMutation, clock, emptyElement)
     expect(createSpy).not.toHaveBeenCalled()
     clock.tick(EXPIRE_DELAY)
 
@@ -149,7 +151,7 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle }) => trackActions(lifeCycle))
+      .beforeBuild(({ lifeCycle, DOMMutation }) => trackActions(lifeCycle, DOMMutation))
   })
 
   afterEach(() => {
@@ -159,14 +161,14 @@ describe('newAction', () => {
   })
 
   it('ignores any starting action while another one is happening', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
+    const { lifeCycle, DOMMutation, clock } = setupBuilder.build()
     lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
     newClick('test-1')
     newClick('test-2')
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    DOMMutation.notify()
 
     clock.tick(EXPIRE_DELAY)
     expect(events.length).toBe(1)
@@ -174,7 +176,7 @@ describe('newAction', () => {
   })
 
   it('counts errors occurring during the action', () => {
-    const { lifeCycle, clock } = setupBuilder.build()
+    const { lifeCycle, DOMMutation, clock } = setupBuilder.build()
     const collectedRumEvent = { type: RumEventType.ERROR } as RumEvent & Context
     lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
@@ -182,7 +184,7 @@ describe('newAction', () => {
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    lifeCycle.notify(LifeCycleEventType.DOM_MUTATED)
+    DOMMutation.notify()
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, collectedRumEvent)
 
     clock.tick(EXPIRE_DELAY)
