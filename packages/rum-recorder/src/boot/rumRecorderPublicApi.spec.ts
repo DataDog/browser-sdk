@@ -10,11 +10,14 @@ describe('makeRumRecorderPublicApi', () => {
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
   let startRumSpy: jasmine.Spy<StartRum>
+  let isRecording: boolean
 
   beforeEach(() => {
+    isRecording = true
     stopRecordingSpy = jasmine.createSpy()
     startRecordingSpy = jasmine.createSpy().and.callFake(() => ({
       stop: stopRecordingSpy,
+      isRecording: () => isRecording,
     }))
     startRumSpy = jasmine.createSpy<StartRum>().and.callFake((userConfiguration) => {
       const configuration: Partial<Configuration> = {
@@ -92,9 +95,12 @@ describe('makeRumRecorderPublicApi', () => {
 
   describe('commonContext hasReplay', () => {
     it('is true only if recording', () => {
+      isRecording = false
       rumRecorderPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
       expect(getCommonContext().hasReplay).toBeUndefined()
       rumRecorderPublicApi.startSessionReplayRecording()
+      expect(getCommonContext().hasReplay).toBeUndefined()
+      isRecording = true
       expect(getCommonContext().hasReplay).toBe(true)
       rumRecorderPublicApi.stopSessionReplayRecording()
       expect(getCommonContext().hasReplay).toBeUndefined()

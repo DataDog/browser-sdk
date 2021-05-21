@@ -21,6 +21,7 @@ type RecorderState =
   | {
       status: RecorderStatus.Started
       stopRecording: () => void
+      isRecording: () => void
     }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
@@ -31,7 +32,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
     const startRumResult = startRumImpl(userConfiguration, () => ({
       ...getCommonContext(),
-      hasReplay: state.status === RecorderStatus.Started ? true : undefined,
+      hasReplay: state.status === RecorderStatus.Started && state.isRecording() ? true : undefined,
     }))
 
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
@@ -41,7 +42,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
         return
       }
 
-      const { stop: stopRecording } = startRecordingImpl(
+      const { stop: stopRecording, isRecording } = startRecordingImpl(
         lifeCycle,
         userConfiguration.applicationId,
         configuration,
@@ -51,6 +52,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       state = {
         status: RecorderStatus.Started,
         stopRecording,
+        isRecording,
       }
       lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
     }
