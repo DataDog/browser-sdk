@@ -82,6 +82,6 @@ describe('action collection', () => {
       })
 
       expect(resourceEvents.length).toBe(1)
-      expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id!)
+      expect(resourceEvents[0].action!.id).toBe(actionEvents[0].action.id)
     })
 })
