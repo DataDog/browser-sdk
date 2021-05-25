@@ -209,4 +209,26 @@ describe('xhr proxy', () => {
       },
     })
   })
+
+  it('should track only the second request (the first request is canceled)', (done) => {
+    const onLoad = jasmine.createSpy()
+    withXhr({
+      setup(xhr) {
+        xhr.addEventListener('load', onLoad)
+        xhr.open('GET', '/first')
+        xhr.send()
+        xhr.open('GET', '/second')
+        xhr.send()
+        xhr.complete(200, 'ok')
+      },
+      onComplete() {
+        const request = getRequest(0)
+        expect(onLoad).toHaveBeenCalledTimes(1)
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/second')
+        expect(request.status).toBe(200)
+        done()
+      },
+    })
+  })
 })

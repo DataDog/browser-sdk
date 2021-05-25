@@ -181,6 +181,10 @@ class StubXhr {
     this.fakeEventTarget.addEventListener(name, callback)
   }
 
+  removeEventListener(name: string, callback: () => void) {
+    this.fakeEventTarget.removeEventListener(name, callback)
+  }
+
   private dispatchEvent(name: string) {
     this.fakeEventTarget.dispatchEvent(createNewEvent(name))
   }
