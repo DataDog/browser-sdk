@@ -1,21 +1,23 @@
+import { LogsUserConfiguration } from '@datadog/browser-logs'
+import { RumUserConfiguration } from '@datadog/browser-rum-core'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
 import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
-import { DEFAULT_SETUPS, LogsSetupOptions, RumSetupOptions, SetupFactory, SetupOptions } from './pageSetups'
+import { DEFAULT_SETUPS, SetupFactory, SetupOptions } from './pageSetups'
 import { Endpoints } from './sdkBuilds'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
-const DEFAULT_RUM_OPTIONS = {
+const DEFAULT_RUM_CONFIGURATION = {
   applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
   clientToken: 'token',
   enableExperimentalFeatures: [],
 }
 
-const DEFAULT_LOGS_OPTIONS = {
+const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: 'token',
 }
 
@@ -33,32 +35,32 @@ interface TestContext {
 type TestRunner = (testContext: TestContext) => Promise<void>
 
 class TestBuilder {
-  private rumOptions: RumSetupOptions | undefined = undefined
-  private rumRecorderOptions: RumSetupOptions | undefined = undefined
-  private logsOptions: LogsSetupOptions | undefined = undefined
+  private rumConfiguration: RumUserConfiguration | undefined = undefined
+  private rumRecorderConfiguration: RumUserConfiguration | undefined = undefined
+  private logsConfiguration: LogsUserConfiguration | undefined = undefined
   private head = ''
   private body = ''
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
 
-  withRum(rumOptions?: RumSetupOptions) {
-    this.rumOptions = { ...DEFAULT_RUM_OPTIONS, ...rumOptions }
+  withRum(rumConfiguration?: Partial<RumUserConfiguration>) {
+    this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumConfiguration }
     return this
   }
 
-  withRumRecorder(rumRecorderOptions?: RumSetupOptions) {
-    this.rumRecorderOptions = { ...DEFAULT_RUM_OPTIONS, ...rumRecorderOptions }
+  withRumRecorder(rumRecorderConfiguration?: Partial<RumUserConfiguration>) {
+    this.rumRecorderConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumRecorderConfiguration }
     return this
   }
 
-  withRumInit(rumInit: (options: RumSetupOptions) => void) {
+  withRumInit(rumInit: (configuration: RumUserConfiguration) => void) {
     this.rumInit = rumInit
     return this
   }
 
-  withLogs(logsOptions?: LogsSetupOptions) {
-    this.logsOptions = { ...DEFAULT_LOGS_OPTIONS, ...logsOptions }
+  withLogs(logsConfiguration?: Partial<LogsUserConfiguration>) {
+    this.logsConfiguration = { ...DEFAULT_LOGS_CONFIGURATION, ...logsConfiguration }
     return this
   }
 
@@ -86,10 +88,10 @@ class TestBuilder {
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
-      logs: this.logsOptions,
-      rum: this.rumOptions,
+      logs: this.logsConfiguration,
+      rum: this.rumConfiguration,
       rumInit: this.rumInit,
-      rumRecorder: this.rumRecorderOptions,
+      rumRecorder: this.rumRecorderConfiguration,
     }
 
     if (setups.length > 1) {
@@ -103,9 +105,8 @@ class TestBuilder {
     }
   }
 
-  private rumInit: (options: RumSetupOptions) => void = (options) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    ;(window.DD_RUM as any).init(options)
+  private rumInit: (configuration: RumUserConfiguration) => void = (configuration) => {
+    window.DD_RUM!.init(configuration)
   }
 }
 

@@ -1,24 +1,11 @@
-export interface RumSetupOptions {
-  clientToken?: string
-  applicationId?: string
-  internalMonitoringApiKey?: string
-  allowedTracingOrigins?: string[]
-  service?: string
-  trackInteractions?: boolean
-  enableExperimentalFeatures?: string[]
-}
-
-export interface LogsSetupOptions {
-  clientToken?: string
-  internalMonitoringApiKey?: string
-  forwardErrorsToLogs?: boolean
-}
+import { LogsUserConfiguration } from '@datadog/browser-logs'
+import { RumUserConfiguration } from '@datadog/browser-rum-core'
 
 export interface SetupOptions {
-  rum?: RumSetupOptions
-  rumRecorder?: RumSetupOptions
-  logs?: LogsSetupOptions
-  rumInit: (rumOptions: RumSetupOptions) => void
+  rum?: RumUserConfiguration
+  rumRecorder?: RumUserConfiguration
+  logs?: LogsUserConfiguration
+  rumInit: (configuration: RumUserConfiguration) => void
   head?: string
   body?: string
 }
@@ -53,19 +40,19 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
       <script>
         ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
         DD_LOGS.onReady(function () {
-          DD_LOGS.init(${formatLogsOptions(options.logs)})
+          DD_LOGS.init(${formatLogsConfiguration(options.logs)})
         })
       </script>
     `
   }
 
-  const rumOptions = options.rumRecorder || options.rum
-  if (rumOptions) {
+  const rumConfiguration = options.rumRecorder || options.rum
+  if (rumConfiguration) {
     body += html`
       <script type="text/javascript">
         ${formatSnippet(options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
-          ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
+          ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
         })
       </script>
     `
@@ -84,20 +71,20 @@ export function bundleSetup(options: SetupOptions) {
     header += html`
       <script type="text/javascript" src="./datadog-logs.js"></script>
       <script type="text/javascript">
-        DD_LOGS.init(${formatLogsOptions(options.logs)})
+        DD_LOGS.init(${formatLogsConfiguration(options.logs)})
       </script>
     `
   }
 
-  const rumOptions = options.rumRecorder || options.rum
-  if (rumOptions) {
+  const rumConfiguration = options.rumRecorder || options.rum
+  if (rumConfiguration) {
     header += html`
       <script
         type="text/javascript"
         src="${options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
-        ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
+        ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
       </script>
     `
   }
@@ -114,17 +101,17 @@ export function npmSetup(options: SetupOptions) {
   if (options.logs) {
     header += html`
       <script type="text/javascript">
-        window.LOGS_CONFIG = ${formatLogsOptions(options.logs)}
+        window.LOGS_CONFIG = ${formatLogsConfiguration(options.logs)}
       </script>
     `
   }
 
-  const rumOptions = options.rumRecorder || options.rum
-  if (rumOptions) {
+  const rumConfiguration = options.rumRecorder || options.rum
+  if (rumConfiguration) {
     header += html`
       <script type="text/javascript">
         window.RUM_INIT = () => {
-          ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
+          ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
         }
       </script>
     `
@@ -157,10 +144,10 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function formatLogsOptions(options: LogsSetupOptions) {
-  return JSON.stringify(options)
+function formatLogsConfiguration(configuration: LogsUserConfiguration) {
+  return JSON.stringify(configuration)
 }
 
-function formatRumOptions(options: RumSetupOptions) {
-  return JSON.stringify(options).replace('"LOCATION_ORIGIN"', 'location.origin')
+function formatRumConfiguration(configuration: RumUserConfiguration) {
+  return JSON.stringify(configuration).replace('"LOCATION_ORIGIN"', 'location.origin')
 }

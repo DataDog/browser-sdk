@@ -1,24 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { createTest } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('before init API calls', () => {
   createTest('should be associated to corresponding views')
     .withRum({ enableExperimentalFeatures: ['view-renaming'] })
-    .withRumInit((options) => {
-      ;(window.DD_RUM as any).addError('before manual view')
-      ;(window.DD_RUM as any).addAction('before manual view')
-      ;(window.DD_RUM as any).addTiming('before manual view')
+    .withRumInit((configuration) => {
+      window.DD_RUM!.addError('before manual view')
+      window.DD_RUM!.addAction('before manual view')
+      window.DD_RUM!.addTiming('before manual view')
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return
       setTimeout(() => (window.DD_RUM as any).startView('manual view'), 10)
 
       setTimeout(() => {
-        ;(window.DD_RUM as any).addError('after manual view')
-        ;(window.DD_RUM as any).addAction('after manual view')
-        ;(window.DD_RUM as any).addTiming('after manual view')
+        window.DD_RUM!.addError('after manual view')
+        window.DD_RUM!.addAction('after manual view')
+        window.DD_RUM!.addTiming('after manual view')
       }, 20)
 
-      setTimeout(() => (window.DD_RUM as any).init(options), 30)
+      setTimeout(() => window.DD_RUM!.init(configuration), 30)
     })
     .run(async ({ events }) => {
       await flushEvents()
