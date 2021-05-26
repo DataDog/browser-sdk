@@ -51,7 +51,7 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
   }
-  view: {
+  view?: {
     in_foreground?: boolean
   }
 }
@@ -131,7 +131,7 @@ export interface RawRumActionEvent {
       name: string
     }
   }
-  view: {
+  view?: {
     in_foreground?: boolean
   }
 }

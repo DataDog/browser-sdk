@@ -78,11 +78,10 @@ function processError(error: RawError, foregroundContexts: ForegroundContexts) {
       type: error.type,
     },
     type: RumEventType.ERROR as const,
-    view: {},
   }
   const inForeground = foregroundContexts.getInForeground(error.startClocks.relative)
   if (inForeground !== undefined) {
-    rawRumEvent.view.in_foreground = inForeground
+    rawRumEvent.view = { in_foreground: inForeground }
   }
 
   return {

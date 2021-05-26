@@ -62,7 +62,7 @@ function processAction(action: AutoAction | CustomAction, foregroundContexts: Fo
   )
   const inForeground = foregroundContexts.getInForeground(action.startClocks.relative)
   if (inForeground !== undefined) {
-    actionEvent.view.in_foreground = inForeground
+    actionEvent.view = { in_foreground: inForeground }
   }
   return {
     customerContext,
