@@ -1,11 +1,11 @@
 import { isIE } from '@datadog/browser-core/test/specHelper'
-import { createDOMMutationObservable } from './domMutationObserver'
+import { createDOMMutationObservable } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
 // We want to wait for a few event loop executions to potentially collect multiple mutation events.
-const DOM_MUTATION_COLLECTION_DURATION = 16
+const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
-describe('domMutationObserver', () => {
+describe('domMutationObservable', () => {
   beforeEach(() => {
     if (isIE()) {
       pending('dom mutation not available')
@@ -23,16 +23,16 @@ describe('domMutationObserver', () => {
       const DOMMutation = createDOMMutationObservable()
 
       let counter = 0
-      const subscription = DOMMutation.subscribe(() => (counter += 1))
+      const domMutationSubscription = DOMMutation.subscribe(() => (counter += 1))
 
       mutate(root)
 
       setTimeout(() => {
         expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
-        subscription.unsubscribe()
+        domMutationSubscription.unsubscribe()
         done()
-      }, DOM_MUTATION_COLLECTION_DURATION)
+      }, DOM_MUTATION_OBSERVABLE_DURATION)
     }
   }
 
