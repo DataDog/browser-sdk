@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
-import { createTest, bundleSetup } from '../../lib/framework'
-import { asyncSetup } from '../../lib/framework/pageSetups'
+import { createTest } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('before init API calls', () => {
@@ -21,8 +20,6 @@ describe('before init API calls', () => {
 
       setTimeout(() => (window.DD_RUM as any).init(options), 30)
     })
-    .withSetup(bundleSetup, 'bundle')
-    .withSetup(asyncSetup, 'async')
     .run(async ({ events }) => {
       await flushEvents()
 

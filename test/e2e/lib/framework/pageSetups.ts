@@ -123,7 +123,9 @@ export function npmSetup(options: SetupOptions) {
   if (rumOptions) {
     header += html`
       <script type="text/javascript">
-        window.RUM_CONFIG = ${formatRumOptions(rumOptions)}
+        window.RUM_INIT = () => {
+          ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
+        }
       </script>
     `
   }
