@@ -29,9 +29,9 @@ describe('foreground context', () => {
     beforeEach(() => {
       spyOn(Document.prototype, 'hasFocus').and.callFake(() => false)
     })
-    describe('without any focus not blur event', () => {
+    describe('without any focus nor blur event', () => {
       describe('getInForeground', () => {
-        it('should false', () => {
+        it('should return false', () => {
           const { clock } = setupBuilder.build()
 
           clock.tick(1_000)
@@ -122,7 +122,7 @@ describe('foreground context', () => {
             })
           })
 
-          it('should have the thrid period finishing with the view end', () => {
+          it('should have the third period finishing with the view end', () => {
             expect(periods![2]).toEqual({
               start: toServerDuration(35 as Duration),
               duration: toServerDuration(15 as Duration),
