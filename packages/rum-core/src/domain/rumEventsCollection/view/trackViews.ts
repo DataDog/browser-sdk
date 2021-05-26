@@ -12,7 +12,7 @@ import {
   TimeStamp,
   display,
 } from '@datadog/browser-core'
-import { DOMMutation } from '../../../browser/domMutationObserver'
+import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -54,7 +54,7 @@ export interface ViewEndedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation: DOMMutation) {
+export function trackViews(location: Location, lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
   let isRecording = false
 
   // eslint-disable-next-line prefer-const
@@ -104,7 +104,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
   function trackInitialView() {
     const initialView = newView(
       lifeCycle,
-      domMutation,
+      domMutationObservable,
       location,
       isRecording,
       ViewLoadingType.INITIAL_LOAD,
@@ -121,7 +121,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
   function trackViewChange(startClocks?: ClocksState, name?: string) {
     return newView(
       lifeCycle,
-      domMutation,
+      domMutationObservable,
       location,
       isRecording,
       ViewLoadingType.ROUTE_CHANGE,
@@ -152,7 +152,7 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
 
 function newView(
   lifeCycle: LifeCycle,
-  domMutation: DOMMutation,
+  domMutationObservable: DOMMutationObservable,
   initialLocation: Location,
   initialHasReplay: boolean,
   loadingType: ViewLoadingType,
@@ -182,7 +182,7 @@ function newView(
 
   const { setLoadEvent, stop: stopViewMetricsTracking, viewMetrics } = trackViewMetrics(
     lifeCycle,
-    domMutation,
+    domMutationObservable,
     scheduleViewUpdate,
     loadingType
   )

@@ -1,7 +1,5 @@
 import { noop, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { createDomMutationStub, DOMMutationStub } from 'packages/rum-core/test/createDomMutationStub'
 import { Clock, mockClock } from '../../../core/test/specHelper'
-import { createDOMMutationObservable, DOMMutation } from '../browser/domMutationObservable'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent } from './requestCollection'
@@ -38,21 +36,21 @@ describe('trackPagePageActivities', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
 
   let lifeCycle: LifeCycle
-  let domMutation: DOMMutationStub
+  let domMutationObservable: Observable<void>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    domMutation = createDomMutationStub()
+    domMutationObservable = new Observable()
   })
 
   it('emits an activity event on dom mutation', () => {
-    trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
-    domMutation.notify()
+    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
+    domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
   })
 
   it('emits an activity event on resource collected', () => {
-    trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'resource',
     }
@@ -61,7 +59,7 @@ describe('trackPagePageActivities', () => {
   })
 
   it('does not emit an activity event when a navigation occurs', () => {
-    trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+    trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
     const performanceTiming = {
       entryType: 'navigation',
     }
@@ -73,16 +71,16 @@ describe('trackPagePageActivities', () => {
   })
 
   it('stops emitting activities after calling stop()', () => {
-    const { stop, observable } = trackPageActivities(lifeCycle, domMutation)
+    const { stop, observable } = trackPageActivities(lifeCycle, domMutationObservable)
     observable.subscribe(pushEvent)
 
-    domMutation.notify()
+    domMutationObservable.notify()
     expect(events).toEqual([{ isBusy: false }])
 
     stop()
 
-    domMutation.notify()
-    domMutation.notify()
+    domMutationObservable.notify()
+    domMutationObservable.notify()
 
     expect(events).toEqual([{ isBusy: false }])
   })
@@ -92,15 +90,15 @@ describe('trackPagePageActivities', () => {
       return { requestIndex } as RequestCompleteEvent
     }
     let lifeCycle: LifeCycle
-    let domMutation: DOMMutation
+    let domMutationObservable: Observable<void>
 
     beforeEach(() => {
       lifeCycle = new LifeCycle()
-      domMutation = createDOMMutationObservable()
+      domMutationObservable = new Observable()
     })
 
     it('emits an activity event when a request starts', () => {
-      trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })
@@ -109,7 +107,7 @@ describe('trackPagePageActivities', () => {
 
     it('emits an activity event when a request completes', () => {
       const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })
@@ -119,14 +117,14 @@ describe('trackPagePageActivities', () => {
 
     it('ignores requests that has started before', () => {
       const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, makeFakeRequestCompleteEvent(10))
       expect(events).toEqual([])
     })
 
     it('keeps emitting busy events while all requests are not completed', () => {
       const lifeCycle = new LifeCycle()
-      trackPageActivities(lifeCycle, domMutation).observable.subscribe(pushEvent)
+      trackPageActivities(lifeCycle, domMutationObservable).observable.subscribe(pushEvent)
       lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
         requestIndex: 10,
       })

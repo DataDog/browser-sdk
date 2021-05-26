@@ -1,10 +1,10 @@
 import { monitor, Subscription } from '@datadog/browser-core'
 
-export interface DOMMutation {
+export interface DOMMutationObservable {
   subscribe(callback: () => void): Subscription
 }
 
-export function createDOMMutationObservable(): DOMMutation {
+export function createDOMMutationObservable(): DOMMutationObservable {
   let callbacks: Array<() => void> = []
   const MutationObserver = getMutationObserverConstructor()
   const observer = MutationObserver ? new MutationObserver(monitor(notify)) : undefined

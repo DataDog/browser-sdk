@@ -5,6 +5,7 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
+  Observable,
   TimeStamp,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
@@ -12,7 +13,6 @@ import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
-import { createDomMutationStub, DOMMutationStub } from './createDomMutationStub'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -30,7 +30,7 @@ export interface TestSetupBuilder {
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
 interface BuildContext {
   lifeCycle: LifeCycle
-  domMutation: DOMMutationStub
+  domMutationObservable: Observable<void>
   configuration: Readonly<Configuration>
   session: RumSession
   location: Location
@@ -40,8 +40,7 @@ interface BuildContext {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  domMutation: DOMMutationStub
-
+  domMutationObservable: Observable<void>
   clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
@@ -60,7 +59,7 @@ export function setup(): TestSetupBuilder {
     isTrackedWithResource: () => true,
   }
   const lifeCycle = new LifeCycle()
-  const domMutation = createDomMutationStub()
+  const domMutationObservable = new Observable<void>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: Array<{
@@ -130,7 +129,7 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.forEach((task) => {
         const result = task({
           lifeCycle,
-          domMutation,
+          domMutationObservable,
           parentContexts,
           session,
           applicationId: FAKE_APP_ID,
@@ -145,7 +144,7 @@ export function setup(): TestSetupBuilder {
         clock,
         fakeLocation,
         lifeCycle,
-        domMutation,
+        domMutationObservable,
         rawRumEvents,
         session,
       }

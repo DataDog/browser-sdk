@@ -13,8 +13,8 @@ describe('actionCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, domMutation, configuration }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, domMutation, configuration))
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration))
       })
   })
 

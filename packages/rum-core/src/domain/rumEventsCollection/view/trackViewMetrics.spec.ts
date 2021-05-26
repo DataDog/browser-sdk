@@ -65,9 +65,9 @@ describe('rum track view metrics', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutation)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -92,11 +92,11 @@ describe('rum track view metrics', () => {
     })
 
     it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
-      const { domMutation, clock } = setupBuilder.build()
+      const { domMutationObservable, clock } = setupBuilder.build()
 
       history.pushState({}, '', '/bar')
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-      domMutation.notify()
+      domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -115,7 +115,7 @@ describe('rum track view metrics', () => {
     })
 
     it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
-      const { lifeCycle, domMutation, clock } = setupBuilder.build()
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       expect(getHandledCount()).toEqual(1)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -125,7 +125,7 @@ describe('rum track view metrics', () => {
         FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING
       )
 
-      domMutation.notify()
+      domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
@@ -138,7 +138,7 @@ describe('rum track view metrics', () => {
 
     // eslint-disable-next-line max-len
     it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
-      const { lifeCycle, domMutation, clock } = setupBuilder.build()
+      const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
       expect(getHandledCount()).toEqual(1)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
@@ -146,7 +146,7 @@ describe('rum track view metrics', () => {
         LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
         FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_BEFORE_ACTIVITY_TIMING
       )
-      domMutation.notify()
+      domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 

@@ -15,12 +15,12 @@ describe('rum track location change', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle, domMutation)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
     createSpy = jasmine.createSpy('create')
   })

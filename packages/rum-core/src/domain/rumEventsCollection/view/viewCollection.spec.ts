@@ -13,8 +13,8 @@ describe('viewCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, domMutation }) => {
-        startViewCollection(lifeCycle, domMutation, location)
+      .beforeBuild(({ lifeCycle, domMutationObservable }) => {
+        startViewCollection(lifeCycle, domMutationObservable, location)
       })
   })
 

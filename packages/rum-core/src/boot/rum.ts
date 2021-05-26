@@ -1,5 +1,5 @@
 import { combine, commonInit, Configuration } from '@datadog/browser-core'
-import { createDOMMutationObservable } from '../browser/domMutationObserver'
+import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/internalContext'
@@ -22,7 +22,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
   const lifeCycle = new LifeCycle()
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
-  const domMutation = createDOMMutationObservable()
+  const domMutationObservable = createDOMMutationObservable()
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -44,9 +44,9 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming, startView } = startViewCollection(lifeCycle, domMutation, location)
+  const { addTiming, startView } = startViewCollection(lifeCycle, domMutationObservable, location)
   const { addError } = startErrorCollection(lifeCycle, configuration)
-  const { addAction } = startActionCollection(lifeCycle, domMutation, configuration)
+  const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
