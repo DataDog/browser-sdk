@@ -2,8 +2,8 @@ import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
-interface BrowserXHR extends XMLHttpRequest {
-  _datadog_xhr?: XhrStartContext
+interface BrowserXHR<T extends XhrOpenContext = XhrStartContext> extends XMLHttpRequest {
+  _datadog_xhr?: T
 }
 
 export interface XhrProxy<
@@ -14,14 +14,16 @@ export interface XhrProxy<
   onRequestComplete: (callback: (context: CompleteContext) => void) => void
 }
 
-export interface XhrStartContext {
+export interface XhrOpenContext {
   method: string
   url: string
+}
+
+export interface XhrStartContext extends XhrOpenContext {
   startTime: RelativeTime // deprecated
   startClocks: ClocksState
   isAborted: boolean
   hasBeenReported: boolean
-
   /**
    * allow clients to enhance the context
    */
@@ -78,7 +80,7 @@ function proxyXhr() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   originalXhrAbort = XMLHttpRequest.prototype.abort
 
-  function reportXhr(this: BrowserXHR, clearListeners: () => void) {
+  function reportXhr(this: BrowserXHR<XhrStartContext>, clearListeners: () => void) {
     clearListeners()
     if (this._datadog_xhr!.hasBeenReported) {
       return
@@ -95,7 +97,7 @@ function proxyXhr() {
     onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
   }
 
-  XMLHttpRequest.prototype.open = function (this: BrowserXHR, method: string, url: string) {
+  XMLHttpRequest.prototype.open = function (this: BrowserXHR<XhrOpenContext>, method: string, url: string) {
     callMonitored(() => {
       // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
       // and can be used by different code versions depending on customer setup
@@ -103,7 +105,7 @@ function proxyXhr() {
       this._datadog_xhr = {
         method,
         url: normalizeUrl(url),
-      } as XhrStartContext
+      }
     })
     return originalXhrOpen.apply(this, arguments as any)
   }
