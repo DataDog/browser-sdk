@@ -39,7 +39,7 @@ export type ViewportResizeData = {
 export type InputData = {
   source: IncrementalSource.Input
   id: number
-} & InputValue
+} & InputState
 
 export type MediaInteractionData = {
   source: IncrementalSource.MediaInteraction
@@ -218,12 +218,12 @@ export interface ViewportResizeDimention {
 
 export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
 
-export interface InputValue {
+export interface InputState {
   text?: string
   isChecked?: boolean
 }
 
-export type InputCallback = (v: InputValue & { id: number }) => void
+export type InputCallback = (v: InputState & { id: number }) => void
 
 export const MediaInteractions = {
   Play: 0,

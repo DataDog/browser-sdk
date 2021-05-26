@@ -14,7 +14,7 @@ import {
   HookResetter,
   IncrementalSource,
   InputCallback,
-  InputValue,
+  InputState,
   ListenerHandler,
   MediaInteractionCallback,
   MediaInteractions,
@@ -163,7 +163,7 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 }
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
-const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
+const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
@@ -174,18 +174,18 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     const type = target.type
 
-    let inputValue: InputValue
+    let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
-      inputValue = { isChecked: (target as HTMLInputElement).checked }
+      inputState = { isChecked: (target as HTMLInputElement).checked }
     } else {
       const value = getElementInputValue(target)
       if (value === undefined) {
         return
       }
-      inputValue = { text: value }
+      inputState = { text: value }
     }
 
-    cbWithDedup(target, inputValue)
+    cbWithDedup(target, inputState)
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
@@ -198,15 +198,19 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
     }
   }
 
-  function cbWithDedup(target: Node, v: InputValue) {
+  function cbWithDedup(target: Node, inputState: InputState) {
     if (!hasSerializedNode(target)) {
       return
     }
-    const lastInputValue = lastInputValueMap.get(target)
-    if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
-      lastInputValueMap.set(target, v)
+    const lastInputState = lastInputStateMap.get(target)
+    if (
+      !lastInputState ||
+      lastInputState.text !== inputState.text ||
+      lastInputState.isChecked !== inputState.isChecked
+    ) {
+      lastInputStateMap.set(target, inputState)
       cb({
-        ...v,
+        ...inputState,
         id: getSerializedNodeId(target),
       })
     }
