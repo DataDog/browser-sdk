@@ -98,6 +98,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         user,
         context: globalContextManager.get(),
       })))
+      // TODO respect API order
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
       beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))

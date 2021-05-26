@@ -52,6 +52,11 @@ class TestBuilder {
     return this
   }
 
+  withRumInit(rumInit: (options: RumSetupOptions) => void) {
+    this.rumInit = rumInit
+    return this
+  }
+
   withLogs(logsOptions?: LogsSetupOptions) {
     this.logsOptions = { ...DEFAULT_LOGS_OPTIONS, ...logsOptions }
     return this
@@ -83,6 +88,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsOptions,
       rum: this.rumOptions,
+      rumInit: this.rumInit,
       rumRecorder: this.rumRecorderOptions,
     }
 
@@ -95,6 +101,11 @@ class TestBuilder {
     } else {
       declareTest(this.title, setups[0].factory(setupOptions), runner)
     }
+  }
+
+  private rumInit: (options: RumSetupOptions) => void = (options) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    ;(window.DD_RUM as any).init(options)
   }
 }
 

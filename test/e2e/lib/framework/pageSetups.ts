@@ -18,6 +18,7 @@ export interface SetupOptions {
   rum?: RumSetupOptions
   rumRecorder?: RumSetupOptions
   logs?: LogsSetupOptions
+  rumInit: (rumOptions: RumSetupOptions) => void
   head?: string
   body?: string
 }
@@ -64,7 +65,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
       <script type="text/javascript">
         ${formatSnippet(options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
-          DD_RUM.init(${formatRumOptions(rumOptions)})
+          ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
         })
       </script>
     `
@@ -96,7 +97,7 @@ export function bundleSetup(options: SetupOptions) {
         src="${options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
-        DD_RUM.init(${formatRumOptions(rumOptions)})
+        ;(${options.rumInit.toString()})(${formatRumOptions(rumOptions)})
       </script>
     `
   }
