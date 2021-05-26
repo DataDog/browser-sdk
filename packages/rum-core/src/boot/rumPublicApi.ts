@@ -12,13 +12,10 @@ import {
   monitor,
   UserConfiguration,
   clocksNow,
-  TimeStamp,
   timeStampNow,
-  ClocksState,
   display,
 } from '@datadog/browser-core'
-import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { startRum } from './rum'
@@ -47,23 +44,20 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   const beforeInitApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitApiCalls.add<[string, TimeStamp]>([name, timeStampNow()], ([name, time]) => addTimingStrategy(name, time))
+    const time = timeStampNow()
+    beforeInitApiCalls.add(() => addTimingStrategy(name, time))
   }
   let startViewStrategy: StartRumResult['startView'] = (name) => {
-    beforeInitApiCalls.add<[string | undefined, ClocksState]>([name, clocksNow()], ([name, startClocks]) =>
-      startViewStrategy(name, startClocks)
-    )
+    const startClocks = clocksNow()
+    beforeInitApiCalls.add(() => startViewStrategy(name, startClocks))
   }
   let addActionStrategy: StartRumResult['addAction'] = (action) => {
-    beforeInitApiCalls.add<[CustomAction, CommonContext]>([action, clonedCommonContext()], ([action, commonContext]) =>
-      addActionStrategy(action, commonContext)
-    )
+    const commonContext = clonedCommonContext()
+    beforeInitApiCalls.add(() => addActionStrategy(action, commonContext))
   }
   let addErrorStrategy: StartRumResult['addError'] = (providedError) => {
-    beforeInitApiCalls.add<[ProvidedError, CommonContext]>(
-      [providedError, clonedCommonContext()],
-      ([error, commonContext]) => addErrorStrategy(error, commonContext)
-    )
+    const commonContext = clonedCommonContext()
+    beforeInitApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }
 
   function clonedCommonContext(): CommonContext {

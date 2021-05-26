@@ -38,9 +38,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
 
   const beforeInitSendLog = new BoundedBuffer()
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
-    beforeInitSendLog.add<[LogsMessage, Context]>([message, currentContext], ([message, context]) =>
-      sendLogStrategy(message, context)
-    )
+    beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
   }
   const logger = new Logger(sendLog)
 
