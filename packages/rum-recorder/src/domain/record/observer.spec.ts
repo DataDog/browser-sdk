@@ -44,7 +44,7 @@ describe('initInputObserver', () => {
 
     dispatchInputEvent('foo')
 
-    expect(inputCallbackSpy.calls.first().args[0].text).toBe('***')
+    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
   })
 
   it('masks input values according to a parent element privacy mode', () => {
@@ -52,7 +52,7 @@ describe('initInputObserver', () => {
 
     dispatchInputEvent('foo')
 
-    expect(inputCallbackSpy.calls.first().args[0].text).toBe('***')
+    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
   })
 
   function dispatchInputEvent(newValue: string) {

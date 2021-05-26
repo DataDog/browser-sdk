@@ -218,10 +218,7 @@ export interface ViewportResizeDimention {
 
 export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
 
-export interface InputState {
-  text?: string
-  isChecked?: boolean
-}
+export type InputState = { text: string } | { isChecked: boolean }
 
 export type InputCallback = (v: InputState & { id: number }) => void
 

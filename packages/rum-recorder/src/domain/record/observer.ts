@@ -205,8 +205,8 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
     const lastInputState = lastInputStateMap.get(target)
     if (
       !lastInputState ||
-      lastInputState.text !== inputState.text ||
-      lastInputState.isChecked !== inputState.isChecked
+      (lastInputState as { text?: string }).text !== (inputState as { text?: string }).text ||
+      (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
     ) {
       lastInputStateMap.set(target, inputState)
       cb({
