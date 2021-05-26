@@ -1,4 +1,4 @@
-import { RelativeTime, relativeNow, toServerDuration, Duration } from '@datadog/browser-core'
+import { RelativeTime, relativeNow, Duration, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { createNewEvent } from '../../../core/test/specHelper'
 import { InForegroundPeriod } from '../rawRumEvent.types'
@@ -110,22 +110,22 @@ describe('foreground context', () => {
 
           it('should have the whole first period', () => {
             expect(periods![0]).toEqual({
-              start: toServerDuration(5 as Duration),
-              duration: toServerDuration(10 as Duration),
+              start: (5 * 1e6) as ServerDuration,
+              duration: (10 * 1e6) as ServerDuration,
             })
           })
 
           it('should have the whole second period', () => {
             expect(periods![1]).toEqual({
-              start: toServerDuration(20 as Duration),
-              duration: toServerDuration(10 as Duration),
+              start: (20 * 1e6) as ServerDuration,
+              duration: (10 * 1e6) as ServerDuration,
             })
           })
 
           it('should have the third period finishing with the view end', () => {
             expect(periods![2]).toEqual({
-              start: toServerDuration(35 as Duration),
-              duration: toServerDuration(15 as Duration),
+              start: (35 * 1e6) as ServerDuration,
+              duration: (15 * 1e6) as ServerDuration,
             })
           })
         })
@@ -141,15 +141,15 @@ describe('foreground context', () => {
 
           it('should have the first period with the beginning truncated', () => {
             expect(periods![0]).toEqual({
-              start: toServerDuration(0 as Duration),
-              duration: toServerDuration(5 as Duration),
+              start: 0 as ServerDuration,
+              duration: (5 * 1e6) as ServerDuration,
             })
           })
 
           it('should have the second period with the end truncated', () => {
             expect(periods![1]).toEqual({
-              start: toServerDuration(10 as Duration),
-              duration: toServerDuration(5 as Duration),
+              start: (10 * 1e6) as ServerDuration,
+              duration: (5 * 1e6) as ServerDuration,
             })
           })
         })
@@ -165,15 +165,15 @@ describe('foreground context', () => {
 
           it('should have the first period with the beginning truncated', () => {
             expect(periods![0]).toEqual({
-              start: toServerDuration(0 as Duration),
-              duration: toServerDuration(5 as Duration),
+              start: 0 as ServerDuration,
+              duration: (5 * 1e6) as ServerDuration,
             })
           })
 
           it('should have the second period with the end truncated with the view end', () => {
             expect(periods![1]).toEqual({
-              start: toServerDuration(10 as Duration),
-              duration: toServerDuration(10 as Duration),
+              start: (10 * 1e6) as ServerDuration,
+              duration: (10 * 1e6) as ServerDuration,
             })
           })
         })
