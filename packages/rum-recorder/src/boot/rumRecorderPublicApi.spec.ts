@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Configuration, includes } from '@datadog/browser-core'
 import { StartRum } from '@datadog/browser-rum-core'
+import { createNewEvent } from '../../../core/test/specHelper'
 import { makeRumRecorderPublicApi, RumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -56,6 +56,14 @@ describe('makeRumRecorderPublicApi', () => {
       })
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
+
+    it('does not start recording before the page "load"', () => {
+      const { triggerOnLoad } = mockDocumentReadyState()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startRecordingSpy).not.toHaveBeenCalled()
+      triggerOnLoad()
+      expect(startRecordingSpy).toHaveBeenCalled()
+    })
   })
 
   describe('startSessionReplayRecording()', () => {
@@ -72,6 +80,15 @@ describe('makeRumRecorderPublicApi', () => {
       rumRecorderPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
       expect(startRecordingSpy).toHaveBeenCalled()
     })
+
+    it('does not start recording multiple times if restarted before onload', () => {
+      const { triggerOnLoad } = mockDocumentReadyState()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumRecorderPublicApi.stopSessionReplayRecording()
+      rumRecorderPublicApi.startSessionReplayRecording()
+      triggerOnLoad()
+      expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('stopSessionReplayRecording()', () => {
@@ -85,7 +102,15 @@ describe('makeRumRecorderPublicApi', () => {
 
     it('does not start recording if called before init()', () => {
       rumRecorderPublicApi.stopSessionReplayRecording()
-      rumRecorderPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION })
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('prevents recording to start at page "load"', () => {
+      const { triggerOnLoad } = mockDocumentReadyState()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumRecorderPublicApi.stopSessionReplayRecording()
+      triggerOnLoad()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
   })
@@ -99,5 +124,26 @@ describe('makeRumRecorderPublicApi', () => {
       rumRecorderPublicApi.stopSessionReplayRecording()
       expect(getCommonContext().hasReplay).toBeUndefined()
     })
+
+    it('is undefined before page "load"', () => {
+      const { triggerOnLoad } = mockDocumentReadyState()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(getCommonContext().hasReplay).toBeUndefined()
+      rumRecorderPublicApi.startSessionReplayRecording()
+      expect(getCommonContext().hasReplay).toBeUndefined()
+      triggerOnLoad()
+      expect(getCommonContext().hasReplay).toBe(true)
+    })
   })
 })
+
+function mockDocumentReadyState() {
+  let readyState = 'loading'
+  spyOnProperty(Document.prototype, 'readyState', 'get').and.callFake(() => readyState)
+  return {
+    triggerOnLoad: () => {
+      readyState = 'complete'
+      window.dispatchEvent(createNewEvent('load'))
+    },
+  }
+}
