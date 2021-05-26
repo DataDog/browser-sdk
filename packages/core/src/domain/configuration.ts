@@ -51,7 +51,7 @@ export interface UserConfiguration {
   silentMultipleInit?: boolean
   trackInteractions?: boolean
   proxyHost?: string
-  beforeSend?: (event: any) => void
+  beforeSend?: BeforeSendCallback
 
   service?: string
   env?: string
@@ -66,6 +66,8 @@ export interface UserConfiguration {
   replica?: ReplicaUserConfiguration
 }
 
+export type BeforeSendCallback = (event: any, context?: any) => unknown
+
 interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
@@ -76,7 +78,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     cookieOptions: CookieOptions
 
     service?: string
-    beforeSend?: (event: any) => unknown
+    beforeSend?: BeforeSendCallback
 
     isEnabled: (feature: string) => boolean
   }
