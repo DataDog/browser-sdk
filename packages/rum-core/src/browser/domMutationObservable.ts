@@ -19,10 +19,8 @@ export function createDOMMutationObservable(): DOMMutation {
       return
     }
     observer.observe(document, {
-      attributeOldValue: true,
       attributes: true,
       characterData: true,
-      characterDataOldValue: true,
       childList: true,
       subtree: true,
     })
