@@ -56,12 +56,12 @@ describe('rum view referrer', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
           initialViewCreatedEvent = event
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
     createSpy = jasmine.createSpy('create')
   })
@@ -122,13 +122,13 @@ describe('rum track renew session', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ lifeCycle, location, DOMMutation }) => {
+      .beforeBuild(({ lifeCycle, location, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
   })
 
@@ -169,9 +169,9 @@ describe('rum track loading type', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
   })
 
@@ -205,9 +205,9 @@ describe('rum track view is active', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
   })
 
@@ -245,9 +245,9 @@ describe('rum view timings', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
   })
 
@@ -373,9 +373,9 @@ describe('rum track custom timings', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        ;({ addTiming } = trackViews(location, lifeCycle, DOMMutation))
+        ;({ addTiming } = trackViews(location, lifeCycle, domMutation))
       })
   })
 
@@ -470,9 +470,9 @@ describe('track hasReplay', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+      .beforeBuild(({ location, lifeCycle, domMutation }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, DOMMutation)
+        return trackViews(location, lifeCycle, domMutation)
       })
   })
 
@@ -538,9 +538,9 @@ describe('rum start view', () => {
   beforeEach(() => {
     ;({ getHandledCount, getViewEvent, handler } = spyOnViews())
 
-    setupBuilder = setup().beforeBuild(({ location, lifeCycle, DOMMutation }) => {
+    setupBuilder = setup().beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
       lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-      ;({ startView } = trackViews(location, lifeCycle, DOMMutation))
+      ;({ startView } = trackViews(location, lifeCycle, domMutationObservable))
     })
   })
 

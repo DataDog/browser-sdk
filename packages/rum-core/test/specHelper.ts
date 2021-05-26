@@ -8,11 +8,11 @@ import {
   TimeStamp,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
-import { createDOMMutationObservable, DOMMutation } from '../src/browser/domMutationObserver'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { RumSession } from '../src/domain/rumSession'
 import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { createDomMutationStub, DOMMutationStub } from './createDomMutationStub'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -30,7 +30,7 @@ export interface TestSetupBuilder {
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
 interface BuildContext {
   lifeCycle: LifeCycle
-  DOMMutation: DOMMutation
+  domMutation: DOMMutationStub
   configuration: Readonly<Configuration>
   session: RumSession
   location: Location
@@ -40,7 +40,7 @@ interface BuildContext {
 
 export interface TestIO {
   lifeCycle: LifeCycle
-  DOMMutation: DOMMutation
+  domMutation: DOMMutationStub
 
   clock: Clock
   fakeLocation: Partial<Location>
@@ -60,7 +60,7 @@ export function setup(): TestSetupBuilder {
     isTrackedWithResource: () => true,
   }
   const lifeCycle = new LifeCycle()
-  const DOMMutation = createDOMMutationObservable()
+  const domMutation = createDomMutationStub()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: Array<{
@@ -130,7 +130,7 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.forEach((task) => {
         const result = task({
           lifeCycle,
-          DOMMutation,
+          domMutation,
           parentContexts,
           session,
           applicationId: FAKE_APP_ID,
@@ -145,7 +145,7 @@ export function setup(): TestSetupBuilder {
         clock,
         fakeLocation,
         lifeCycle,
-        DOMMutation,
+        domMutation,
         rawRumEvents,
         session,
       }

@@ -1,15 +1,15 @@
 import { Duration, isEmptyObject, mapValues, ServerDuration, toServerDuration } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { DOMMutation } from '../../../browser/domMutationObserver'
+import { DOMMutation } from '../../../browser/domMutationObservable'
 import { trackViews, ViewEvent } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, DOMMutation: DOMMutation, location: Location) {
+export function startViewCollection(lifeCycle: LifeCycle, domMutation: DOMMutation, location: Location) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
   )
 
-  return trackViews(location, lifeCycle, DOMMutation)
+  return trackViews(location, lifeCycle, domMutation)
 }
 
 function processViewUpdate(view: ViewEvent) {

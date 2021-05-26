@@ -1,16 +1,16 @@
 import { combine, Configuration, toServerDuration } from '@datadog/browser-core'
 import { ActionType, CommonContext, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { DOMMutation } from '../../../browser/domMutationObserver'
+import { DOMMutation } from '../../../browser/domMutationObservable'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
 
-export function startActionCollection(lifeCycle: LifeCycle, DOMMutation: DOMMutation, configuration: Configuration) {
+export function startActionCollection(lifeCycle: LifeCycle, domMutation: DOMMutation, configuration: Configuration) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   )
 
   if (configuration.trackInteractions) {
-    trackActions(lifeCycle, DOMMutation)
+    trackActions(lifeCycle, domMutation)
   }
 
   return {

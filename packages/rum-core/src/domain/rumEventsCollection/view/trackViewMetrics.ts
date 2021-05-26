@@ -4,7 +4,7 @@ import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
-import { DOMMutation } from '../../../browser/domMutationObserver'
+import { DOMMutation } from '../../../browser/domMutationObservable'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -14,7 +14,7 @@ export interface ViewMetrics {
 
 export function trackViewMetrics(
   lifeCycle: LifeCycle,
-  DOMMutation: DOMMutation,
+  domMutation: DOMMutation,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType
 ) {
@@ -38,7 +38,7 @@ export function trackViewMetrics(
 
   const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(
     lifeCycle,
-    DOMMutation,
+    domMutation,
     setActivityLoadingTime
   )
 
@@ -96,11 +96,11 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
 
 function trackActivityLoadingTime(
   lifeCycle: LifeCycle,
-  DOMMutation: DOMMutation,
+  domMutation: DOMMutation,
   callback: (loadingTimeValue: Duration | undefined) => void
 ) {
   const startTime = timeStampNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, DOMMutation, (params) => {
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, domMutation, (params) => {
     if (params.hadActivity) {
       callback(elapsed(startTime, params.endTime))
     } else {

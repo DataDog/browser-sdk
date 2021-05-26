@@ -1,6 +1,6 @@
-import { monitor, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { DOMMutation } from '../browser/domMutationObserver'
-import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
+import { monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { DOMMutation } from '../browser/domMutationObservable'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
@@ -17,12 +17,12 @@ type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | 
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
-  DOMMutation: DOMMutation,
+  domMutation: DOMMutation,
   completionCallback: (params: CompletionCallbackParameters) => void
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
     lifeCycle,
-    DOMMutation
+    domMutation
   )
 
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
@@ -65,14 +65,14 @@ export function waitIdlePageActivity(
 // after MAX_DURATION, it has been validated.
 export function trackPageActivities(
   lifeCycle: LifeCycle,
-  DOMMutation: DOMMutation
+  domMutation: DOMMutation
 ): { observable: Observable<PageActivityEvent>; stop: () => void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
-  subscriptions.push(DOMMutation.subscribe(() => notifyPageActivity()))
+  subscriptions.push(domMutation.subscribe(() => notifyPageActivity()))
 
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
