@@ -25,7 +25,7 @@ export function startRecording(
     addRecord({ ...rawRecord, timestamp: Date.now() })
   }
 
-  const { stop: stopRecording, takeFullSnapshot, isRecording } = record({
+  const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRawRecord,
   })
 
@@ -37,7 +37,6 @@ export function startRecording(
       stopRecording()
       stopSegmentCollection()
     },
-    isRecording,
   }
 }
 

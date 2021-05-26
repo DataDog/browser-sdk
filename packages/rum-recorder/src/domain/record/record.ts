@@ -13,13 +13,9 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  let isRecording = false
   const mutationController = new MutationController()
 
   const takeFullSnapshot = () => {
-    if (!isRecording) {
-      return
-    }
     mutationController.flush() // process any pending mutation before taking a full snapshot
 
     emit({
@@ -63,8 +59,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const handlers: ListenerHandler[] = []
-  const startRecording = () => {
-    isRecording = true
+  const init = () => {
     takeFullSnapshot()
 
     handlers.push(
@@ -143,14 +138,12 @@ export function record(options: RecordOptions): RecordAPI {
     )
   }
 
-  runOnReadyState('complete', startRecording)
+  runOnReadyState('complete', init)
 
   return {
     stop: () => {
-      isRecording = false
       handlers.forEach((h) => h())
     },
     takeFullSnapshot,
-    isRecording: () => isRecording,
   }
 }

@@ -28,19 +28,11 @@ describe('record', () => {
     recordApi?.stop()
   })
 
-  it('does not start recording before the page "onload"', () => {
-    const { triggerOnLoad } = mockDocumentReadyState()
-    initRecording()
-    expect(recordApi.isRecording()).toBe(false)
-    triggerOnLoad()
-    expect(recordApi.isRecording()).toBe(true)
-  })
-
   it('captures stylesheet rules', (done) => {
     const styleElement = document.createElement('style')
     sandbox.appendChild(styleElement)
 
-    initRecording()
+    startRecording()
 
     const styleSheet = styleElement.sheet as CSSStyleSheet
     const ruleIdx0 = styleSheet.insertRule('body { background: #000; }')
@@ -109,35 +101,26 @@ describe('record', () => {
     })
   })
 
-  describe('takeFullSnapshot', () => {
-    it('ignores any "takeFullSnapshot" call while it is not recording', () => {
-      mockDocumentReadyState()
-      initRecording()
-      recordApi.takeFullSnapshot()
-      expect(emitSpy).not.toHaveBeenCalled()
-    })
+  it('flushes pending mutation records before taking a full snapshot', (done) => {
+    startRecording()
 
-    it('flushes pending mutation records before taking a full snapshot', (done) => {
-      initRecording()
+    sandbox.appendChild(document.createElement('div'))
 
-      sandbox.appendChild(document.createElement('div'))
+    recordApi.takeFullSnapshot()
 
-      recordApi.takeFullSnapshot()
+    waitEmitCalls(7, () => {
+      const records = getEmittedRecords()
 
-      waitEmitCalls(7, () => {
-        const records = getEmittedRecords()
+      expect(records[0].type).toEqual(RecordType.Meta)
+      expect(records[1].type).toEqual(RecordType.Focus)
+      expect(records[2].type).toEqual(RecordType.FullSnapshot)
+      expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
+      expect((records[3] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+      expect(records[4].type).toEqual(RecordType.Meta)
+      expect(records[5].type).toEqual(RecordType.Focus)
+      expect(records[6].type).toEqual(RecordType.FullSnapshot)
 
-        expect(records[0].type).toEqual(RecordType.Meta)
-        expect(records[1].type).toEqual(RecordType.Focus)
-        expect(records[2].type).toEqual(RecordType.FullSnapshot)
-        expect(records[3].type).toEqual(RecordType.IncrementalSnapshot)
-        expect((records[3] as IncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
-        expect(records[4].type).toEqual(RecordType.Meta)
-        expect(records[5].type).toEqual(RecordType.Focus)
-        expect(records[6].type).toEqual(RecordType.FullSnapshot)
-
-        expectNoExtraEmitCalls(done)
-      })
+      expectNoExtraEmitCalls(done)
     })
   })
 
@@ -150,7 +133,7 @@ describe('record', () => {
     })
 
     it('adds an initial Focus record when starting to record', () => {
-      initRecording()
+      startRecording()
       expect(getEmittedRecords()[1]).toEqual({
         type: RecordType.Focus,
         data: {
@@ -160,7 +143,7 @@ describe('record', () => {
     })
 
     it('adds a Focus record on focus', () => {
-      initRecording()
+      startRecording()
       emitSpy.calls.reset()
 
       window.dispatchEvent(createNewEvent('focus'))
@@ -168,7 +151,7 @@ describe('record', () => {
     })
 
     it('adds a Focus record on blur', () => {
-      initRecording()
+      startRecording()
       emitSpy.calls.reset()
 
       window.dispatchEvent(createNewEvent('blur'))
@@ -176,7 +159,7 @@ describe('record', () => {
     })
 
     it('adds a Focus record on when taking a full snapshot', () => {
-      initRecording()
+      startRecording()
       emitSpy.calls.reset()
 
       recordApi.takeFullSnapshot()
@@ -185,18 +168,18 @@ describe('record', () => {
 
     it('set has_focus to true if the document has the focus', () => {
       hasFocus = true
-      initRecording()
+      startRecording()
       expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(true)
     })
 
     it("set has_focus to false if the document doesn't have the focus", () => {
       hasFocus = false
-      initRecording()
+      startRecording()
       expect((getEmittedRecords()[1] as FocusRecord).data.has_focus).toBe(false)
     })
   })
 
-  function initRecording() {
+  function startRecording() {
     recordApi = record({
       emit: emitSpy,
     })
@@ -212,15 +195,4 @@ function createDOMSandbox() {
   sandbox.id = 'sandbox'
   document.body.appendChild(sandbox)
   return sandbox
-}
-
-function mockDocumentReadyState() {
-  let readyState = 'loading'
-  spyOnProperty(Document.prototype, 'readyState', 'get').and.callFake(() => readyState)
-  return {
-    triggerOnLoad: () => {
-      readyState = 'complete'
-      window.dispatchEvent(createNewEvent('load'))
-    },
-  }
 }
