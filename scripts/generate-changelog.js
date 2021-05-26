@@ -14,6 +14,11 @@ const CHANGELOG_FILE = 'CHANGELOG.md'
 const CONTRIBUTING_FILE = 'CONTRIBUTING.md'
 
 async function main() {
+  if (!process.env.EDITOR) {
+    console.error('Please configure your environment variable EDITOR')
+    process.exit(1)
+  }
+
   const emojisLegend = await getEmojisLegend()
   const changesList = await getChangesList()
 
@@ -89,7 +94,7 @@ async function executeCommand(command) {
 
 function spawnCommand(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' })
+    const child = spawn(command, args, { stdio: 'inherit', shell: true })
     child.on('error', () => reject())
     child.on('close', () => resolve())
     child.on('exit', () => resolve())

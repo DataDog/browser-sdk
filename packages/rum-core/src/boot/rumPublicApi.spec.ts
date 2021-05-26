@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND, RelativeTime, TimeStamp, display } from '@datadog/browser-core'
+import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
@@ -434,10 +434,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual({
-        relative: 10 as RelativeTime,
-        timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
-      })
+      expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(10 as RelativeTime))
     })
 
     it('should add custom timings', () => {

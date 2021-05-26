@@ -1,12 +1,20 @@
-import { monitor, callMonitored, throttle, DOM_EVENT, addEventListeners, addEventListener } from '@datadog/browser-core'
-import { nodeOrAncestorsShouldBeHidden, nodeOrAncestorsShouldHaveInputIgnored } from './privacy'
-import { getSerializedNodeId, hasSerializedNode } from './serializationUtils'
+import {
+  monitor,
+  callMonitored,
+  throttle,
+  DOM_EVENT,
+  addEventListeners,
+  addEventListener,
+  includes,
+} from '@datadog/browser-core'
+import { nodeOrAncestorsShouldBeHidden } from './privacy'
+import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
   HookResetter,
   IncrementalSource,
   InputCallback,
-  InputValue,
+  InputState,
   ListenerHandler,
   MediaInteractionCallback,
   MediaInteractions,
@@ -155,55 +163,54 @@ function initViewportResizeObserver(cb: ViewportResizeCallback): ListenerHandler
 }
 
 export const INPUT_TAGS = ['INPUT', 'TEXTAREA', 'SELECT']
-const lastInputValueMap: WeakMap<EventTarget, InputValue> = new WeakMap()
-function initInputObserver(cb: InputCallback): ListenerHandler {
+const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
+export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
-    const target = event.target as Node
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement
 
-    if (
-      !target ||
-      !(target as Element).tagName ||
-      INPUT_TAGS.indexOf((target as Element).tagName) < 0 ||
-      nodeOrAncestorsShouldBeHidden(target) ||
-      nodeOrAncestorsShouldHaveInputIgnored(target)
-    ) {
+    if (!target || !target.tagName || !includes(INPUT_TAGS, target.tagName) || nodeOrAncestorsShouldBeHidden(target)) {
       return
     }
 
-    const type: string | undefined = (target as HTMLInputElement).type
-    const text = (target as HTMLInputElement).value
-    let isChecked = false
+    const type = target.type
 
+    let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
-      isChecked = (target as HTMLInputElement).checked
+      inputState = { isChecked: (target as HTMLInputElement).checked }
+    } else {
+      const value = getElementInputValue(target)
+      if (value === undefined) {
+        return
+      }
+      inputState = { text: value }
     }
 
-    cbWithDedup(target, { text, isChecked })
+    cbWithDedup(target, inputState)
 
-    // if a radio was checked
-    // the other radios with the same name attribute will be unchecked.
-    const name: string | undefined = (target as HTMLInputElement).name
-    if (type === 'radio' && name && isChecked) {
+    // If a radio was checked, other radios with the same name attribute will be unchecked.
+    const name = target.name
+    if (type === 'radio' && name && (target as HTMLInputElement).checked) {
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
-          cbWithDedup(el, {
-            isChecked: !isChecked,
-            text: (el as HTMLInputElement).value,
-          })
+          cbWithDedup(el, { isChecked: false })
         }
       })
     }
   }
 
-  function cbWithDedup(target: Node, v: InputValue) {
+  function cbWithDedup(target: Node, inputState: InputState) {
     if (!hasSerializedNode(target)) {
       return
     }
-    const lastInputValue = lastInputValueMap.get(target)
-    if (!lastInputValue || lastInputValue.text !== v.text || lastInputValue.isChecked !== v.isChecked) {
-      lastInputValueMap.set(target, v)
+    const lastInputState = lastInputStateMap.get(target)
+    if (
+      !lastInputState ||
+      (lastInputState as { text?: string }).text !== (inputState as { text?: string }).text ||
+      (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
+    ) {
+      lastInputStateMap.set(target, inputState)
       cb({
-        ...v,
+        ...inputState,
         id: getSerializedNodeId(target),
       })
     }

@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console, local-rules/disallow-side-effects */
 /**
  * Keep references on console methods to avoid triggering patched behaviors
  *
@@ -7,7 +7,7 @@
  * but we should be safe from infinite loop nonetheless.
  */
 export const display: Pick<typeof console, 'log' | 'warn' | 'error'> = {
-  log: console.log,
-  warn: console.warn,
-  error: console.error,
+  log: console.log.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
 }

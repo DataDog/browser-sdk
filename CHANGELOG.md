@@ -16,6 +16,26 @@
 
 ---
 
+## v2.10.0
+
+- ✨[RUMF-889] enable system clock usages ([#845](https://github.com/DataDog/browser-sdk/pull/845))
+
+## v2.9.1
+
+- 🐛 [logs] Fix IE11 console.log issue ([#852](https://github.com/DataDog/browser-sdk/pull/852))
+
+## v2.9.0
+
+- ✨[RUMF-907] Use unaltered console functions when displaying console messages ([#847](https://github.com/DataDog/browser-sdk/pull/847))
+- ✨[RUMF-910] handle logs console and http simultaneously ([#844](https://github.com/DataDog/browser-sdk/pull/844))
+- ⚡️ [RUMF-902] enable new mutation observer ([#842](https://github.com/DataDog/browser-sdk/pull/842))
+- ✨[RUMF-908] attach current drift value to events ([#843](https://github.com/DataDog/browser-sdk/pull/843))
+- ✨ Clear previously set user context ([#840](https://github.com/DataDog/browser-sdk/pull/840))
+- 📝 add a warning in the RUM-recorder readme ([#838](https://github.com/DataDog/browser-sdk/pull/838))
+- 📝 Restructure tables in docs page for improved readability ([#835](https://github.com/DataDog/browser-sdk/pull/835))
+- 📦 [RUMF-905] update vulnerable dependencies ([#836](https://github.com/DataDog/browser-sdk/pull/836))
+- ⚡️ [RUMF-896] process mutations asynchronously ([#832](https://github.com/DataDog/browser-sdk/pull/832))
+
 ## v2.8.1
 
 - 🐛 [RUMF-870] Max errors threshold should not take into account errors excluded by beforeSend ([#828](https://github.com/DataDog/browser-sdk/pull/828))

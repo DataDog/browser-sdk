@@ -12,6 +12,8 @@ import {
   monitor,
   UserConfiguration,
   clocksNow,
+  TimeStamp,
+  timeStampNow,
   ClocksState,
   display,
 } from '@datadog/browser-core'
@@ -43,9 +45,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, ClocksState]>()
+  const beforeInitAddTiming = new BoundedBuffer<[string, TimeStamp]>()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, clocksNow()])
+    beforeInitAddTiming.add([name, timeStampNow()])
   }
 
   const beforeInitStartView = new BoundedBuffer<[string | undefined, ClocksState]>()
@@ -98,7 +100,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       })))
       beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
       beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, endClocks]) => addTimingStrategy(name, endClocks))
+      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
       if (configuration.isEnabled('view-renaming')) {
         startViewStrategy = startView
         beforeInitStartView.drain(([name, startClocks]) => startViewStrategy(name, startClocks))
