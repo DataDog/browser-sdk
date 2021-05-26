@@ -1,4 +1,4 @@
-import { Context, RawError, RelativeTime } from '@datadog/browser-core'
+import { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -23,10 +23,6 @@ export enum LifeCycleEventType {
   RECORD_STARTED,
   RECORD_STOPPED,
   RAW_ERROR_COLLECTED,
-}
-
-export interface Subscription {
-  unsubscribe: () => void
 }
 
 export class LifeCycle {
