@@ -36,9 +36,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   const globalContextManager = createContextManager()
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
-  const beforeInitSendLog = new BoundedBuffer<[LogsMessage, Context]>()
+  const beforeInitSendLog = new BoundedBuffer()
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
-    beforeInitSendLog.add([message, currentContext])
+    beforeInitSendLog.add<[LogsMessage, Context]>([message, currentContext], ([message, context]) =>
+      sendLogStrategy(message, context)
+    )
   }
   const logger = new Logger(sendLog)
 
@@ -56,7 +58,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       sendLogStrategy = startLogsImpl(userConfiguration, logger, globalContextManager.get)
-      beforeInitSendLog.drain(([message, context]) => sendLogStrategy(message, context))
+      beforeInitSendLog.drain()
 
       isAlreadyInitialized = true
     }),

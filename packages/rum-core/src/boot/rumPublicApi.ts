@@ -45,24 +45,25 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, TimeStamp]>()
+  const beforeInitApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, timeStampNow()])
+    beforeInitApiCalls.add<[string, TimeStamp]>([name, timeStampNow()], ([name, time]) => addTimingStrategy(name, time))
   }
-
-  const beforeInitStartView = new BoundedBuffer<[string | undefined, ClocksState]>()
   let startViewStrategy: StartRumResult['startView'] = (name) => {
-    beforeInitStartView.add([name, clocksNow()])
+    beforeInitApiCalls.add<[string | undefined, ClocksState]>([name, clocksNow()], ([name, startClocks]) =>
+      startViewStrategy(name, startClocks)
+    )
   }
-
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
   let addActionStrategy: StartRumResult['addAction'] = (action) => {
-    beforeInitAddAction.add([action, clonedCommonContext()])
+    beforeInitApiCalls.add<[CustomAction, CommonContext]>([action, clonedCommonContext()], ([action, commonContext]) =>
+      addActionStrategy(action, commonContext)
+    )
   }
-
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
   let addErrorStrategy: StartRumResult['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, clonedCommonContext()])
+    beforeInitApiCalls.add<[ProvidedError, CommonContext]>(
+      [providedError, clonedCommonContext()],
+      ([error, commonContext]) => addErrorStrategy(error, commonContext)
+    )
   }
 
   function clonedCommonContext(): CommonContext {
@@ -98,15 +99,10 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         user,
         context: globalContextManager.get(),
       })))
-      // TODO respect API order
-      beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
-      beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
       if (configuration.isEnabled('view-renaming')) {
         startViewStrategy = startView
-        beforeInitStartView.drain(([name, startClocks]) => startViewStrategy(name, startClocks))
       }
-
+      beforeInitApiCalls.drain()
       isAlreadyInitialized = true
     }),
 
