@@ -2,7 +2,7 @@ import { RelativeTime, relativeNow, toServerDuration, Duration } from '@datadog/
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { createNewEvent } from '../../../core/test/specHelper'
 import { InForegroundPeriod } from '../rawRumEvent.types'
-import { startForegroundContexts, ForegroundContexts } from './foregroundContexts'
+import { startForegroundContexts, ForegroundContexts, MAX_NUMBER_OF_FOCUSED_TIME } from './foregroundContexts'
 
 const FOCUS_PERIOD_LENGTH = 10 as Duration
 const BLUR_PERIOD_LENGTH = 5 as Duration
@@ -153,6 +153,30 @@ describe('foreground context', () => {
             })
           })
         })
+
+        describe('when in between the the full period and ongoing periods', () => {
+          let periods: InForegroundPeriod[] | undefined
+          beforeEach(() => {
+            periods = foregroundContext.getInForegroundPeriods(25 as RelativeTime, 20 as Duration)
+          })
+          it('should have 2 in foreground periods', () => {
+            expect(periods).toHaveSize(2)
+          })
+
+          it('should have the first period with the beginning truncated', () => {
+            expect(periods![0]).toEqual({
+              start: toServerDuration(0 as Duration),
+              duration: toServerDuration(5 as Duration),
+            })
+          })
+
+          it('should have the second period with the end truncated with the view end', () => {
+            expect(periods![1]).toEqual({
+              start: toServerDuration(10 as Duration),
+              duration: toServerDuration(10 as Duration),
+            })
+          })
+        })
       })
     })
 
@@ -189,6 +213,49 @@ describe('foreground context', () => {
           expect(foregroundContext.getInForeground(30 as RelativeTime)).toEqual(false)
         })
       })
+    })
+
+    describe(`after reaching the maximum number of focus periods: ${MAX_NUMBER_OF_FOCUSED_TIME}`, () => {
+      beforeEach(() => {
+        // given
+        const { clock } = setupBuilder.build()
+        Array.from({ length: MAX_NUMBER_OF_FOCUSED_TIME + 1 }).forEach(() => {
+          window.dispatchEvent(createNewEvent('focus'))
+          clock.tick(FOCUS_PERIOD_LENGTH)
+          window.dispatchEvent(createNewEvent('blur'))
+          clock.tick(BLUR_PERIOD_LENGTH)
+        })
+
+        // when
+        window.dispatchEvent(createNewEvent('focus'))
+        clock.tick(FOCUS_PERIOD_LENGTH)
+      })
+
+      it('should not record anything after', () => {
+        // then
+        expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
+      })
+    })
+
+    it('when the periods is closed twice, should not be in foreground', () => {
+      // when
+      const { clock } = setupBuilder.build()
+      window.dispatchEvent(createNewEvent('focus'))
+      clock.tick(FOCUS_PERIOD_LENGTH)
+      window.dispatchEvent(createNewEvent('blur'))
+      clock.tick(BLUR_PERIOD_LENGTH)
+      window.dispatchEvent(createNewEvent('blur'))
+
+      // then
+      expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
+    })
+
+    it('after starting with a blur even, should not be in foreground', () => {
+      // when
+      setupBuilder.build()
+      window.dispatchEvent(createNewEvent('blur'))
+      // then
+      expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
     })
   })
 
