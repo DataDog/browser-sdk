@@ -12,12 +12,10 @@ import {
   monitor,
   UserConfiguration,
   clocksNow,
-  TimeStamp,
   timeStampNow,
   display,
 } from '@datadog/browser-core'
-import { CustomAction } from '../domain/rumEventsCollection/action/trackActions'
-import { ProvidedError, ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
+import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { startRum } from './rum'
@@ -44,19 +42,22 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
 
-  const beforeInitAddTiming = new BoundedBuffer<[string, TimeStamp]>()
+  const beforeInitApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name) => {
-    beforeInitAddTiming.add([name, timeStampNow()])
+    const time = timeStampNow()
+    beforeInitApiCalls.add(() => addTimingStrategy(name, time))
   }
-
-  const beforeInitAddAction = new BoundedBuffer<[CustomAction, CommonContext]>()
+  let startViewStrategy: StartRumResult['startView'] = (name) => {
+    const startClocks = clocksNow()
+    beforeInitApiCalls.add(() => startViewStrategy(name, startClocks))
+  }
   let addActionStrategy: StartRumResult['addAction'] = (action) => {
-    beforeInitAddAction.add([action, clonedCommonContext()])
+    const commonContext = clonedCommonContext()
+    beforeInitApiCalls.add(() => addActionStrategy(action, commonContext))
   }
-
-  const beforeInitAddError = new BoundedBuffer<[ProvidedError, CommonContext]>()
   let addErrorStrategy: StartRumResult['addError'] = (providedError) => {
-    beforeInitAddError.add([providedError, clonedCommonContext()])
+    const commonContext = clonedCommonContext()
+    beforeInitApiCalls.add(() => addErrorStrategy(providedError, commonContext))
   }
 
   function clonedCommonContext(): CommonContext {
@@ -79,7 +80,11 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         userConfiguration.clientToken = userConfiguration.publicApiKey
       }
 
+      let configuration
+      let startView
       ;({
+        configuration,
+        startView,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         addTiming: addTimingStrategy,
@@ -88,10 +93,10 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         user,
         context: globalContextManager.get(),
       })))
-      beforeInitAddAction.drain(([action, commonContext]) => addActionStrategy(action, commonContext))
-      beforeInitAddError.drain(([error, commonContext]) => addErrorStrategy(error, commonContext))
-      beforeInitAddTiming.drain(([name, time]) => addTimingStrategy(name, time))
-
+      if (configuration.isEnabled('view-renaming')) {
+        startViewStrategy = startView
+      }
+      beforeInitApiCalls.drain()
       isAlreadyInitialized = true
     }),
 
@@ -152,6 +157,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     removeUser: monitor(() => {
       user = {}
     }),
+  })
+  ;(rumPublicApi as any)['startView'] = monitor((name?: string) => {
+    startViewStrategy(name)
   })
   return rumPublicApi
 

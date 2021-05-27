@@ -1,4 +1,12 @@
-import { Duration, RelativeTime, TimeStamp, timeStampNow, display } from '@datadog/browser-core'
+import {
+  ClocksState,
+  Duration,
+  RelativeTime,
+  TimeStamp,
+  timeStampNow,
+  display,
+  relativeToClocks,
+} from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -517,5 +525,68 @@ describe('track hasReplay', () => {
     history.pushState({}, '', '/bar')
 
     expect(getViewEvent(2).hasReplay).toBe(false)
+  })
+})
+
+describe('rum start view', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => ViewEvent
+  let getHandledCount: () => number
+  let startView: (name?: string, endClocks?: ClocksState) => void
+
+  beforeEach(() => {
+    ;({ getHandledCount, getViewEvent, handler } = spyOnViews())
+
+    setupBuilder = setup().beforeBuild(({ location, lifeCycle }) => {
+      lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      ;({ startView } = trackViews(location, lifeCycle))
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should start a new view', () => {
+    const { clock } = setupBuilder.withFakeClock().build()
+    expect(getHandledCount()).toBe(1)
+    const initialViewId = getViewEvent(0).id
+
+    clock.tick(10)
+    startView()
+
+    expect(getHandledCount()).toBe(3)
+
+    expect(getViewEvent(1).id).toBe(initialViewId)
+    expect(getViewEvent(1).isActive).toBe(false)
+    expect(getViewEvent(1).startClocks.relative).toBe(0 as RelativeTime)
+    expect(getViewEvent(1).duration).toBe(10 as Duration)
+
+    expect(getViewEvent(2).id).not.toBe(initialViewId)
+    expect(getViewEvent(2).isActive).toBe(true)
+    expect(getViewEvent(2).startClocks.relative).toBe(10 as RelativeTime)
+  })
+
+  it('should name the view', () => {
+    setupBuilder.build()
+
+    startView()
+    startView('foo')
+    startView('bar')
+
+    expect(getViewEvent(2).name).toBeUndefined()
+    expect(getViewEvent(4).name).toBe('foo')
+    expect(getViewEvent(6).name).toBe('bar')
+  })
+
+  it('should use the provided clock to stop the current view and start the new one', () => {
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(100)
+    startView('foo', relativeToClocks(50 as RelativeTime))
+
+    expect(getViewEvent(1).duration).toBe(50 as Duration)
+    expect(getViewEvent(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 })
