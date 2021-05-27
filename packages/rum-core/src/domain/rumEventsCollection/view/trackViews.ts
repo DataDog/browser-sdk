@@ -116,14 +116,19 @@ export function trackViews(location: Location, lifeCycle: LifeCycle) {
     return { initialView, stop }
   }
 
-  function trackViewChange() {
-    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url)
+  function trackViewChange(startClocks?: ClocksState, name?: string) {
+    return newView(lifeCycle, location, isRecording, ViewLoadingType.ROUTE_CHANGE, currentView.url, startClocks, name)
   }
 
   return {
     addTiming: (name: string, time = timeStampNow()) => {
       currentView.addTiming(name, time)
       currentView.triggerUpdate()
+    },
+    startView: (name?: string, startClocks?: ClocksState) => {
+      currentView.end(startClocks)
+      currentView.triggerUpdate()
+      currentView = trackViewChange(startClocks, name)
     },
     stop: () => {
       stopInitialViewTracking()
@@ -194,8 +199,8 @@ function newView(
 
   return {
     scheduleUpdate: scheduleViewUpdate,
-    end() {
-      endClocks = clocksNow()
+    end(clocks = clocksNow()) {
+      endClocks = clocks
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
     },

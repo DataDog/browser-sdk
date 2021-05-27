@@ -34,14 +34,19 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     )
   )
 
-  const { parentContexts, addError, addAction, addTiming } = startRumEventCollection(
+  const { parentContexts } = startRumEventCollection(
     userConfiguration.applicationId,
-    location,
     lifeCycle,
     configuration,
     session,
     getCommonContext
   )
+
+  startLongTaskCollection(lifeCycle)
+  startResourceCollection(lifeCycle, session)
+  const { addTiming, startView } = startViewCollection(lifeCycle, location)
+  const { addError } = startErrorCollection(lifeCycle, configuration)
+  const { addAction } = startActionCollection(lifeCycle, configuration)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
@@ -53,6 +58,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addAction,
     addError,
     addTiming,
+    startView,
     configuration,
     lifeCycle,
     parentContexts,
@@ -63,7 +69,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
 export function startRumEventCollection(
   applicationId: string,
-  location: Location,
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
@@ -72,21 +77,10 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
-  startLongTaskCollection(lifeCycle)
-  startResourceCollection(lifeCycle, session)
-  const { addTiming, stop: stopViewCollection } = startViewCollection(lifeCycle, location)
-  const { addError } = startErrorCollection(lifeCycle, configuration)
-  const { addAction } = startActionCollection(lifeCycle, configuration)
 
   return {
-    addAction,
-    addError,
     parentContexts,
-
-    addTiming,
-
-    stop() {
-      stopViewCollection()
+    stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
