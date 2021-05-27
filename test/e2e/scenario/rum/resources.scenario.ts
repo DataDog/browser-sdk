@@ -201,6 +201,56 @@ describe('rum resources', () => {
         expect(resourceEvent?.resource.status_code).toBe(0)
       })
   })
+
+  describe('support XHRs with same XMLHttpRequest instance', () => {
+    createTest('track only second XHR (first is canceled by the browser)')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', '/ok?duration=200&call=1')
+          xhr.send()
+          xhr.open('GET', '/ok?duration=100&call=2')
+          xhr.send()
+          setTimeout(() => {
+            done(undefined)
+          }, 200)
+        })
+
+        await flushEvents()
+
+        const resourceEvents = events.rumResources.filter((event) => event.resource.type === 'xhr')
+        expect(resourceEvents.length).toEqual(1)
+        expect(events.rumErrors.length).toBe(0)
+        expect(resourceEvents[0]?.resource.status_code).toBe(200)
+      })
+
+    createTest('track both XHRs when the second wait for the respond of the first')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          const triggerSecondCall = () => {
+            xhr.removeEventListener('loadend', triggerSecondCall)
+            xhr.addEventListener('loadend', () => done(undefined))
+            xhr.open('GET', '/ok?duration=100&call=2')
+            xhr.send()
+          }
+          xhr.addEventListener('loadend', triggerSecondCall)
+          xhr.open('GET', '/ok?duration=100&call=1')
+          xhr.send()
+        })
+
+        await flushEvents()
+
+        const resourceEvents = events.rumResources.filter((event) => event.resource.type === 'xhr')
+        expect(resourceEvents.length).toEqual(2)
+        expect(events.rumErrors.length).toBe(0)
+        expect(resourceEvents.map((resourceEvent) => resourceEvent.resource.status_code)).toEqual([200, 200])
+      })
+  })
 })
 
 function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
