@@ -16,6 +16,10 @@
 
 ---
 
+## v2.11.1
+
+- 🐛 do not break the recorder when an URL fails to parse ([#871](https://github.com/DataDog/browser-sdk/pull/871))
+
 ## v2.11.0
 
 - 🐛 [REPLAY-312] use unpatched MutationObserver object ([#866](https://github.com/DataDog/browser-sdk/pull/866))
