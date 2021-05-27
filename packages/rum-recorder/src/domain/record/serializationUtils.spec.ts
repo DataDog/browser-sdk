@@ -149,6 +149,10 @@ describe('makeUrlAbsolute', () => {
   it('does not change data URIs', () => {
     expect(makeUrlAbsolute('data:image/gif;base64,ABC', 'http://example.org/foo/')).toBe('data:image/gif;base64,ABC')
   })
+
+  it('returns the original value if it fails to be parsed as an URL', () => {
+    expect(makeUrlAbsolute('http://', 'http://example.org/foo/')).toBe('http://')
+  })
 })
 
 describe('getElementInputValue', () => {
