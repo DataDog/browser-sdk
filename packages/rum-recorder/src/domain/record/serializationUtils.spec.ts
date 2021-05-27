@@ -138,6 +138,12 @@ describe('makeSrcsetUrlsAbsolute', () => {
 })
 
 describe('makeUrlAbsolute', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
   it('makes an absolute URL from a relative path', () => {
     expect(makeUrlAbsolute('bar', 'http://example.org/foo/')).toBe('http://example.org/foo/bar')
   })
