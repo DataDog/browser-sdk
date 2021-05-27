@@ -10,11 +10,11 @@ interface BrowserWindow extends Window {
   }
 }
 
-function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
+export function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
   let constructor: MutationObserverConstructor | undefined
   const browserWindow: BrowserWindow = window
 
-  // Angular uses Zone.js to provide a context persisting accross async tasks.  Zone.js replaces the
+  // Angular uses Zone.js to provide a context persisting across async tasks.  Zone.js replaces the
   // global MutationObserver constructor with a patched version to support the context propagation.
   // There is an ongoing issue[1][2] with this setup when using a MutationObserver within a Angular
   // component: on some occasions, the callback is being called in an infinite loop, causing the
