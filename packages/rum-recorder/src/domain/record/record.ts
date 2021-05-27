@@ -59,85 +59,81 @@ export function record(options: RecordOptions): RecordAPI {
 
   takeFullSnapshot()
 
-  const handlers = [
-    initObservers({
-      mutationController,
-      inputCb: (v) =>
-        emit({
-          data: {
-            source: IncrementalSource.Input,
-            ...v,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      mediaInteractionCb: (p) =>
-        emit({
-          data: {
-            source: IncrementalSource.MediaInteraction,
-            ...p,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      mouseInteractionCb: (d) =>
-        emit({
-          data: {
-            source: IncrementalSource.MouseInteraction,
-            ...d,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      mousemoveCb: (positions, source) =>
-        emit({
-          data: {
-            positions,
-            source,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      mutationCb: (m) =>
-        emit({
-          data: {
-            source: IncrementalSource.Mutation,
-            ...m,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      scrollCb: (p) =>
-        emit({
-          data: {
-            source: IncrementalSource.Scroll,
-            ...p,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      styleSheetRuleCb: (r) =>
-        emit({
-          data: {
-            source: IncrementalSource.StyleSheetRule,
-            ...r,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      viewportResizeCb: (d) =>
-        emit({
-          data: {
-            source: IncrementalSource.ViewportResize,
-            ...d,
-          },
-          type: RecordType.IncrementalSnapshot,
-        }),
-      focusCb: (data) =>
-        emit({
-          type: RecordType.Focus,
-          data,
-        }),
-    }),
-  ]
+  const stopObservers = initObservers({
+    mutationController,
+    inputCb: (v) =>
+      emit({
+        data: {
+          source: IncrementalSource.Input,
+          ...v,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mediaInteractionCb: (p) =>
+      emit({
+        data: {
+          source: IncrementalSource.MediaInteraction,
+          ...p,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mouseInteractionCb: (d) =>
+      emit({
+        data: {
+          source: IncrementalSource.MouseInteraction,
+          ...d,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mousemoveCb: (positions, source) =>
+      emit({
+        data: {
+          positions,
+          source,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mutationCb: (m) =>
+      emit({
+        data: {
+          source: IncrementalSource.Mutation,
+          ...m,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    scrollCb: (p) =>
+      emit({
+        data: {
+          source: IncrementalSource.Scroll,
+          ...p,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    styleSheetRuleCb: (r) =>
+      emit({
+        data: {
+          source: IncrementalSource.StyleSheetRule,
+          ...r,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    viewportResizeCb: (d) =>
+      emit({
+        data: {
+          source: IncrementalSource.ViewportResize,
+          ...d,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    focusCb: (data) =>
+      emit({
+        type: RecordType.Focus,
+        data,
+      }),
+  })
 
   return {
-    stop: () => {
-      handlers.forEach((h) => h())
-    },
+    stop: stopObservers,
     takeFullSnapshot,
   }
 }
