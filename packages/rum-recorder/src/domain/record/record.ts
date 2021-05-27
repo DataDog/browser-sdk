@@ -1,8 +1,7 @@
-import { runOnReadyState } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
-import { IncrementalSource, ListenerHandler, RecordAPI, RecordOptions } from './types'
+import { IncrementalSource, RecordAPI, RecordOptions } from './types'
 import { getWindowHeight, getWindowWidth } from './utils'
 import { MutationController } from './mutationObserver'
 
@@ -58,92 +57,83 @@ export function record(options: RecordOptions): RecordAPI {
     })
   }
 
-  const handlers: ListenerHandler[] = []
-  const init = () => {
-    takeFullSnapshot()
+  takeFullSnapshot()
 
-    handlers.push(
-      initObservers({
-        mutationController,
-        inputCb: (v) =>
-          emit({
-            data: {
-              source: IncrementalSource.Input,
-              ...v,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        mediaInteractionCb: (p) =>
-          emit({
-            data: {
-              source: IncrementalSource.MediaInteraction,
-              ...p,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        mouseInteractionCb: (d) =>
-          emit({
-            data: {
-              source: IncrementalSource.MouseInteraction,
-              ...d,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        mousemoveCb: (positions, source) =>
-          emit({
-            data: {
-              positions,
-              source,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        mutationCb: (m) =>
-          emit({
-            data: {
-              source: IncrementalSource.Mutation,
-              ...m,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        scrollCb: (p) =>
-          emit({
-            data: {
-              source: IncrementalSource.Scroll,
-              ...p,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        styleSheetRuleCb: (r) =>
-          emit({
-            data: {
-              source: IncrementalSource.StyleSheetRule,
-              ...r,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        viewportResizeCb: (d) =>
-          emit({
-            data: {
-              source: IncrementalSource.ViewportResize,
-              ...d,
-            },
-            type: RecordType.IncrementalSnapshot,
-          }),
-        focusCb: (data) =>
-          emit({
-            type: RecordType.Focus,
-            data,
-          }),
-      })
-    )
-  }
-
-  runOnReadyState('complete', init)
+  const stopObservers = initObservers({
+    mutationController,
+    inputCb: (v) =>
+      emit({
+        data: {
+          source: IncrementalSource.Input,
+          ...v,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mediaInteractionCb: (p) =>
+      emit({
+        data: {
+          source: IncrementalSource.MediaInteraction,
+          ...p,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mouseInteractionCb: (d) =>
+      emit({
+        data: {
+          source: IncrementalSource.MouseInteraction,
+          ...d,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mousemoveCb: (positions, source) =>
+      emit({
+        data: {
+          positions,
+          source,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    mutationCb: (m) =>
+      emit({
+        data: {
+          source: IncrementalSource.Mutation,
+          ...m,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    scrollCb: (p) =>
+      emit({
+        data: {
+          source: IncrementalSource.Scroll,
+          ...p,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    styleSheetRuleCb: (r) =>
+      emit({
+        data: {
+          source: IncrementalSource.StyleSheetRule,
+          ...r,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    viewportResizeCb: (d) =>
+      emit({
+        data: {
+          source: IncrementalSource.ViewportResize,
+          ...d,
+        },
+        type: RecordType.IncrementalSnapshot,
+      }),
+    focusCb: (data) =>
+      emit({
+        type: RecordType.Focus,
+        data,
+      }),
+  })
 
   return {
-    stop: () => {
-      handlers.forEach((h) => h())
-    },
+    stop: stopObservers,
     takeFullSnapshot,
   }
 }
