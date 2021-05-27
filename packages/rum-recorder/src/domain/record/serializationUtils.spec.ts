@@ -138,6 +138,12 @@ describe('makeSrcsetUrlsAbsolute', () => {
 })
 
 describe('makeUrlAbsolute', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
   it('makes an absolute URL from a relative path', () => {
     expect(makeUrlAbsolute('bar', 'http://example.org/foo/')).toBe('http://example.org/foo/bar')
   })
@@ -148,6 +154,10 @@ describe('makeUrlAbsolute', () => {
 
   it('does not change data URIs', () => {
     expect(makeUrlAbsolute('data:image/gif;base64,ABC', 'http://example.org/foo/')).toBe('data:image/gif;base64,ABC')
+  })
+
+  it('returns the original value if it fails to be parsed as an URL', () => {
+    expect(makeUrlAbsolute('http://', 'http://example.org/foo/')).toBe('http://')
   })
 })
 
