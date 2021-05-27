@@ -39,7 +39,7 @@ export type ViewportResizeData = {
 export type InputData = {
   source: IncrementalSource.Input
   id: number
-} & InputValue
+} & InputState
 
 export type MediaInteractionData = {
   source: IncrementalSource.MediaInteraction
@@ -82,27 +82,30 @@ export interface ObserverParam {
 }
 
 // https://dom.spec.whatwg.org/#interface-mutationrecord
-export interface CharacterDataMutationRecord {
+export interface RumCharacterDataMutationRecord {
   type: 'characterData'
   target: Node
   oldValue: string | null
 }
 
-export interface AttributesMutationRecord {
+export interface RumAttributesMutationRecord {
   type: 'attributes'
-  target: Node
+  target: Element
   oldValue: string | null
   attributeName: string | null
 }
 
-export interface ChildListMutationRecord {
+export interface RumChildListMutationRecord {
   type: 'childList'
   target: Node
   addedNodes: NodeList
   removedNodes: NodeList
 }
 
-export type MutationRecord = CharacterDataMutationRecord | AttributesMutationRecord | ChildListMutationRecord
+export type RumMutationRecord =
+  | RumCharacterDataMutationRecord
+  | RumAttributesMutationRecord
+  | RumChildListMutationRecord
 
 export interface TextCursor {
   node: Node
@@ -215,12 +218,9 @@ export interface ViewportResizeDimention {
 
 export type ViewportResizeCallback = (d: ViewportResizeDimention) => void
 
-export interface InputValue {
-  text: string
-  isChecked: boolean
-}
+export type InputState = { text: string } | { isChecked: boolean }
 
-export type InputCallback = (v: InputValue & { id: number }) => void
+export type InputCallback = (v: InputState & { id: number }) => void
 
 export const MediaInteractions = {
   Play: 0,
