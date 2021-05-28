@@ -1,10 +1,12 @@
-import { RelativeTime } from '@datadog/browser-core'
+import { RelativeTime, Configuration } from '@datadog/browser-core'
+import { RumSession } from '@datadog/browser-rum-core'
 import { isIE } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
+import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumEvent } from '../rumEvent.types'
 import { startRumEventCollection } from './rum'
 
@@ -14,6 +16,32 @@ function collectServerEvents(lifeCycle: LifeCycle) {
     serverRumEvents.push(serverRumEvent)
   })
   return serverRumEvents
+}
+
+function startRum(
+  applicationId: string,
+  lifeCycle: LifeCycle,
+  configuration: Configuration,
+  session: RumSession,
+  location: Location
+) {
+  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
+    applicationId,
+    lifeCycle,
+    configuration,
+    session,
+    () => ({
+      context: {},
+      user: {},
+    })
+  )
+  const { stop: viewCollectionStop } = startViewCollection(lifeCycle, location, foregroundContexts)
+  return {
+    stop: () => {
+      rumEventCollectionStop()
+      viewCollectionStop()
+    },
+  }
 }
 
 describe('rum session', () => {
@@ -27,10 +55,7 @@ describe('rum session', () => {
 
     setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
       serverRumEvents = collectServerEvents(lifeCycle)
-      return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({
-        context: {},
-        user: {},
-      }))
+      return startRum(applicationId, lifeCycle, configuration, session, location)
     })
   })
 
@@ -83,10 +108,7 @@ describe('rum session keep alive', () => {
       })
       .beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({
-          context: {},
-          user: {},
-        }))
+        return startRum(applicationId, lifeCycle, configuration, session, location)
       })
   })
 
@@ -146,10 +168,7 @@ describe('rum view url', () => {
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
       serverRumEvents = collectServerEvents(lifeCycle)
-      return startRumEventCollection(applicationId, location, lifeCycle, configuration, session, () => ({
-        context: {},
-        user: {},
-      }))
+      return startRum(applicationId, lifeCycle, configuration, session, location)
     })
   })
 

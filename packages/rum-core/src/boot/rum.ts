@@ -35,14 +35,19 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     )
   )
 
-  const { parentContexts, addError, addAction, addTiming } = startRumEventCollection(
+  const { parentContexts, foregroundContexts } = startRumEventCollection(
     userConfiguration.applicationId,
-    location,
     lifeCycle,
     configuration,
     session,
     getCommonContext
   )
+
+  startLongTaskCollection(lifeCycle)
+  startResourceCollection(lifeCycle, session)
+  const { addTiming, startView } = startViewCollection(lifeCycle, location, foregroundContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
+  const { addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
@@ -54,6 +59,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addAction,
     addError,
     addTiming,
+    startView,
     configuration,
     lifeCycle,
     parentContexts,
@@ -64,7 +70,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
 export function startRumEventCollection(
   applicationId: string,
-  location: Location,
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
@@ -74,21 +79,11 @@ export function startRumEventCollection(
   const foregroundContexts = startForegroundContexts(configuration)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
-  startLongTaskCollection(lifeCycle)
-  startResourceCollection(lifeCycle, session)
-  const { addTiming, stop: stopViewCollection } = startViewCollection(lifeCycle, location, foregroundContexts)
-  const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
-  const { addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts)
 
   return {
-    addAction,
-    addError,
     parentContexts,
-
-    addTiming,
-
-    stop() {
-      stopViewCollection()
+    foregroundContexts,
+    stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()

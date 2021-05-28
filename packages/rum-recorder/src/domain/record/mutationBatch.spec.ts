@@ -1,9 +1,10 @@
 import { collectAsyncCalls } from '../../../test/utils'
 import { createMutationBatch } from './mutationBatch'
+import { RumMutationRecord } from './types'
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>
-  let processMutationBatchSpy: jasmine.Spy<(mutations: MutationRecord[]) => void>
+  let processMutationBatchSpy: jasmine.Spy<(mutations: RumMutationRecord[]) => void>
 
   beforeEach(() => {
     processMutationBatchSpy = jasmine.createSpy()
@@ -15,7 +16,7 @@ describe('createMutationBatch', () => {
   })
 
   it('calls the callback asynchronously after adding a mutation', (done) => {
-    const mutation = { type: 'childList' } as MutationRecord
+    const mutation = { type: 'childList' } as RumMutationRecord
     mutationBatch.addMutations([mutation])
 
     const {
@@ -30,7 +31,7 @@ describe('createMutationBatch', () => {
   })
 
   it('calls the callback synchronously on flush', () => {
-    const mutation = { type: 'childList' } as MutationRecord
+    const mutation = { type: 'childList' } as RumMutationRecord
     mutationBatch.addMutations([mutation])
     mutationBatch.flush()
 
@@ -38,9 +39,9 @@ describe('createMutationBatch', () => {
   })
 
   it('appends mutations to the batch when adding more mutations', () => {
-    const mutation1 = { type: 'childList' } as MutationRecord
-    const mutation2 = { type: 'characterData' } as MutationRecord
-    const mutation3 = { type: 'attributes' } as MutationRecord
+    const mutation1 = { type: 'childList' } as RumMutationRecord
+    const mutation2 = { type: 'characterData' } as RumMutationRecord
+    const mutation3 = { type: 'attributes' } as RumMutationRecord
     mutationBatch.addMutations([mutation1])
     mutationBatch.addMutations([mutation2, mutation3])
     mutationBatch.flush()

@@ -1,130 +1,401 @@
-/* eslint-disable max-len */
 import { isIE } from '../../../../core/test/specHelper'
-import { IGNORED_NODE_ID } from './serializationUtils'
-import { absoluteToStylesheet, serializeNodeWithId } from './serialize'
+import {
+  InputPrivacyMode,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+} from '../../constants'
+import { hasSerializedNode } from './serializationUtils'
+import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
+import { ElementNode, NodeType } from './types'
 
-describe('absolute url to stylesheet', () => {
-  const href = 'http://localhost/css/style.css'
-
-  it('can handle relative path', () => {
-    expect(absoluteToStylesheet('url(a.jpg)', href)).toEqual(`url(http://localhost/css/a.jpg)`)
-  })
-
-  it('can handle same level path', () => {
-    expect(absoluteToStylesheet('url("./a.jpg")', href)).toEqual(`url("http://localhost/css/a.jpg")`)
-  })
-
-  it('can handle parent level path', () => {
-    expect(absoluteToStylesheet('url("../a.jpg")', href)).toEqual(`url("http://localhost/a.jpg")`)
-  })
-
-  it('can handle absolute path', () => {
-    expect(absoluteToStylesheet('url("/a.jpg")', href)).toEqual(`url("http://localhost/a.jpg")`)
-  })
-
-  it('can handle external path', () => {
-    expect(absoluteToStylesheet('url("http://localhost/a.jpg")', href)).toEqual(`url("http://localhost/a.jpg")`)
-  })
-
-  it('can handle single quote path', () => {
-    expect(absoluteToStylesheet(`url('./a.jpg')`, href)).toEqual(`url('http://localhost/css/a.jpg')`)
-  })
-
-  it('can handle no quote path', () => {
-    expect(absoluteToStylesheet('url(./a.jpg)', href)).toEqual(`url(http://localhost/css/a.jpg)`)
-  })
-
-  it('can handle multiple no quote paths', () => {
-    expect(
-      absoluteToStylesheet(
-        'background-image: url(images/b.jpg);background: #aabbcc url(images/a.jpg) 50% 50% repeat;',
-        href
-      )
-    ).toEqual(
-      `background-image: url(http://localhost/css/images/b.jpg);` +
-        `background: #aabbcc url(http://localhost/css/images/a.jpg) 50% 50% repeat;`
-    )
-  })
-
-  it('can handle data url image', () => {
-    expect(absoluteToStylesheet('url(data:image/gif;base64,ABC)', href)).toEqual('url(data:image/gif;base64,ABC)')
-    expect(absoluteToStylesheet('url(data:application/font-woff;base64,d09GMgABAAAAAAm)', href)).toEqual(
-      'url(data:application/font-woff;base64,d09GMgABAAAAAAm)'
-    )
-  })
-
-  it('preserves quotes around inline svgs with spaces', () => {
-    expect(
-      absoluteToStylesheet(
-        "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2328a745' d='M3'/%3E%3C/svg%3E\")",
-        href
-      )
-    ).toEqual(
-      "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2328a745' d='M3'/%3E%3C/svg%3E\")"
-    )
-    expect(
-      absoluteToStylesheet(
-        'url(\'data:image/svg+xml;utf8,<svg width="28" height="32" viewBox="0 0 28 32" xmlns="http://www.w3.org/2000/svg"><path d="M27 14C28" fill="white"/></svg>\')',
-        href
-      )
-    ).toEqual(
-      'url(\'data:image/svg+xml;utf8,<svg width="28" height="32" viewBox="0 0 28 32" xmlns="http://www.w3.org/2000/svg"><path d="M27 14C28" fill="white"/></svg>\')'
-    )
-  })
-  it('can handle empty path', () => {
-    expect(absoluteToStylesheet(`url('')`, href)).toEqual(`url('')`)
-  })
-})
+const DEFAULT_OPTIONS: SerializeOptions = {
+  document,
+  ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+}
 
 describe('serializeNodeWithId', () => {
-  describe('ignores some nodes', () => {
-    const defaultOptions = {
-      doc: document,
-      map: {},
+  let sandbox: HTMLElement
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
     }
+    sandbox = document.createElement('div')
+    sandbox.id = 'sandbox'
+    document.body.appendChild(sandbox)
+  })
 
-    beforeEach(() => {
-      if (isIE()) {
-        pending('IE not supported')
-      }
+  afterEach(() => {
+    sandbox.remove()
+  })
+
+  describe('document serialization', () => {
+    it('serializes a document', () => {
+      const document = new DOMParser().parseFromString(`<!doctype html><html>foo</html>`, 'text/html')
+      expect(serializeDocument(document)).toEqual({
+        type: NodeType.Document,
+        childNodes: [
+          jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
+          jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
+        ],
+        id: (jasmine.any(Number) as unknown) as number,
+      })
+    })
+  })
+
+  describe('elements serialization', () => {
+    it('serializes a div', () => {
+      expect(serializeNodeWithId(document.createElement('div'), DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {},
+        isSVG: undefined,
+        childNodes: [],
+        id: (jasmine.any(Number) as unknown) as number,
+      })
     })
 
-    it('does not save ignored nodes in the map', () => {
-      const map = {}
-      serializeNodeWithId(document.createElement('script'), { ...defaultOptions, map })
-      expect(map).toEqual({})
+    it('serializes hidden elements', () => {
+      const element = document.createElement('div')
+      element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
+
+      expect(serializeNodeWithId(element, DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Element,
+        tagName: 'div',
+        attributes: {
+          id: '',
+          class: '',
+          rr_width: '0px',
+          rr_height: '0px',
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
+        },
+        isSVG: undefined,
+        childNodes: [],
+        id: (jasmine.any(Number) as unknown) as number,
+      })
     })
 
-    it('sets ignored serialized node id to IGNORED_NODE_ID', () => {
+    it('does not serialize hidden element children', () => {
+      const element = document.createElement('div')
+      element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
+      element.appendChild(document.createElement('hr'))
+
+      expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).childNodes).toEqual([])
+    })
+
+    it('serializes attributes', () => {
+      const element = document.createElement('div')
+      element.setAttribute('foo', 'bar')
+      element.setAttribute('data-foo', 'data-bar')
+      element.className = 'zog'
+      element.style.width = '10px'
+
+      expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).attributes).toEqual({
+        foo: 'bar',
+        'data-foo': 'data-bar',
+        class: 'zog',
+        style: 'width: 10px;',
+      })
+    })
+
+    it('serializes scroll position', () => {
+      const element = document.createElement('div')
+      Object.assign(element.style, { width: '100px', height: '100px', overflow: 'scroll' })
+      const inner = document.createElement('div')
+      Object.assign(inner.style, { width: '200px', height: '200px' })
+      element.appendChild(inner)
+      sandbox.appendChild(element)
+      element.scrollBy(10, 20)
+
+      expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).attributes).toEqual(
+        jasmine.objectContaining({
+          rr_scrollTop: 20,
+          rr_scrollLeft: 10,
+        })
+      )
+    })
+
+    it('ignores white space in <head>', () => {
+      const head = document.createElement('head')
+      head.innerHTML = `  <title>  foo </title>  `
+
+      expect((serializeNodeWithId(head, DEFAULT_OPTIONS)! as ElementNode).childNodes).toEqual([
+        jasmine.objectContaining({
+          type: NodeType.Element,
+          tagName: 'title',
+          childNodes: [jasmine.objectContaining({ type: NodeType.Text, textContent: '  foo ' })],
+        }),
+      ])
+    })
+
+    it('serializes <input> text elements value', () => {
+      const input = document.createElement('input')
+      input.value = 'toto'
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { value: 'toto' },
+        })
+      )
+    })
+
+    it('serializes <textarea> elements value', () => {
+      const textarea = document.createElement('textarea')
+      textarea.value = 'toto'
+
+      expect(serializeNodeWithId(textarea, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { value: 'toto' },
+        })
+      )
+    })
+
+    it('serializes <select> elements value and selected state', () => {
+      const select = document.createElement('select')
+      const option1 = document.createElement('option')
+      option1.value = 'foo'
+      select.appendChild(option1)
+      const option2 = document.createElement('option')
+      option2.value = 'bar'
+      select.appendChild(option2)
+      select.options.selectedIndex = 1
+
+      expect(serializeNodeWithId(select, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { value: 'bar' },
+          childNodes: [
+            jasmine.objectContaining({
+              attributes: {
+                value: 'foo',
+              },
+            }),
+            jasmine.objectContaining({
+              attributes: {
+                value: 'bar',
+                selected: true,
+              },
+            }),
+          ],
+        })
+      )
+    })
+
+    it('does not serialize <input type="password"> values set via property setter', () => {
+      const input = document.createElement('input')
+      input.type = 'password'
+      input.value = 'toto'
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { type: 'password' },
+        })
+      )
+    })
+
+    it('does not serialize <input type="password"> values set via attribute setter', () => {
+      const input = document.createElement('input')
+      input.type = 'password'
+      input.setAttribute('value', 'toto')
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { type: 'password' },
+        })
+      )
+    })
+
+    it('serializes <input type="checkbox"> elements checked state', () => {
+      const checkbox = document.createElement('input')
+
+      expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: {},
+        })
+      )
+
+      checkbox.checked = true
+
+      expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { checked: true },
+        })
+      )
+    })
+
+    it('serializes <audio> elements paused state', () => {
+      const audio = document.createElement('audio')
+
+      expect(serializeNodeWithId(audio, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { rr_mediaState: 'paused' },
+        })
+      )
+
+      // Emulate a playing audio file
+      Object.defineProperty(audio, 'paused', { value: false })
+
+      expect(serializeNodeWithId(audio, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { rr_mediaState: 'played' },
+        })
+      )
+    })
+
+    it('replaces weird tag names with "div"', () => {
+      expect((serializeNodeWithId(document.createElement('foo:bar'), DEFAULT_OPTIONS) as ElementNode).tagName).toEqual(
+        'div'
+      )
+    })
+
+    describe('input privacy mode', () => {
+      it('replaces <input> values with asterisks for masked mode', () => {
+        const input = document.createElement('input')
+        input.value = 'toto'
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+
+        expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+          jasmine.objectContaining({
+            attributes: {
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+              value: '****',
+            },
+          })
+        )
+      })
+
+      it('respects ancestor privacy mode', () => {
+        const parent = document.createElement('div')
+        const input = document.createElement('input')
+        input.value = 'toto'
+        parent.appendChild(input)
+        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+
+        expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
+          jasmine.objectContaining({
+            attributes: { value: '****' },
+          })
+        )
+      })
+    })
+
+    it('does not serialize <input> values for ignored mode', () => {
+      const input = document.createElement('input')
+      input.value = 'toto'
+      input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+          },
+        })
+      )
+    })
+
+    it('ignores the privacy mode for <input type="button">', () => {
+      const button = document.createElement('input')
+      button.type = 'button'
+      button.value = 'toto'
+      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+    })
+
+    it('ignores the privacy mode for <input type="submit">', () => {
+      const button = document.createElement('input')
+      button.type = 'submit'
+      button.value = 'toto'
+      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+    })
+  })
+
+  describe('text nodes serialization', () => {
+    it('serializes a text node', () => {
+      expect(serializeNodeWithId(document.createTextNode('foo'), DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.Text,
+        id: (jasmine.any(Number) as unknown) as number,
+        isStyle: undefined,
+        textContent: 'foo',
+      })
+    })
+
+    it('does not serialize text nodes with only white space if the ignoreWhiteSpace option is specified', () => {
+      expect(
+        serializeNodeWithId(document.createTextNode('   '), { ...DEFAULT_OPTIONS, ignoreWhiteSpace: true })
+      ).toEqual(null)
+    })
+
+    it('serializes a text node contained in a <style> element', () => {
+      const style = document.createElement('style')
+      style.textContent = 'body { background-color: red }'
+
+      expect(serializeNodeWithId(style.childNodes[0], DEFAULT_OPTIONS)).toEqual(
+        jasmine.objectContaining({
+          textContent: 'body { background-color: red }',
+          isStyle: true,
+        })
+      )
+    })
+  })
+
+  describe('CDATA nodes serialization', () => {
+    it('serializes a CDATA node', () => {
+      const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
+      expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), DEFAULT_OPTIONS)).toEqual({
+        type: NodeType.CDATA,
+        id: (jasmine.any(Number) as unknown) as number,
+        textContent: '',
+      })
+    })
+  })
+
+  it('adds serialized node ids to the provided Set', () => {
+    const serializedNodeIds = new Set<number>()
+    const node = serializeNodeWithId(document.createElement('div'), { ...DEFAULT_OPTIONS, serializedNodeIds })!
+    expect(serializedNodeIds).toEqual(new Set([node.id]))
+  })
+
+  describe('ignores some nodes', () => {
+    it('does not save ignored nodes in the serializedNodeIds set', () => {
+      const serializedNodeIds = new Set<number>()
+      serializeNodeWithId(document.createElement('script'), { ...DEFAULT_OPTIONS, serializedNodeIds })
+      expect(serializedNodeIds.size).toBe(0)
+    })
+
+    it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
-      serializeNodeWithId(scriptElement, defaultOptions)
-      expect((scriptElement as any).__sn).toEqual(jasmine.objectContaining({ id: IGNORED_NODE_ID }))
+      serializeNodeWithId(scriptElement, DEFAULT_OPTIONS)
+      expect(hasSerializedNode(scriptElement)).toBe(false)
     })
 
     it('ignores script tags', () => {
-      expect(serializeNodeWithId(document.createElement('script'), defaultOptions)).toEqual(null)
+      expect(serializeNodeWithId(document.createElement('script'), DEFAULT_OPTIONS)).toEqual(null)
     })
 
     it('ignores comments', () => {
-      expect(serializeNodeWithId(document.createComment('foo'), defaultOptions)).toEqual(null)
+      expect(serializeNodeWithId(document.createComment('foo'), DEFAULT_OPTIONS)).toEqual(null)
     })
 
     it('ignores link favicons', () => {
       const linkElement = document.createElement('link')
       linkElement.setAttribute('rel', 'shortcut icon')
-      expect(serializeNodeWithId(linkElement, defaultOptions)).toEqual(null)
+      expect(serializeNodeWithId(linkElement, DEFAULT_OPTIONS)).toEqual(null)
     })
 
     it('ignores meta keywords', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'keywords')
-      expect(serializeNodeWithId(metaElement, defaultOptions)).toEqual(null)
+      expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
     })
 
     it('ignores meta name attribute casing', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'KeYwOrDs')
-      expect(serializeNodeWithId(metaElement, defaultOptions)).toEqual(null)
+      expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
     })
   })
 })

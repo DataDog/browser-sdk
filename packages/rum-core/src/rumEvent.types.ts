@@ -108,6 +108,10 @@ export type RumErrorEvent = CommonProperties & {
    */
   readonly error: {
     /**
+     * UUID of the error
+     */
+    readonly id?: string
+    /**
      * Error message
      */
     message: string
@@ -213,6 +217,10 @@ export type RumLongTaskEvent = CommonProperties & {
    * Long Task properties
    */
   readonly long_task: {
+    /**
+     * UUID of the long task
+     */
+    readonly id?: string
     /**
      * Duration in ns of the long task
      */
