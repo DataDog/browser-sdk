@@ -23,8 +23,18 @@ export function startActionCollection(lifeCycle: LifeCycle, configuration: Confi
 }
 
 function processAction(action: AutoAction | CustomAction) {
-  const autoActionProperties = isAutoAction(action)
-    ? {
+  const commonActionProperties = {
+    action: {
+      target: {
+        name: action.name,
+      },
+      type: action.type,
+    },
+    date: action.startClocks.timeStamp,
+    type: RumEventType.ACTION as const,
+  }
+  const actionEvent = isAutoAction(action)
+    ? combine(commonActionProperties, {
         action: {
           error: {
             count: action.counts.errorCount,
@@ -38,23 +48,13 @@ function processAction(action: AutoAction | CustomAction) {
             count: action.counts.resourceCount,
           },
         },
-      }
-    : undefined
-  const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent = combine(
-    {
-      action: {
-        id: generateUUID(),
-        target: {
-          name: action.name,
+      })
+    : combine(commonActionProperties, {
+        action: {
+          id: generateUUID(),
         },
-        type: action.type,
-      },
-      date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION as const,
-    },
-    autoActionProperties
-  )
+      })
+  const customerContext = !isAutoAction(action) ? action.context : undefined
   return {
     customerContext,
     rawRumEvent: actionEvent,
