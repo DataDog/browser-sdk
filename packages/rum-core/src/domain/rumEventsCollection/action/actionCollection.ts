@@ -56,7 +56,6 @@ function processAction(action: AutoAction | CustomAction, foregroundContexts: Fo
       },
       date: action.startClocks.timeStamp,
       type: RumEventType.ACTION as const,
-      view: {},
     },
     autoActionProperties
   )
