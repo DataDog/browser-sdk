@@ -95,7 +95,10 @@ function getInForeground(startTime: RelativeTime): boolean {
     if (foregroundPeriod.end !== undefined && startTime > foregroundPeriod.end) {
       break
     }
-    if (startTime > foregroundPeriod.start && (foregroundPeriod.end == null || startTime < foregroundPeriod.end)) {
+    if (
+      startTime > foregroundPeriod.start &&
+      (foregroundPeriod.end === undefined || startTime < foregroundPeriod.end)
+    ) {
       return true
     }
   }
@@ -122,7 +125,7 @@ function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration
     const startTime = eventStartTime > foregroundPeriod.start ? eventStartTime : foregroundPeriod.start
     const startDuration = elapsed(eventStartTime, startTime)
     const endTime =
-      foregroundPeriod.end == null || eventEndTime < foregroundPeriod.end ? eventEndTime : foregroundPeriod.end
+      foregroundPeriod.end === undefined || eventEndTime < foregroundPeriod.end ? eventEndTime : foregroundPeriod.end
     const endDuration = elapsed(startTime, endTime)
     filteredForegroundPeriods.unshift({
       start: toServerDuration(startDuration),
