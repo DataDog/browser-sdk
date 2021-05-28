@@ -26,7 +26,7 @@ export type RumActionEvent = CommonProperties & {
     /**
      * UUID of the action
      */
-    readonly id: string
+    readonly id?: string
     /**
      * Duration in ns to the action is considered loaded
      */
@@ -110,7 +110,7 @@ export type RumErrorEvent = CommonProperties & {
     /**
      * UUID of the error
      */
-    readonly id: string
+    readonly id?: string
     /**
      * Error message
      */
@@ -220,7 +220,7 @@ export type RumLongTaskEvent = CommonProperties & {
     /**
      * UUID of the long task
      */
-    readonly id: string
+    readonly id?: string
     /**
      * Duration in ns of the long task
      */
@@ -254,7 +254,7 @@ export type RumResourceEvent = CommonProperties & {
     /**
      * UUID of the resource
      */
-    readonly id: string
+    readonly id?: string
     /**
      * Resource type
      */
