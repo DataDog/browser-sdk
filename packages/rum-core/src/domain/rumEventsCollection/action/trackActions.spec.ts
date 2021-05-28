@@ -149,7 +149,7 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable: DOMMutation }) => trackActions(lifeCycle, DOMMutation))
+      .beforeBuild(({ lifeCycle, domMutationObservable }) => trackActions(lifeCycle, domMutationObservable))
   })
 
   afterEach(() => {
