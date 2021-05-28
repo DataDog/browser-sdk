@@ -103,7 +103,8 @@ function getInForeground(startTime: RelativeTime): boolean {
 }
 
 function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration): InForegroundPeriod[] {
-  const eventEndTime = ((eventStartTime as number) + (duration as number)) as RelativeTime
+  // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+  const eventEndTime = (eventStartTime + duration) as RelativeTime
   const filteredForegroundPeriods: InForegroundPeriod[] = []
 
   for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
