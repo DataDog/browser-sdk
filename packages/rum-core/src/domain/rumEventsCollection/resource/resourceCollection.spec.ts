@@ -45,6 +45,7 @@ describe('resourceCollection', () => {
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: (jasmine.any(Number) as unknown) as TimeStamp,
         resource: {
+          id: jasmine.any(String),
           duration: (100 * 1e6) as ServerDuration,
           size: undefined,
           type: ResourceType.OTHER,
@@ -72,6 +73,7 @@ describe('resourceCollection', () => {
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         resource: {
+          id: jasmine.any(String),
           duration: (100 * 1e6) as ServerDuration,
           method: 'GET',
           status_code: 200,

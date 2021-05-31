@@ -47,6 +47,7 @@ describe('long task collection', () => {
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       long_task: {
+        id: jasmine.any(String),
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,
