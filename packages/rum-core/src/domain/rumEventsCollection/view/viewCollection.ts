@@ -1,17 +1,18 @@
 import { Duration, isEmptyObject, mapValues, ServerDuration, toServerDuration } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { ForegroundContexts } from '../../foregroundContexts'
 import { trackViews, ViewEvent } from './trackViews'
 
-export function startViewCollection(lifeCycle: LifeCycle, location: Location) {
+export function startViewCollection(lifeCycle: LifeCycle, location: Location, foregroundContexts: ForegroundContexts) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, foregroundContexts))
   )
 
   return trackViews(location, lifeCycle)
 }
 
-function processViewUpdate(view: ViewEvent) {
+function processViewUpdate(view: ViewEvent, foregroundContexts: ForegroundContexts) {
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
@@ -45,6 +46,7 @@ function processViewUpdate(view: ViewEvent) {
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
+      in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, view.duration),
     },
     session: {
       has_replay: view.hasReplay || undefined,

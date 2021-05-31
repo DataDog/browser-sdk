@@ -5,6 +5,7 @@ import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle } from '../domain/lifeCycle'
 import { startParentContexts } from '../domain/parentContexts'
+import { startForegroundContexts } from '../domain/foregroundContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
@@ -34,7 +35,7 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     )
   )
 
-  const { parentContexts } = startRumEventCollection(
+  const { parentContexts, foregroundContexts } = startRumEventCollection(
     userConfiguration.applicationId,
     lifeCycle,
     configuration,
@@ -44,9 +45,9 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming, startView } = startViewCollection(lifeCycle, location)
-  const { addError } = startErrorCollection(lifeCycle, configuration)
-  const { addAction } = startActionCollection(lifeCycle, configuration)
+  const { addTiming, startView } = startViewCollection(lifeCycle, location, foregroundContexts)
+  const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
+  const { addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
@@ -75,15 +76,19 @@ export function startRumEventCollection(
   getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
+  const foregroundContexts = startForegroundContexts(configuration)
   const batch = startRumBatch(configuration, lifeCycle)
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
 
   return {
     parentContexts,
+    foregroundContexts,
     stop: () => {
       // prevent batch from previous tests to keep running and send unwanted requests
       // could be replaced by stopping all the component when they will all have a stop method
       batch.stop()
+      parentContexts.stop()
+      foregroundContexts.stop()
     },
   }
 }

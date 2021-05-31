@@ -13,8 +13,11 @@ describe('actionCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, configuration))
+      .withForegroundContexts({
+        getInForeground: () => true,
+      })
+      .beforeBuild(({ lifeCycle, configuration, foregroundContexts }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts))
       })
   })
 
@@ -57,6 +60,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      view: {
+        in_foreground: true,
+      },
     })
   })
 
@@ -79,6 +85,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      view: {
+        in_foreground: true,
+      },
     })
   })
 })

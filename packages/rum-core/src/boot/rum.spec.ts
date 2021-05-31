@@ -25,7 +25,7 @@ function startRum(
   session: RumSession,
   location: Location
 ) {
-  const { stop: rumEventCollectionStop } = startRumEventCollection(
+  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     applicationId,
     lifeCycle,
     configuration,
@@ -35,7 +35,7 @@ function startRum(
       user: {},
     })
   )
-  const { stop: viewCollectionStop } = startViewCollection(lifeCycle, location)
+  const { stop: viewCollectionStop } = startViewCollection(lifeCycle, location, foregroundContexts)
   return {
     stop: () => {
       rumEventCollectionStop()

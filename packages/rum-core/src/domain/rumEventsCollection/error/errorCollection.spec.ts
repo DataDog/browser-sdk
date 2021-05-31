@@ -13,8 +13,11 @@ describe('error collection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle))
+      .withForegroundContexts({
+        getInForeground: () => true,
+      })
+      .beforeBuild(({ lifeCycle, foregroundContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts))
       })
   })
 
@@ -45,6 +48,9 @@ describe('error collection', () => {
             type: 'Error',
           },
           type: RumEventType.ERROR,
+          view: {
+            in_foreground: true,
+          },
         },
         savedCommonContext: undefined,
         startTime: 1234,
@@ -127,6 +133,9 @@ describe('error collection', () => {
           source: ErrorSource.NETWORK,
           stack: 'bar',
           type: 'foo',
+        },
+        view: {
+          in_foreground: true,
         },
         type: RumEventType.ERROR,
       })

@@ -206,6 +206,7 @@ module.exports = {
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'use-isnan': 'error',
     'valid-typeof': 'off',
+    'no-eq-null': 'error',
   },
   overrides: [
     {

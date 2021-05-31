@@ -52,6 +52,9 @@ export interface RawRumErrorEvent {
     source: ErrorSource
     message: string
   }
+  view?: {
+    in_foreground: boolean
+  }
 }
 
 export interface RawRumViewEvent {
@@ -79,6 +82,7 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
+    in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
     has_replay: true | undefined
@@ -86,6 +90,11 @@ export interface RawRumViewEvent {
   _dd: {
     document_version: number
   }
+}
+
+export interface InForegroundPeriod {
+  start: ServerDuration
+  duration: ServerDuration
 }
 
 export enum ViewLoadingType {
@@ -123,6 +132,9 @@ export interface RawRumActionEvent {
     target: {
       name: string
     }
+  }
+  view?: {
+    in_foreground: boolean
   }
 }
 
