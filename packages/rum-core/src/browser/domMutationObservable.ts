@@ -8,7 +8,6 @@ export function createDOMMutationObservable(): DOMMutationObservable {
   let callbacks: Array<() => void> = []
   const MutationObserver = getMutationObserverConstructor()
   const observer = MutationObserver ? new MutationObserver(monitor(notify)) : undefined
-  let isDOMObserved = false
 
   function notify() {
     callbacks.forEach((callback) => callback())
@@ -18,13 +17,13 @@ export function createDOMMutationObservable(): DOMMutationObservable {
     if (!observer) {
       return
     }
+
     observer.observe(document, {
       attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
     })
-    isDOMObserved = true
   }
 
   function stopDOMObservation() {
@@ -33,12 +32,11 @@ export function createDOMMutationObservable(): DOMMutationObservable {
     }
 
     observer.disconnect()
-    isDOMObserved = false
   }
 
   return {
     subscribe: (callback) => {
-      if (!isDOMObserved) {
+      if (!callbacks.length) {
         startDOMObservation()
       }
 
