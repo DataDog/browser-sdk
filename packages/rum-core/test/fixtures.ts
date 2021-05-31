@@ -3,6 +3,7 @@ import {
   Context,
   Duration,
   ErrorSource,
+  generateUUID,
   RelativeTime,
   ResourceType,
   ServerDuration,
@@ -18,6 +19,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         {
           type,
           action: {
+            id: generateUUID(),
             target: {
               name: 'target',
             },
@@ -33,6 +35,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           date: 0 as TimeStamp,
           long_task: {
+            id: generateUUID(),
             duration: 0 as ServerDuration,
           },
         },
@@ -44,6 +47,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           date: 0 as TimeStamp,
           error: {
+            id: generateUUID(),
             message: 'oh snap',
             source: ErrorSource.SOURCE,
           },
@@ -56,6 +60,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           date: 0 as TimeStamp,
           resource: {
+            id: generateUUID(),
             duration: 0 as ServerDuration,
             type: ResourceType.OTHER,
             url: 'http://foo.bar',
@@ -72,6 +77,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           },
           date: 0 as TimeStamp,
           view: {
+            id: generateUUID(),
             action: { count: 0 },
             error: { count: 0 },
             is_active: true,
