@@ -166,7 +166,8 @@ describe('foreground context', () => {
 
     it('should not record anything after reaching the maximum number of focus periods', () => {
       const { clock } = setupBuilder.build()
-      Array.from({ length: MAX_NUMBER_OF_FOCUSED_TIME + 1 }).forEach(() => {
+      // eslint-disable-next-line prefer-spread
+      Array.apply(null, Array(MAX_NUMBER_OF_FOCUSED_TIME + 1)).forEach(() => {
         window.dispatchEvent(createNewEvent('focus'))
         clock.tick(FOCUS_PERIOD_LENGTH)
         window.dispatchEvent(createNewEvent('blur'))
