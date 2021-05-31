@@ -20,10 +20,10 @@ describe('domMutationObservable', () => {
       root.appendChild(document.createTextNode('foo'))
       document.body.appendChild(root)
 
-      const DOMMutation = createDOMMutationObservable()
+      const domMutationObservable = createDOMMutationObservable()
 
       let counter = 0
-      const domMutationSubscription = DOMMutation.subscribe(() => (counter += 1))
+      const domMutationSubscription = domMutationObservable.subscribe(() => (counter += 1))
 
       mutate(root)
 
