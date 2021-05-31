@@ -1,4 +1,4 @@
-import { combine, Configuration, toServerDuration } from '@datadog/browser-core'
+import { combine, Configuration, toServerDuration, generateUUID } from '@datadog/browser-core'
 import { ActionType, CommonContext, RumEventType, RawRumActionEvent } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
@@ -49,6 +49,7 @@ function processAction(action: AutoAction | CustomAction, foregroundContexts: Fo
   const actionEvent: RawRumActionEvent = combine(
     {
       action: {
+        id: generateUUID(),
         target: {
           name: action.name,
         },

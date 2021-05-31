@@ -6,6 +6,7 @@ import {
   RawError,
   startAutomaticErrorCollection,
   ClocksState,
+  generateUUID,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -65,6 +66,7 @@ function processError(error: RawError, foregroundContexts: ForegroundContexts) {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
+      id: generateUUID(),
       message: error.message,
       resource: error.resource
         ? {
