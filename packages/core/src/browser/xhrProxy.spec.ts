@@ -110,9 +110,9 @@ describe('xhr proxy', () => {
     const onReadyStateChange = jasmine.createSpy()
     withXhr({
       setup(xhr) {
-        xhr.onreadystatechange = onReadyStateChange
-        xhr.addEventListener('load', () => xhr.abort())
         xhr.open('GET', '/ok')
+        xhr.addEventListener('readystatechange', onReadyStateChange)
+        xhr.addEventListener('load', () => xhr.abort())
         xhr.send()
         xhr.complete(200, 'ok')
       },
