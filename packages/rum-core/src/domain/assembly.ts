@@ -44,8 +44,6 @@ const FIELDS_WITH_SENSITIVE_DATA = [
   'resource.url',
 ]
 
-type Mutable<T> = { -readonly [P in keyof T]: T[P] }
-
 export function startRumAssembly(
   applicationId: string,
   configuration: Configuration,
@@ -91,11 +89,12 @@ export function startRumAssembly(
         }
 
         if (!('has_replay' in serverRumEvent.session)) {
-          ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
+          ;(serverRumEvent.session as { has_replay?: boolean }).has_replay = commonContext.hasReplay
         }
 
         if (!isEmptyObject(commonContext.user)) {
-          ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
         }
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)

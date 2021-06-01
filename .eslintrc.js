@@ -207,15 +207,8 @@ module.exports = {
     'use-isnan': 'error',
     'valid-typeof': 'off',
     'no-eq-null': 'error',
-    camelcase: ['error', { ignoreDestructuring: true, properties: 'never', allow: ['_datadog_xhr', '_dd_temp_'] }],
   },
   overrides: [
-    {
-      files: ['**/*.types.ts', '**/types.ts'],
-      rules: {
-        camelcase: 'off',
-      },
-    },
     {
       files: ['scripts/*.js'],
       rules: {
