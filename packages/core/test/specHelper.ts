@@ -135,11 +135,7 @@ class StubXhr {
   public onreadystatechange: () => void = noop
 
   private hasEnded = false
-  private fakeEventTarget: HTMLDivElement
-
-  constructor() {
-    this.fakeEventTarget = document.createElement('div')
-  }
+  private listeners: { [k: string]: Array<() => void> } = {}
 
   /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
   open(method: string, url: string) {}
@@ -154,7 +150,7 @@ class StubXhr {
     }
     this.hasEnded = true
     this.readyState = XMLHttpRequest.DONE
-    this.onreadystatechange()
+    this.dispatchEvent('readystatechange')
     this.dispatchEvent('abort')
     this.dispatchEvent('loadend')
   }
@@ -167,7 +163,8 @@ class StubXhr {
     this.response = response
     this.status = status
     this.readyState = XMLHttpRequest.DONE
-    this.onreadystatechange()
+    this.dispatchEvent('readystatechange')
+
     if (status >= 200 && status < 500) {
       this.dispatchEvent('load')
     }
@@ -178,15 +175,26 @@ class StubXhr {
   }
 
   addEventListener(name: string, callback: () => void) {
-    this.fakeEventTarget.addEventListener(name, callback)
+    if (!this.listeners[name]) {
+      this.listeners[name] = []
+    }
+
+    this.listeners[name].push(callback)
   }
 
   removeEventListener(name: string, callback: () => void) {
-    this.fakeEventTarget.removeEventListener(name, callback)
+    if (!this.listeners[name]) {
+      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
+    }
+
+    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
   }
 
   private dispatchEvent(name: string) {
-    this.fakeEventTarget.dispatchEvent(createNewEvent(name))
+    if (!this.listeners[name]) {
+      return
+    }
+    this.listeners[name].forEach((listener) => listener.call(this))
   }
 }
 
