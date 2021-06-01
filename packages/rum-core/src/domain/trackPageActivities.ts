@@ -1,5 +1,6 @@
-import { monitor, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, Subscription } from './lifeCycle'
+import { monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { DOMMutationObservable } from '../browser/domMutationObservable'
+import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
@@ -16,9 +17,13 @@ type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | 
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
+  domMutationObservable: DOMMutationObservable,
   completionCallback: (params: CompletionCallbackParameters) => void
 ) {
-  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(lifeCycle)
+  const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
+    lifeCycle,
+    domMutationObservable
+  )
 
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
@@ -59,14 +64,15 @@ export function waitIdlePageActivity(
 // Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
 // after MAX_DURATION, it has been validated.
 export function trackPageActivities(
-  lifeCycle: LifeCycle
+  lifeCycle: LifeCycle,
+  domMutationObservable: DOMMutationObservable
 ): { observable: Observable<PageActivityEvent>; stop: () => void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
   let firstRequestIndex: undefined | number
   let pendingRequestsCount = 0
 
-  subscriptions.push(lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => notifyPageActivity()))
+  subscriptions.push(domMutationObservable.subscribe(() => notifyPageActivity()))
 
   subscriptions.push(
     lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {

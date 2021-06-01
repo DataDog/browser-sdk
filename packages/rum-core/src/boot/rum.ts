@@ -1,5 +1,5 @@
 import { combine, commonInit, Configuration } from '@datadog/browser-core'
-import { startDOMMutationCollection } from '../browser/domMutationCollection'
+import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
 import { startInternalContext } from '../domain/internalContext'
@@ -21,9 +21,9 @@ import { RumUserConfiguration } from './rumPublicApi'
 
 export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
   const lifeCycle = new LifeCycle()
-
   const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
+  const domMutationObservable = createDOMMutationObservable()
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -45,13 +45,13 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-  const { addTiming, startView } = startViewCollection(lifeCycle, location, foregroundContexts)
+
+  const { addTiming, startView } = startViewCollection(lifeCycle, location, domMutationObservable, foregroundContexts)
   const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
-  const { addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts)
+  const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
-  startDOMMutationCollection(lifeCycle)
 
   const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
 
@@ -78,6 +78,7 @@ export function startRumEventCollection(
   const parentContexts = startParentContexts(lifeCycle, session)
   const foregroundContexts = startForegroundContexts(configuration)
   const batch = startRumBatch(configuration, lifeCycle)
+
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
 
   return {
