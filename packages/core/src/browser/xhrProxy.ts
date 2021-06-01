@@ -1,4 +1,4 @@
-import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { callMonitored } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
@@ -23,7 +23,6 @@ export interface XhrStartContext extends XhrOpenContext {
   startTime: RelativeTime // deprecated
   startClocks: ClocksState
   isAborted: boolean
-  hasBeenReported: boolean
   /**
    * allow clients to enhance the context
    */
@@ -90,6 +89,12 @@ function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) 
       method,
       url: normalizeUrl(url),
     }
+
+    // To avoid adding listeners each time 'open()' is called,
+    // we take advantage of the automatic listener discarding if multiple identical EventListeners are registered
+    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#multiple_identical_event_listeners
+    this.addEventListener('readystatechange', onReadyStateChange)
+    this.addEventListener('loadend', reportXhr)
   })
   return originalXhrOpen.apply(this, arguments as any)
 }
@@ -104,31 +109,7 @@ function sendXhr(this: BrowserXHR) {
       startTime: relativeNow(),
       startClocks: clocksNow(),
       isAborted: false,
-      hasBeenReported: false,
     }
-
-    const originalOnreadystatechange = this.onreadystatechange
-    const onreadystatechange = function (this: BrowserXHR) {
-      if (this.readyState === XMLHttpRequest.DONE) {
-        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-        // application during a future event. For example, Angular is calling .abort() on
-        // completed requests during a onreadystatechange event, so the status becomes '0'
-        // before the request is collected.
-        onEnd()
-      }
-
-      if (originalOnreadystatechange) {
-        originalOnreadystatechange.apply(this, arguments as any)
-      }
-    }
-
-    const onEnd = monitor(() => {
-      this.removeEventListener('loadend', onEnd)
-      this.onreadystatechange = originalOnreadystatechange
-      reportXhr(this)
-    })
-    this.onreadystatechange = onreadystatechange
-    this.addEventListener('loadend', onEnd)
 
     beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr!, this))
   })
@@ -145,18 +126,29 @@ function abortXhr(this: BrowserXHR) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
-function reportXhr(xhr: BrowserXHR) {
-  if (xhr._datadog_xhr!.hasBeenReported) {
-    return
+function onReadyStateChange(this: BrowserXHR) {
+  if (this.readyState === XMLHttpRequest.DONE) {
+    // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+    // application during a future event. For example, Angular is calling .abort() on
+    // completed requests during a onreadystatechange event, so the status becomes '0'
+    // before the request is collected.
+    // https://github.com/angular/angular/blob/master/packages/common/http/src/xhr.ts
+    reportXhr.call(this)
   }
-  xhr._datadog_xhr!.hasBeenReported = true
+}
 
-  const xhrCompleteContext: XhrCompleteContext = {
-    ...xhr._datadog_xhr!,
-    duration: elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow()),
-    response: xhr.response as string | undefined,
-    status: xhr.status,
-  }
+function reportXhr(this: BrowserXHR) {
+  callMonitored(() => {
+    const xhrCompleteContext: XhrCompleteContext = {
+      ...this._datadog_xhr!,
+      duration: elapsed(this._datadog_xhr!.startClocks.timeStamp, timeStampNow()),
+      response: this.response as string | undefined,
+      status: this.status,
+    }
 
-  onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
+    onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
+    // Unsubscribe to avoid being reported twice
+    this.removeEventListener('readystatechange', onReadyStateChange)
+    this.removeEventListener('loadend', reportXhr)
+  })
 }
