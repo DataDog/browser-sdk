@@ -27,7 +27,7 @@ function startRum(
   location: Location,
   domMutationObservable: DOMMutationObservable
 ) {
-  const { stop: rumEventCollectionStop } = startRumEventCollection(
+  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     applicationId,
     lifeCycle,
     configuration,
@@ -37,7 +37,13 @@ function startRum(
       user: {},
     })
   )
-  const { stop: viewCollectionStop } = startViewCollection(lifeCycle, domMutationObservable, location)
+  const { stop: viewCollectionStop } = startViewCollection(
+    lifeCycle,
+    location,
+    domMutationObservable,
+    foregroundContexts
+  )
+
   return {
     stop: () => {
       rumEventCollectionStop()

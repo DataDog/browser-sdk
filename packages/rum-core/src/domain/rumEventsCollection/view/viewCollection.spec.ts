@@ -13,8 +13,11 @@ describe('viewCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, domMutationObservable }) => {
-        startViewCollection(lifeCycle, domMutationObservable, location)
+      .withForegroundContexts({
+        getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
+      })
+      .beforeBuild(({ lifeCycle, foregroundContexts, domMutationObservable }) => {
+        startViewCollection(lifeCycle, location, domMutationObservable, foregroundContexts)
       })
   })
 
@@ -99,6 +102,7 @@ describe('viewCollection', () => {
           count: 10,
         },
         time_spent: (100 * 1e6) as ServerDuration,
+        in_foreground_periods: [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       },
       session: {
         has_replay: undefined,
