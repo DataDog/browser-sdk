@@ -5,6 +5,7 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
+  Observable,
   TimeStamp,
   noop,
 } from '@datadog/browser-core'
@@ -32,6 +33,7 @@ export interface TestSetupBuilder {
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
 interface BuildContext {
   lifeCycle: LifeCycle
+  domMutationObservable: Observable<void>
   configuration: Readonly<Configuration>
   session: RumSession
   location: Location
@@ -42,6 +44,7 @@ interface BuildContext {
 
 export interface TestIO {
   lifeCycle: LifeCycle
+  domMutationObservable: Observable<void>
   clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
@@ -60,6 +63,7 @@ export function setup(): TestSetupBuilder {
     isTrackedWithResource: () => true,
   }
   const lifeCycle = new LifeCycle()
+  const domMutationObservable = new Observable<void>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
   const rawRumEvents: Array<{
@@ -138,6 +142,7 @@ export function setup(): TestSetupBuilder {
       beforeBuildTasks.forEach((task) => {
         const result = task({
           lifeCycle,
+          domMutationObservable,
           parentContexts,
           foregroundContexts,
           session,
@@ -153,6 +158,7 @@ export function setup(): TestSetupBuilder {
         clock,
         fakeLocation,
         lifeCycle,
+        domMutationObservable,
         rawRumEvents,
         session,
       }

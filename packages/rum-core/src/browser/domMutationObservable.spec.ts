@@ -1,12 +1,11 @@
-import { isIE } from '../../../core/test/specHelper'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startDOMMutationCollection } from './domMutationCollection'
+import { isIE } from '@datadog/browser-core/test/specHelper'
+import { createDOMMutationObservable } from './domMutationObservable'
 
 // The MutationObserver invokes its callback in an event loop microtask, making this asynchronous.
 // We want to wait for a few event loop executions to potentially collect multiple mutation events.
-const DOM_MUTATION_COLLECTION_DURATION = 16
+const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
-describe('domMutationCollection', () => {
+describe('domMutationObservable', () => {
   beforeEach(() => {
     if (isIE()) {
       pending('dom mutation not available')
@@ -21,23 +20,19 @@ describe('domMutationCollection', () => {
       root.appendChild(document.createTextNode('foo'))
       document.body.appendChild(root)
 
-      const lifeCycle = new LifeCycle()
+      const domMutationObservable = createDOMMutationObservable()
 
       let counter = 0
-      lifeCycle.subscribe(LifeCycleEventType.DOM_MUTATED, () => {
-        counter += 1
-      })
-
-      const domMutationCollectionSubscription = startDOMMutationCollection(lifeCycle)
+      const domMutationSubscription = domMutationObservable.subscribe(() => (counter += 1))
 
       mutate(root)
 
       setTimeout(() => {
         expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
-        domMutationCollectionSubscription.stop()
+        domMutationSubscription.unsubscribe()
         done()
-      }, DOM_MUTATION_COLLECTION_DURATION)
+      }, DOM_MUTATION_OBSERVABLE_DURATION)
     }
   }
 

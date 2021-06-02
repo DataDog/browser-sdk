@@ -16,8 +16,8 @@ describe('actionCollection', () => {
       .withForegroundContexts({
         getInForeground: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration, foregroundContexts }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, configuration, foregroundContexts))
+      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, foregroundContexts }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts))
       })
   })
 
