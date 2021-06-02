@@ -16,6 +16,13 @@
 
 ---
 
+## v2.12.0
+
+- ⚡️ start mutation observer only when needed ([#858](https://github.com/DataDog/browser-sdk/pull/858))
+- 📦 bump ws from 7.4.2 to 7.4.6 ([#875](https://github.com/DataDog/browser-sdk/pull/875))
+- ✨ track foreground ([#854](https://github.com/DataDog/browser-sdk/pull/854))
+- ✨ add id on rum events ([#873](https://github.com/DataDog/browser-sdk/pull/873))
+
 ## v2.11.1
 
 - 🐛 do not break the recorder when an URL fails to parse ([#871](https://github.com/DataDog/browser-sdk/pull/871))
