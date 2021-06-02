@@ -548,10 +548,13 @@ window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 
 ### Change the destination
 
-By default, loggers created by the Datadog browser logs SDK are sending logs to Datadog. After the Datadog browser logs SDK is initialized, it is possible to configure the logger to send logs to the `console`, or to not send logs at all (`silent`) using to the API:
+By default, loggers created by the Datadog browser logs SDK are sending logs to Datadog. After the Datadog browser logs SDK is initialized, it is possible to configure the logger to:
+* send logs to the `console` and Datadog (`http`),
+* send logs to the `console` only,
+* or to not send logs at all (`silent`)
 
 ```
-setHandler (handler?: 'http' | 'console' | 'silent')
+setHandler (handler?: 'http' | 'console' | 'silent' | Array<handler>)
 ```
 
 ##### NPM
@@ -561,7 +564,8 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.logger.setHandler('<HANDLER>')
+datadogLogs.logger.setHandler('<HANDLER>') 
+datadogLogs.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 ```
 
 #### CDN async
@@ -571,6 +575,7 @@ For CDN async, use:
 ```javascript
 DD_LOGS.onReady(function () {
   DD_LOGS.logger.setHandler('<HANDLER>')
+  DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 })
 ```
 
@@ -582,6 +587,7 @@ For CDN sync, use:
 
 ```javascript
 window.DD_LOGS && DD_LOGS.logger.setHandler('<HANDLER>')
+window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 ```
 
 **Note**: The `window.DD_LOGS` check is used to prevent issues if a loading failure occurs with the SDK.
