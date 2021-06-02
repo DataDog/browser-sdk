@@ -39,11 +39,11 @@ function startRum(
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
+    configuration,
     location,
     domMutationObservable,
     foregroundContexts
   )
-
   return {
     stop: () => {
       rumEventCollectionStop()

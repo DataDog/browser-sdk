@@ -12,6 +12,7 @@ export const DEFAULT_CONFIGURATION = {
   sampleRate: 100,
   silentMultipleInit: false,
   trackInteractions: false,
+  trackViewsManually: false,
 
   /**
    * arbitrary value, byte precision not needed
@@ -50,6 +51,7 @@ export interface UserConfiguration {
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
   trackInteractions?: boolean
+  trackViewsManually?: boolean
   proxyHost?: string
   beforeSend?: (event: any) => void
 
@@ -129,6 +131,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('trackInteractions' in userConfiguration) {
     configuration.trackInteractions = !!userConfiguration.trackInteractions
+  }
+
+  if ('trackViewsManually' in userConfiguration) {
+    configuration.trackViewsManually = !!userConfiguration.trackViewsManually
   }
 
   return configuration
