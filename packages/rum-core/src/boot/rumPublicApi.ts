@@ -22,7 +22,7 @@ import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollect
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
-import { startRum } from './rum'
+import { startRum } from './startRum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string

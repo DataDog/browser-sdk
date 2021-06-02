@@ -7,7 +7,7 @@ import {
   CommonContext,
 } from '@datadog/browser-rum-core'
 
-import { startRecording } from './recorder'
+import { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
 export type RumRecorderPublicApi = ReturnType<typeof makeRumRecorderPublicApi>

@@ -16,7 +16,7 @@ import { Clock, mockClock } from '../../../core/test/specHelper'
 
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LogsEvent } from '../logsEvent.types'
-import { buildAssemble, doStartLogs } from './logs'
+import { buildAssemble, doStartLogs } from './startLogs'
 
 interface SentMessage extends LogsMessage {
   logger?: { name: string }
