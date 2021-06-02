@@ -549,9 +549,10 @@ window.DD_LOGS && DD_LOGS.logger.setLevel('<LEVEL>')
 ### Change the destination
 
 By default, loggers created by the Datadog browser logs SDK are sending logs to Datadog. After the Datadog browser logs SDK is initialized, it is possible to configure the logger to:
-* send logs to the `console` and Datadog (`http`),
-* send logs to the `console` only,
-* or to not send logs at all (`silent`)
+
+- send logs to the `console` and Datadog (`http`),
+- send logs to the `console` only,
+- or to not send logs at all (`silent`)
 
 ```
 setHandler (handler?: 'http' | 'console' | 'silent' | Array<handler>)
@@ -564,7 +565,7 @@ For NPM, use:
 ```javascript
 import { datadogLogs } from '@datadog/browser-logs'
 
-datadogLogs.logger.setHandler('<HANDLER>') 
+datadogLogs.logger.setHandler('<HANDLER>')
 datadogLogs.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 ```
 
