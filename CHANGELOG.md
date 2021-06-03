@@ -16,6 +16,25 @@
 
 ---
 
+## v2.12.0
+
+- ⚡️ start mutation observer only when needed ([#858](https://github.com/DataDog/browser-sdk/pull/858))
+- 📦 bump ws from 7.4.2 to 7.4.6 ([#875](https://github.com/DataDog/browser-sdk/pull/875))
+- ✨ track foreground ([#854](https://github.com/DataDog/browser-sdk/pull/854))
+- ✨ add id on rum events ([#873](https://github.com/DataDog/browser-sdk/pull/873))
+
+## v2.11.1
+
+- 🐛 do not break the recorder when an URL fails to parse ([#871](https://github.com/DataDog/browser-sdk/pull/871))
+
+## v2.11.0
+
+- 🐛 [REPLAY-312] use unpatched MutationObserver object ([#866](https://github.com/DataDog/browser-sdk/pull/866))
+- 🐛 ignore full snapshots taken before "load" event ([#861](https://github.com/DataDog/browser-sdk/pull/861))
+- ⚗✨ [RUMF-878] add startView API ([#850](https://github.com/DataDog/browser-sdk/pull/850))
+- 🏷️ update events format ([#864](https://github.com/DataDog/browser-sdk/pull/864))
+- ✨ [RUMF-913] allow masking input values ([#860](https://github.com/DataDog/browser-sdk/pull/860))
+
 ## v2.10.0
 
 - ✨[RUMF-889] enable system clock usages ([#845](https://github.com/DataDog/browser-sdk/pull/845))

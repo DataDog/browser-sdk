@@ -206,8 +206,16 @@ module.exports = {
     'unicorn/filename-case': ['error', { case: 'camelCase' }],
     'use-isnan': 'error',
     'valid-typeof': 'off',
+    'no-eq-null': 'error',
+    camelcase: ['error', { properties: 'never', allow: ['_datadog_xhr', '_dd_temp_'] }],
   },
   overrides: [
+    {
+      files: ['**/*.types.ts', '**/types.ts'],
+      rules: {
+        camelcase: 'off',
+      },
+    },
     {
       files: ['scripts/*.js'],
       rules: {

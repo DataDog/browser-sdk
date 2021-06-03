@@ -6,9 +6,11 @@ import {
   RawError,
   startAutomaticErrorCollection,
   ClocksState,
+  generateUUID,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { ForegroundContexts } from '../../foregroundContexts'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -19,20 +21,24 @@ export interface ProvidedError {
 
 export type ProvidedSource = 'custom' | 'network' | 'source'
 
-export function startErrorCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startErrorCollection(
+  lifeCycle: LifeCycle,
+  configuration: Configuration,
+  foregroundContexts: ForegroundContexts
+) {
   startAutomaticErrorCollection(configuration).subscribe((error) =>
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   )
 
-  return doStartErrorCollection(lifeCycle)
+  return doStartErrorCollection(lifeCycle, foregroundContexts)
 }
 
-export function doStartErrorCollection(lifeCycle: LifeCycle) {
+export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts: ForegroundContexts) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext, savedCommonContext }) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       customerContext,
       savedCommonContext,
-      ...processError(error),
+      ...processError(error, foregroundContexts),
     })
   })
 
@@ -56,10 +62,11 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
   return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
-function processError(error: RawError) {
+function processError(error: RawError, foregroundContexts: ForegroundContexts) {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
+      id: generateUUID(),
       message: error.message,
       resource: error.resource
         ? {
@@ -73,6 +80,10 @@ function processError(error: RawError) {
       type: error.type,
     },
     type: RumEventType.ERROR as const,
+  }
+  const inForeground = foregroundContexts.getInForeground(error.startClocks.relative)
+  if (inForeground !== undefined) {
+    rawRumEvent.view = { in_foreground: inForeground }
   }
 
   return {

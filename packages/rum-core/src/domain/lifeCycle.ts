@@ -1,4 +1,4 @@
-import { Context, RawError, RelativeTime } from '@datadog/browser-core'
+import { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
 import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -17,17 +17,12 @@ export enum LifeCycleEventType {
   REQUEST_STARTED,
   REQUEST_COMPLETED,
   SESSION_RENEWED,
-  DOM_MUTATED,
   BEFORE_UNLOAD,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RECORD_STARTED,
   RECORD_STOPPED,
   RAW_ERROR_COLLECTED,
-}
-
-export interface Subscription {
-  unsubscribe: () => void
 }
 
 export class LifeCycle {
@@ -48,7 +43,6 @@ export class LifeCycle {
   notify(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
       | LifeCycleEventType.RECORD_STARTED
@@ -95,7 +89,6 @@ export class LifeCycle {
   subscribe(
     eventType:
       | LifeCycleEventType.SESSION_RENEWED
-      | LifeCycleEventType.DOM_MUTATED
       | LifeCycleEventType.BEFORE_UNLOAD
       | LifeCycleEventType.AUTO_ACTION_DISCARDED
       | LifeCycleEventType.RECORD_STARTED

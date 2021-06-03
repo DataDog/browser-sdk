@@ -153,15 +153,6 @@ export function buildAssemble(
   }
 }
 
-export function assembleMessageContexts(
-  defaultContext: { service?: string; session_id?: string },
-  currentContext: Context,
-  rumInternalContext: Context | undefined,
-  message: LogsMessage
-) {
-  return combine(defaultContext, currentContext, rumInternalContext, message)
-}
-
 interface Rum {
   getInternalContext: (startTime?: RelativeTime) => Context
 }

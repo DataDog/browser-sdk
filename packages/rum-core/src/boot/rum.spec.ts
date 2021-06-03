@@ -2,6 +2,7 @@ import { RelativeTime, Configuration } from '@datadog/browser-core'
 import { RumSession } from '@datadog/browser-rum-core'
 import { isIE } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -23,9 +24,10 @@ function startRum(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   session: RumSession,
-  location: Location
+  location: Location,
+  domMutationObservable: DOMMutationObservable
 ) {
-  const { stop: rumEventCollectionStop } = startRumEventCollection(
+  const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     applicationId,
     lifeCycle,
     configuration,
@@ -35,7 +37,13 @@ function startRum(
       user: {},
     })
   )
-  const { stop: viewCollectionStop } = startViewCollection(lifeCycle, location)
+  const { stop: viewCollectionStop } = startViewCollection(
+    lifeCycle,
+    location,
+    domMutationObservable,
+    foregroundContexts
+  )
+
   return {
     stop: () => {
       rumEventCollectionStop()
@@ -53,10 +61,12 @@ describe('rum session', () => {
       pending('no full rum support')
     }
 
-    setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
-      serverRumEvents = collectServerEvents(lifeCycle)
-      return startRum(applicationId, lifeCycle, configuration, session, location)
-    })
+    setupBuilder = setup().beforeBuild(
+      ({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
+        serverRumEvents = collectServerEvents(lifeCycle)
+        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
+      }
+    )
   })
 
   afterEach(() => {
@@ -106,9 +116,9 @@ describe('rum session keep alive', () => {
         isTracked: () => isSessionTracked,
         isTrackedWithResource: () => true,
       })
-      .beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
+      .beforeBuild(({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(applicationId, lifeCycle, configuration, session, location)
+        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
       })
   })
 
@@ -166,10 +176,12 @@ describe('rum view url', () => {
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
-    setupBuilder = setup().beforeBuild(({ applicationId, location, lifeCycle, configuration, session }) => {
-      serverRumEvents = collectServerEvents(lifeCycle)
-      return startRum(applicationId, lifeCycle, configuration, session, location)
-    })
+    setupBuilder = setup().beforeBuild(
+      ({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
+        serverRumEvents = collectServerEvents(lifeCycle)
+        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
+      }
+    )
   })
 
   afterEach(() => {

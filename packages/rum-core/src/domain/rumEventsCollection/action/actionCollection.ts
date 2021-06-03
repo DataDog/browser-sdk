@@ -1,28 +1,35 @@
-import { combine, Configuration, toServerDuration } from '@datadog/browser-core'
-import { ActionType, CommonContext, RumEventType } from '../../../rawRumEvent.types'
+import { combine, Configuration, toServerDuration, generateUUID } from '@datadog/browser-core'
+import { ActionType, CommonContext, RumEventType, RawRumActionEvent } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { DOMMutationObservable } from '../../../browser/domMutationObservable'
+import { ForegroundContexts } from '../../foregroundContexts'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
 
-export function startActionCollection(lifeCycle: LifeCycle, configuration: Configuration) {
+export function startActionCollection(
+  lifeCycle: LifeCycle,
+  domMutationObservable: DOMMutationObservable,
+  configuration: Configuration,
+  foregroundContexts: ForegroundContexts
+) {
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, foregroundContexts))
   )
 
   if (configuration.trackInteractions) {
-    trackActions(lifeCycle)
+    trackActions(lifeCycle, domMutationObservable)
   }
 
   return {
     addAction: (action: CustomAction, savedCommonContext?: CommonContext) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         savedCommonContext,
-        ...processAction(action),
+        ...processAction(action, foregroundContexts),
       })
     },
   }
 }
 
-function processAction(action: AutoAction | CustomAction) {
+function processAction(action: AutoAction | CustomAction, foregroundContexts: ForegroundContexts) {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -41,9 +48,10 @@ function processAction(action: AutoAction | CustomAction) {
       }
     : undefined
   const customerContext = !isAutoAction(action) ? action.context : undefined
-  const actionEvent = combine(
+  const actionEvent: RawRumActionEvent = combine(
     {
       action: {
+        id: generateUUID(),
         target: {
           name: action.name,
         },
@@ -54,6 +62,10 @@ function processAction(action: AutoAction | CustomAction) {
     },
     autoActionProperties
   )
+  const inForeground = foregroundContexts.getInForeground(action.startClocks.relative)
+  if (inForeground !== undefined) {
+    actionEvent.view = { in_foreground: inForeground }
+  }
   return {
     customerContext,
     rawRumEvent: actionEvent,
