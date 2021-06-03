@@ -9,7 +9,7 @@ import {
   generateUUID,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
 
 export interface ProvidedError {
@@ -62,7 +62,10 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
   return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
-function processError(error: RawError, foregroundContexts: ForegroundContexts) {
+function processError(
+  error: RawError,
+  foregroundContexts: ForegroundContexts
+): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {

@@ -43,7 +43,7 @@ describe('long task collection', () => {
       startTime: 1234 as RelativeTime,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       long_task: {

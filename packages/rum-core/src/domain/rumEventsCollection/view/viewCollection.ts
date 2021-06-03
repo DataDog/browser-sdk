@@ -1,6 +1,6 @@
 import { Duration, isEmptyObject, mapValues, ServerDuration, toServerDuration } from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ForegroundContexts } from '../../foregroundContexts'
 import { trackViews, ViewEvent } from './trackViews'
@@ -18,7 +18,10 @@ export function startViewCollection(
   return trackViews(location, lifeCycle, domMutationObservable)
 }
 
-function processViewUpdate(view: ViewEvent, foregroundContexts: ForegroundContexts) {
+function processViewUpdate(
+  view: ViewEvent,
+  foregroundContexts: ForegroundContexts
+): RawRumEventCollectedData<RawRumViewEvent> {
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,

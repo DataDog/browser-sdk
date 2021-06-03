@@ -48,15 +48,7 @@ export class LifeCycle {
       | LifeCycleEventType.RECORD_STARTED
       | LifeCycleEventType.RECORD_STOPPED
   ): void
-  notify(
-    eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    data: {
-      startTime: RelativeTime
-      rawRumEvent: RawRumEvent
-      savedCommonContext?: CommonContext
-      customerContext?: Context
-    }
-  ): void
+  notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
   notify(eventType: LifeCycleEventType, data?: any) {
     const eventCallbacks = this.callbacks[eventType]
@@ -97,12 +89,7 @@ export class LifeCycle {
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    callback: (data: {
-      startTime: RelativeTime
-      rawRumEvent: RawRumEvent
-      savedCommonContext?: CommonContext
-      customerContext?: Context
-    }) => void
+    callback: (data: RawRumEventCollectedData) => void
   ): Subscription
   subscribe(
     eventType: LifeCycleEventType.RUM_EVENT_COLLECTED,
@@ -119,4 +106,11 @@ export class LifeCycle {
       },
     }
   }
+}
+
+export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
+  startTime: RelativeTime
+  rawRumEvent: E
+  savedCommonContext?: CommonContext
+  customerContext?: Context
 }

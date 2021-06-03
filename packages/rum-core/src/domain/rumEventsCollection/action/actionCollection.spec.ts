@@ -39,7 +39,7 @@ describe('actionCollection', () => {
       type: ActionType.CLICK,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         error: {
@@ -74,7 +74,7 @@ describe('actionCollection', () => {
       type: ActionType.CUSTOM,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         id: jasmine.any(String),

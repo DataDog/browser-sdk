@@ -1,6 +1,6 @@
 import { combine, Configuration, toServerDuration, generateUUID } from '@datadog/browser-core'
 import { ActionType, CommonContext, RumEventType, RawRumActionEvent } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ForegroundContexts } from '../../foregroundContexts'
 import { AutoAction, CustomAction, trackActions } from './trackActions'
@@ -29,7 +29,10 @@ export function startActionCollection(
   }
 }
 
-function processAction(action: AutoAction | CustomAction, foregroundContexts: ForegroundContexts) {
+function processAction(
+  action: AutoAction | CustomAction,
+  foregroundContexts: ForegroundContexts
+): RawRumEventCollectedData<RawRumActionEvent> {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
