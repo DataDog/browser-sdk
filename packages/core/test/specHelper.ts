@@ -133,12 +133,14 @@ class StubXhr {
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
-
+  public listeners: { [k: string]: Array<() => void> } = {}
+  private isOnreadystatechangeAttributeCallFirst = true
   private hasEnded = false
-  private listeners: { [k: string]: Array<() => void> } = {}
 
   /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
-  open(method: string, url: string) {}
+  open(method: string, url: string) {
+    this.hasEnded = false
+  }
   send() {}
   /* eslint-enable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
@@ -163,7 +165,14 @@ class StubXhr {
     this.response = response
     this.status = status
     this.readyState = XMLHttpRequest.DONE
-    this.dispatchEvent('readystatechange')
+
+    if (this.isOnreadystatechangeAttributeCallFirst) {
+      this.onreadystatechange()
+      this.dispatchEvent('readystatechange')
+    } else {
+      this.dispatchEvent('readystatechange')
+      this.onreadystatechange()
+    }
 
     if (status >= 200 && status < 500) {
       this.dispatchEvent('load')
@@ -178,7 +187,9 @@ class StubXhr {
     if (!this.listeners[name]) {
       this.listeners[name] = []
     }
-
+    if (name === 'readystatechange' && this.onreadystatechange === noop) {
+      this.isOnreadystatechangeAttributeCallFirst = false
+    }
     this.listeners[name].push(callback)
   }
 
