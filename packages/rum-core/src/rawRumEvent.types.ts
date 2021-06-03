@@ -210,6 +210,18 @@ export interface CommonContext {
   hasReplay?: true
 }
 
+export interface ReadonlyLocation {
+  readonly hash: string
+  readonly host: string
+  readonly hostname: string
+  readonly href: string
+  readonly origin: string
+  readonly pathname: string
+  readonly port: string
+  readonly protocol: string
+  readonly search: string
+}
+
 export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumErrorEvent
   ? { error?: unknown }
   : E extends RawRumActionEvent
@@ -222,4 +234,6 @@ export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumError
       xhr?: XMLHttpRequest
       response?: Response
     }
+  : E extends RawRumViewEvent
+  ? { location: ReadonlyLocation }
   : never

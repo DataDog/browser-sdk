@@ -2,7 +2,7 @@ import { Context, DOM_EVENT, ClocksState, Observable } from '@datadog/browser-co
 import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType, ActionType } from '../../../rawRumEvent.types'
+import { RumEventType, ActionType, ReadonlyLocation } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { PAGE_ACTIVITY_MAX_DURATION, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../trackPageActivities'
 import { AutoAction, trackActions } from './trackActions'
@@ -80,7 +80,7 @@ describe('trackActions', () => {
     expect(createSpy).toHaveBeenCalled()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-      location,
+      location: location as ReadonlyLocation,
       id: 'fake',
       referrer: 'http://foo.com',
       startClocks: (jasmine.any(Object) as unknown) as ClocksState,
