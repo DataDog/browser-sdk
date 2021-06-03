@@ -31,7 +31,7 @@ export interface TestSetupBuilder {
 }
 
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
-interface BuildContext {
+export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
   configuration: Readonly<Configuration>

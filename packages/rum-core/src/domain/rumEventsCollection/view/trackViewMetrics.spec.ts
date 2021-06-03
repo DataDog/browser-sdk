@@ -1,14 +1,15 @@
-import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
 import { Context, RelativeTime, Duration } from '@datadog/browser-core'
+import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
 import { TestSetupBuilder, setup } from '../../../../test/specHelper'
-import { RumEventType } from '../../../rawRumEvent.types'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
+import { RumEventType } from '../../../rawRumEvent.types'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
-import { ViewEvent, trackViews, THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
+import { setupViewTest, ViewTest } from './trackViews.spec'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 
@@ -40,34 +41,16 @@ const FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING: RumPerformance
   loadEventEnd: (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime,
 }
 
-function spyOnViews() {
-  const handler = jasmine.createSpy()
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
-}
-
 describe('rum track view metrics', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-  let getHandledCount: () => number
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getHandledCount, getViewEvent } = spyOnViews())
-
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutationObservable)
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
       })
   })
 
@@ -82,41 +65,47 @@ describe('rum track view metrics', () => {
 
     it('should have an undefined loading time if there is no activity on a route change', () => {
       const { clock } = setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
-      history.pushState({}, '', '/bar')
+      startView()
       clock.tick(AFTER_PAGE_ACTIVITY_MAX_DURATION)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(2).loadingTime).toBeUndefined()
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(2).loadingTime).toBeUndefined()
     })
 
     it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
       const { domMutationObservable, clock } = setupBuilder.build()
+      const { getViewUpdate, startView } = viewTest
 
-      history.pushState({}, '', '/bar')
+      startView()
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       domMutationObservable.notify()
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getViewEvent(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(getViewUpdate(3).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     })
 
     it('should use loadEventEnd for initial view when having no activity', () => {
       const { lifeCycle, clock } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).loadingTime).toEqual(FAKE_NAVIGATION_ENTRY.loadEventEnd)
     })
 
     it('should use loadEventEnd for initial view when load event is bigger than computed loading time', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
@@ -130,8 +119,8 @@ describe('rum track view metrics', () => {
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).loadingTime).toEqual(
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).loadingTime).toEqual(
         FAKE_NAVIGATION_ENTRY_WITH_LOADEVENT_AFTER_ACTIVITY_TIMING.loadEventEnd
       )
     })
@@ -139,7 +128,9 @@ describe('rum track view metrics', () => {
     // eslint-disable-next-line max-len
     it('should use computed loading time for initial view when load event is smaller than computed loading time', () => {
       const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       lifeCycle.notify(
@@ -150,90 +141,102 @@ describe('rum track view metrics', () => {
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).loadingTime).toEqual(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     })
   })
 
   describe('event counts', () => {
     it('should track error count', () => {
       const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.errorCount).toEqual(0)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.errorCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ERROR } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.errorCount).toEqual(2)
-      expect(getViewEvent(2).eventCounts.errorCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.errorCount).toEqual(2)
+      expect(getViewUpdate(2).eventCounts.errorCount).toEqual(0)
     })
 
     it('should track long task count', () => {
       const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.longTaskCount).toEqual(0)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.longTaskCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.LONG_TASK } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.longTaskCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.longTaskCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.longTaskCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.longTaskCount).toEqual(0)
     })
 
     it('should track resource count', () => {
       const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.resourceCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.resourceCount).toEqual(0)
     })
 
     it('should track action count', () => {
       const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.userActionCount).toEqual(0)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.userActionCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.ACTION } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.userActionCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.userActionCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.userActionCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.userActionCount).toEqual(0)
     })
 
     it('should reset event count when the view changes', () => {
       const { lifeCycle } = setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts.resourceCount).toEqual(0)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts.resourceCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).eventCounts.resourceCount).toEqual(1)
-      expect(getViewEvent(2).eventCounts.resourceCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).eventCounts.resourceCount).toEqual(1)
+      expect(getViewUpdate(2).eventCounts.resourceCount).toEqual(0)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       history.pushState({}, '', '/baz')
 
-      expect(getHandledCount()).toEqual(5)
-      expect(getViewEvent(3).eventCounts.resourceCount).toEqual(2)
-      expect(getViewEvent(4).eventCounts.resourceCount).toEqual(0)
+      expect(getViewUpdateCount()).toEqual(5)
+      expect(getViewUpdate(3).eventCounts.resourceCount).toEqual(2)
+      expect(getViewUpdate(4).eventCounts.resourceCount).toEqual(0)
     })
 
     it('should update eventCounts when a resource event is collected (throttled)', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).eventCounts).toEqual({
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).eventCounts).toEqual({
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 0,
@@ -242,12 +245,12 @@ describe('rum track view metrics', () => {
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
 
-      expect(getHandledCount()).toEqual(1)
+      expect(getViewUpdateCount()).toEqual(1)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).eventCounts).toEqual({
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).eventCounts).toEqual({
         errorCount: 0,
         longTaskCount: 0,
         resourceCount: 1,
@@ -257,21 +260,23 @@ describe('rum track view metrics', () => {
 
     it('should not update eventCounts after ending a view', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      expect(getHandledCount()).toEqual(1)
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
 
-      expect(getHandledCount()).toEqual(1)
+      expect(getViewUpdateCount()).toEqual(1)
 
-      history.pushState({}, '', '/bar')
+      startView()
 
-      expect(getHandledCount()).toEqual(3)
-      expect(getViewEvent(1).id).toEqual(getViewEvent(0).id)
-      expect(getViewEvent(2).id).not.toEqual(getViewEvent(0).id)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).id).toEqual(getViewUpdate(0).id)
+      expect(getViewUpdate(2).id).not.toEqual(getViewUpdate(0).id)
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(3)
+      expect(getViewUpdateCount()).toEqual(3)
     })
   })
 
@@ -289,19 +294,24 @@ describe('rum track view metrics', () => {
 
     it('should be initialized to 0', () => {
       setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).cumulativeLayoutShift).toBe(0)
     })
 
     it('should be initialized to undefined if layout-shift is not supported', () => {
       isLayoutShiftSupported = false
       setupBuilder.build()
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(undefined)
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).cumulativeLayoutShift).toBe(undefined)
     })
 
     it('should accumulate layout shift values', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
@@ -317,12 +327,13 @@ describe('rum track view metrics', () => {
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(0.3)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).cumulativeLayoutShift).toBe(0.3)
     })
 
     it('should round the cumulative layout shift value to 4 decimals', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
@@ -338,12 +349,13 @@ describe('rum track view metrics', () => {
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(2)
-      expect(getViewEvent(1).cumulativeLayoutShift).toBe(2.3457)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).cumulativeLayoutShift).toBe(2.3457)
     })
 
     it('should ignore entries with recent input', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
@@ -353,8 +365,8 @@ describe('rum track view metrics', () => {
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-      expect(getHandledCount()).toEqual(1)
-      expect(getViewEvent(0).cumulativeLayoutShift).toBe(0)
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).cumulativeLayoutShift).toBe(0)
     })
   })
 })
