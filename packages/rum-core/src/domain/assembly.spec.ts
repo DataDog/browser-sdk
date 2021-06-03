@@ -103,6 +103,21 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
 
+        it('should define the context field even if the global context is empty', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                expect(event.context).toEqual({})
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+          })
+        })
+
         it('should reject modification on context field for view events', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({

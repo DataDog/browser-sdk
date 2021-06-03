@@ -52,8 +52,13 @@ describe('limitModification', () => {
     const object = {
       string_to_undefined: 'bar',
       string_to_number: 'qux',
+
       null_to_object: null,
       object_to_null: {},
+
+      undefined_to_object: undefined,
+      object_to_undefined: {},
+
       array_to_object: [],
       object_to_array: {},
     }
@@ -62,6 +67,8 @@ describe('limitModification', () => {
       candidate.string_to_number = 1234
       candidate.null_to_object = {}
       candidate.object_to_null = null
+      candidate.undefined_to_object = {}
+      candidate.object_to_undefined = undefined
       candidate.array_to_object = {}
       candidate.object_to_array = []
     }
@@ -71,8 +78,13 @@ describe('limitModification', () => {
     expect(object).toEqual({
       string_to_undefined: 'bar',
       string_to_number: 'qux',
+
       null_to_object: null,
       object_to_null: {},
+
+      undefined_to_object: undefined,
+      object_to_undefined: {},
+
       array_to_object: [],
       object_to_array: {},
     })
