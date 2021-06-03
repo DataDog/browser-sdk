@@ -1,4 +1,5 @@
 import { Duration, RelativeTime, RequestType, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { isIE } from '../../../../../core/test/specHelper'
 import { createResourceEntry } from '../../../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
@@ -32,14 +33,12 @@ describe('resourceCollection', () => {
 
     it('should create resource from performance entry', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
-      lifeCycle.notify(
-        LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
-        createResourceEntry({
-          duration: 100 as Duration,
-          name: 'https://resource.com/valid',
-          startTime: 1234 as RelativeTime,
-        })
-      )
+      const performanceEntry = createResourceEntry({
+        duration: 100 as Duration,
+        name: 'https://resource.com/valid',
+        startTime: 1234 as RelativeTime,
+      })
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry)
 
       expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -53,10 +52,14 @@ describe('resourceCollection', () => {
         },
         type: RumEventType.RESOURCE,
       })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        performanceEntry,
+      })
     })
 
-    it('should create resource from completed request', () => {
+    it('should create resource from completed XHR request', () => {
       const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      const xhr = new XMLHttpRequest()
       lifeCycle.notify(
         LifeCycleEventType.REQUEST_COMPLETED,
         createCompletedRequest({
@@ -66,6 +69,7 @@ describe('resourceCollection', () => {
           status: 200,
           type: RequestType.XHR,
           url: 'https://resource.com/valid',
+          xhr,
         })
       )
 
@@ -81,6 +85,50 @@ describe('resourceCollection', () => {
           url: 'https://resource.com/valid',
         },
         type: RumEventType.RESOURCE,
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        xhr,
+        performanceEntry: undefined,
+        response: undefined,
+      })
+    })
+
+    it('should create resource from completed fetch request', () => {
+      if (isIE()) {
+        pending('No IE support')
+      }
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      const response = new Response()
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createCompletedRequest({
+          duration: 100 as Duration,
+          method: 'GET',
+          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          status: 200,
+          type: RequestType.FETCH,
+          url: 'https://resource.com/valid',
+          response,
+        })
+      )
+
+      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
+        date: jasmine.any(Number),
+        resource: {
+          id: jasmine.any(String),
+          duration: (100 * 1e6) as ServerDuration,
+          method: 'GET',
+          status_code: 200,
+          type: ResourceType.FETCH,
+          url: 'https://resource.com/valid',
+        },
+        type: RumEventType.RESOURCE,
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        response,
+        performanceEntry: undefined,
+        xhr: undefined,
       })
     })
   })

@@ -59,7 +59,15 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime: startClocks.relative, rawRumEvent: resourceEvent, domainContext: {} }
+  return {
+    startTime: startClocks.relative,
+    rawRumEvent: resourceEvent,
+    domainContext: {
+      performanceEntry: matchingTiming as PerformanceEntry | undefined,
+      response: request.response,
+      xhr: request.xhr,
+    },
+  }
 }
 
 function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventCollectedData<RawRumResourceEvent> {
@@ -81,7 +89,13 @@ function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventC
     tracingInfo,
     entryMetrics
   )
-  return { startTime: startClocks.relative, rawRumEvent: resourceEvent, domainContext: {} }
+  return {
+    startTime: startClocks.relative,
+    rawRumEvent: resourceEvent,
+    domainContext: {
+      performanceEntry: (entry as unknown) as PerformanceEntry,
+    },
+  }
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {

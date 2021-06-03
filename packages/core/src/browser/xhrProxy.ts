@@ -129,6 +129,7 @@ function proxyXhr() {
             duration: elapsed(xhrPendingContext.startClocks.timeStamp, timeStampNow()),
             responseText: this.response as string | undefined,
             status: this.status,
+            xhr: this,
           }
 
           onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))

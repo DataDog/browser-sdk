@@ -28,6 +28,7 @@ export interface FetchStartContext {
 export interface FetchCompleteContext extends FetchStartContext {
   duration: Duration
   status: number
+  response?: Response
   responseText: string
   responseType?: string
   isAborted: boolean
@@ -122,6 +123,7 @@ function afterSend(responsePromise: Promise<Response>, context: FetchStartContex
       } catch (e) {
         text = `Unable to retrieve response: ${e as string}`
       }
+      context.response = response
       context.responseText = text
       context.responseType = response.type
       context.status = response.status

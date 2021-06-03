@@ -40,6 +40,8 @@ export interface RequestCompleteEvent {
   duration: Duration
   spanId?: TraceIdentifier
   traceId?: TraceIdentifier
+  xhr?: XMLHttpRequest
+  response?: Response
 }
 
 let nextRequestIndex = 1
@@ -76,6 +78,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
         traceId: context.traceId,
         type: RequestType.XHR,
         url: context.url,
+        xhr: context.xhr,
       })
     }
   })
@@ -109,6 +112,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         traceId: context.traceId,
         type: RequestType.FETCH,
         url: context.url,
+        response: context.response,
       })
     }
   })
