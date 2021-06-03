@@ -214,4 +214,6 @@ export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumError
   ? { error?: unknown }
   : E extends RawRumActionEvent
   ? { event?: Event }
+  : E extends RawRumLongTaskEvent
+  ? { performanceEntry: PerformanceEntry }
   : never

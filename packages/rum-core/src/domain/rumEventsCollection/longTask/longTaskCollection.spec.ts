@@ -37,11 +37,12 @@ describe('long task collection', () => {
 
   it('should create raw rum event from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+    const performanceEntry: RumPerformanceEntry = {
       duration: 100 as Duration,
       entryType: 'longtask',
       startTime: 1234 as RelativeTime,
-    })
+    }
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry)
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -51,6 +52,9 @@ describe('long task collection', () => {
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,
+    })
+    expect(rawRumEvents[0].domainContext).toEqual({
+      performanceEntry: (performanceEntry as unknown) as PerformanceEntry,
     })
   })
 })
