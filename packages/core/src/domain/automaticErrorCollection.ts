@@ -70,6 +70,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       type,
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
+      originalError: errorObject,
     })
   }
   subscribe(traceKitReportHandler)

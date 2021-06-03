@@ -28,8 +28,9 @@ describe('error collection', () => {
   describe('provided', () => {
     it('notifies a raw rum error event', () => {
       const { rawRumEvents } = setupBuilder.build()
+      const error = new Error('foo')
       addError({
-        error: new Error('foo'),
+        error,
         source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
@@ -54,7 +55,7 @@ describe('error collection', () => {
         },
         savedCommonContext: undefined,
         startTime: 1234 as RelativeTime,
-        domainContext: {},
+        domainContext: { error },
       })
     })
 
@@ -105,6 +106,7 @@ describe('error collection', () => {
   describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
     it('should create error event from collected error', () => {
       const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      const error = new Error('hello')
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
           message: 'hello',
@@ -117,6 +119,7 @@ describe('error collection', () => {
           stack: 'bar',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
+          originalError: error,
         },
       })
 
@@ -139,6 +142,9 @@ describe('error collection', () => {
           in_foreground: true,
         },
         type: RumEventType.ERROR,
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        error,
       })
     })
   })

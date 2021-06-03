@@ -59,7 +59,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
 
 function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-  return { startClocks, source, ...formatUnknownError(stackTrace, error, 'Provided') }
+  return { startClocks, source, originalError: error, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
 function processError(
@@ -92,6 +92,8 @@ function processError(
   return {
     rawRumEvent,
     startTime: error.startClocks.relative,
-    domainContext: {},
+    domainContext: {
+      error: error.originalError,
+    },
   }
 }
