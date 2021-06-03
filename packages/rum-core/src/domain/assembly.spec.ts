@@ -51,19 +51,92 @@ describe('rum assembly', () => {
 
   describe('beforeSend', () => {
     describe('fields modification', () => {
-      it('should allow modification on sensitive field', () => {
-        const { lifeCycle } = setupBuilder
-          .withConfiguration({
-            beforeSend: (event) => (event.view.url = 'modified'),
-          })
-          .build()
+      describe('sensitive fields', () => {
+        it('should allow modification on sensitive field', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => (event.view.url = 'modified'),
+            })
+            .build()
 
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
-          startTime: 0 as RelativeTime,
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
+            startTime: 0 as RelativeTime,
+          })
+
+          expect(serverRumEvents[0].view.url).toBe('modified')
+        })
+      })
+
+      describe('context field', () => {
+        it('should allow modification on context field for events other than views', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context.foo = 'bar'
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+          })
+
+          expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
 
-        expect(serverRumEvents[0].view.url).toBe('modified')
+        it('should allow replacing the context field for events other than views', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context = { foo: 'bar' }
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+          })
+
+          expect(serverRumEvents[0].context!.foo).toBe('bar')
+        })
+
+        it('should reject modification on context field for view events', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context.foo = 'bar'
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+            startTime: 0 as RelativeTime,
+          })
+
+          expect(serverRumEvents[0].context).toBeUndefined()
+        })
+
+        it('should reject replacing the context field to non-object', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context = null
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+            customerContext: { foo: 'bar' },
+          })
+
+          expect(serverRumEvents[0].context!.foo).toBe('bar')
+        })
       })
 
       it('should reject modification on non sensitive and non context field', () => {
@@ -81,40 +154,6 @@ describe('rum assembly', () => {
         })
 
         expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-      })
-
-      it('should allow modification on context field for events other than views', () => {
-        const { lifeCycle } = setupBuilder
-          .withConfiguration({
-            beforeSend: (event) => {
-              event.context.foo = 'bar'
-            },
-          })
-          .build()
-
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-          startTime: 0 as RelativeTime,
-        })
-
-        expect(serverRumEvents[0].context!.foo).toBe('bar')
-      })
-
-      it('should reject modification on context field for view events', () => {
-        const { lifeCycle } = setupBuilder
-          .withConfiguration({
-            beforeSend: (event) => {
-              event.context.foo = 'bar'
-            },
-          })
-          .build()
-
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-          startTime: 0 as RelativeTime,
-        })
-
-        expect(serverRumEvents[0].context).toBeUndefined()
       })
     })
 

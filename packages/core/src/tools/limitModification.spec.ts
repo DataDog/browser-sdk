@@ -49,17 +49,32 @@ describe('limitModification', () => {
   })
 
   it('should not allow changing the type of the value on modifiable field', () => {
-    const object = { foo: { bar: 'bar' }, qux: 'qux' }
+    const object = {
+      string_to_undefined: 'bar',
+      string_to_number: 'qux',
+      null_to_object: null,
+      object_to_null: {},
+      array_to_object: [],
+      object_to_array: {},
+    }
     const modifier = (candidate: any) => {
-      candidate.foo.bar = undefined
-      candidate.qux = 1234
+      candidate.string_to_undefined = undefined
+      candidate.string_to_number = 1234
+      candidate.null_to_object = {}
+      candidate.object_to_null = null
+      candidate.array_to_object = {}
+      candidate.object_to_array = []
     }
 
-    limitModification(object, ['foo.bar', 'qux'], modifier)
+    limitModification(object, Object.keys(object), modifier)
 
     expect(object).toEqual({
-      foo: { bar: 'bar' },
-      qux: 'qux',
+      string_to_undefined: 'bar',
+      string_to_number: 'qux',
+      null_to_object: null,
+      object_to_null: {},
+      array_to_object: [],
+      object_to_array: {},
     })
   })
 

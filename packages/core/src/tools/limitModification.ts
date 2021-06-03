@@ -54,13 +54,9 @@ function isValidObjectContaining(object: unknown, field: string): object is { [k
 }
 
 function areSameType(valueA: unknown, valueB: unknown) {
-  if (valueA === null) {
-    return valueB === null
-  }
-
-  if (Array.isArray(valueA)) {
-    return Array.isArray(valueB)
-  }
-
-  return typeof valueA === typeof valueB
+  return (
+    (valueA === null) === (valueB === null) &&
+    Array.isArray(valueA) === Array.isArray(valueB) &&
+    typeof valueA === typeof valueB
+  )
 }
