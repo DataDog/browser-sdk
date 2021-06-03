@@ -38,6 +38,7 @@ export interface AutoAction {
   startClocks: ClocksState
   duration: Duration
   counts: ActionCounts
+  event: Event
 }
 
 export interface AutoActionCreatedEvent {
@@ -65,7 +66,7 @@ export function trackActions(lifeCycle: LifeCycle, domMutationObservable: DOMMut
         return
       }
 
-      action.create(ActionType.CLICK, name)
+      action.create(ActionType.CLICK, name, event)
     },
     { capture: true }
   )
@@ -83,12 +84,12 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMM
   let currentIdlePageActivitySubscription: { stop: () => void }
 
   return {
-    create: (type: AutoActionType, name: string) => {
+    create: (type: AutoActionType, name: string, event: Event) => {
       if (currentAction) {
         // Ignore any new action if another one is already occurring.
         return
       }
-      const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name)
+      const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
 
       currentAction = pendingAutoAction
       currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
@@ -115,7 +116,7 @@ class PendingAutoAction {
   private startClocks: ClocksState
   private eventCountsSubscription: { eventCounts: EventCounts; stop(): void }
 
-  constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string) {
+  constructor(private lifeCycle: LifeCycle, private type: AutoActionType, private name: string, private event: Event) {
     this.id = generateUUID()
     this.startClocks = clocksNow()
     this.eventCountsSubscription = trackEventCounts(lifeCycle)
@@ -135,6 +136,7 @@ class PendingAutoAction {
       name: this.name,
       startClocks: this.startClocks,
       type: this.type,
+      event: this.event,
     })
     this.eventCountsSubscription.stop()
   }

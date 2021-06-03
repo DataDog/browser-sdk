@@ -210,4 +210,8 @@ export interface CommonContext {
   hasReplay?: true
 }
 
-export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumErrorEvent ? { error?: unknown } : never
+export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumErrorEvent
+  ? { error?: unknown }
+  : E extends RawRumActionEvent
+  ? { event?: Event }
+  : never
