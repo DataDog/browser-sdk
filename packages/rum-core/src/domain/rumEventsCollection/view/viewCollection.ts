@@ -70,5 +70,6 @@ function processViewUpdate(
   return {
     rawRumEvent: viewEvent,
     startTime: view.startClocks.relative,
+    domainContext: {},
   }
 }

@@ -209,3 +209,5 @@ export interface CommonContext {
   context: Context
   hasReplay?: true
 }
+
+export type RumEventDomainContext<E extends RawRumEvent> = {}

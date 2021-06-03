@@ -92,5 +92,6 @@ function processError(
   return {
     rawRumEvent,
     startTime: error.startClocks.relative,
+    domainContext: {},
   }
 }

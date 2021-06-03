@@ -73,6 +73,7 @@ function processAction(
     customerContext,
     rawRumEvent: actionEvent,
     startTime: action.startClocks.relative,
+    domainContext: {},
   }
 }
 

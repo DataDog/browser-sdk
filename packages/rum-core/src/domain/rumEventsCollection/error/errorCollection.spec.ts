@@ -54,6 +54,7 @@ describe('error collection', () => {
         },
         savedCommonContext: undefined,
         startTime: 1234 as RelativeTime,
+        domainContext: {},
       })
     })
 
