@@ -17,6 +17,7 @@ export interface XhrProxy<
 export interface XhrOpenContext {
   method: string
   url: string
+  originalOnReadyStateChange: ((this: XMLHttpRequest, ev: Event) => any) | null
 }
 
 export interface XhrStartContext extends XhrOpenContext {
@@ -88,13 +89,19 @@ function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) 
     this._datadog_xhr = {
       method,
       url: normalizeUrl(url),
+      // Keep track of the user onreadystatechange to be able to call it after us
+      originalOnReadyStateChange: getOriginalOnReadyStateChange(this),
     }
 
     // To avoid adding listeners each time 'open()' is called,
     // we take advantage of the automatic listener discarding if multiple identical EventListeners are registered
     // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#multiple_identical_event_listeners
-    this.addEventListener('readystatechange', onReadyStateChange)
     this.addEventListener('loadend', reportXhr)
+
+    // Bind readystatechange with addEventListener and attribute affectation
+    // to ensure not to be overridden after or before the xhr open is called
+    this.addEventListener('readystatechange', onReadyStateChange)
+    this.onreadystatechange = onReadyStateChangeFromProperty
   })
   return originalXhrOpen.apply(this, arguments as any)
 }
@@ -126,6 +133,15 @@ function abortXhr(this: BrowserXHR) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
+function onReadyStateChangeFromProperty(this: BrowserXHR) {
+  onReadyStateChange.call(this)
+
+  const originalOnReadyStateChange = getOriginalOnReadyStateChange(this)
+  if (originalOnReadyStateChange) {
+    originalOnReadyStateChange.apply(this, arguments as any)
+  }
+}
+
 function onReadyStateChange(this: BrowserXHR) {
   if (this.readyState === XMLHttpRequest.DONE) {
     // Try to report the XHR as soon as possible, because the XHR may be mutated by the
@@ -150,5 +166,14 @@ function reportXhr(this: BrowserXHR) {
     // Unsubscribe to avoid being reported twice
     this.removeEventListener('readystatechange', onReadyStateChange)
     this.removeEventListener('loadend', reportXhr)
+    this.onreadystatechange = getOriginalOnReadyStateChange(this)
   })
+}
+
+function getOriginalOnReadyStateChange(xhr: BrowserXHR<XhrOpenContext> | BrowserXHR<XhrStartContext>) {
+  // Check if the onreadystatechange has changed between the open() and the async onreadystatechange callback
+  // and get xhr.onreadystatechange instead of originalOnreadystatechange
+  return xhr.onreadystatechange !== onReadyStateChangeFromProperty
+    ? xhr.onreadystatechange
+    : xhr._datadog_xhr?.originalOnReadyStateChange ?? null
 }

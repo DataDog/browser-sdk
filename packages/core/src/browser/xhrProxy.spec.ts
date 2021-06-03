@@ -106,13 +106,47 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track successful request aborted', (done) => {
-    const onReadyStateChange = jasmine.createSpy()
+  it('should track successful request aborted when onreadystatechange is overridden before open', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            xhr.abort()
+          }
+        }
+        spyOn(xhr, 'onreadystatechange').and.callThrough()
+        xhr.open('GET', '/ok')
+        xhr.send()
+        xhr.complete(200, 'ok')
+      },
+      onComplete(xhr) {
+        const request = getRequest(0)
+        expect(completeSpy.calls.count()).toBe(1)
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/ok')
+        expect(request.response).toBe('ok')
+        expect(request.status).toBe(200)
+        expect(request.startTime).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.isAborted).toBe(false)
+        expect(xhr.status).toBe(0)
+        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
+        expect()
+        done()
+      },
+    })
+  })
+
+  it('should track successful request aborted when onreadystatechange overridden after open', (done) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
-        xhr.addEventListener('readystatechange', onReadyStateChange)
-        xhr.addEventListener('load', () => xhr.abort())
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            xhr.abort()
+          }
+        }
+        spyOn(xhr, 'onreadystatechange').and.callThrough()
         xhr.send()
         xhr.complete(200, 'ok')
       },
@@ -126,7 +160,7 @@ describe('xhr proxy', () => {
         expect(request.duration).toEqual(jasmine.any(Number))
         expect(request.isAborted).toBe(false)
         expect(xhr.status).toBe(0)
-        expect(onReadyStateChange).toHaveBeenCalled()
+        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
         done()
       },
     })
@@ -154,7 +188,29 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track request with onreadystatechange overridden', (done) => {
+  it('should track request with onreadystatechange overridden before open', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.onreadystatechange = () => undefined
+        xhr.open('GET', '/ok')
+        xhr.send()
+        xhr.complete(200, 'ok')
+      },
+      onComplete() {
+        const request = getRequest(0)
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/ok')
+        expect(request.response).toBe('ok')
+        expect(request.status).toBe(200)
+        expect(request.isAborted).toBe(false)
+        expect(request.startTime).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(jasmine.any(Number))
+        done()
+      },
+    })
+  })
+
+  it('should track request with onreadystatechange overridden after open', (done) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -194,7 +250,7 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should should not break xhr opened before the instrumentation', (done) => {
+  it('should not break xhr opened before the instrumentation', (done) => {
     resetXhrProxy()
     withXhr({
       setup(xhr) {
@@ -210,23 +266,44 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track only the second request (the first request is canceled)', (done) => {
-    const onLoad = jasmine.createSpy()
+  it('should track multiple requests with the same xhr instance', (done) => {
+    let listeners: { [k: string]: Array<() => void> }
     withXhr({
-      setup(xhr) {
+      completionMode: 'manual',
+      setup(xhr, complete) {
+        const onLoad = () => {
+          xhr.removeEventListener('load', onLoad)
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.complete(400, 'ok')
+        }
+        xhr.onreadystatechange = jasmine.createSpy()
         xhr.addEventListener('load', onLoad)
-        xhr.open('GET', '/first')
-        xhr.send()
-        xhr.open('GET', '/second')
+        xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
+        listeners = xhr.listeners
+        complete(xhr)
       },
-      onComplete() {
-        const request = getRequest(0)
-        expect(onLoad).toHaveBeenCalledTimes(1)
-        expect(request.method).toBe('GET')
-        expect(request.url).toContain('/second')
-        expect(request.status).toBe(200)
+      onComplete(xhr) {
+        const firstRequest = getRequest(1)
+        expect(firstRequest.method).toBe('GET')
+        expect(firstRequest.status).toBe(400)
+        expect(firstRequest.isAborted).toBe(false)
+        expect(firstRequest.startTime).toEqual(jasmine.any(Number))
+        expect(firstRequest.duration).toEqual(jasmine.any(Number))
+
+        const secondRequest = getRequest(0)
+        expect(secondRequest.method).toBe('GET')
+        expect(secondRequest.status).toBe(200)
+        expect(secondRequest.isAborted).toBe(false)
+        expect(secondRequest.startTime).toEqual(jasmine.any(Number))
+        expect(secondRequest.duration).toEqual(jasmine.any(Number))
+
+        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
+        expect(listeners.load.length).toBe(0)
+        expect(listeners.loadend.length).toBe(0)
+        expect(listeners.readystatechange.length).toBe(0)
         done()
       },
     })
