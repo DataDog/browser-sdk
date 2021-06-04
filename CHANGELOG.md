@@ -16,6 +16,10 @@
 
 ---
 
+## v2.12.1
+
+- 🔊 monitor potential invalid date ([#880](https://github.com/DataDog/browser-sdk/pull/880))
+
 ## v2.12.0
 
 - ⚡️ start mutation observer only when needed ([#858](https://github.com/DataDog/browser-sdk/pull/858))
