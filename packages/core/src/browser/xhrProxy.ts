@@ -101,7 +101,7 @@ function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) 
     // Bind readystatechange with addEventListener and attribute affectation
     // to ensure not to be overridden after or before the xhr open is called
     this.addEventListener('readystatechange', onReadyStateChange)
-    this.onreadystatechange = onReadyStateChangeFromProperty
+    this.onreadystatechange = datadogOnReadyStateChangeFromProperty
   })
   return originalXhrOpen.apply(this, arguments as any)
 }
@@ -133,7 +133,8 @@ function abortXhr(this: BrowserXHR) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
-function onReadyStateChangeFromProperty(this: BrowserXHR) {
+// prefix the function name to avoid overlap with the end user for getOriginalOnReadyStateChange()
+function datadogOnReadyStateChangeFromProperty(this: BrowserXHR) {
   onReadyStateChange.call(this)
 
   const originalOnReadyStateChange = getOriginalOnReadyStateChange(this)
@@ -173,7 +174,9 @@ function reportXhr(this: BrowserXHR) {
 function getOriginalOnReadyStateChange(xhr: BrowserXHR<XhrOpenContext> | BrowserXHR<XhrStartContext>) {
   // Check if the onreadystatechange has changed between the open() and the async onreadystatechange callback
   // and get xhr.onreadystatechange instead of originalOnreadystatechange
-  return xhr.onreadystatechange !== onReadyStateChangeFromProperty
+  // In the case where DD_RUM and DD_LOGS are in the page the comparison by reference miss
+  // therefore we check the function name to avoid recursive calls
+  return xhr.onreadystatechange?.name !== datadogOnReadyStateChangeFromProperty?.name
     ? xhr.onreadystatechange
     : xhr._datadog_xhr?.originalOnReadyStateChange ?? null
 }
