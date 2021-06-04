@@ -71,4 +71,24 @@ describe('beforeSend', () => {
       const initialDocument = events.rumResources[0]
       expect(initialDocument.context).toEqual({ foo: 'bar' })
     })
+
+  createTest('allows to replace non-view events context')
+    .withRum({
+      beforeSend(event) {
+        event.context = { foo: 'bar' }
+      },
+    })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      window.DD_RUM!.addRumGlobalContext('foo', 'baz')
+      window.DD_RUM!.addRumGlobalContext('zig', 'zag')
+    })
+    .run(async ({ events }) => {
+      await flushEvents()
+
+      const initialView = events.rumViews[0]
+      expect(initialView.context).toEqual({ foo: 'baz', zig: 'zag' })
+      const initialDocument = events.rumResources[0]
+      expect(initialDocument.context).toEqual({ foo: 'bar' })
+    })
 })
