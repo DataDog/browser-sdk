@@ -52,7 +52,7 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['view-renaming'] })
+    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['view-renaming'] } as any)
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
@@ -102,6 +102,43 @@ describe('API calls and events around init', () => {
         { name: 'before manual view', viewId: initialView.view.id },
         { name: 'after manual view', viewId: initialView.view.id }
       )
+    })
+})
+
+describe('beforeSend', () => {
+  createTest('allows to edit non-view events context')
+    .withRum({
+      beforeSend(event) {
+        event.context!.foo = 'bar'
+      },
+    })
+    .run(async ({ events }) => {
+      await flushEvents()
+
+      const initialView = events.rumViews[0]
+      expect(initialView.context).toBeUndefined()
+      const initialDocument = events.rumResources[0]
+      expect(initialDocument.context).toEqual({ foo: 'bar' })
+    })
+
+  createTest('allows to replace non-view events context')
+    .withRum({
+      beforeSend(event) {
+        event.context = { foo: 'bar' }
+      },
+    })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      window.DD_RUM!.addRumGlobalContext('foo', 'baz')
+      window.DD_RUM!.addRumGlobalContext('zig', 'zag')
+    })
+    .run(async ({ events }) => {
+      await flushEvents()
+
+      const initialView = events.rumViews[0]
+      expect(initialView.context).toEqual({ foo: 'baz', zig: 'zag' })
+      const initialDocument = events.rumResources[0]
+      expect(initialDocument.context).toEqual({ foo: 'bar' })
     })
 })
 
