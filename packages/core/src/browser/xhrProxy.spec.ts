@@ -106,7 +106,7 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track successful request aborted when onreadystatechange is overridden before open', (done) => {
+  it('should track successful request aborted', (done) => {
     withXhr({
       setup(xhr) {
         xhr.onreadystatechange = () => {
@@ -132,35 +132,6 @@ describe('xhr proxy', () => {
         expect(xhr.status).toBe(0)
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
         expect()
-        done()
-      },
-    })
-  })
-
-  it('should track successful request aborted when onreadystatechange overridden after open', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok')
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            xhr.abort()
-          }
-        }
-        spyOn(xhr, 'onreadystatechange').and.callThrough()
-        xhr.send()
-        xhr.complete(200, 'ok')
-      },
-      onComplete(xhr) {
-        const request = getRequest(0)
-        expect(request.method).toBe('GET')
-        expect(request.url).toContain('/ok')
-        expect(request.response).toBe('ok')
-        expect(request.status).toBe(200)
-        expect(request.startTime).toEqual(jasmine.any(Number))
-        expect(request.duration).toEqual(jasmine.any(Number))
-        expect(request.isAborted).toBe(false)
-        expect(xhr.status).toBe(0)
-        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
         done()
       },
     })
@@ -307,7 +278,6 @@ describe('xhr proxy', () => {
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
         expect(listeners.load.length).toBe(0)
         expect(listeners.loadend.length).toBe(0)
-        expect(listeners.readystatechange.length).toBe(0)
         done()
       },
     })

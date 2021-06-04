@@ -1,5 +1,4 @@
-import { functionName } from '..'
-import { callMonitored } from '../domain/internalMonitoring'
+import { monitor, callMonitored } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
@@ -18,7 +17,6 @@ export interface XhrProxy<
 export interface XhrOpenContext {
   method: string
   url: string
-  originalOnReadyStateChange: ((this: XMLHttpRequest, ev: Event) => any) | null
 }
 
 export interface XhrStartContext extends XhrOpenContext {
@@ -90,19 +88,7 @@ function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) 
     this._datadog_xhr = {
       method,
       url: normalizeUrl(url),
-      // Keep track of the user onreadystatechange to be able to call it after us
-      originalOnReadyStateChange: getOriginalOnReadyStateChange(this),
     }
-
-    // To avoid adding listeners each time 'open()' is called,
-    // we take advantage of the automatic listener discarding if multiple identical EventListeners are registered
-    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#multiple_identical_event_listeners
-    this.addEventListener('loadend', reportXhr)
-
-    // Bind readystatechange with addEventListener and attribute affectation
-    // to ensure not to be overridden after or before the xhr open is called
-    this.addEventListener('readystatechange', onReadyStateChange)
-    this.onreadystatechange = datadogOnReadyStateChangeFromProperty
   })
   return originalXhrOpen.apply(this, arguments as any)
 }
@@ -119,6 +105,34 @@ function sendXhr(this: BrowserXHR) {
       isAborted: false,
     }
 
+    let hasBeenReported = false
+    const originalOnreadystatechange = this.onreadystatechange
+    const onreadystatechange = function (this: BrowserXHR) {
+      if (this.readyState === XMLHttpRequest.DONE) {
+        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+        // application during a future event. For example, Angular is calling .abort() on
+        // completed requests during a onreadystatechange event, so the status becomes '0'
+        // before the request is collected.
+        onEnd()
+      }
+
+      if (originalOnreadystatechange) {
+        originalOnreadystatechange.apply(this, arguments as any)
+      }
+    }
+
+    const onEnd = monitor(() => {
+      this.removeEventListener('loadend', onEnd)
+      this.onreadystatechange = originalOnreadystatechange
+      if (hasBeenReported) {
+        return
+      }
+      hasBeenReported = true
+      reportXhr(this)
+    })
+    this.onreadystatechange = onreadystatechange
+    this.addEventListener('loadend', onEnd)
+
     beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr!, this))
   })
 
@@ -134,50 +148,13 @@ function abortXhr(this: BrowserXHR) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
-// prefix the function name to avoid overlap with the end user for getOriginalOnReadyStateChange()
-function datadogOnReadyStateChangeFromProperty(this: BrowserXHR) {
-  onReadyStateChange.call(this)
-
-  const originalOnReadyStateChange = getOriginalOnReadyStateChange(this)
-  if (originalOnReadyStateChange) {
-    originalOnReadyStateChange.apply(this, arguments as any)
+function reportXhr(xhr: BrowserXHR) {
+  const xhrCompleteContext: XhrCompleteContext = {
+    ...xhr._datadog_xhr!,
+    duration: elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow()),
+    response: xhr.response as string | undefined,
+    status: xhr.status,
   }
-}
 
-function onReadyStateChange(this: BrowserXHR) {
-  if (this.readyState === XMLHttpRequest.DONE) {
-    // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-    // application during a future event. For example, Angular is calling .abort() on
-    // completed requests during a onreadystatechange event, so the status becomes '0'
-    // before the request is collected.
-    // https://github.com/angular/angular/blob/master/packages/common/http/src/xhr.ts
-    reportXhr.call(this)
-  }
-}
-
-function reportXhr(this: BrowserXHR) {
-  callMonitored(() => {
-    const xhrCompleteContext: XhrCompleteContext = {
-      ...this._datadog_xhr!,
-      duration: elapsed(this._datadog_xhr!.startClocks.timeStamp, timeStampNow()),
-      response: this.response as string | undefined,
-      status: this.status,
-    }
-
-    onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
-    // Unsubscribe to avoid being reported twice
-    this.removeEventListener('readystatechange', onReadyStateChange)
-    this.removeEventListener('loadend', reportXhr)
-    this.onreadystatechange = getOriginalOnReadyStateChange(this)
-  })
-}
-
-function getOriginalOnReadyStateChange(xhr: BrowserXHR<XhrOpenContext> | BrowserXHR<XhrStartContext>) {
-  // Check if the onreadystatechange has changed between the open() and the async onreadystatechange callback
-  // and get xhr.onreadystatechange instead of originalOnreadystatechange
-  // In the case where DD_RUM and DD_LOGS are in the page the comparison by reference miss
-  // therefore we check the function name to avoid recursive calls
-  return functionName(xhr.onreadystatechange) !== functionName(datadogOnReadyStateChangeFromProperty)
-    ? xhr.onreadystatechange
-    : xhr._datadog_xhr?.originalOnReadyStateChange ?? null
+  onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
 }
