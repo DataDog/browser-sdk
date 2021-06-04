@@ -10,9 +10,10 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
+import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
-import { ForegroundContexts } from '../src/domain/foregroundContexts'
+import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
 import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
@@ -205,4 +206,50 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateFormat(combine(fakeContext, rawRumEvent))
+}
+
+export type ViewTest = ReturnType<typeof setupViewTest>
+
+export function setupViewTest(
+  { lifeCycle, location, domMutationObservable, configuration }: BuildContext,
+  initialViewName?: string
+) {
+  const { handler: viewUpdateHandler, getViewEvent: getViewUpdate, getHandledCount: getViewUpdateCount } = spyOnViews(
+    'view update'
+  )
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
+  const { handler: viewCreateHandler, getViewEvent: getViewCreate, getHandledCount: getViewCreateCount } = spyOnViews(
+    'view create'
+  )
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
+  const { stop, startView, addTiming } = trackViews(
+    location,
+    lifeCycle,
+    domMutationObservable,
+    !configuration.trackViewsManually,
+    initialViewName
+  )
+  return {
+    stop,
+    startView,
+    addTiming,
+    getViewUpdate,
+    getViewUpdateCount,
+    getViewCreate,
+    getViewCreateCount,
+  }
+}
+
+export function spyOnViews(name?: string) {
+  const handler = jasmine.createSpy(name)
+
+  function getViewEvent(index: number) {
+    return handler.calls.argsFor(index)[0] as ViewEvent
+  }
+
+  function getHandledCount() {
+    return handler.calls.count()
+  }
+
+  return { handler, getViewEvent, getHandledCount }
 }

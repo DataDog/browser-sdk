@@ -1,6 +1,6 @@
 import { Context, RelativeTime, Duration } from '@datadog/browser-core'
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
-import { TestSetupBuilder, setup } from '../../../../test/specHelper'
+import { TestSetupBuilder, setup, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
 import {
@@ -9,7 +9,6 @@ import {
   PAGE_ACTIVITY_VALIDATION_DELAY,
 } from '../../trackPageActivities'
 import { THROTTLE_VIEW_UPDATE_PERIOD } from './trackViews'
-import { setupViewTest, ViewTest } from './trackViews.spec'
 
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 

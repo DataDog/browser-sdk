@@ -1,5 +1,5 @@
 import { Duration, RelativeTime, timeStampNow, display, relativeToClocks } from '@datadog/browser-core'
-import { setup, TestSetupBuilder, BuildContext } from '../../../../test/specHelper'
+import { setup, TestSetupBuilder, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -7,7 +7,7 @@ import {
 } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, ViewEvent } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD, ViewEvent } from './trackViews'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -24,52 +24,6 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domInteractive: 234 as RelativeTime,
   entryType: 'navigation',
   loadEventEnd: 567 as RelativeTime,
-}
-
-export type ViewTest = ReturnType<typeof setupViewTest>
-
-export function setupViewTest(
-  { lifeCycle, location, domMutationObservable, configuration }: BuildContext,
-  initialViewName?: string
-) {
-  const { handler: viewUpdateHandler, getViewEvent: getViewUpdate, getHandledCount: getViewUpdateCount } = spyOnViews(
-    'view update'
-  )
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
-  const { handler: viewCreateHandler, getViewEvent: getViewCreate, getHandledCount: getViewCreateCount } = spyOnViews(
-    'view create'
-  )
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
-  const { stop, startView, addTiming } = trackViews(
-    location,
-    lifeCycle,
-    domMutationObservable,
-    !configuration.trackViewsManually,
-    initialViewName
-  )
-  return {
-    stop,
-    startView,
-    addTiming,
-    getViewUpdate,
-    getViewUpdateCount,
-    getViewCreate,
-    getViewCreateCount,
-  }
-}
-
-function spyOnViews(name?: string) {
-  const handler = jasmine.createSpy(name)
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
 }
 
 describe('track views automatically', () => {
