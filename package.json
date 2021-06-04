@@ -15,7 +15,7 @@
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
     "dev": "node scripts/dev-server.js",
-    "release": "lerna version --exact",
+    "release": "scripts/cli release",
     "version": "scripts/cli version",
     "publish:npm": "TARGET_DATACENTER=us BUILD_MODE=release yarn build && lerna publish from-package",
     "test": "yarn test:unit:watch",
