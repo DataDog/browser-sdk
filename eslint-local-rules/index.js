@@ -9,4 +9,5 @@
 module.exports = {
   'disallow-side-effects': require('./disallowSideEffects'),
   'disallow-enum-exports': require('./disallowEnumExports'),
+  'disallow-spec-import-spec': require('./disallowSpecImportSpec'),
 }
