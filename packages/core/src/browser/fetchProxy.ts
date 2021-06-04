@@ -28,7 +28,7 @@ export interface FetchStartContext {
 export interface FetchCompleteContext extends FetchStartContext {
   duration: Duration
   status: number
-  response: string
+  responseText: string
   responseType?: string
   isAborted: boolean
 }
@@ -111,7 +111,7 @@ function afterSend(responsePromise: Promise<Response>, context: FetchStartContex
 
     if ('stack' in response || response instanceof Error) {
       context.status = 0
-      context.response = toStackTraceString(computeStackTrace(response))
+      context.responseText = toStackTraceString(computeStackTrace(response))
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
 
       onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
@@ -122,7 +122,7 @@ function afterSend(responsePromise: Promise<Response>, context: FetchStartContex
       } catch (e) {
         text = `Unable to retrieve response: ${e as string}`
       }
-      context.response = text
+      context.responseText = text
       context.responseType = response.type
       context.status = response.status
       context.isAborted = false

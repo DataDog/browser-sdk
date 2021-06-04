@@ -238,7 +238,7 @@ describe('network error tracker', () => {
     })
   })
 
-  it('should add a default error response', (done) => {
+  it('should add a default error response text', (done) => {
     fetchStub(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: undefined })
 
     fetchStubManager.whenAllComplete(() => {
@@ -249,7 +249,7 @@ describe('network error tracker', () => {
     })
   })
 
-  it('should truncate error response', (done) => {
+  it('should truncate error response text', (done) => {
     fetchStub(FAKE_URL).resolveWith({
       ...DEFAULT_REQUEST,
       responseText: 'Lorem ipsum dolor sit amet orci aliquam.',

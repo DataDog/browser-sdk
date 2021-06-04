@@ -34,7 +34,7 @@ export interface RequestCompleteEvent {
   method: string
   url: string
   status: number
-  response?: string
+  responseText?: string
   responseType?: string
   startClocks: ClocksState
   duration: Duration
@@ -69,7 +69,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
         duration: context.duration,
         method: context.method,
         requestIndex: context.requestIndex,
-        response: context.response,
+        responseText: context.responseText,
         spanId: context.spanId,
         startClocks: context.startClocks,
         status: context.status,
@@ -101,7 +101,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         duration: context.duration,
         method: context.method,
         requestIndex: context.requestIndex,
-        response: context.response,
+        responseText: context.responseText,
         responseType: context.responseType,
         spanId: context.spanId,
         startClocks: context.startClocks,
