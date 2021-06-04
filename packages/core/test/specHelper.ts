@@ -250,16 +250,18 @@ export function withXhr({
   completionMode?: 'manual' | 'automatic'
 }) {
   const xhr = new XMLHttpRequest()
+  const complete = (xhr: StubXhr | XMLHttpRequest) => {
+    setTimeout(() => {
+      onComplete((xhr as unknown) as XMLHttpRequest)
+    })
+  }
   if (completionMode === 'automatic') {
     const loadendHandler = () => {
       xhr.removeEventListener('loadend', loadendHandler)
-      setTimeout(() => {
-        onComplete(xhr)
-      })
+      complete(xhr)
     }
     xhr.addEventListener('loadend', loadendHandler)
   }
-  const complete = (xhr: StubXhr) => onComplete((xhr as unknown) as XMLHttpRequest)
 
   setup((xhr as unknown) as StubXhr, complete)
 }

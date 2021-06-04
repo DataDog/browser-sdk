@@ -271,31 +271,35 @@ describe('xhr proxy', () => {
     withXhr({
       completionMode: 'manual',
       setup(xhr, complete) {
+        const secondOnload = () => {
+          xhr.removeEventListener('load', secondOnload)
+          complete(xhr)
+        }
         const onLoad = () => {
           xhr.removeEventListener('load', onLoad)
-          xhr.open('GET', '/ok')
+          xhr.addEventListener('load', secondOnload)
+          xhr.open('GET', '/ok?request=1')
           xhr.send()
           xhr.complete(400, 'ok')
         }
         xhr.onreadystatechange = jasmine.createSpy()
         xhr.addEventListener('load', onLoad)
-        xhr.open('GET', '/ok')
+        xhr.open('GET', '/ok?request=1')
         xhr.send()
         xhr.complete(200, 'ok')
         listeners = xhr.listeners
-        complete(xhr)
       },
       onComplete(xhr) {
-        const firstRequest = getRequest(1)
+        const firstRequest = getRequest(0)
         expect(firstRequest.method).toBe('GET')
-        expect(firstRequest.status).toBe(400)
+        expect(firstRequest.status).toBe(200)
         expect(firstRequest.isAborted).toBe(false)
         expect(firstRequest.startTime).toEqual(jasmine.any(Number))
         expect(firstRequest.duration).toEqual(jasmine.any(Number))
 
-        const secondRequest = getRequest(0)
+        const secondRequest = getRequest(1)
         expect(secondRequest.method).toBe('GET')
-        expect(secondRequest.status).toBe(200)
+        expect(secondRequest.status).toBe(400)
         expect(secondRequest.isAborted).toBe(false)
         expect(secondRequest.startTime).toEqual(jasmine.any(Number))
         expect(secondRequest.duration).toEqual(jasmine.any(Number))
