@@ -1,3 +1,4 @@
+import { functionName } from '..'
 import { callMonitored } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
@@ -176,7 +177,7 @@ function getOriginalOnReadyStateChange(xhr: BrowserXHR<XhrOpenContext> | Browser
   // and get xhr.onreadystatechange instead of originalOnreadystatechange
   // In the case where DD_RUM and DD_LOGS are in the page the comparison by reference miss
   // therefore we check the function name to avoid recursive calls
-  return xhr.onreadystatechange?.name !== datadogOnReadyStateChangeFromProperty?.name
+  return functionName(xhr.onreadystatechange) !== functionName(datadogOnReadyStateChangeFromProperty)
     ? xhr.onreadystatechange
     : xhr._datadog_xhr?.originalOnReadyStateChange ?? null
 }

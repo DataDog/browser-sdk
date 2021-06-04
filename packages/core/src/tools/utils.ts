@@ -242,6 +242,17 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
   return newObject
 }
 
+export function functionName(func: ((...args: any[]) => any) | null | undefined) {
+  if (!func) {
+    return
+  }
+  if (func.name) {
+    return func.name
+  }
+  const result = /^function\s*([^\s(]+)/.exec(func.toString())
+  return result ? result[1] : undefined
+}
+
 /**
  * inspired by https://mathiasbynens.be/notes/globalthis
  */
