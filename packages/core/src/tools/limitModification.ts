@@ -1,9 +1,8 @@
 import { Context, deepClone } from './context'
 
 /**
- * Current limitations:
+ * Current limitation:
  * - field path do not support array, 'a.b.c' only
- * - modifiable fields type must be string
  */
 export function limitModification<T extends Context, Result>(
   object: T,
@@ -15,8 +14,12 @@ export function limitModification<T extends Context, Result>(
   modifiableFieldPaths.forEach((path) => {
     const originalValue = get(object, path)
     const newValue = get(clone, path)
-    if (typeof originalValue === 'string' && typeof newValue === 'string') {
+    const originalType = getType(originalValue)
+    const newType = getType(newValue)
+    if (newType === originalType) {
       set(object, path, newValue)
+    } else if (originalType === 'object' && (newType === 'undefined' || newType === 'null')) {
+      set(object, path, {})
     }
   })
   return result
@@ -33,7 +36,7 @@ function get(object: unknown, path: string) {
   return current
 }
 
-function set(object: unknown, path: string, value: string) {
+function set(object: unknown, path: string, value: unknown) {
   let current = object
   const fields = path.split('.')
   for (let i = 0; i < fields.length; i += 1) {
@@ -51,4 +54,17 @@ function set(object: unknown, path: string, value: string) {
 
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
   return typeof object === 'object' && object !== null && field in object
+}
+
+/**
+ * Similar to `typeof`, but distinguish plain objects from `null` and arrays
+ */
+function getType(value: unknown) {
+  if (value === null) {
+    return 'null'
+  }
+  if (Array.isArray(value)) {
+    return 'array'
+  }
+  return typeof value
 }

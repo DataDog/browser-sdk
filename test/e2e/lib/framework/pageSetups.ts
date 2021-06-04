@@ -149,5 +149,11 @@ function formatLogsConfiguration(configuration: LogsUserConfiguration) {
 }
 
 function formatRumConfiguration(configuration: RumUserConfiguration) {
-  return JSON.stringify(configuration).replace('"LOCATION_ORIGIN"', 'location.origin')
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  let result = JSON.stringify(configuration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
+  result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
+  if (configuration.beforeSend) {
+    result = result.replace('"BEFORE_SEND"', configuration.beforeSend.toString())
+  }
+  return result
 }
