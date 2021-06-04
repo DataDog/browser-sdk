@@ -90,6 +90,27 @@ describe('limitModification', () => {
     })
   })
 
+  it('should allow emptying an object by setting it to null, undefined or deleting it', () => {
+    const object: any = {
+      a: { foo: 'a' },
+      b: { foo: 'b' },
+      c: { foo: 'c' },
+    }
+    const modifier = (candidate: any) => {
+      candidate.a = null
+      candidate.b = undefined
+      delete candidate.c
+    }
+
+    limitModification(object, Object.keys(object), modifier)
+
+    expect(object).toEqual({
+      a: {},
+      b: {},
+      c: {},
+    })
+  })
+
   it('should not allow structural change of the object', () => {
     const object = { foo: { bar: 'bar' }, qux: 'qux' }
     const modifier = (candidate: any) => {

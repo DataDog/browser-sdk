@@ -103,6 +103,60 @@ describe('rum assembly', () => {
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
 
+        it('should empty the context field if set to null', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context = null
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+            customerContext: { foo: 'bar' },
+          })
+
+          expect(serverRumEvents[0].context).toBeUndefined()
+        })
+
+        it('should empty the context field if set to undefined', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                event.context = undefined
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+            customerContext: { foo: 'bar' },
+          })
+
+          expect(serverRumEvents[0].context).toBeUndefined()
+        })
+
+        it('should empty the context field if deleted', () => {
+          const { lifeCycle } = setupBuilder
+            .withConfiguration({
+              beforeSend: (event) => {
+                delete event.context
+              },
+            })
+            .build()
+
+          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
+            startTime: 0 as RelativeTime,
+            customerContext: { foo: 'bar' },
+          })
+
+          expect(serverRumEvents[0].context).toBeUndefined()
+        })
+
         it('should define the context field even if the global context is empty', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({
@@ -139,7 +193,7 @@ describe('rum assembly', () => {
           const { lifeCycle } = setupBuilder
             .withConfiguration({
               beforeSend: (event) => {
-                event.context = null
+                event.context = 1
               },
             })
             .build()
