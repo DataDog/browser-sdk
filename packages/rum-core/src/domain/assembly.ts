@@ -100,7 +100,7 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
-          if (!Number.isInteger(serverRumEvent.date)) {
+          if (typeof serverRumEvent.date !== 'number') {
             addMonitoringMessage('invalid date', {
               debug: {
                 eventType: serverRumEvent.type,
