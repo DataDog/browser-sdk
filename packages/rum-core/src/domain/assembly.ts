@@ -9,6 +9,8 @@ import {
   timeStampNow,
   currentDrift,
   display,
+  addMonitoringMessage,
+  relativeNow,
 } from '@datadog/browser-core'
 import {
   CommonContext,
@@ -98,6 +100,18 @@ export function startRumAssembly(
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
+          if (!Number.isInteger(serverRumEvent.date)) {
+            addMonitoringMessage('invalid date', {
+              debug: {
+                eventType: serverRumEvent.type,
+                eventTimeStamp: serverRumEvent.date,
+                eventRelativeTime: Math.round(startTime),
+                timeStampNow: timeStampNow(),
+                relativeNow: Math.round(relativeNow()),
+                drift: currentDrift(),
+              },
+            })
+          }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
       }
