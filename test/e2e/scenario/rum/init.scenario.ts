@@ -55,3 +55,20 @@ describe('before init API calls', () => {
       expect(afterManualViewAction.view.id).toBe(manualView.view.id)
     })
 })
+
+describe('beforeSend', () => {
+  createTest('allows to edit non-view events context')
+    .withRum({
+      beforeSend(event) {
+        event.context!.foo = 'bar'
+      },
+    })
+    .run(async ({ events }) => {
+      await flushEvents()
+
+      const initialView = events.rumViews[0]
+      expect(initialView.context).toBeUndefined()
+      const initialDocument = events.rumResources[0]
+      expect(initialDocument.context).toEqual({ foo: 'bar' })
+    })
+})
