@@ -13,8 +13,11 @@ describe('error collection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle }) => {
-        ;({ addError } = doStartErrorCollection(lifeCycle))
+      .withForegroundContexts({
+        getInForeground: () => true,
+      })
+      .beforeBuild(({ lifeCycle, foregroundContexts }) => {
+        ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts))
       })
   })
 
@@ -37,6 +40,7 @@ describe('error collection', () => {
         rawRumEvent: {
           date: jasmine.any(Number),
           error: {
+            id: jasmine.any(String),
             message: 'foo',
             resource: undefined,
             source: ErrorSource.CUSTOM,
@@ -44,6 +48,9 @@ describe('error collection', () => {
             type: 'Error',
           },
           type: RumEventType.ERROR,
+          view: {
+            in_foreground: true,
+          },
         },
         savedCommonContext: undefined,
         startTime: 1234,
@@ -116,6 +123,7 @@ describe('error collection', () => {
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         error: {
+          id: jasmine.any(String),
           message: 'hello',
           resource: {
             method: 'GET',
@@ -125,6 +133,9 @@ describe('error collection', () => {
           source: ErrorSource.NETWORK,
           stack: 'bar',
           type: 'foo',
+        },
+        view: {
+          in_foreground: true,
         },
         type: RumEventType.ERROR,
       })

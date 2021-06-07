@@ -1,10 +1,10 @@
 import { datadogLogs, LogsUserConfiguration } from '@datadog/browser-logs'
-import { datadogRum, RumUserConfiguration } from '@datadog/browser-rum-recorder'
+import { datadogRum } from '@datadog/browser-rum-recorder'
 
 declare global {
   interface Window {
     LOGS_CONFIG?: LogsUserConfiguration
-    RUM_CONFIG?: RumUserConfiguration
+    RUM_INIT?: () => void
   }
 }
 
@@ -13,8 +13,8 @@ if (typeof window !== 'undefined') {
     datadogLogs.init(window.LOGS_CONFIG)
   }
 
-  if (window.RUM_CONFIG) {
-    datadogRum.init(window.RUM_CONFIG)
+  if (window.RUM_INIT) {
+    window.RUM_INIT()
   }
 } else {
   // compat test

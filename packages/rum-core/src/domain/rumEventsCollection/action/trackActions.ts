@@ -13,6 +13,7 @@ import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
+import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -44,8 +45,8 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
-export function trackActions(lifeCycle: LifeCycle) {
-  const action = startActionManagement(lifeCycle)
+export function trackActions(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
+  const action = startActionManagement(lifeCycle, domMutationObservable)
 
   // New views trigger the discard of the current pending Action
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
@@ -77,7 +78,7 @@ export function trackActions(lifeCycle: LifeCycle) {
   }
 }
 
-function startActionManagement(lifeCycle: LifeCycle) {
+function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
   let currentAction: PendingAutoAction | undefined
   let currentIdlePageActivitySubscription: { stop: () => void }
 
@@ -90,7 +91,7 @@ function startActionManagement(lifeCycle: LifeCycle) {
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name)
 
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, (params) => {
+      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
         if (params.hadActivity) {
           pendingAutoAction.complete(params.endTime)
         } else {

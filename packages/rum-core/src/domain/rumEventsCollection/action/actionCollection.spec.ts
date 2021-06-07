@@ -13,8 +13,11 @@ describe('actionCollection', () => {
       .withConfiguration({
         isEnabled: () => true,
       })
-      .beforeBuild(({ lifeCycle, configuration }) => {
-        ;({ addAction } = startActionCollection(lifeCycle, configuration))
+      .withForegroundContexts({
+        getInForeground: () => true,
+      })
+      .beforeBuild(({ lifeCycle, configuration, domMutationObservable, foregroundContexts }) => {
+        ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts))
       })
   })
 
@@ -57,6 +60,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      view: {
+        in_foreground: true,
+      },
     })
   })
 
@@ -71,6 +77,7 @@ describe('actionCollection', () => {
     expect(rawRumEvents[0].startTime).toBe(1234)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
+        id: jasmine.any(String),
         target: {
           name: 'foo',
         },
@@ -78,6 +85,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      view: {
+        in_foreground: true,
+      },
     })
   })
 })

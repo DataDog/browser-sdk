@@ -1,3 +1,10 @@
+import { isIE } from '../../../../core/test/specHelper'
+import {
+  InputPrivacyMode,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+} from '../../constants'
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
@@ -5,6 +12,8 @@ import {
   setSerializedNode,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
+  maskValue,
+  getElementInputValue,
 } from './serializationUtils'
 
 describe('serialized Node storage in DOM Nodes', () => {
@@ -129,6 +138,12 @@ describe('makeSrcsetUrlsAbsolute', () => {
 })
 
 describe('makeUrlAbsolute', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
   it('makes an absolute URL from a relative path', () => {
     expect(makeUrlAbsolute('bar', 'http://example.org/foo/')).toBe('http://example.org/foo/bar')
   })
@@ -139,5 +154,107 @@ describe('makeUrlAbsolute', () => {
 
   it('does not change data URIs', () => {
     expect(makeUrlAbsolute('data:image/gif;base64,ABC', 'http://example.org/foo/')).toBe('data:image/gif;base64,ABC')
+  })
+
+  it('returns the original value if it fails to be parsed as an URL', () => {
+    expect(makeUrlAbsolute('http://', 'http://example.org/foo/')).toBe('http://')
+  })
+})
+
+describe('getElementInputValue', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
+  it('returns "undefined" for a non-input element', () => {
+    expect(getElementInputValue(document.createElement('div'))).toBeUndefined()
+  })
+
+  it('returns the value of a <input>', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    expect(getElementInputValue(input)).toBe('foo')
+  })
+
+  it('does not return the value of a <input type="password">', () => {
+    const input = document.createElement('input')
+    input.type = 'password'
+    input.value = 'foo'
+    expect(getElementInputValue(input)).toBeUndefined()
+  })
+
+  it('does not return the value of a <input> with a IGNORED privacy mode', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    wrapInIgnoredParent(input)
+    expect(getElementInputValue(input)).toBeUndefined()
+  })
+
+  it('always returns the value of a <select>', () => {
+    const select = document.createElement('select')
+    const option = document.createElement('option')
+    option.value = 'foo'
+    select.appendChild(option)
+    select.value = 'foo'
+    wrapInIgnoredParent(select)
+    expect(getElementInputValue(select)).toBe('foo')
+  })
+
+  it('always returns the value of a <option>', () => {
+    const option = document.createElement('option')
+    option.value = 'foo'
+    wrapInIgnoredParent(option)
+    expect(getElementInputValue(option)).toBe('foo')
+  })
+
+  it('always returns the value of a <input type="button">', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    input.type = 'button'
+    wrapInIgnoredParent(input)
+    expect(getElementInputValue(input)).toBe('foo')
+  })
+
+  it('always returns the value of a <input type="submit">', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    input.type = 'submit'
+    wrapInIgnoredParent(input)
+    expect(getElementInputValue(input)).toBe('foo')
+  })
+
+  it('always returns the value of a <input type="reset">', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    input.type = 'reset'
+    wrapInIgnoredParent(input)
+    expect(getElementInputValue(input)).toBe('foo')
+  })
+
+  it('respects the provided ancestor InputPrivacyMode', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    expect(getElementInputValue(input, InputPrivacyMode.IGNORED)).toBeUndefined()
+  })
+
+  it('masks the value according to the InputPrivacyMode', () => {
+    const input = document.createElement('input')
+    input.value = 'foo'
+    input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+    expect(getElementInputValue(input)).toBe('***')
+  })
+
+  function wrapInIgnoredParent(element: Element) {
+    const parent = document.createElement('div')
+    parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+    parent.appendChild(element)
+  }
+})
+
+describe('maskValue', () => {
+  it('replaces each characters by an asterisk', () => {
+    expect(maskValue('foo')).toBe('***')
   })
 })

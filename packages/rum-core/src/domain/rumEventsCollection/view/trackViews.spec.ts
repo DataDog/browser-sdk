@@ -1,4 +1,12 @@
-import { Duration, RelativeTime, TimeStamp, timeStampNow, display } from '@datadog/browser-core'
+import {
+  ClocksState,
+  Duration,
+  RelativeTime,
+  TimeStamp,
+  timeStampNow,
+  display,
+  relativeToClocks,
+} from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
@@ -48,12 +56,12 @@ describe('rum view referrer', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
           initialViewCreatedEvent = event
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
     createSpy = jasmine.createSpy('create')
   })
@@ -114,13 +122,13 @@ describe('rum track renew session', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ lifeCycle, location }) => {
+      .beforeBuild(({ lifeCycle, location, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
         const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
           initialViewId = id
           subscription.unsubscribe()
         })
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -161,9 +169,9 @@ describe('rum track loading type', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -197,9 +205,9 @@ describe('rum track view is active', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -237,9 +245,9 @@ describe('rum view timings', () => {
 
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -365,9 +373,9 @@ describe('rum track custom timings', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        ;({ addTiming } = trackViews(location, lifeCycle))
+        ;({ addTiming } = trackViews(location, lifeCycle, domMutationObservable))
       })
   })
 
@@ -462,9 +470,9 @@ describe('track hasReplay', () => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle }) => {
+      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
         lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle)
+        return trackViews(location, lifeCycle, domMutationObservable)
       })
   })
 
@@ -517,5 +525,68 @@ describe('track hasReplay', () => {
     history.pushState({}, '', '/bar')
 
     expect(getViewEvent(2).hasReplay).toBe(false)
+  })
+})
+
+describe('rum start view', () => {
+  let setupBuilder: TestSetupBuilder
+  let handler: jasmine.Spy
+  let getViewEvent: (index: number) => ViewEvent
+  let getHandledCount: () => number
+  let startView: (name?: string, endClocks?: ClocksState) => void
+
+  beforeEach(() => {
+    ;({ getHandledCount, getViewEvent, handler } = spyOnViews())
+
+    setupBuilder = setup().beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
+      lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
+      ;({ startView } = trackViews(location, lifeCycle, domMutationObservable))
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should start a new view', () => {
+    const { clock } = setupBuilder.withFakeClock().build()
+    expect(getHandledCount()).toBe(1)
+    const initialViewId = getViewEvent(0).id
+
+    clock.tick(10)
+    startView()
+
+    expect(getHandledCount()).toBe(3)
+
+    expect(getViewEvent(1).id).toBe(initialViewId)
+    expect(getViewEvent(1).isActive).toBe(false)
+    expect(getViewEvent(1).startClocks.relative).toBe(0 as RelativeTime)
+    expect(getViewEvent(1).duration).toBe(10 as Duration)
+
+    expect(getViewEvent(2).id).not.toBe(initialViewId)
+    expect(getViewEvent(2).isActive).toBe(true)
+    expect(getViewEvent(2).startClocks.relative).toBe(10 as RelativeTime)
+  })
+
+  it('should name the view', () => {
+    setupBuilder.build()
+
+    startView()
+    startView('foo')
+    startView('bar')
+
+    expect(getViewEvent(2).name).toBeUndefined()
+    expect(getViewEvent(4).name).toBe('foo')
+    expect(getViewEvent(6).name).toBe('bar')
+  })
+
+  it('should use the provided clock to stop the current view and start the new one', () => {
+    const { clock } = setupBuilder.withFakeClock().build()
+
+    clock.tick(100)
+    startView('foo', relativeToClocks(50 as RelativeTime))
+
+    expect(getViewEvent(1).duration).toBe(50 as Duration)
+    expect(getViewEvent(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 })

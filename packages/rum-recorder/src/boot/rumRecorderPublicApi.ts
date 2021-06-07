@@ -1,4 +1,4 @@
-import { Configuration, monitor, noop } from '@datadog/browser-core'
+import { Configuration, monitor, noop, runOnReadyState } from '@datadog/browser-core'
 import { LifeCycleEventType, makeRumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
 
 import { startRecording } from './recorder'
@@ -12,11 +12,15 @@ export interface RumRecorderUserConfiguration extends RumUserConfiguration {
 
 const enum RecorderStatus {
   Stopped,
+  Starting,
   Started,
 }
 type RecorderState =
   | {
       status: RecorderStatus.Stopped
+    }
+  | {
+      status: RecorderStatus.Starting
     }
   | {
       status: RecorderStatus.Started
@@ -37,30 +41,41 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     const { lifeCycle, parentContexts, configuration, session } = startRumResult
 
     startSessionReplayRecordingImpl = () => {
-      if (state.status === RecorderStatus.Started) {
+      if (state.status !== RecorderStatus.Stopped) {
         return
       }
 
-      const { stop: stopRecording } = startRecordingImpl(
-        lifeCycle,
-        userConfiguration.applicationId,
-        configuration,
-        session,
-        parentContexts
-      )
-      state = {
-        status: RecorderStatus.Started,
-        stopRecording,
-      }
-      lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+      state = { status: RecorderStatus.Starting }
+
+      runOnReadyState('complete', () => {
+        if (state.status !== RecorderStatus.Starting) {
+          return
+        }
+
+        const { stop: stopRecording } = startRecordingImpl(
+          lifeCycle,
+          userConfiguration.applicationId,
+          configuration,
+          session,
+          parentContexts
+        )
+        state = {
+          status: RecorderStatus.Started,
+          stopRecording,
+        }
+        lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+      })
     }
 
     stopSessionReplayRecordingImpl = () => {
-      if (state.status !== RecorderStatus.Started) {
+      if (state.status === RecorderStatus.Stopped) {
         return
       }
 
-      state.stopRecording()
+      if (state.status === RecorderStatus.Started) {
+        state.stopRecording()
+      }
+
       state = {
         status: RecorderStatus.Stopped,
       }

@@ -1,11 +1,18 @@
 import { isIE } from '../../../../core/test/specHelper'
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
+import {
+  InputPrivacyMode,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+} from '../../constants'
 import { hasSerializedNode } from './serializationUtils'
-import { serializeDocument, serializeNodeWithId } from './serialize'
+import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
 import { ElementNode, NodeType } from './types'
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS: SerializeOptions = {
   document,
+  ancestorInputPrivacyMode: InputPrivacyMode.NONE,
 }
 
 describe('serializeNodeWithId', () => {
@@ -175,6 +182,30 @@ describe('serializeNodeWithId', () => {
       )
     })
 
+    it('does not serialize <input type="password"> values set via property setter', () => {
+      const input = document.createElement('input')
+      input.type = 'password'
+      input.value = 'toto'
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { type: 'password' },
+        })
+      )
+    })
+
+    it('does not serialize <input type="password"> values set via attribute setter', () => {
+      const input = document.createElement('input')
+      input.type = 'password'
+      input.setAttribute('value', 'toto')
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: { type: 'password' },
+        })
+      )
+    })
+
     it('serializes <input type="checkbox"> elements checked state', () => {
       const checkbox = document.createElement('input')
 
@@ -216,6 +247,69 @@ describe('serializeNodeWithId', () => {
       expect((serializeNodeWithId(document.createElement('foo:bar'), DEFAULT_OPTIONS) as ElementNode).tagName).toEqual(
         'div'
       )
+    })
+
+    describe('input privacy mode', () => {
+      it('replaces <input> values with asterisks for masked mode', () => {
+        const input = document.createElement('input')
+        input.value = 'toto'
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+
+        expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+          jasmine.objectContaining({
+            attributes: {
+              [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
+              value: '****',
+            },
+          })
+        )
+      })
+
+      it('respects ancestor privacy mode', () => {
+        const parent = document.createElement('div')
+        const input = document.createElement('input')
+        input.value = 'toto'
+        parent.appendChild(input)
+        parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+
+        expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
+          jasmine.objectContaining({
+            attributes: { value: '****' },
+          })
+        )
+      })
+    })
+
+    it('does not serialize <input> values for ignored mode', () => {
+      const input = document.createElement('input')
+      input.value = 'toto'
+      input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
+        jasmine.objectContaining({
+          attributes: {
+            [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+          },
+        })
+      )
+    })
+
+    it('ignores the privacy mode for <input type="button">', () => {
+      const button = document.createElement('input')
+      button.type = 'button'
+      button.value = 'toto'
+      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
+    })
+
+    it('ignores the privacy mode for <input type="submit">', () => {
+      const button = document.createElement('input')
+      button.type = 'submit'
+      button.value = 'toto'
+      button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
+
+      expect((serializeNodeWithId(button, DEFAULT_OPTIONS)! as ElementNode).attributes.value).toEqual('toto')
     })
   })
 

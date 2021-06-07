@@ -9,6 +9,8 @@ import {
   timeStampNow,
   currentDrift,
   display,
+  addMonitoringMessage,
+  relativeNow,
 } from '@datadog/browser-core'
 import {
   CommonContext,
@@ -34,7 +36,8 @@ enum SessionType {
   USER = 'user',
 }
 
-const FIELDS_WITH_SENSITIVE_DATA = [
+const VIEW_EVENTS_MODIFIABLE_FIELD_PATHS = [
+  // Fields with sensitive data
   'view.url',
   'view.referrer',
   'action.target.name',
@@ -43,6 +46,14 @@ const FIELDS_WITH_SENSITIVE_DATA = [
   'error.resource.url',
   'resource.url',
 ]
+
+const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
+  ...VIEW_EVENTS_MODIFIABLE_FIELD_PATHS,
+  // User-customizable field
+  'context',
+]
+
+type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
 export function startRumAssembly(
   applicationId: string,
@@ -83,20 +94,31 @@ export function startRumAssembly(
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
 
-        const context = combine(commonContext.context, customerContext)
-        if (!isEmptyObject(context)) {
-          serverRumEvent.context = context
-        }
+        serverRumEvent.context = combine(commonContext.context, customerContext)
 
         if (!('has_replay' in serverRumEvent.session)) {
-          ;(serverRumEvent.session as { has_replay?: boolean }).has_replay = commonContext.hasReplay
+          ;(serverRumEvent.session as Mutable<RumEvent['session']>).has_replay = commonContext.hasReplay
         }
 
         if (!isEmptyObject(commonContext.user)) {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          ;(serverRumEvent.usr as RumEvent['usr']) = commonContext.user as User & Context
+          ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
         if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
+          if (isEmptyObject(serverRumEvent.context)) {
+            delete serverRumEvent.context
+          }
+          if (typeof serverRumEvent.date !== 'number') {
+            addMonitoringMessage('invalid date', {
+              debug: {
+                eventType: serverRumEvent.type,
+                eventTimeStamp: serverRumEvent.date,
+                eventRelativeTime: Math.round(startTime),
+                timeStampNow: timeStampNow(),
+                relativeNow: Math.round(relativeNow()),
+                drift: currentDrift(),
+              },
+            })
+          }
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
       }
@@ -110,7 +132,11 @@ function shouldSend(
   errorFilter: ErrorFilter
 ) {
   if (beforeSend) {
-    const result = limitModification(event, FIELDS_WITH_SENSITIVE_DATA, beforeSend)
+    const result = limitModification(
+      event,
+      event.type === RumEventType.VIEW ? VIEW_EVENTS_MODIFIABLE_FIELD_PATHS : OTHER_EVENTS_MODIFIABLE_FIELD_PATHS,
+      beforeSend
+    )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false
     }

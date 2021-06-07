@@ -13,7 +13,7 @@ export interface RawRumResourceEvent {
   type: RumEventType.RESOURCE
   resource: {
     type: ResourceType
-    id?: string // only for traced requests
+    id: string
     duration: ServerDuration
     url: string
     method?: string
@@ -46,10 +46,14 @@ export interface RawRumErrorEvent {
       status_code: number
       method: string
     }
+    id: string
     type?: string
     stack?: string
     source: ErrorSource
     message: string
+  }
+  view?: {
+    in_foreground: boolean
   }
 }
 
@@ -78,6 +82,7 @@ export interface RawRumViewEvent {
     action: Count
     long_task: Count
     resource: Count
+    in_foreground_periods?: InForegroundPeriod[]
   }
   session: {
     has_replay: true | undefined
@@ -85,6 +90,11 @@ export interface RawRumViewEvent {
   _dd: {
     document_version: number
   }
+}
+
+export interface InForegroundPeriod {
+  start: ServerDuration
+  duration: ServerDuration
 }
 
 export enum ViewLoadingType {
@@ -104,6 +114,7 @@ export interface RawRumLongTaskEvent {
   date: TimeStamp
   type: RumEventType.LONG_TASK
   long_task: {
+    id: string
     duration: ServerDuration
   }
 }
@@ -112,7 +123,7 @@ export interface RawRumActionEvent {
   date: TimeStamp
   type: RumEventType.ACTION
   action: {
-    id?: string
+    id: string
     type: ActionType
     loading_time?: ServerDuration
     error?: Count
@@ -121,6 +132,9 @@ export interface RawRumActionEvent {
     target: {
       name: string
     }
+  }
+  view?: {
+    in_foreground: boolean
   }
 }
 

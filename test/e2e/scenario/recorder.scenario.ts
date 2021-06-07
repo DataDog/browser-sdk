@@ -63,14 +63,16 @@ describe('recorder', () => {
     })
 
   describe('full snapshot', () => {
-    createTest('obfuscate blocks')
+    createTest('obfuscate elements')
       .withSetup(bundleSetup)
       .withRumRecorder()
       .withBody(
         html`
-          <p id="foo">foo</p>
-          <p id="bar" data-dd-privacy="hidden">bar</p>
-          <p id="baz" class="dd-privacy-hidden baz">baz</p>
+          <p id="not-obfuscated">foo</p>
+          <p id="hidden-by-attribute" data-dd-privacy="hidden">bar</p>
+          <p id="hidden-by-classname" class="dd-privacy-hidden baz">baz</p>
+          <input id="input-ignored" data-dd-privacy="input-ignored" value="toto" />
+          <input id="input-masked" data-dd-privacy="input-masked" value="toto" />
         `
       )
       .run(async ({ events }) => {
@@ -80,20 +82,28 @@ describe('recorder', () => {
 
         const fullSnapshot = findFullSnapshot(getFirstSegment(events))!
 
-        const fooNode = findElementWithIdAttribute(fullSnapshot.data.node, 'foo')
-        expect(fooNode).toBeTruthy()
-        expect(findTextContent(fooNode!)).toBe('foo')
+        const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
+        expect(node).toBeTruthy()
+        expect(findTextContent(node!)).toBe('foo')
 
-        const barNode = findElementWithIdAttribute(fullSnapshot.data.node, 'bar')
-        expect(barNode).toBeTruthy()
-        expect(barNode!.attributes['data-dd-privacy']).toBe('hidden')
-        expect(barNode!.childNodes.length).toBe(0)
+        const hiddenNodeByAttribute = findElementWithIdAttribute(fullSnapshot.data.node, 'hidden-by-attribute')
+        expect(hiddenNodeByAttribute).toBeTruthy()
+        expect(hiddenNodeByAttribute!.attributes['data-dd-privacy']).toBe('hidden')
+        expect(hiddenNodeByAttribute!.childNodes.length).toBe(0)
 
-        const bazNode = findElementWithIdAttribute(fullSnapshot.data.node, 'baz')
-        expect(bazNode).toBeTruthy()
-        expect(bazNode!.attributes.class).toBe('dd-privacy-hidden baz')
-        expect(bazNode!.attributes['data-dd-privacy']).toBe('hidden')
-        expect(bazNode!.childNodes.length).toBe(0)
+        const hiddenNodeByClassName = findElementWithIdAttribute(fullSnapshot.data.node, 'hidden-by-classname')
+        expect(hiddenNodeByClassName).toBeTruthy()
+        expect(hiddenNodeByClassName!.attributes.class).toBe('dd-privacy-hidden baz')
+        expect(hiddenNodeByClassName!.attributes['data-dd-privacy']).toBe('hidden')
+        expect(hiddenNodeByClassName!.childNodes.length).toBe(0)
+
+        const inputIgnored = findElementWithIdAttribute(fullSnapshot.data.node, 'input-ignored')
+        expect(inputIgnored).toBeTruthy()
+        expect(inputIgnored!.attributes.value).toBeUndefined()
+
+        const inputMasked = findElementWithIdAttribute(fullSnapshot.data.node, 'input-masked')
+        expect(inputMasked).toBeTruthy()
+        expect(inputMasked!.attributes.value).toBe('****')
       })
   })
 
@@ -470,25 +480,25 @@ describe('recorder', () => {
 
         const textInputRecords = filterRecordsByIdAttribute(segment, 'text-input')
         expect(textInputRecords.length).toBeGreaterThanOrEqual(4)
-        expect(textInputRecords[textInputRecords.length - 1].data.text).toBe('test')
+        expect((textInputRecords[textInputRecords.length - 1].data as { text?: string }).text).toBe('test')
 
         const radioInputRecords = filterRecordsByIdAttribute(segment, 'radio-input')
         expect(radioInputRecords.length).toBe(1)
-        expect(radioInputRecords[0].data.text).toBe('on')
-        expect(radioInputRecords[0].data.isChecked).toBe(true)
+        expect((radioInputRecords[0].data as { text?: string }).text).toBe(undefined)
+        expect((radioInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
         const checkboxInputRecords = filterRecordsByIdAttribute(segment, 'checkbox-input')
         expect(checkboxInputRecords.length).toBe(1)
-        expect(checkboxInputRecords[0].data.text).toBe('on')
-        expect(checkboxInputRecords[0].data.isChecked).toBe(true)
+        expect((checkboxInputRecords[0].data as { text?: string }).text).toBe(undefined)
+        expect((checkboxInputRecords[0].data as { isChecked?: boolean }).isChecked).toBe(true)
 
         const textareaRecords = filterRecordsByIdAttribute(segment, 'textarea')
         expect(textareaRecords.length).toBeGreaterThanOrEqual(4)
-        expect(textareaRecords[textareaRecords.length - 1].data.text).toBe('textarea test')
+        expect((textareaRecords[textareaRecords.length - 1].data as { text?: string }).text).toBe('textarea test')
 
         const selectRecords = filterRecordsByIdAttribute(segment, 'select')
         expect(selectRecords.length).toBe(1)
-        expect(selectRecords[0].data.text).toBe('2')
+        expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
         function filterRecordsByIdAttribute(segment: Segment, idAttribute: string) {
           const fullSnapshot = findFullSnapshot(segment)!
@@ -531,7 +541,38 @@ describe('recorder', () => {
         const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
 
         expect(inputRecords.length).toBeGreaterThanOrEqual(3) // 4 on Safari, 3 on others
-        expect((inputRecords[inputRecords.length - 1].data as InputData).text).toBe('foo')
+        expect((inputRecords[inputRecords.length - 1].data as { text?: string }).text).toBe('foo')
+      })
+
+    createTest('replace masked values by asterisks')
+      .withSetup(bundleSetup)
+      .withRumRecorder()
+      .withBody(
+        html`
+          <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
+          <input type="text" id="by-classname" class="dd-privacy-input-masked" />
+        `
+      )
+      .run(async ({ events }) => {
+        const firstInput = await $('#by-data-attribute')
+        await firstInput.setValue('foo')
+
+        const secondInput = await $('#by-classname')
+        await secondInput.setValue('bar')
+
+        await flushEvents()
+
+        expect(events.sessionReplay.length).toBe(1)
+
+        const segment = getFirstSegment(events)
+
+        const inputRecords = findAllIncrementalSnapshots(segment, IncrementalSource.Input)
+
+        expect(inputRecords.length).toBeGreaterThan(0)
+
+        expect(inputRecords.every((inputRecord) => /^\**$/.test((inputRecord.data as { text: string }).text))).toBe(
+          true
+        )
       })
   })
 

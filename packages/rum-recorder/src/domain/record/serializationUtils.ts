@@ -1,4 +1,6 @@
 import { buildUrl } from '@datadog/browser-core'
+import { InputPrivacyMode } from '../../constants'
+import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
 export interface NodeWithSerializedNode extends Node {
@@ -72,5 +74,56 @@ export function makeSrcsetUrlsAbsolute(attributeValue: string, baseUrl: string) 
 }
 
 export function makeUrlAbsolute(url: string, baseUrl: string): string {
-  return buildUrl(url.trim(), baseUrl).href
+  try {
+    return buildUrl(url.trim(), baseUrl).href
+  } catch (_) {
+    return url
+  }
+}
+
+/**
+ * Get the element "value" to be serialized as an attribute or an input update record. It respects
+ * the input privacy mode of the element. An 'ancestorInputPrivacyMode' can be provided (if known)
+ * to avoid iterating over the element ancestors when looking for the input privacy mode.
+ */
+export function getElementInputValue(element: Element, ancestorInputPrivacyMode?: InputPrivacyMode) {
+  const tagName = element.tagName
+  if (tagName === 'OPTION' || tagName === 'SELECT') {
+    // Always use the option and select value, as they are useful to display the currently selected
+    // option during replay. They can still be hidden via the "hidden" privacy attribute or class
+    // name.
+    return (element as HTMLOptionElement | HTMLSelectElement).value
+  }
+
+  if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+    return
+  }
+
+  const value = (element as HTMLInputElement | HTMLTextAreaElement).value
+  const type = (element as HTMLInputElement | HTMLTextAreaElement).type
+
+  if (type === 'button' || type === 'submit' || type === 'reset') {
+    // Always use button-like element values, as they are used during replay to display their label.
+    // They can still be hidden via the "hidden" privacy attribute or class name.
+    return value
+  }
+
+  const inputPrivacyMode = ancestorInputPrivacyMode
+    ? getNodeInputPrivacyMode(element, ancestorInputPrivacyMode)
+    : getNodeOrAncestorsInputPrivacyMode(element)
+
+  if (
+    inputPrivacyMode === InputPrivacyMode.IGNORED ||
+    // Never use the radio and checkbox value, as they are not useful during replay.
+    type === 'radio' ||
+    type === 'checkbox'
+  ) {
+    return
+  }
+
+  return inputPrivacyMode === InputPrivacyMode.MASKED ? maskValue(value) : value
+}
+
+export function maskValue(value: string) {
+  return value.replace(/./g, '*')
 }
