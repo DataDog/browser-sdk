@@ -50,6 +50,11 @@ cmd_build_json2type () {
   set -e
 }
 
+cmd_release () {
+  [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
+  yarn lerna version --exact
+}
+
 cmd_version () {
   node ./scripts/generate-changelog.js
   # keep test app lockfile up to date
