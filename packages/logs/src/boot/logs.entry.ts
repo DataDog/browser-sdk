@@ -11,7 +11,7 @@ import {
   display,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { startLogs, LogsUserConfiguration } from './logs'
+import { startLogs, LogsUserConfiguration } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType

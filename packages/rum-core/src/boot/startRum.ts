@@ -1,11 +1,11 @@
-import { combine, commonInit, Configuration } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
+import { startForegroundContexts } from '../domain/foregroundContexts'
 import { startInternalContext } from '../domain/internalContext'
 import { LifeCycle } from '../domain/lifeCycle'
 import { startParentContexts } from '../domain/parentContexts'
-import { startForegroundContexts } from '../domain/foregroundContexts'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/rumEventsCollection/action/actionCollection'
 import { startErrorCollection } from '../domain/rumEventsCollection/error/errorCollection'
@@ -15,13 +15,16 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-
-import { buildEnv } from './buildEnv'
 import { RumUserConfiguration } from './rumPublicApi'
 
-export function startRum(userConfiguration: RumUserConfiguration, getCommonContext: () => CommonContext) {
+export function startRum(
+  userConfiguration: RumUserConfiguration,
+  configuration: Configuration,
+  internalMonitoring: InternalMonitoring,
+  getCommonContext: () => CommonContext,
+  initialViewName?: string
+) {
   const lifeCycle = new LifeCycle()
-  const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
   const session = startRumSession(configuration, lifeCycle)
   const domMutationObservable = createDOMMutationObservable()
 
@@ -45,8 +48,14 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
 
   startLongTaskCollection(lifeCycle)
   startResourceCollection(lifeCycle, session)
-
-  const { addTiming, startView } = startViewCollection(lifeCycle, location, domMutationObservable, foregroundContexts)
+  const { addTiming, startView } = startViewCollection(
+    lifeCycle,
+    configuration,
+    location,
+    domMutationObservable,
+    foregroundContexts,
+    initialViewName
+  )
   const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
   const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
@@ -60,7 +69,6 @@ export function startRum(userConfiguration: RumUserConfiguration, getCommonConte
     addError,
     addTiming,
     startView,
-    configuration,
     lifeCycle,
     parentContexts,
     session,

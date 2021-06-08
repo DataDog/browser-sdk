@@ -16,8 +16,8 @@ describe('viewCollection', () => {
       .withForegroundContexts({
         getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts, domMutationObservable }) => {
-        startViewCollection(lifeCycle, location, domMutationObservable, foregroundContexts)
+      .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
+        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts)
       })
   })
 

@@ -8,7 +8,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addError: () => undefined,
   addTiming: () => undefined,
   startView: () => undefined,
-  configuration: { isEnabled: () => true } as any,
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
@@ -448,19 +447,27 @@ describe('rum public api', () => {
     })
   })
 
-  describe('startView', () => {
+  describe('trackViews mode', () => {
+    const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION, enableExperimentalFeatures: ['view-renaming'] }
+    const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
+
+    let startRumSpy: jasmine.Spy<StartRum>
     let startViewSpy: jasmine.Spy<ReturnType<StartRum>['startView']>
+    let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
     beforeEach(() => {
-      startViewSpy = jasmine.createSpy()
+      startViewSpy = jasmine.createSpy('startView')
+      addTimingSpy = jasmine.createSpy('addTiming')
       displaySpy = spyOn(display, 'error')
-      rumPublicApi = makeRumPublicApi(() => ({
+      startRumSpy = jasmine.createSpy('startRum').and.returnValue({
         ...noopStartRum(),
+        addTiming: addTimingSpy,
         startView: startViewSpy,
-      }))
+      })
+      rumPublicApi = makeRumPublicApi(startRumSpy)
       setupBuilder = setup()
     })
 
@@ -468,34 +475,121 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    it('should allow to start view before init', () => {
-      const { clock } = setupBuilder.withFakeClock().build()
+    describe('when auto', () => {
+      it('should start rum at init', () => {
+        rumPublicApi.init(AUTO_CONFIGURATION)
 
-      clock.tick(10)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startView('foo')
+        expect(startRumSpy).toHaveBeenCalled()
+      })
 
-      expect(startViewSpy).not.toHaveBeenCalled()
+      it('before init startView should be handled after init', () => {
+        const { clock } = setupBuilder.withFakeClock().build()
 
-      clock.tick(20)
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        clock.tick(10)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
 
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
-        relative: 10 as RelativeTime,
-        timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
+        expect(startViewSpy).not.toHaveBeenCalled()
+
+        clock.tick(20)
+        rumPublicApi.init(AUTO_CONFIGURATION)
+
+        expect(startViewSpy).toHaveBeenCalled()
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+        expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
+          relative: 10 as RelativeTime,
+          timeStamp: (jasmine.any(Number) as unknown) as TimeStamp,
+        })
+      })
+
+      it('after init startView should be handle immediately', () => {
+        rumPublicApi.init(AUTO_CONFIGURATION)
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
+
+        expect(startViewSpy).toHaveBeenCalled()
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
+        expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
+        expect(displaySpy).not.toHaveBeenCalled()
       })
     })
 
-    it('should to start view', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+    describe('when views are tracked manually', () => {
+      it('should not start rum at init', () => {
+        rumPublicApi.init(MANUAL_CONFIGURATION)
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(rumPublicApi as any).startView('foo')
+        expect(startRumSpy).not.toHaveBeenCalled()
+      })
 
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
-      expect(displaySpy).not.toHaveBeenCalled()
+      it('before init startView should start rum', () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
+        expect(startRumSpy).not.toHaveBeenCalled()
+        expect(startViewSpy).not.toHaveBeenCalled()
+
+        rumPublicApi.init(MANUAL_CONFIGURATION)
+        expect(startRumSpy).toHaveBeenCalled()
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startViewSpy).not.toHaveBeenCalled()
+      })
+
+      it('after init startView should start rum', () => {
+        rumPublicApi.init(MANUAL_CONFIGURATION)
+        expect(startRumSpy).not.toHaveBeenCalled()
+        expect(startViewSpy).not.toHaveBeenCalled()
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
+        expect(startRumSpy).toHaveBeenCalled()
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startViewSpy).not.toHaveBeenCalled()
+      })
+
+      it('after start rum startView should start view', () => {
+        rumPublicApi.init(MANUAL_CONFIGURATION)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('bar')
+
+        expect(startRumSpy).toHaveBeenCalled()
+        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startViewSpy).toHaveBeenCalled()
+        expect(startViewSpy.calls.argsFor(0)[0]).toEqual('bar')
+        expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
+      })
+
+      it('API calls should be handled in order', () => {
+        const { clock } = setupBuilder.withFakeClock().build()
+
+        clock.tick(10)
+        rumPublicApi.addTiming('first')
+
+        clock.tick(10)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(rumPublicApi as any).startView('foo')
+
+        clock.tick(10)
+        rumPublicApi.addTiming('second')
+
+        clock.tick(10)
+        rumPublicApi.init(MANUAL_CONFIGURATION)
+
+        clock.tick(10)
+        rumPublicApi.addTiming('third')
+
+        expect(addTimingSpy).toHaveBeenCalledTimes(3)
+
+        expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('first')
+        expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(10 as RelativeTime))
+
+        expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('second')
+        expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(getTimeStamp(30 as RelativeTime))
+
+        expect(addTimingSpy.calls.argsFor(2)[0]).toEqual('third')
+        expect(addTimingSpy.calls.argsFor(2)[1]).toBeUndefined() // no time saved when started
+      })
     })
   })
 })
