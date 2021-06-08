@@ -32,6 +32,7 @@ export interface FetchCompleteContext extends FetchStartContext {
   responseText: string
   responseType?: string
   isAborted: boolean
+  error?: Error
 }
 
 let fetchProxySingleton: FetchProxy | undefined
@@ -114,6 +115,7 @@ function afterSend(responsePromise: Promise<Response>, context: FetchStartContex
       context.status = 0
       context.responseText = toStackTraceString(computeStackTrace(response))
       context.isAborted = response instanceof DOMException && response.code === DOMException.ABORT_ERR
+      context.error = response
 
       onRequestCompleteCallbacks.forEach((callback) => callback(context as FetchCompleteContext))
     } else if ('status' in response) {

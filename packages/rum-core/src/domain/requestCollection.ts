@@ -42,6 +42,9 @@ export interface RequestCompleteEvent {
   traceId?: TraceIdentifier
   xhr?: XMLHttpRequest
   response?: Response
+  input?: RequestInfo
+  init?: RequestInit
+  error?: Error
 }
 
 let nextRequestIndex = 1
@@ -113,6 +116,8 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
         type: RequestType.FETCH,
         url: context.url,
         response: context.response,
+        init: context.init,
+        input: context.input,
       })
     }
   })

@@ -89,7 +89,10 @@ describe('resourceCollection', () => {
       expect(rawRumEvents[0].domainContext).toEqual({
         xhr,
         performanceEntry: undefined,
-        response: undefined,
+        fetchResponse: undefined,
+        fetchInput: undefined,
+        fetchInit: undefined,
+        fetchError: undefined,
       })
     })
 
@@ -109,6 +112,8 @@ describe('resourceCollection', () => {
           type: RequestType.FETCH,
           url: 'https://resource.com/valid',
           response,
+          input: 'https://resource.com/valid',
+          init: { headers: { foo: 'bar' } },
         })
       )
 
@@ -126,10 +131,25 @@ describe('resourceCollection', () => {
         type: RumEventType.RESOURCE,
       })
       expect(rawRumEvents[0].domainContext).toEqual({
-        response,
         performanceEntry: undefined,
         xhr: undefined,
+        fetchResponse: response,
+        fetchInput: 'https://resource.com/valid',
+        fetchInit: { headers: { foo: 'bar' } },
+        fetchError: undefined,
       })
+    })
+
+    it('should include the error in failed fetch requests', () => {
+      const { lifeCycle, rawRumEvents } = setupBuilder.build()
+      const error = new Error()
+      lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ error }))
+
+      expect(rawRumEvents[0].domainContext).toEqual(
+        jasmine.objectContaining({
+          fetchError: error,
+        })
+      )
     })
   })
 
