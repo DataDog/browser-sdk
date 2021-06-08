@@ -1,8 +1,8 @@
-import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { callMonitored, monitor } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
-interface BrowserXHR<T extends XhrOpenContext = XhrStartContext> extends XMLHttpRequest {
+interface BrowserXHR<T extends XhrOpenContext> extends XMLHttpRequest {
   _datadog_xhr?: T
 }
 
@@ -93,21 +93,19 @@ function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) 
   return originalXhrOpen.apply(this, arguments as any)
 }
 
-function sendXhr(this: BrowserXHR) {
+function sendXhr(this: BrowserXHR<XhrStartContext>) {
   callMonitored(() => {
     if (!this._datadog_xhr) {
       return
     }
-    this._datadog_xhr = {
-      ...this._datadog_xhr,
-      startTime: relativeNow(),
-      startClocks: clocksNow(),
-      isAborted: false,
-    }
+
+    this._datadog_xhr.startTime = relativeNow()
+    this._datadog_xhr.startClocks = clocksNow()
+    this._datadog_xhr.isAborted = false
 
     let hasBeenReported = false
     const originalOnreadystatechange = this.onreadystatechange
-    const onreadystatechange = function (this: BrowserXHR) {
+    const onreadystatechange = function (this: BrowserXHR<XhrStartContext>) {
       if (this.readyState === XMLHttpRequest.DONE) {
         // Try to report the XHR as soon as possible, because the XHR may be mutated by the
         // application during a future event. For example, Angular is calling .abort() on
@@ -131,7 +129,7 @@ function sendXhr(this: BrowserXHR) {
         return
       }
       hasBeenReported = true
-      reportXhr(this)
+      reportXhr(this, this._datadog_xhr!)
     })
     this.onreadystatechange = onreadystatechange
     this.addEventListener('loadend', onEnd)
@@ -142,7 +140,7 @@ function sendXhr(this: BrowserXHR) {
   return originalXhrSend.apply(this, arguments as any)
 }
 
-function abortXhr(this: BrowserXHR) {
+function abortXhr(this: BrowserXHR<XhrStartContext>) {
   callMonitored(() => {
     if (this._datadog_xhr) {
       this._datadog_xhr.isAborted = true
@@ -151,10 +149,10 @@ function abortXhr(this: BrowserXHR) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
-function reportXhr(xhr: BrowserXHR) {
+function reportXhr(xhr: BrowserXHR<XhrStartContext>, pendingContext: XhrStartContext) {
   const xhrCompleteContext: XhrCompleteContext = {
-    ...xhr._datadog_xhr!,
-    duration: elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow()),
+    ...pendingContext,
+    duration: elapsed(pendingContext.startClocks.timeStamp, timeStampNow()),
     response: xhr.response as string | undefined,
     status: xhr.status,
   }
