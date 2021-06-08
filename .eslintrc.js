@@ -246,6 +246,12 @@ module.exports = {
       },
     },
     {
+      files: ['packages/**/*.ts'],
+      rules: {
+        'local-rules/disallow-spec-import': 'error',
+      },
+    },
+    {
       files: ['packages/{rum,logs,rum-recorder}/src/index.ts', 'packages/rum-recorder/src/internal.ts'],
       rules: {
         'local-rules/disallow-enum-exports': 'error',

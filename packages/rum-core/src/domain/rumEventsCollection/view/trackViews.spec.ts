@@ -1,13 +1,5 @@
-import {
-  ClocksState,
-  Duration,
-  RelativeTime,
-  TimeStamp,
-  timeStampNow,
-  display,
-  relativeToClocks,
-} from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { Duration, RelativeTime, timeStampNow, display, relativeToClocks } from '@datadog/browser-core'
+import { setup, TestSetupBuilder, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import {
   RumLargestContentfulPaintTiming,
   RumPerformanceNavigationTiming,
@@ -15,7 +7,7 @@ import {
 } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
-import { THROTTLE_VIEW_UPDATE_PERIOD, trackViews, ViewEvent, ViewCreatedEvent } from './trackViews'
+import { THROTTLE_VIEW_UPDATE_PERIOD, ViewEvent } from './trackViews'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
   entryType: 'paint',
@@ -34,144 +26,533 @@ const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   loadEventEnd: 567 as RelativeTime,
 }
 
-function spyOnViews() {
-  const handler = jasmine.createSpy()
-
-  function getViewEvent(index: number) {
-    return handler.calls.argsFor(index)[0] as ViewEvent
-  }
-
-  function getHandledCount() {
-    return handler.calls.count()
-  }
-
-  return { handler, getViewEvent, getHandledCount }
-}
-
-describe('rum view referrer', () => {
+describe('track views automatically', () => {
   let setupBuilder: TestSetupBuilder
-  let initialViewCreatedEvent: ViewCreatedEvent
-  let createSpy: jasmine.Spy<(event: ViewCreatedEvent) => void>
+  let viewTest: ViewTest
 
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (event) => {
-          initialViewCreatedEvent = event
-          subscription.unsubscribe()
-        })
-        return trackViews(location, lifeCycle, domMutationObservable)
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
       })
-    createSpy = jasmine.createSpy('create')
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should set the document referrer as referrer for the initial view', () => {
+  describe('location changes', () => {
+    it('should update view location on search change', () => {
+      setupBuilder.build()
+      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
+
+      history.pushState({}, '', '/foo?bar=qux')
+
+      expect(getViewCreateCount()).toBe(1)
+      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
+
+      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
+      expect(lastUpdate.id).toBe(getViewCreate(0).id)
+    })
+
+    it('should create new view on path change', () => {
+      setupBuilder.build()
+      const { getViewCreateCount, getViewCreate } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
+
+      history.pushState({}, '', '/bar')
+
+      expect(getViewCreateCount()).toBe(2)
+      expect(getViewCreate(1).location.href).toMatch(/\/bar$/)
+    })
+
+    it('should create new view on hash change from history', () => {
+      setupBuilder.build()
+      const { getViewCreateCount, getViewCreate } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
+
+      history.pushState({}, '', '/foo#bar')
+
+      expect(getViewCreateCount()).toBe(2)
+      expect(getViewCreate(1).location.href).toMatch(/\/foo#bar$/)
+    })
+
+    it('should not create a new view on hash change from history when the hash has kept the same value', () => {
+      history.pushState({}, '', '/foo#bar')
+
+      setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+
+      history.pushState({}, '', '/foo#bar')
+
+      expect(getViewCreateCount()).toBe(1)
+    })
+
+    it('should create a new view on hash change', (done) => {
+      setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      function hashchangeCallBack() {
+        expect(getViewCreateCount()).toBe(2)
+        window.removeEventListener('hashchange', hashchangeCallBack)
+        done()
+      }
+
+      window.addEventListener('hashchange', hashchangeCallBack)
+
+      expect(getViewCreateCount()).toBe(1)
+      window.location.hash = '#bar'
+    })
+
+    it('should not create a new view when the hash has kept the same value', (done) => {
+      history.pushState({}, '', '/foo#bar')
+
+      setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      function hashchangeCallBack() {
+        expect(getViewCreateCount()).toBe(1)
+        window.removeEventListener('hashchange', hashchangeCallBack)
+        done()
+      }
+
+      window.addEventListener('hashchange', hashchangeCallBack)
+
+      expect(getViewCreateCount()).toBe(1)
+      window.location.hash = '#bar'
+    })
+
+    function mockGetElementById() {
+      const fakeGetElementById = (elementId: string) => ((elementId === 'testHashValue') as any) as HTMLElement
+      return spyOn(document, 'getElementById').and.callFake(fakeGetElementById)
+    }
+
+    it('should not create a new view when it is an Anchor navigation', (done) => {
+      setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+      mockGetElementById()
+
+      function hashchangeCallBack() {
+        expect(getViewCreateCount()).toBe(1)
+        window.removeEventListener('hashchange', hashchangeCallBack)
+        done()
+      }
+
+      window.addEventListener('hashchange', hashchangeCallBack)
+
+      expect(getViewCreateCount()).toBe(1)
+      window.location.hash = '#testHashValue'
+    })
+
+    it('should not create a new view when the search part of the hash changes', () => {
+      history.pushState({}, '', '/foo#bar')
+      setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+
+      history.pushState({}, '', '/foo#bar?search=1')
+      history.pushState({}, '', '/foo#bar?search=2')
+      history.pushState({}, '', '/foo#bar?')
+      history.pushState({}, '', '/foo#bar')
+
+      expect(getViewCreateCount()).toBe(1)
+    })
+  })
+
+  describe('renew session', () => {
+    it('should create new view on renew session', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewCreateCount()).toBe(2)
+    })
+
+    it('should not update the current view when the session is renewed', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdateCount, getViewUpdate } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
+    })
+  })
+
+  describe('view referrer', () => {
+    it('should set the document referrer as referrer for the initial view', () => {
+      setupBuilder.build()
+      const { getViewCreate } = viewTest
+
+      expect(getViewCreate(0).referrer).toEqual(document.referrer)
+    })
+
+    it('should set the previous view URL as referrer when a route change occurs', () => {
+      setupBuilder.build()
+      const { getViewCreate } = viewTest
+
+      history.pushState({}, '', '/bar')
+
+      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo$/))
+    })
+
+    it('should set the previous view URL as referrer when a the session is renewed', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreate } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo$/))
+    })
+
+    it('should use the most up-to-date URL of the previous view as a referrer', () => {
+      setupBuilder.build()
+      const { getViewCreate } = viewTest
+
+      history.pushState({}, '', '/foo?a=b')
+      history.pushState({}, '', '/bar')
+
+      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo\?a=b$/))
+    })
+  })
+})
+
+describe('track views manually', () => {
+  let setupBuilder: TestSetupBuilder
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .withConfiguration({ trackViewsManually: true })
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  describe('location changes', () => {
+    it('should update view location on search change', () => {
+      setupBuilder.build()
+      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
+
+      history.pushState({}, '', '/foo?bar=qux')
+
+      expect(getViewCreateCount()).toBe(1)
+      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
+
+      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
+      expect(lastUpdate.id).toBe(getViewCreate(0).id)
+    })
+
+    it('should update view location on path change', () => {
+      setupBuilder.build()
+      const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
+
+      history.pushState({}, '', '/bar')
+
+      expect(getViewCreateCount()).toBe(1)
+      expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
+
+      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(lastUpdate.location.href).toMatch(/\/bar$/)
+      expect(lastUpdate.id).toBe(getViewCreate(0).id)
+    })
+  })
+
+  describe('renew session', () => {
+    it('should not update the current view when the session is renewed', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdateCount } = viewTest
+
+      expect(getViewUpdateCount()).toEqual(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewUpdateCount()).toEqual(1)
+    })
+
+    it('should not create new view when the session is renewed', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewCreateCount } = viewTest
+
+      expect(getViewCreateCount()).toEqual(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(getViewCreateCount()).toEqual(1)
+    })
+  })
+
+  describe('view referrer', () => {
+    it('should set the document referrer as referrer for the initial view', () => {
+      setupBuilder.build()
+      const { getViewCreate } = viewTest
+
+      expect(getViewCreate(0).referrer).toEqual(document.referrer)
+    })
+
+    it('should set the previous view URL as referrer when starting a new view', () => {
+      setupBuilder.build()
+      const { getViewUpdate, getViewUpdateCount, startView } = viewTest
+
+      startView()
+      history.pushState({}, '', '/bar')
+
+      const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+      expect(lastUpdate.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
+      expect(lastUpdate.location.href).toEqual(jasmine.stringMatching(/\/bar$/))
+    })
+
+    it('should use the most up-to-date URL of the previous view as a referrer', () => {
+      setupBuilder.build()
+      const { getViewCreate, startView } = viewTest
+
+      history.pushState({}, '', '/foo?a=b')
+      history.pushState({}, '', '/bar')
+      startView()
+
+      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/bar$/))
+    })
+  })
+})
+
+describe('initial view', () => {
+  let setupBuilder: TestSetupBuilder
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    setupBuilder = setup().beforeBuild((buildContext) => {
+      viewTest = setupViewTest(buildContext, 'initial view name')
+      return viewTest
+    })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should be created on start', () => {
     setupBuilder.build()
-    expect(initialViewCreatedEvent.referrer).toEqual(document.referrer)
+    const { getViewCreate, getViewCreateCount } = viewTest
+
+    expect(getViewCreateCount()).toBe(1)
+    expect(getViewCreate(0).name).toBe('initial view name')
   })
 
-  it('should set the previous view URL as referrer when a route change occurs', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+  describe('timings', () => {
+    it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdateCount, getViewUpdate } = viewTest
 
-    history.pushState({}, '', '/bar')
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).timings).toEqual({})
 
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0]
-    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-  })
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
 
-  it('should set the previous view URL as referrer when a the session is renewed', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+      expect(getViewUpdateCount()).toEqual(1)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0]
-    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-  })
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).timings).toEqual({
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        loadEvent: 567 as Duration,
+      })
+    })
 
-  it('should use the most up-to-date URL of the previous view as a referrer', () => {
-    const { lifeCycle } = setupBuilder.build()
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+    it('should update timings when ending a view', () => {
+      const { lifeCycle } = setupBuilder.build()
+      const { getViewUpdateCount, getViewUpdate, startView } = viewTest
 
-    history.pushState({}, '', '/foo?a=b')
-    history.pushState({}, '', '/bar')
+      expect(getViewUpdateCount()).toEqual(1)
+      expect(getViewUpdate(0).timings).toEqual({})
 
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0]
-    expect(viewContext.referrer).toEqual(jasmine.stringMatching(/\/foo\?a=b$/))
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+      expect(getViewUpdateCount()).toEqual(1)
+
+      startView()
+
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(1).timings).toEqual({
+        domComplete: 456 as Duration,
+        domContentLoaded: 345 as Duration,
+        domInteractive: 234 as Duration,
+        firstContentfulPaint: 123 as Duration,
+        largestContentfulPaint: 789 as Duration,
+        loadEvent: 567 as Duration,
+      })
+      expect(getViewUpdate(2).timings).toEqual({})
+    })
+
+    describe('load event happening after initial view end', () => {
+      let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
+      let secondView: { init: ViewEvent; last: ViewEvent }
+      const VIEW_DURATION = 100 as Duration
+
+      beforeEach(() => {
+        const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+        const { getViewUpdateCount, getViewUpdate, startView } = viewTest
+
+        expect(getViewUpdateCount()).toEqual(1)
+
+        clock.tick(VIEW_DURATION)
+
+        startView()
+
+        clock.tick(VIEW_DURATION)
+
+        expect(getViewUpdateCount()).toEqual(3)
+
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
+        lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
+
+        clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+        expect(getViewUpdateCount()).toEqual(4)
+
+        initialView = {
+          end: getViewUpdate(1),
+          init: getViewUpdate(0),
+          last: getViewUpdate(3),
+        }
+        secondView = {
+          init: getViewUpdate(2),
+          last: getViewUpdate(2),
+        }
+      })
+
+      it('should not set timings to the second view', () => {
+        expect(secondView.last.timings).toEqual({})
+      })
+
+      it('should set timings only on the initial view', () => {
+        expect(initialView.last.timings).toEqual({
+          domComplete: 456 as Duration,
+          domContentLoaded: 345 as Duration,
+          domInteractive: 234 as Duration,
+          firstContentfulPaint: 123 as Duration,
+          largestContentfulPaint: 789 as Duration,
+          loadEvent: 567 as Duration,
+        })
+      })
+
+      it('should not update the initial view duration when updating it with new timings', () => {
+        expect(initialView.end.duration).toBe(VIEW_DURATION)
+        expect(initialView.last.duration).toBe(VIEW_DURATION)
+      })
+
+      it('should update the initial view loadingTime following the loadEventEnd value', () => {
+        expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
+      })
+    })
   })
 })
 
-describe('rum track renew session', () => {
+describe('view hasReplay', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let initialViewId: string
-  let getHandledCount: () => number
-  let getViewEvent: (index: number) => ViewEvent
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ lifeCycle, location, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        const subscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id }) => {
-          initialViewId = id
-          subscription.unsubscribe()
-        })
-        return trackViews(location, lifeCycle, domMutationObservable)
-      })
+    setupBuilder = setup().beforeBuild((buildContext) => {
+      viewTest = setupViewTest(buildContext)
+      return viewTest
+    })
   })
 
   afterEach(() => {
     setupBuilder.cleanup()
   })
 
-  it('should create new view on renew session', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const createSpy = jasmine.createSpy<(event: ViewCreatedEvent) => void>('create')
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, createSpy)
+  it('sets hasReplay to false by default', () => {
+    setupBuilder.build()
+    const { getViewUpdate } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-    expect(createSpy).toHaveBeenCalled()
-    const viewContext = createSpy.calls.argsFor(0)[0]
-    expect(viewContext.id).not.toEqual(initialViewId)
+    expect(getViewUpdate(0).hasReplay).toBe(false)
   })
 
-  it('should send a final view event when the session is renewed', () => {
+  it('sets hasReplay to true when the recording starts', () => {
     const { lifeCycle } = setupBuilder.build()
-    expect(getHandledCount()).toEqual(1)
+    const { getViewUpdate, startView } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-    expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(0).id).not.toBe(getViewEvent(1).id)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    startView()
+
+    expect(getViewUpdate(1).hasReplay).toBe(true)
+  })
+
+  it('keeps hasReplay to true when the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    startView()
+
+    expect(getViewUpdate(1).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to true when a new view is created after the recording starts', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+
+    startView()
+
+    expect(getViewUpdate(2).hasReplay).toBe(true)
+  })
+
+  it('sets hasReplay to false when a new view is created after the recording stops', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
+    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
+
+    startView()
+
+    expect(getViewUpdate(2).hasReplay).toBe(false)
   })
 })
 
-describe('rum track loading type', () => {
+describe('view loading type', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getViewEvent } = spyOnViews())
-
     setupBuilder = setup()
       .withFakeClock()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutationObservable)
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
       })
   })
 
@@ -181,34 +562,31 @@ describe('rum track loading type', () => {
 
   it('should collect initial view type as "initial_load"', () => {
     setupBuilder.build()
-    expect(getViewEvent(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+    const { getViewUpdate } = viewTest
+
+    expect(getViewUpdate(0).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
   })
 
-  it('should collect view type as "route_change" after a route change', () => {
+  it('should collect view type as "route_change" after a view change', () => {
     setupBuilder.build()
-    history.pushState({}, '', '/bar')
-    expect(getViewEvent(1).location.pathname).toEqual('/foo')
-    expect(getViewEvent(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+    const { getViewUpdate, startView } = viewTest
 
-    expect(getViewEvent(2).location.pathname).toEqual('/bar')
-    expect(getViewEvent(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
+    startView()
+
+    expect(getViewUpdate(1).loadingType).toEqual(ViewLoadingType.INITIAL_LOAD)
+    expect(getViewUpdate(2).loadingType).toEqual(ViewLoadingType.ROUTE_CHANGE)
   })
 })
 
-describe('rum track view is active', () => {
+describe('view is active', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutationObservable)
-      })
+    setupBuilder = setup().beforeBuild((buildContext) => {
+      viewTest = setupViewTest(buildContext)
+      return viewTest
+    })
   })
 
   afterEach(() => {
@@ -217,165 +595,32 @@ describe('rum track view is active', () => {
 
   it('should set initial view as active', () => {
     setupBuilder.build()
-    expect(getViewEvent(0).isActive).toBe(true)
+    const { getViewUpdate } = viewTest
+
+    expect(getViewUpdate(0).isActive).toBe(true)
   })
 
   it('should set old view as inactive and new one as active after a route change', () => {
     setupBuilder.build()
-    history.pushState({}, '', '/bar')
-    expect(getViewEvent(1).isActive).toBe(false)
-    expect(getViewEvent(2).isActive).toBe(true)
-  })
+    const { getViewUpdate, startView } = viewTest
 
-  it('should keep view as active after a search change', () => {
-    setupBuilder.build()
-    history.pushState({}, '', '/foo?bar=qux')
-    expect(getViewEvent(1).isActive).toBe(true)
+    startView()
+
+    expect(getViewUpdate(1).isActive).toBe(false)
+    expect(getViewUpdate(2).isActive).toBe(true)
   })
 })
 
-describe('rum view timings', () => {
+describe('view custom timings', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getHandledCount: () => number
-  let getViewEvent: (index: number) => ViewEvent
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getViewEvent, getHandledCount } = spyOnViews())
-
     setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutationObservable)
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('should update timings when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-    expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).timings).toEqual({})
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-
-    expect(getHandledCount()).toEqual(1)
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getHandledCount()).toEqual(2)
-    expect(getViewEvent(1).timings).toEqual({
-      domComplete: 456 as Duration,
-      domContentLoaded: 345 as Duration,
-      domInteractive: 234 as Duration,
-      loadEvent: 567 as Duration,
-    })
-  })
-
-  it('should update timings when ending a view', () => {
-    const { lifeCycle } = setupBuilder.build()
-    expect(getHandledCount()).toEqual(1)
-    expect(getViewEvent(0).timings).toEqual({})
-
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-    expect(getHandledCount()).toEqual(1)
-
-    history.pushState({}, '', '/bar')
-
-    expect(getHandledCount()).toEqual(3)
-    expect(getViewEvent(1).timings).toEqual({
-      domComplete: 456 as Duration,
-      domContentLoaded: 345 as Duration,
-      domInteractive: 234 as Duration,
-      firstContentfulPaint: 123 as Duration,
-      largestContentfulPaint: 789 as Duration,
-      loadEvent: 567 as Duration,
-    })
-    expect(getViewEvent(2).timings).toEqual({})
-  })
-
-  describe('load event happening after initial view end', () => {
-    let initialView: { init: ViewEvent; end: ViewEvent; last: ViewEvent }
-    let secondView: { init: ViewEvent; last: ViewEvent }
-    const VIEW_DURATION = 100 as Duration
-
-    beforeEach(() => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
-      expect(getHandledCount()).toEqual(1)
-
-      clock.tick(VIEW_DURATION)
-
-      history.pushState({}, '', '/bar')
-
-      clock.tick(VIEW_DURATION)
-
-      expect(getHandledCount()).toEqual(3)
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_NAVIGATION_ENTRY)
-
-      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-      expect(getHandledCount()).toEqual(4)
-
-      initialView = {
-        end: getViewEvent(1),
-        init: getViewEvent(0),
-        last: getViewEvent(3),
-      }
-      secondView = {
-        init: getViewEvent(2),
-        last: getViewEvent(2),
-      }
-    })
-
-    it('should not set timings to the second view', () => {
-      expect(secondView.last.timings).toEqual({})
-    })
-
-    it('should set timings only on the initial view', () => {
-      expect(initialView.last.timings).toEqual({
-        domComplete: 456 as Duration,
-        domContentLoaded: 345 as Duration,
-        domInteractive: 234 as Duration,
-        firstContentfulPaint: 123 as Duration,
-        largestContentfulPaint: 789 as Duration,
-        loadEvent: 567 as Duration,
-      })
-    })
-
-    it('should not update the initial view duration when updating it with new timings', () => {
-      expect(initialView.end.duration).toBe(VIEW_DURATION)
-      expect(initialView.last.duration).toBe(VIEW_DURATION)
-    })
-
-    it('should update the initial view loadingTime following the loadEventEnd value', () => {
-      expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
-    })
-  })
-})
-
-describe('rum track custom timings', () => {
-  let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-  let addTiming: (name: string, time?: TimeStamp) => void
-
-  beforeEach(() => {
-    ;({ handler, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
       .withFakeClock()
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        ;({ addTiming } = trackViews(location, lifeCycle, domMutationObservable))
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext)
+        return viewTest
       })
   })
 
@@ -385,26 +630,30 @@ describe('rum track custom timings', () => {
 
   it('should add custom timing to current view', () => {
     const { clock } = setupBuilder.build()
-    history.pushState({}, '', '/bar')
-    const currentViewId = getViewEvent(2).id
+    const { getViewUpdate, startView, addTiming } = viewTest
+
+    startView()
+    const currentViewId = getViewUpdate(2).id
     clock.tick(20)
     addTiming('foo')
 
-    const event = getViewEvent(3)
-    expect(event.id).toEqual(currentViewId)
-    expect(event.customTimings).toEqual({ foo: 20 as Duration })
+    const view = getViewUpdate(3)
+    expect(view.id).toEqual(currentViewId)
+    expect(view.customTimings).toEqual({ foo: 20 as Duration })
   })
 
   it('should add multiple custom timings', () => {
     const { clock } = setupBuilder.build()
+    const { getViewUpdate, addTiming } = viewTest
+
     clock.tick(20)
     addTiming('foo')
 
     clock.tick(10)
     addTiming('bar')
 
-    const event = getViewEvent(2)
-    expect(event.customTimings).toEqual({
+    const view = getViewUpdate(2)
+    expect(view.customTimings).toEqual({
       bar: 30 as Duration,
       foo: 20 as Duration,
     })
@@ -412,14 +661,16 @@ describe('rum track custom timings', () => {
 
   it('should update custom timing', () => {
     const { clock } = setupBuilder.build()
+    const { getViewUpdate, addTiming } = viewTest
+
     clock.tick(20)
     addTiming('foo')
 
     clock.tick(10)
     addTiming('bar')
 
-    let event = getViewEvent(2)
-    expect(event.customTimings).toEqual({
+    let view = getViewUpdate(2)
+    expect(view.customTimings).toEqual({
       bar: 30 as Duration,
       foo: 20 as Duration,
     })
@@ -427,8 +678,8 @@ describe('rum track custom timings', () => {
     clock.tick(20)
     addTiming('foo')
 
-    event = getViewEvent(3)
-    expect(event.customTimings).toEqual({
+    view = getViewUpdate(3)
+    expect(view.customTimings).toEqual({
       bar: 30 as Duration,
       foo: 50 as Duration,
     })
@@ -436,111 +687,40 @@ describe('rum track custom timings', () => {
 
   it('should add custom timing with a specific time', () => {
     const { clock } = setupBuilder.build()
+    const { getViewUpdate, addTiming } = viewTest
 
     clock.tick(1234)
     addTiming('foo', timeStampNow())
 
-    expect(getViewEvent(1).customTimings).toEqual({
+    expect(getViewUpdate(1).customTimings).toEqual({
       foo: 1234 as Duration,
     })
   })
 
   it('should sanitized timing name', () => {
     const { clock } = setupBuilder.build()
+    const { getViewUpdate, addTiming } = viewTest
+
     const displaySpy = spyOn(display, 'warn')
 
     clock.tick(1234)
     addTiming('foo bar-qux.@zip_21%$*€👋', timeStampNow())
 
-    expect(getViewEvent(1).customTimings).toEqual({
+    expect(getViewUpdate(1).customTimings).toEqual({
       'foo_bar-qux.@zip_21_$____': 1234 as Duration,
     })
     expect(displaySpy).toHaveBeenCalled()
   })
 })
 
-describe('track hasReplay', () => {
+describe('start view', () => {
   let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
+  let viewTest: ViewTest
 
   beforeEach(() => {
-    ;({ handler, getViewEvent } = spyOnViews())
-
-    setupBuilder = setup()
-      .withFakeLocation('/foo')
-      .withFakeClock()
-      .beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-        lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-        return trackViews(location, lifeCycle, domMutationObservable)
-      })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('sets hasReplay to false by default', () => {
-    setupBuilder.build()
-    expect(getViewEvent(0).hasReplay).toBe(false)
-  })
-
-  it('sets hasReplay to true when the recording starts', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-
-    history.pushState({}, '', '/bar')
-
-    expect(getViewEvent(1).hasReplay).toBe(true)
-  })
-
-  it('keeps hasReplay to true when the recording stops', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
-
-    history.pushState({}, '', '/bar')
-
-    expect(getViewEvent(1).hasReplay).toBe(true)
-  })
-
-  it('sets hasReplay to true when a new view is created after the recording starts', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-
-    history.pushState({}, '', '/bar')
-
-    expect(getViewEvent(2).hasReplay).toBe(true)
-  })
-
-  it('sets hasReplay to false when a new view is created after the recording stops', () => {
-    const { lifeCycle } = setupBuilder.build()
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
-
-    history.pushState({}, '', '/bar')
-
-    expect(getViewEvent(2).hasReplay).toBe(false)
-  })
-})
-
-describe('rum start view', () => {
-  let setupBuilder: TestSetupBuilder
-  let handler: jasmine.Spy
-  let getViewEvent: (index: number) => ViewEvent
-  let getHandledCount: () => number
-  let startView: (name?: string, endClocks?: ClocksState) => void
-
-  beforeEach(() => {
-    ;({ getHandledCount, getViewEvent, handler } = spyOnViews())
-
-    setupBuilder = setup().beforeBuild(({ location, lifeCycle, domMutationObservable }) => {
-      lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, handler)
-      ;({ startView } = trackViews(location, lifeCycle, domMutationObservable))
+    setupBuilder = setup().beforeBuild((buildContext) => {
+      viewTest = setupViewTest(buildContext)
+      return viewTest
     })
   })
 
@@ -550,43 +730,47 @@ describe('rum start view', () => {
 
   it('should start a new view', () => {
     const { clock } = setupBuilder.withFakeClock().build()
-    expect(getHandledCount()).toBe(1)
-    const initialViewId = getViewEvent(0).id
+    const { getViewUpdateCount, getViewUpdate, startView } = viewTest
+
+    expect(getViewUpdateCount()).toBe(1)
+    const initialViewId = getViewUpdate(0).id
 
     clock.tick(10)
     startView()
 
-    expect(getHandledCount()).toBe(3)
+    expect(getViewUpdateCount()).toBe(3)
 
-    expect(getViewEvent(1).id).toBe(initialViewId)
-    expect(getViewEvent(1).isActive).toBe(false)
-    expect(getViewEvent(1).startClocks.relative).toBe(0 as RelativeTime)
-    expect(getViewEvent(1).duration).toBe(10 as Duration)
+    expect(getViewUpdate(1).id).toBe(initialViewId)
+    expect(getViewUpdate(1).isActive).toBe(false)
+    expect(getViewUpdate(1).startClocks.relative).toBe(0 as RelativeTime)
+    expect(getViewUpdate(1).duration).toBe(10 as Duration)
 
-    expect(getViewEvent(2).id).not.toBe(initialViewId)
-    expect(getViewEvent(2).isActive).toBe(true)
-    expect(getViewEvent(2).startClocks.relative).toBe(10 as RelativeTime)
+    expect(getViewUpdate(2).id).not.toBe(initialViewId)
+    expect(getViewUpdate(2).isActive).toBe(true)
+    expect(getViewUpdate(2).startClocks.relative).toBe(10 as RelativeTime)
   })
 
   it('should name the view', () => {
     setupBuilder.build()
+    const { getViewUpdate, startView } = viewTest
 
     startView()
     startView('foo')
     startView('bar')
 
-    expect(getViewEvent(2).name).toBeUndefined()
-    expect(getViewEvent(4).name).toBe('foo')
-    expect(getViewEvent(6).name).toBe('bar')
+    expect(getViewUpdate(2).name).toBeUndefined()
+    expect(getViewUpdate(4).name).toBe('foo')
+    expect(getViewUpdate(6).name).toBe('bar')
   })
 
   it('should use the provided clock to stop the current view and start the new one', () => {
     const { clock } = setupBuilder.withFakeClock().build()
+    const { getViewUpdate, startView } = viewTest
 
     clock.tick(100)
     startView('foo', relativeToClocks(50 as RelativeTime))
 
-    expect(getViewEvent(1).duration).toBe(50 as Duration)
-    expect(getViewEvent(2).startClocks.relative).toBe(50 as RelativeTime)
+    expect(getViewUpdate(1).duration).toBe(50 as Duration)
+    expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
   })
 })

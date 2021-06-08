@@ -9,7 +9,7 @@ import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumEvent } from '../rumEvent.types'
-import { startRumEventCollection } from './rum'
+import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEvent[] = []
@@ -39,11 +39,11 @@ function startRum(
   )
   const { stop: viewCollectionStop } = startViewCollection(
     lifeCycle,
+    configuration,
     location,
     domMutationObservable,
     foregroundContexts
   )
-
   return {
     stop: () => {
       rumEventCollectionStop()

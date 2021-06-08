@@ -1,4 +1,11 @@
-import { Duration, isEmptyObject, mapValues, ServerDuration, toServerDuration } from '@datadog/browser-core'
+import {
+  Duration,
+  isEmptyObject,
+  mapValues,
+  ServerDuration,
+  toServerDuration,
+  Configuration,
+} from '@datadog/browser-core'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
@@ -7,15 +14,18 @@ import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
+  configuration: Configuration,
   location: Location,
   domMutationObservable: DOMMutationObservable,
-  foregroundContexts: ForegroundContexts
+  foregroundContexts: ForegroundContexts,
+  initialViewName?: string
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, foregroundContexts))
   )
 
-  return trackViews(location, lifeCycle, domMutationObservable)
+  const shouldTrackViewsAutomatically = !configuration.isEnabled('view-renaming') || !configuration.trackViewsManually
+  return trackViews(location, lifeCycle, domMutationObservable, shouldTrackViewsAutomatically, initialViewName)
 }
 
 function processViewUpdate(view: ViewEvent, foregroundContexts: ForegroundContexts) {

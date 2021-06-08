@@ -1,7 +1,13 @@
-import { Configuration, monitor, noop, runOnReadyState } from '@datadog/browser-core'
-import { LifeCycleEventType, makeRumPublicApi, RumUserConfiguration, StartRum } from '@datadog/browser-rum-core'
+import { Configuration, monitor, noop, runOnReadyState, InternalMonitoring } from '@datadog/browser-core'
+import {
+  LifeCycleEventType,
+  makeRumPublicApi,
+  RumUserConfiguration,
+  StartRum,
+  CommonContext,
+} from '@datadog/browser-rum-core'
 
-import { startRecording } from './recorder'
+import { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
 export type RumRecorderPublicApi = ReturnType<typeof makeRumRecorderPublicApi>
@@ -28,19 +34,48 @@ type RecorderState =
     }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
-  const rumPublicApi = makeRumPublicApi<RumRecorderUserConfiguration>((userConfiguration, getCommonContext) => {
+  let onRumStartStrategy = (userConfiguration: RumRecorderUserConfiguration, configuration: Configuration) => {
+    if (
+      !userConfiguration.manualSessionReplayRecordingStart &&
+      // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
+      // the Datadog app. See RUMF-886
+      !configuration.isEnabled('postpone_start_recording')
+    ) {
+      startSessionReplayRecordingStrategy()
+    }
+  }
+  let startSessionReplayRecordingStrategy = () => {
+    onRumStartStrategy = () => startSessionReplayRecordingStrategy()
+  }
+  let stopSessionReplayRecordingStrategy = () => {
+    onRumStartStrategy = noop
+  }
+
+  function startRumRecorder(
+    userConfiguration: RumRecorderUserConfiguration,
+    configuration: Configuration,
+    internalMonitoring: InternalMonitoring,
+    getCommonContext: () => CommonContext,
+    initialViewName?: string
+  ) {
     let state: RecorderState = {
       status: RecorderStatus.Stopped,
     }
 
-    const startRumResult = startRumImpl(userConfiguration, () => ({
-      ...getCommonContext(),
-      hasReplay: state.status === RecorderStatus.Started ? true : undefined,
-    }))
+    const startRumResult = startRumImpl(
+      userConfiguration,
+      configuration,
+      internalMonitoring,
+      () => ({
+        ...getCommonContext(),
+        hasReplay: state.status === RecorderStatus.Started ? true : undefined,
+      }),
+      initialViewName
+    )
 
-    const { lifeCycle, parentContexts, configuration, session } = startRumResult
+    const { lifeCycle, parentContexts, session } = startRumResult
 
-    startSessionReplayRecordingImpl = () => {
+    startSessionReplayRecordingStrategy = () => {
       if (state.status !== RecorderStatus.Stopped) {
         return
       }
@@ -67,7 +102,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       })
     }
 
-    stopSessionReplayRecordingImpl = () => {
+    stopSessionReplayRecordingStrategy = () => {
       if (state.status === RecorderStatus.Stopped) {
         return
       }
@@ -82,37 +117,20 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
-    onInit(userConfiguration, configuration)
+    onRumStartStrategy(userConfiguration, configuration)
 
     return startRumResult
-  })
-
-  let onInit = (userConfiguration: RumRecorderUserConfiguration, configuration: Configuration) => {
-    if (
-      !userConfiguration.manualSessionReplayRecordingStart &&
-      // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
-      // the Datadog app. See RUMF-886
-      !configuration.isEnabled('postpone_start_recording')
-    ) {
-      startSessionReplayRecordingImpl()
-    }
   }
 
-  let startSessionReplayRecordingImpl = () => {
-    onInit = () => startSessionReplayRecordingImpl()
-  }
-
-  let stopSessionReplayRecordingImpl = () => {
-    onInit = noop
-  }
+  const rumPublicApi = makeRumPublicApi<RumRecorderUserConfiguration>(startRumRecorder)
 
   const rumRecorderPublicApi = {
     ...rumPublicApi,
     startSessionReplayRecording: monitor(() => {
-      startSessionReplayRecordingImpl()
+      startSessionReplayRecordingStrategy()
     }),
     stopSessionReplayRecording: monitor(() => {
-      stopSessionReplayRecordingImpl()
+      stopSessionReplayRecordingStrategy()
     }),
   }
   return rumRecorderPublicApi
