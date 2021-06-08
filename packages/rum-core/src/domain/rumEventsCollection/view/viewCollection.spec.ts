@@ -1,6 +1,6 @@
 import { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { ReadonlyLocation, RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
+import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
@@ -27,7 +27,7 @@ describe('viewCollection', () => {
 
   it('should create view from view update', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const location: Partial<ReadonlyLocation> = {}
+    const location: Partial<Location> = {}
     const view: ViewEvent = {
       cumulativeLayoutShift: 1,
       customTimings: {
@@ -48,7 +48,7 @@ describe('viewCollection', () => {
       hasReplay: false,
       loadingTime: 20 as Duration,
       loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: location as ReadonlyLocation,
+      location: location as Location,
       referrer: '',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       timings: {

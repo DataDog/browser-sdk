@@ -1,5 +1,4 @@
 import { monitor, addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import { ReadonlyLocation } from '../../../rawRumEvent.types'
 
 export function trackLocationChanges(onLocationChange: () => void) {
   const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
@@ -13,7 +12,7 @@ export function trackLocationChanges(onLocationChange: () => void) {
   }
 }
 
-export function areDifferentLocation(currentLocation: ReadonlyLocation, otherLocation: ReadonlyLocation) {
+export function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
   return (
     currentLocation.pathname !== otherLocation.pathname ||
     (!isHashAnAnchor(otherLocation.hash) &&

@@ -13,7 +13,7 @@ import {
   display,
 } from '@datadog/browser-core'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
-import { ViewLoadingType, ViewCustomTimings, ReadonlyLocation } from '../../../rawRumEvent.types'
+import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
@@ -24,7 +24,7 @@ import { trackViewMetrics } from './trackViewMetrics'
 export interface ViewEvent {
   id: string
   name?: string
-  location: ReadonlyLocation
+  location: Readonly<Location>
   referrer: string
   timings: Timings
   customTimings: ViewCustomTimings
@@ -42,7 +42,7 @@ export interface ViewEvent {
 export interface ViewCreatedEvent {
   id: string
   name?: string
-  location: ReadonlyLocation
+  location: Location
   referrer: string
   startClocks: ClocksState
 }
@@ -201,7 +201,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location: ReadonlyLocation = createReadonlyLocation(initialLocation)
+  let location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
@@ -270,7 +270,7 @@ function newView(
       customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
     },
     updateLocation(newLocation: Location) {
-      location = createReadonlyLocation(newLocation)
+      location = { ...newLocation }
     },
     updateHasReplay(newHasReplay: boolean) {
       hasReplay = newHasReplay
@@ -290,18 +290,4 @@ function sanitizeTiming(name: string) {
     display.warn(`Invalid timing name: ${name}, sanitized to: ${sanitized}`)
   }
   return sanitized
-}
-
-function createReadonlyLocation(location: Location): ReadonlyLocation {
-  return {
-    hash: location.hash,
-    host: location.host,
-    hostname: location.hostname,
-    href: location.href,
-    origin: location.origin,
-    pathname: location.pathname,
-    port: location.port,
-    protocol: location.protocol,
-    search: location.search,
-  }
 }

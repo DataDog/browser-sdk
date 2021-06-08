@@ -1,6 +1,5 @@
 import { Duration, RelativeTime, relativeToClocks } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { ReadonlyLocation } from '../rawRumEvent.types'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
@@ -23,7 +22,7 @@ describe('parentContexts', () => {
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return {
-      location: location as ReadonlyLocation,
+      location,
       startClocks,
       id: FAKE_ID,
       referrer: 'http://foo.com',
@@ -125,10 +124,7 @@ describe('parentContexts', () => {
     it('should return the current url with the current view', () => {
       const { lifeCycle, fakeLocation } = setupBuilder.build()
 
-      lifeCycle.notify(
-        LifeCycleEventType.VIEW_CREATED,
-        buildViewCreatedEvent({ location: fakeLocation as ReadonlyLocation })
-      )
+      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
       history.pushState({}, '', '/foo')

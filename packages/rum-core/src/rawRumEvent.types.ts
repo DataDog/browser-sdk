@@ -220,7 +220,7 @@ export type RumEventDomainContext =
   | RumLongTaskEventDomainContext
 
 export interface RumViewEventDomainContext {
-  location: ReadonlyLocation
+  location: Readonly<Location>
 }
 export interface RumActionEventDomainContext {
   event?: Event
@@ -244,18 +244,6 @@ export interface RumErrorEventDomainContext {
 }
 export interface RumLongTaskEventDomainContext {
   performanceEntry: PerformanceEntryRepresentation
-}
-
-export interface ReadonlyLocation {
-  readonly hash: string
-  readonly host: string
-  readonly hostname: string
-  readonly href: string
-  readonly origin: string
-  readonly pathname: string
-  readonly port: string
-  readonly protocol: string
-  readonly search: string
 }
 
 /**
