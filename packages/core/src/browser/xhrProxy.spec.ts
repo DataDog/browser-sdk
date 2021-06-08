@@ -161,12 +161,12 @@ describe('xhr proxy', () => {
   it('should track request with onreadystatechange overridden before open', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.onreadystatechange = () => undefined
+        xhr.onreadystatechange = jasmine.createSpy()
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
       },
-      onComplete() {
+      onComplete(xhr) {
         const request = getRequest(0)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
@@ -175,6 +175,7 @@ describe('xhr proxy', () => {
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
+        expect(xhr.onreadystatechange).toHaveBeenCalled()
         done()
       },
     })
@@ -185,10 +186,10 @@ describe('xhr proxy', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
-        xhr.onreadystatechange = () => undefined
+        xhr.onreadystatechange = jasmine.createSpy()
         xhr.complete(200, 'ok')
       },
-      onComplete() {
+      onComplete(xhr) {
         const request = getRequest(0)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
@@ -197,6 +198,7 @@ describe('xhr proxy', () => {
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
+        expect(xhr.onreadystatechange).toHaveBeenCalled()
         done()
       },
     })

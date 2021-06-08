@@ -123,7 +123,10 @@ function sendXhr(this: BrowserXHR) {
 
     const onEnd = monitor(() => {
       this.removeEventListener('loadend', onEnd)
-      this.onreadystatechange = originalOnreadystatechange
+      // if the onreadystatechange hasn't been overridden by the user after the send()
+      if (this.onreadystatechange === onreadystatechange) {
+        this.onreadystatechange = originalOnreadystatechange
+      }
       if (hasBeenReported) {
         return
       }
