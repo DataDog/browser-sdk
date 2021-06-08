@@ -131,7 +131,6 @@ describe('xhr proxy', () => {
         expect(request.isAborted).toBe(false)
         expect(xhr.status).toBe(0)
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
-        expect()
         done()
       },
     })

@@ -128,21 +128,47 @@ export interface FetchStubPromise extends Promise<Response> {
   rejectWith: (error: Error) => void
 }
 
-class StubXhr {
+class StubEventEmitter {
+  public listeners: { [k: string]: Array<() => void> } = {}
+
+  addEventListener(name: string, callback: () => void) {
+    if (!this.listeners[name]) {
+      this.listeners[name] = []
+    }
+
+    this.listeners[name].push(callback)
+  }
+
+  removeEventListener(name: string, callback: () => void) {
+    if (!this.listeners[name]) {
+      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
+    }
+
+    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
+  }
+
+  protected dispatchEvent(name: string) {
+    if (!this.listeners[name]) {
+      return
+    }
+    this.listeners[name].forEach((listener) => listener.call(this))
+  }
+}
+
+class StubXhr extends StubEventEmitter {
   public response: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
-  public listeners: { [k: string]: Array<() => void> } = {}
-  private isOnreadystatechangeAttributeCallFirst = true
+
   private hasEnded = false
 
   /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
   open(method: string, url: string) {
     this.hasEnded = false
   }
+
   send() {}
-  /* eslint-enable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
   abort() {
     this.status = 0
@@ -152,7 +178,7 @@ class StubXhr {
     }
     this.hasEnded = true
     this.readyState = XMLHttpRequest.DONE
-    this.dispatchEvent('readystatechange')
+    this.onreadystatechange()
     this.dispatchEvent('abort')
     this.dispatchEvent('loadend')
   }
@@ -166,13 +192,7 @@ class StubXhr {
     this.status = status
     this.readyState = XMLHttpRequest.DONE
 
-    if (this.isOnreadystatechangeAttributeCallFirst) {
-      this.onreadystatechange()
-      this.dispatchEvent('readystatechange')
-    } else {
-      this.dispatchEvent('readystatechange')
-      this.onreadystatechange()
-    }
+    this.onreadystatechange()
 
     if (status >= 200 && status < 500) {
       this.dispatchEvent('load')
@@ -181,31 +201,6 @@ class StubXhr {
       this.dispatchEvent('error')
     }
     this.dispatchEvent('loadend')
-  }
-
-  addEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      this.listeners[name] = []
-    }
-    if (name === 'readystatechange' && this.onreadystatechange === noop) {
-      this.isOnreadystatechangeAttributeCallFirst = false
-    }
-    this.listeners[name].push(callback)
-  }
-
-  removeEventListener(name: string, callback: () => void) {
-    if (!this.listeners[name]) {
-      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
-    }
-
-    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
-  }
-
-  private dispatchEvent(name: string) {
-    if (!this.listeners[name]) {
-      return
-    }
-    this.listeners[name].forEach((listener) => listener.call(this))
   }
 }
 
@@ -250,15 +245,15 @@ export function withXhr({
   completionMode?: 'manual' | 'automatic'
 }) {
   const xhr = new XMLHttpRequest()
-  const complete = (xhr: StubXhr | XMLHttpRequest) => {
+  const complete = () => {
     setTimeout(() => {
-      onComplete((xhr as unknown) as XMLHttpRequest)
+      onComplete(xhr)
     })
   }
   if (completionMode === 'automatic') {
     const loadendHandler = () => {
       xhr.removeEventListener('loadend', loadendHandler)
-      complete(xhr)
+      complete()
     }
     xhr.addEventListener('loadend', loadendHandler)
   }
