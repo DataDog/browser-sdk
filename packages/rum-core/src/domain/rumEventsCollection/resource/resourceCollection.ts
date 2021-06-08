@@ -63,7 +63,7 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming as PerformanceEntry | undefined,
+      performanceEntry: matchingTiming instanceof PerformanceEntry ? matchingTiming.toJSON() : matchingTiming,
       response: request.response,
       xhr: request.xhr,
     },

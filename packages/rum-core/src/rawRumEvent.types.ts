@@ -1,4 +1,4 @@
-import { Context, Duration, ErrorSource, ResourceType, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { Context, Duration, ErrorSource, ResourceType, ServerDuration, TimeStamp, Omit } from '@datadog/browser-core'
 
 export enum RumEventType {
   ACTION = 'action',
@@ -222,15 +222,22 @@ export interface ReadonlyLocation {
   readonly search: string
 }
 
+/**
+ * Symbolizes the type of the value returned by performanceEntry.toJSON(). Can also be built
+ * manually to represent other kind of performance entries (ex: initial_document) or polyfilled
+ * based on `performance.timing`.
+ */
+export type PerformanceEntryRepresentation = Omit<PerformanceEntry, 'toJSON'>
+
 export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumErrorEvent
   ? { error?: unknown }
   : E extends RawRumActionEvent
   ? { event?: Event }
   : E extends RawRumLongTaskEvent
-  ? { performanceEntry: PerformanceEntry }
+  ? { performanceEntry: PerformanceEntryRepresentation }
   : E extends RawRumResourceEvent
   ? {
-      performanceEntry?: PerformanceEntry
+      performanceEntry?: PerformanceEntryRepresentation
       xhr?: XMLHttpRequest
       response?: Response
     }
