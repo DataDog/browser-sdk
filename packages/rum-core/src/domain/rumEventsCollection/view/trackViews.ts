@@ -166,7 +166,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location: ReadonlyLocation = cloneLocation(initialLocation)
+  let location: ReadonlyLocation = createReadonlyLocation(initialLocation)
   let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
@@ -235,7 +235,7 @@ function newView(
       customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
     },
     updateLocation(newLocation: Location) {
-      location = cloneLocation(newLocation)
+      location = createReadonlyLocation(newLocation)
     },
     updateHasReplay(newHasReplay: boolean) {
       hasReplay = newHasReplay
@@ -257,7 +257,7 @@ function sanitizeTiming(name: string) {
   return sanitized
 }
 
-function cloneLocation(location: Location): ReadonlyLocation {
+function createReadonlyLocation(location: Location): ReadonlyLocation {
   return {
     hash: location.hash,
     host: location.host,
