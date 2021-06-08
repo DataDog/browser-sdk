@@ -101,6 +101,18 @@ describe('error collection', () => {
         id: 'foo',
       })
     })
+
+    it('should include non-Error values in domain context', () => {
+      const { rawRumEvents } = setupBuilder.build()
+      addError({
+        error: { foo: 'bar' },
+        source: ErrorSource.CUSTOM,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        error: { foo: 'bar' },
+      })
+    })
   })
 
   describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
