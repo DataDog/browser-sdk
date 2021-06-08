@@ -246,9 +246,9 @@ module.exports = {
       },
     },
     {
-      files: ['packages/*/src/**/*.spec.ts'],
+      files: ['packages/**/*.ts'],
       rules: {
-        'local-rules/disallow-spec-import-spec': 'error',
+        'local-rules/disallow-spec-import': 'error',
       },
     },
     {
