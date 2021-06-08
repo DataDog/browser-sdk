@@ -18,10 +18,7 @@ export function startViewCollection(
   return trackViews(location, lifeCycle, domMutationObservable)
 }
 
-function processViewUpdate(
-  view: ViewEvent,
-  foregroundContexts: ForegroundContexts
-): RawRumEventCollectedData<RawRumViewEvent> {
+function processViewUpdate(view: ViewEvent, foregroundContexts: ForegroundContexts): RawRumEventCollectedData {
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,

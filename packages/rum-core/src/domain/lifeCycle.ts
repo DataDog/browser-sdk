@@ -1,6 +1,20 @@
 import { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { CommonContext, RawRumEvent, RumEventDomainContext } from '../rawRumEvent.types'
+import {
+  CommonContext,
+  RawRumActionEvent,
+  RawRumErrorEvent,
+  RawRumLongTaskEvent,
+  RawRumResourceEvent,
+  RawRumViewEvent,
+  RumActionEventDomainContext,
+  RumErrorEventDomainContext,
+  RumFetchResourceEventDomainContext,
+  RumLongTaskEventDomainContext,
+  RumOtherResourceEventDomainContext,
+  RumViewEventDomainContext,
+  RumXhrResourceEventDomainContext,
+} from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -108,10 +122,32 @@ export class LifeCycle {
   }
 }
 
-export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
+export type RawRumEventCollectedData = {
   startTime: RelativeTime
-  rawRumEvent: E
   savedCommonContext?: CommonContext
   customerContext?: Context
-  domainContext: RumEventDomainContext<E>
-}
+} & (
+  | {
+      rawRumEvent: RawRumViewEvent
+      domainContext: RumViewEventDomainContext
+    }
+  | {
+      rawRumEvent: RawRumErrorEvent
+      domainContext: RumErrorEventDomainContext
+    }
+  | {
+      rawRumEvent: RawRumActionEvent
+      domainContext: RumActionEventDomainContext
+    }
+  | {
+      rawRumEvent: RawRumResourceEvent
+      domainContext:
+        | RumXhrResourceEventDomainContext
+        | RumFetchResourceEventDomainContext
+        | RumOtherResourceEventDomainContext
+    }
+  | {
+      rawRumEvent: RawRumLongTaskEvent
+      domainContext: RumLongTaskEventDomainContext
+    }
+)

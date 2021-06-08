@@ -22,7 +22,7 @@ import { startRum } from './rum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
-  beforeSend?: (event: RumEvent, context: RumEventDomainContext<any>) => void | boolean
+  beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>

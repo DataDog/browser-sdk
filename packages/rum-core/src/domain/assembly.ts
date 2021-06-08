@@ -131,7 +131,7 @@ export function startRumAssembly(
 function shouldSend(
   event: RumEvent & Context,
   beforeSend: BeforeSendCallback | undefined,
-  domainContext: RumEventDomainContext<any>,
+  domainContext: RumEventDomainContext,
   errorFilter: ErrorFilter
 ) {
   if (beforeSend) {

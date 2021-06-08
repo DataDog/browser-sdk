@@ -210,6 +210,39 @@ export interface CommonContext {
   hasReplay?: true
 }
 
+export type RumEventDomainContext =
+  | RumViewEventDomainContext
+  | RumActionEventDomainContext
+  | RumFetchResourceEventDomainContext
+  | RumXhrResourceEventDomainContext
+  | RumOtherResourceEventDomainContext
+  | RumErrorEventDomainContext
+  | RumLongTaskEventDomainContext
+
+export interface RumViewEventDomainContext {
+  location: ReadonlyLocation
+}
+export interface RumActionEventDomainContext {
+  event?: Event
+}
+export interface RumFetchResourceEventDomainContext {
+  response: Response
+  performanceEntry?: PerformanceEntryRepresentation
+}
+export interface RumXhrResourceEventDomainContext {
+  xhr: XMLHttpRequest
+  performanceEntry?: PerformanceEntryRepresentation
+}
+export interface RumOtherResourceEventDomainContext {
+  performanceEntry: PerformanceEntryRepresentation
+}
+export interface RumErrorEventDomainContext {
+  error: unknown
+}
+export interface RumLongTaskEventDomainContext {
+  performanceEntry: PerformanceEntryRepresentation
+}
+
 export interface ReadonlyLocation {
   readonly hash: string
   readonly host: string
@@ -228,19 +261,3 @@ export interface ReadonlyLocation {
  * based on `performance.timing`.
  */
 export type PerformanceEntryRepresentation = Omit<PerformanceEntry, 'toJSON'>
-
-export type RumEventDomainContext<E extends RawRumEvent> = E extends RawRumErrorEvent
-  ? { error?: unknown }
-  : E extends RawRumActionEvent
-  ? { event?: Event }
-  : E extends RawRumLongTaskEvent
-  ? { performanceEntry: PerformanceEntryRepresentation }
-  : E extends RawRumResourceEvent
-  ? {
-      performanceEntry?: PerformanceEntryRepresentation
-      xhr?: XMLHttpRequest
-      response?: Response
-    }
-  : E extends RawRumViewEvent
-  ? { location: ReadonlyLocation }
-  : never

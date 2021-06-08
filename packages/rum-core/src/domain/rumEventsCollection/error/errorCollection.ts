@@ -62,10 +62,7 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
   return { startClocks, source, originalError: error, ...formatUnknownError(stackTrace, error, 'Provided') }
 }
 
-function processError(
-  error: RawError,
-  foregroundContexts: ForegroundContexts
-): RawRumEventCollectedData<RawRumErrorEvent> {
+function processError(error: RawError, foregroundContexts: ForegroundContexts): RawRumEventCollectedData {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
     error: {
