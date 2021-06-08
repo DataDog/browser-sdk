@@ -238,27 +238,19 @@ export function stubXhr() {
 export function withXhr({
   setup,
   onComplete,
-  completionMode = 'automatic',
 }: {
-  setup: (xhr: StubXhr, complete: (xhr: StubXhr) => void) => void
+  setup: (xhr: StubXhr) => void
   onComplete: (xhr: XMLHttpRequest) => void
-  completionMode?: 'manual' | 'automatic'
 }) {
   const xhr = new XMLHttpRequest()
-  const complete = () => {
+  const loadend = () => {
+    xhr.removeEventListener('loadend', loadend)
     setTimeout(() => {
       onComplete(xhr)
     })
   }
-  if (completionMode === 'automatic') {
-    const loadendHandler = () => {
-      xhr.removeEventListener('loadend', loadendHandler)
-      complete()
-    }
-    xhr.addEventListener('loadend', loadendHandler)
-  }
-
-  setup((xhr as unknown) as StubXhr, complete)
+  xhr.addEventListener('loadend', loadend)
+  setup((xhr as unknown) as StubXhr)
 }
 
 export function setPageVisibility(visibility: 'visible' | 'hidden') {

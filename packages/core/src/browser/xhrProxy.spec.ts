@@ -241,16 +241,14 @@ describe('xhr proxy', () => {
   it('should track multiple requests with the same xhr instance', (done) => {
     let listeners: { [k: string]: Array<() => void> }
     withXhr({
-      completionMode: 'manual',
-      setup(xhr, complete) {
+      setup(xhr) {
         const secondOnload = () => {
           xhr.removeEventListener('load', secondOnload)
-          complete(xhr)
         }
         const onLoad = () => {
           xhr.removeEventListener('load', onLoad)
           xhr.addEventListener('load', secondOnload)
-          xhr.open('GET', '/ok?request=1')
+          xhr.open('GET', '/ok?request=2')
           xhr.send()
           xhr.complete(400, 'ok')
         }
@@ -264,6 +262,7 @@ describe('xhr proxy', () => {
       onComplete(xhr) {
         const firstRequest = getRequest(0)
         expect(firstRequest.method).toBe('GET')
+        expect(firstRequest.url).toContain('/ok?request=1')
         expect(firstRequest.status).toBe(200)
         expect(firstRequest.isAborted).toBe(false)
         expect(firstRequest.startTime).toEqual(jasmine.any(Number))
@@ -271,6 +270,7 @@ describe('xhr proxy', () => {
 
         const secondRequest = getRequest(1)
         expect(secondRequest.method).toBe('GET')
+        expect(secondRequest.url).toContain('/ok?request=2')
         expect(secondRequest.status).toBe(400)
         expect(secondRequest.isAborted).toBe(false)
         expect(secondRequest.startTime).toEqual(jasmine.any(Number))
