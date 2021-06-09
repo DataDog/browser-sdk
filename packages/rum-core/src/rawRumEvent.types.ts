@@ -210,14 +210,17 @@ export interface CommonContext {
   hasReplay?: true
 }
 
-export type RumEventDomainContext =
-  | RumViewEventDomainContext
-  | RumActionEventDomainContext
-  | RumFetchResourceEventDomainContext
-  | RumXhrResourceEventDomainContext
-  | RumOtherResourceEventDomainContext
-  | RumErrorEventDomainContext
-  | RumLongTaskEventDomainContext
+export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW
+  ? RumViewEventDomainContext
+  : T extends RumEventType.ACTION
+  ? RumActionEventDomainContext
+  : T extends RumEventType.RESOURCE
+  ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
+  : T extends RumEventType.ERROR
+  ? RumErrorEventDomainContext
+  : T extends RumEventType.LONG_TASK
+  ? RumLongTaskEventDomainContext
+  : never
 
 export interface RumViewEventDomainContext {
   location: Readonly<Location>

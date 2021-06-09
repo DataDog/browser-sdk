@@ -1,7 +1,7 @@
 import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { CommonContext, RawRumErrorEvent, RumEventDomainContext, RumEventType } from '../rawRumEvent.types'
+import { CommonContext, RawRumErrorEvent, RawRumEvent, RumEventDomainContext, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
@@ -591,15 +591,15 @@ describe('rum assembly', () => {
   })
 })
 
-function notifyRawRumEvent(
+function notifyRawRumEvent<E extends RawRumEvent>(
   lifeCycle: LifeCycle,
-  partialData: Omit<RawRumEventCollectedData, 'startTime' | 'domainContext'> &
-    Partial<Pick<RawRumEventCollectedData, 'startTime' | 'domainContext'>>
+  partialData: Omit<RawRumEventCollectedData<E>, 'startTime' | 'domainContext'> &
+    Partial<Pick<RawRumEventCollectedData<E>, 'startTime' | 'domainContext'>>
 ) {
   const fullData = {
     startTime: 0 as RelativeTime,
     domainContext: {} as RumEventDomainContext,
     ...partialData,
-  } as RawRumEventCollectedData
+  }
   lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, fullData)
 }

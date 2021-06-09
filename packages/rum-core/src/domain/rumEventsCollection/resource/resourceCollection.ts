@@ -7,7 +7,7 @@ import {
   relativeToClocks,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RumEventType } from '../../../rawRumEvent.types'
+import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
@@ -34,7 +34,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, session: RumSessio
   })
 }
 
-function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData {
+function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
@@ -73,7 +73,7 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
   }
 }
 
-function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventCollectedData {
+function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry)

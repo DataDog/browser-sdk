@@ -28,7 +28,10 @@ export function startViewCollection(
   return trackViews(location, lifeCycle, domMutationObservable, shouldTrackViewsAutomatically, initialViewName)
 }
 
-function processViewUpdate(view: ViewEvent, foregroundContexts: ForegroundContexts): RawRumEventCollectedData {
+function processViewUpdate(
+  view: ViewEvent,
+  foregroundContexts: ForegroundContexts
+): RawRumEventCollectedData<RawRumViewEvent> {
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,

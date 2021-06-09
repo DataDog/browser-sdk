@@ -32,7 +32,7 @@ export function startActionCollection(
 function processAction(
   action: AutoAction | CustomAction,
   foregroundContexts: ForegroundContexts
-): RawRumEventCollectedData {
+): RawRumEventCollectedData<RawRumActionEvent> {
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
