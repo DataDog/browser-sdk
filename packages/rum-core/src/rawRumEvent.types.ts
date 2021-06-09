@@ -51,6 +51,7 @@ export interface RawRumErrorEvent {
     stack?: string
     source: ErrorSource
     message: string
+    is_handled?: boolean
   }
   view?: {
     in_foreground: boolean

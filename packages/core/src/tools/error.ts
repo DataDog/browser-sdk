@@ -14,6 +14,7 @@ export interface RawError {
     method: string
   }
   originalError?: unknown
+  isHandled?: boolean
 }
 
 export const ErrorSource = {

@@ -50,6 +50,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             id: generateUUID(),
             message: 'oh snap',
             source: ErrorSource.SOURCE,
+            isHandled: false,
           },
         },
         overrides

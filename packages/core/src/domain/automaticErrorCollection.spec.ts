@@ -43,6 +43,7 @@ describe('console tracker', () => {
       message: 'console error: foo bar',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      isHandled: true,
     })
   })
 
@@ -53,6 +54,7 @@ describe('console tracker', () => {
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      isHandled: true,
     })
   })
 

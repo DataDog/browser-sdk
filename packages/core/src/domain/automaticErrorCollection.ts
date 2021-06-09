@@ -32,6 +32,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startClocks: clocksNow(),
+      isHandled: true,
     })
   })
 }
@@ -71,6 +72,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
       originalError: errorObject,
+      isHandled: false,
     })
   }
   subscribe(traceKitReportHandler)
