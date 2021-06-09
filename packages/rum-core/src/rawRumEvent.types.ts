@@ -229,10 +229,10 @@ export interface RumActionEventDomainContext {
   event?: Event
 }
 export interface RumFetchResourceEventDomainContext {
-  fetchInit?: RequestInit
-  fetchInput: RequestInfo
-  fetchResponse?: Response
-  fetchError?: Error
+  requestInit?: RequestInit
+  requestInput: RequestInfo
+  response?: Response
+  error?: Error
   performanceEntry?: PerformanceEntryRepresentation
 }
 export interface RumXhrResourceEventDomainContext {

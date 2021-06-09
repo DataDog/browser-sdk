@@ -89,10 +89,10 @@ describe('resourceCollection', () => {
       expect(rawRumEvents[0].domainContext).toEqual({
         xhr,
         performanceEntry: undefined,
-        fetchResponse: undefined,
-        fetchInput: undefined,
-        fetchInit: undefined,
-        fetchError: undefined,
+        response: undefined,
+        requestInput: undefined,
+        requestInit: undefined,
+        error: undefined,
       })
     })
 
@@ -133,10 +133,10 @@ describe('resourceCollection', () => {
       expect(rawRumEvents[0].domainContext).toEqual({
         performanceEntry: undefined,
         xhr: undefined,
-        fetchResponse: response,
-        fetchInput: 'https://resource.com/valid',
-        fetchInit: { headers: { foo: 'bar' } },
-        fetchError: undefined,
+        response,
+        requestInput: 'https://resource.com/valid',
+        requestInit: { headers: { foo: 'bar' } },
+        error: undefined,
       })
     })
 
@@ -147,7 +147,7 @@ describe('resourceCollection', () => {
 
       expect(rawRumEvents[0].domainContext).toEqual(
         jasmine.objectContaining({
-          fetchError: error,
+          error,
         })
       )
     })

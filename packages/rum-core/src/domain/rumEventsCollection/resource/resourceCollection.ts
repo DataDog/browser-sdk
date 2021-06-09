@@ -65,10 +65,10 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
     domainContext: {
       performanceEntry: matchingTiming instanceof PerformanceEntry ? matchingTiming.toJSON() : matchingTiming,
       xhr: request.xhr,
-      fetchResponse: request.response,
-      fetchInput: request.input,
-      fetchInit: request.init,
-      fetchError: request.error,
+      response: request.response,
+      requestInput: request.input,
+      requestInit: request.init,
+      error: request.error,
     },
   }
 }
