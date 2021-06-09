@@ -47,6 +47,7 @@ describe('error collection', () => {
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
             type: 'Error',
+            is_handled: true,
           },
           type: RumEventType.ERROR,
           view: {
@@ -149,6 +150,7 @@ describe('error collection', () => {
           source: ErrorSource.NETWORK,
           stack: 'bar',
           type: 'foo',
+          is_handled: undefined,
         },
         view: {
           in_foreground: true,

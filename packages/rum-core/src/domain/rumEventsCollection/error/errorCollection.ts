@@ -59,7 +59,13 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
 
 function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
-  return { startClocks, source, originalError: error, ...formatUnknownError(stackTrace, error, 'Provided') }
+  return {
+    startClocks,
+    source,
+    originalError: error,
+    ...formatUnknownError(stackTrace, error, 'Provided'),
+    isHandled: true,
+  }
 }
 
 function processError(
@@ -81,6 +87,7 @@ function processError(
       source: error.source,
       stack: error.stack,
       type: error.type,
+      is_handled: error.isHandled,
     },
     type: RumEventType.ERROR as const,
   }
