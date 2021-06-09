@@ -129,7 +129,7 @@ function sendXhr(this: BrowserXHR<XhrStartContext>) {
         return
       }
       hasBeenReported = true
-      reportXhr(this, this._datadog_xhr!)
+      reportXhr(this as BrowserXHR<XhrCompleteContext>)
     })
     this.onreadystatechange = onreadystatechange
     this.addEventListener('loadend', onEnd)
@@ -149,13 +149,10 @@ function abortXhr(this: BrowserXHR<XhrStartContext>) {
   return originalXhrAbort.apply(this, arguments as any)
 }
 
-function reportXhr(xhr: BrowserXHR<XhrStartContext>, pendingContext: XhrStartContext) {
-  const xhrCompleteContext: XhrCompleteContext = {
-    ...pendingContext,
-    duration: elapsed(pendingContext.startClocks.timeStamp, timeStampNow()),
-    response: xhr.response as string | undefined,
-    status: xhr.status,
-  }
+function reportXhr(xhr: BrowserXHR<XhrCompleteContext>) {
+  xhr._datadog_xhr!.duration = elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow())
+  xhr._datadog_xhr!.response = xhr.response as string | undefined
+  xhr._datadog_xhr!.status = xhr.status
 
-  onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
+  onRequestCompleteCallbacks.forEach((callback) => callback({ ...xhr._datadog_xhr! }))
 }
