@@ -96,7 +96,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventC
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: (entry as unknown) as PerformanceEntry,
+      performanceEntry: entry instanceof PerformanceEntry ? entry.toJSON() : entry,
     },
   }
 }
