@@ -28,8 +28,9 @@ describe('error collection', () => {
   describe('provided', () => {
     it('notifies a raw rum error event', () => {
       const { rawRumEvents } = setupBuilder.build()
+      const error = new Error('foo')
       addError({
-        error: new Error('foo'),
+        error,
         source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
@@ -53,7 +54,8 @@ describe('error collection', () => {
           },
         },
         savedCommonContext: undefined,
-        startTime: 1234,
+        startTime: 1234 as RelativeTime,
+        domainContext: { error },
       })
     })
 
@@ -99,11 +101,24 @@ describe('error collection', () => {
         id: 'foo',
       })
     })
+
+    it('should include non-Error values in domain context', () => {
+      const { rawRumEvents } = setupBuilder.build()
+      addError({
+        error: { foo: 'bar' },
+        source: ErrorSource.CUSTOM,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        error: { foo: 'bar' },
+      })
+    })
   })
 
   describe('RAW_ERROR_COLLECTED LifeCycle event', () => {
     it('should create error event from collected error', () => {
       const { rawRumEvents, lifeCycle } = setupBuilder.build()
+      const error = new Error('hello')
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         error: {
           message: 'hello',
@@ -116,10 +131,11 @@ describe('error collection', () => {
           stack: 'bar',
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
           type: 'foo',
+          originalError: error,
         },
       })
 
-      expect(rawRumEvents[0].startTime).toBe(1234)
+      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         error: {
@@ -138,6 +154,9 @@ describe('error collection', () => {
           in_foreground: true,
         },
         type: RumEventType.ERROR,
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        error,
       })
     })
   })

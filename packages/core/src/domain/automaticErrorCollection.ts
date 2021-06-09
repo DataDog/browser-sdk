@@ -70,6 +70,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       type,
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
+      originalError: errorObject,
     })
   }
   subscribe(traceKitReportHandler)
@@ -97,7 +98,7 @@ export function trackNetworkError(configuration: Configuration, errorObservable:
           url: request.url,
         },
         source: ErrorSource.NETWORK,
-        stack: truncateResponse(request.response, configuration) || 'Failed to load',
+        stack: truncateResponseText(request.responseText, configuration) || 'Failed to load',
         startClocks: request.startClocks,
       })
     }
@@ -119,11 +120,11 @@ function isServerError(request: { status: number }) {
   return request.status >= 500
 }
 
-function truncateResponse(response: string | undefined, configuration: Configuration) {
-  if (response && response.length > configuration.requestErrorResponseLengthLimit) {
-    return `${response.substring(0, configuration.requestErrorResponseLengthLimit)}...`
+function truncateResponseText(responseText: string | undefined, configuration: Configuration) {
+  if (responseText && responseText.length > configuration.requestErrorResponseLengthLimit) {
+    return `${responseText.substring(0, configuration.requestErrorResponseLengthLimit)}...`
   }
-  return response
+  return responseText
 }
 
 function format(type: RequestType) {

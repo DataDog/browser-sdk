@@ -47,8 +47,8 @@ describe('configuration', () => {
         }
       }
       const configuration = buildConfiguration({ clientToken, beforeSend }, usEnv)
-      expect(configuration.beforeSend!({ view: { url: '/foo' } })).toBeFalse()
-      expect(configuration.beforeSend!({ view: { url: '/bar' } })).toBeUndefined()
+      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
 
     it('should catch errors and log them', () => {
@@ -58,7 +58,7 @@ describe('configuration', () => {
       }
       const configuration = buildConfiguration({ clientToken, beforeSend }, usEnv)
       const displaySpy = spyOn(display, 'error')
-      expect(configuration.beforeSend!(null)).toBeUndefined()
+      expect(configuration.beforeSend!(null, {})).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
     })
   })

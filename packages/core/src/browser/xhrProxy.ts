@@ -29,8 +29,9 @@ export interface XhrStartContext {
 export interface XhrCompleteContext extends XhrStartContext {
   duration: Duration
   status: number
-  response: string | undefined
+  responseText: string | undefined
   isAborted: boolean
+  xhr: XMLHttpRequest
 }
 
 let xhrProxySingleton: XhrProxy | undefined
@@ -126,8 +127,9 @@ function proxyXhr() {
           const xhrCompleteContext: XhrCompleteContext = {
             ...xhrPendingContext,
             duration: elapsed(xhrPendingContext.startClocks.timeStamp, timeStampNow()),
-            response: this.response as string | undefined,
+            responseText: this.response as string | undefined,
             status: this.status,
+            xhr: this,
           }
 
           onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))

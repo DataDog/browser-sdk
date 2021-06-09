@@ -24,7 +24,7 @@ import { trackViewMetrics } from './trackViewMetrics'
 export interface ViewEvent {
   id: string
   name?: string
-  location: Location
+  location: Readonly<Location>
   referrer: string
   timings: Timings
   customTimings: ViewCustomTimings
@@ -201,7 +201,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location: Location = { ...initialLocation }
+  let location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })

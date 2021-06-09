@@ -8,7 +8,7 @@ import {
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
-import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
 import { matchRequestTiming } from './matchRequestTiming'
@@ -34,7 +34,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, session: RumSessio
   })
 }
 
-function processRequest(request: RequestCompleteEvent) {
+function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
 
   const matchingTiming = matchRequestTiming(request)
@@ -54,15 +54,26 @@ function processRequest(request: RequestCompleteEvent) {
         status_code: request.status,
         url: request.url,
       },
-      type: RumEventType.RESOURCE,
+      type: RumEventType.RESOURCE as const,
     },
     tracingInfo,
     correspondingTimingOverrides
   )
-  return { startTime: startClocks.relative, rawRumEvent: resourceEvent as RawRumResourceEvent }
+  return {
+    startTime: startClocks.relative,
+    rawRumEvent: resourceEvent,
+    domainContext: {
+      performanceEntry: matchingTiming instanceof PerformanceEntry ? matchingTiming.toJSON() : matchingTiming,
+      xhr: request.xhr,
+      response: request.response,
+      requestInput: request.input,
+      requestInit: request.init,
+      error: request.error,
+    },
+  }
 }
 
-function processResourceEntry(entry: RumPerformanceResourceTiming) {
+function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventCollectedData<RawRumResourceEvent> {
   const type = computeResourceKind(entry)
   const entryMetrics = computePerformanceEntryMetrics(entry)
   const tracingInfo = computeEntryTracingInfo(entry)
@@ -76,12 +87,18 @@ function processResourceEntry(entry: RumPerformanceResourceTiming) {
         type,
         url: entry.name,
       },
-      type: RumEventType.RESOURCE,
+      type: RumEventType.RESOURCE as const,
     },
     tracingInfo,
     entryMetrics
   )
-  return { startTime: startClocks.relative, rawRumEvent: resourceEvent as RawRumResourceEvent }
+  return {
+    startTime: startClocks.relative,
+    rawRumEvent: resourceEvent,
+    domainContext: {
+      performanceEntry: entry instanceof PerformanceEntry ? entry.toJSON() : entry,
+    },
+  }
 }
 
 function computePerformanceEntryMetrics(timing: RumPerformanceResourceTiming) {

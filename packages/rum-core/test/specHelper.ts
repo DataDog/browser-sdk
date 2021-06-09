@@ -3,7 +3,6 @@ import {
   buildUrl,
   combine,
   Configuration,
-  Context,
   DEFAULT_CONFIGURATION,
   Observable,
   TimeStamp,
@@ -11,11 +10,11 @@ import {
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
 import { ForegroundContexts } from '../src/domain/foregroundContexts'
-import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
-import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -49,12 +48,7 @@ export interface TestIO {
   clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
-  rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedCommonContext?: CommonContext
-    customerContext?: Context
-  }>
+  rawRumEvents: RawRumEventCollectedData[]
 }
 
 export function setup(): TestSetupBuilder {
@@ -67,12 +61,7 @@ export function setup(): TestSetupBuilder {
   const domMutationObservable = new Observable<void>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedGlobalContext?: Context
-    customerContext?: Context
-  }> = []
+  const rawRumEvents: RawRumEventCollectedData[] = []
 
   let clock: Clock
   let fakeLocation: Partial<Location> = location

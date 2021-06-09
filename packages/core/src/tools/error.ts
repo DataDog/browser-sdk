@@ -13,6 +13,7 @@ export interface RawError {
     statusCode: number
     method: string
   }
+  originalError?: unknown
 }
 
 export const ErrorSource = {
