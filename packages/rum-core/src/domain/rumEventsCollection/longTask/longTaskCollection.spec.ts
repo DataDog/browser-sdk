@@ -1,9 +1,18 @@
 import { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumPerformanceEntry } from '../../../browser/performanceCollection'
+import { RumPerformanceEntry, RumPerformanceLongTaskTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { startLongTaskCollection } from './longTaskCollection'
+
+const LONG_TASK: RumPerformanceLongTaskTiming = {
+  duration: 100 as Duration,
+  entryType: 'longtask',
+  startTime: 1234 as RelativeTime,
+  toJSON() {
+    return { name: 'self', duration: 100, entryType: 'longtask', startTime: 1234 }
+  },
+}
 
 describe('long task collection', () => {
   let setupBuilder: TestSetupBuilder
@@ -25,7 +34,7 @@ describe('long task collection', () => {
   it('should only listen to long task performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
     ;[
-      { duration: 100 as Duration, entryType: 'longtask', startTime: 1234 },
+      LONG_TASK,
       { duration: 100 as Duration, entryType: 'navigation', startTime: 1234 },
       { duration: 100 as Duration, entryType: 'resource', startTime: 1234 },
       { duration: 100 as Duration, entryType: 'paint', startTime: 1234 },
@@ -37,12 +46,7 @@ describe('long task collection', () => {
 
   it('should create raw rum event from performance entry', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const performanceEntry: RumPerformanceEntry = {
-      duration: 100 as Duration,
-      entryType: 'longtask',
-      startTime: 1234 as RelativeTime,
-    }
-    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, performanceEntry)
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, LONG_TASK)
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -54,7 +58,7 @@ describe('long task collection', () => {
       type: RumEventType.LONG_TASK,
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: (performanceEntry as unknown) as PerformanceEntry,
+      performanceEntry: { name: 'self', duration: 100, entryType: 'longtask', startTime: 1234 },
     })
   })
 })

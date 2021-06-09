@@ -16,6 +16,7 @@ import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
+import { PerformanceEntryRepresentation } from '../rawRumEvent.types'
 
 export interface RumPerformanceResourceTiming {
   entryType: 'resource'
@@ -42,6 +43,7 @@ export interface RumPerformanceLongTaskTiming {
   entryType: 'longtask'
   startTime: RelativeTime
   duration: Duration
+  toJSON(): PerformanceEntryRepresentation
 }
 
 export interface RumPerformancePaintTiming {
