@@ -103,6 +103,13 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      // do not trigger view update to avoid wrong data
+      currentView.end()
+      // Renew view on session renewal
+      currentView = trackViewChange(undefined, currentView.name)
+    })
+
     // End the current view on page unload
     lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
       currentView.end()
@@ -134,13 +141,6 @@ export function trackViews(
   }
 
   function startAutomaticViewCollection() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      // do not trigger view update to avoid wrong data
-      currentView.end()
-      // Renew view on session renewal
-      currentView = trackViewChange()
-    })
-
     return trackLocationChanges(() => {
       if (areDifferentLocation(currentView.getLocation(), location)) {
         // Renew view on location changes
@@ -155,11 +155,6 @@ export function trackViews(
   }
 
   function startManualViewCollection() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      // do not trigger view update to avoid wrong data
-      currentView.end()
-    })
-
     return trackLocationChanges(() => {
       currentView.updateLocation(location)
       currentView.triggerUpdate()
@@ -246,6 +241,7 @@ function newView(
   }
 
   return {
+    name,
     scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
       endClocks = clocks

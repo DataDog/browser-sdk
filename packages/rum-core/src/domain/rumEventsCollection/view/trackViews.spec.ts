@@ -169,31 +169,6 @@ describe('track views automatically', () => {
     })
   })
 
-  describe('renew session', () => {
-    it('should create new view on renew session', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewCreateCount } = viewTest
-
-      expect(getViewCreateCount()).toBe(1)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewCreateCount()).toBe(2)
-    })
-
-    it('should not update the current view when the session is renewed', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdateCount, getViewUpdate } = viewTest
-
-      expect(getViewUpdateCount()).toEqual(1)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewUpdateCount()).toEqual(2)
-      expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
-    })
-  })
-
   describe('view referrer', () => {
     it('should set the document referrer as referrer for the initial view', () => {
       setupBuilder.build()
@@ -277,30 +252,6 @@ describe('track views manually', () => {
       const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
       expect(lastUpdate.location.href).toMatch(/\/bar$/)
       expect(lastUpdate.id).toBe(getViewCreate(0).id)
-    })
-  })
-
-  describe('renew session', () => {
-    it('should not update the current view when the session is renewed', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewUpdateCount } = viewTest
-
-      expect(getViewUpdateCount()).toEqual(1)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewUpdateCount()).toEqual(1)
-    })
-
-    it('should not create new view when the session is renewed', () => {
-      const { lifeCycle } = setupBuilder.build()
-      const { getViewCreateCount } = viewTest
-
-      expect(getViewCreateCount()).toEqual(1)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(getViewCreateCount()).toEqual(1)
     })
   })
 
@@ -471,6 +422,75 @@ describe('initial view', () => {
         expect(initialView.last.loadingTime).toBe(FAKE_NAVIGATION_ENTRY.loadEventEnd)
       })
     })
+  })
+})
+
+describe('renew session', () => {
+  let setupBuilder: TestSetupBuilder
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    setupBuilder = setup()
+      .withFakeLocation('/foo')
+      .beforeBuild((buildContext) => {
+        viewTest = setupViewTest(buildContext, 'initial view name')
+        return viewTest
+      })
+  })
+
+  afterEach(() => {
+    setupBuilder.cleanup()
+  })
+
+  it('should create new view on renew session', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewCreateCount } = viewTest
+
+    expect(getViewCreateCount()).toBe(1)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    expect(getViewCreateCount()).toBe(2)
+  })
+
+  it('should use the current view name for the new view', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewCreateCount, getViewCreate, startView } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    startView('foo')
+    startView('bar')
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    startView('qux')
+    history.pushState({}, '', '/bar')
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    expect(getViewCreateCount()).toBe(8)
+
+    expect(getViewCreate(0).name).toBe('initial view name')
+    expect(getViewCreate(1).name).toBe('initial view name')
+
+    expect(getViewCreate(2).name).toBe('foo')
+    expect(getViewCreate(3).name).toBe('bar')
+    expect(getViewCreate(4).name).toBe('bar')
+
+    expect(getViewCreate(5).name).toBe('qux')
+    expect(getViewCreate(6).name).toBeUndefined()
+    expect(getViewCreate(7).name).toBeUndefined()
+  })
+
+  it('should not update the current view when the session is renewed', () => {
+    const { lifeCycle } = setupBuilder.build()
+    const { getViewUpdateCount, getViewUpdate } = viewTest
+
+    expect(getViewUpdateCount()).toEqual(1)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    expect(getViewUpdateCount()).toEqual(2)
+    expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
   })
 })
 
