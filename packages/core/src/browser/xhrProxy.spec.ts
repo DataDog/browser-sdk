@@ -107,17 +107,21 @@ describe('xhr proxy', () => {
   })
 
   it('should track successful request aborted', (done) => {
-    const onReadyStateChange = jasmine.createSpy()
     withXhr({
       setup(xhr) {
-        xhr.onreadystatechange = onReadyStateChange
-        xhr.addEventListener('load', () => xhr.abort())
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            xhr.abort()
+          }
+        }
+        spyOn(xhr, 'onreadystatechange').and.callThrough()
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
       },
       onComplete(xhr) {
         const request = getRequest(0)
+        expect(completeSpy.calls.count()).toBe(1)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
         expect(request.responseText).toBe('ok')
@@ -126,7 +130,7 @@ describe('xhr proxy', () => {
         expect(request.duration).toEqual(jasmine.any(Number))
         expect(request.isAborted).toBe(false)
         expect(xhr.status).toBe(0)
-        expect(onReadyStateChange).toHaveBeenCalled()
+        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
         done()
       },
     })
@@ -154,15 +158,15 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should track request with onreadystatechange overridden', (done) => {
+  it('should track request with onreadystatechange overridden before open', (done) => {
     withXhr({
       setup(xhr) {
+        xhr.onreadystatechange = jasmine.createSpy()
         xhr.open('GET', '/ok')
         xhr.send()
-        xhr.onreadystatechange = () => undefined
         xhr.complete(200, 'ok')
       },
-      onComplete() {
+      onComplete(xhr) {
         const request = getRequest(0)
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
@@ -171,6 +175,30 @@ describe('xhr proxy', () => {
         expect(request.isAborted).toBe(false)
         expect(request.startTime).toEqual(jasmine.any(Number))
         expect(request.duration).toEqual(jasmine.any(Number))
+        expect(xhr.onreadystatechange).toHaveBeenCalled()
+        done()
+      },
+    })
+  })
+
+  it('should track request with onreadystatechange overridden after open', (done) => {
+    withXhr({
+      setup(xhr) {
+        xhr.open('GET', '/ok')
+        xhr.send()
+        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.complete(200, 'ok')
+      },
+      onComplete(xhr) {
+        const request = getRequest(0)
+        expect(request.method).toBe('GET')
+        expect(request.url).toContain('/ok')
+        expect(request.responseText).toBe('ok')
+        expect(request.status).toBe(200)
+        expect(request.isAborted).toBe(false)
+        expect(request.startTime).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(xhr.onreadystatechange).toHaveBeenCalled()
         done()
       },
     })
@@ -194,7 +222,7 @@ describe('xhr proxy', () => {
     })
   })
 
-  it('should should not break xhr opened before the instrumentation', (done) => {
+  it('should not break xhr opened before the instrumentation', (done) => {
     resetXhrProxy()
     withXhr({
       setup(xhr) {
@@ -205,6 +233,52 @@ describe('xhr proxy', () => {
       },
       onComplete() {
         expect(completeSpy.calls.count()).toBe(0)
+        done()
+      },
+    })
+  })
+
+  it('should track multiple requests with the same xhr instance', (done) => {
+    let listeners: { [k: string]: Array<() => void> }
+    withXhr({
+      setup(xhr) {
+        const secondOnload = () => {
+          xhr.removeEventListener('load', secondOnload)
+        }
+        const onLoad = () => {
+          xhr.removeEventListener('load', onLoad)
+          xhr.addEventListener('load', secondOnload)
+          xhr.open('GET', '/ok?request=2')
+          xhr.send()
+          xhr.complete(400, 'ok')
+        }
+        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.addEventListener('load', onLoad)
+        xhr.open('GET', '/ok?request=1')
+        xhr.send()
+        xhr.complete(200, 'ok')
+        listeners = xhr.listeners
+      },
+      onComplete(xhr) {
+        const firstRequest = getRequest(0)
+        expect(firstRequest.method).toBe('GET')
+        expect(firstRequest.url).toContain('/ok?request=1')
+        expect(firstRequest.status).toBe(200)
+        expect(firstRequest.isAborted).toBe(false)
+        expect(firstRequest.startTime).toEqual(jasmine.any(Number))
+        expect(firstRequest.duration).toEqual(jasmine.any(Number))
+
+        const secondRequest = getRequest(1)
+        expect(secondRequest.method).toBe('GET')
+        expect(secondRequest.url).toContain('/ok?request=2')
+        expect(secondRequest.status).toBe(400)
+        expect(secondRequest.isAborted).toBe(false)
+        expect(secondRequest.startTime).toEqual(jasmine.any(Number))
+        expect(secondRequest.duration).toEqual(jasmine.any(Number))
+
+        expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
+        expect(listeners.load.length).toBe(0)
+        expect(listeners.loadend.length).toBe(0)
         done()
       },
     })

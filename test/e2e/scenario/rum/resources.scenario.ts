@@ -201,6 +201,36 @@ describe('rum resources', () => {
         expect(resourceEvent?.resource.status_code).toBe(0)
       })
   })
+
+  describe('support XHRs with same XMLHttpRequest instance', () => {
+    createTest('track XHRs when calling requests one after another')
+      .withRum()
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await browserExecuteAsync((done) => {
+          const xhr = new XMLHttpRequest()
+          const triggerSecondCall = () => {
+            xhr.removeEventListener('loadend', triggerSecondCall)
+            xhr.addEventListener('loadend', () => done(undefined))
+            xhr.open('GET', '/ok?duration=100&call=2')
+            xhr.send()
+          }
+          xhr.addEventListener('loadend', triggerSecondCall)
+          xhr.open('GET', '/ok?duration=100&call=1')
+          xhr.send()
+        })
+
+        await flushEvents()
+
+        const resourceEvents = events.rumResources.filter((event) => event.resource.type === 'xhr')
+        expect(resourceEvents.length).toEqual(2)
+        expect(events.rumErrors.length).toBe(0)
+        expect(resourceEvents[0].resource.url).toContain('/ok?duration=100&call=1')
+        expect(resourceEvents[0].resource.status_code).toEqual(200)
+        expect(resourceEvents[1].resource.url).toContain('/ok?duration=100&call=2')
+        expect(resourceEvents[1].resource.status_code).toEqual(200)
+      })
+  })
 })
 
 function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {

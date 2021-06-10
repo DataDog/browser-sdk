@@ -128,23 +128,47 @@ export interface FetchStubPromise extends Promise<Response> {
   rejectWith: (error: Error) => void
 }
 
-class StubXhr {
+class StubEventEmitter {
+  public listeners: { [k: string]: Array<() => void> } = {}
+
+  addEventListener(name: string, callback: () => void) {
+    if (!this.listeners[name]) {
+      this.listeners[name] = []
+    }
+
+    this.listeners[name].push(callback)
+  }
+
+  removeEventListener(name: string, callback: () => void) {
+    if (!this.listeners[name]) {
+      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
+    }
+
+    this.listeners[name] = this.listeners[name].filter((listener) => listener !== callback)
+  }
+
+  protected dispatchEvent(name: string) {
+    if (!this.listeners[name]) {
+      return
+    }
+    this.listeners[name].forEach((listener) => listener.call(this))
+  }
+}
+
+class StubXhr extends StubEventEmitter {
   public response: string | undefined = undefined
   public status: number | undefined = undefined
   public readyState: number = XMLHttpRequest.UNSENT
   public onreadystatechange: () => void = noop
 
   private hasEnded = false
-  private fakeEventTarget: HTMLDivElement
-
-  constructor() {
-    this.fakeEventTarget = document.createElement('div')
-  }
 
   /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
-  open(method: string, url: string) {}
+  open(method: string, url: string) {
+    this.hasEnded = false
+  }
+
   send() {}
-  /* eslint-enable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 
   abort() {
     this.status = 0
@@ -167,7 +191,9 @@ class StubXhr {
     this.response = response
     this.status = status
     this.readyState = XMLHttpRequest.DONE
+
     this.onreadystatechange()
+
     if (status >= 200 && status < 500) {
       this.dispatchEvent('load')
     }
@@ -175,14 +201,6 @@ class StubXhr {
       this.dispatchEvent('error')
     }
     this.dispatchEvent('loadend')
-  }
-
-  addEventListener(name: string, callback: () => void) {
-    this.fakeEventTarget.addEventListener(name, callback)
-  }
-
-  private dispatchEvent(name: string) {
-    this.fakeEventTarget.dispatchEvent(createNewEvent(name))
   }
 }
 
@@ -225,11 +243,13 @@ export function withXhr({
   onComplete: (xhr: XMLHttpRequest) => void
 }) {
   const xhr = new XMLHttpRequest()
-  xhr.addEventListener('loadend', () => {
+  const loadend = () => {
+    xhr.removeEventListener('loadend', loadend)
     setTimeout(() => {
       onComplete(xhr)
     })
-  })
+  }
+  xhr.addEventListener('loadend', loadend)
   setup((xhr as unknown) as StubXhr)
 }
 

@@ -1,9 +1,9 @@
-import { monitor, callMonitored } from '../domain/internalMonitoring'
+import { callMonitored, monitor } from '../domain/internalMonitoring'
 import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, timeStampNow } from '../tools/timeUtils'
 import { normalizeUrl } from '../tools/urlPolyfill'
 
-interface BrowserXHR extends XMLHttpRequest {
-  _datadog_xhr: XhrStartContext
+interface BrowserXHR<T extends XhrOpenContext> extends XMLHttpRequest {
+  _datadog_xhr?: T
 }
 
 export interface XhrProxy<
@@ -14,12 +14,15 @@ export interface XhrProxy<
   onRequestComplete: (callback: (context: CompleteContext) => void) => void
 }
 
-export interface XhrStartContext {
+export interface XhrOpenContext {
   method: string
   url: string
+}
+
+export interface XhrStartContext extends XhrOpenContext {
   startTime: RelativeTime // deprecated
   startClocks: ClocksState
-
+  isAborted: boolean
   /**
    * allow clients to enhance the context
    */
@@ -30,7 +33,6 @@ export interface XhrCompleteContext extends XhrStartContext {
   duration: Duration
   status: number
   responseText: string | undefined
-  isAborted: boolean
   xhr: XMLHttpRequest
 }
 
@@ -46,7 +48,16 @@ export function startXhrProxy<
   CompleteContext extends XhrCompleteContext = XhrCompleteContext
 >(): XhrProxy<StartContext, CompleteContext> {
   if (!xhrProxySingleton) {
-    proxyXhr()
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    originalXhrOpen = XMLHttpRequest.prototype.open
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    originalXhrSend = XMLHttpRequest.prototype.send
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    originalXhrAbort = XMLHttpRequest.prototype.abort
+    XMLHttpRequest.prototype.open = openXhr
+    XMLHttpRequest.prototype.send = sendXhr
+    XMLHttpRequest.prototype.abort = abortXhr
+
     xhrProxySingleton = {
       beforeSend(callback: (context: XhrStartContext, xhr: XMLHttpRequest) => void) {
         beforeSendCallbacks.push(callback)
@@ -70,86 +81,80 @@ export function resetXhrProxy() {
   }
 }
 
-function proxyXhr() {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  originalXhrOpen = XMLHttpRequest.prototype.open
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  originalXhrSend = XMLHttpRequest.prototype.send
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  originalXhrAbort = XMLHttpRequest.prototype.abort
+function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) {
+  callMonitored(() => {
+    // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
+    // and can be used by different code versions depending on customer setup
+    // so it should stay compatible with older versions
+    this._datadog_xhr = {
+      method,
+      url: normalizeUrl(url),
+    }
+  })
+  return originalXhrOpen.apply(this, arguments as any)
+}
 
-  XMLHttpRequest.prototype.open = function (this: BrowserXHR, method: string, url: string) {
-    callMonitored(() => {
-      // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
-      // and can be used by different code versions depending on customer setup
-      // so it should stay compatible with older versions
-      ;(this._datadog_xhr as Pick<XhrStartContext, 'method' | 'url'>) = {
-        method,
-        url: normalizeUrl(url),
+function sendXhr(this: BrowserXHR<XhrStartContext>) {
+  callMonitored(() => {
+    if (!this._datadog_xhr) {
+      return
+    }
+
+    this._datadog_xhr.startTime = relativeNow()
+    this._datadog_xhr.startClocks = clocksNow()
+    this._datadog_xhr.isAborted = false
+
+    let hasBeenReported = false
+    const originalOnreadystatechange = this.onreadystatechange
+    const onreadystatechange = function (this: BrowserXHR<XhrStartContext>) {
+      if (this.readyState === XMLHttpRequest.DONE) {
+        // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+        // application during a future event. For example, Angular is calling .abort() on
+        // completed requests during a onreadystatechange event, so the status becomes '0'
+        // before the request is collected.
+        onEnd()
       }
-    })
-    return originalXhrOpen.apply(this, arguments as any)
-  }
 
-  XMLHttpRequest.prototype.send = function (this: BrowserXHR) {
-    callMonitored(() => {
-      if (this._datadog_xhr) {
-        const xhrPendingContext = this._datadog_xhr as XhrStartContext &
-          Pick<XhrCompleteContext, 'startTime' | 'isAborted'>
-        xhrPendingContext.startTime = relativeNow()
-        xhrPendingContext.startClocks = clocksNow()
-        xhrPendingContext.isAborted = false
-
-        const originalOnreadystatechange = this.onreadystatechange
-
-        this.onreadystatechange = function () {
-          if (this.readyState === XMLHttpRequest.DONE) {
-            // Try to report the XHR as soon as possible, because the XHR may be mutated by the
-            // application during a future event. For example, Angular is calling .abort() on
-            // completed requests during a onreadystatechange event, so the status becomes '0'
-            // before the request is collected.
-            callMonitored(reportXhr)
-          }
-
-          if (originalOnreadystatechange) {
-            originalOnreadystatechange.apply(this, arguments as any)
-          }
-        }
-
-        let hasBeenReported = false
-
-        const reportXhr = () => {
-          if (hasBeenReported) {
-            return
-          }
-          hasBeenReported = true
-
-          const xhrCompleteContext: XhrCompleteContext = {
-            ...xhrPendingContext,
-            duration: elapsed(xhrPendingContext.startClocks.timeStamp, timeStampNow()),
-            responseText: this.response as string | undefined,
-            status: this.status,
-            xhr: this,
-          }
-
-          onRequestCompleteCallbacks.forEach((callback) => callback(xhrCompleteContext))
-        }
-
-        this.addEventListener('loadend', monitor(reportXhr))
-
-        beforeSendCallbacks.forEach((callback) => callback(xhrPendingContext, this))
+      if (originalOnreadystatechange) {
+        originalOnreadystatechange.apply(this, arguments as any)
       }
-    })
+    }
 
-    return originalXhrSend.apply(this, arguments as any)
-  }
-
-  XMLHttpRequest.prototype.abort = function (this: BrowserXHR) {
-    callMonitored(() => {
-      if (this._datadog_xhr) {
-        this._datadog_xhr.isAborted = true
+    const onEnd = monitor(() => {
+      this.removeEventListener('loadend', onEnd)
+      // if the onreadystatechange hasn't been overridden by the user after the send()
+      if (this.onreadystatechange === onreadystatechange) {
+        this.onreadystatechange = originalOnreadystatechange
       }
+      if (hasBeenReported) {
+        return
+      }
+      hasBeenReported = true
+      reportXhr(this as BrowserXHR<XhrCompleteContext>)
     })
-    return originalXhrAbort.apply(this, arguments as any)
-  }
+    this.onreadystatechange = onreadystatechange
+    this.addEventListener('loadend', onEnd)
+
+    beforeSendCallbacks.forEach((callback) => callback(this._datadog_xhr!, this))
+  })
+
+  return originalXhrSend.apply(this, arguments as any)
+}
+
+function abortXhr(this: BrowserXHR<XhrStartContext>) {
+  callMonitored(() => {
+    if (this._datadog_xhr) {
+      this._datadog_xhr.isAborted = true
+    }
+  })
+  return originalXhrAbort.apply(this, arguments as any)
+}
+
+function reportXhr(xhr: BrowserXHR<XhrCompleteContext>) {
+  xhr._datadog_xhr!.duration = elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow())
+  xhr._datadog_xhr!.responseText = xhr.response as string | undefined
+  xhr._datadog_xhr!.status = xhr.status
+  xhr._datadog_xhr!.xhr = xhr
+
+  onRequestCompleteCallbacks.forEach((callback) => callback({ ...xhr._datadog_xhr! }))
 }
