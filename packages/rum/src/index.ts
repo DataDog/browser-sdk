@@ -12,4 +12,13 @@ export {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  // Events context
+  RumEventDomainContext,
+  RumViewEventDomainContext,
+  RumErrorEventDomainContext,
+  RumActionEventDomainContext,
+  RumFetchResourceEventDomainContext,
+  RumXhrResourceEventDomainContext,
+  RumOtherResourceEventDomainContext,
+  RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'

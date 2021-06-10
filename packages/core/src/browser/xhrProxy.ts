@@ -32,7 +32,8 @@ export interface XhrStartContext extends XhrOpenContext {
 export interface XhrCompleteContext extends XhrStartContext {
   duration: Duration
   status: number
-  response: string | undefined
+  responseText: string | undefined
+  xhr: XMLHttpRequest
 }
 
 let xhrProxySingleton: XhrProxy | undefined
@@ -151,8 +152,9 @@ function abortXhr(this: BrowserXHR<XhrStartContext>) {
 
 function reportXhr(xhr: BrowserXHR<XhrCompleteContext>) {
   xhr._datadog_xhr!.duration = elapsed(xhr._datadog_xhr!.startClocks.timeStamp, timeStampNow())
-  xhr._datadog_xhr!.response = xhr.response as string | undefined
+  xhr._datadog_xhr!.responseText = xhr.response as string | undefined
   xhr._datadog_xhr!.status = xhr.status
+  xhr._datadog_xhr!.xhr = xhr
 
   onRequestCompleteCallbacks.forEach((callback) => callback({ ...xhr._datadog_xhr! }))
 }

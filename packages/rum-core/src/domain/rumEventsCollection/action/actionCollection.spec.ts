@@ -1,4 +1,5 @@
 import { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { createNewEvent } from '../../../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -26,6 +27,7 @@ describe('actionCollection', () => {
   })
   it('should create action from auto action', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    const event = createNewEvent('click')
     lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
       counts: {
         errorCount: 10,
@@ -37,9 +39,10 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
+      event,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         error: {
@@ -64,6 +67,9 @@ describe('actionCollection', () => {
         in_foreground: true,
       },
     })
+    expect(rawRumEvents[0].domainContext).toEqual({
+      event,
+    })
   })
 
   it('should create action from custom action', () => {
@@ -74,7 +80,7 @@ describe('actionCollection', () => {
       type: ActionType.CUSTOM,
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234)
+    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         id: jasmine.any(String),
@@ -89,5 +95,6 @@ describe('actionCollection', () => {
         in_foreground: true,
       },
     })
+    expect(rawRumEvents[0].domainContext).toEqual({})
   })
 })

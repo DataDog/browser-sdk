@@ -8,7 +8,7 @@ import { collectAsyncCalls } from '../../test/utils'
 import { setMaxSegmentSize } from '../domain/segmentCollection/segmentCollection'
 
 import { Segment, RecordType } from '../types'
-import { startRecording } from './recorder'
+import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder

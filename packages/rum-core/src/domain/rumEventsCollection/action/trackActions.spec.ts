@@ -1,5 +1,5 @@
 import { Context, DOM_EVENT, ClocksState, Observable } from '@datadog/browser-core'
-import { Clock } from '../../../../../core/test/specHelper'
+import { Clock, createNewEvent } from '../../../../../core/test/specHelper'
 import { RumEvent } from '../../../../../rum/src'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType, ActionType } from '../../../rawRumEvent.types'
@@ -43,7 +43,7 @@ describe('trackActions', () => {
     })
 
     clock.tick(SOME_ARBITRARY_DELAY)
-    target.click()
+    target.dispatchEvent(createNewEvent('click'))
   }
 
   beforeEach(() => {
@@ -108,6 +108,7 @@ describe('trackActions', () => {
         name: 'Click me',
         startClocks: jasmine.any(Object),
         type: ActionType.CLICK,
+        event: createNewEvent('click'),
       },
     ])
   })

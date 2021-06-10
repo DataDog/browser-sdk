@@ -1,4 +1,15 @@
-import { addEventListeners, DOM_EVENT, Duration, elapsed, EventEmitter, RelativeTime } from '@datadog/browser-core'
+import {
+  addEventListeners,
+  DOM_EVENT,
+  Duration,
+  elapsed,
+  EventEmitter,
+  RelativeTime,
+  ONE_DAY,
+  addMonitoringMessage,
+  relativeNow,
+  timeStampNow,
+} from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -69,6 +80,15 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
       entry.name === 'first-contentful-paint' &&
       entry.startTime < firstHidden.timeStamp
     ) {
+      if (entry.startTime > ONE_DAY) {
+        addMonitoringMessage('FCP > 1 day', {
+          debug: {
+            fcp: Math.round(entry.startTime),
+            relativeNow: Math.round(relativeNow()),
+            timeStampNow: timeStampNow(),
+          },
+        })
+      }
       callback(entry.startTime)
     }
   })
@@ -109,6 +129,15 @@ export function trackLargestContentfulPaint(
         entry.startTime < firstInteractionTimestamp &&
         entry.startTime < firstHidden.timeStamp
       ) {
+        if (entry.startTime > ONE_DAY) {
+          addMonitoringMessage('LCP > 1 day', {
+            debug: {
+              lcp: Math.round(entry.startTime),
+              relativeNow: Math.round(relativeNow()),
+              timeStampNow: timeStampNow(),
+            },
+          })
+        }
         callback(entry.startTime)
       }
     }

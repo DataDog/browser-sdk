@@ -16,6 +16,13 @@
 
 ---
 
+## v2.13.0
+
+- ✨ [RUMF-909] add beforeSend context ([#883](https://github.com/DataDog/browser-sdk/pull/883))
+- ✨ [RUMF-909] allow event context edition in beforeSend ([#869](https://github.com/DataDog/browser-sdk/pull/869))
+- 🔊[RUMF-927] monitor timings with high values ([#884](https://github.com/DataDog/browser-sdk/pull/884))
+- ⚗ [RUMF-878] add trackViewsManually option (disabled) ([#867](https://github.com/DataDog/browser-sdk/pull/867))
+
 ## v2.12.1
 
 - 🔊 monitor potential invalid date ([#880](https://github.com/DataDog/browser-sdk/pull/880))

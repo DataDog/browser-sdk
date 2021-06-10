@@ -11,6 +11,7 @@ import {
   display,
   addMonitoringMessage,
   relativeNow,
+  BeforeSendCallback,
 } from '@datadog/browser-core'
 import {
   CommonContext,
@@ -19,6 +20,7 @@ import {
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
+  RumEventDomainContext,
   RumEventType,
   User,
 } from '../rawRumEvent.types'
@@ -69,7 +71,7 @@ export function startRumAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, rawRumEvent, savedCommonContext, customerContext }) => {
+    ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
       if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
@@ -103,7 +105,7 @@ export function startRumAssembly(
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
-        if (shouldSend(serverRumEvent, configuration.beforeSend, errorFilter)) {
+        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, errorFilter)) {
           if (isEmptyObject(serverRumEvent.context)) {
             delete serverRumEvent.context
           }
@@ -128,14 +130,15 @@ export function startRumAssembly(
 
 function shouldSend(
   event: RumEvent & Context,
-  beforeSend: ((event: any) => unknown) | undefined,
+  beforeSend: BeforeSendCallback | undefined,
+  domainContext: RumEventDomainContext,
   errorFilter: ErrorFilter
 ) {
   if (beforeSend) {
     const result = limitModification(
       event,
       event.type === RumEventType.VIEW ? VIEW_EVENTS_MODIFIABLE_FIELD_PATHS : OTHER_EVENTS_MODIFIABLE_FIELD_PATHS,
-      beforeSend
+      (event) => beforeSend(event, domainContext)
     )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false

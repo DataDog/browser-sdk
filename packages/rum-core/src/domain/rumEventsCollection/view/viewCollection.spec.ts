@@ -16,8 +16,8 @@ describe('viewCollection', () => {
       .withForegroundContexts({
         getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
-      .beforeBuild(({ lifeCycle, foregroundContexts, domMutationObservable }) => {
-        startViewCollection(lifeCycle, location, domMutationObservable, foregroundContexts)
+      .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
+        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts)
       })
   })
 
@@ -64,7 +64,7 @@ describe('viewCollection', () => {
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
-    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234)
+    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,

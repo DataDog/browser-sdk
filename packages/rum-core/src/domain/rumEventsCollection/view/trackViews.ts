@@ -24,7 +24,7 @@ import { trackViewMetrics } from './trackViewMetrics'
 export interface ViewEvent {
   id: string
   name?: string
-  location: Location
+  location: Readonly<Location>
   referrer: string
   timings: Timings
   customTimings: ViewCustomTimings
@@ -54,54 +54,24 @@ export interface ViewEndedEvent {
 export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
-export function trackViews(location: Location, lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
+export function trackViews(
+  location: Location,
+  lifeCycle: LifeCycle,
+  domMutationObservable: DOMMutationObservable,
+  areViewsTrackedAutomatically: boolean,
+  initialViewName?: string
+) {
   let isRecording = false
 
-  // eslint-disable-next-line prefer-const
-  let { stop: stopInitialViewTracking, initialView: currentView } = trackInitialView()
-  const { stop: stopLocationChangesTracking } = trackLocationChanges(() => {
-    if (areDifferentLocation(currentView.getLocation(), location)) {
-      // Renew view on location changes
-      currentView.end()
-      currentView.triggerUpdate()
-      currentView = trackViewChange()
-      return
-    }
-    currentView.updateLocation(location)
-    currentView.triggerUpdate()
-  })
+  const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewName)
+  let currentView = initialView
 
-  // Renew view on session renewal
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    // do not trigger view update to avoid wrong data
-    currentView.end()
-    currentView = trackViewChange()
-  })
+  const { stop: stopViewLifeCycle } = startViewLifeCycle()
+  const { stop: stopViewCollectionMode } = areViewsTrackedAutomatically
+    ? startAutomaticViewCollection()
+    : startManualViewCollection()
 
-  // End the current view on page unload
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
-    currentView.end()
-    currentView.triggerUpdate()
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.RECORD_STARTED, () => {
-    isRecording = true
-    currentView.updateHasReplay(true)
-  })
-
-  lifeCycle.subscribe(LifeCycleEventType.RECORD_STOPPED, () => {
-    isRecording = false
-  })
-
-  // Session keep alive
-  const keepAliveInterval = window.setInterval(
-    monitor(() => {
-      currentView.triggerUpdate()
-    }),
-    SESSION_KEEP_ALIVE_INTERVAL
-  )
-
-  function trackInitialView() {
+  function trackInitialView(name?: string) {
     const initialView = newView(
       lifeCycle,
       domMutationObservable,
@@ -109,7 +79,8 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
       isRecording,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
-      clocksOrigin()
+      clocksOrigin(),
+      name
     )
     const { stop } = trackInitialViewTimings(lifeCycle, (timings) => {
       initialView.updateTimings(timings)
@@ -131,6 +102,65 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
     )
   }
 
+  function startViewLifeCycle() {
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      // do not trigger view update to avoid wrong data
+      currentView.end()
+      // Renew view on session renewal
+      currentView = trackViewChange(undefined, currentView.name)
+    })
+
+    // End the current view on page unload
+    lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
+      currentView.end()
+      currentView.triggerUpdate()
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.RECORD_STARTED, () => {
+      isRecording = true
+      currentView.updateHasReplay(true)
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.RECORD_STOPPED, () => {
+      isRecording = false
+    })
+
+    // Session keep alive
+    const keepAliveInterval = window.setInterval(
+      monitor(() => {
+        currentView.triggerUpdate()
+      }),
+      SESSION_KEEP_ALIVE_INTERVAL
+    )
+
+    return {
+      stop: () => {
+        clearInterval(keepAliveInterval)
+      },
+    }
+  }
+
+  function startAutomaticViewCollection() {
+    return trackLocationChanges(() => {
+      if (areDifferentLocation(currentView.getLocation(), location)) {
+        // Renew view on location changes
+        currentView.end()
+        currentView.triggerUpdate()
+        currentView = trackViewChange()
+        return
+      }
+      currentView.updateLocation(location)
+      currentView.triggerUpdate()
+    })
+  }
+
+  function startManualViewCollection() {
+    return trackLocationChanges(() => {
+      currentView.updateLocation(location)
+      currentView.triggerUpdate()
+    })
+  }
+
   return {
     addTiming: (name: string, time = timeStampNow()) => {
       currentView.addTiming(name, time)
@@ -142,10 +172,10 @@ export function trackViews(location: Location, lifeCycle: LifeCycle, domMutation
       currentView = trackViewChange(startClocks, name)
     },
     stop: () => {
+      stopViewCollectionMode()
       stopInitialViewTracking()
-      stopLocationChangesTracking()
+      stopViewLifeCycle()
       currentView.end()
-      clearInterval(keepAliveInterval)
     },
   }
 }
@@ -166,10 +196,10 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location: Location = { ...initialLocation }
+  let location = { ...initialLocation }
   let hasReplay = initialHasReplay
 
-  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, startClocks, location, referrer })
+  lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
 
   // Update the view every time the measures are changing
   const { throttled: scheduleViewUpdate, cancel: cancelScheduleViewUpdate } = throttle(
@@ -211,6 +241,7 @@ function newView(
   }
 
   return {
+    name,
     scheduleUpdate: scheduleViewUpdate,
     end(clocks = clocksNow()) {
       endClocks = clocks

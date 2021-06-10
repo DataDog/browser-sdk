@@ -3,18 +3,18 @@ import {
   buildUrl,
   combine,
   Configuration,
-  Context,
   DEFAULT_CONFIGURATION,
   Observable,
   TimeStamp,
   noop,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
-import { LifeCycle, LifeCycleEventType } from '../src/domain/lifeCycle'
-import { ParentContexts } from '../src/domain/parentContexts'
 import { ForegroundContexts } from '../src/domain/foregroundContexts'
+import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
+import { ParentContexts } from '../src/domain/parentContexts'
+import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
 import { RumSession } from '../src/domain/rumSession'
-import { CommonContext, RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
+import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
 
 export interface TestSetupBuilder {
@@ -31,7 +31,7 @@ export interface TestSetupBuilder {
 }
 
 type BeforeBuildCallback = (buildContext: BuildContext) => void | { stop: () => void }
-interface BuildContext {
+export interface BuildContext {
   lifeCycle: LifeCycle
   domMutationObservable: Observable<void>
   configuration: Readonly<Configuration>
@@ -48,12 +48,7 @@ export interface TestIO {
   clock: Clock
   fakeLocation: Partial<Location>
   session: RumSession
-  rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedCommonContext?: CommonContext
-    customerContext?: Context
-  }>
+  rawRumEvents: RawRumEventCollectedData[]
 }
 
 export function setup(): TestSetupBuilder {
@@ -66,12 +61,7 @@ export function setup(): TestSetupBuilder {
   const domMutationObservable = new Observable<void>()
   const cleanupTasks: Array<() => void> = []
   const beforeBuildTasks: BeforeBuildCallback[] = []
-  const rawRumEvents: Array<{
-    startTime: number
-    rawRumEvent: RawRumEvent
-    savedGlobalContext?: Context
-    customerContext?: Context
-  }> = []
+  const rawRumEvents: RawRumEventCollectedData[] = []
 
   let clock: Clock
   let fakeLocation: Partial<Location> = location
@@ -205,4 +195,50 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     },
   }
   validateFormat(combine(fakeContext, rawRumEvent))
+}
+
+export type ViewTest = ReturnType<typeof setupViewTest>
+
+export function setupViewTest(
+  { lifeCycle, location, domMutationObservable, configuration }: BuildContext,
+  initialViewName?: string
+) {
+  const { handler: viewUpdateHandler, getViewEvent: getViewUpdate, getHandledCount: getViewUpdateCount } = spyOnViews(
+    'view update'
+  )
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, viewUpdateHandler)
+  const { handler: viewCreateHandler, getViewEvent: getViewCreate, getHandledCount: getViewCreateCount } = spyOnViews(
+    'view create'
+  )
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, viewCreateHandler)
+  const { stop, startView, addTiming } = trackViews(
+    location,
+    lifeCycle,
+    domMutationObservable,
+    !configuration.trackViewsManually,
+    initialViewName
+  )
+  return {
+    stop,
+    startView,
+    addTiming,
+    getViewUpdate,
+    getViewUpdateCount,
+    getViewCreate,
+    getViewCreateCount,
+  }
+}
+
+export function spyOnViews(name?: string) {
+  const handler = jasmine.createSpy(name)
+
+  function getViewEvent(index: number) {
+    return handler.calls.argsFor(index)[0] as ViewEvent
+  }
+
+  function getHandledCount() {
+    return handler.calls.count()
+  }
+
+  return { handler, getViewEvent, getHandledCount }
 }
