@@ -132,6 +132,10 @@ export type RumErrorEvent = CommonProperties & {
      */
     readonly type?: string
     /**
+     * Whether the error has been handled manually in the source code or not
+     */
+    readonly handling?: 'handled' | 'unhandled'
+    /**
      * Resource properties of the error
      */
     readonly resource?: {
@@ -565,6 +569,30 @@ export type RumViewEvent = CommonProperties & {
       readonly duration: number
       [k: string]: unknown
     }[]
+    /**
+     * Average memory used during the view lifetime (in bytes)
+     */
+    readonly memory_average?: number
+    /**
+     * Peak memory used during the view lifetime (in bytes)
+     */
+    readonly memory_max?: number
+    /**
+     * Total number of cpu ticks during the view’s lifetime
+     */
+    readonly cpu_ticks_count?: number
+    /**
+     * Average number of cpu ticks per second during the view’s lifetime
+     */
+    readonly cpu_ticks_per_second?: number
+    /**
+     * Average refresh rate during the view’s lifetime (in frames per second)
+     */
+    readonly refresh_rate_average?: number
+    /**
+     * Minimum refresh rate during the view’s lifetime (in frames per second)
+     */
+    readonly refresh_rate_min?: number
     [k: string]: unknown
   }
   /**
