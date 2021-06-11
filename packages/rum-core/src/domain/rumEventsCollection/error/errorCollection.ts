@@ -7,6 +7,7 @@ import {
   startAutomaticErrorCollection,
   ClocksState,
   generateUUID,
+  ErrorHandling,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
@@ -64,7 +65,7 @@ function computeRawError(error: unknown, startClocks: ClocksState, source: Provi
     source,
     originalError: error,
     ...formatUnknownError(stackTrace, error, 'Provided'),
-    isHandled: true,
+    handling: ErrorHandling.HANDLED,
   }
 }
 
@@ -87,7 +88,7 @@ function processError(
       source: error.source,
       stack: error.stack,
       type: error.type,
-      is_handled: error.isHandled,
+      handling: error.handling,
     },
     type: RumEventType.ERROR as const,
   }

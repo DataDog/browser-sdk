@@ -14,7 +14,7 @@ export interface RawError {
     method: string
   }
   originalError?: unknown
-  isHandled?: boolean
+  handling?: ErrorHandling
 }
 
 export const ErrorSource = {
@@ -25,6 +25,12 @@ export const ErrorSource = {
   NETWORK: 'network',
   SOURCE: 'source',
 } as const
+
+export enum ErrorHandling {
+  HANDLED = 'handled',
+  UNHANDLED = 'unhandled',
+}
+
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 

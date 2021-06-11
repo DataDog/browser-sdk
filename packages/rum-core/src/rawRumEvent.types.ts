@@ -1,4 +1,13 @@
-import { Context, Duration, ErrorSource, ResourceType, ServerDuration, TimeStamp, Omit } from '@datadog/browser-core'
+import {
+  Context,
+  Duration,
+  ErrorSource,
+  ErrorHandling,
+  ResourceType,
+  ServerDuration,
+  TimeStamp,
+  Omit,
+} from '@datadog/browser-core'
 
 export enum RumEventType {
   ACTION = 'action',
@@ -51,7 +60,7 @@ export interface RawRumErrorEvent {
     stack?: string
     source: ErrorSource
     message: string
-    is_handled?: boolean
+    handling?: ErrorHandling
   }
   view?: {
     in_foreground: boolean

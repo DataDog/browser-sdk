@@ -1,4 +1,4 @@
-import { ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -47,7 +47,7 @@ describe('error collection', () => {
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
             type: 'Error',
-            is_handled: true,
+            handling: ErrorHandling.HANDLED,
           },
           type: RumEventType.ERROR,
           view: {
@@ -150,7 +150,7 @@ describe('error collection', () => {
           source: ErrorSource.NETWORK,
           stack: 'bar',
           type: 'foo',
-          is_handled: undefined,
+          handling: undefined,
         },
         view: {
           in_foreground: true,
