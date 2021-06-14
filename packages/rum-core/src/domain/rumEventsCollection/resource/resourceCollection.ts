@@ -6,8 +6,14 @@ import {
   toServerDuration,
   relativeToClocks,
 } from '@datadog/browser-core'
-import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
-import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
+import { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import {
+  PerformanceEntryRepresentation,
+  RawRumResourceEvent,
+  RumEventType,
+  RumFetchResourceEventDomainContext,
+  RumXhrResourceEventDomainContext,
+} from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
@@ -63,13 +69,13 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: matchingTiming instanceof PerformanceEntry ? matchingTiming.toJSON() : matchingTiming,
+      performanceEntry: matchingTiming && toPerformanceEntryRepresentation(matchingTiming),
       xhr: request.xhr,
       response: request.response,
       requestInput: request.input,
       requestInit: request.init,
       error: request.error,
-    },
+    } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
   }
 }
 
@@ -96,7 +102,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventC
     startTime: startClocks.relative,
     rawRumEvent: resourceEvent,
     domainContext: {
-      performanceEntry: entry instanceof PerformanceEntry ? entry.toJSON() : entry,
+      performanceEntry: toPerformanceEntryRepresentation(entry),
     },
   }
 }
@@ -126,4 +132,12 @@ function computeRequestTracingInfo(request: RequestCompleteEvent) {
 
 function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
   return entry.traceId ? { _dd: { trace_id: entry.traceId } } : undefined
+}
+
+function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
+  // Safari 10 doesn't support PerformanceEntry
+  if (typeof PerformanceEntry === 'function' && entry instanceof PerformanceEntry) {
+    entry.toJSON()
+  }
+  return entry as PerformanceEntryRepresentation
 }
