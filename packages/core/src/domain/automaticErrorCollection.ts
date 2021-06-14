@@ -1,6 +1,13 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../browser/xhrProxy'
-import { ErrorSource, formatUnknownError, RawError, toStackTraceString, formatErrorMessage } from '../tools/error'
+import {
+  ErrorSource,
+  formatUnknownError,
+  RawError,
+  toStackTraceString,
+  formatErrorMessage,
+  ErrorHandling,
+} from '../tools/error'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/timeUtils'
 import { jsonStringify, RequestType, find } from '../tools/utils'
@@ -32,6 +39,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
       ...buildErrorFromParams(params),
       source: ErrorSource.CONSOLE,
       startClocks: clocksNow(),
+      handling: ErrorHandling.HANDLED,
     })
   })
 }
@@ -71,6 +79,7 @@ export function startRuntimeErrorTracking(errorObservable: ErrorObservable) {
       source: ErrorSource.SOURCE,
       startClocks: clocksNow(),
       originalError: errorObject,
+      handling: ErrorHandling.UNHANDLED,
     })
   }
   subscribe(traceKitReportHandler)
