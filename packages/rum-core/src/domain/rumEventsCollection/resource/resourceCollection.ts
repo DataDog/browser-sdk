@@ -6,7 +6,11 @@ import {
   toServerDuration,
   relativeToClocks,
 } from '@datadog/browser-core'
-import { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
+import {
+  RumPerformanceEntry,
+  RumPerformanceResourceTiming,
+  supportPerformanceEntry,
+} from '../../../browser/performanceCollection'
 import {
   PerformanceEntryRepresentation,
   RawRumResourceEvent,
@@ -135,8 +139,7 @@ function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
 }
 
 function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
-  // Safari 10 doesn't support PerformanceEntry
-  if (typeof PerformanceEntry === 'function' && entry instanceof PerformanceEntry) {
+  if (supportPerformanceEntry() && entry instanceof PerformanceEntry) {
     entry.toJSON()
   }
   return entry as PerformanceEntryRepresentation
