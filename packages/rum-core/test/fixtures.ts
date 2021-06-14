@@ -2,6 +2,7 @@ import {
   combine,
   Context,
   Duration,
+  ErrorHandling,
   ErrorSource,
   generateUUID,
   RelativeTime,
@@ -50,6 +51,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             id: generateUUID(),
             message: 'oh snap',
             source: ErrorSource.SOURCE,
+            handling: ErrorHandling.HANDLED,
           },
         },
         overrides

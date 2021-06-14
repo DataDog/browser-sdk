@@ -1,4 +1,4 @@
-import { ErrorSource, RawError } from '../tools/error'
+import { ErrorHandling, ErrorSource, RawError } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../test/specHelper'
 import { includes } from '../tools/utils'
@@ -43,6 +43,7 @@ describe('console tracker', () => {
       message: 'console error: foo bar',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      handling: ErrorHandling.HANDLED,
     })
   })
 
@@ -53,6 +54,7 @@ describe('console tracker', () => {
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
       startClocks: jasmine.any(Object),
+      handling: ErrorHandling.HANDLED,
     })
   })
 
