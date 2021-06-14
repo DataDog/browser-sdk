@@ -1,5 +1,5 @@
 import { StackTrace } from '../domain/tracekit'
-import { formatUnknownError } from './error'
+import { createHandlingStackTrace, formatUnknownError } from './error'
 
 describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
@@ -69,5 +69,25 @@ describe('formatUnknownError', () => {
     const formatted = formatUnknownError(NOT_COMPUTED_STACK_TRACE, errorObject, 'Uncaught')
 
     expect(formatted.message).toEqual('Uncaught {"foo":"bar"}')
+  })
+})
+
+describe('createHandlingStackTrace', () => {
+  let stackTrace: StackTrace
+  function rumInstrumentationCall() {
+    stackTrace = createHandlingStackTrace()
+  }
+  function userCall() {
+    rumInstrumentationCall()
+  }
+  it('should get handling stack trace without instrumental function calls', () => {
+    userCall()
+    expect(stackTrace.stack[0]).toEqual({
+      args: [],
+      column: jasmine.any(Number),
+      func: 'userCall',
+      line: jasmine.any(Number),
+      url: jasmine.any(String),
+    })
   })
 })

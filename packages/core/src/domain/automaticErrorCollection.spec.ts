@@ -42,9 +42,20 @@ describe('console tracker', () => {
       ...CONSOLE_CONTEXT,
       message: 'console error: foo bar',
       stack: undefined,
+      handlingStack: jasmine.any(String),
       startClocks: jasmine.any(Object),
       handling: ErrorHandling.HANDLED,
     })
+  })
+
+  it('should generate an instrumentation stack', () => {
+    function triggerError() {
+      console.error('foo', 'bar')
+    }
+    triggerError()
+    const rawError = notifyError.calls.mostRecent().args[0] as RawError
+    expect(rawError.handlingStack).toContain('triggerError')
+    expect(rawError.handlingStack).not.toContain('console.error')
   })
 
   it('should stringify object parameters', () => {
@@ -53,6 +64,7 @@ describe('console tracker', () => {
       ...CONSOLE_CONTEXT,
       message: 'console error: Hello {\n  "foo": "bar"\n}',
       stack: undefined,
+      handlingStack: jasmine.any(String),
       startClocks: jasmine.any(Object),
       handling: ErrorHandling.HANDLED,
     })

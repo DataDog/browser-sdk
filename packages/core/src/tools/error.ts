@@ -1,6 +1,7 @@
-import { StackTrace } from '../domain/tracekit'
+import { callMonitored } from '../domain/internalMonitoring'
+import { computeStackTrace, StackTrace } from '../domain/tracekit'
 import { ClocksState } from './timeUtils'
-import { jsonStringify } from './utils'
+import { jsonStringify, noop } from './utils'
 
 export interface RawError {
   startClocks: ClocksState
@@ -15,6 +16,7 @@ export interface RawError {
   }
   originalError?: unknown
   handling?: ErrorHandling
+  handlingStack?: string
 }
 
 export const ErrorSource = {
@@ -34,11 +36,17 @@ export enum ErrorHandling {
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
-export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
+export function formatUnknownError(
+  stackTrace: StackTrace | undefined,
+  errorObject: any,
+  nonErrorPrefix: string,
+  handlingStack?: StackTrace
+) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
     return {
       message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
       stack: 'No stack, consider using an instance of Error',
+      handlingStack: handlingStack ? toStackTraceString(handlingStack) : undefined,
       type: stackTrace && stackTrace.name,
     }
   }
@@ -46,6 +54,7 @@ export function formatUnknownError(stackTrace: StackTrace | undefined, errorObje
   return {
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
+    handlingStack: handlingStack ? toStackTraceString(handlingStack) : undefined,
     type: stackTrace.name,
   }
 }
@@ -64,4 +73,27 @@ export function toStackTraceString(stack: StackTrace) {
 
 export function formatErrorMessage(stack: StackTrace) {
   return `${stack.name || 'Error'}: ${stack.message!}`
+}
+
+/** Has to be called at the utmost position of the RUM call stack */
+export function createHandlingStackTrace(): StackTrace {
+  const instrumentationCallDepth = 2
+  const error = new Error()
+  let stackTrace: StackTrace
+
+  // IE needs to throw the error to fill in the stack trace
+  if (!error.stack) {
+    try {
+      throw error
+    } catch (e) {
+      noop()
+    }
+  }
+
+  callMonitored(() => {
+    stackTrace = computeStackTrace(error)
+    stackTrace.stack = stackTrace.stack.slice(instrumentationCallDepth)
+  })
+
+  return stackTrace!
 }
