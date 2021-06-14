@@ -17,6 +17,8 @@ import {
   commonInit,
   Configuration,
   InternalMonitoring,
+  callMonitored,
+  createHandlingStackTrace,
 } from '@datadog/browser-core'
 import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { CommonContext, User, ActionType, RumEventDomainContext } from '../rawRumEvent.types'
@@ -152,21 +154,25 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       rumPublicApi.addAction(name, context as Context)
     },
 
-    addError: monitor((error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
-      let checkedSource: ProvidedSource
-      if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-        checkedSource = source
-      } else {
-        display.error(`DD_RUM.addError: Invalid source '${source as string}'`)
-        checkedSource = ErrorSource.CUSTOM
-      }
-      addErrorStrategy({
-        error,
-        context: deepClone(context as Context),
-        source: checkedSource,
-        startClocks: clocksNow(),
+    addError: (error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
+      const handlingStack = createHandlingStackTrace()
+      callMonitored(() => {
+        let checkedSource: ProvidedSource
+        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
+          checkedSource = source
+        } else {
+          display.error(`DD_RUM.addError: Invalid source '${source as string}'`)
+          checkedSource = ErrorSource.CUSTOM
+        }
+        addErrorStrategy({
+          error,
+          handlingStack,
+          context: deepClone(context as Context),
+          source: checkedSource,
+          startClocks: clocksNow(),
+        })
       })
-    }),
+    },
 
     addTiming: monitor((name: string) => {
       addTimingStrategy(name)

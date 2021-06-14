@@ -1,4 +1,4 @@
-import { ErrorHandling, ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { createHandlingStackTrace, ErrorHandling, ErrorSource, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
@@ -29,8 +29,10 @@ describe('error collection', () => {
     it('notifies a raw rum error event', () => {
       const { rawRumEvents } = setupBuilder.build()
       const error = new Error('foo')
+
       addError({
         error,
+        handlingStack: createHandlingStackTrace(),
         source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
@@ -46,6 +48,7 @@ describe('error collection', () => {
             resource: undefined,
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
+            handling_stack: jasmine.any(String),
             type: 'Error',
             handling: ErrorHandling.HANDLED,
           },
@@ -65,6 +68,7 @@ describe('error collection', () => {
       addError({
         context: { foo: 'bar' },
         error: new Error('foo'),
+        handlingStack: createHandlingStackTrace(),
         source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
@@ -78,6 +82,7 @@ describe('error collection', () => {
       addError(
         {
           error: new Error('foo'),
+          handlingStack: createHandlingStackTrace(),
           source: ErrorSource.CUSTOM,
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
@@ -93,6 +98,7 @@ describe('error collection', () => {
       addError(
         {
           error: new Error('foo'),
+          handlingStack: createHandlingStackTrace(),
           source: ErrorSource.CUSTOM,
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
@@ -108,6 +114,7 @@ describe('error collection', () => {
       addError({
         error: { foo: 'bar' },
         source: ErrorSource.CUSTOM,
+        handlingStack: createHandlingStackTrace(),
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
       expect(rawRumEvents[0].domainContext).toEqual({
@@ -149,6 +156,7 @@ describe('error collection', () => {
           },
           source: ErrorSource.NETWORK,
           stack: 'bar',
+          handling_stack: undefined,
           type: 'foo',
           handling: undefined,
         },

@@ -1,4 +1,5 @@
 import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { toStackTraceString } from 'packages/core/src/tools/error'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
@@ -257,6 +258,7 @@ describe('rum public api', () => {
         {
           context: undefined,
           error: new Error('foo'),
+          handlingStack: jasmine.any(Object),
           source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
@@ -276,6 +278,15 @@ describe('rum public api', () => {
       rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
       expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
       expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
+    })
+
+    it('should generate an stacktrace at the upmost position of RUM call stack', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.addError(new Error('message'))
+
+      expect(addErrorSpy).toHaveBeenCalledTimes(1)
+      const stacktrace = toStackTraceString(addErrorSpy.calls.argsFor(0)[0].handlingStack)
+      expect(stacktrace).not.toContain('addError')
     })
 
     describe('save context when capturing an error', () => {
