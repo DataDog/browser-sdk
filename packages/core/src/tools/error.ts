@@ -75,9 +75,21 @@ export function formatErrorMessage(stack: StackTrace) {
   return `${stack.name || 'Error'}: ${stack.message!}`
 }
 
-/** Has to be called at the utmost position of the RUM call stack */
+/**
+ Creates a stacktrace starting from the previous call and working down.
+ - Has to be called at the utmost position of the RUM call stack.
+ - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
+ 
+ Example:
+  ```javascript
+  function utmostFunction() {
+      const handlingStack = createHandlingStackTrace()
+      callMonitored(() => {})
+  }
+  ```
+ */
 export function createHandlingStackTrace(): StackTrace {
-  const instrumentationCallDepth = 2
+  const internalFrameToSkip = 2 // Skip the two RUM internal frames in order to keep only the user calls
   const error = new Error()
   let stackTrace: StackTrace
 
@@ -92,7 +104,7 @@ export function createHandlingStackTrace(): StackTrace {
 
   callMonitored(() => {
     stackTrace = computeStackTrace(error)
-    stackTrace.stack = stackTrace.stack.slice(instrumentationCallDepth)
+    stackTrace.stack = stackTrace.stack.slice(internalFrameToSkip)
   })
 
   return stackTrace!
