@@ -1,5 +1,5 @@
 import { StackTrace } from '../domain/tracekit'
-import { createHandlingStackTrace, formatUnknownError } from './error'
+import { createHandlingStackTrace, formatUnknownError, toStackTraceString } from './error'
 
 describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
@@ -77,17 +77,19 @@ describe('createHandlingStackTrace', () => {
   function rumInstrumentationCall() {
     stackTrace = createHandlingStackTrace()
   }
-  function userCall() {
+  function userCallTwo() {
     rumInstrumentationCall()
   }
+  function userCallOne() {
+    userCallTwo()
+  }
+
   it('should get handling stack trace without instrumental function calls', () => {
-    userCall()
-    expect(stackTrace.stack[0]).toEqual({
-      args: [],
-      column: jasmine.any(Number),
-      func: 'userCall',
-      line: jasmine.any(Number),
-      url: jasmine.any(String),
-    })
+    userCallOne()
+
+    const formattedStackTrace = toStackTraceString(stackTrace)
+    expect(formattedStackTrace).toMatch(`Error: 
+  at userCallTwo @ (.*)
+  at userCallOne @ (.*)`)
   })
 })
