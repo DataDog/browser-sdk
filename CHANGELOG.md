@@ -16,6 +16,13 @@
 
 ---
 
+## v2.14.0
+
+- 🐛 [RUMF-931] check if PerformanceEntry is defined before using it ([#891](https://github.com/DataDog/browser-sdk/pull/891))
+- ✨ [RUMF-921] differentiate handled and unhandled errors ([#886](https://github.com/DataDog/browser-sdk/pull/886))
+- 🐛 [RUMF-876] Improve proxy behavior for xhr reuse ([#865](https://github.com/DataDog/browser-sdk/pull/865))
+- ⚗ manual view mode: create new view on renew session ([#887](https://github.com/DataDog/browser-sdk/pull/887))
+
 ## v2.13.0
 
 - ✨ [RUMF-909] add beforeSend context ([#883](https://github.com/DataDog/browser-sdk/pull/883))
