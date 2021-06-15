@@ -2,35 +2,35 @@
 # yarn lockfile v1
 
 
-"@datadog/browser-core@2.13.0", "@datadog/browser-core@file:../../packages/core":
-  version "2.13.0"
+"@datadog/browser-core@2.14.0", "@datadog/browser-core@file:../../packages/core":
+  version "2.14.0"
   dependencies:
     tslib "^1.10.0"
 
 "@datadog/browser-logs@file:../../packages/logs":
-  version "2.13.0"
+  version "2.14.0"
   dependencies:
-    "@datadog/browser-core" "2.13.0"
+    "@datadog/browser-core" "2.14.0"
     tslib "^1.10.0"
 
-"@datadog/browser-rum-core@2.13.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
-  version "2.13.0"
+"@datadog/browser-rum-core@2.14.0", "@datadog/browser-rum-core@file:../../packages/rum-core":
+  version "2.14.0"
   dependencies:
-    "@datadog/browser-core" "2.13.0"
+    "@datadog/browser-core" "2.14.0"
     tslib "^1.10.0"
 
 "@datadog/browser-rum-recorder@file:../../packages/rum-recorder":
-  version "2.13.0"
+  version "2.14.0"
   dependencies:
-    "@datadog/browser-core" "2.13.0"
-    "@datadog/browser-rum-core" "2.13.0"
+    "@datadog/browser-core" "2.14.0"
+    "@datadog/browser-rum-core" "2.14.0"
     tslib "^1.10.0"
 
 "@datadog/browser-rum@file:../../packages/rum":
-  version "2.13.0"
+  version "2.14.0"
   dependencies:
-    "@datadog/browser-core" "2.13.0"
-    "@datadog/browser-rum-core" "2.13.0"
+    "@datadog/browser-core" "2.14.0"
+    "@datadog/browser-rum-core" "2.14.0"
     tslib "^1.10.0"
 
 "@types/eslint-scope@^3.7.0":
@@ -201,9 +201,9 @@
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
 acorn@^8.0.4:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.3.0.tgz#1193f9b96c4e8232f00b11a9edff81b2c8b98b88"
-  integrity sha512-tqPKHZ5CaBJw0Xmy0ZZvLs1qTV+BNFSyvn77ASXkpBNfIRk8ev26fKrD9iLGwGA9zedPao52GSHzq8lyZG0NUw==
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.4.0.tgz#af53266e698d7cffa416714b503066a82221be60"
+  integrity sha512-ULr0LDaEqQrMFGyQ3bhJkLsbtrQ8QibAseGZeaSUiT/6zb9IvIkomWHJIvgvwad+hinRAgsI51JcWk2yvwyL+w==
 
 ajv-keywords@^3.5.2:
   version "3.5.2"
@@ -256,9 +256,9 @@ buffer-from@^1.0.0:
   integrity sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
 
 caniuse-lite@^1.0.30001219:
-  version "1.0.30001236"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001236.tgz#0a80de4cdf62e1770bb46a30d884fc8d633e3958"
-  integrity sha512-o0PRQSrSCGJKCPZcgMzl5fUaj5xHe8qA2m4QRvnyY4e1lITqoNkr7q/Oh1NcpGSy0Th97UZ35yoKcINPoq7YOQ==
+  version "1.0.30001237"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001237.tgz#4b7783661515b8e7151fc6376cfd97f0e427b9e5"
+  integrity sha512-pDHgRndit6p1NR2GhzMbQ6CkRrp4VKuSsqbcLeOQppYPKOYkKT/6ZvZDvKJUqcmtyWIAHuZq3SVS2vc1egCZzw==
 
 chalk@^2.3.0:
   version "2.4.2"
@@ -302,9 +302,9 @@ core-util-is@~1.0.0:
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
 electron-to-chromium@^1.3.723:
-  version "1.3.750"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.750.tgz#7e5ef6f478316b0bd656af5942fe502610e97eaf"
-  integrity sha512-Eqy9eHNepZxJXT+Pc5++zvEi5nQ6AGikwFYDCYwXUFBr+ynJ6pDG7MzZmwGYCIuXShLJM0n4bq+aoKDmvSGJ8A==
+  version "1.3.752"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.752.tgz#0728587f1b9b970ec9ffad932496429aef750d09"
+  integrity sha512-2Tg+7jSl3oPxgsBsWKh5H83QazTkmWG/cnNwJplmyZc7KcN61+I10oUgaXSVk/NwfvN3BdkKDR4FYuRBQQ2v0A==
 
 emojis-list@^3.0.0:
   version "3.0.0"
