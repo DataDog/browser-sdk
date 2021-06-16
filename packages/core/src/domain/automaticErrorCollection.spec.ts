@@ -48,14 +48,13 @@ describe('console tracker', () => {
     })
   })
 
-  it('should generate an instrumentation stack', () => {
+  it('should generate a handling stack', () => {
     function triggerError() {
       console.error('foo', 'bar')
     }
     triggerError()
     const rawError = notifyError.calls.mostRecent().args[0] as RawError
-    expect(rawError.handlingStack).toContain('triggerError')
-    expect(rawError.handlingStack).not.toContain('console.error')
+    expect(rawError.handlingStack).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
   })
 
   it('should stringify object parameters', () => {

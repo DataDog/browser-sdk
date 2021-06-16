@@ -280,13 +280,15 @@ describe('rum public api', () => {
       expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
 
-    it('should generate an stacktrace at the upmost position of RUM call stack', () => {
+    it('should generate a handling stack', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('message'))
-
+      function triggerError() {
+        rumPublicApi.addError(new Error('message'))
+      }
+      triggerError()
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       const stacktrace = toStackTraceString(addErrorSpy.calls.argsFor(0)[0].handlingStack)
-      expect(stacktrace).not.toContain('addError')
+      expect(stacktrace).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
     })
 
     describe('save context when capturing an error', () => {

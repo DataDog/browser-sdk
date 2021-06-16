@@ -74,17 +74,17 @@ describe('formatUnknownError', () => {
 
 describe('createHandlingStackTrace', () => {
   let stackTrace: StackTrace
-  function rumInstrumentationCall() {
+  function internalCall() {
     stackTrace = createHandlingStackTrace()
   }
   function userCallTwo() {
-    rumInstrumentationCall()
+    internalCall()
   }
   function userCallOne() {
     userCallTwo()
   }
 
-  it('should get handling stack trace without instrumental function calls', () => {
+  it('should create handling stack trace without internal calls', () => {
     userCallOne()
 
     const formattedStackTrace = toStackTraceString(stackTrace)
