@@ -7,7 +7,7 @@ import {
   toStackTraceString,
   formatErrorMessage,
   ErrorHandling,
-  createHandlingStackTrace,
+  createHandlingStack,
 } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/timeUtils'
@@ -36,7 +36,7 @@ export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
 
   console.error = (...params: unknown[]) => {
-    const handlingStack = createHandlingStackTrace()
+    const handlingStack = createHandlingStack()
     callMonitored(() => {
       originalConsoleError.apply(console, params)
       errorObservable.notify({

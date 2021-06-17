@@ -18,7 +18,7 @@ import {
   Configuration,
   InternalMonitoring,
   callMonitored,
-  createHandlingStackTrace,
+  createHandlingStack,
 } from '@datadog/browser-core'
 import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { CommonContext, User, ActionType, RumEventDomainContext } from '../rawRumEvent.types'
@@ -155,7 +155,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     },
 
     addError: (error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
-      const handlingStack = createHandlingStackTrace()
+      const handlingStack = createHandlingStack()
       callMonitored(() => {
         let checkedSource: ProvidedSource
         if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {

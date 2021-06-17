@@ -82,7 +82,7 @@ export function formatErrorMessage(stack: StackTrace) {
  - Has to be called at the utmost position of the call stack.
  - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
  */
-export function createHandlingStackTrace(): string {
+export function createHandlingStack(): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
@@ -91,7 +91,7 @@ export function createHandlingStackTrace(): string {
    */
   const internalFramesToSkip = 2
   const error = new Error()
-  let formattedStackTrace: string
+  let formattedStack: string
 
   // IE needs to throw the error to fill in the stack trace
   if (!error.stack) {
@@ -105,8 +105,8 @@ export function createHandlingStackTrace(): string {
   callMonitored(() => {
     const stackTrace = computeStackTrace(error)
     stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip)
-    formattedStackTrace = toStackTraceString(stackTrace)
+    formattedStack = toStackTraceString(stackTrace)
   })
 
-  return formattedStackTrace!
+  return formattedStack!
 }
