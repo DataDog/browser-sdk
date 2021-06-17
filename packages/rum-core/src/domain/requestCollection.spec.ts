@@ -16,7 +16,7 @@ import {
 } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
-import { clearTracingIfCancelled, Tracer } from './tracing/tracer'
+import { clearTracingIfCancelled, TraceIdentifier, Tracer } from './tracing/tracer'
 
 const configuration = {
   ...DEFAULT_CONFIGURATION,
@@ -44,7 +44,10 @@ describe('collect fetch', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
       clearTracingIfCancelled,
-      traceFetch: () => undefined,
+      traceFetch: (context) => {
+        context.traceId = new TraceIdentifier()
+        context.spanId = new TraceIdentifier()
+      },
     }
     trackFetch(lifeCycle, configuration as Configuration, tracerStub as Tracer)
 
@@ -84,18 +87,6 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should not trace cancelled requests', (done) => {
-    fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
-
-    fetchStubManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
-
-      expect(request.status).toEqual(0)
-      expect(request.traceId).toEqual(undefined)
-      done()
-    })
-  })
-
   it('should assign a request id', (done) => {
     fetchStub(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
@@ -117,6 +108,42 @@ describe('collect fetch', () => {
       done()
     })
   })
+
+  describe('tracing', () => {
+    it('should trace requests by default', (done) => {
+      fetchStub(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+
+      fetchStubManager.whenAllComplete(() => {
+        const request = completeSpy.calls.argsFor(0)[0]
+
+        expect(request.traceId).toBeDefined()
+        done()
+      })
+    })
+
+    it('should trace aborted requests', (done) => {
+      fetchStub(FAKE_URL).abort()
+
+      fetchStubManager.whenAllComplete(() => {
+        const request = completeSpy.calls.argsFor(0)[0]
+
+        expect(request.traceId).toBeDefined()
+        done()
+      })
+    })
+
+    it('should not trace requests ending with status 0', (done) => {
+      fetchStub(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
+
+      fetchStubManager.whenAllComplete(() => {
+        const request = completeSpy.calls.argsFor(0)[0]
+
+        expect(request.status).toEqual(0)
+        expect(request.traceId).toBeUndefined()
+        done()
+      })
+    })
+  })
 })
 
 describe('collect xhr', () => {
@@ -136,7 +163,10 @@ describe('collect xhr', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
       clearTracingIfCancelled,
-      traceXhr: () => undefined,
+      traceXhr: (context) => {
+        context.traceId = new TraceIdentifier()
+        context.spanId = new TraceIdentifier()
+      },
     }
     trackXhr(lifeCycle, configuration as Configuration, tracerStub as Tracer)
   })
@@ -225,6 +255,54 @@ describe('collect xhr', () => {
         expect(request.traceId).toEqual(undefined)
         done()
       },
+    })
+  })
+
+  describe('tracing', () => {
+    it('should trace requests by default', (done) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.complete(200)
+        },
+        onComplete() {
+          const request = completeSpy.calls.argsFor(0)[0]
+          expect(request.traceId).toBeDefined()
+          done()
+        },
+      })
+    })
+
+    it('should trace aborted requests', (done) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.abort()
+        },
+        onComplete() {
+          const request = completeSpy.calls.argsFor(0)[0]
+          expect(request.traceId).toBeDefined()
+          done()
+        },
+      })
+    })
+
+    it('should not trace requests ending with status 0', (done) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.complete(0)
+        },
+        onComplete() {
+          const request = completeSpy.calls.argsFor(0)[0]
+          expect(request.status).toEqual(0)
+          expect(request.traceId).toBeUndefined()
+          done()
+        },
+      })
     })
   })
 })

@@ -17,7 +17,7 @@ interface TracingHeaders {
 }
 
 export function clearTracingIfCancelled(context: RumFetchCompleteContext | RumXhrCompleteContext) {
-  if (context.status === 0) {
+  if (context.status === 0 && !context.isAborted) {
     context.traceId = undefined
     context.spanId = undefined
   }
