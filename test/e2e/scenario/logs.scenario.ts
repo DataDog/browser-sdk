@@ -84,4 +84,15 @@ describe('logs', () => {
       expect(unreachableRequest.http.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
+
+  createTest('returns user configuration')
+    .withLogs({ service: 'cool-service', version: '1.0.5', env: 'prod' })
+    .run(async () => {
+      const configuration = (await browserExecute(() => window.DD_LOGS!.getUserConfiguration())) as any
+      expect(configuration).toEqual({
+        service: 'cool-service',
+        version: '1.0.5',
+        env: 'prod',
+      })
+    })
 })

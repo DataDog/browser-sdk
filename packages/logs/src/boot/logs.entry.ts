@@ -8,6 +8,7 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
+  PublicUserConfiguration,
   display,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
@@ -40,6 +41,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
     beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
   }
+  let getUserConfigurationStrategy = (): PublicUserConfiguration | undefined => undefined
   const logger = new Logger(sendLog)
 
   return makePublicApi({
@@ -56,6 +58,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       sendLogStrategy = startLogsImpl(userConfiguration, logger, globalContextManager.get)
+      getUserConfigurationStrategy = () => ({
+        service: userConfiguration.service,
+        env: userConfiguration.env,
+        version: userConfiguration.version,
+      })
       beforeInitSendLog.drain()
 
       isAlreadyInitialized = true
@@ -77,6 +84,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     }),
 
     getLogger: monitor((name: string) => customLoggers[name]),
+
+    getUserConfiguration: monitor(() => getUserConfigurationStrategy()),
   })
 
   function canInitLogs(userConfiguration: LogsUserConfiguration) {
