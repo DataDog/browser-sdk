@@ -48,7 +48,7 @@ describe('error collection', () => {
             resource: undefined,
             source: ErrorSource.CUSTOM,
             stack: jasmine.stringMatching('Error: foo'),
-            handling_stack: jasmine.any(String),
+            handling_stack: 'Error: handling foo',
             type: 'Error',
             handling: ErrorHandling.HANDLED,
           },
