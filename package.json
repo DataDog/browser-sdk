@@ -89,6 +89,7 @@
     "webpack-dev-middleware": "4.1.0"
   },
   "resolutions": {
-    "**/bumbag/lodash": "4.17.21"
+    "**/bumbag/lodash": "4.17.21",
+    "**/conventional-changelog-core/get-pkg-repo": "4.1.2"
   }
 }
