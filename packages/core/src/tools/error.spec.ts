@@ -75,7 +75,7 @@ describe('formatUnknownError', () => {
 describe('createHandlingStackTrace', () => {
   let stackTrace: string
   function internalCall() {
-    stackTrace = createHandlingStackTrace()
+    handlingStack = createHandlingStack()
   }
   function userCallTwo() {
     internalCall()
