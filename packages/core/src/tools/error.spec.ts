@@ -1,5 +1,5 @@
 import { StackTrace } from '../domain/tracekit'
-import { createHandlingStackTrace, formatUnknownError, toStackTraceString } from './error'
+import { createHandlingStackTrace, formatUnknownError } from './error'
 
 describe('formatUnknownError', () => {
   const NOT_COMPUTED_STACK_TRACE: StackTrace = { name: undefined, message: undefined, stack: [] } as any
@@ -73,7 +73,7 @@ describe('formatUnknownError', () => {
 })
 
 describe('createHandlingStackTrace', () => {
-  let stackTrace: StackTrace
+  let stackTrace: string
   function internalCall() {
     stackTrace = createHandlingStackTrace()
   }
@@ -87,8 +87,7 @@ describe('createHandlingStackTrace', () => {
   it('should create handling stack trace without internal calls', () => {
     userCallOne()
 
-    const formattedStackTrace = toStackTraceString(stackTrace)
-    expect(formattedStackTrace).toMatch(`Error: 
+    expect(stackTrace).toMatch(`Error: 
   at userCallTwo @ (.*)
   at userCallOne @ (.*)`)
   })

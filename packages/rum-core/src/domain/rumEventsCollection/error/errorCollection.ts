@@ -8,7 +8,6 @@ import {
   ClocksState,
   generateUUID,
   ErrorHandling,
-  StackTrace,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
@@ -19,7 +18,7 @@ export interface ProvidedError {
   error: unknown
   context?: Context
   source: ProvidedSource
-  handlingStack: StackTrace
+  handlingStack: string
 }
 
 export type ProvidedSource = 'custom' | 'network' | 'source'
@@ -62,7 +61,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
 
 function computeRawError(
   error: unknown,
-  handlingStack: StackTrace,
+  handlingStack: string,
   startClocks: ClocksState,
   source: ProvidedSource
 ): RawError {

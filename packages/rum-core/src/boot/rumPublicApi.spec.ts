@@ -1,5 +1,4 @@
 import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
-import { toStackTraceString } from 'packages/core/src/tools/error'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
@@ -258,7 +257,7 @@ describe('rum public api', () => {
         {
           context: undefined,
           error: new Error('foo'),
-          handlingStack: jasmine.any(Object),
+          handlingStack: jasmine.any(String),
           source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
@@ -287,7 +286,7 @@ describe('rum public api', () => {
       }
       triggerError()
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
-      const stacktrace = toStackTraceString(addErrorSpy.calls.argsFor(0)[0].handlingStack)
+      const stacktrace = addErrorSpy.calls.argsFor(0)[0].handlingStack
       expect(stacktrace).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
     })
 

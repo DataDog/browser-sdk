@@ -40,13 +40,13 @@ export function formatUnknownError(
   stackTrace: StackTrace | undefined,
   errorObject: any,
   nonErrorPrefix: string,
-  handlingStack?: StackTrace
+  handlingStack?: string
 ) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
     return {
       message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
       stack: 'No stack, consider using an instance of Error',
-      handlingStack: handlingStack ? toStackTraceString(handlingStack) : undefined,
+      handlingStack,
       type: stackTrace && stackTrace.name,
     }
   }
@@ -54,7 +54,7 @@ export function formatUnknownError(
   return {
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
-    handlingStack: handlingStack ? toStackTraceString(handlingStack) : undefined,
+    handlingStack,
     type: stackTrace.name,
   }
 }
@@ -82,7 +82,7 @@ export function formatErrorMessage(stack: StackTrace) {
  - Has to be called at the utmost position of the call stack.
  - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
  */
-export function createHandlingStackTrace(): StackTrace {
+export function createHandlingStackTrace(): string {
   /**
    * Skip the two internal frames:
    * - SDK API (console.error, ...)
@@ -91,7 +91,7 @@ export function createHandlingStackTrace(): StackTrace {
    */
   const internalFramesToSkip = 2
   const error = new Error()
-  let stackTrace: StackTrace
+  let formattedStackTrace: string
 
   // IE needs to throw the error to fill in the stack trace
   if (!error.stack) {
@@ -103,9 +103,10 @@ export function createHandlingStackTrace(): StackTrace {
   }
 
   callMonitored(() => {
-    stackTrace = computeStackTrace(error)
+    const stackTrace = computeStackTrace(error)
     stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip)
+    formattedStackTrace = toStackTraceString(stackTrace)
   })
 
-  return stackTrace!
+  return formattedStackTrace!
 }

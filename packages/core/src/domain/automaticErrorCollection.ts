@@ -54,13 +54,13 @@ export function stopConsoleTracking() {
 }
 /* eslint-enable no-console */
 
-function buildErrorFromParams(params: unknown[], handlingStack: StackTrace) {
+function buildErrorFromParams(params: unknown[], handlingStack: string) {
   const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
 
   return {
     message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
-    handlingStack: toStackTraceString(handlingStack),
+    handlingStack,
   }
 }
 
