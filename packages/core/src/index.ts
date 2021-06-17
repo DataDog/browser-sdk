@@ -6,7 +6,7 @@ export {
   BeforeSendCallback,
 } from './domain/configuration'
 export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
-export { computeStackTrace } from './domain/tracekit'
+export { computeStackTrace, StackTrace } from './domain/tracekit'
 export {
   BuildEnv,
   BuildMode,
@@ -40,7 +40,7 @@ export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
 export * from './tools/utils'
 export * from './tools/errorFilter'
-export { ErrorSource, ErrorHandling, formatUnknownError, RawError } from './tools/error'
+export { ErrorSource, ErrorHandling, formatUnknownError, createHandlingStack, RawError } from './tools/error'
 export { combine, Context, ContextArray, ContextValue, deepClone } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'

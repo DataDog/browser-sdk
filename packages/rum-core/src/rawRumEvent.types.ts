@@ -58,6 +58,7 @@ export interface RawRumErrorEvent {
     id: string
     type?: string
     stack?: string
+    handling_stack?: string
     source: ErrorSource
     message: string
     handling?: ErrorHandling
