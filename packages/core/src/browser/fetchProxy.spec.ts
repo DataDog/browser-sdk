@@ -58,7 +58,7 @@ describe('fetch proxy', () => {
   })
 
   it('should track aborted fetch', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+    fetchStub(FAKE_URL).abort()
 
     fetchStubManager.whenAllComplete(() => {
       const request = getRequest(0)

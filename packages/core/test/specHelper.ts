@@ -77,11 +77,11 @@ export function stubFetch(): FetchStubManager {
     pendingRequests += 1
     let resolve: (response: ResponseStub) => unknown
     let reject: (error: Error) => unknown
-    const promise: unknown = new Promise((res, rej) => {
+    const promise = (new Promise((res, rej) => {
       resolve = res
       reject = rej
-    })
-    ;(promise as FetchStubPromise).resolveWith = (response: ResponseStub) => {
+    }) as unknown) as FetchStubPromise
+    promise.resolveWith = (response: ResponseStub) => {
       resolve({
         ...response,
         clone: () => {
@@ -98,10 +98,14 @@ export function stubFetch(): FetchStubManager {
       })
       onRequestEnd()
     }
-    ;(promise as FetchStubPromise).rejectWith = (error: Error) => {
+    promise.rejectWith = (error: Error) => {
       reject(error)
       onRequestEnd()
     }
+    promise.abort = () => {
+      promise.rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+    }
+
     return promise
   }) as typeof window.fetch
 
@@ -126,6 +130,7 @@ export type FetchStub = (input: RequestInfo, init?: RequestInit) => FetchStubPro
 export interface FetchStubPromise extends Promise<Response> {
   resolveWith: (response: ResponseStub) => void
   rejectWith: (error: Error) => void
+  abort: () => void
 }
 
 class StubEventEmitter {
