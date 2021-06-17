@@ -9,14 +9,14 @@ import {
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
   traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
-  clearTracingIfCancelled: (context: RumFetchCompleteContext | RumXhrCompleteContext) => void
+  clearTracingIfNeeded: (context: RumFetchCompleteContext | RumXhrCompleteContext) => void
 }
 
 interface TracingHeaders {
   [key: string]: string
 }
 
-export function clearTracingIfCancelled(context: RumFetchCompleteContext | RumXhrCompleteContext) {
+export function clearTracingIfNeeded(context: RumFetchCompleteContext | RumXhrCompleteContext) {
   if (context.status === 0 && !context.isAborted) {
     context.traceId = undefined
     context.spanId = undefined
@@ -25,7 +25,7 @@ export function clearTracingIfCancelled(context: RumFetchCompleteContext | RumXh
 
 export function startTracer(configuration: Configuration): Tracer {
   return {
-    clearTracingIfCancelled,
+    clearTracingIfNeeded,
     traceFetch: (context) =>
       injectHeadersIfTracingAllowed(configuration, context, (tracingHeaders: TracingHeaders) => {
         if (context.input instanceof Request && !context.init?.headers) {

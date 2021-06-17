@@ -16,7 +16,7 @@ import {
 } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RequestCompleteEvent, RequestStartEvent, trackFetch, trackXhr } from './requestCollection'
-import { clearTracingIfCancelled, TraceIdentifier, Tracer } from './tracing/tracer'
+import { clearTracingIfNeeded, TraceIdentifier, Tracer } from './tracing/tracer'
 
 const configuration = {
   ...DEFAULT_CONFIGURATION,
@@ -43,7 +43,7 @@ describe('collect fetch', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
-      clearTracingIfCancelled,
+      clearTracingIfNeeded,
       traceFetch: (context) => {
         context.traceId = new TraceIdentifier()
         context.spanId = new TraceIdentifier()
@@ -162,7 +162,7 @@ describe('collect xhr', () => {
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
     const tracerStub: Partial<Tracer> = {
-      clearTracingIfCancelled,
+      clearTracingIfNeeded,
       traceXhr: (context) => {
         context.traceId = new TraceIdentifier()
         context.spanId = new TraceIdentifier()

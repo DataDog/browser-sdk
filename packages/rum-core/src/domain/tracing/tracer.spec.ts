@@ -270,7 +270,7 @@ describe('tracer', () => {
         spanId: new TraceIdentifier(),
         traceId: new TraceIdentifier(),
       } as any
-      tracer.clearTracingIfCancelled(context)
+      tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeUndefined()
       expect(context.spanId).toBeUndefined()
@@ -284,7 +284,7 @@ describe('tracer', () => {
         spanId: new TraceIdentifier(),
         traceId: new TraceIdentifier(),
       } as any
-      tracer.clearTracingIfCancelled(context)
+      tracer.clearTracingIfNeeded(context)
 
       expect(context.traceId).toBeDefined()
       expect(context.spanId).toBeDefined()
