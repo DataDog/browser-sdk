@@ -1,5 +1,6 @@
 import { createTest, EventRegistry } from '../../lib/framework'
 import { flushEvents } from '../../lib/helpers/sdk'
+import { browserExecute } from '../../lib/helpers/browser'
 
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')
@@ -102,6 +103,23 @@ describe('API calls and events around init', () => {
         { name: 'before manual view', viewId: initialView.view.id },
         { name: 'after manual view', viewId: initialView.view.id }
       )
+    })
+
+  createTest('returns user configuration')
+    .withRum({ service: 'my-service', version: '1.0.3', env: 'staging' })
+    .withRumInit((configuration) => {
+      // check if function is defined and if doesn't throw an error
+      window.DD_RUM!.getUserConfiguration()
+
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async () => {
+      const configuration = (await browserExecute(() => window.DD_RUM!.getUserConfiguration())) as any
+      expect(configuration).toEqual({
+        service: 'my-service',
+        version: '1.0.3',
+        env: 'staging',
+      })
     })
 })
 

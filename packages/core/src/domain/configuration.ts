@@ -68,6 +68,8 @@ export interface UserConfiguration {
   replica?: ReplicaUserConfiguration
 }
 
+export type PublicUserConfiguration = Pick<UserConfiguration, 'service' | 'env' | 'version'>
+
 export type BeforeSendCallback = (event: any, context?: any) => unknown
 
 interface ReplicaUserConfiguration {

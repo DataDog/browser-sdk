@@ -2,6 +2,7 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   UserConfiguration,
+  PublicUserConfiguration,
   buildCookieOptions,
   BeforeSendCallback,
 } from './domain/configuration'

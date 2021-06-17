@@ -9,6 +9,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   startView: () => undefined,
   getInternalContext: () => undefined,
+  getUserConfiguration: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
   session: {} as any,
@@ -137,6 +138,35 @@ describe('rum public api', () => {
       const startTime = 234832890
       expect(rumPublicApi.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalledWith(startTime)
+    })
+  })
+
+  describe('getUserConfiguration', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi((userConfiguration) => ({
+        ...noopStartRum(),
+        getUserConfiguration: () => ({
+          service: userConfiguration.service,
+          env: userConfiguration.env,
+          version: userConfiguration.version,
+        }),
+      }))
+    })
+
+    it('returns undefined before init', () => {
+      expect(rumPublicApi.getUserConfiguration()).toBe(undefined)
+    })
+
+    it('returns the user configuration after init', () => {
+      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' })
+
+      expect(rumPublicApi.getUserConfiguration()).toEqual({
+        service: 'my-service',
+        version: '1.4.2',
+        env: 'dev',
+      })
     })
   })
 

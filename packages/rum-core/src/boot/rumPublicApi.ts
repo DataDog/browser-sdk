@@ -50,6 +50,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
   let user: User = {}
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
+  let getUserConfigurationStrategy: StartRumResult['getUserConfiguration'] = () => undefined
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -109,6 +110,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         addError: addErrorStrategy,
         addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
+        getUserConfiguration: getUserConfigurationStrategy,
       } = startRumImpl(
         userConfiguration,
         configuration,
@@ -137,6 +139,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     setRumGlobalContext: monitor(globalContextManager.set),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
+    getUserConfiguration: monitor(() => getUserConfigurationStrategy()),
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
