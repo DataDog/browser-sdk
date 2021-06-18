@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, PublicInitConfiguration } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -73,11 +73,6 @@ export function startRum(
     parentContexts,
     session,
     getInternalContext: internalContext.get,
-    getInitConfiguration: (): PublicInitConfiguration | undefined => ({
-      service: initConfiguration.service,
-      env: initConfiguration.env,
-      version: initConfiguration.version,
-    }),
   }
 }
 

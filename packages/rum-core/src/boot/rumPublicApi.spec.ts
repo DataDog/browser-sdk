@@ -9,7 +9,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   startView: () => undefined,
   getInternalContext: () => undefined,
-  getInitConfiguration: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
   session: {} as any,
@@ -145,13 +144,8 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi((userConfiguration) => ({
+      rumPublicApi = makeRumPublicApi(() => ({
         ...noopStartRum(),
-        getInitConfiguration: () => ({
-          service: userConfiguration.service,
-          env: userConfiguration.env,
-          version: userConfiguration.version,
-        }),
       }))
     })
 
