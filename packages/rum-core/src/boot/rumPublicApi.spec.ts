@@ -1,7 +1,7 @@
 import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -9,7 +9,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addTiming: () => undefined,
   startView: () => undefined,
   getInternalContext: () => undefined,
-  getUserConfiguration: () => undefined,
+  getInitConfiguration: () => undefined,
   lifeCycle: {} as any,
   parentContexts: {} as any,
   session: {} as any,
@@ -28,7 +28,7 @@ describe('rum public api', () => {
 
     it('init should log an error with no application id', () => {
       const invalidConfiguration = { clientToken: 'yes' }
-      rumPublicApi.init(invalidConfiguration as RumUserConfiguration)
+      rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
       expect(display.error).toHaveBeenCalledTimes(1)
 
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes' })
@@ -141,13 +141,13 @@ describe('rum public api', () => {
     })
   })
 
-  describe('getUserConfiguration', () => {
+  describe('getInitConfiguration', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
       rumPublicApi = makeRumPublicApi((userConfiguration) => ({
         ...noopStartRum(),
-        getUserConfiguration: () => ({
+        getInitConfiguration: () => ({
           service: userConfiguration.service,
           env: userConfiguration.env,
           version: userConfiguration.version,
@@ -156,13 +156,13 @@ describe('rum public api', () => {
     })
 
     it('returns undefined before init', () => {
-      expect(rumPublicApi.getUserConfiguration()).toBe(undefined)
+      expect(rumPublicApi.getInitConfiguration()).toBe(undefined)
     })
 
     it('returns the user configuration after init', () => {
       rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' })
 
-      expect(rumPublicApi.getUserConfiguration()).toEqual({
+      expect(rumPublicApi.getInitConfiguration()).toEqual({
         service: 'my-service',
         version: '1.4.2',
         env: 'dev',

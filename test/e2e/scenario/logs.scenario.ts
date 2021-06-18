@@ -88,8 +88,8 @@ describe('logs', () => {
   createTest('returns user configuration')
     .withLogs({ service: 'cool-service', version: '1.0.5', env: 'prod' })
     .run(async () => {
-      const configuration = (await browserExecute(() => window.DD_LOGS!.getUserConfiguration())) as any
-      expect(configuration).toEqual({
+      const initConfiguration = (await browserExecute(() => window.DD_LOGS!.getInitConfiguration())) as any
+      expect(initConfiguration).toEqual({
         service: 'cool-service',
         version: '1.0.5',
         env: 'prod',

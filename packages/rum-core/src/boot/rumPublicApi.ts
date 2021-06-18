@@ -10,7 +10,7 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
-  UserConfiguration,
+  InitConfiguration,
   clocksNow,
   timeStampNow,
   display,
@@ -26,15 +26,21 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumUserConfiguration extends UserConfiguration {
+export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
 
+/**
+ * TODO: remove this type in the next major release
+ * @deprecated Use RumInitConfiguration instead
+ */
+export type RumUserConfiguration = RumInitConfiguration
+
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
-export type StartRum<C extends RumUserConfiguration = RumUserConfiguration> = (
-  userConfiguration: C,
+export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
+  initConfiguration: C,
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
@@ -43,14 +49,14 @@ export type StartRum<C extends RumUserConfiguration = RumUserConfiguration> = (
 
 type StartRumResult = ReturnType<typeof startRum>
 
-export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: StartRum<C>) {
+export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
   let user: User = {}
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
-  let getUserConfigurationStrategy: StartRumResult['getUserConfiguration'] = () => undefined
+  let getInitConfigurationStrategy: StartRumResult['getInitConfiguration'] = () => undefined
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -73,19 +79,19 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     })
   }
 
-  function initRum(userConfiguration: C) {
+  function initRum(initConfiguration: C) {
     if (
-      !checkCookiesAuthorized(buildCookieOptions(userConfiguration)) ||
+      !checkCookiesAuthorized(buildCookieOptions(initConfiguration)) ||
       !checkIsNotLocalFile() ||
-      !canInitRum(userConfiguration)
+      !canInitRum(initConfiguration)
     ) {
       return
     }
-    if (userConfiguration.publicApiKey) {
-      userConfiguration.clientToken = userConfiguration.publicApiKey
+    if (initConfiguration.publicApiKey) {
+      initConfiguration.clientToken = initConfiguration.publicApiKey
     }
 
-    const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
+    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.isEnabled('view-renaming') || !configuration.trackViewsManually) {
       doStartRum()
     } else {
@@ -110,9 +116,9 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         addError: addErrorStrategy,
         addTiming: addTimingStrategy,
         getInternalContext: getInternalContextStrategy,
-        getUserConfiguration: getUserConfigurationStrategy,
+        getInitConfiguration: getInitConfigurationStrategy,
       } = startRumImpl(
-        userConfiguration,
+        initConfiguration,
         configuration,
         internalMonitoring,
         () => ({
@@ -139,7 +145,7 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     setRumGlobalContext: monitor(globalContextManager.set),
 
     getInternalContext: monitor((startTime?: number) => getInternalContextStrategy(startTime)),
-    getUserConfiguration: monitor(() => getUserConfigurationStrategy()),
+    getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
 
     addAction: monitor((name: string, context?: object) => {
       addActionStrategy({
@@ -216,33 +222,33 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
     return result
   }
 
-  function canInitRum(userConfiguration: RumUserConfiguration) {
+  function canInitRum(initConfiguration: RumInitConfiguration) {
     if (isAlreadyInitialized) {
-      if (!userConfiguration.silentMultipleInit) {
+      if (!initConfiguration.silentMultipleInit) {
         display.error('DD_RUM is already initialized.')
       }
       return false
     }
-    if (!userConfiguration || (!userConfiguration.clientToken && !userConfiguration.publicApiKey)) {
+    if (!initConfiguration || (!initConfiguration.clientToken && !initConfiguration.publicApiKey)) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }
-    if (!userConfiguration.applicationId) {
+    if (!initConfiguration.applicationId) {
       display.error('Application ID is not configured, no RUM data will be collected.')
       return false
     }
-    if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
       display.error('Sample Rate should be a number between 0 and 100')
       return false
     }
-    if (userConfiguration.resourceSampleRate !== undefined && !isPercentage(userConfiguration.resourceSampleRate)) {
+    if (initConfiguration.resourceSampleRate !== undefined && !isPercentage(initConfiguration.resourceSampleRate)) {
       display.error('Resource Sample Rate should be a number between 0 and 100')
       return false
     }
     if (
-      Array.isArray(userConfiguration.allowedTracingOrigins) &&
-      userConfiguration.allowedTracingOrigins.length !== 0 &&
-      userConfiguration.service === undefined
+      Array.isArray(initConfiguration.allowedTracingOrigins) &&
+      initConfiguration.allowedTracingOrigins.length !== 0 &&
+      initConfiguration.service === undefined
     ) {
       display.error('Service need to be configured when tracing is enabled')
       return false

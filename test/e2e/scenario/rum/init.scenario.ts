@@ -109,13 +109,13 @@ describe('API calls and events around init', () => {
     .withRum({ service: 'my-service', version: '1.0.3', env: 'staging' })
     .withRumInit((configuration) => {
       // check if function is defined and if doesn't throw an error
-      window.DD_RUM!.getUserConfiguration()
+      window.DD_RUM!.getInitConfiguration()
 
       window.DD_RUM!.init(configuration)
     })
     .run(async () => {
-      const configuration = (await browserExecute(() => window.DD_RUM!.getUserConfiguration())) as any
-      expect(configuration).toEqual({
+      const initConfiguration = (await browserExecute(() => window.DD_RUM!.getInitConfiguration())) as any
+      expect(initConfiguration).toEqual({
         service: 'my-service',
         version: '1.0.3',
         env: 'staging',

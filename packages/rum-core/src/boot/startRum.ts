@@ -1,4 +1,4 @@
-import { combine, Configuration, InternalMonitoring, PublicUserConfiguration } from '@datadog/browser-core'
+import { combine, Configuration, InternalMonitoring, PublicInitConfiguration } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { startPerformanceCollection } from '../browser/performanceCollection'
 import { startRumAssembly } from '../domain/assembly'
@@ -15,10 +15,10 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-import { RumUserConfiguration } from './rumPublicApi'
+import { RumInitConfiguration } from './rumPublicApi'
 
 export function startRum(
-  userConfiguration: RumUserConfiguration,
+  initConfiguration: RumInitConfiguration,
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
@@ -31,7 +31,7 @@ export function startRum(
   internalMonitoring.setExternalContextProvider(() =>
     combine(
       {
-        application_id: userConfiguration.applicationId,
+        application_id: initConfiguration.applicationId,
       },
       parentContexts.findView(),
       getCommonContext().context
@@ -39,7 +39,7 @@ export function startRum(
   )
 
   const { parentContexts, foregroundContexts } = startRumEventCollection(
-    userConfiguration.applicationId,
+    initConfiguration.applicationId,
     lifeCycle,
     configuration,
     session,
@@ -62,7 +62,7 @@ export function startRum(
   startRequestCollection(lifeCycle, configuration)
   startPerformanceCollection(lifeCycle, configuration)
 
-  const internalContext = startInternalContext(userConfiguration.applicationId, session, parentContexts)
+  const internalContext = startInternalContext(initConfiguration.applicationId, session, parentContexts)
 
   return {
     addAction,
@@ -73,10 +73,10 @@ export function startRum(
     parentContexts,
     session,
     getInternalContext: internalContext.get,
-    getUserConfiguration: (): PublicUserConfiguration | undefined => ({
-      service: userConfiguration.service,
-      env: userConfiguration.env,
-      version: userConfiguration.version,
+    getInitConfiguration: (): PublicInitConfiguration | undefined => ({
+      service: initConfiguration.service,
+      env: initConfiguration.env,
+      version: initConfiguration.version,
     }),
   }
 }

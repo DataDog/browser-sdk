@@ -1,11 +1,12 @@
-import { LogsUserConfiguration } from '@datadog/browser-logs'
-import { RumUserConfiguration } from '@datadog/browser-rum-core'
+import { LogsInitConfiguration } from '@datadog/browser-logs'
+import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 
 export interface SetupOptions {
-  rum?: RumUserConfiguration
-  rumRecorder?: RumUserConfiguration
-  logs?: LogsUserConfiguration
-  rumInit: (configuration: RumUserConfiguration) => void
+  rum?: RumInitConfiguration
+  rumRecorder?: RumRecorderInitConfiguration
+  logs?: LogsInitConfiguration
+  rumInit: (initConfiguration: RumInitConfiguration) => void
   head?: string
   body?: string
 }
@@ -144,16 +145,16 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function formatLogsConfiguration(configuration: LogsUserConfiguration) {
-  return JSON.stringify(configuration)
+function formatLogsConfiguration(initConfiguration: LogsInitConfiguration) {
+  return JSON.stringify(initConfiguration)
 }
 
-function formatRumConfiguration(configuration: RumUserConfiguration) {
+function formatRumConfiguration(initConfiguration: RumInitConfiguration) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  let result = JSON.stringify(configuration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
+  let result = JSON.stringify(initConfiguration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
   result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
-  if (configuration.beforeSend) {
-    result = result.replace('"BEFORE_SEND"', configuration.beforeSend.toString())
+  if (initConfiguration.beforeSend) {
+    result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
   }
   return result
 }
