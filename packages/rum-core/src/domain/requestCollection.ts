@@ -69,7 +69,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: Configuration, tra
   })
   xhrProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      tracer.clearTracingIfCancelled(context)
+      tracer.clearTracingIfNeeded(context)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
@@ -102,7 +102,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: Configuration, t
   })
   fetchProxy.onRequestComplete((context) => {
     if (isAllowedRequestUrl(configuration, context.url)) {
-      tracer.clearTracingIfCancelled(context)
+      tracer.clearTracingIfNeeded(context)
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
         duration: context.duration,
         method: context.method,
