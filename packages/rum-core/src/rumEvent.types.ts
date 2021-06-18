@@ -136,6 +136,10 @@ export type RumErrorEvent = CommonProperties & {
      */
     readonly handling?: 'handled' | 'unhandled'
     /**
+     * Handling call stack
+     */
+    readonly handling_stack?: string
+    /**
      * Resource properties of the error
      */
     readonly resource?: {

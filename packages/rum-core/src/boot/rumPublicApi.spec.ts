@@ -257,6 +257,7 @@ describe('rum public api', () => {
         {
           context: undefined,
           error: new Error('foo'),
+          handlingStack: jasmine.any(String),
           source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
@@ -276,6 +277,17 @@ describe('rum public api', () => {
       rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
       expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
       expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
+    })
+
+    it('should generate a handling stack', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      function triggerError() {
+        rumPublicApi.addError(new Error('message'))
+      }
+      triggerError()
+      expect(addErrorSpy).toHaveBeenCalledTimes(1)
+      const stacktrace = addErrorSpy.calls.argsFor(0)[0].handlingStack
+      expect(stacktrace).toMatch(/^Error:\s+at triggerError (.|\n)*$/)
     })
 
     describe('save context when capturing an error', () => {

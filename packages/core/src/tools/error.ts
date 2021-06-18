@@ -1,6 +1,7 @@
-import { StackTrace } from '../domain/tracekit'
+import { callMonitored } from '../domain/internalMonitoring'
+import { computeStackTrace, StackTrace } from '../domain/tracekit'
 import { ClocksState } from './timeUtils'
-import { jsonStringify } from './utils'
+import { jsonStringify, noop } from './utils'
 
 export interface RawError {
   startClocks: ClocksState
@@ -15,6 +16,7 @@ export interface RawError {
   }
   originalError?: unknown
   handling?: ErrorHandling
+  handlingStack?: string
 }
 
 export const ErrorSource = {
@@ -34,11 +36,17 @@ export enum ErrorHandling {
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export type ErrorSource = typeof ErrorSource[keyof typeof ErrorSource]
 
-export function formatUnknownError(stackTrace: StackTrace | undefined, errorObject: any, nonErrorPrefix: string) {
+export function formatUnknownError(
+  stackTrace: StackTrace | undefined,
+  errorObject: any,
+  nonErrorPrefix: string,
+  handlingStack?: string
+) {
   if (!stackTrace || (stackTrace.message === undefined && !(errorObject instanceof Error))) {
     return {
       message: `${nonErrorPrefix} ${jsonStringify(errorObject)!}`,
       stack: 'No stack, consider using an instance of Error',
+      handlingStack,
       type: stackTrace && stackTrace.name,
     }
   }
@@ -46,6 +54,7 @@ export function formatUnknownError(stackTrace: StackTrace | undefined, errorObje
   return {
     message: stackTrace.message || 'Empty message',
     stack: toStackTraceString(stackTrace),
+    handlingStack,
     type: stackTrace.name,
   }
 }
@@ -64,4 +73,40 @@ export function toStackTraceString(stack: StackTrace) {
 
 export function formatErrorMessage(stack: StackTrace) {
   return `${stack.name || 'Error'}: ${stack.message!}`
+}
+
+/**
+ Creates a stacktrace without SDK internal frames.
+ 
+ Constraints:
+ - Has to be called at the utmost position of the call stack.
+ - No internal monitoring should encapsulate the function, that is why we need to use callMonitored inside of it.
+ */
+export function createHandlingStack(): string {
+  /**
+   * Skip the two internal frames:
+   * - SDK API (console.error, ...)
+   * - this function
+   * in order to keep only the user calls
+   */
+  const internalFramesToSkip = 2
+  const error = new Error()
+  let formattedStack: string
+
+  // IE needs to throw the error to fill in the stack trace
+  if (!error.stack) {
+    try {
+      throw error
+    } catch (e) {
+      noop()
+    }
+  }
+
+  callMonitored(() => {
+    const stackTrace = computeStackTrace(error)
+    stackTrace.stack = stackTrace.stack.slice(internalFramesToSkip)
+    formattedStack = toStackTraceString(stackTrace)
+  })
+
+  return formattedStack!
 }

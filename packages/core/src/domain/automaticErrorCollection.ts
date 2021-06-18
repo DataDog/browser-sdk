@@ -7,12 +7,13 @@ import {
   toStackTraceString,
   formatErrorMessage,
   ErrorHandling,
+  createHandlingStack,
 } from '../tools/error'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/timeUtils'
 import { jsonStringify, RequestType, find } from '../tools/utils'
 import { Configuration } from './configuration'
-import { monitor } from './internalMonitoring'
+import { callMonitored } from './internalMonitoring'
 import { computeStackTrace, subscribe, unsubscribe, StackTrace } from './tracekit'
 
 export type ErrorObservable = Observable<RawError>
@@ -33,15 +34,19 @@ let originalConsoleError: (...params: unknown[]) => void
 /* eslint-disable no-console */
 export function startConsoleTracking(errorObservable: ErrorObservable) {
   originalConsoleError = console.error
-  console.error = monitor((...params: unknown[]) => {
-    originalConsoleError.apply(console, params)
-    errorObservable.notify({
-      ...buildErrorFromParams(params),
-      source: ErrorSource.CONSOLE,
-      startClocks: clocksNow(),
-      handling: ErrorHandling.HANDLED,
+
+  console.error = (...params: unknown[]) => {
+    const handlingStack = createHandlingStack()
+    callMonitored(() => {
+      originalConsoleError.apply(console, params)
+      errorObservable.notify({
+        ...buildErrorFromParams(params, handlingStack),
+        source: ErrorSource.CONSOLE,
+        startClocks: clocksNow(),
+        handling: ErrorHandling.HANDLED,
+      })
     })
-  })
+  }
 }
 
 export function stopConsoleTracking() {
@@ -49,11 +54,13 @@ export function stopConsoleTracking() {
 }
 /* eslint-enable no-console */
 
-function buildErrorFromParams(params: unknown[]) {
+function buildErrorFromParams(params: unknown[], handlingStack: string) {
   const firstErrorParam = find(params, (param: unknown): param is Error => param instanceof Error)
+
   return {
     message: ['console error:', ...params].map((param) => formatConsoleParameters(param)).join(' '),
     stack: firstErrorParam ? toStackTraceString(computeStackTrace(firstErrorParam)) : undefined,
+    handlingStack,
   }
 }
 

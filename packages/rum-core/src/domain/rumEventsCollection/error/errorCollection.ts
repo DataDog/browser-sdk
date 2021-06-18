@@ -18,6 +18,7 @@ export interface ProvidedError {
   error: unknown
   context?: Context
   source: ProvidedSource
+  handlingStack: string
 }
 
 export type ProvidedSource = 'custom' | 'network' | 'source'
@@ -45,10 +46,10 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
 
   return {
     addError: (
-      { error, startClocks, context: customerContext, source }: ProvidedError,
+      { error, handlingStack, startClocks, context: customerContext, source }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const rawError = computeRawError(error, startClocks, source)
+      const rawError = computeRawError(error, handlingStack, startClocks, source)
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext,
         savedCommonContext,
@@ -58,13 +59,18 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
   }
 }
 
-function computeRawError(error: unknown, startClocks: ClocksState, source: ProvidedSource): RawError {
+function computeRawError(
+  error: unknown,
+  handlingStack: string,
+  startClocks: ClocksState,
+  source: ProvidedSource
+): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
   return {
     startClocks,
     source,
     originalError: error,
-    ...formatUnknownError(stackTrace, error, 'Provided'),
+    ...formatUnknownError(stackTrace, error, 'Provided', handlingStack),
     handling: ErrorHandling.HANDLED,
   }
 }
@@ -87,6 +93,7 @@ function processError(
         : undefined,
       source: error.source,
       stack: error.stack,
+      handling_stack: error.handlingStack,
       type: error.type,
       handling: error.handling,
     },
