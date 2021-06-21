@@ -16,6 +16,11 @@
 
 ---
 
+## v2.15.0
+
+- ✨ [RUMF-920] keep trace id on aborted requests ([#898](https://github.com/DataDog/browser-sdk/pull/898))
+- ✨ [RUMF-922] stack trace on handled calls ([#889](https://github.com/DataDog/browser-sdk/pull/889))
+
 ## v2.14.0
 
 - 🐛 [RUMF-931] check if PerformanceEntry is defined before using it ([#891](https://github.com/DataDog/browser-sdk/pull/891))
