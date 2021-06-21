@@ -60,7 +60,10 @@ function addNewForegroundPeriod() {
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
-    addMonitoringMessage('Previous foreground periods not closed. Continuing current one')
+    addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
+      inForegroundPeriodsCount: foregroundPeriods.length,
+      currentForegroundPeriodStart: currentForegroundPeriod.start,
+    })
     return
   }
   foregroundPeriods.push({
@@ -75,7 +78,11 @@ function closeForegroundPeriod() {
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   if (currentForegroundPeriod.end !== undefined) {
-    addMonitoringMessage('Current foreground period already closed')
+    addMonitoringMessage('Current foreground period already closed', {
+      inForegroundPeriodsCount: foregroundPeriods.length,
+      currentForegroundPeriodStart: currentForegroundPeriod.start,
+      currentForegroundPeriodEnd: currentForegroundPeriod.end,
+    })
     return
   }
   currentForegroundPeriod.end = relativeNow()
