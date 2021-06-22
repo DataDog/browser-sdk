@@ -13,11 +13,10 @@ import {
 } from '../../../browser/performanceCollection'
 import {
   PerformanceEntryRepresentation,
-  RawRumResourceEvent,
-  RumEventType,
-  RumFetchResourceEventDomainContext,
   RumXhrResourceEventDomainContext,
-} from '../../../rawRumEvent.types'
+  RumFetchResourceEventDomainContext,
+} from '../../../domainContext.types'
+import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
 import { RumSession } from '../../rumSession'
