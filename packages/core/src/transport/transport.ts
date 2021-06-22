@@ -1,10 +1,40 @@
 import { display } from '../tools/display'
 import { Context } from '../tools/context'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
-import { monitor, addErrorToMonitoringBatch } from '../domain/internalMonitoring'
+import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../domain/internalMonitoring'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
+
+/* eslint-disable camelcase */
+type ErrorCtx =
+  | {
+      err_msg?: string
+      err_stack?: string
+    }
+  | undefined
+
+type TransportErrorContext = {
+  error?: ErrorCtx
+  event?: {
+    type: string
+    is_trusted: boolean
+    total: number
+    loaded: number
+  }
+  req?: {
+    status: number
+    ready_state: number
+    timeout: number
+    response_text: string
+  }
+  on_line: boolean
+  size: number
+  url: string
+  try_beacon: boolean
+  bytes_limit: number
+}
+/* eslint-enable camelcase */
 
 /**
  * Use POST request without content type to:
@@ -19,7 +49,8 @@ export class HttpRequest {
 
   send(data: string | FormData, size: number) {
     const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
-    if (navigator.sendBeacon && size < this.bytesLimit) {
+    const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
+    if (tryBeacon) {
       try {
         const isQueued = navigator.sendBeacon(url, data)
         if (isQueued) {
@@ -29,9 +60,32 @@ export class HttpRequest {
         reportBeaconError(e)
       }
     }
-    const request = new XMLHttpRequest()
-    request.open('POST', url, true)
-    request.send(data)
+
+    const transportErrorHandler = (ctx: Partial<TransportErrorContext>) => {
+      const transportErrCtx: TransportErrorContext = {
+        on_line: navigator.onLine,
+        size,
+        url,
+        try_beacon: tryBeacon,
+        bytes_limit: this.bytesLimit,
+        ...ctx,
+      }
+      addMonitoringMessage('Internal XHR failed', transportErrCtx)
+    }
+
+    try {
+      const request = new XMLHttpRequest()
+      request.addEventListener('error', (e) => transportErrorHandler(getTransportErrorEventDetails(e)))
+      request.open('POST', url, true)
+      request.send(data)
+    } catch (err) {
+      transportErrorHandler({
+        error: {
+          err_msg: err.message,
+          err_stack: err.stack,
+        },
+      })
+    }
   }
 }
 
@@ -199,4 +253,26 @@ export class Batch {
       addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => this.flush())
     }
   }
+}
+
+function getTransportErrorEventDetails(event: ProgressEvent) {
+  const ctx: Partial<TransportErrorContext> = {}
+  if (event) {
+    ctx.event = {
+      type: event.type,
+      is_trusted: event.isTrusted,
+      total: event.total,
+      loaded: event.loaded,
+    }
+    if (event?.currentTarget) {
+      const req = event?.currentTarget as XMLHttpRequest
+      ctx.req = {
+        status: req.status,
+        ready_state: req.readyState,
+        timeout: req.timeout,
+        response_text: req.responseText,
+      }
+    }
+  }
+  return ctx
 }
