@@ -16,7 +16,7 @@ import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { FAKE_INITIAL_DOCUMENT, isAllowedRequestUrl } from '../domain/rumEventsCollection/resource/resourceUtils'
 
 import { getDocumentTraceId } from '../domain/tracing/getDocumentTraceId'
-import { PerformanceEntryRepresentation } from '../rawRumEvent.types'
+import { PerformanceEntryRepresentation } from '../domainContext.types'
 
 export interface RumPerformanceResourceTiming {
   entryType: 'resource'

@@ -13,6 +13,7 @@ import {
   relativeNow,
   BeforeSendCallback,
 } from '@datadog/browser-core'
+import { RumEventDomainContext } from '../domainContext.types'
 import {
   CommonContext,
   RawRumErrorEvent,
@@ -20,7 +21,6 @@ import {
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RumContext,
-  RumEventDomainContext,
   RumEventType,
   User,
 } from '../rawRumEvent.types'

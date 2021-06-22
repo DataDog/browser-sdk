@@ -21,7 +21,8 @@ import {
   createHandlingStack,
 } from '@datadog/browser-core'
 import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
-import { CommonContext, User, ActionType, RumEventDomainContext } from '../rawRumEvent.types'
+import { RumEventDomainContext } from '../domainContext.types'
+import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
