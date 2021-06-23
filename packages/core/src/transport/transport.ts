@@ -7,7 +7,7 @@ import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../dom
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
 
 /* eslint-disable camelcase */
-type TransportErrorContext = {
+type TransportIssueContext = {
   event?: {
     type: string
     is_trusted: boolean
@@ -54,7 +54,10 @@ export class HttpRequest {
 
     const transportIntrospection = (event: ProgressEvent) => {
       const req = event?.currentTarget as XMLHttpRequest
-      const xhrTransportContext: TransportErrorContext = {
+      if (req.status >= 200 && req.status < 300) {
+        return
+      }
+      const xhrTransportContext: TransportIssueContext = {
         on_line: navigator.onLine,
         size,
         url,
@@ -72,11 +75,17 @@ export class HttpRequest {
           response_text: req.responseText,
         },
       }
-      addMonitoringMessage('XHR fallback failed', xhrTransportContext)
+      reportXhrIssue(xhrTransportContext)
     }
 
     const request = new XMLHttpRequest()
-    request.addEventListener('loadend', (event) => transportIntrospection(event))
+    /*
+      Successful responses (200–299)
+    */
+    request.addEventListener(
+      'loadend',
+      monitor((event) => transportIntrospection(event))
+    )
     request.open('POST', url, true)
     request.send(data)
   }
@@ -91,6 +100,14 @@ function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true
     addErrorToMonitoringBatch(e)
+  }
+}
+
+let hasReportedXhrError = false
+function reportXhrIssue(xhrTransportContext: TransportIssueContext) {
+  if (!hasReportedXhrError) {
+    hasReportedXhrError = true
+    addMonitoringMessage('XHR fallback failed', xhrTransportContext)
   }
 }
 
