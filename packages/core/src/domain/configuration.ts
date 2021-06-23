@@ -74,8 +74,6 @@ export interface InitConfiguration {
  */
 export type UserConfiguration = InitConfiguration
 
-export type PublicInitConfiguration = Pick<InitConfiguration, 'service' | 'env' | 'version'>
-
 export type BeforeSendCallback = (event: any, context?: any) => unknown
 
 interface ReplicaUserConfiguration {

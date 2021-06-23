@@ -8,8 +8,9 @@ import {
   isPercentage,
   makePublicApi,
   monitor,
-  PublicInitConfiguration,
   display,
+  deepClone,
+  InitConfiguration,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
 import { startLogs, LogsInitConfiguration } from './startLogs'
@@ -41,7 +42,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
     beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
   }
-  let getInitConfigurationStrategy = (): PublicInitConfiguration | undefined => undefined
+  let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   const logger = new Logger(sendLog)
 
   return makePublicApi({
@@ -58,11 +59,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
 
       sendLogStrategy = startLogsImpl(initConfiguration, logger, globalContextManager.get)
-      getInitConfigurationStrategy = () => ({
-        service: initConfiguration.service,
-        env: initConfiguration.env,
-        version: initConfiguration.version,
-      })
+      getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 
       isAlreadyInitialized = true

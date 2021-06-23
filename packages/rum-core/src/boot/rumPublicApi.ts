@@ -11,7 +11,6 @@ import {
   makePublicApi,
   monitor,
   InitConfiguration,
-  PublicInitConfiguration,
   clocksNow,
   timeStampNow,
   display,
@@ -57,7 +56,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
   let user: User = {}
 
   let getInternalContextStrategy: StartRumResult['getInternalContext'] = () => undefined
-  let getInitConfigurationStrategy = (): PublicInitConfiguration | undefined => undefined
+  let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
 
   let bufferApiCalls = new BoundedBuffer()
   let addTimingStrategy: StartRumResult['addTiming'] = (name, time = timeStampNow()) => {
@@ -107,11 +106,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       }
       beforeInitCalls.drain()
     }
-    getInitConfigurationStrategy = () => ({
-      service: initConfiguration.service,
-      env: initConfiguration.env,
-      version: initConfiguration.version,
-    })
+    getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
     isAlreadyInitialized = true
 

@@ -154,13 +154,11 @@ describe('rum public api', () => {
     })
 
     it('returns the user configuration after init', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' })
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+      rumPublicApi.init(initConfiguration)
 
-      expect(rumPublicApi.getInitConfiguration()).toEqual({
-        service: 'my-service',
-        version: '1.4.2',
-        env: 'dev',
-      })
+      expect(rumPublicApi.getInitConfiguration()).toEqual(initConfiguration)
+      expect(rumPublicApi.getInitConfiguration()).not.toBe(initConfiguration)
     })
   })
 

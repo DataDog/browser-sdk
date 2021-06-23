@@ -388,6 +388,128 @@ export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', 
   }
 }
 
+type Merged<TDestination, TSource> =
+  // case 1 - source is undefined - return destination
+  TSource extends undefined
+    ? TDestination
+    : // case 2 - destination is undefined - return source
+    TDestination extends undefined
+    ? TSource
+    : // case 3 - source is an array - see if it merges or overwrites
+    TSource extends any[]
+    ? TDestination extends any[]
+      ? TDestination & TSource
+      : TSource
+    : // case 4 - source is an object - see if it merges or overwrites
+    TSource extends object
+    ? TDestination extends object
+      ? TDestination extends any[]
+        ? TSource
+        : TDestination & TSource
+      : TSource
+    : // case 5 - cannot merge - return source
+      TSource
+
+/**
+ * Iterate over source and affect its sub values into destination, recursively.
+ * If the source and destination can't be merged, return source.
+ */
+export function mergeInto<D, S>(destination: D, source: S, references = new Map<any, any>()): Merged<D, S> {
+  // ignore the source if it is undefined
+  if (source === undefined) {
+    return destination as Merged<D, S>
+  }
+
+  if (typeof source !== 'object' || source === null) {
+    // primitive values - just return source
+    return source as Merged<D, S>
+  } else if (source instanceof Date) {
+    return (new Date(source.getTime()) as unknown) as Merged<D, S>
+  } else if (source instanceof RegExp) {
+    const flags =
+      source.flags ||
+      // old browsers compatibility
+      [
+        source.global ? 'g' : '',
+        source.ignoreCase ? 'i' : '',
+        source.multiline ? 'm' : '',
+        source.sticky ? 'y' : '',
+        source.unicode ? 'u' : '',
+      ].join('')
+    return (new RegExp(source.source, flags) as unknown) as Merged<D, S>
+  } else {
+    // handle circular references
+    let merged = references.get(source)
+    if (!merged) {
+      if (source instanceof Set) {
+        merged = destination instanceof Set ? destination : new Set()
+        references.set(source, merged)
+        source.forEach((value) => {
+          merged.add(mergeInto(undefined, value, references))
+        })
+      } else if (source instanceof Map) {
+        merged = destination instanceof Map ? destination : new Map()
+        references.set(source, merged)
+        source.forEach((value, key) => {
+          merged.set(key, mergeInto(merged.get(key), value, references))
+        })
+      } else if (Array.isArray(source)) {
+        merged = Array.isArray(destination) ? destination : []
+        references.set(source, merged)
+        for (let i = 0; i < source.length; ++i) {
+          merged[i] = mergeInto(merged[i], source[i], references)
+        }
+      } else {
+        merged =
+          typeof destination === 'object' && !Array.isArray(destination) && destination !== null ? destination : {}
+        references.set(source, merged)
+        for (const key in source) {
+          // include prototype properties
+          merged[key] = mergeInto(merged[key], source[key], references)
+        }
+      }
+    }
+    return merged
+  }
+}
+
+/**
+ * A simplistic implementation of a deep clone algorithm.
+ * Caveats:
+ *  * it doesn't maintain prototype chains - don't use with instances of custom classes.
+ */
+export function deepClone<T>(value: T): T {
+  return mergeInto(undefined, value) as T
+}
+
+type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
+
+/*
+ * Performs a deep merge of objects and arrays.
+ * - Arguments won't be mutated
+ * - Object and arrays in the output value are dereferenced ("deep cloned")
+ * - Arrays values are merged index by index
+ * - Objects are merged by keys
+ * - Values get replaced, unless undefined
+ */
+export function combine<A, B>(a: A, b: B): Combined<A, B>
+export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>
+export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): Combined<Combined<Combined<A, B>, C>, D>
+export function combine(...sources: any[]): unknown {
+  let destination: any
+
+  for (const source of sources) {
+    // Ignore any undefined or null sources.
+    if (source === undefined || source === null) {
+      continue
+    }
+
+    destination = mergeInto(destination, source)
+  }
+
+  return destination
+}
+
 // Define those types for TS 3.0 compatibility
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
 export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown

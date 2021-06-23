@@ -1,4 +1,5 @@
-import { Context, deepClone } from './context'
+import { Context } from './context'
+import { deepClone } from './utils'
 
 /**
  * Current limitation:
