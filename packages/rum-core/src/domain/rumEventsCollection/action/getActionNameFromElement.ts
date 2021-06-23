@@ -1,6 +1,11 @@
 import { safeTruncate } from '@datadog/browser-core'
 
-export function getActionNameFromElement(element: Element): string {
+/**
+ * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent. This can be customized by the setting the actionNameAttribute configuration option.
+ */
+const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
+
+export function getActionNameFromElement(element: Element, actionNameAttribute?: string): string {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
@@ -8,29 +13,25 @@ export function getActionNameFromElement(element: Element): string {
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   return (
-    getActionNameFromElementProgrammatically(element) ||
+    getActionNameFromElementProgrammatically(element, actionNameAttribute) ||
     getActionNameFromElementForStrategies(element, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, fallbackStrategies) ||
     ''
   )
 }
 
-/**
- * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
- */
-const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
-function getActionNameFromElementProgrammatically(targetElement: Element) {
+function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute = PROGRAMMATIC_ATTRIBUTE) {
   let elementWithAttribute
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
   // If available, use element.closest() to match get the attribute from the element or any of its
   // parent.  Else fallback to a more traditional implementation.
   if (supportsElementClosest()) {
-    elementWithAttribute = targetElement.closest(`[${PROGRAMMATIC_ATTRIBUTE}]`)
+    elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
   } else {
     let element: Element | null = targetElement
     while (element) {
-      if (element.hasAttribute(PROGRAMMATIC_ATTRIBUTE)) {
+      if (element.hasAttribute(programmaticAttribute)) {
         elementWithAttribute = element
         break
       }
@@ -41,7 +42,7 @@ function getActionNameFromElementProgrammatically(targetElement: Element) {
   if (!elementWithAttribute) {
     return
   }
-  const name = elementWithAttribute.getAttribute(PROGRAMMATIC_ATTRIBUTE)!
+  const name = elementWithAttribute.getAttribute(programmaticAttribute)!
   return truncate(normalizeWhitespace(name.trim()))
 }
 

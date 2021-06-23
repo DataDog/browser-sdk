@@ -82,6 +82,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     service?: string
     beforeSend?: BeforeSendCallback
 
+    actionNameAttribute?: string
+
     isEnabled: (feature: string) => boolean
   }
 

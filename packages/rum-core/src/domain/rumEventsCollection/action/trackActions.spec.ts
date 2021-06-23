@@ -60,11 +60,11 @@ describe('trackActions', () => {
 
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable }) => {
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) => {
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, createSpy)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
         lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, discardSpy)
-        return trackActions(lifeCycle, domMutationObservable)
+        return trackActions(lifeCycle, domMutationObservable, configuration)
       })
   })
 
@@ -150,7 +150,11 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({ lifeCycle, domMutationObservable }) => trackActions(lifeCycle, domMutationObservable))
+      .beforeBuild(({
+        lifeCycle,
+        domMutationObservable,
+        configuration
+      }) => trackActions(lifeCycle, domMutationObservable, configuration))
   })
 
   afterEach(() => {
@@ -196,5 +200,51 @@ describe('newAction', () => {
       longTaskCount: 0,
       resourceCount: 0,
     })
+  })
+})
+
+describe('newAction with a custom actionNameAttribute', () => {
+  let setupBuilder: TestSetupBuilder
+  const { events, pushEvent } = eventsCollector<AutoAction>()
+
+  function newClick(name: string) {
+    const button = document.createElement('button')
+    button.setAttribute('data-my-custom-attribute', name)
+    document.getElementById('root')!.appendChild(button)
+    button.click()
+  }
+
+  beforeEach(() => {
+    const root = document.createElement('root')
+    root.setAttribute('id', 'root')
+    document.body.appendChild(root)
+    setupBuilder = setup()
+      .withFakeClock()
+      .withConfiguration({actionNameAttribute: 'data-my-custom-attribute'})
+      .beforeBuild(({
+        lifeCycle,
+        domMutationObservable,
+        configuration
+      }) => trackActions(lifeCycle, domMutationObservable, configuration))
+  })
+
+  afterEach(() => {
+    const root = document.getElementById('root')!
+    root.parentNode!.removeChild(root)
+    setupBuilder.cleanup()
+  })
+
+  it('ignores any starting action while another one is happening', () => {
+    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+    lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+
+    newClick('test-1')
+
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify()
+
+    clock.tick(EXPIRE_DELAY)
+    expect(events.length).toBe(1)
+    expect(events[0].name).toBe('test-1')
   })
 })
