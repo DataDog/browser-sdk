@@ -19,6 +19,7 @@ import {
   getElementInputValue,
 } from './serializationUtils'
 import { forEach } from './utils'
+import { Configuration } from './configuration'
 
 export interface SerializeOptions {
   document: Document
@@ -129,6 +130,14 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
       attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
     }
   }
+
+  if (
+    tagName === 'img'
+    // && configuration.isEnabled('privacy-by-default-poc')
+  ) {
+    delete attributes.src;
+  }
+
 
   // dynamic stylesheet
   if (
@@ -280,7 +289,20 @@ function serializeTextNode(text: Text, options: SerializeOptions): TextNode | un
     textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
   } else if (options.ignoreWhiteSpace && !textContent.trim()) {
     return
+  } else if (
+    textContent
+    && parentTagName!=='HEAD'
+    // && configuration.isEnabled('privacy-by-default-poc')
+  ) {
+    // POC: Split each word and reorder the characters.
+    // Probablisitic detection, probably good enough for most HTML, but we could add
+    // randomize one character and also change the word length with a 5% likelyhood.
+    textContent = textContent.split(' ')
+      .map(str=>shuffle(Array.from(str)).join(''))
+      .join(' ');
+    textContent = textContent.replace(/[0-9]/gi, '0');
   }
+
   return {
     type: NodeType.Text,
     textContent,
@@ -344,4 +366,19 @@ function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
 
 function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
+}
+
+
+function shuffle(array: string[]) {
+  // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
+  let m = array.length;
+  let t: string;
+  let i: number;
+  while (m) {
+    i = Math.floor(Math.random() * m--);
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+  return array;
 }
