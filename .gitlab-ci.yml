@@ -11,6 +11,7 @@ cache:
 
 stages:
   - ci-image
+  - install-dependencies
   - test
   - browserstack
   - pre-deploy-notify
@@ -26,6 +27,13 @@ ci-image:
   script:
     - docker build --tag $CI_IMAGE .
     - docker push $CI_IMAGE
+
+install-node-modules:
+  stage: install-dependencies
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
 
 format:
   stage: test
