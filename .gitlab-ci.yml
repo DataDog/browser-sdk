@@ -4,6 +4,11 @@ variables:
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
 
+cache:
+  key: '$CI_JOB_NAME-$CI_COMMIT_REF_SLUG'
+  paths:
+    - node_modules/
+
 stages:
   - ci-image
   - test
