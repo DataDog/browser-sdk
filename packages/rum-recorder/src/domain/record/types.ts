@@ -66,6 +66,7 @@ export interface RecordOptions {
 export interface RecordAPI {
   stop: ListenerHandler
   takeFullSnapshot: () => void
+  flush: () => void
 }
 
 export interface ObserverParam {
