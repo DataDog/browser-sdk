@@ -170,6 +170,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       document,
       serializedNodeIds,
       ancestorInputPrivacyMode: getNodeOrAncestorsInputPrivacyMode(node.parentNode!),
+      // configuration: 99999999999999999
     })
     if (!serializedNode) {
       continue

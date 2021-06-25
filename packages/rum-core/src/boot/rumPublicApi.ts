@@ -24,11 +24,13 @@ import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollect
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
+import { CensorshipLevel } from '../../../../packages/rum-recorder/src/constants'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
+  censorshipLevel?: CensorshipLevel.PRIVATE,
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
 
@@ -124,6 +126,10 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
         startViewStrategy = startView
       }
       bufferApiCalls.drain()
+    }
+    if (
+      configuration.isEnabled('privacy-by-default-poc')) {
+        (window as any).DD_RUM__PRIVATE = configuration
     }
   }
 

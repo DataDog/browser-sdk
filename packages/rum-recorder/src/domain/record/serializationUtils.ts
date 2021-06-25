@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { InputPrivacyMode } from '../../constants'
+import { InputPrivacyMode, PRIVACY_INPUT_MASK } from '../../constants'
 import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
@@ -125,5 +125,5 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 }
 
 export function maskValue(value: string) {
-  return value.replace(/./g, '*')
+  return value.replace(/.+/, PRIVACY_INPUT_MASK);
 }

@@ -1,5 +1,6 @@
-import { InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { getNodeInputPrivacyMode, nodeShouldBeHidden } from './privacy'
+import { CensorshipLevel, InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
+import { Configuration } from '../../../../core/src/domain/configuration'
+import { getNodeInputPrivacyMode, nodeShouldBeHidden, scrambleText, isFormGroupElement } from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -19,13 +20,13 @@ import {
   getElementInputValue,
 } from './serializationUtils'
 import { forEach } from './utils'
-import { Configuration } from './configuration'
 
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   ancestorInputPrivacyMode: InputPrivacyMode
+  // configuration: Configuration
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
@@ -33,6 +34,7 @@ export function serializeDocument(document: Document): SerializedNodeWithId {
   return serializeNodeWithId(document, {
     document,
     ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+    // configuration: 99999999999999999
   })!
 }
 
@@ -87,6 +89,8 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
+  // const {censorshipLevel} = options.configuration;
+  const censorshipLevel = getCensorshipLevel();
 
   if (shouldIgnoreElement(element)) {
     return
@@ -132,8 +136,25 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   }
 
   if (
-    tagName === 'img'
-    // && configuration.isEnabled('privacy-by-default-poc')
+    censorshipLevel===CensorshipLevel.PRIVATE
+    && tagName === 'img'
+    && isEnabled('privacy-by-default-poc')
+  ) {
+    if (attributes.src) {
+      // TODO: For the POC for simplicity just demo with a placeholder
+      const { width, height } = element.getBoundingClientRect()
+      attributes.rr_width = `${Math.round(width)}px`;
+      attributes.rr_height = `${Math.round(height)}px`;
+      // delete attributes.src;
+      attributes.src = `https://via.placeholder.com/${width}x${height}`;
+    }
+  }
+
+
+  if (
+    censorshipLevel===CensorshipLevel.FORMS
+    && isFormGroupElement(element)
+    && isEnabled('privacy-by-default-poc')
   ) {
     delete attributes.src;
   }
@@ -292,15 +313,9 @@ function serializeTextNode(text: Text, options: SerializeOptions): TextNode | un
   } else if (
     textContent
     && parentTagName!=='HEAD'
-    // && configuration.isEnabled('privacy-by-default-poc')
+    && isEnabled('privacy-by-default-poc')
   ) {
-    // POC: Split each word and reorder the characters.
-    // Probablisitic detection, probably good enough for most HTML, but we could add
-    // randomize one character and also change the word length with a 5% likelyhood.
-    textContent = textContent.split(' ')
-      .map(str=>shuffle(Array.from(str)).join(''))
-      .join(' ');
-    textContent = textContent.replace(/[0-9]/gi, '0');
+    textContent = scrambleText(textContent);
   }
 
   return {
@@ -369,16 +384,14 @@ function isSVGElement(el: Element): boolean {
 }
 
 
-function shuffle(array: string[]) {
-  // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
-  let m = array.length;
-  let t: string;
-  let i: number;
-  while (m) {
-    i = Math.floor(Math.random() * m--);
-    t = array[m];
-    array[m] = array[i];
-    array[i] = t;
-  }
-  return array;
+
+function isEnabled (feature: string):boolean {
+  const configuration: Configuration = (window as any).DD_RUM__PRIVATE;
+  return configuration.isEnabled(feature);
+}
+
+function getCensorshipLevel ():CensorshipLevel {
+  const configuration: Configuration = (window as any).DD_RUM__PRIVATE;
+  const censorshipLevel: CensorshipLevel = configuration.censorshipLevel;
+  return censorshipLevel;
 }
