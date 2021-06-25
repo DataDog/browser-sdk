@@ -30,7 +30,7 @@ import { startRum } from './startRum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
-  censorshipLevel?: CensorshipLevel.PRIVATE,
+  censorshipLevel?: CensorshipLevel.PRIVATE
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
 
@@ -127,9 +127,8 @@ export function makeRumPublicApi<C extends RumUserConfiguration>(startRumImpl: S
       }
       bufferApiCalls.drain()
     }
-    if (
-      configuration.isEnabled('privacy-by-default-poc')) {
-        (window as any).DD_RUM__PRIVATE = configuration
+    if (configuration.isEnabled('privacy-by-default-poc')) {
+      ;(window as any).DD_RUM__PRIVATE = configuration
     }
   }
 

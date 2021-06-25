@@ -11,7 +11,7 @@ import {
   FORM_PRIVATE_TAG_NAMES,
 } from '../../constants'
 
-import {Configuration} from '../../../../../packages/core/src/domain/configuration'
+import { Configuration } from '../../../../../packages/core/src/domain/configuration'
 
 // PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
 // events we want to ignore by default, as they often contain PII.
@@ -97,10 +97,9 @@ function isInputElement(elem: Element): elem is HTMLInputElement {
 /**
  * For CensorshipLevel=FORMS, we should block all form like elements
  */
-export function isFormGroupElement (elem: Element): boolean {
+export function isFormGroupElement(elem: Element): boolean {
   return FORM_PRIVATE_TAG_NAMES[elem.tagName]
 }
-
 
 /**
  * Scramble each "word" in a string, split by any whitespace character.
@@ -108,22 +107,23 @@ export function isFormGroupElement (elem: Element): boolean {
  * @param text
  * @returns
  */
-export const scrambleText = (text: string) => text
-      .split(/\s/)
-      .map((str) => shuffle(Array.from(str)).join("").toLowerCase())
-      .join(" ")
-      .replace(/[0-9]/gi, '0')
+export const scrambleText = (text: string) =>
+  text
+    .split(/\s/)
+    .map((str) => shuffle(Array.from(str)).join('').toLowerCase())
+    .join(' ')
+    .replace(/[0-9]/gi, '0')
 
 function shuffle(array: string[]) {
   // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
-  let m = array.length;
-  let t: string;
-  let i: number;
+  let m = array.length
+  let t: string
+  let i: number
   while (m) {
-    i = Math.floor(Math.random() * m--);
-    t = array[m];
-    array[m] = array[i];
-    array[i] = t;
+    i = Math.floor(Math.random() * m--)
+    t = array[m]
+    array[m] = array[i]
+    array[i] = t
   }
-  return array;
+  return array
 }

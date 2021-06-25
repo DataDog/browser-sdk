@@ -83,7 +83,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     cookieOptions: CookieOptions
 
     service?: string
-    beforeSend?: BeforeSendCallback 
+    beforeSend?: BeforeSendCallback
     censorshipLevel?: CensorshipLevel
 
     isEnabled: (feature: string) => boolean

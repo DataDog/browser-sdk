@@ -21,7 +21,7 @@ export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked'
 
 export const PRIVACY_INPUT_MASK = '*****'
 
-export const FORM_PRIVATE_TAG_NAMES: {[tagName: string]: true} = {
+export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
   INPUT: true,
   LABEL: true,
   SELECT: true,
@@ -33,7 +33,7 @@ export const FORM_PRIVATE_TAG_NAMES: {[tagName: string]: true} = {
   OPTION: true,
   OPTGROUP: true,
   LEGEND: true,
-};
+}
 
 // export const FORM_PRIVATE_ATTRS = {
 //   alt: true,

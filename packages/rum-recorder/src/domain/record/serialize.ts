@@ -90,7 +90,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
   // const {censorshipLevel} = options.configuration;
-  const censorshipLevel = getCensorshipLevel();
+  const censorshipLevel = getCensorshipLevel()
 
   if (shouldIgnoreElement(element)) {
     return
@@ -135,30 +135,20 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  if (
-    censorshipLevel===CensorshipLevel.PRIVATE
-    && tagName === 'img'
-    && isEnabled('privacy-by-default-poc')
-  ) {
+  if (censorshipLevel === CensorshipLevel.PRIVATE && tagName === 'img' && isEnabled('privacy-by-default-poc')) {
     if (attributes.src) {
       // TODO: For the POC for simplicity just demo with a placeholder
       const { width, height } = element.getBoundingClientRect()
-      attributes.rr_width = `${Math.round(width)}px`;
-      attributes.rr_height = `${Math.round(height)}px`;
+      attributes.rr_width = `${Math.round(width)}px`
+      attributes.rr_height = `${Math.round(height)}px`
       // delete attributes.src;
-      attributes.src = `https://via.placeholder.com/${width}x${height}`;
+      attributes.src = `https://via.placeholder.com/${width}x${height}`
     }
   }
 
-
-  if (
-    censorshipLevel===CensorshipLevel.FORMS
-    && isFormGroupElement(element)
-    && isEnabled('privacy-by-default-poc')
-  ) {
-    delete attributes.src;
+  if (censorshipLevel === CensorshipLevel.FORMS && isFormGroupElement(element) && isEnabled('privacy-by-default-poc')) {
+    delete attributes.src
   }
-
 
   // dynamic stylesheet
   if (
@@ -310,12 +300,8 @@ function serializeTextNode(text: Text, options: SerializeOptions): TextNode | un
     textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
   } else if (options.ignoreWhiteSpace && !textContent.trim()) {
     return
-  } else if (
-    textContent
-    && parentTagName!=='HEAD'
-    && isEnabled('privacy-by-default-poc')
-  ) {
-    textContent = scrambleText(textContent);
+  } else if (textContent && parentTagName !== 'HEAD' && isEnabled('privacy-by-default-poc')) {
+    textContent = scrambleText(textContent)
   }
 
   return {
@@ -383,15 +369,13 @@ function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
 }
 
-
-
-function isEnabled (feature: string):boolean {
-  const configuration: Configuration = (window as any).DD_RUM__PRIVATE;
-  return configuration.isEnabled(feature);
+function isEnabled(feature: string): boolean {
+  const configuration: Configuration = (window as any).DD_RUM__PRIVATE
+  return configuration.isEnabled(feature)
 }
 
-function getCensorshipLevel ():CensorshipLevel {
-  const configuration: Configuration = (window as any).DD_RUM__PRIVATE;
-  const censorshipLevel: CensorshipLevel = configuration.censorshipLevel;
-  return censorshipLevel;
+function getCensorshipLevel(): CensorshipLevel {
+  const configuration: Configuration = (window as any).DD_RUM__PRIVATE
+  const censorshipLevel: CensorshipLevel = configuration.censorshipLevel
+  return censorshipLevel
 }
