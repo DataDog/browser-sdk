@@ -143,7 +143,7 @@ e2e-bs:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
 
-deploy-head:
+deploy-staging-head:
   only:
     refs:
       - main
@@ -155,7 +155,7 @@ deploy-head:
     - BUILD_MODE=staging yarn build:bundle
     - ./scripts/deploy.sh staging head
 
-deploy-canary:
+deploy-prod-canary:
   only:
     refs:
       - tags
@@ -169,7 +169,7 @@ deploy-canary:
     - BUILD_MODE=release yarn build:bundle
     - ./scripts/deploy.sh prod canary
 
-deploy-stable:
+deploy-prod-stable:
   only:
     refs:
       - tags
@@ -203,7 +203,7 @@ notify-feature-branch-failure:
     - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
 
-notify-head-success:
+notify-staging-head-success:
   extends: .prepare_notification
   only:
     refs:
@@ -213,7 +213,7 @@ notify-head-success:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
 
-notify-head-failure:
+notify-staging-head-failure:
   extends: .prepare_notification
   when: on_failure
   only:
@@ -233,7 +233,7 @@ notify-release-ready:
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
-notify-canary-success:
+notify-prod-canary-success:
   extends: .prepare_notification
   stage: notify:canary
   only:
@@ -244,7 +244,7 @@ notify-canary-success:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
-notify-canary-failure:
+notify-prod-canary-failure:
   extends: .prepare_notification
   stage: notify:canary
   when: on_failure
@@ -255,7 +255,7 @@ notify-canary-failure:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
-notify-stable-success:
+notify-prod-stable-success:
   extends: .prepare_notification
   only:
     refs:
@@ -265,7 +265,7 @@ notify-stable-success:
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
-notify-stable-failure:
+notify-prod-stable-failure:
   extends: .prepare_notification
   when: on_failure
   only:
