@@ -493,33 +493,6 @@ describe('deepClone', () => {
     expect(clone[1].getDate()).toEqual(12)
   })
 
-  it('clones Set', () => {
-    const source = new Set([1, 2, 3])
-    const clone = deepClone(source)
-
-    expect(clone).toEqual(source)
-    expect(clone).not.toBe(source)
-
-    expect(clone.has(2)).toEqual(true)
-    source.add(4)
-    expect(clone.has(4)).toEqual(false)
-  })
-
-  it('clones Map', () => {
-    const source = new Map([
-      ['foo', 'bar'],
-      ['bar', 'baz'],
-    ])
-    const clone = deepClone(source)
-
-    expect(clone).toEqual(source)
-    expect(clone).not.toBe(source)
-
-    expect(clone.get('foo')).toEqual('bar')
-    source.set('bar', 'foo')
-    expect(clone.get('bar')).toEqual('baz')
-  })
-
   it('handles circular references', () => {
     const a: Record<string, any> = { foo: 'bar', ref: null }
     const b: Record<string, any> = { baz: 'bar', ref: null }

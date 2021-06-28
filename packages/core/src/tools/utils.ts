@@ -410,11 +410,17 @@ type Merged<TDestination, TSource> =
     : // case 5 - cannot merge - return source
       TSource
 
+interface CircularReferenceMap {
+  get(key: any): any | undefined
+  has(key: any): boolean
+  set(key: any, value: any): this
+}
+
 /**
  * Iterate over source and affect its sub values into destination, recursively.
  * If the source and destination can't be merged, return source.
  */
-export function mergeInto<D, S>(destination: D, source: S, references = new Map<any, any>()): Merged<D, S> {
+export function mergeInto<D, S>(destination: D, source: S, references: CircularReferenceMap = new Map()): Merged<D, S> {
   // ignore the source if it is undefined
   if (source === undefined) {
     return destination as Merged<D, S>
@@ -442,20 +448,6 @@ export function mergeInto<D, S>(destination: D, source: S, references = new Map<
   if (references.has(source)) {
     // handle circular references
     return references.get(source) as Merged<D, S>
-  } else if (source instanceof Set) {
-    const merged = destination instanceof Set ? destination : new Set()
-    references.set(source, merged)
-    source.forEach((value) => {
-      merged.add(mergeInto(undefined, value, references))
-    })
-    return (merged as unknown) as Merged<D, S>
-  } else if (source instanceof Map) {
-    const merged = destination instanceof Map ? destination : new Map()
-    references.set(source, merged)
-    source.forEach((value, key) => {
-      merged.set(key, mergeInto(merged.get(key), value, references))
-    })
-    return (merged as unknown) as Merged<D, S>
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
     references.set(source, merged)
@@ -480,6 +472,7 @@ export function mergeInto<D, S>(destination: D, source: S, references = new Map<
  * A simplistic implementation of a deep clone algorithm.
  * Caveats:
  * - It doesn't maintain prototype chains - don't use with instances of custom classes.
+ * - It doesn't handle Map and Set
  */
 export function deepClone<T>(value: T): T {
   return mergeInto(undefined, value) as T
