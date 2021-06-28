@@ -181,7 +181,7 @@ deploy-prod-stable:
   script:
     - yarn
     - BUILD_MODE=release yarn build:bundle
-    - ./scripts/deploy.sh prod stable
+    - ./scripts/deploy.sh prod
 
 ########################################################################################################################
 # Notify
