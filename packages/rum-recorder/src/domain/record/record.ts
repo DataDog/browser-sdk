@@ -135,6 +135,6 @@ export function record(options: RecordOptions): RecordAPI {
   return {
     stop: stopObservers,
     takeFullSnapshot,
-    flush: () => mutationController.flush(),
+    flushMutations: () => mutationController.flush(),
   }
 }
