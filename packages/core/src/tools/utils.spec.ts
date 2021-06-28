@@ -489,8 +489,9 @@ describe('deepClone', () => {
     expect(clone).not.toBe(source)
     expect(clone[1]).not.toBe(source[1])
 
-    source[1].setDate(1)
-    expect(clone[1].getDate()).toEqual(12)
+    const originalTime = source[1].getTime()
+    source[1].setTime(originalTime + 100)
+    expect(clone[1].getTime()).toEqual(originalTime)
   })
 
   it('handles circular references', () => {
