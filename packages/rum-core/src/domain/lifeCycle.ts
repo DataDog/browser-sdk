@@ -1,6 +1,7 @@
 import { Context, RawError, RelativeTime, Subscription } from '@datadog/browser-core'
 import { RumPerformanceEntry } from '../browser/performanceCollection'
-import { CommonContext, RawRumEvent, RumEventDomainContext } from '../rawRumEvent.types'
+import { RumEventDomainContext } from '../domainContext.types'
+import { CommonContext, RawRumEvent } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'

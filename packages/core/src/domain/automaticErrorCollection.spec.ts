@@ -216,7 +216,7 @@ describe('network error tracker', () => {
   })
 
   it('should track aborted requests ', (done) => {
-    fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+    fetchStub(FAKE_URL).abort()
 
     fetchStubManager.whenAllComplete(() => {
       expect(errorObservableSpy).toHaveBeenCalled()
@@ -281,7 +281,7 @@ describe('network error tracker', () => {
     })
 
     it('should not track aborted requests ', (done) => {
-      fetchStub(FAKE_URL).rejectWith(new DOMException('The user aborted a request', 'AbortError'))
+      fetchStub(FAKE_URL).abort()
 
       fetchStubManager.whenAllComplete(() => {
         expect(errorObservableSpy).not.toHaveBeenCalled()

@@ -16,17 +16,16 @@ export {
   RumLongTaskEvent,
 } from './rumEvent.types'
 export {
-  ViewContext,
-  CommonContext,
-  RumEventDomainContext,
-  RumViewEventDomainContext,
-  RumErrorEventDomainContext,
-  RumActionEventDomainContext,
-  RumFetchResourceEventDomainContext,
-  RumXhrResourceEventDomainContext,
-  RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
-} from './rawRumEvent.types'
+  RumErrorEventDomainContext,
+  RumOtherResourceEventDomainContext,
+  RumXhrResourceEventDomainContext,
+  RumFetchResourceEventDomainContext,
+  RumActionEventDomainContext,
+  RumViewEventDomainContext,
+  RumEventDomainContext,
+} from './domainContext.types'
+export { ViewContext, CommonContext } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
 export { ParentContexts } from './domain/parentContexts'
