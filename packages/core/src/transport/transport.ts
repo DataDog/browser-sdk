@@ -5,27 +5,7 @@ import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../dom
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
-
-/* eslint-disable camelcase */
-type TransportIssueContext = {
-  event?: {
-    type: string
-    is_trusted: boolean
-    total: number
-    loaded: number
-  }
-  request?: {
-    status: number
-    ready_state: number
-    response_text: string
-  }
-  on_line: boolean
-  size: number
-  url: string
-  try_beacon: boolean
-  bytes_limit: number
-}
-/* eslint-enable camelcase */
+let hasReportedXhrError = false
 
 /**
  * Use POST request without content type to:
@@ -57,31 +37,28 @@ export class HttpRequest {
       if (req.status >= 200 && req.status < 300) {
         return
       }
-      const xhrTransportContext: TransportIssueContext = {
-        on_line: navigator.onLine,
-        size,
-        url,
-        try_beacon: tryBeacon,
-        bytes_limit: this.bytesLimit,
-        event: {
-          type: event.type,
-          is_trusted: event.isTrusted,
-          total: event.total,
-          loaded: event.loaded,
-        },
-        request: {
-          status: req.status,
-          ready_state: req.readyState,
-          response_text: req.responseText,
-        },
+      if (!hasReportedXhrError) {
+        hasReportedXhrError = true
+        addMonitoringMessage('XHR fallback failed', {
+          on_line: navigator.onLine,
+          size,
+          url,
+          try_beacon: tryBeacon,
+          event: {
+            is_trusted: event.isTrusted,
+            total: event.total,
+            loaded: event.loaded,
+          },
+          request: {
+            status: req.status,
+            ready_state: req.readyState,
+            response_text: req.responseText.slice(0, 64),
+          },
+        })
       }
-      reportXhrIssue(xhrTransportContext)
     }
 
     const request = new XMLHttpRequest()
-    /*
-      Successful responses (200–299)
-    */
     request.addEventListener(
       'loadend',
       monitor((event) => transportIntrospection(event))
@@ -100,14 +77,6 @@ function reportBeaconError(e: unknown) {
   if (!hasReportedBeaconError) {
     hasReportedBeaconError = true
     addErrorToMonitoringBatch(e)
-  }
-}
-
-let hasReportedXhrError = false
-function reportXhrIssue(xhrTransportContext: TransportIssueContext) {
-  if (!hasReportedXhrError) {
-    hasReportedXhrError = true
-    addMonitoringMessage('XHR fallback failed', xhrTransportContext)
   }
 }
 
