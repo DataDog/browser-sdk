@@ -1,7 +1,8 @@
 import { buildUrl } from '@datadog/browser-core'
-import { InputPrivacyMode, PRIVACY_INPUT_MASK } from '../../constants'
+import { CensorshipLevel, InputPrivacyMode, PRIVACY_INPUT_MASK } from '../../constants'
 import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { SerializedNodeWithId } from './types'
+import {getCensorshipLevel} from './serialize'
 
 export interface NodeWithSerializedNode extends Node {
   __sn: SerializedNodeWithId
@@ -87,6 +88,14 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
  * to avoid iterating over the element ancestors when looking for the input privacy mode.
  */
 export function getElementInputValue(element: Element, ancestorInputPrivacyMode?: InputPrivacyMode) {
+  if (
+    getCensorshipLevel()===CensorshipLevel.PRIVATE ||
+    getCensorshipLevel()===CensorshipLevel.FORMS
+  ) {
+    const value = (element as HTMLOptionElement | HTMLSelectElement).value;
+    return maskValue(value);
+  }
+
   const tagName = element.tagName
   if (tagName === 'OPTION' || tagName === 'SELECT') {
     // Always use the option and select value, as they are useful to display the currently selected

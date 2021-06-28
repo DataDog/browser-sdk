@@ -146,7 +146,11 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  if (censorshipLevel === CensorshipLevel.FORMS && isFormGroupElement(element) && isEnabled('privacy-by-default-poc')) {
+  if (
+    (censorshipLevel === CensorshipLevel.PRIVATE || censorshipLevel === CensorshipLevel.FORMS) &&
+    isFormGroupElement(element) &&
+    isEnabled('privacy-by-default-poc')
+  ) {
     delete attributes.src
   }
 
@@ -376,6 +380,6 @@ function isEnabled(feature: string): boolean {
 
 function getCensorshipLevel(): CensorshipLevel {
   const configuration: Configuration = (window as any).DD_RUM__PRIVATE
-  const censorshipLevel: CensorshipLevel = configuration.censorshipLevel
-  return censorshipLevel
+  const level: CensorshipLevel = configuration.censorshipLevel
+  return level;
 }

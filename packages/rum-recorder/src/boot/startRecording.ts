@@ -27,7 +27,8 @@ export function startRecording(
 
   const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRawRecord,
-  })
+  },
+  configuration)
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))

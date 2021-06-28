@@ -101,19 +101,89 @@ export function isFormGroupElement(elem: Element): boolean {
   return FORM_PRIVATE_TAG_NAMES[elem.tagName]
 }
 
+
 /**
  * Scramble each "word" in a string, split by any whitespace character.
- * NOTE: This is not cryptographically secure, but a "happy medium" that maintains the layout of each HTML element.
- * @param text
- * @returns
+ * NOTE: This is not cryptographically secure, but a "happy medium" that maintains 
+ * the layout of each HTML element to handle UX usecases. for web elements that need
+ * strong level of privacy, they should be masked to fully block any recording on it.
+ * 
+ * ROUGH ALGORITHM:
+ * - reduce text charset: alphas are lowercased, numbers set to zero, others set to '*'
+ * - sort each word in the string
+ * - sort the characters of each word
+ * - words with <4 chars get replaced to asterisks
+ * - 10% chance of adding a letter
+ * - 10% chance of removing a letter
+ * - 10% chance of swapping a letter picked from the entire string
+ * - NOTE: Each transformation probability is independent
+ * 
+ * PITFALLS: Scrambling text provides little censorship for keywords/enums/options
+ * where there are only a handful of possible outcomes
+ * 
+ * FUTURE: We could modify Fisher-Yates Algorithm to first pass shuffle only the non-whitespace characters
+ * in an array to preserve the text breakpoints. This would provide strong word censorship while maintaining overall 
+ * text length, but would change the size of each word a little bit.
+ * 
+ * FUTURE: We split by any whitespace character and at the end replace with a space character. We should replace with
+ * the origional space character, such as a new line. The effect is that CSS `white-space: pre;` isn't preserved.
  */
-export const scrambleText = (text: string) =>
-  text
-    .split(/\s/)
-    .map((str) => shuffle(Array.from(str)).join('').toLowerCase())
-    .join(' ')
+export const scrambleText = (text: string) => {
+  const reducedText = text
+    .toLowerCase()
     .replace(/[0-9]/gi, '0')
+    .replace(/[^0-9a-u\s]/gi, '*')
+    // Drop letters vwxyz (no support for other unicode chars or other rare letters like j+k)
+  const words = reducedText.split(/\s/);
+  const censoredWords = shuffle(
+    words.map(word=>censorWord(word, reducedText))
+  );
+  
+  // Pad the string to handle losing some characters
+  const newLength = censoredWords.reduce((sum, word)=>sum+=word.length, 0);
+  if (newLength < text.length) {
+    censoredWords.push(''.repeat(text.length - newLength));
+  }
+  // Truncate the string to handle added characthers
+  return censoredWords.join(' ').slice(0, text.length);
+}
 
+
+/**
+ * Masks word by shuffling letters
+ * Masks short words by replacing entirely with '*' chars
+ * Masks length by possibly adding or removing one char
+ * Masks set of chars by possibly masking one char
+ * NOTE: Each transformation probability is independent
+ */
+function censorWord (word: string, text: string) {
+  if (word.length <=3) {
+    return word.replace(/./g, '*');
+  }
+  // Adding another char from the (parent) text increases entropy for large text bodies
+  if (Math.random() >= 0.9) {
+    const idx = Math.floor(text.length * Math.random());
+    const newChar = text[idx];
+    word += newChar
+  }
+  // Mask set of chars somewhat 
+  const letters = Array.from(word);
+  if (Math.random() >= 0.9) {
+    const fromIdx = Math.floor(text.length * Math.random());
+    const toIdx = Math.floor(word.length * Math.random());
+    letters[toIdx] = text[fromIdx];
+  }
+  let shuffledLetters = shuffle(letters);
+  if (Math.random() >= 0.9) {
+    shuffledLetters = shuffledLetters.slice(0,-1);
+  }
+  return shuffledLetters.join('');
+}
+
+/**
+ * Fisher-Yates Algorithm to shuffle an array.
+ * Unbiased, linear time efficiency, with constant space.
+ */
 function shuffle(array: string[]) {
   // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
   let m = array.length
