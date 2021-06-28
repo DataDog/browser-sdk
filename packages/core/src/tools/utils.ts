@@ -437,46 +437,49 @@ export function mergeInto<D, S>(destination: D, source: S, references = new Map<
         source.unicode ? 'u' : '',
       ].join('')
     return (new RegExp(source.source, flags) as unknown) as Merged<D, S>
-  } else {
-    // handle circular references
-    let merged = references.get(source)
-    if (!merged) {
-      if (source instanceof Set) {
-        merged = destination instanceof Set ? destination : new Set()
-        references.set(source, merged)
-        source.forEach((value) => {
-          merged.add(mergeInto(undefined, value, references))
-        })
-      } else if (source instanceof Map) {
-        merged = destination instanceof Map ? destination : new Map()
-        references.set(source, merged)
-        source.forEach((value, key) => {
-          merged.set(key, mergeInto(merged.get(key), value, references))
-        })
-      } else if (Array.isArray(source)) {
-        merged = Array.isArray(destination) ? destination : []
-        references.set(source, merged)
-        for (let i = 0; i < source.length; ++i) {
-          merged[i] = mergeInto(merged[i], source[i], references)
-        }
-      } else {
-        merged =
-          typeof destination === 'object' && !Array.isArray(destination) && destination !== null ? destination : {}
-        references.set(source, merged)
-        for (const key in source) {
-          // include prototype properties
-          merged[key] = mergeInto(merged[key], source[key], references)
-        }
-      }
-    }
-    return merged
   }
+
+  if (references.has(source)) {
+    // handle circular references
+    return references.get(source) as Merged<D, S>
+  } else if (source instanceof Set) {
+    const merged = destination instanceof Set ? destination : new Set()
+    references.set(source, merged)
+    source.forEach((value) => {
+      merged.add(mergeInto(undefined, value, references))
+    })
+    return (merged as unknown) as Merged<D, S>
+  } else if (source instanceof Map) {
+    const merged = destination instanceof Map ? destination : new Map()
+    references.set(source, merged)
+    source.forEach((value, key) => {
+      merged.set(key, mergeInto(merged.get(key), value, references))
+    })
+    return (merged as unknown) as Merged<D, S>
+  } else if (Array.isArray(source)) {
+    const merged: any[] = Array.isArray(destination) ? destination : []
+    references.set(source, merged)
+    for (let i = 0; i < source.length; ++i) {
+      merged[i] = mergeInto(merged[i], source[i], references)
+    }
+    return (merged as unknown) as Merged<D, S>
+  }
+
+  const merged: Record<any, any> =
+    typeof destination === 'object' && !Array.isArray(destination) && destination !== null ? destination : {}
+  references.set(source, merged)
+  for (const key in source) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      merged[key] = mergeInto(merged[key], source[key], references)
+    }
+  }
+  return (merged as unknown) as Merged<D, S>
 }
 
 /**
  * A simplistic implementation of a deep clone algorithm.
  * Caveats:
- *  * it doesn't maintain prototype chains - don't use with instances of custom classes.
+ * - It doesn't maintain prototype chains - don't use with instances of custom classes.
  */
 export function deepClone<T>(value: T): T {
   return mergeInto(undefined, value) as T
@@ -507,7 +510,7 @@ export function combine(...sources: any[]): unknown {
     destination = mergeInto(destination, source)
   }
 
-  return destination
+  return destination as unknown
 }
 
 // Define those types for TS 3.0 compatibility
