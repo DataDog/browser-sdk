@@ -49,9 +49,9 @@ main() {
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
     for file_path in "${FILE_PATHS[@]}"; do
-      local file_name=$(basename "$file_path")
+      local file_name=$(suffixed-file-name "$file_path")
       echo "Upload ${file_name}"
-      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name}${suffix};
+      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name};
     done
 }
 
@@ -60,9 +60,15 @@ invalidate-cloudfront() {
     echo "Creating invalidation"
     local -a paths_to_invalidate
     for file_path in "${FILE_PATHS[@]}"; do
-      paths_to_invalidate+=("/$(basename "$file_path")")
+      paths_to_invalidate+=($(suffixed-file-name "$file_path"))
     done
     aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "${paths_to_invalidate[@]}"
+}
+
+suffixed-file-name() {
+    file_path=$1
+    local file_name=$(basename "$file_path")
+    echo ${file_name%.*}${suffix}.${file_name##*.}
 }
 
 in-isolation() {
