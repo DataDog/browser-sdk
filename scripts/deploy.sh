@@ -23,36 +23,30 @@ case "${env}" in
     ;;
 esac
 
-LEGACY_FILE_PATHS=(
-  "packages/logs/bundle/datadog-logs-eu.js"
-  "packages/logs/bundle/datadog-logs-us.js"
-  "packages/rum/bundle/datadog-rum-eu.js"
-  "packages/rum/bundle/datadog-rum-us.js"
-)
-
 FILE_PATHS=(
   "packages/logs/bundle/datadog-logs.js"
   "packages/rum/bundle/datadog-rum.js"
   "packages/rum-recorder/bundle/datadog-rum-recorder.js"
 )
 
+# legacy files do not support suffix
+if [[ -z $suffix ]]; then
+  FILE_PATHS+=(
+    "packages/logs/bundle/datadog-logs-eu.js"
+    "packages/logs/bundle/datadog-logs-us.js"
+    "packages/rum/bundle/datadog-rum-eu.js"
+    "packages/rum/bundle/datadog-rum-us.js"
+  )
+fi
+
 CACHE_CONTROL='max-age=900, s-maxage=60'
 
 main() {
-
-  in-isolation upload-to-s3 FILE_PATHS
-  in-isolation invalidate-cloudfront FILE_PATHS
-
-  # legacy files do not support suffix
-  if [ -z "$suffix" ]
-  then
-    in-isolation upload-to-s3 LEGACY_FILE_PATHS
-    in-isolation invalidate-cloudfront LEGACY_FILE_PATHS
-  fi
+  in-isolation upload-to-s3
+  in-isolation invalidate-cloudfront
 }
 
 upload-to-s3() {
-    file_paths=${!1}
     assume-role "build-stable-browser-agent-artifacts-s3-write"
     for file_path in "${file_paths[@]}"; do
       local file_name=$(basename "$file_path")
@@ -62,7 +56,6 @@ upload-to-s3() {
 }
 
 invalidate-cloudfront() {
-    file_paths=${!1}
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
     local -a paths_to_invalidate
@@ -74,10 +67,9 @@ invalidate-cloudfront() {
 
 in-isolation() {
     function=$1
-    file_paths=$2
     # subshell to assume-role only for the function
     (
-        ${function} file_paths
+        ${function}
     )
 }
 
