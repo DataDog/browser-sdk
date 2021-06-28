@@ -18,7 +18,7 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod"
+    echo "Usage: ./deploy.sh staging|prod [head|canary]"
     exit 1
     ;;
 esac
@@ -29,7 +29,7 @@ FILE_PATHS=(
   "packages/rum-recorder/bundle/datadog-rum-recorder.js"
 )
 
-# legacy files do not support suffix
+# no need to update legacy files for deployments with suffix
 if [[ -z $suffix ]]; then
   FILE_PATHS+=(
     "packages/logs/bundle/datadog-logs-eu.js"
