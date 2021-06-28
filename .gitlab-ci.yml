@@ -15,6 +15,8 @@ stages:
   - test
   - browserstack
   - pre-deploy-notify
+  - deploy:canary
+  - notify:canary
   - deploy
   - notify
 
@@ -154,7 +156,7 @@ e2e-bs:
     - yarn
     - ./scripts/ci-bs.sh test:e2e
 
-deploy-staging:
+deploy-staging-head:
   only:
     refs:
       - main
@@ -164,9 +166,23 @@ deploy-staging:
   script:
     - yarn
     - BUILD_MODE=staging yarn build:bundle
-    - ./scripts/deploy.sh staging
+    - ./scripts/deploy.sh staging head
 
-deploy-release:
+deploy-prod-canary:
+  only:
+    refs:
+      - tags
+  stage: deploy:canary
+  when: manual
+  allow_failure: false
+  tags: ['runner:main', 'size:large']
+  image: $CI_IMAGE
+  script:
+    - yarn
+    - BUILD_MODE=release yarn build:bundle
+    - ./scripts/deploy.sh prod canary
+
+deploy-prod-stable:
   only:
     refs:
       - tags
@@ -193,62 +209,81 @@ notify-feature-branch-failure:
       - main
       - tags
 
-notify-main-success:
+.prepare_notification:
   extends: .slack-notifier-base
+  before_script:
+    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
+    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
+
+notify-staging-head-success:
+  extends: .prepare_notification
   only:
     refs:
       - main
   script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog_staging:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops-stg" "$MESSAGE_TEXT"
 
-notify-main-failure:
-  extends: .slack-notifier-base
+notify-staging-head-failure:
+  extends: .prepare_notification
   when: on_failure
   only:
     refs:
       - main
   script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME main pipeline for <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
 notify-release-ready:
-  extends: .slack-notifier-base
+  extends: .prepare_notification
   stage: pre-deploy-notify
   only:
     refs:
       - tags
   script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
     - 'MESSAGE_TEXT=":i: $CI_PROJECT_NAME <$BUILD_URL|$COMMIT_MESSAGE> ready to be deployed to :datadog:"'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
 
-notify-release-success:
-  extends: .slack-notifier-base
+notify-prod-canary-success:
+  extends: .prepare_notification
+  stage: notify:canary
   only:
     refs:
       - tags
   script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - COMMIT_URL="$CI_PROJECT_URL/commits/$CI_COMMIT_SHA"
     - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :datadog:."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"
     - postmessage "#rum-ops" "$MESSAGE_TEXT"
 
-notify-release-failure:
-  extends: .slack-notifier-base
+notify-prod-canary-failure:
+  extends: .prepare_notification
+  stage: notify:canary
   when: on_failure
   only:
     refs:
       - tags
   script:
-    - COMMIT_MESSAGE=`git show-branch --no-name HEAD`
-    - BUILD_URL="$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID"
+    - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+
+notify-prod-stable-success:
+  extends: .prepare_notification
+  only:
+    refs:
+      - tags
+  script:
+    - 'MESSAGE_TEXT=":rocket: $CI_PROJECT_NAME <$COMMIT_URL|$COMMIT_MESSAGE> deployed to :earth_americas:."'
+    - postmessage "#rum-deploy" "$MESSAGE_TEXT"
+    - postmessage "#rum-ops" "$MESSAGE_TEXT"
+
+notify-prod-stable-failure:
+  extends: .prepare_notification
+  when: on_failure
+  only:
+    refs:
+      - tags
+  script:
     - 'MESSAGE_TEXT=":host-red: $CI_PROJECT_NAME release pipeline <$BUILD_URL|$COMMIT_MESSAGE> failed."'
     - postmessage "#rum-deploy" "$MESSAGE_TEXT"

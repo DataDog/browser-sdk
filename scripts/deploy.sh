@@ -3,6 +3,8 @@
 set -ex
 
 env=$1
+suffix=${2+"-$2"}
+
 
 case "${env}" in
 "prod")
@@ -16,20 +18,26 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod"
+    echo "Usage: ./deploy.sh staging|prod [head|canary]"
     exit 1
     ;;
 esac
 
 FILE_PATHS=(
-  "packages/logs/bundle/datadog-logs-eu.js"
-  "packages/logs/bundle/datadog-logs-us.js"
   "packages/logs/bundle/datadog-logs.js"
-  "packages/rum-recorder/bundle/datadog-rum-recorder.js"
-  "packages/rum/bundle/datadog-rum-eu.js"
-  "packages/rum/bundle/datadog-rum-us.js"
   "packages/rum/bundle/datadog-rum.js"
+  "packages/rum-recorder/bundle/datadog-rum-recorder.js"
 )
+
+# no need to update legacy files for deployments with suffix
+if [[ -z $suffix ]]; then
+  FILE_PATHS+=(
+    "packages/logs/bundle/datadog-logs-eu.js"
+    "packages/logs/bundle/datadog-logs-us.js"
+    "packages/rum/bundle/datadog-rum-eu.js"
+    "packages/rum/bundle/datadog-rum-us.js"
+  )
+fi
 
 CACHE_CONTROL='max-age=900, s-maxage=60'
 
@@ -43,7 +51,7 @@ upload-to-s3() {
     for file_path in "${FILE_PATHS[@]}"; do
       local file_name=$(basename "$file_path")
       echo "Upload ${file_name}"
-      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name};
+      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name}${suffix};
     done
 }
 
