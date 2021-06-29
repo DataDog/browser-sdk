@@ -1,10 +1,11 @@
 import { display } from '../tools/display'
 import { Context } from '../tools/context'
 import { addEventListener, DOM_EVENT, jsonStringify, noop, objectValues } from '../tools/utils'
-import { monitor, addErrorToMonitoringBatch } from '../domain/internalMonitoring'
+import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../domain/internalMonitoring'
 
 // https://en.wikipedia.org/wiki/UTF-8
 const HAS_MULTI_BYTES_CHARACTERS = /[^\u0000-\u007F]/
+let hasReportedXhrError = false
 
 /**
  * Use POST request without content type to:
@@ -19,7 +20,8 @@ export class HttpRequest {
 
   send(data: string | FormData, size: number) {
     const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
-    if (navigator.sendBeacon && size < this.bytesLimit) {
+    const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
+    if (tryBeacon) {
       try {
         const isQueued = navigator.sendBeacon(url, data)
         if (isQueued) {
@@ -29,7 +31,38 @@ export class HttpRequest {
         reportBeaconError(e)
       }
     }
+
+    const transportIntrospection = (event: ProgressEvent) => {
+      const req = event?.currentTarget as XMLHttpRequest
+      if (req.status >= 200 && req.status < 300) {
+        return
+      }
+      if (!hasReportedXhrError) {
+        hasReportedXhrError = true
+        addMonitoringMessage('XHR fallback failed', {
+          on_line: navigator.onLine,
+          size,
+          url,
+          try_beacon: tryBeacon,
+          event: {
+            is_trusted: event.isTrusted,
+            total: event.total,
+            loaded: event.loaded,
+          },
+          request: {
+            status: req.status,
+            ready_state: req.readyState,
+            response_text: req.responseText.slice(0, 64),
+          },
+        })
+      }
+    }
+
     const request = new XMLHttpRequest()
+    request.addEventListener(
+      'loadend',
+      monitor((event) => transportIntrospection(event))
+    )
     request.open('POST', url, true)
     request.send(data)
   }
