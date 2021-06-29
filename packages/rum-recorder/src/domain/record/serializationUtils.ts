@@ -126,7 +126,10 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 }
 
 export function maskValue(value: string) {
-  return value.replace(/.+/, PRIVACY_INPUT_MASK)
+  if (isFlagEnabled('privacy-by-default-poc')) {
+    return value.replace(/.+/, PRIVACY_INPUT_MASK)
+  }
+  return value.replace(/./g, '*')
 }
 
 export function isFlagEnabled(feature: string): boolean {
