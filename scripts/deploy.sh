@@ -60,7 +60,7 @@ invalidate-cloudfront() {
     echo "Creating invalidation"
     local -a paths_to_invalidate
     for file_path in "${FILE_PATHS[@]}"; do
-      paths_to_invalidate+=($(suffixed-file-name "$file_path"))
+      paths_to_invalidate+=("/$(suffixed-file-name "$file_path")")
     done
     aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "${paths_to_invalidate[@]}"
 }
