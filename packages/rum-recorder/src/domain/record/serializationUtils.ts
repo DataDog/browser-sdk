@@ -146,6 +146,7 @@ export function getCensorshipLevel(): CensorshipLevel {
     // Should never happen. Default to private
     return CensorshipLevel.PRIVATE
   }
-  const level: CensorshipLevel = configuration.censorshipLevel
+  // PENDING review from core package, core defines `censorshipLevel` as any string.
+  const level: CensorshipLevel = configuration.censorshipLevel as CensorshipLevel
   return level
 }
