@@ -24,14 +24,13 @@ import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollect
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
-import { CensorshipLevel } from '../../../../packages/rum-recorder/src/constants'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
 export interface RumUserConfiguration extends UserConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
-  censorshipLevel?: CensorshipLevel.PRIVATE
+  censorshipLevel?: string
 }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
