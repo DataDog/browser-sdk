@@ -145,13 +145,16 @@ export function html(parts: readonly string[], ...vars: string[]) {
 }
 
 function formatLogsConfiguration(configuration: LogsUserConfiguration) {
-  return JSON.stringify(configuration)
+  return formatConfiguration(configuration)
 }
 
 function formatRumConfiguration(configuration: RumUserConfiguration) {
+  return formatConfiguration(configuration).replace('"LOCATION_ORIGIN"', 'location.origin')
+}
+
+function formatConfiguration(configuration: LogsUserConfiguration | RumUserConfiguration) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   let result = JSON.stringify(configuration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
-  result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
   if (configuration.beforeSend) {
     result = result.replace('"BEFORE_SEND"', configuration.beforeSend.toString())
   }
