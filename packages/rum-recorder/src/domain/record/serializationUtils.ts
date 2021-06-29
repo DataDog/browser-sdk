@@ -1,8 +1,9 @@
 import { buildUrl } from '@datadog/browser-core'
+import {getRumRecorderConfig} from '../../boot/startRecording'
 import { CensorshipLevel, InputPrivacyMode, PRIVACY_INPUT_MASK } from '../../constants'
 import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { SerializedNodeWithId } from './types'
-import {getCensorshipLevel} from './serialize'
+
 
 export interface NodeWithSerializedNode extends Node {
   __sn: SerializedNodeWithId
@@ -88,9 +89,10 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
  * to avoid iterating over the element ancestors when looking for the input privacy mode.
  */
 export function getElementInputValue(element: Element, ancestorInputPrivacyMode?: InputPrivacyMode) {
+  const censorshipLevel = getCensorshipLevel();
   if (
-    getCensorshipLevel()===CensorshipLevel.PRIVATE ||
-    getCensorshipLevel()===CensorshipLevel.FORMS
+    censorshipLevel===CensorshipLevel.PRIVATE ||
+    censorshipLevel===CensorshipLevel.FORMS
   ) {
     const value = (element as HTMLOptionElement | HTMLSelectElement).value;
     return maskValue(value);
@@ -135,4 +137,28 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 
 export function maskValue(value: string) {
   return value.replace(/.+/, PRIVACY_INPUT_MASK)
+}
+
+
+
+export function isFlagEnabled(feature: string): boolean {
+  const configuration = getRumRecorderConfig();
+  if (!configuration) {
+    return false;
+  }
+  // REMOVE: const configuration: Configuration = (window as any).DD_RUM__PRIVATE
+  return configuration.isEnabled(feature)
+}
+
+
+
+export function getCensorshipLevel(): CensorshipLevel {
+  const configuration = getRumRecorderConfig() ;
+  if (!configuration) {
+    // Should never happen. Default to private
+    return CensorshipLevel.PRIVATE
+  }
+  // TODO: const configuration: Configuration = (window as any).DD_RUM__PRIVATE
+  const level: CensorshipLevel = configuration.censorshipLevel
+  return level
 }

@@ -1,5 +1,4 @@
 import { CensorshipLevel, InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { Configuration } from '../../../../core/src/domain/configuration'
 import { getNodeInputPrivacyMode, nodeShouldBeHidden, scrambleText, isFormGroupElement } from './privacy'
 import {
   SerializedNode,
@@ -18,6 +17,8 @@ import {
   setSerializedNode,
   transformAttribute,
   getElementInputValue,
+  getCensorshipLevel,
+  isFlagEnabled
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -26,7 +27,6 @@ export interface SerializeOptions {
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
   ancestorInputPrivacyMode: InputPrivacyMode
-  // configuration: Configuration
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
@@ -34,7 +34,6 @@ export function serializeDocument(document: Document): SerializedNodeWithId {
   return serializeNodeWithId(document, {
     document,
     ancestorInputPrivacyMode: InputPrivacyMode.NONE,
-    // configuration: 99999999999999999
   })!
 }
 
@@ -135,7 +134,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  if (censorshipLevel === CensorshipLevel.PRIVATE && tagName === 'img' && isEnabled('privacy-by-default-poc')) {
+  if (censorshipLevel === CensorshipLevel.PRIVATE && tagName === 'img' && isFlagEnabled('privacy-by-default-poc')) {
     if (attributes.src) {
       // TODO: For the POC for simplicity just demo with a placeholder
       const { width, height } = element.getBoundingClientRect()
@@ -149,7 +148,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   if (
     (censorshipLevel === CensorshipLevel.PRIVATE || censorshipLevel === CensorshipLevel.FORMS) &&
     isFormGroupElement(element) &&
-    isEnabled('privacy-by-default-poc')
+    isFlagEnabled('privacy-by-default-poc')
   ) {
     delete attributes.src
   }
@@ -304,7 +303,7 @@ function serializeTextNode(text: Text, options: SerializeOptions): TextNode | un
     textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
   } else if (options.ignoreWhiteSpace && !textContent.trim()) {
     return
-  } else if (textContent && parentTagName !== 'HEAD' && isEnabled('privacy-by-default-poc')) {
+  } else if (textContent && parentTagName !== 'HEAD' && isFlagEnabled('privacy-by-default-poc')) {
     textContent = scrambleText(textContent)
   }
 
@@ -373,13 +372,3 @@ function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
 }
 
-function isEnabled(feature: string): boolean {
-  const configuration: Configuration = (window as any).DD_RUM__PRIVATE
-  return configuration.isEnabled(feature)
-}
-
-function getCensorshipLevel(): CensorshipLevel {
-  const configuration: Configuration = (window as any).DD_RUM__PRIVATE
-  const level: CensorshipLevel = configuration.censorshipLevel
-  return level;
-}

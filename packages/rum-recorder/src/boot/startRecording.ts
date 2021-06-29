@@ -6,6 +6,8 @@ import { startSegmentCollection } from '../domain/segmentCollection'
 import { send } from '../transport/send'
 import { RawRecord, RecordType } from '../types'
 
+let configurationProviderRef: Configuration | undefined;
+
 export function startRecording(
   lifeCycle: LifeCycle,
   applicationId: string,
@@ -13,6 +15,7 @@ export function startRecording(
   session: RumSession,
   parentContexts: ParentContexts
 ) {
+  configurationProviderRef = configuration;
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
     applicationId,
@@ -27,8 +30,7 @@ export function startRecording(
 
   const { stop: stopRecording, takeFullSnapshot } = record({
     emit: addRawRecord,
-  },
-  configuration)
+  })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
@@ -37,6 +39,7 @@ export function startRecording(
     stop: () => {
       stopRecording()
       stopSegmentCollection()
+      configurationProviderRef = undefined;
     },
   }
 }
@@ -47,4 +50,8 @@ export function trackViewEndRecord(lifeCycle: LifeCycle, addRawRecord: (record: 
       type: RecordType.ViewEnd,
     })
   })
+}
+
+export function getRumRecorderConfig (): Configuration | undefined {
+  return configurationProviderRef;
 }

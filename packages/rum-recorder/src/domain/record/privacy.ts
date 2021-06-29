@@ -1,6 +1,6 @@
 import {
   InputPrivacyMode,
-  CensorshipLevel,
+  // CensorshipLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
@@ -11,7 +11,11 @@ import {
   FORM_PRIVATE_TAG_NAMES,
 } from '../../constants'
 
-import { Configuration } from '../../../../../packages/core/src/domain/configuration'
+
+const MASKING_CHAR = '᙮'
+const MIN_LEN_TO_MASK = 50;
+const whitespaceTest = /^\s$/;
+
 
 // PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
 // events we want to ignore by default, as they often contain PII.
@@ -98,94 +102,78 @@ function isInputElement(elem: Element): elem is HTMLInputElement {
  * For CensorshipLevel=FORMS, we should block all form like elements
  */
 export function isFormGroupElement(elem: Element): boolean {
-  return FORM_PRIVATE_TAG_NAMES[elem.tagName]
+  return !!FORM_PRIVATE_TAG_NAMES[elem.tagName]
 }
 
 
 /**
- * Scramble each "word" in a string, split by any whitespace character.
- * NOTE: This is not cryptographically secure, but a "happy medium" that maintains 
- * the layout of each HTML element to handle UX usecases. for web elements that need
- * strong level of privacy, they should be masked to fully block any recording on it.
+ * Scramble text dynamically preserving whitespace and attempts to approximate the same (pixel) text width. For 
+ * long strings (over 50 chars) we scramble ~90% of characters to balance privacy with maintaining accurate pixel width.
+ * 
+ * NOTE: This is not cryptographically secure due to whitespace preservation + char shuffling, 
+ * but instead is a "happy medium" that maintains the layout of each HTML element to handle UX usecases. 
+ * For web elements that need strong level of privacy, they should be masked to fully block any recording on it.
  * 
  * ROUGH ALGORITHM:
- * - reduce text charset: alphas are lowercased, numbers set to zero, others set to '*'
- * - sort each word in the string
- * - sort the characters of each word
- * - words with <4 chars get replaced to asterisks
- * - 10% chance of adding a letter
- * - 10% chance of removing a letter
- * - 10% chance of swapping a letter picked from the entire string
- * - NOTE: Each transformation probability is independent
+ * A. for short strings under 50 chars: simply return string with all non-whitespace chars masked
+ * B. for long strings over 50 chars:
+ * 1. iterate through string to collect all non-whitespace characters.
+ * 2. reduce + scramble the non-whitespace chars:
+ * - i. toLocaleLowerCase
+ * - ii. Hide possibly financial /performance data by setting numbers to zero
+ * - iii. Add in 10% more MASK_CHARs 
+ * - iv. shuffle the chars (after shuffling, some characters get dropped thanks to 10% padding)
+ * 3. refill the scrambled chars into the old string maintaining the origional whitespace.
  * 
- * PITFALLS: Scrambling text provides little censorship for keywords/enums/options
+ * PITFALLS: 
+ * 1. Scrambling text provides little censorship for keywords/enums/options
  * where there are only a handful of possible outcomes
- * 
- * FUTURE: We could modify Fisher-Yates Algorithm to first pass shuffle only the non-whitespace characters
- * in an array to preserve the text breakpoints. This would provide strong word censorship while maintaining overall 
- * text length, but would change the size of each word a little bit.
- * 
- * FUTURE: We split by any whitespace character and at the end replace with a space character. We should replace with
- * the origional space character, such as a new line. The effect is that CSS `white-space: pre;` isn't preserved.
+ * 2. Random is used for each iteration, over many session replay recordings enough samples could be collected to 
+ * statistically rebuild the text. Though with text lengths over 50, the magnitude of samples
+ * required is probably unreasonable so hasn't been examined.
  */
 export const scrambleText = (text: string) => {
+  // For most text, we just mask all non-whitespace
+  // But for really long paragraph text, we preserve some of the characters to maintain pixel perfect length
+  if (text.length <= MIN_LEN_TO_MASK) {
+      return text.replace(/[^\s]/g, MASKING_CHAR);
+  }
   const reducedText = text
-    .toLowerCase()
-    .replace(/[0-9]/gi, '0')
-    .replace(/[^0-9a-u\s]/gi, '*')
-    // Drop letters vwxyz (no support for other unicode chars or other rare letters like j+k)
-  const words = reducedText.split(/\s/);
-  const censoredWords = shuffle(
-    words.map(word=>censorWord(word, reducedText))
-  );
-  
-  // Pad the string to handle losing some characters
-  const newLength = censoredWords.reduce((sum, word)=>sum+=word.length, 0);
-  if (newLength < text.length) {
-    censoredWords.push(''.repeat(text.length - newLength));
+  .toLocaleLowerCase()
+  .replace(/[0-9]/gi, '0') // Hide financial/perf related data
+  const reducedChars = Array.from(reducedText);
+  const chars = [];
+  for (let i=0; i<reducedChars.length; i++) {
+      if (!whitespaceTest.test(reducedChars[i])) {
+          chars.push(reducedChars[i]);
+      }
   }
-  // Truncate the string to handle added characthers
-  return censoredWords.join(' ').slice(0, text.length);
-}
+  // Add 10% length of MASKING_CHAR to hide origonal string length + some of the charset 
+  const addRandCharsLength = Math.ceil(reducedChars.length*0.1);
+  Array.prototype.push.apply(chars,new Array(addRandCharsLength).fill(MASKING_CHAR));
+  shuffle(chars);
 
-
-/**
- * Masks word by shuffling letters
- * Masks short words by replacing entirely with '*' chars
- * Masks length by possibly adding or removing one char
- * Masks set of chars by possibly masking one char
- * NOTE: Each transformation probability is independent
- */
-function censorWord (word: string, text: string) {
-  if (word.length <=3) {
-    return word.replace(/./g, '*');
-  }
-  // Adding another char from the (parent) text increases entropy for large text bodies
-  if (Math.random() >= 0.9) {
-    const idx = Math.floor(text.length * Math.random());
-    const newChar = text[idx];
-    word += newChar
-  }
-  // Mask set of chars somewhat 
-  const letters = Array.from(word);
-  if (Math.random() >= 0.9) {
-    const fromIdx = Math.floor(text.length * Math.random());
-    const toIdx = Math.floor(word.length * Math.random());
-    letters[toIdx] = text[fromIdx];
-  }
-  let shuffledLetters = shuffle(letters);
-  if (Math.random() >= 0.9) {
-    shuffledLetters = shuffledLetters.slice(0,-1);
-  }
-  return shuffledLetters.join('');
-}
+  // Now we put the scrambled chars back into the string, around the origional whitespace
+  const whitespacedText = [];
+  let i = 0;
+  while (whitespacedText.length < reducedChars.length) {
+      if (whitespaceTest.test(reducedChars[i])) {
+          whitespacedText.push(reducedChars[i]);
+      }
+      else {
+          whitespacedText.push(chars.pop());
+      }
+      i++;
+  };
+  return whitespacedText.join('');
+};
 
 /**
  * Fisher-Yates Algorithm to shuffle an array.
  * Unbiased, linear time efficiency, with constant space.
  */
 function shuffle(array: string[]) {
-  // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
+  // https://bost.ocks.org/mike/shuffle/
   let m = array.length
   let t: string
   let i: number
