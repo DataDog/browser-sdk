@@ -19,7 +19,7 @@ export class Segment {
     private creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (size: number) => void,
-    onFlushed: (data: Uint8Array, sizeInBytes: number) => void
+    onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
     this.start = initialRecord.timestamp
     this.end = initialRecord.timestamp
@@ -33,10 +33,10 @@ export class Segment {
 
       if (data.id === this.id) {
         if ('result' in data) {
-          onFlushed(data.result, data.sizeInBytes)
+          onFlushed(data.result, data.rawSize)
           worker.removeEventListener('message', listener)
         } else {
-          onWrote(data.size)
+          onWrote(data.compressedSize)
         }
       } else if (data.id > this.id) {
         // Messages should be received in the same order as they are sent, so if we receive a

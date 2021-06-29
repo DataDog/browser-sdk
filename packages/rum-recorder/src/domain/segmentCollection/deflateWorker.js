@@ -14,7 +14,7 @@ function workerCodeFn() {
     const { Deflate, constants } = makePakoDeflate()
 
     let deflate = new Deflate()
-    let sizeInBytes = 0
+    let rawSize = 0
     self.addEventListener(
       'message',
       monitor((event) => {
@@ -23,26 +23,26 @@ function workerCodeFn() {
           case 'write':
             const binaryData = new TextEncoder().encode(data.data)
             deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-            sizeInBytes += binaryData.length
+            rawSize += binaryData.length
             self.postMessage({
               id: data.id,
-              size: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
+              compressedSize: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
             })
             break
           case 'flush':
             if (data.data) {
               const binaryData = new TextEncoder().encode(data.data)
               deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-              sizeInBytes += binaryData.length
+              rawSize += binaryData.length
             }
             deflate.push('', constants.Z_FINISH)
             self.postMessage({
               id: data.id,
               result: deflate.result,
-              sizeInBytes,
+              rawSize,
             })
             deflate = new Deflate()
-            sizeInBytes = 0
+            rawSize = 0
             break
         }
       })
