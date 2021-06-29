@@ -146,7 +146,7 @@ export function doStartSegmentCollection(
         }
       },
       (data, rawSegmentSize) => {
-        send(data, { ...segment.meta }, rawSegmentSize)
+        send(data, segment.meta, rawSegmentSize)
       }
     )
 
