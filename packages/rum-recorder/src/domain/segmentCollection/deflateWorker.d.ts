@@ -29,5 +29,6 @@ export type DeflateWorkerResponse =
   | {
       id: number
       result: Uint8Array
+      sizeInBytes: number
     }
   | { error: Error | string }

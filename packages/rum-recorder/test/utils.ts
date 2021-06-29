@@ -83,6 +83,7 @@ export class MockWorker implements DeflateWorker {
               data: {
                 id: message.id,
                 result: mergeUint8Arrays(this.deflatedData),
+                sizeInBytes: 0,
               },
             })
           )

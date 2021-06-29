@@ -19,7 +19,7 @@ export class Segment {
     private creationReason: CreationReason,
     initialRecord: Record,
     onWrote: (size: number) => void,
-    onFlushed: (data: Uint8Array) => void
+    onFlushed: (data: Uint8Array, sizeInBytes: number) => void
   ) {
     this.start = initialRecord.timestamp
     this.end = initialRecord.timestamp
@@ -33,7 +33,7 @@ export class Segment {
 
       if (data.id === this.id) {
         if ('result' in data) {
-          onFlushed(data.result)
+          onFlushed(data.result, data.sizeInBytes)
           worker.removeEventListener('message', listener)
         } else {
           onWrote(data.size)

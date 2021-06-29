@@ -18,7 +18,7 @@ export function startRecording(
     applicationId,
     session,
     parentContexts,
-    (data, meta) => send(configuration.sessionReplayEndpoint, data, meta)
+    (data, meta, segmentSize) => send(configuration.sessionReplayEndpoint, data, meta, segmentSize)
   )
 
   function addRawRecord(rawRecord: RawRecord) {
