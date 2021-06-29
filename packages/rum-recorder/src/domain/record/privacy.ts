@@ -15,6 +15,8 @@ import {
 // to obfuscate.
 const PRIVACY_INPUT_TYPES_TO_IGNORE = ['email', 'password', 'tel']
 
+const MASKING_CHAR = '᙮'
+
 // Returns true if the given DOM node should be hidden. Ancestors
 // are not checked.
 export function nodeShouldBeHidden(node: Node): boolean {
@@ -89,3 +91,5 @@ function isElement(node: Node): node is Element {
 function isInputElement(elem: Element): elem is HTMLInputElement {
   return elem.tagName === 'INPUT'
 }
+
+export const censorText = (text: string) => text.replace(/[^\s]/g, MASKING_CHAR)
