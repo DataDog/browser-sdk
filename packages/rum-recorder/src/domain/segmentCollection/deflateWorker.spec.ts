@@ -1,6 +1,12 @@
+import { isIE } from '../../../../core/test/specHelper'
 import { createDeflateWorker, DeflateWorker, DeflateWorkerResponse } from './deflateWorker'
 
 describe('deflateWorker', () => {
+  beforeEach(() => {
+    if (isIE()) {
+      pending('no TextEncoder support')
+    }
+  })
   it('buffers data and responds with the buffer deflated size when writing', (done) => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 3, (events) => {
