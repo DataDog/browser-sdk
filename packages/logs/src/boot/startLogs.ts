@@ -9,7 +9,6 @@ import {
   ErrorObservable,
   HttpRequest,
   InternalMonitoring,
-  limitModification,
   Observable,
   RawError,
   RelativeTime,
@@ -25,8 +24,6 @@ export interface LogsUserConfiguration extends UserConfiguration {
   forwardErrorsToLogs?: boolean
   beforeSend?: (event: LogsEvent) => void | boolean
 }
-
-const FIELDS_WITH_SENSITIVE_DATA = ['view.url', 'view.referrer', 'message', 'error.stack', 'http.url']
 
 export function startLogs(
   userConfiguration: LogsUserConfiguration,
@@ -136,15 +133,8 @@ export function buildAssemble(
       getRUMInternalContext(),
       message
     )
-    if (configuration.beforeSend) {
-      const shouldSend = limitModification(
-        contextualizedMessage as LogsEvent & Context,
-        FIELDS_WITH_SENSITIVE_DATA,
-        configuration.beforeSend
-      )
-      if (shouldSend === false) {
-        return undefined
-      }
+    if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {
+      return undefined
     }
     if (contextualizedMessage.status === StatusType.error && errorFilter.isLimitReached()) {
       return undefined
