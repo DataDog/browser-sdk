@@ -4011,173 +4011,6 @@ function workerCodeFn() {
     _utf8len[254] = _utf8len[254] = 1 // Invalid sequence start
     // convert string to array (typed, when possible)
 
-    var string2buf = function string2buf(str) {
-      var buf
-      var c
-      var c2
-      var m_pos
-      var i
-      var str_len = str.length
-      var buf_len = 0 // count binary size
-
-      for (m_pos = 0; m_pos < str_len; m_pos++) {
-        c = str.charCodeAt(m_pos)
-
-        if ((c & 0xfc00) === 0xd800 && m_pos + 1 < str_len) {
-          c2 = str.charCodeAt(m_pos + 1)
-
-          if ((c2 & 0xfc00) === 0xdc00) {
-            c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00)
-            m_pos++
-          }
-        }
-
-        buf_len += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4
-      } // allocate buffer
-
-      buf = new Uint8Array(buf_len) // convert
-
-      for (i = 0, m_pos = 0; i < buf_len; m_pos++) {
-        c = str.charCodeAt(m_pos)
-
-        if ((c & 0xfc00) === 0xd800 && m_pos + 1 < str_len) {
-          c2 = str.charCodeAt(m_pos + 1)
-
-          if ((c2 & 0xfc00) === 0xdc00) {
-            c = 0x10000 + ((c - 0xd800) << 10) + (c2 - 0xdc00)
-            m_pos++
-          }
-        }
-
-        if (c < 0x80) {
-          /* one byte */
-          buf[i++] = c
-        } else if (c < 0x800) {
-          /* two bytes */
-          buf[i++] = 0xc0 | (c >>> 6)
-          buf[i++] = 0x80 | (c & 0x3f)
-        } else if (c < 0x10000) {
-          /* three bytes */
-          buf[i++] = 0xe0 | (c >>> 12)
-          buf[i++] = 0x80 | ((c >>> 6) & 0x3f)
-          buf[i++] = 0x80 | (c & 0x3f)
-        } else {
-          /* four bytes */
-          buf[i++] = 0xf0 | (c >>> 18)
-          buf[i++] = 0x80 | ((c >>> 12) & 0x3f)
-          buf[i++] = 0x80 | ((c >>> 6) & 0x3f)
-          buf[i++] = 0x80 | (c & 0x3f)
-        }
-      }
-
-      return buf
-    } // Helper
-
-    var buf2binstring = function buf2binstring(buf, len) {
-      // On Chrome, the arguments in a function call that are allowed is `65534`.
-      // If the length of the buffer is smaller than that, we can use this optimization,
-      // otherwise we will take a slower path.
-      if (len < 65534) {
-        if (buf.subarray && STR_APPLY_UIA_OK) {
-          return String.fromCharCode.apply(null, buf.length === len ? buf : buf.subarray(0, len))
-        }
-      }
-
-      var result = ''
-
-      for (var i = 0; i < len; i++) {
-        result += String.fromCharCode(buf[i])
-      }
-
-      return result
-    } // convert array to string
-
-    var buf2string = function buf2string(buf, max) {
-      var i
-      var out
-      var len = max || buf.length // Reserve max possible length (2 words per char)
-      // NB: by unknown reasons, Array is significantly faster for
-      //     String.fromCharCode.apply than Uint16Array.
-
-      var utf16buf = new Array(len * 2)
-
-      for (out = 0, i = 0; i < len; ) {
-        var c = buf[i++] // quick process ascii
-
-        if (c < 0x80) {
-          utf16buf[out++] = c
-          continue
-        }
-
-        var c_len = _utf8len[c] // skip 5 & 6 byte codes
-
-        if (c_len > 4) {
-          utf16buf[out++] = 0xfffd
-          i += c_len - 1
-          continue
-        } // apply mask on first byte
-
-        c &= c_len === 2 ? 0x1f : c_len === 3 ? 0x0f : 0x07 // join the rest
-
-        while (c_len > 1 && i < len) {
-          c = (c << 6) | (buf[i++] & 0x3f)
-          c_len--
-        } // terminated by end of string?
-
-        if (c_len > 1) {
-          utf16buf[out++] = 0xfffd
-          continue
-        }
-
-        if (c < 0x10000) {
-          utf16buf[out++] = c
-        } else {
-          c -= 0x10000
-          utf16buf[out++] = 0xd800 | ((c >> 10) & 0x3ff)
-          utf16buf[out++] = 0xdc00 | (c & 0x3ff)
-        }
-      }
-
-      return buf2binstring(utf16buf, out)
-    } // Calculate max possible position in utf8 buffer,
-    // that will not break sequence. If that's not possible
-    // - (very small limits) return max size as is.
-    //
-    // buf[] - utf8 bytes array
-    // max   - length limit (mandatory);
-
-    var utf8border = function utf8border(buf, max) {
-      max = max || buf.length
-
-      if (max > buf.length) {
-        max = buf.length
-      } // go back from last position, until start of sequence found
-
-      var pos = max - 1
-
-      while (pos >= 0 && (buf[pos] & 0xc0) === 0x80) {
-        pos--
-      } // Very small and broken sequence,
-      // return max, because we should return something anyway.
-
-      if (pos < 0) {
-        return max
-      } // If we came to start of buffer - that means buffer is too small,
-      // return max too.
-
-      if (pos === 0) {
-        return max
-      }
-
-      return pos + _utf8len[buf[pos]] > max ? pos : max
-    }
-
-    var strings = {
-      string2buf,
-      buf2string,
-      utf8border,
-    }
-
     // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
     //
     // This software is provided 'as-is', without any express or implied
@@ -4381,10 +4214,7 @@ function workerCodeFn() {
       if (opt.dictionary) {
         var dict // Convert data if needed
 
-        if (typeof opt.dictionary === 'string') {
-          // If we need to compress text, change encoding to utf8.
-          dict = strings.string2buf(opt.dictionary)
-        } else if (toString.call(opt.dictionary) === '[object ArrayBuffer]') {
+        if (toString.call(opt.dictionary) === '[object ArrayBuffer]') {
           dict = new Uint8Array(opt.dictionary)
         } else {
           dict = opt.dictionary
@@ -4439,10 +4269,7 @@ function workerCodeFn() {
         _flush_mode = flush_mode === true ? Z_FINISH$1 : Z_NO_FLUSH$1
       } // Convert data if needed
 
-      if (typeof data === 'string') {
-        // If we need to compress text, change encoding to utf8.
-        strm.input = strings.string2buf(data)
-      } else if (toString.call(data) === '[object ArrayBuffer]') {
+      if (toString.call(data) === '[object ArrayBuffer]') {
         strm.input = new Uint8Array(data)
       } else {
         strm.input = data
