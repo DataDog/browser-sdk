@@ -15,7 +15,7 @@ export function send(endpointUrl: string, data: Uint8Array, meta: SegmentMeta, s
   )
 
   toFormEntries(meta, (key, value) => formData.set(key, value))
-  formData.set('raw_segment_size', segmentSize.toString(10))
+  formData.set('raw_segment_size', segmentSize.toString())
 
   const request = new HttpRequest(endpointUrl, SEND_BEACON_BYTE_LENGTH_LIMIT)
   request.send(formData, data.byteLength)
