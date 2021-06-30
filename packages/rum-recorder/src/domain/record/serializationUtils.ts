@@ -126,11 +126,22 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 }
 
 export function maskValue(value: string) {
+  (window as any).maskValue = maskValue; // TODO: REMOVE
   if (isFlagEnabled('privacy-by-default-poc')) {
     return value.replace(/.+/, PRIVACY_INPUT_MASK)
   }
   return value.replace(/./g, '*')
 }
+
+// TODO: disableFormsByDefault
+export function formTrackingAllowed (feature: string): boolean {
+  const configuration = getRumRecorderConfig()
+  if (!configuration) {
+    return false
+  }
+  return configuration.isEnabled(feature)
+}
+
 
 export function isFlagEnabled(feature: string): boolean {
   const configuration = getRumRecorderConfig()
@@ -143,8 +154,7 @@ export function isFlagEnabled(feature: string): boolean {
 export function getCensorshipLevel(): CensorshipLevel {
   const configuration = getRumRecorderConfig()
   if (!configuration) {
-    // Should never happen. Default to private
-    return CensorshipLevel.PRIVATE
+    return CensorshipLevel.PUBLIC
   }
   // PENDING review from core package, core defines `censorshipLevel` as any string.
   const level: CensorshipLevel = configuration.censorshipLevel as CensorshipLevel

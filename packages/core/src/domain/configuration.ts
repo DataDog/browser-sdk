@@ -2,6 +2,7 @@ import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
+import { CensorshipLevel } from '../../../../packages/rum-recorder/src/constants'
 import { computeTransportConfiguration, Datacenter } from './transportConfiguration'
 
 export const DEFAULT_CONFIGURATION = {
@@ -13,7 +14,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  censorshipLevel: 'PUBLIC',
+  censorshipLevel: 'hello',
 
   /**
    * arbitrary value, byte precision not needed
@@ -90,7 +91,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
-    censorshipLevel?: string
 
     actionNameAttribute?: string
 
@@ -156,7 +156,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
   }
 
   if ('censorshipLevel' in userConfiguration) {
-    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel
+    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel;
   }
 
   return configuration

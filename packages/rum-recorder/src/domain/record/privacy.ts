@@ -1,4 +1,5 @@
 import {
+  CensorshipLevel,
   InputPrivacyMode,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -8,6 +9,8 @@ import {
   PRIVACY_CLASS_INPUT_IGNORED,
   PRIVACY_CLASS_INPUT_MASKED,
 } from '../../constants'
+
+import {getCensorshipLevel} from './serializationUtils'
 
 // PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
 // events we want to ignore by default, as they often contain PII.
@@ -20,18 +23,36 @@ const MASKING_CHAR = '᙮'
 // Returns true if the given DOM node should be hidden. Ancestors
 // are not checked.
 export function nodeShouldBeHidden(node: Node): boolean {
-  return (
-    isElement(node) &&
-    (node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_HIDDEN ||
-      node.classList.contains(PRIVACY_CLASS_HIDDEN))
-  )
+  if (isElement(node)) {
+    return (
+      node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_HIDDEN ||
+        node.classList.contains(PRIVACY_CLASS_HIDDEN)
+    )
+  }
+  else if (node.nodeType === Node.TEXT_NODE) {
+    if (node.parentElement) {
+      return nodeShouldBeHidden(node.parentElement);
+    }
+    const censorshipLevel = getCensorshipLevel();
+    // TODO: Whatabout handling FORM type?
+    return censorshipLevel===CensorshipLevel.PRIVATE;
+    
+  }
+  else if (node.nodeType === Node.DOCUMENT_NODE) {
+    const censorshipLevel = getCensorshipLevel();
+    return censorshipLevel===CensorshipLevel.PRIVATE;
+  }
+  return false;
 }
 
 // Returns true if the given DOM node should be hidden, recursively
 // checking its ancestors.
 export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
   if (!node) {
-    return false
+    // Walking up the tree results in a node without a parent so fallback to default
+    // Walking down the tree results in no children to fallback to defaul
+    const censorshipLevel = getCensorshipLevel();
+    return censorshipLevel===CensorshipLevel.PRIVATE;
   }
 
   if (nodeShouldBeHidden(node)) {
@@ -46,6 +67,7 @@ export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
  * sure we respect the privacy mode priorities.
  */
 export function getNodeInputPrivacyMode(node: Node, ancestorInputPrivacyMode: InputPrivacyMode): InputPrivacyMode {
+  // Non-Elements (like Text Nodes) don't have `input` values.
   if (!isElement(node)) {
     return InputPrivacyMode.NONE
   }
@@ -60,6 +82,7 @@ export function getNodeInputPrivacyMode(node: Node, ancestorInputPrivacyMode: In
     return InputPrivacyMode.IGNORED
   }
 
+  // TODO: REVIEW: Is masking stronger than IGNORED? IF so this should be above the ignored part.
   if (
     ancestorInputPrivacyMode === InputPrivacyMode.MASKED ||
     attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED ||
@@ -80,7 +103,7 @@ export function getNodeOrAncestorsInputPrivacyMode(node: Node): InputPrivacyMode
   // recursively.
   const ancestorInputPrivacyMode = node.parentNode
     ? getNodeOrAncestorsInputPrivacyMode(node.parentNode)
-    : InputPrivacyMode.NONE
+    : InputPrivacyMode.NONE // TODO: SPEC CLARIFICATION: This is the initial part.
   return getNodeInputPrivacyMode(node, ancestorInputPrivacyMode)
 }
 
@@ -92,4 +115,7 @@ function isInputElement(elem: Element): elem is HTMLInputElement {
   return elem.tagName === 'INPUT'
 }
 
-export const censorText = (text: string) => text.replace(/[^\s]/g, MASKING_CHAR)
+export const censorText = (text: string) => {
+  (window as any).censorText = censorText; // TODO: REMOVE
+  return text.replace(/[^\s]/g, MASKING_CHAR);
+}

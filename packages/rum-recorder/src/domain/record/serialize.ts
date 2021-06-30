@@ -1,5 +1,5 @@
-import { InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { getNodeInputPrivacyMode, nodeShouldBeHidden } from './privacy'
+import { CensorshipLevel, InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
+import { getNodeInputPrivacyMode, nodeShouldBeHidden, censorText, nodeOrAncestorsShouldBeHidden } from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -17,6 +17,8 @@ import {
   setSerializedNode,
   transformAttribute,
   getElementInputValue,
+  getCensorshipLevel,
+  maskValue,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -29,9 +31,11 @@ export interface SerializeOptions {
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
+  // TODO: NOTE: This only affects `input`, not general HTML text blocking
+  const defaultPrivacyMode = InputPrivacyMode.NONE; // TODO: get DEFAULT privacy mode, set to MASKED?
   return serializeNodeWithId(document, {
     document,
-    ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+    ancestorInputPrivacyMode: defaultPrivacyMode,
   })!
 }
 
@@ -86,11 +90,14 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
+  const censorshipLevel = getCensorshipLevel();
 
+  // Ignore Elements like Script and some Link, Metas
   if (shouldIgnoreElement(element)) {
     return
   }
 
+  // TODO: WHY IS THIS NOT nodeOrAncestorsShouldBeHidden() ???? Also make the function private
   if (nodeShouldBeHidden(element)) {
     const { width, height } = element.getBoundingClientRect()
     return {
@@ -109,7 +116,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   }
 
   const attributes: Attributes = {}
-  for (const { name, value } of Array.from(element.attributes)) {
+  for (const { name, value } of Array.from(element.attributes)) { // TODO: WE WANT MORE FILTERING HERE
     // Never take those attributes into account, as they will be conditionally set below.
     if (name === 'value' || name === 'selected' || name === 'checked') {
       continue
@@ -143,21 +150,24 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  // form fields
-  const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
-  if (value) {
-    attributes.value = value
-  }
-
-  if (tagName === 'option') {
-    const selectElement = (element as HTMLOptionElement).parentElement
-    if ((element as HTMLOptionElement).value === (selectElement as HTMLSelectElement).value) {
-      attributes.selected = (element as HTMLOptionElement).selected
+    
+  // Form fields: INPUT/OPTION/SELECT/TEXTAREA
+  // with censorshipLevel [PRIVATE | FORMS] we don't display form like info
+  if (censorshipLevel===CensorshipLevel.PUBLIC) {
+    const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
+    if (value) {
+      attributes.value = value
     }
-  }
 
-  if (tagName === 'input' && (element as HTMLInputElement).checked) {
-    attributes.checked = true
+    if (tagName === 'option') {
+      const selectElement = (element as HTMLOptionElement).parentElement
+      if ((element as HTMLOptionElement).value === (selectElement as HTMLSelectElement).value) {
+        attributes.selected = (element as HTMLOptionElement).selected
+      }
+    }
+    if (tagName === 'input' && (element as HTMLInputElement).checked) {
+      attributes.checked = true
+    }
   }
 
   // media elements
@@ -267,20 +277,31 @@ function shouldIgnoreElement(element: Element) {
     return (element.getAttribute(name) || '').toLowerCase()
   }
 
+  (window as any).serializeElementNode = serializeElementNode; // TODO: REMOVE
   return false
 }
 
-function serializeTextNode(text: Text, options: SerializeOptions): TextNode | undefined {
+
+
+
+function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
-  const parentTagName = text.parentNode && (text.parentNode as HTMLElement).tagName
-  let textContent = text.textContent || ''
+  const parentTagName = textNode.parentNode && (textNode.parentNode as HTMLElement).tagName
+  let textContent = textNode.textContent || ''
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   if (isStyle) {
     textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
   } else if (options.ignoreWhiteSpace && !textContent.trim()) {
     return
   }
+
+  if (nodeOrAncestorsShouldBeHidden(textNode)) {// TODO: FINISHED, now test
+    textContent = censorText(textContent);
+  }
+
+  (window as any).serializeTextNode = serializeTextNode; // TODO: REMOVE
+  
   return {
     type: NodeType.Text,
     textContent,

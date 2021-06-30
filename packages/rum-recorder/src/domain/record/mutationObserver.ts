@@ -274,6 +274,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
       }
       transformedValue = inputValue
     } else if (value) {
+      // TODO: SPEC CLARIFY: CENSOR VALUES HERE: if (censored....)  transformedValue = 'MASK_CHARS' or null?
       transformedValue = transformAttribute(document, mutation.attributeName!, value)
     } else {
       transformedValue = null

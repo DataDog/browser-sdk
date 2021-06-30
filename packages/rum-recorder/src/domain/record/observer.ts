@@ -176,7 +176,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
-      inputState = { isChecked: (target as HTMLInputElement).checked }
+      inputState = { isChecked: (target as HTMLInputElement).checked } // TODO: el.checked
     } else {
       const value = getElementInputValue(target)
       if (value === undefined) {
@@ -189,10 +189,10 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
-    if (type === 'radio' && name && (target as HTMLInputElement).checked) {
+    if (type === 'radio' && name && (target as HTMLInputElement).checked) { // TODO: el.checked
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
-          cbWithDedup(el, { isChecked: false })
+          cbWithDedup(el, { isChecked: false }) // TODO: el.checked
         }
       })
     }
