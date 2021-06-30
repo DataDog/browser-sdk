@@ -137,9 +137,9 @@ describe('newAction', () => {
   let setupBuilder: TestSetupBuilder
   const { events, pushEvent } = eventsCollector<AutoAction>()
 
-  function newClick(name: string) {
+  function newClick(name: string, attribute = 'title') {
     const button = document.createElement('button')
-    button.setAttribute('title', name)
+    button.setAttribute(attribute, name)
     document.getElementById('root')!.appendChild(button)
     button.click()
   }
@@ -199,42 +199,14 @@ describe('newAction', () => {
       resourceCount: 0,
     })
   })
-})
 
-describe('newAction with a custom actionNameAttribute', () => {
-  let setupBuilder: TestSetupBuilder
-  const { events, pushEvent } = eventsCollector<AutoAction>()
-
-  function newClick(name: string) {
-    const button = document.createElement('button')
-    button.setAttribute('data-my-custom-attribute', name)
-    document.getElementById('root')!.appendChild(button)
-    button.click()
-  }
-
-  beforeEach(() => {
-    const root = document.createElement('root')
-    root.setAttribute('id', 'root')
-    document.body.appendChild(root)
-    setupBuilder = setup()
-      .withFakeClock()
+  it('should take the name from user-configured attribute', () => {
+    const { lifeCycle, domMutationObservable, clock } = setupBuilder
       .withConfiguration({ actionNameAttribute: 'data-my-custom-attribute' })
-      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) =>
-        trackActions(lifeCycle, domMutationObservable, configuration)
-      )
-  })
-
-  afterEach(() => {
-    const root = document.getElementById('root')!
-    root.parentNode!.removeChild(root)
-    setupBuilder.cleanup()
-  })
-
-  it('ignores any starting action while another one is happening', () => {
-    const { lifeCycle, domMutationObservable, clock } = setupBuilder.build()
+      .build()
     lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
 
-    newClick('test-1')
+    newClick('test-1', 'data-my-custom-attribute')
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     domMutationObservable.notify()

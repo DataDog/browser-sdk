@@ -6,7 +6,7 @@ import { safeTruncate } from '@datadog/browser-core'
  */
 const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
 
-export function getActionNameFromElement(element: Element, actionNameAttribute?: string): string {
+export function getActionNameFromElement(element: Element, actionNameAttribute = PROGRAMMATIC_ATTRIBUTE): string {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
@@ -21,10 +21,7 @@ export function getActionNameFromElement(element: Element, actionNameAttribute?:
   )
 }
 
-function getActionNameFromElementProgrammatically(
-  targetElement: Element,
-  programmaticAttribute = PROGRAMMATIC_ATTRIBUTE
-) {
+function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
   let elementWithAttribute
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
