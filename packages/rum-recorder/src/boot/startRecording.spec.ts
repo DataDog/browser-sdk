@@ -149,8 +149,7 @@ describe('startRecording', () => {
   it('takes a full snapshot when the view changes', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
-
+    changeView(lifeCycle)
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(2, (calls) => {
@@ -162,9 +161,7 @@ describe('startRecording', () => {
   it('adds a ViewEnd record when the view ends', (done) => {
     const { lifeCycle } = setupBuilder.build()
 
-    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
-    viewId = 'view-id-2'
-    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+    changeView(lifeCycle)
     flushSegment(lifeCycle)
 
     waitRequestSendCalls(2, (calls) => {
@@ -172,6 +169,26 @@ describe('startRecording', () => {
       readRequestSegment(calls.first(), (segment) => {
         expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
         expectNoExtraRequestSendCalls(done)
+      })
+    })
+  })
+
+  it('flushes pending mutations before ending the view', (done) => {
+    const { lifeCycle } = setupBuilder.build()
+
+    sandbox.appendChild(document.createElement('hr'))
+    changeView(lifeCycle)
+    flushSegment(lifeCycle)
+
+    waitRequestSendCalls(2, (calls) => {
+      readRequestSegment(calls.first(), (segment) => {
+        expect(segment.records[segment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
+        expect(segment.records[segment.records.length - 1].type).toBe(RecordType.ViewEnd)
+
+        readRequestSegment(calls.mostRecent(), (segment) => {
+          expect(segment.records[0].type).toBe(RecordType.Meta)
+          expectNoExtraRequestSendCalls(done)
+        })
       })
     })
   })
@@ -190,6 +207,12 @@ describe('startRecording', () => {
       })
     })
   })
+
+  function changeView(lifeCycle: LifeCycle) {
+    lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
+    viewId = 'view-id-2'
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {} as any)
+  }
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
