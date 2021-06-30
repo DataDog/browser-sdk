@@ -412,15 +412,38 @@ type Merged<TDestination, TSource> =
 
 interface CircularReferenceMap {
   get(key: any): any | undefined
-  has(key: any): boolean
-  set(key: any, value: any): this
+  set(key: any, value: any): unknown
+}
+
+type CircularReferenceMapArrayEntry = [/* key */ any, /* value */ any]
+
+function createCircularReferenceMap(): CircularReferenceMap {
+  if (typeof Map !== 'undefined') {
+    return new Map()
+  }
+  const entries: CircularReferenceMapArrayEntry[] = []
+  return {
+    get(key) {
+      const entry = entries.find((entry) => entry[0] === key)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return entry ? entry[1] : undefined
+    },
+    set(key, value) {
+      const entryIndex = entries.findIndex((entry) => entry[0] === key)
+      if (entryIndex !== -1) {
+        entries[entryIndex][1] = value
+      } else {
+        entries.push([key, value])
+      }
+    },
+  }
 }
 
 /**
  * Iterate over source and affect its sub values into destination, recursively.
  * If the source and destination can't be merged, return source.
  */
-export function mergeInto<D, S>(destination: D, source: S, references: CircularReferenceMap = new Map()): Merged<D, S> {
+export function mergeInto<D, S>(destination: D, source: S, references = createCircularReferenceMap()): Merged<D, S> {
   // ignore the source if it is undefined
   if (source === undefined) {
     return destination as Merged<D, S>
@@ -445,9 +468,10 @@ export function mergeInto<D, S>(destination: D, source: S, references: CircularR
     return (new RegExp(source.source, flags) as unknown) as Merged<D, S>
   }
 
-  if (references.has(source)) {
+  const reference = references.get(source) as Merged<D, S> | undefined
+  if (reference) {
     // handle circular references
-    return references.get(source) as Merged<D, S>
+    return reference
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
     references.set(source, merged)
