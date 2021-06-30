@@ -13,7 +13,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  censorshipLevel: 'PRIVATE',
+  censorshipLevel: 'PUBLIC',
 
   /**
    * arbitrary value, byte precision not needed
@@ -153,6 +153,10 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
 
   if ('actionNameAttribute' in initConfiguration) {
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
+  }
+
+  if ('censorshipLevel' in userConfiguration) {
+    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel
   }
 
   return configuration
