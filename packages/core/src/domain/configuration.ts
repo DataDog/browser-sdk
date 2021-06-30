@@ -42,6 +42,7 @@ export interface UserConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
   applicationId?: string
+  actionNameAttribute?: string
   internalMonitoringApiKey?: string
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
@@ -139,6 +140,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('trackViewsManually' in userConfiguration) {
     configuration.trackViewsManually = !!userConfiguration.trackViewsManually
+  }
+
+  if ('actionNameAttribute' in userConfiguration) {
+    configuration.actionNameAttribute = userConfiguration.actionNameAttribute
   }
 
   return configuration
