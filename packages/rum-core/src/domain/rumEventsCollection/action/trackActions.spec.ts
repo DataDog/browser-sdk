@@ -150,11 +150,9 @@ describe('newAction', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .beforeBuild(({
-        lifeCycle,
-        domMutationObservable,
-        configuration
-      }) => trackActions(lifeCycle, domMutationObservable, configuration))
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) =>
+        trackActions(lifeCycle, domMutationObservable, configuration)
+      )
   })
 
   afterEach(() => {
@@ -220,12 +218,10 @@ describe('newAction with a custom actionNameAttribute', () => {
     document.body.appendChild(root)
     setupBuilder = setup()
       .withFakeClock()
-      .withConfiguration({actionNameAttribute: 'data-my-custom-attribute'})
-      .beforeBuild(({
-        lifeCycle,
-        domMutationObservable,
-        configuration
-      }) => trackActions(lifeCycle, domMutationObservable, configuration))
+      .withConfiguration({ actionNameAttribute: 'data-my-custom-attribute' })
+      .beforeBuild(({ lifeCycle, domMutationObservable, configuration }) =>
+        trackActions(lifeCycle, domMutationObservable, configuration)
+      )
   })
 
   afterEach(() => {

@@ -50,7 +50,7 @@ export interface AutoActionCreatedEvent {
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  {actionNameAttribute}: Configuration
+  { actionNameAttribute }: Configuration
 ) {
   const action = startActionManagement(lifeCycle, domMutationObservable)
 

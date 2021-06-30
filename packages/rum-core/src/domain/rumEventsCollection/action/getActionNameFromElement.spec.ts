@@ -289,9 +289,12 @@ describe('getActionNameFromElement', () => {
 
     it('extracts the name from a user-configured attribute', () => {
       expect(
-        getActionNameFromElement(element`
+        getActionNameFromElement(
+          element`
           <div data-test-id="foo">ignored</div>
-        `, 'data-test-id')
+        `,
+          'data-test-id'
+        )
       ).toBe('foo')
     })
   })
