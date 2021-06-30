@@ -297,5 +297,16 @@ describe('getActionNameFromElement', () => {
         )
       ).toBe('foo')
     })
+
+    it('favors data-dd-action-name over user-configured attribute', () => {
+      expect(
+        getActionNameFromElement(
+          element`
+          <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
+        `,
+          'data-test-id'
+        )
+      ).toBe('bar')
+    })
   })
 })

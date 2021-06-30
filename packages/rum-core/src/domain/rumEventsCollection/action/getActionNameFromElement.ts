@@ -2,11 +2,11 @@ import { safeTruncate } from '@datadog/browser-core'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
- * This can be customized by the setting the actionNameAttribute configuration option.
+ * It can also be retrieved from a user defined attribute.
  */
-const PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
+const DEFAULT_PROGRAMMATIC_ATTRIBUTE = 'data-dd-action-name'
 
-export function getActionNameFromElement(element: Element, actionNameAttribute = PROGRAMMATIC_ATTRIBUTE): string {
+export function getActionNameFromElement(element: Element, userProgrammaticAttribute?: string): string {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, use strategies that are known to return good results. Those strategies will be used on
@@ -14,7 +14,8 @@ export function getActionNameFromElement(element: Element, actionNameAttribute =
   // * if no name is found this way, use strategies returning less accurate names as a fallback.
   //   Those are much likely to succeed.
   return (
-    getActionNameFromElementProgrammatically(element, actionNameAttribute) ||
+    getActionNameFromElementProgrammatically(element, DEFAULT_PROGRAMMATIC_ATTRIBUTE) ||
+    (userProgrammaticAttribute && getActionNameFromElementProgrammatically(element, userProgrammaticAttribute)) ||
     getActionNameFromElementForStrategies(element, priorityStrategies) ||
     getActionNameFromElementForStrategies(element, fallbackStrategies) ||
     ''
