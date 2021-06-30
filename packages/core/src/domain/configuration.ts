@@ -13,7 +13,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  censorshipLevel: 'PRIVATE',
+  censorshipLevel: 'PUBLIC',
 
   /**
    * arbitrary value, byte precision not needed
@@ -140,6 +140,10 @@ export function buildConfiguration(userConfiguration: UserConfiguration, buildEn
 
   if ('trackViewsManually' in userConfiguration) {
     configuration.trackViewsManually = !!userConfiguration.trackViewsManually
+  }
+
+  if ('censorshipLevel' in userConfiguration) {
+    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel
   }
 
   return configuration
