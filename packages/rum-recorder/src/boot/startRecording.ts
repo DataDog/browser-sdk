@@ -25,10 +25,11 @@ export function startRecording(
     addRecord({ ...rawRecord, timestamp: Date.now() })
   }
 
-  const { stop: stopRecording, takeFullSnapshot } = record({
+  const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
     emit: addRawRecord,
   })
 
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, flushMutations)
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
   trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
 

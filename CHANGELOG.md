@@ -16,6 +16,11 @@
 
 ---
 
+## v2.15.1
+
+- 🐛 fix new view segment starting with an IncrementalSnapshot ([#908](https://github.com/DataDog/browser-sdk/pull/908))
+- 🐛 [REPLAY-325] add verbose error details on XHR transport failure ([#902](https://github.com/DataDog/browser-sdk/pull/902))
+
 ## v2.15.0
 
 - ✨ [RUMF-920] keep trace id on aborted requests ([#898](https://github.com/DataDog/browser-sdk/pull/898))
