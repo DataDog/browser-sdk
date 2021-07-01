@@ -200,24 +200,26 @@ describe('logs', () => {
       expect(assembledMessage!.service).toBe('from-current-context')
     })
 
-    it('should allow modification on sensitive field', () => {
+    it('should allow modification of existing fields', () => {
       beforeSend = (event: LogsEvent) => {
-        event.message = 'modified'
+        event.message = 'modified message'
+        ;(event.service as any) = 'modified service'
       }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
-      expect(assembledMessage!.message).toBe('modified')
+      expect(assembledMessage!.message).toBe('modified message')
+      expect(assembledMessage!.service).toBe('modified service')
     })
 
-    it('should reject modification on non sensitive field', () => {
+    it('should allow adding new fields', () => {
       beforeSend = (event: LogsEvent) => {
-        ;(event.service as any) = 'modified'
+        event.foo = 'bar'
       }
 
       const assembledMessage = assemble(DEFAULT_MESSAGE, {})
 
-      expect(assembledMessage!.service).toBe('Service')
+      expect(assembledMessage!.foo).toBe('bar')
     })
   })
 

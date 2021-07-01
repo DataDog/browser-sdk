@@ -84,4 +84,20 @@ describe('logs', () => {
       expect(unreachableRequest.http.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
+
+  createTest('allow to modify events')
+    .withLogs({
+      beforeSend(event) {
+        event.foo = 'bar'
+      },
+    })
+    .run(async ({ events }) => {
+      await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        window.DD_LOGS!.logger.log('hello', {})
+      })
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].foo).toBe('bar')
+    })
 })
