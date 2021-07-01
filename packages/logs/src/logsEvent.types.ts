@@ -68,7 +68,7 @@ export interface LogsEvent {
     /**
      * Stacktrace of the error
      */
-    readonly stack?: string
+    stack?: string
 
     [k: string]: unknown
   }
