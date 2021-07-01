@@ -16,7 +16,7 @@ export function startActionCollection(
   )
 
   if (configuration.trackInteractions) {
-    trackActions(lifeCycle, domMutationObservable)
+    trackActions(lifeCycle, domMutationObservable, configuration)
   }
 
   return {

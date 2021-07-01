@@ -8,6 +8,7 @@ import {
   ClocksState,
   clocksNow,
   TimeStamp,
+  Configuration,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -46,7 +47,11 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
-export function trackActions(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
+export function trackActions(
+  lifeCycle: LifeCycle,
+  domMutationObservable: DOMMutationObservable,
+  { actionNameAttribute }: Configuration
+) {
   const action = startActionManagement(lifeCycle, domMutationObservable)
 
   // New views trigger the discard of the current pending Action
@@ -61,7 +66,7 @@ export function trackActions(lifeCycle: LifeCycle, domMutationObservable: DOMMut
       if (!(event.target instanceof Element)) {
         return
       }
-      const name = getActionNameFromElement(event.target)
+      const name = getActionNameFromElement(event.target, actionNameAttribute)
       if (!name) {
         return
       }
