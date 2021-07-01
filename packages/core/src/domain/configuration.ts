@@ -42,6 +42,7 @@ export interface InitConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
   applicationId?: string
+  actionNameAttribute?: string
   internalMonitoringApiKey?: string
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
@@ -87,6 +88,8 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
+
+    actionNameAttribute?: string
 
     isEnabled: (feature: string) => boolean
   }
@@ -143,6 +146,10 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
 
   if ('trackViewsManually' in initConfiguration) {
     configuration.trackViewsManually = !!initConfiguration.trackViewsManually
+  }
+
+  if ('actionNameAttribute' in userConfiguration) {
+    configuration.actionNameAttribute = userConfiguration.actionNameAttribute
   }
 
   return configuration
