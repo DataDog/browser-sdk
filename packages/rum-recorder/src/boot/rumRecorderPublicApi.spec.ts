@@ -16,10 +16,10 @@ describe('makeRumRecorderPublicApi', () => {
     startRecordingSpy = jasmine.createSpy('startRecording').and.callFake(() => ({
       stop: stopRecordingSpy,
     }))
-    startRumSpy = jasmine.createSpy<StartRum>('startRum').and.callFake((userConfiguration) => {
+    startRumSpy = jasmine.createSpy<StartRum>('startRum').and.callFake((initConfiguration) => {
       const configuration: Partial<Configuration> = {
         isEnabled(feature) {
-          return includes(userConfiguration.enableExperimentalFeatures || [], feature)
+          return includes(initConfiguration.enableExperimentalFeatures || [], feature)
         },
       }
       return ({ configuration } as unknown) as ReturnType<StartRum>

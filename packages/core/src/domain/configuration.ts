@@ -148,8 +148,8 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.trackViewsManually = !!initConfiguration.trackViewsManually
   }
 
-  if ('actionNameAttribute' in userConfiguration) {
-    configuration.actionNameAttribute = userConfiguration.actionNameAttribute
+  if ('actionNameAttribute' in initConfiguration) {
+    configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
   return configuration

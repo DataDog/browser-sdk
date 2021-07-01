@@ -40,9 +40,9 @@ type RecorderState =
     }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
-  let onRumStartStrategy = (userConfiguration: RumRecorderInitConfiguration, configuration: Configuration) => {
+  let onRumStartStrategy = (initConfiguration: RumRecorderInitConfiguration, configuration: Configuration) => {
     if (
-      !userConfiguration.manualSessionReplayRecordingStart &&
+      !initConfiguration.manualSessionReplayRecordingStart &&
       // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
       // the Datadog app. See RUMF-886
       !configuration.isEnabled('postpone_start_recording')
