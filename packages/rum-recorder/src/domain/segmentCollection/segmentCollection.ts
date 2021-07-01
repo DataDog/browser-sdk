@@ -40,7 +40,7 @@ export function startSegmentCollection(
   applicationId: string,
   session: RumSession,
   parentContexts: ParentContexts,
-  send: (data: Uint8Array, meta: SegmentMeta, segmentSize: number) => void
+  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number) => void
 ) {
   if (!workerSingleton) {
     workerSingleton = createDeflateWorker()
@@ -83,7 +83,7 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  send: (data: Uint8Array, meta: SegmentMeta, segmentSize: number) => void,
+  send: (data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number) => void,
   worker: DeflateWorker,
   emitter: EventEmitter = window
 ) {
