@@ -286,5 +286,27 @@ describe('getActionNameFromElement', () => {
       `)
       ).toBe('foo')
     })
+
+    it('extracts the name from a user-configured attribute', () => {
+      expect(
+        getActionNameFromElement(
+          element`
+          <div data-test-id="foo">ignored</div>
+        `,
+          'data-test-id'
+        )
+      ).toBe('foo')
+    })
+
+    it('favors data-dd-action-name over user-configured attribute', () => {
+      expect(
+        getActionNameFromElement(
+          element`
+          <div data-test-id="foo" data-dd-action-name="bar">ignored</div>
+        `,
+          'data-test-id'
+        )
+      ).toBe('bar')
+    })
   })
 })
