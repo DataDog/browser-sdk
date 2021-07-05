@@ -1,5 +1,5 @@
 import { Context } from './context'
-import { deepClone } from './utils'
+import { deepClone, getType } from './utils'
 
 /**
  * Current limitation:
@@ -55,17 +55,4 @@ function set(object: unknown, path: string, value: unknown) {
 
 function isValidObjectContaining(object: unknown, field: string): object is { [key: string]: unknown } {
   return typeof object === 'object' && object !== null && field in object
-}
-
-/**
- * Similar to `typeof`, but distinguish plain objects from `null` and arrays
- */
-function getType(value: unknown) {
-  if (value === null) {
-    return 'null'
-  }
-  if (Array.isArray(value)) {
-    return 'array'
-  }
-  return typeof value
 }

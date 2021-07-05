@@ -388,6 +388,19 @@ export function runOnReadyState(expectedReadyState: 'complete' | 'interactive', 
   }
 }
 
+/**
+ * Similar to `typeof`, but distinguish plain objects from `null` and arrays
+ */
+export function getType(value: unknown) {
+  if (value === null) {
+    return 'null'
+  }
+  if (Array.isArray(value)) {
+    return 'array'
+  }
+  return typeof value
+}
+
 type Merged<TDestination, TSource> =
   // case 1 - source is undefined - return destination
   TSource extends undefined
@@ -482,8 +495,7 @@ export function mergeInto<D, S>(
     return (merged as unknown) as Merged<D, S>
   }
 
-  const merged: Record<any, any> =
-    typeof destination === 'object' && !Array.isArray(destination) && destination !== null ? destination : {}
+  const merged: Record<any, any> = getType(destination) === 'object' ? destination : {}
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
