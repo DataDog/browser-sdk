@@ -426,7 +426,7 @@ type Merged<TDestination, TSource> =
 interface CircularReferenceChecker {
   hasAlreadyBeenSeen(value: any): boolean
 }
-export function createCircularReferenceChecker(): CircularReferenceChecker {
+function createCircularReferenceChecker(): CircularReferenceChecker {
   if (typeof WeakSet !== 'undefined') {
     const set: WeakSet<any> = new WeakSet()
     return {
