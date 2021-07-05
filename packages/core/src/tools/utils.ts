@@ -410,31 +410,30 @@ type Merged<TDestination, TSource> =
     : // case 5 - cannot merge - return source
       TSource
 
-interface CircularReferenceMap {
-  get(key: any): any | undefined
-  set(key: any, value: any): unknown
+interface CircularReferenceChecker {
+  hasAlreadyBeenSeen(value: any): boolean
 }
-
-type CircularReferenceMapArrayEntry = [/* key */ any, /* value */ any]
-
-function createCircularReferenceMap(): CircularReferenceMap {
-  if (typeof Map !== 'undefined') {
-    return new Map()
+export function createCircularReferenceChecker(): CircularReferenceChecker {
+  if (typeof WeakSet !== 'undefined') {
+    const set: WeakSet<any> = new WeakSet()
+    return {
+      hasAlreadyBeenSeen(value) {
+        const has = set.has(value)
+        if (!has) {
+          set.add(value)
+        }
+        return has
+      },
+    }
   }
-  const entries: CircularReferenceMapArrayEntry[] = []
+  const array: any[] = []
   return {
-    get(key) {
-      const entry = entries.find((entry) => entry[0] === key)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return entry ? entry[1] : undefined
-    },
-    set(key, value) {
-      const entryIndex = entries.findIndex((entry) => entry[0] === key)
-      if (entryIndex !== -1) {
-        entries[entryIndex][1] = value
-      } else {
-        entries.push([key, value])
+    hasAlreadyBeenSeen(value) {
+      const has = array.indexOf(value) >= 0
+      if (!has) {
+        array.push(value)
       }
+      return has
     },
   }
 }
@@ -443,7 +442,11 @@ function createCircularReferenceMap(): CircularReferenceMap {
  * Iterate over source and affect its sub values into destination, recursively.
  * If the source and destination can't be merged, return source.
  */
-export function mergeInto<D, S>(destination: D, source: S, references = createCircularReferenceMap()): Merged<D, S> {
+export function mergeInto<D, S>(
+  destination: D,
+  source: S,
+  circularReferenceChecker = createCircularReferenceChecker()
+): Merged<D, S> {
   // ignore the source if it is undefined
   if (source === undefined) {
     return destination as Merged<D, S>
@@ -468,25 +471,22 @@ export function mergeInto<D, S>(destination: D, source: S, references = createCi
     return (new RegExp(source.source, flags) as unknown) as Merged<D, S>
   }
 
-  const reference = references.get(source) as Merged<D, S> | undefined
-  if (reference) {
-    // handle circular references
-    return reference
+  if (circularReferenceChecker.hasAlreadyBeenSeen(source)) {
+    // remove circular references
+    return (undefined as unknown) as Merged<D, S>
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
-    references.set(source, merged)
     for (let i = 0; i < source.length; ++i) {
-      merged[i] = mergeInto(merged[i], source[i], references)
+      merged[i] = mergeInto(merged[i], source[i], circularReferenceChecker)
     }
     return (merged as unknown) as Merged<D, S>
   }
 
   const merged: Record<any, any> =
     typeof destination === 'object' && !Array.isArray(destination) && destination !== null ? destination : {}
-  references.set(source, merged)
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
-      merged[key] = mergeInto(merged[key], source[key], references)
+      merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
     }
   }
   return (merged as unknown) as Merged<D, S>

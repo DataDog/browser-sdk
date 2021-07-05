@@ -494,7 +494,7 @@ describe('deepClone', () => {
     expect(clone[1].getTime()).toEqual(originalTime)
   })
 
-  it('should handle circular references', () => {
+  it('should remove circular references', () => {
     const a: Record<string, any> = { foo: 'bar', ref: null }
     const b: Record<string, any> = { baz: 'bar', ref: null }
     // create circular reference
@@ -504,12 +504,10 @@ describe('deepClone', () => {
     const clonedA = deepClone(a)
     const clonedB = deepClone(b)
 
-    expect(clonedA).toEqual(a)
-    expect(clonedA).not.toBe(a)
+    expect(clonedA).not.toEqual(a)
+    expect(clonedA.ref.ref).toBeUndefined()
 
-    expect(clonedB).toEqual(b)
-    expect(clonedB).not.toBe(b)
-
-    expect(clonedA.ref.ref.foo).toEqual('bar')
+    expect(clonedB).not.toEqual(b)
+    expect(clonedB.ref.ref).toBeUndefined()
   })
 })
