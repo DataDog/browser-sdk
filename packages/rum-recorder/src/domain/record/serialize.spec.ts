@@ -2,6 +2,7 @@ import { isIE } from '../../../../core/test/specHelper'
 import {
   InputPrivacyMode,
   PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
@@ -118,6 +119,7 @@ describe('serializeNodeWithId', () => {
     })
 
     it('ignores white space in <head>', () => {
+      // TODO: REMOVE: Title can be blocked.
       const head = document.createElement('head')
       head.innerHTML = `  <title>  foo </title>  `
 
@@ -315,7 +317,11 @@ describe('serializeNodeWithId', () => {
 
   describe('text nodes serialization', () => {
     it('serializes a text node', () => {
-      expect(serializeNodeWithId(document.createTextNode('foo'), DEFAULT_OPTIONS)).toEqual({
+      const parentEl = document.createElement('bar')
+      parentEl.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_ALLOW)
+      const textNode = document.createTextNode('foo')
+      parentEl.appendChild(textNode)
+      expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
         id: (jasmine.any(Number) as unknown) as number,
         isStyle: undefined,

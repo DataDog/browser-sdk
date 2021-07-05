@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { CensorshipLevel, InputPrivacyMode, PRIVACY_INPUT_MASK } from '../../constants'
+import { CensorshipLevel, InputPrivacyMode, CENSORED_STRING_MARK } from '../../constants'
 import { getRumRecorderConfig } from '../../boot/startRecording'
 import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
 import { SerializedNodeWithId } from './types'
@@ -28,6 +28,7 @@ export function getSerializedNodeId(node: Node): number | undefined
 export function getSerializedNodeId(node: Node) {
   return hasSerializedNode(node) ? node.__sn.id : undefined
 }
+;(window as any).getSerializedNodeId = getSerializedNodeId
 
 export function setSerializedNode(node: Node, serializeNode: SerializedNodeWithId) {
   ;(node as Partial<NodeWithSerializedNode>).__sn = serializeNode
@@ -126,22 +127,20 @@ export function getElementInputValue(element: Element, ancestorInputPrivacyMode?
 }
 
 export function maskValue(value: string) {
-  (window as any).maskValue = maskValue; // TODO: REMOVE
   if (isFlagEnabled('privacy-by-default-poc')) {
-    return value.replace(/.+/, PRIVACY_INPUT_MASK)
+    return value.replace(/.+/, CENSORED_STRING_MARK)
   }
   return value.replace(/./g, '*')
 }
 
 // TODO: disableFormsByDefault
-export function formTrackingAllowed (feature: string): boolean {
+export function formTrackingAllowed(feature: string): boolean {
   const configuration = getRumRecorderConfig()
   if (!configuration) {
     return false
   }
   return configuration.isEnabled(feature)
 }
-
 
 export function isFlagEnabled(feature: string): boolean {
   const configuration = getRumRecorderConfig()

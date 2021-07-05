@@ -14,7 +14,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  censorshipLevel: 'hello',
+  censorshipLevel: 'PRIVATE',
 
   /**
    * arbitrary value, byte precision not needed
@@ -91,6 +91,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
+    censorshipLevel?: string
 
     actionNameAttribute?: string
 
@@ -156,7 +157,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
   }
 
   if ('censorshipLevel' in userConfiguration) {
-    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel;
+    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel
   }
 
   return configuration

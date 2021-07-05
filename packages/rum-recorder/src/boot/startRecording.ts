@@ -15,7 +15,6 @@ export function startRecording(
   session: RumSession,
   parentContexts: ParentContexts
 ) {
-  debugger;
   configurationProviderRef = configuration
   const { addRecord, stop: stopSegmentCollection } = startSegmentCollection(
     lifeCycle,
@@ -41,7 +40,6 @@ export function startRecording(
     stop: () => {
       stopRecording()
       stopSegmentCollection()
-      debugger;
       configurationProviderRef = undefined
     },
   }

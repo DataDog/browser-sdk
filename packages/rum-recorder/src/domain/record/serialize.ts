@@ -1,5 +1,21 @@
-import { CensorshipLevel, InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { getNodeInputPrivacyMode, nodeShouldBeHidden, censorText, nodeOrAncestorsShouldBeHidden } from './privacy'
+import { objectEntries } from 'packages/core/src/tools/utils'
+import {
+  // CensorshipLevel,
+  NodeCensorshipTag,
+  InputPrivacyMode,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  CENSORED_STRING_MARK,
+} from '../../constants'
+import {
+  getNodeInputPrivacyMode,
+  nodeShouldBeHidden,
+  censorText,
+  // nodeOrAncestorsShouldBeHidden,
+  getNodeInheritedCensorshipLevel,
+  getAttributesForPrivacyLevel,
+  shuffle,
+} from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
@@ -17,8 +33,8 @@ import {
   setSerializedNode,
   transformAttribute,
   getElementInputValue,
-  getCensorshipLevel,
-  maskValue,
+  // getCensorshipLevel,
+  // maskValue,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -32,7 +48,7 @@ export interface SerializeOptions {
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   // TODO: NOTE: This only affects `input`, not general HTML text blocking
-  const defaultPrivacyMode = InputPrivacyMode.NONE; // TODO: get DEFAULT privacy mode, set to MASKED?
+  const defaultPrivacyMode = InputPrivacyMode.NONE // TODO: get DEFAULT privacy mode, set to MASKED?
   return serializeNodeWithId(document, {
     document,
     ancestorInputPrivacyMode: defaultPrivacyMode,
@@ -90,15 +106,11 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
 function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
-  const censorshipLevel = getCensorshipLevel();
-
-  // Ignore Elements like Script and some Link, Metas
-  if (shouldIgnoreElement(element)) {
-    return
-  }
+  const nodePrivacyLevel = getNodeInheritedCensorshipLevel(element)
 
   // TODO: WHY IS THIS NOT nodeOrAncestorsShouldBeHidden() ???? Also make the function private
-  if (nodeShouldBeHidden(element)) {
+  // if (nodeShouldBeHidden(element)) {
+  if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
     return {
       type: NodeType.Element,
@@ -115,14 +127,30 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  const attributes: Attributes = {}
-  for (const { name, value } of Array.from(element.attributes)) { // TODO: WE WANT MORE FILTERING HERE
-    // Never take those attributes into account, as they will be conditionally set below.
-    if (name === 'value' || name === 'selected' || name === 'checked') {
-      continue
-    }
-    attributes[name] = transformAttribute(options.document, name, value)
+  // Ignore Elements like Script and some Link, Metas
+  // if (shouldIgnoreElement(element)) {
+  if (nodePrivacyLevel === NodeCensorshipTag.IGNORE) {
+    // TODO: We should still record ignored elements, just not their textNode content.
+    // TODO: On the record OR replay side, we should prefix the tagName so it has no effect.
+    return
   }
+
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
+  objectEntries(attributes).forEach(([name, value]) => {
+    const attrValue = value as string
+    // Add domains to relative URLs
+    attributes[name] = transformAttribute(options.document, name, attrValue)
+  })
+
+  // const attributes: Attributes = {}
+  // // TODO: getAttributesForPrivacyLevel(element, nodePrivacyLevel)
+  // for (const { name, value } of Array.from(element.attributes)) {
+  //   // Never take those attributes into account, as they will be conditionally set below.
+  //   if (name === 'value' || name === 'selected' || name === 'checked') {
+  //     continue
+  //   }
+  //   attributes[name] = transformAttribute(options.document, name, value)
+  // }
 
   // remote css
   if (tagName === 'link') {
@@ -150,10 +178,8 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-    
   // Form fields: INPUT/OPTION/SELECT/TEXTAREA
-  // with censorshipLevel [PRIVATE | FORMS] we don't display form like info
-  if (censorshipLevel===CensorshipLevel.PUBLIC) {
+  if (nodePrivacyLevel === NodeCensorshipTag.ALLOW) {
     const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
     if (value) {
       attributes.value = value
@@ -204,6 +230,14 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     childNodes = []
   }
 
+  if (
+    // To enhance privacy, we shuffle the
+    nodePrivacyLevel === NodeCensorshipTag.MASK &&
+    (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP')
+  ) {
+    shuffle<SerializedNodeWithId>(childNodes)
+  }
+
   return {
     type: NodeType.Element,
     tagName,
@@ -212,8 +246,10 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     isSVG,
   }
 }
+;(window as any).serializeElementNode = serializeElementNode
+;(window as any).getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
 
-function shouldIgnoreElement(element: Element) {
+export function shouldIgnoreElement(element: Element): boolean {
   if (element.nodeName === 'SCRIPT') {
     return true
   }
@@ -277,31 +313,31 @@ function shouldIgnoreElement(element: Element) {
     return (element.getAttribute(name) || '').toLowerCase()
   }
 
-  (window as any).serializeElementNode = serializeElementNode; // TODO: REMOVE
   return false
 }
-
-
-
 
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentNode && (textNode.parentNode as HTMLElement).tagName
   let textContent = textNode.textContent || ''
+
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   if (isStyle) {
     textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
   } else if (options.ignoreWhiteSpace && !textContent.trim()) {
     return
+  } else {
+    // if (nodeOrAncestorsShouldBeHidden(textNode)) {
+    const nodePrivacyLevel = getNodeInheritedCensorshipLevel(textNode)
+    if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
+      // TODO: now test
+      textContent = CENSORED_STRING_MARK
+    } else if (nodePrivacyLevel === NodeCensorshipTag.MASK) {
+      textContent = censorText(textContent)
+    }
   }
 
-  if (nodeOrAncestorsShouldBeHidden(textNode)) {// TODO: FINISHED, now test
-    textContent = censorText(textContent);
-  }
-
-  (window as any).serializeTextNode = serializeTextNode; // TODO: REMOVE
-  
   return {
     type: NodeType.Text,
     textContent,
