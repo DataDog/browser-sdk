@@ -432,7 +432,7 @@ describe('combine', () => {
 })
 
 describe('deepClone', () => {
-  it('pass-through non-objects', () => {
+  it('should pass-through non-objects and functions', () => {
     expect(deepClone('test')).toBe('test')
     expect(deepClone(true)).toBe(true)
     expect(deepClone(null)).toBe(null)
@@ -442,7 +442,7 @@ describe('deepClone', () => {
     expect(deepClone(undefined)).toBe(undefined)
   })
 
-  it('clones array', () => {
+  it('should clone array recursively', () => {
     const source = [1, undefined, null, [4, 5, 6]]
     const clone = deepClone(source)
 
@@ -455,7 +455,7 @@ describe('deepClone', () => {
     expect((clone[3] as any[])[3]).toBeUndefined()
   })
 
-  it('clones object', () => {
+  it('should clone object recursively', () => {
     const source = { foo: 'bar', baz: { arr: [1, 2], fn: () => undefined } }
     const clone = deepClone(source)
 
@@ -468,7 +468,7 @@ describe('deepClone', () => {
     expect((clone.baz as any).added).toBeUndefined()
   })
 
-  it('clones regexp', () => {
+  it('should clone regexp', () => {
     const source = { reg: /test/gi }
     const clone = deepClone(source)
 
@@ -481,7 +481,7 @@ describe('deepClone', () => {
     expect(clone.reg.multiline).toBe(false)
   })
 
-  it('clones date', () => {
+  it('should clone date', () => {
     const source = [1, new Date('2012-12-12')] as const
     const clone = deepClone(source)
 
@@ -494,7 +494,7 @@ describe('deepClone', () => {
     expect(clone[1].getTime()).toEqual(originalTime)
   })
 
-  it('handles circular references', () => {
+  it('should handle circular references', () => {
     const a: Record<string, any> = { foo: 'bar', ref: null }
     const b: Record<string, any> = { baz: 'bar', ref: null }
     // create circular reference
