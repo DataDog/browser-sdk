@@ -14,9 +14,9 @@ chrome.webRequest.onBeforeRequest.addListener(
           redirectUrl: store.useRumRecorder ? DEV_RUM_RECORDER_URL : DEV_RUM_URL,
         }
       }
-    } else if (store.useRumRecorder && /\/datadog-rum(?!-recorder)\.js$/.test(info.url)) {
+    } else if (store.useRumRecorder && /\/datadog-rum(?!-recorder)/.test(info.url)) {
       return {
-        redirectUrl: info.url.replace(/\.js$/, '-recorder.js'),
+        redirectUrl: info.url.replace(/datadog-rum/, 'datadog-rum-recorder'),
       }
     }
     return
