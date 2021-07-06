@@ -1,6 +1,7 @@
 export {
   DEFAULT_CONFIGURATION,
   Configuration,
+  InitConfiguration,
   UserConfiguration,
   buildCookieOptions,
   BeforeSendCallback,
@@ -41,7 +42,7 @@ export * from './tools/timeUtils'
 export * from './tools/utils'
 export * from './tools/errorFilter'
 export { ErrorSource, ErrorHandling, formatUnknownError, createHandlingStack, RawError } from './tools/error'
-export { combine, Context, ContextArray, ContextValue, deepClone } from './tools/context'
+export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { startXhrProxy, XhrCompleteContext, XhrStartContext, XhrProxy, resetXhrProxy } from './browser/xhrProxy'
 export {

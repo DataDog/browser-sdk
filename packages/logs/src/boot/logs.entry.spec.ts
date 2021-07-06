@@ -156,6 +156,10 @@ describe('logs entry', () => {
       expect(getLoggedMessage(0).message.message).toEqual('message')
     })
 
+    it('returns undefined initial configuration', () => {
+      expect(LOGS.getInitConfiguration()).toBeUndefined()
+    })
+
     describe('save context when submiting a log', () => {
       it('saves the date', () => {
         LOGS.logger.log('message')
@@ -220,6 +224,11 @@ describe('logs entry', () => {
           status: StatusType.info,
         },
       })
+    })
+
+    it('returns cloned initial configuration', () => {
+      expect(LOGS.getInitConfiguration()).toEqual(DEFAULT_INIT_CONFIGURATION)
+      expect(LOGS.getInitConfiguration()).not.toBe(DEFAULT_INIT_CONFIGURATION)
     })
 
     describe('global context', () => {
