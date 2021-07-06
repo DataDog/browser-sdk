@@ -455,14 +455,27 @@ describe('combine', () => {
 })
 
 describe('deepClone', () => {
-  it('should pass-through non-objects and functions', () => {
+  it('should pass-through primitive values', () => {
     expect(deepClone('test')).toBe('test')
     expect(deepClone(true)).toBe(true)
+    expect(deepClone(false)).toBe(false)
     expect(deepClone(null)).toBe(null)
+    expect(deepClone(undefined)).toBe(undefined)
+    expect(deepClone(1)).toBe(1)
+    expect(deepClone(NaN)).toBeNaN()
+    expect(deepClone(Infinity)).toBe(Infinity)
+    expect(deepClone(-Infinity)).toBe(-Infinity)
+  })
+
+  it('should pass-through functions', () => {
     const fn = () => null
     expect(deepClone(fn)).toBe(fn)
-    expect(deepClone(1)).toBe(1)
-    expect(deepClone(undefined)).toBe(undefined)
+  })
+
+  it('should pass-through classes', () => {
+    class Foo {}
+    // typeof class is 'function' so it will behave the same as for function case
+    expect(deepClone(Foo)).toBe(Foo)
   })
 
   it('should clone array recursively', () => {
