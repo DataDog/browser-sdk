@@ -38,7 +38,7 @@ export const DEFAULT_CONFIGURATION = {
   batchBytesLimit: 16 * ONE_KILO_BYTE,
 }
 
-export interface UserConfiguration {
+export interface InitConfiguration {
   publicApiKey?: string // deprecated
   clientToken: string
   applicationId?: string
@@ -68,6 +68,12 @@ export interface UserConfiguration {
   // only on staging build mode
   replica?: ReplicaUserConfiguration
 }
+
+/**
+ * TODO: Remove this type in the next major release
+ * @deprecated Use InitConfiguration instead
+ */
+export type UserConfiguration = InitConfiguration
 
 export type BeforeSendCallback = (event: any, context?: any) => unknown
 
@@ -107,61 +113,61 @@ interface ReplicaConfiguration {
   internalMonitoringEndpoint: string
 }
 
-export function buildConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv): Configuration {
-  const enableExperimentalFeatures = Array.isArray(userConfiguration.enableExperimentalFeatures)
-    ? userConfiguration.enableExperimentalFeatures
+export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
+  const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
+    ? initConfiguration.enableExperimentalFeatures
     : []
 
   const configuration: Configuration = {
     beforeSend:
-      userConfiguration.beforeSend && catchUserErrors(userConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(userConfiguration),
+      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
+    cookieOptions: buildCookieOptions(initConfiguration),
     isEnabled: (feature: string) => includes(enableExperimentalFeatures, feature),
-    service: userConfiguration.service,
-    ...computeTransportConfiguration(userConfiguration, buildEnv),
+    service: initConfiguration.service,
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,
   }
 
-  if ('allowedTracingOrigins' in userConfiguration) {
-    configuration.allowedTracingOrigins = userConfiguration.allowedTracingOrigins!
+  if ('allowedTracingOrigins' in initConfiguration) {
+    configuration.allowedTracingOrigins = initConfiguration.allowedTracingOrigins!
   }
 
-  if ('sampleRate' in userConfiguration) {
-    configuration.sampleRate = userConfiguration.sampleRate!
+  if ('sampleRate' in initConfiguration) {
+    configuration.sampleRate = initConfiguration.sampleRate!
   }
 
-  if ('resourceSampleRate' in userConfiguration) {
-    configuration.resourceSampleRate = userConfiguration.resourceSampleRate!
+  if ('resourceSampleRate' in initConfiguration) {
+    configuration.resourceSampleRate = initConfiguration.resourceSampleRate!
   }
 
-  if ('trackInteractions' in userConfiguration) {
-    configuration.trackInteractions = !!userConfiguration.trackInteractions
+  if ('trackInteractions' in initConfiguration) {
+    configuration.trackInteractions = !!initConfiguration.trackInteractions
   }
 
-  if ('trackViewsManually' in userConfiguration) {
-    configuration.trackViewsManually = !!userConfiguration.trackViewsManually
+  if ('trackViewsManually' in initConfiguration) {
+    configuration.trackViewsManually = !!initConfiguration.trackViewsManually
   }
 
-  if ('actionNameAttribute' in userConfiguration) {
-    configuration.actionNameAttribute = userConfiguration.actionNameAttribute
+  if ('actionNameAttribute' in initConfiguration) {
+    configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
   return configuration
 }
 
-export function buildCookieOptions(userConfiguration: UserConfiguration) {
+export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
 
-  cookieOptions.secure = mustUseSecureCookie(userConfiguration)
-  cookieOptions.crossSite = !!userConfiguration.useCrossSiteSessionCookie
+  cookieOptions.secure = mustUseSecureCookie(initConfiguration)
+  cookieOptions.crossSite = !!initConfiguration.useCrossSiteSessionCookie
 
-  if (!!userConfiguration.trackSessionAcrossSubdomains) {
+  if (!!initConfiguration.trackSessionAcrossSubdomains) {
     cookieOptions.domain = getCurrentSite()
   }
 
   return cookieOptions
 }
 
-function mustUseSecureCookie(userConfiguration: UserConfiguration) {
-  return !!userConfiguration.useSecureSessionCookie || !!userConfiguration.useCrossSiteSessionCookie
+function mustUseSecureCookie(initConfiguration: InitConfiguration) {
+  return !!initConfiguration.useSecureSessionCookie || !!initConfiguration.useCrossSiteSessionCookie
 }

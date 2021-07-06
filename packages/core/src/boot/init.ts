@@ -1,5 +1,5 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
-import { buildConfiguration, UserConfiguration } from '../domain/configuration'
+import { buildConfiguration, InitConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
 import { Datacenter } from '../domain/transportConfiguration'
 import { catchUserErrors } from '../tools/catchUserErrors'
@@ -49,8 +49,8 @@ export interface BuildEnv {
   sdkVersion: string
 }
 
-export function commonInit(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
-  const configuration = buildConfiguration(userConfiguration, buildEnv)
+export function commonInit(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
+  const configuration = buildConfiguration(initConfiguration, buildEnv)
   const internalMonitoring = startInternalMonitoring(configuration)
 
   return {

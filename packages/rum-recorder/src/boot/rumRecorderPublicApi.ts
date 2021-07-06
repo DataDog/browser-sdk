@@ -2,7 +2,7 @@ import { Configuration, monitor, noop, runOnReadyState, InternalMonitoring } fro
 import {
   LifeCycleEventType,
   makeRumPublicApi,
-  RumUserConfiguration,
+  RumInitConfiguration,
   StartRum,
   CommonContext,
 } from '@datadog/browser-rum-core'
@@ -12,9 +12,15 @@ import { startRecording } from './startRecording'
 export type StartRecording = typeof startRecording
 export type RumRecorderPublicApi = ReturnType<typeof makeRumRecorderPublicApi>
 
-export interface RumRecorderUserConfiguration extends RumUserConfiguration {
+export interface RumRecorderInitConfiguration extends RumInitConfiguration {
   manualSessionReplayRecordingStart?: boolean
 }
+
+/**
+ * TODO: remove this type in the next major release
+ * @deprecated Use RumRecorderInitConfiguration instead
+ */
+export type RumRecorderUserConfiguration = RumRecorderInitConfiguration
 
 const enum RecorderStatus {
   Stopped,
@@ -34,9 +40,9 @@ type RecorderState =
     }
 
 export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingImpl: StartRecording) {
-  let onRumStartStrategy = (userConfiguration: RumRecorderUserConfiguration, configuration: Configuration) => {
+  let onRumStartStrategy = (initConfiguration: RumRecorderInitConfiguration, configuration: Configuration) => {
     if (
-      !userConfiguration.manualSessionReplayRecordingStart &&
+      !initConfiguration.manualSessionReplayRecordingStart &&
       // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
       // the Datadog app. See RUMF-886
       !configuration.isEnabled('postpone_start_recording')
@@ -52,7 +58,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
   }
 
   function startRumRecorder(
-    userConfiguration: RumRecorderUserConfiguration,
+    initConfiguration: RumRecorderInitConfiguration,
     configuration: Configuration,
     internalMonitoring: InternalMonitoring,
     getCommonContext: () => CommonContext,
@@ -63,7 +69,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     }
 
     const startRumResult = startRumImpl(
-      userConfiguration,
+      initConfiguration,
       configuration,
       internalMonitoring,
       () => ({
@@ -89,7 +95,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
         const { stop: stopRecording } = startRecordingImpl(
           lifeCycle,
-          userConfiguration.applicationId,
+          initConfiguration.applicationId,
           configuration,
           session,
           parentContexts
@@ -117,12 +123,12 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
       lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
     }
 
-    onRumStartStrategy(userConfiguration, configuration)
+    onRumStartStrategy(initConfiguration, configuration)
 
     return startRumResult
   }
 
-  const rumPublicApi = makeRumPublicApi<RumRecorderUserConfiguration>(startRumRecorder)
+  const rumPublicApi = makeRumPublicApi<RumRecorderInitConfiguration>(startRumRecorder)
 
   const rumRecorderPublicApi = {
     ...rumPublicApi,

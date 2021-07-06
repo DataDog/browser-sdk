@@ -1,5 +1,6 @@
-import { LogsUserConfiguration } from '@datadog/browser-logs'
-import { RumUserConfiguration } from '@datadog/browser-rum-core'
+import { LogsInitConfiguration } from '@datadog/browser-logs'
+import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
 import { validateFormat } from '../helpers/validation'
@@ -35,32 +36,32 @@ interface TestContext {
 type TestRunner = (testContext: TestContext) => Promise<void>
 
 class TestBuilder {
-  private rumConfiguration: RumUserConfiguration | undefined = undefined
-  private rumRecorderConfiguration: RumUserConfiguration | undefined = undefined
-  private logsConfiguration: LogsUserConfiguration | undefined = undefined
+  private rumConfiguration: RumInitConfiguration | undefined = undefined
+  private rumRecorderConfiguration: RumRecorderInitConfiguration | undefined = undefined
+  private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
   private setups: Array<{ factory: SetupFactory; name?: string }> = []
 
   constructor(private title: string) {}
 
-  withRum(rumConfiguration?: Partial<RumUserConfiguration>) {
-    this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumConfiguration }
+  withRum(rumInitConfiguration?: Partial<RumInitConfiguration>) {
+    this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
     return this
   }
 
-  withRumRecorder(rumRecorderConfiguration?: Partial<RumUserConfiguration>) {
-    this.rumRecorderConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumRecorderConfiguration }
+  withRumRecorder(rumRecorderInitConfiguration?: Partial<RumRecorderInitConfiguration>) {
+    this.rumRecorderConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumRecorderInitConfiguration }
     return this
   }
 
-  withRumInit(rumInit: (configuration: RumUserConfiguration) => void) {
+  withRumInit(rumInit: (initConfiguration: RumInitConfiguration) => void) {
     this.rumInit = rumInit
     return this
   }
 
-  withLogs(logsConfiguration?: Partial<LogsUserConfiguration>) {
-    this.logsConfiguration = { ...DEFAULT_LOGS_CONFIGURATION, ...logsConfiguration }
+  withLogs(logsInitConfiguration?: Partial<LogsInitConfiguration>) {
+    this.logsConfiguration = { ...DEFAULT_LOGS_CONFIGURATION, ...logsInitConfiguration }
     return this
   }
 
@@ -105,7 +106,7 @@ class TestBuilder {
     }
   }
 
-  private rumInit: (configuration: RumUserConfiguration) => void = (configuration) => {
+  private rumInit: (configuration: RumInitConfiguration) => void = (configuration) => {
     window.DD_RUM!.init(configuration)
   }
 }
