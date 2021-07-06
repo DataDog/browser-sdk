@@ -70,7 +70,6 @@ describe('makeRumRecorderPublicApi', () => {
     describe('when tracking views manually', () => {
       const MANUAL_VIEWS_CONFIGURATION = {
         ...DEFAULT_INIT_CONFIGURATION,
-        enableExperimentalFeatures: ['view-renaming'],
         trackViewsManually: true,
       }
       it('starts RUM when initial view is started', () => {

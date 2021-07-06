@@ -482,7 +482,7 @@ describe('rum public api', () => {
   })
 
   describe('trackViews mode', () => {
-    const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION, enableExperimentalFeatures: ['view-renaming'] }
+    const AUTO_CONFIGURATION = { ...DEFAULT_INIT_CONFIGURATION }
     const MANUAL_CONFIGURATION = { ...AUTO_CONFIGURATION, trackViewsManually: true }
 
     let startRumSpy: jasmine.Spy<StartRum>

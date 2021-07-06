@@ -3,7 +3,7 @@ import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')
-    .withRum({ enableExperimentalFeatures: ['view-renaming'] })
+    .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before manual view')
       window.DD_RUM!.addAction('before manual view')
@@ -52,7 +52,7 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['view-renaming'] } as any)
+    .withRum({ trackViewsManually: true })
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
