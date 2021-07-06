@@ -520,8 +520,7 @@ describe('rum public api', () => {
         const { clock } = setupBuilder.withFakeClock().build()
 
         clock.tick(10)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
+        rumPublicApi.startView('foo')
 
         expect(startViewSpy).not.toHaveBeenCalled()
 
@@ -539,8 +538,7 @@ describe('rum public api', () => {
       it('after init startView should be handle immediately', () => {
         rumPublicApi.init(AUTO_CONFIGURATION)
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
+        rumPublicApi.startView('foo')
 
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual('foo')
@@ -557,8 +555,7 @@ describe('rum public api', () => {
       })
 
       it('before init startView should start rum', () => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
+        rumPublicApi.startView('foo')
         expect(startRumSpy).not.toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
 
@@ -573,8 +570,7 @@ describe('rum public api', () => {
         expect(startRumSpy).not.toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
+        rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
         expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
         expect(startViewSpy).not.toHaveBeenCalled()
@@ -582,10 +578,8 @@ describe('rum public api', () => {
 
       it('after start rum startView should start view', () => {
         rumPublicApi.init(MANUAL_CONFIGURATION)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('bar')
+        rumPublicApi.startView('foo')
+        rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
         expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
@@ -601,8 +595,7 @@ describe('rum public api', () => {
         rumPublicApi.addTiming('first')
 
         clock.tick(10)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumPublicApi as any).startView('foo')
+        rumPublicApi.startView('foo')
 
         clock.tick(10)
         rumPublicApi.addTiming('second')

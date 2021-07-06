@@ -197,9 +197,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     removeUser: monitor(() => {
       user = {}
     }),
-  })
-  ;(rumPublicApi as any)['startView'] = monitor((name?: string) => {
-    startViewStrategy(name)
+
+    startView: monitor((name?: string) => {
+      startViewStrategy(name)
+    }),
   })
   return rumPublicApi
 
