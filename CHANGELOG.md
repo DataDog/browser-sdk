@@ -16,6 +16,11 @@
 
 ---
 
+## v2.16.0
+
+- ✨ [RUMF-932] allow context edition in logs beforeSend ([#909](https://github.com/DataDog/browser-sdk/pull/909))
+- ✨ [RUMF-945] allow users to customize the attribute used to define the action name ([#919](https://github.com/DataDog/browser-sdk/pull/919))
+
 ## v2.15.1
 
 - 🐛 fix new view segment starting with an IncrementalSnapshot ([#908](https://github.com/DataDog/browser-sdk/pull/908))
