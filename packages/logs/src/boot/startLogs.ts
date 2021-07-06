@@ -13,26 +13,32 @@ import {
   RawError,
   RelativeTime,
   startAutomaticErrorCollection,
-  UserConfiguration,
+  InitConfiguration,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
 
-export interface LogsUserConfiguration extends UserConfiguration {
+export interface LogsInitConfiguration extends InitConfiguration {
   forwardErrorsToLogs?: boolean
   beforeSend?: (event: LogsEvent) => void | boolean
 }
 
+/**
+ * TODO: remove this type in the next major release
+ * @deprecated Use LogsInitConfiguration instead
+ */
+export type LogsUserConfiguration = LogsInitConfiguration
+
 export function startLogs(
-  userConfiguration: LogsUserConfiguration,
+  initConfiguration: LogsInitConfiguration,
   errorLogger: Logger,
   getGlobalContext: () => Context
 ) {
-  const { configuration, internalMonitoring } = commonInit(userConfiguration, buildEnv)
+  const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
   const errorObservable =
-    userConfiguration.forwardErrorsToLogs !== false
+    initConfiguration.forwardErrorsToLogs !== false
       ? startAutomaticErrorCollection(configuration)
       : new Observable<RawError>()
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))

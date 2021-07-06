@@ -4,6 +4,7 @@ export {
   CommonProperties,
   ProvidedSource,
   RumPublicApi as RumGlobal,
+  RumInitConfiguration,
   RumUserConfiguration,
   // Events
   RumEvent,
