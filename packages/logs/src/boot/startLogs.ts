@@ -12,8 +12,10 @@ import {
   Observable,
   RawError,
   RelativeTime,
-  startAutomaticErrorCollection,
   InitConfiguration,
+  trackNetworkError,
+  trackRuntimeError,
+  trackConsoleError,
 } from '@datadog/browser-core'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
@@ -37,10 +39,14 @@ export function startLogs(
   getGlobalContext: () => Context
 ) {
   const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
-  const errorObservable =
-    initConfiguration.forwardErrorsToLogs !== false
-      ? startAutomaticErrorCollection(configuration)
-      : new Observable<RawError>()
+  const errorObservable = new Observable<RawError>()
+
+  if (initConfiguration.forwardErrorsToLogs !== false) {
+    trackConsoleError(errorObservable)
+    trackRuntimeError(errorObservable)
+    trackNetworkError(configuration, errorObservable)
+  }
+
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
   return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger, getGlobalContext)
 }
