@@ -6,7 +6,7 @@ export {
   buildCookieOptions,
   BeforeSendCallback,
 } from './domain/configuration'
-export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
+export { startAutomaticErrorCollection } from './domain/error/automaticErrorCollection'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export {
   BuildEnv,
@@ -27,7 +27,7 @@ export {
   addErrorToMonitoringBatch,
   setDebugMode,
 } from './domain/internalMonitoring'
-export { Observable, Subscription } from './tools/observable'
+export { Observable, ErrorObservable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
   SESSION_TIME_OUT_DELAY,

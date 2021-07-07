@@ -1,3 +1,5 @@
+import { RawError } from './error'
+
 export interface Subscription {
   unsubscribe: () => void
 }
@@ -18,3 +20,5 @@ export class Observable<T> {
     this.observers.forEach((observer) => observer(data))
   }
 }
+
+export type ErrorObservable = Observable<RawError>
