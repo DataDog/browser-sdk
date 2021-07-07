@@ -24,8 +24,7 @@ export function startViewCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, foregroundContexts))
   )
 
-  const shouldTrackViewsAutomatically = !configuration.isEnabled('view-renaming') || !configuration.trackViewsManually
-  return trackViews(location, lifeCycle, domMutationObservable, shouldTrackViewsAutomatically, initialViewName)
+  return trackViews(location, lifeCycle, domMutationObservable, !configuration.trackViewsManually, initialViewName)
 }
 
 function processViewUpdate(

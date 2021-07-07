@@ -70,15 +70,13 @@ describe('makeRumRecorderPublicApi', () => {
     describe('when tracking views manually', () => {
       const MANUAL_VIEWS_CONFIGURATION = {
         ...DEFAULT_INIT_CONFIGURATION,
-        enableExperimentalFeatures: ['view-renaming'],
         trackViewsManually: true,
       }
       it('starts RUM when initial view is started', () => {
         expect(startRumSpy).not.toHaveBeenCalled()
         rumRecorderPublicApi.init(MANUAL_VIEWS_CONFIGURATION)
         expect(startRumSpy).not.toHaveBeenCalled()
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumRecorderPublicApi as any).startView()
+        rumRecorderPublicApi.startView()
         expect(startRumSpy).toHaveBeenCalled()
       })
 
@@ -86,15 +84,13 @@ describe('makeRumRecorderPublicApi', () => {
         expect(startRecordingSpy).not.toHaveBeenCalled()
         rumRecorderPublicApi.init(MANUAL_VIEWS_CONFIGURATION)
         expect(startRecordingSpy).not.toHaveBeenCalled()
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumRecorderPublicApi as any).startView()
+        rumRecorderPublicApi.startView()
         expect(startRecordingSpy).toHaveBeenCalled()
       })
 
       it('does not start recording when initial view is started with manualSessionReplayRecordingStart: true', () => {
         rumRecorderPublicApi.init({ ...MANUAL_VIEWS_CONFIGURATION, manualSessionReplayRecordingStart: true })
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumRecorderPublicApi as any).startView()
+        rumRecorderPublicApi.startView()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
 
@@ -103,16 +99,14 @@ describe('makeRumRecorderPublicApi', () => {
           ...MANUAL_VIEWS_CONFIGURATION,
           enableExperimentalFeatures: ['postpone_start_recording'],
         })
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumRecorderPublicApi as any).startView()
+        rumRecorderPublicApi.startView()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
 
       it('does not start recording before the page "load"', () => {
         const { triggerOnLoad } = mockDocumentReadyState()
         rumRecorderPublicApi.init(MANUAL_VIEWS_CONFIGURATION)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        ;(rumRecorderPublicApi as any).startView()
+        rumRecorderPublicApi.startView()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         triggerOnLoad()
         expect(startRecordingSpy).toHaveBeenCalled()
