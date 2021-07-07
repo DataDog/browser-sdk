@@ -169,7 +169,7 @@ Enables [automatic collection of users actions][6].
 `actionNameAttribute`
 : Optional<br/>
 **Type**: String<br/>
-Specify your own attribute that will be used to name actions, cf [declaring a name for actions][9].
+Specify your own attribute to be used to [name actions][9].
 
 `sampleRate`
 : Optional<br/>
