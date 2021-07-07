@@ -1,12 +1,18 @@
-import { Configuration, performDraw, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSession {
   getId: () => string | undefined
+  getPlan(): RumSessionPlan | undefined
   isTracked: () => boolean
   isTrackedWithResource: () => boolean
+}
+
+export enum RumSessionPlan {
+  LITE = 1,
+  REPLAY = 2,
 }
 
 export enum RumTrackingType {
@@ -26,7 +32,8 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
 
   return {
     getId: session.getId,
-    isTracked: () => session.getId() !== undefined && isTracked(session.getTrackingType()),
+    getPlan: () => getSessionPlan(session),
+    isTracked: () => getSessionPlan(session) !== undefined,
     isTrackedWithResource: () =>
       session.getId() !== undefined && session.getTrackingType() === RumTrackingType.TRACKED_WITH_RESOURCES,
   }
@@ -62,4 +69,11 @@ function isTracked(rumSessionType: RumTrackingType | undefined) {
     rumSessionType === RumTrackingType.TRACKED_WITH_RESOURCES ||
     rumSessionType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
   )
+}
+
+function getSessionPlan(session: Session<RumTrackingType>) {
+  return session.getId() !== undefined && isTracked(session.getTrackingType())
+    ? // TODO: return correct plan based on tracking type
+      RumSessionPlan.REPLAY
+    : undefined
 }

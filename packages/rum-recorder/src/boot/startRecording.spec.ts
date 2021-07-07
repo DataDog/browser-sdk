@@ -1,5 +1,6 @@
 import { HttpRequest } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { RumSessionPlan } from 'packages/rum-core/src/domain/rumSession'
 import { inflate } from 'pako'
 import { createNewEvent, isIE } from '../../../core/test/specHelper'
 
@@ -51,6 +52,7 @@ describe('startRecording', () => {
       })
       .withSession({
         getId: () => sessionId,
+        getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })

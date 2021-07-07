@@ -30,6 +30,7 @@ export {
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
+  Session,
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
   SESSION_COOKIE_NAME,
