@@ -14,9 +14,9 @@ chrome.webRequest.onBeforeRequest.addListener(
           redirectUrl: store.useRumRecorder ? DEV_RUM_RECORDER_URL : DEV_RUM_URL,
         }
       }
-    } else if (store.useRumRecorder && /\/datadog-rum(?!-recorder)\.js$/.test(info.url)) {
+    } else if (store.useRumRecorder && /\/datadog-rum(?!-recorder)/.test(info.url)) {
       return {
-        redirectUrl: info.url.replace(/\.js$/, '-recorder.js'),
+        redirectUrl: info.url.replace(/datadog-rum/, 'datadog-rum-recorder'),
       }
     }
     return
@@ -24,9 +24,9 @@ chrome.webRequest.onBeforeRequest.addListener(
   {
     types: ['script'],
     urls: [
-      'https://*/datadog-logs.js',
-      'https://*/datadog-rum.js',
-      'https://*/datadog-rum-recorder.js',
+      ...getBundleUrlPatterns('logs'),
+      ...getBundleUrlPatterns('rum'),
+      ...getBundleUrlPatterns('rum-recorder'),
       'https://localhost:8443/static/datadog-rum-hotdog.js',
     ],
   },
@@ -44,6 +44,14 @@ listenAction('setStore', (newStore) => {
     chrome.browsingData.removeCache({})
   }
 })
+
+function getBundleUrlPatterns(bundleName: string) {
+  return [
+    `https://*/datadog-${bundleName}.js`,
+    `https://*/datadog-${bundleName}-canary.js`,
+    `https://*/datadog-${bundleName}-head.js`,
+  ]
+}
 
 async function refreshDevServerStatus() {
   const timeoutId = setTimeout(() => setStore({ devServerStatus: 'checking' }), 500)
