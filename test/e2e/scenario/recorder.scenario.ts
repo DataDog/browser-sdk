@@ -38,6 +38,7 @@ describe('recorder', () => {
         'session.id': jasmine.stringMatching(UUID_RE),
         start: jasmine.stringMatching(TIMESTAMP_RE),
         'view.id': jasmine.stringMatching(UUID_RE),
+        raw_segment_size: jasmine.stringMatching(INTEGER_RE),
       })
       expect(segment).toEqual({
         data: {

@@ -100,11 +100,11 @@ describe('Segment', () => {
   })
 
   it('calls the onFlushed callback when data is flush', () => {
-    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
+    const onFlushedSpy = jasmine.createSpy<(data: Uint8Array, rawSegmentSize: number) => void>()
     const segment = new Segment(worker, CONTEXT, 'init', RECORD, noop, onFlushedSpy)
     segment.flush()
     worker.processAllMessages()
-    expect(onFlushedSpy).toHaveBeenCalledOnceWith(jasmine.any(Uint8Array))
+    expect(onFlushedSpy).toHaveBeenCalledOnceWith(jasmine.any(Uint8Array), jasmine.any(Number))
   })
 
   it('calls the onWrote callbacks separately when two Segment are used', () => {
