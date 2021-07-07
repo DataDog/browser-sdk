@@ -16,6 +16,11 @@
 
 ---
 
+## v2.17.0
+
+- ✨ [RUMF-928] enable manual view tracking ([#924](https://github.com/DataDog/browser-sdk/pull/924))
+- ✨ [PROF-3535] expose init configuration via `getInitConfiguration()` API ([#897](https://github.com/DataDog/browser-sdk/pull/897))
+
 ## v2.16.0
 
 - ✨ [RUMF-932] allow context edition in logs beforeSend ([#909](https://github.com/DataDog/browser-sdk/pull/909))
