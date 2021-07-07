@@ -1,11 +1,12 @@
-import { LogsUserConfiguration } from '@datadog/browser-logs'
-import { RumUserConfiguration } from '@datadog/browser-rum-core'
+import { LogsInitConfiguration } from '@datadog/browser-logs'
+import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 
 export interface SetupOptions {
-  rum?: RumUserConfiguration
-  rumRecorder?: RumUserConfiguration
-  logs?: LogsUserConfiguration
-  rumInit: (configuration: RumUserConfiguration) => void
+  rum?: RumInitConfiguration
+  rumRecorder?: RumRecorderInitConfiguration
+  logs?: LogsInitConfiguration
+  rumInit: (initConfiguration: RumInitConfiguration) => void
   head?: string
   body?: string
 }
@@ -144,19 +145,19 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function formatLogsConfiguration(configuration: LogsUserConfiguration) {
-  return formatConfiguration(configuration)
+function formatLogsConfiguration(initConfiguration: LogsInitConfiguration) {
+  return formatConfiguration(initConfiguration)
 }
 
-function formatRumConfiguration(configuration: RumUserConfiguration) {
-  return formatConfiguration(configuration).replace('"LOCATION_ORIGIN"', 'location.origin')
+function formatRumConfiguration(initConfiguration: RumInitConfiguration) {
+  return formatConfiguration(initConfiguration).replace('"LOCATION_ORIGIN"', 'location.origin')
 }
 
-function formatConfiguration(configuration: LogsUserConfiguration | RumUserConfiguration) {
+function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  let result = JSON.stringify(configuration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
-  if (configuration.beforeSend) {
-    result = result.replace('"BEFORE_SEND"', configuration.beforeSend.toString())
+  let result = JSON.stringify(initConfiguration, (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value))
+  if (initConfiguration.beforeSend) {
+    result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
   }
   return result
 }

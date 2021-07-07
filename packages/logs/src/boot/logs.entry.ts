@@ -9,9 +9,11 @@ import {
   makePublicApi,
   monitor,
   display,
+  deepClone,
+  InitConfiguration,
 } from '@datadog/browser-core'
 import { HandlerType, Logger, LogsMessage, StatusType } from '../domain/logger'
-import { startLogs, LogsUserConfiguration } from './startLogs'
+import { startLogs, LogsInitConfiguration } from './startLogs'
 
 export interface LoggerConfiguration {
   level?: StatusType
@@ -40,22 +42,24 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
   let sendLogStrategy = (message: LogsMessage, currentContext: Context) => {
     beforeInitSendLog.add(() => sendLogStrategy(message, currentContext))
   }
+  let getInitConfigurationStrategy = (): InitConfiguration | undefined => undefined
   const logger = new Logger(sendLog)
 
   return makePublicApi({
     logger,
 
-    init: monitor((userConfiguration: LogsUserConfiguration) => {
-      if (!canInitLogs(userConfiguration)) {
+    init: monitor((initConfiguration: LogsInitConfiguration) => {
+      if (!canInitLogs(initConfiguration)) {
         return
       }
 
-      if (userConfiguration.publicApiKey) {
-        userConfiguration.clientToken = userConfiguration.publicApiKey
+      if (initConfiguration.publicApiKey) {
+        initConfiguration.clientToken = initConfiguration.publicApiKey
         display.warn('Public API Key is deprecated. Please use Client Token instead.')
       }
 
-      sendLogStrategy = startLogsImpl(userConfiguration, logger, globalContextManager.get)
+      sendLogStrategy = startLogsImpl(initConfiguration, logger, globalContextManager.get)
+      getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
 
       isAlreadyInitialized = true
@@ -77,20 +81,22 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
     }),
 
     getLogger: monitor((name: string) => customLoggers[name]),
+
+    getInitConfiguration: monitor(() => getInitConfigurationStrategy()),
   })
 
-  function canInitLogs(userConfiguration: LogsUserConfiguration) {
+  function canInitLogs(initConfiguration: LogsInitConfiguration) {
     if (isAlreadyInitialized) {
-      if (!userConfiguration.silentMultipleInit) {
+      if (!initConfiguration.silentMultipleInit) {
         display.error('DD_LOGS is already initialized.')
       }
       return false
     }
-    if (!userConfiguration || (!userConfiguration.publicApiKey && !userConfiguration.clientToken)) {
+    if (!initConfiguration || (!initConfiguration.publicApiKey && !initConfiguration.clientToken)) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }
-    if (userConfiguration.sampleRate !== undefined && !isPercentage(userConfiguration.sampleRate)) {
+    if (initConfiguration.sampleRate !== undefined && !isPercentage(initConfiguration.sampleRate)) {
       display.error('Sample Rate should be a number between 0 and 100')
       return false
     }

@@ -1,7 +1,7 @@
 import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumUserConfiguration, StartRum } from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -27,7 +27,7 @@ describe('rum public api', () => {
 
     it('init should log an error with no application id', () => {
       const invalidConfiguration = { clientToken: 'yes' }
-      rumPublicApi.init(invalidConfiguration as RumUserConfiguration)
+      rumPublicApi.init(invalidConfiguration as RumInitConfiguration)
       expect(display.error).toHaveBeenCalledTimes(1)
 
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes' })
@@ -137,6 +137,28 @@ describe('rum public api', () => {
       const startTime = 234832890
       expect(rumPublicApi.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalledWith(startTime)
+    })
+  })
+
+  describe('getInitConfiguration', () => {
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      rumPublicApi = makeRumPublicApi(() => ({
+        ...noopStartRum(),
+      }))
+    })
+
+    it('returns undefined before init', () => {
+      expect(rumPublicApi.getInitConfiguration()).toBe(undefined)
+    })
+
+    it('returns the user configuration after init', () => {
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+      rumPublicApi.init(initConfiguration)
+
+      expect(rumPublicApi.getInitConfiguration()).toEqual(initConfiguration)
+      expect(rumPublicApi.getInitConfiguration()).not.toBe(initConfiguration)
     })
   })
 

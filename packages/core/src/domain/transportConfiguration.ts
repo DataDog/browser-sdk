@@ -1,6 +1,6 @@
 import { BuildEnv, BuildMode } from '../boot/init'
 import { includes } from '../tools/utils'
-import { TransportConfiguration, UserConfiguration } from './configuration'
+import { TransportConfiguration, InitConfiguration } from './configuration'
 
 const ENDPOINTS = {
   alternate: {
@@ -47,20 +47,20 @@ interface TransportSettings {
   version?: string
 }
 
-export function computeTransportConfiguration(userConfiguration: UserConfiguration, buildEnv: BuildEnv) {
+export function computeTransportConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
   const transportSettings: TransportSettings = {
     buildMode: buildEnv.buildMode,
-    clientToken: userConfiguration.clientToken,
-    env: userConfiguration.env,
-    proxyHost: userConfiguration.proxyHost,
+    clientToken: initConfiguration.clientToken,
+    env: initConfiguration.env,
+    proxyHost: initConfiguration.proxyHost,
     sdkVersion: buildEnv.sdkVersion,
-    service: userConfiguration.service,
-    site: userConfiguration.site || INTAKE_SITE[userConfiguration.datacenter || buildEnv.datacenter],
-    version: userConfiguration.version,
+    service: initConfiguration.service,
+    site: initConfiguration.site || INTAKE_SITE[initConfiguration.datacenter || buildEnv.datacenter],
+    version: initConfiguration.version,
   }
 
-  const intakeType: IntakeType = getIntakeType(transportSettings.site, userConfiguration)
-  const intakeUrls = getIntakeUrls(intakeType, transportSettings, userConfiguration.replica !== undefined)
+  const intakeType: IntakeType = getIntakeType(transportSettings.site, initConfiguration)
+  const intakeUrls = getIntakeUrls(intakeType, transportSettings, initConfiguration.replica !== undefined)
 
   const configuration: TransportConfiguration = {
     isIntakeUrl: (url: string) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
@@ -70,7 +70,7 @@ export function computeTransportConfiguration(userConfiguration: UserConfigurati
     traceEndpoint: getEndpoint(intakeType, 'trace', transportSettings),
   }
 
-  if (userConfiguration.internalMonitoringApiKey) {
+  if (initConfiguration.internalMonitoringApiKey) {
     configuration.internalMonitoringEndpoint = getEndpoint(
       intakeType,
       'logs',
@@ -87,15 +87,15 @@ export function computeTransportConfiguration(userConfiguration: UserConfigurati
   }
 
   if (transportSettings.buildMode === BuildMode.STAGING) {
-    if (userConfiguration.replica !== undefined) {
+    if (initConfiguration.replica !== undefined) {
       const replicaTransportSettings = {
         ...transportSettings,
-        applicationId: userConfiguration.replica.applicationId,
-        clientToken: userConfiguration.replica.clientToken,
+        applicationId: initConfiguration.replica.applicationId,
+        clientToken: initConfiguration.replica.clientToken,
         site: INTAKE_SITE[Datacenter.US],
       }
       configuration.replica = {
-        applicationId: userConfiguration.replica.applicationId,
+        applicationId: initConfiguration.replica.applicationId,
         internalMonitoringEndpoint: getEndpoint(
           intakeType,
           'logs',
@@ -111,8 +111,8 @@ export function computeTransportConfiguration(userConfiguration: UserConfigurati
   return configuration
 }
 
-function getIntakeType(site: string, userConfiguration: UserConfiguration) {
-  return !userConfiguration.useAlternateIntakeDomains && includes(CLASSIC_ALLOWED_SITES, site) ? 'classic' : 'alternate'
+function getIntakeType(site: string, initConfiguration: InitConfiguration) {
+  return !initConfiguration.useAlternateIntakeDomains && includes(CLASSIC_ALLOWED_SITES, site) ? 'classic' : 'alternate'
 }
 
 function getIntakeUrls(intakeType: IntakeType, settings: TransportSettings, withReplica: boolean) {
