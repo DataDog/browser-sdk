@@ -53,7 +53,7 @@ describe('rum session', () => {
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
 
@@ -63,9 +63,7 @@ describe('rum session', () => {
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_RESOURCES}`
-      )
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_LITE}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
 
@@ -85,7 +83,7 @@ describe('rum session', () => {
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcdef')
     })
 
@@ -110,7 +108,7 @@ describe('rum session', () => {
       document.dispatchEvent(new CustomEvent('click'))
 
       expect(renewSessionSpy).toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
   })

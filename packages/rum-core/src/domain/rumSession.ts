@@ -16,8 +16,11 @@ export enum RumSessionPlan {
 
 export enum RumTrackingType {
   NOT_TRACKED = '0',
-  TRACKED_WITH_RESOURCES = '1',
-  TRACKED_WITHOUT_RESOURCES = '2',
+  // Note: the "tracking type" value (stored in the session cookie) does not match the "session
+  // plan" value (sent in RUM events). This is expected, and was done to keep retrocompatibility
+  // with active sessions when upgrading the SDK.
+  TRACKED_REPLAY = '1',
+  TRACKED_LITE = '2',
 }
 
 export function startRumSession(configuration: Configuration, lifeCycle: LifeCycle): RumSession {
@@ -43,7 +46,9 @@ function isSessionTracked(session: Session<RumTrackingType>) {
 function getSessionPlan(session: Session<RumTrackingType>) {
   return isSessionTracked(session)
     ? // TODO: return correct plan based on tracking type
-      RumSessionPlan.REPLAY
+      session.getTrackingType() === RumTrackingType.TRACKED_LITE
+      ? RumSessionPlan.LITE
+      : RumSessionPlan.REPLAY
     : undefined
 }
 
@@ -54,9 +59,9 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
   } else if (!performDraw(configuration.sampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
   } else if (!performDraw(configuration.replaySampleRate)) {
-    trackingType = RumTrackingType.TRACKED_WITHOUT_RESOURCES
+    trackingType = RumTrackingType.TRACKED_LITE
   } else {
-    trackingType = RumTrackingType.TRACKED_WITH_RESOURCES
+    trackingType = RumTrackingType.TRACKED_REPLAY
   }
   return {
     trackingType,
@@ -67,14 +72,11 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
 function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
   return (
     trackingType === RumTrackingType.NOT_TRACKED ||
-    trackingType === RumTrackingType.TRACKED_WITH_RESOURCES ||
-    trackingType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
+    trackingType === RumTrackingType.TRACKED_REPLAY ||
+    trackingType === RumTrackingType.TRACKED_LITE
   )
 }
 
 function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
-  return (
-    rumSessionType === RumTrackingType.TRACKED_WITH_RESOURCES ||
-    rumSessionType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
-  )
+  return rumSessionType === RumTrackingType.TRACKED_LITE || rumSessionType === RumTrackingType.TRACKED_REPLAY
 }
