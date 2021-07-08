@@ -21,8 +21,8 @@ describe('rum session', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     isEnabled: () => true,
-    resourceSampleRate: 0.5,
-    sampleRate: 0.5,
+    resourceSampleRate: 50,
+    sampleRate: 50,
   }
   let lifeCycle: LifeCycle
   let renewSessionSpy: jasmine.Spy
@@ -122,8 +122,10 @@ describe('rum session', () => {
       expect(rumSession.getId()).toBe('abcdef')
     })
 
-    it('should return undefined if there is no session yet', () => {
+    it('should return undefined if the session has expired', () => {
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
       expect(rumSession.getId()).toBe(undefined)
     })
   })
@@ -135,8 +137,10 @@ describe('rum session', () => {
       expect(rumSession.getPlan()).toBe(RumSessionPlan.REPLAY)
     })
 
-    it('should return undefined if there is no session yet', () => {
+    it('should return undefined if the session has expired', () => {
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
       expect(rumSession.getPlan()).toBe(undefined)
     })
 
