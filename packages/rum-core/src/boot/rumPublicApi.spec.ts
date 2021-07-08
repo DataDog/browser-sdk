@@ -42,19 +42,19 @@ describe('rum public api', () => {
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
-    it('init should log an error if resourceSampleRate is invalid', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 'foo' as any })
+    it('init should log an error if replaySampleRate is invalid', () => {
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 'foo' as any })
       expect(displaySpy).toHaveBeenCalledTimes(1)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 200 })
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
     it('should log an error if init is called several times', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(1)
     })
 
@@ -82,7 +82,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -91,7 +90,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -99,7 +97,7 @@ describe('rum public api', () => {
     })
 
     it("shouldn't trigger any console.error if the configuration is correct", () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
     })
   })

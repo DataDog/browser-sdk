@@ -240,8 +240,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       display.error('Sample Rate should be a number between 0 and 100')
       return false
     }
-    if (initConfiguration.resourceSampleRate !== undefined && !isPercentage(initConfiguration.resourceSampleRate)) {
-      display.error('Resource Sample Rate should be a number between 0 and 100')
+    if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
+      display.error('Replay Sample Rate should be a number between 0 and 100')
       return false
     }
     if (

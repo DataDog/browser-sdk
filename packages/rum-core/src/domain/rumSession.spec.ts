@@ -12,8 +12,8 @@ import { Clock, isIE, mockClock } from '../../../core/test/specHelper'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { RUM_SESSION_KEY, RumTrackingType, startRumSession, RumSessionPlan } from './rumSession'
 
-function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
-  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithResources ? 0 : 1)
+function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
+  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithReplay ? 0 : 1)
 }
 
 describe('rum session', () => {
@@ -21,8 +21,8 @@ describe('rum session', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     isEnabled: () => true,
-    resourceSampleRate: 50,
     sampleRate: 50,
+    replaySampleRate: 50,
   }
   let lifeCycle: LifeCycle
   let renewSessionSpy: jasmine.Spy
@@ -47,8 +47,8 @@ describe('rum session', () => {
   })
 
   describe('cookie storage', () => {
-    it('when tracked with resources should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithResources: true })
+    it('when tracked with replay plan should store session type and id', () => {
+      setupDraws({ tracked: true, trackedWithReplay: true })
 
       startRumSession(configuration as Configuration, lifeCycle)
 
@@ -57,8 +57,8 @@ describe('rum session', () => {
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
 
-    it('when tracked without resources should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithResources: false })
+    it('when tracked with lite plan should store session type and id', () => {
+      setupDraws({ tracked: true, trackedWithReplay: false })
 
       startRumSession(configuration as Configuration, lifeCycle)
 
@@ -106,7 +106,7 @@ describe('rum session', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      setupDraws({ tracked: true, trackedWithResources: true })
+      setupDraws({ tracked: true, trackedWithReplay: true })
       document.dispatchEvent(new CustomEvent('click'))
 
       expect(renewSessionSpy).toHaveBeenCalled()

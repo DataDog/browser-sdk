@@ -53,7 +53,7 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
     trackingType = rawTrackingType
   } else if (!performDraw(configuration.sampleRate)) {
     trackingType = RumTrackingType.NOT_TRACKED
-  } else if (!performDraw(configuration.resourceSampleRate)) {
+  } else if (!performDraw(configuration.replaySampleRate)) {
     trackingType = RumTrackingType.TRACKED_WITHOUT_RESOURCES
   } else {
     trackingType = RumTrackingType.TRACKED_WITH_RESOURCES
