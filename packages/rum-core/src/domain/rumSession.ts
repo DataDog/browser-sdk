@@ -33,10 +33,21 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
   return {
     getId: session.getId,
     getPlan: () => getSessionPlan(session),
-    isTracked: () => getSessionPlan(session) !== undefined,
+    isTracked: () => isSessionTracked(session),
     isTrackedWithResource: () =>
       session.getId() !== undefined && session.getTrackingType() === RumTrackingType.TRACKED_WITH_RESOURCES,
   }
+}
+
+function isSessionTracked(session: Session<RumTrackingType>) {
+  return session.getId() !== undefined && isTypeTracked(session.getTrackingType())
+}
+
+function getSessionPlan(session: Session<RumTrackingType>) {
+  return isSessionTracked(session)
+    ? // TODO: return correct plan based on tracking type
+      RumSessionPlan.REPLAY
+    : undefined
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {
@@ -52,7 +63,7 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
   }
   return {
     trackingType,
-    isTracked: isTracked(trackingType),
+    isTracked: isTypeTracked(trackingType),
   }
 }
 
@@ -64,16 +75,9 @@ function hasValidRumSession(trackingType?: string): trackingType is RumTrackingT
   )
 }
 
-function isTracked(rumSessionType: RumTrackingType | undefined) {
+function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
   return (
     rumSessionType === RumTrackingType.TRACKED_WITH_RESOURCES ||
     rumSessionType === RumTrackingType.TRACKED_WITHOUT_RESOURCES
   )
-}
-
-function getSessionPlan(session: Session<RumTrackingType>) {
-  return session.getId() !== undefined && isTracked(session.getTrackingType())
-    ? // TODO: return correct plan based on tracking type
-      RumSessionPlan.REPLAY
-    : undefined
 }
