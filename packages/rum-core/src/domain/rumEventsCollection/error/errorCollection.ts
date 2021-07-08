@@ -34,7 +34,9 @@ export function startErrorCollection(
   const errorObservable = new Observable<RawError>()
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
-  trackNetworkError(configuration, errorObservable) // deprecated: to remove with version 3
+  if (!configuration.isEnabled('remove-network-errors')) {
+    trackNetworkError(configuration, errorObservable) // deprecated: to remove with version 3
+  }
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 

@@ -44,7 +44,7 @@ export function startLogs(
   if (initConfiguration.forwardErrorsToLogs !== false) {
     trackConsoleError(errorObservable)
     trackRuntimeError(errorObservable)
-    trackNetworkError(configuration, errorObservable)
+    trackNetworkError(configuration, errorObservable, configuration.isEnabled('remove-network-errors'))
   }
 
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))

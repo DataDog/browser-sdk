@@ -5,14 +5,18 @@ import { ErrorObservable } from '../../tools/observable'
 import { RequestType } from '../../tools/utils'
 import { Configuration } from '../configuration'
 
-export function trackNetworkError(configuration: Configuration, errorObservable: ErrorObservable) {
+export function trackNetworkError(
+  configuration: Configuration,
+  errorObservable: ErrorObservable,
+  trackAbortedRequests = true
+) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
     if (
       !configuration.isIntakeUrl(request.url) &&
-      (!configuration.isEnabled('remove-network-errors') || !request.isAborted) &&
+      (trackAbortedRequests || !request.isAborted) &&
       (isRejected(request) || isServerError(request))
     ) {
       errorObservable.notify({
