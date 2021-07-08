@@ -3,14 +3,13 @@ import { flushEvents } from '../../lib/helpers/sdk'
 
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')
-    .withRum({ enableExperimentalFeatures: ['view-renaming'] })
+    .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before manual view')
       window.DD_RUM!.addAction('before manual view')
       window.DD_RUM!.addTiming('before manual view')
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return
-      setTimeout(() => (window.DD_RUM as any).startView('manual view'), 10)
+      setTimeout(() => window.DD_RUM!.startView('manual view'), 10)
 
       setTimeout(() => {
         window.DD_RUM!.addError('after manual view')
@@ -52,7 +51,7 @@ describe('API calls and events around init', () => {
     })
 
   createTest('should be associated to corresponding views when views are manually tracked')
-    .withRum({ trackViewsManually: true, enableExperimentalFeatures: ['view-renaming'] } as any)
+    .withRum({ trackViewsManually: true })
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
@@ -66,8 +65,7 @@ describe('API calls and events around init', () => {
         window.DD_RUM!.addTiming('before manual view')
       }, 20)
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return
-      setTimeout(() => (window.DD_RUM as any).startView('manual view'), 30)
+      setTimeout(() => window.DD_RUM!.startView('manual view'), 30)
 
       setTimeout(() => {
         window.DD_RUM!.addError('after manual view')

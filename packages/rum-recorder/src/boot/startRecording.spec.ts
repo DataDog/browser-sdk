@@ -88,6 +88,7 @@ describe('startRecording', () => {
         segment: jasmine.any(File),
         'session.id': 'session-id',
         start: jasmine.stringMatching(/^\d{13}$/),
+        raw_segment_size: jasmine.stringMatching(/^\d+$/),
         'view.id': 'view-id',
       })
       expectNoExtraRequestSendCalls(done)

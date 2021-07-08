@@ -93,7 +93,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     }
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
-    if (!configuration.isEnabled('view-renaming') || !configuration.trackViewsManually) {
+    if (!configuration.trackViewsManually) {
       doStartRum()
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
@@ -112,9 +112,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     isAlreadyInitialized = true
 
     function doStartRum(initialViewName?: string) {
-      let startView
       ;({
-        startView,
+        startView: startViewStrategy,
         addAction: addActionStrategy,
         addError: addErrorStrategy,
         addTiming: addTimingStrategy,
@@ -129,9 +128,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
         }),
         initialViewName
       ))
-      if (configuration.isEnabled('view-renaming')) {
-        startViewStrategy = startView
-      }
       bufferApiCalls.drain()
     }
   }
@@ -201,9 +197,10 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     removeUser: monitor(() => {
       user = {}
     }),
-  })
-  ;(rumPublicApi as any)['startView'] = monitor((name?: string) => {
-    startViewStrategy(name)
+
+    startView: monitor((name?: string) => {
+      startViewStrategy(name)
+    }),
   })
   return rumPublicApi
 

@@ -58,6 +58,10 @@ export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
 }
 
+export function deleteCookie(name: string, options?: CookieOptions) {
+  setCookie(name, '', 0, options)
+}
+
 export function areCookiesAuthorized(options: CookieOptions): boolean {
   if (document.cookie === undefined || document.cookie === null) {
     return false
@@ -68,7 +72,9 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
     const testCookieName = `dd_cookie_test_${generateUUID()}`
     const testCookieValue = 'test'
     setCookie(testCookieName, testCookieValue, ONE_SECOND, options)
-    return getCookie(testCookieName) === testCookieValue
+    const isCookieCorrectlySet = getCookie(testCookieName) === testCookieValue
+    deleteCookie(testCookieName, options)
+    return isCookieCorrectlySet
   } catch (error) {
     display.error(error)
     return false
@@ -94,6 +100,7 @@ export function getCurrentSite() {
       candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
       setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
     }
+    deleteCookie(testCookieName, { domain: candidateDomain })
     getCurrentSiteCache = candidateDomain
   }
   return getCurrentSiteCache

@@ -166,6 +166,11 @@ The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.
 **Default**: `false` <br/>
 Enables [automatic collection of users actions][6].
 
+`actionNameAttribute`
+: Optional<br/>
+**Type**: String<br/>
+Specify your own attribute to be used to [name actions][9].
+
 `sampleRate`
 : Optional<br/>
 **Type**: Number<br/>
@@ -235,6 +240,7 @@ init(configuration: {
 [3]: https://docs.datadoghq.com/real_user_monitoring/dashboards/
 [4]: https://www.npmjs.com/package/@datadog/browser-rum
 [5]: https://docs.datadoghq.com/account_management/api-app-keys/#client-tokens
-[6]: https://docs.datadoghq.com/real_user_monitoring/data_collected/user_action/#automatic-collection-of-user-actions
+[6]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions
 [7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
+[9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
