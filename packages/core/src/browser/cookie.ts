@@ -100,6 +100,7 @@ export function getCurrentSite() {
       candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
       setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
     }
+    deleteCookie(testCookieName, { domain: candidateDomain })
     getCurrentSiteCache = candidateDomain
   }
   return getCurrentSiteCache
