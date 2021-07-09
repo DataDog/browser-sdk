@@ -43,7 +43,6 @@ describe('parentContexts', () => {
         getId: () => sessionId,
         getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
-        isTrackedWithResource: () => true,
       })
       .beforeBuild(({ lifeCycle, session }) => {
         parentContexts = startParentContexts(lifeCycle, session)

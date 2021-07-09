@@ -59,7 +59,6 @@ describe('internal context', () => {
         getId: () => '1234',
         getPlan: () => undefined,
         isTracked: () => false,
-        isTrackedWithResource: () => false,
       })
       .build()
 

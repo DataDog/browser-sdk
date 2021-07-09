@@ -7,7 +7,6 @@ export interface RumSession {
   getId: () => string | undefined
   getPlan(): RumSessionPlan | undefined
   isTracked: () => boolean
-  isTrackedWithResource: () => boolean
 }
 
 export enum RumSessionPlan {
@@ -34,8 +33,6 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
     getId: session.getId,
     getPlan: () => getSessionPlan(session),
     isTracked: () => isSessionTracked(session),
-    isTrackedWithResource: () =>
-      session.getId() !== undefined && session.getTrackingType() === RumTrackingType.TRACKED_WITH_RESOURCES,
   }
 }
 

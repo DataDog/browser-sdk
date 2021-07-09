@@ -56,7 +56,6 @@ export function setup(): TestSetupBuilder {
     getId: () => '1234' as string | undefined,
     getPlan: () => RumSessionPlan.REPLAY,
     isTracked: () => true,
-    isTrackedWithResource: () => true,
   }
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()

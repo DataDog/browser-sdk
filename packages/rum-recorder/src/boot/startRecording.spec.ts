@@ -54,7 +54,6 @@ describe('startRecording', () => {
         getId: () => sessionId,
         getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
-        isTrackedWithResource: () => true,
       })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
         startRecording(lifeCycle, applicationId, configuration, session, parentContexts)

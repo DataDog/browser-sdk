@@ -226,7 +226,6 @@ describe('computeSegmentContext', () => {
     getId: () => '456',
     getPlan: () => RumSessionPlan.REPLAY,
     isTracked: () => true,
-    isTrackedWithResource: () => true,
   }
 
   it('returns a segment context', () => {

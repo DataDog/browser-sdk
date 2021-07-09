@@ -81,7 +81,6 @@ describe('rum session', () => {
         getId: () => sessionId,
         getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
-        isTrackedWithResource: () => true,
       })
       .build()
 
@@ -117,7 +116,6 @@ describe('rum session keep alive', () => {
         getId: () => '1234',
         getPlan: () => (isSessionTracked ? RumSessionPlan.REPLAY : undefined),
         isTracked: () => isSessionTracked,
-        isTrackedWithResource: () => true,
       })
       .beforeBuild(({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
