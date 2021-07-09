@@ -1,12 +1,18 @@
-import { Configuration, performDraw, startSessionManagement } from '@datadog/browser-core'
+import { Configuration, performDraw, Session, startSessionManagement } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSession {
   getId: () => string | undefined
+  getPlan(): RumSessionPlan | undefined
   isTracked: () => boolean
   isTrackedWithResource: () => boolean
+}
+
+export enum RumSessionPlan {
+  LITE = 1,
+  REPLAY = 2,
 }
 
 export enum RumTrackingType {
@@ -26,10 +32,22 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
 
   return {
     getId: session.getId,
-    isTracked: () => session.getId() !== undefined && isTracked(session.getTrackingType()),
+    getPlan: () => getSessionPlan(session),
+    isTracked: () => isSessionTracked(session),
     isTrackedWithResource: () =>
       session.getId() !== undefined && session.getTrackingType() === RumTrackingType.TRACKED_WITH_RESOURCES,
   }
+}
+
+function isSessionTracked(session: Session<RumTrackingType>) {
+  return session.getId() !== undefined && isTypeTracked(session.getTrackingType())
+}
+
+function getSessionPlan(session: Session<RumTrackingType>) {
+  return isSessionTracked(session)
+    ? // TODO: return correct plan based on tracking type
+      RumSessionPlan.REPLAY
+    : undefined
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {
@@ -45,7 +63,7 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
   }
   return {
     trackingType,
-    isTracked: isTracked(trackingType),
+    isTracked: isTypeTracked(trackingType),
   }
 }
 
@@ -57,7 +75,7 @@ function hasValidRumSession(trackingType?: string): trackingType is RumTrackingT
   )
 }
 
-function isTracked(rumSessionType: RumTrackingType | undefined) {
+function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
   return (
     rumSessionType === RumTrackingType.TRACKED_WITH_RESOURCES ||
     rumSessionType === RumTrackingType.TRACKED_WITHOUT_RESOURCES

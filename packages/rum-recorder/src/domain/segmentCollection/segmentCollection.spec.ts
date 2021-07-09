@@ -8,6 +8,7 @@ import {
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
+import { RumSessionPlan } from 'packages/rum-core/src/domain/rumSession'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
@@ -223,6 +224,7 @@ describe('computeSegmentContext', () => {
 
   const DEFAULT_SESSION: RumSession = {
     getId: () => '456',
+    getPlan: () => RumSessionPlan.REPLAY,
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }

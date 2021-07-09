@@ -6,6 +6,7 @@ import { CommonContext, RawRumErrorEvent, RawRumEvent, RumEventType } from '../r
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
+import { RumSessionPlan } from './rumSession'
 
 describe('rum assembly', () => {
   let setupBuilder: TestSetupBuilder
@@ -449,6 +450,7 @@ describe('rum assembly', () => {
       const { lifeCycle } = setupBuilder
         .withSession({
           getId: () => '1234',
+          getPlan: () => undefined,
           isTracked: () => false,
           isTrackedWithResource: () => false,
         })
@@ -491,7 +493,7 @@ describe('rum assembly', () => {
   })
 
   describe('session context', () => {
-    it('should include the session type and id', () => {
+    it('should include the session type, id and plan', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -500,6 +502,9 @@ describe('rum assembly', () => {
         has_replay: undefined,
         id: '1234',
         type: 'user',
+      })
+      expect(serverRumEvents[0]._dd.session).toEqual({
+        plan: RumSessionPlan.REPLAY,
       })
     })
 
