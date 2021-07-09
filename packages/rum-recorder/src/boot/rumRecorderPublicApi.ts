@@ -5,6 +5,7 @@ import {
   RumInitConfiguration,
   StartRum,
   CommonContext,
+  RumSessionPlan,
 } from '@datadog/browser-rum-core'
 
 import { startRecording } from './startRecording'
@@ -24,12 +25,16 @@ export type RumRecorderUserConfiguration = RumRecorderInitConfiguration
 
 const enum RecorderStatus {
   Stopped,
+  IntentToStart,
   Starting,
   Started,
 }
 type RecorderState =
   | {
       status: RecorderStatus.Stopped
+    }
+  | {
+      status: RecorderStatus.IntentToStart
     }
   | {
       status: RecorderStatus.Starting
@@ -81,8 +86,19 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
 
     const { lifeCycle, parentContexts, session } = startRumResult
 
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      if (state.status === RecorderStatus.IntentToStart) {
+        startSessionReplayRecordingStrategy()
+      }
+    })
+
     startSessionReplayRecordingStrategy = () => {
-      if (state.status !== RecorderStatus.Stopped) {
+      if (session.getPlan() !== RumSessionPlan.REPLAY) {
+        state = { status: RecorderStatus.IntentToStart }
+        return
+      }
+
+      if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
         return
       }
 

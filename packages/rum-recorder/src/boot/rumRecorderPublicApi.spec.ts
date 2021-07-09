@@ -1,4 +1,4 @@
-import { StartRum } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, RumSessionPlan, StartRum } from '@datadog/browser-rum-core'
 import { createNewEvent } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { makeRumRecorderPublicApi, RumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
@@ -151,6 +151,63 @@ describe('makeRumRecorderPublicApi', () => {
       rumRecorderPublicApi.startSessionReplayRecording()
       triggerOnLoad()
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('ignores calls if the session is not tracked', () => {
+      setupBuilder
+        .withSession({
+          isTracked: () => false,
+          getId: () => undefined,
+          getPlan: () => undefined,
+        })
+        .build()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumRecorderPublicApi.startSessionReplayRecording()
+      expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    it('ignores calls if the session plan is LITE', () => {
+      setupBuilder
+        .withSession({
+          isTracked: () => true,
+          getId: () => '123',
+          getPlan: () => RumSessionPlan.LITE,
+        })
+        .build()
+      rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumRecorderPublicApi.startSessionReplayRecording()
+      expect(startRecordingSpy).not.toHaveBeenCalled()
+    })
+
+    describe('when an untracked session expires and the renewed session plan is REPLAY', () => {
+      let isTracked: boolean
+      beforeEach(() => {
+        isTracked = false
+        setupBuilder.withSession({
+          isTracked: () => isTracked,
+          getId: () => (isTracked ? '123' : undefined),
+          getPlan: () => (isTracked ? RumSessionPlan.REPLAY : undefined),
+        })
+      })
+
+      it('starts recording if startSessionReplayRecording was called', () => {
+        const { lifeCycle } = setupBuilder.build()
+        rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumRecorderPublicApi.startSessionReplayRecording()
+        isTracked = true
+        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+        expect(startRecordingSpy).toHaveBeenCalled()
+      })
+
+      it('does not starts recording if stopSessionReplayRecording was called', () => {
+        const { lifeCycle } = setupBuilder.build()
+        rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        rumRecorderPublicApi.startSessionReplayRecording()
+        rumRecorderPublicApi.stopSessionReplayRecording()
+        isTracked = true
+        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+        expect(startRecordingSpy).not.toHaveBeenCalled()
+      })
     })
   })
 
