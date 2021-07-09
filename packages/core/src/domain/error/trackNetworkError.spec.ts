@@ -134,7 +134,7 @@ describe('network error tracker', () => {
     })
   })
 
-  describe('when trackAbortedRequests param is true', () => {
+  describe('when trackAbortedRequests param is false', () => {
     beforeEach(() => {
       ;({ stop: stopNetworkErrorTracking } = trackNetworkError(configuration, errorObservable, false))
       fetchStub = window.fetch as FetchStub

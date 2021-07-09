@@ -1,11 +1,11 @@
-import { ErrorSource, ErrorHandling, formatUnknownError } from '../../tools/error'
+import { ErrorSource, ErrorHandling, formatUnknownError, RawError } from '../../tools/error'
+import { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/timeUtils'
 import { StackTrace, subscribe, unsubscribe } from '../tracekit'
-import { ErrorObservable } from '../../tools/observable'
 
 let traceKitReportHandler: (stack: StackTrace, isWindowError: boolean, errorObject?: any) => void
 
-export function trackRuntimeError(errorObservable: ErrorObservable) {
+export function trackRuntimeError(errorObservable: Observable<RawError>) {
   traceKitReportHandler = (stackTrace: StackTrace, _: boolean, errorObject?: any) => {
     const { stack, message, type } = formatUnknownError(stackTrace, errorObject, 'Uncaught')
     errorObservable.notify({

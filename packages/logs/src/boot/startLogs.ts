@@ -6,7 +6,6 @@ import {
   Configuration,
   Context,
   createErrorFilter,
-  ErrorObservable,
   HttpRequest,
   InternalMonitoring,
   Observable,
@@ -53,7 +52,7 @@ export function startLogs(
 
 export function doStartLogs(
   configuration: Configuration,
-  errorObservable: ErrorObservable,
+  errorObservable: Observable<RawError>,
   internalMonitoring: InternalMonitoring,
   session: LoggerSession,
   errorLogger: Logger,

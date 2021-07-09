@@ -29,7 +29,7 @@ export {
   addErrorToMonitoringBatch,
   setDebugMode,
 } from './domain/internalMonitoring'
-export { Observable, ErrorObservable, Subscription } from './tools/observable'
+export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
   SESSION_TIME_OUT_DELAY,

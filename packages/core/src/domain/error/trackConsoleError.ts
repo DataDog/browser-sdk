@@ -4,17 +4,18 @@ import {
   ErrorHandling,
   createHandlingStack,
   formatErrorMessage,
+  RawError,
 } from '../../tools/error'
+import { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/timeUtils'
 import { find, jsonStringify } from '../../tools/utils'
 import { callMonitored } from '../internalMonitoring'
 import { computeStackTrace } from '../tracekit'
-import { ErrorObservable } from '../../tools/observable'
 
 let originalConsoleError: (...params: unknown[]) => void
 
 /* eslint-disable no-console */
-export function trackConsoleError(errorObservable: ErrorObservable) {
+export function trackConsoleError(errorObservable: Observable<RawError>) {
   originalConsoleError = console.error
 
   console.error = (...params: unknown[]) => {

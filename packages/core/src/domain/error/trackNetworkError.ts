@@ -1,13 +1,13 @@
 import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../../browser/fetchProxy'
 import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../../browser/xhrProxy'
-import { ErrorSource } from '../../tools/error'
-import { ErrorObservable } from '../../tools/observable'
+import { ErrorSource, RawError } from '../../tools/error'
+import { Observable } from '../../tools/observable'
 import { RequestType } from '../../tools/utils'
 import { Configuration } from '../configuration'
 
 export function trackNetworkError(
   configuration: Configuration,
-  errorObservable: ErrorObservable,
+  errorObservable: Observable<RawError>,
   trackAbortedRequests = true
 ) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
