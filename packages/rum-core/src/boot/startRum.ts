@@ -12,7 +12,7 @@ import { startErrorCollection } from '../domain/rumEventsCollection/error/errorC
 import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/longTaskCollection'
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSession, startRumSession } from '../domain/rumSession'
+import { RumSession, RumSessionPlan, startRumSession } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 import { RumInitConfiguration } from './rumPublicApi'
@@ -46,7 +46,9 @@ export function startRum(
     getCommonContext
   )
 
-  startLongTaskCollection(lifeCycle)
+  if (session.getPlan() === RumSessionPlan.REPLAY) {
+    startLongTaskCollection(lifeCycle)
+  }
   startResourceCollection(lifeCycle)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
