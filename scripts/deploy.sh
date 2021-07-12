@@ -39,7 +39,7 @@ if [[ -z $suffix ]]; then
   )
 fi
 
-CACHE_CONTROL='max-age=900, s-maxage=60'
+CACHE_CONTROL='max-age=14400, s-maxage=60'
 
 main() {
   in-isolation upload-to-s3
