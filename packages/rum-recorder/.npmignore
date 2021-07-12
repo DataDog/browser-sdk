@@ -1,6 +1,0 @@
-*
-!/bundle/**/*
-!/cjs/**/*
-!/esm/**/*
-!/src/**/*
-!/internal/*

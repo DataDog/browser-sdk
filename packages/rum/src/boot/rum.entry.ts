@@ -1,9 +1,12 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import { makeRumPublicApi, RumPublicApi, startRum } from '@datadog/browser-rum-core'
+import { startRum } from '@datadog/browser-rum-core'
 
-export const datadogRum = makeRumPublicApi(startRum)
+import { startRecording } from './startRecording'
+import { RumRecorderPublicApi, makeRumRecorderPublicApi } from './rumRecorderPublicApi'
+
+export const datadogRum = makeRumRecorderPublicApi(startRum, startRecording)
 
 interface BrowserWindow extends Window {
-  DD_RUM?: RumPublicApi
+  DD_RUM?: RumRecorderPublicApi
 }
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
