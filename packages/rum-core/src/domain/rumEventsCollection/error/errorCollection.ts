@@ -1,6 +1,5 @@
 import {
   computeStackTrace,
-  Configuration,
   Context,
   formatUnknownError,
   RawError,
@@ -10,7 +9,6 @@ import {
   Observable,
   trackConsoleError,
   trackRuntimeError,
-  trackNetworkError,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
@@ -26,17 +24,10 @@ export interface ProvidedError {
 
 export type ProvidedSource = 'custom' | 'network' | 'source'
 
-export function startErrorCollection(
-  lifeCycle: LifeCycle,
-  configuration: Configuration,
-  foregroundContexts: ForegroundContexts
-) {
+export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: ForegroundContexts) {
   const errorObservable = new Observable<RawError>()
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
-  if (!configuration.isEnabled('remove-network-errors')) {
-    trackNetworkError(configuration, errorObservable) // deprecated: to remove with version 3
-  }
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 

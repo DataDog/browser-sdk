@@ -56,7 +56,7 @@ export function startRum(
     foregroundContexts,
     initialViewName
   )
-  const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
+  const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
   const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration)
