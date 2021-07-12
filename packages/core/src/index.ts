@@ -6,7 +6,9 @@ export {
   buildCookieOptions,
   BeforeSendCallback,
 } from './domain/configuration'
-export { startAutomaticErrorCollection, ErrorObservable } from './domain/automaticErrorCollection'
+export { trackConsoleError } from './domain/error/trackConsoleError'
+export { trackNetworkError } from './domain/error/trackNetworkError'
+export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export {
   BuildEnv,
@@ -30,6 +32,7 @@ export {
 export { Observable, Subscription } from './tools/observable'
 export {
   startSessionManagement,
+  Session,
   SESSION_TIME_OUT_DELAY,
   // Exposed for tests
   SESSION_COOKIE_NAME,

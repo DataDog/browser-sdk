@@ -13,7 +13,7 @@ import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
 import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/trackViews'
-import { RumSession } from '../src/domain/rumSession'
+import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
 import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
 
@@ -52,8 +52,9 @@ export interface TestIO {
 }
 
 export function setup(): TestSetupBuilder {
-  let session = {
+  let session: RumSession = {
     getId: () => '1234' as string | undefined,
+    getPlan: () => RumSessionPlan.REPLAY,
     isTracked: () => true,
     isTrackedWithResource: () => true,
   }
@@ -179,6 +180,9 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     _dd: {
       format_version: 2,
       drift: 0,
+      session: {
+        plan: RumSessionPlan.REPLAY,
+      },
     },
     application: {
       id: fakeId,

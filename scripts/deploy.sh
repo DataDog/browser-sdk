@@ -51,7 +51,7 @@ v[0-9]*) # if major version also update legacy files
   ;;
 esac
 
-CACHE_CONTROL='max-age=900, s-maxage=60'
+CACHE_CONTROL='max-age=14400, s-maxage=60'
 
 main() {
   in-isolation upload-to-s3
