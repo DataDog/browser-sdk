@@ -12,10 +12,10 @@ import {
   RawError,
   RelativeTime,
   InitConfiguration,
-  trackNetworkError,
   trackRuntimeError,
   trackConsoleError,
 } from '@datadog/browser-core'
+import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'

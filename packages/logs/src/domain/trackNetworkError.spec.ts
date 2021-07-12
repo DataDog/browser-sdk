@@ -1,7 +1,6 @@
-import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../../test/specHelper'
-import { RawError } from '../../tools/error'
-import { Observable } from '../../tools/observable'
-import { Configuration } from '../configuration'
+import { Configuration, Observable, RawError } from '@datadog/browser-core'
+import { FetchStub, FetchStubManager, isIE, SPEC_ENDPOINTS, stubFetch } from '../../../core/test/specHelper'
+
 import { trackNetworkError } from './trackNetworkError'
 
 describe('network error tracker', () => {

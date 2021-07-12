@@ -1,9 +1,16 @@
-import { FetchCompleteContext, resetFetchProxy, startFetchProxy } from '../../browser/fetchProxy'
-import { resetXhrProxy, startXhrProxy, XhrCompleteContext } from '../../browser/xhrProxy'
-import { ErrorSource, RawError } from '../../tools/error'
-import { Observable } from '../../tools/observable'
-import { RequestType } from '../../tools/utils'
-import { Configuration } from '../configuration'
+import {
+  Configuration,
+  ErrorSource,
+  FetchCompleteContext,
+  Observable,
+  RawError,
+  RequestType,
+  resetFetchProxy,
+  resetXhrProxy,
+  startFetchProxy,
+  startXhrProxy,
+  XhrCompleteContext,
+} from '@datadog/browser-core'
 
 export function trackNetworkError(
   configuration: Configuration,
