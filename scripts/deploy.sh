@@ -5,7 +5,7 @@ set -ex
 env=$1
 suffix=$2
 
-USAGE="Usage: ./deploy.sh staging|prod head|canary|version"
+USAGE="Usage: ./deploy.sh staging|prod head|canary|vXXX"
 
 case "${env}" in
 "prod")
