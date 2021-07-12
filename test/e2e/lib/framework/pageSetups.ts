@@ -1,6 +1,6 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
+import { RumRecorderInitConfiguration } from '@datadog/browser-rum'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration

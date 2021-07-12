@@ -28,8 +28,6 @@ const packagesRoot = path.resolve(__dirname, '..', 'packages')
 const pathsWithSideEffect = new Set([
   `${packagesRoot}/logs/src/boot/logs.entry.ts`,
   `${packagesRoot}/logs/src/index.ts`,
-  `${packagesRoot}/rum-recorder/src/boot/recorder.entry.ts`,
-  `${packagesRoot}/rum-recorder/src/index.ts`,
   `${packagesRoot}/rum/src/boot/rum.entry.ts`,
   `${packagesRoot}/rum/src/index.ts`,
   `${packagesRoot}/rum-slim/src/boot/rumSlim.entry.ts`,

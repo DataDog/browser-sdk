@@ -1,5 +1,5 @@
-import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum-recorder/cjs/types'
-import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum-recorder/cjs/domain/record/types'
+import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum/cjs/types'
+import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
@@ -12,7 +12,7 @@ import {
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
-} from '../../../packages/rum-recorder/test/utils'
+} from '../../../packages/rum/test/utils'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
