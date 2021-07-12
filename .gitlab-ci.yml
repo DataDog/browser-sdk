@@ -186,7 +186,7 @@ deploy-prod-stable:
   script:
     - yarn
     - BUILD_MODE=release yarn build:bundle
-    - ./scripts/deploy.sh prod
+    - ./scripts/deploy.sh prod v${$(node -p -e "require('./lerna.json').version")%%.*}
 
 ########################################################################################################################
 # Notify
