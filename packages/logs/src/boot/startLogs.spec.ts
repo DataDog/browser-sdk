@@ -2,7 +2,6 @@ import {
   Configuration,
   Context,
   DEFAULT_CONFIGURATION,
-  ErrorObservable,
   ErrorSource,
   noop,
   Observable,
@@ -55,7 +54,7 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
-  let errorObservable: ErrorObservable
+  let errorObservable: Observable<RawError>
   const session = {
     getId: () => (sessionIsTracked ? SESSION_ID : undefined),
     isTracked: () => sessionIsTracked,
