@@ -8,6 +8,7 @@ import { RumPerformanceNavigationTiming } from '../browser/performanceCollection
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
+import { RumSessionPlan } from '../domain/rumSession'
 import { RumEvent } from '../rumEvent.types'
 import { startRumEventCollection } from './startRum'
 
@@ -78,6 +79,7 @@ describe('rum session', () => {
     const { lifeCycle } = setupBuilder
       .withSession({
         getId: () => sessionId,
+        getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })
@@ -113,6 +115,7 @@ describe('rum session keep alive', () => {
       .withFakeClock()
       .withSession({
         getId: () => '1234',
+        getPlan: () => (isSessionTracked ? RumSessionPlan.REPLAY : undefined),
         isTracked: () => isSessionTracked,
         isTrackedWithResource: () => true,
       })

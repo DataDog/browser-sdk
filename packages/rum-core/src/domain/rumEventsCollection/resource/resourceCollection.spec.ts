@@ -5,6 +5,7 @@ import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
+import { RumSessionPlan } from '../../rumSession'
 import { TraceIdentifier } from '../../tracing/tracer'
 import { startResourceCollection } from './resourceCollection'
 
@@ -16,6 +17,7 @@ describe('resourceCollection', () => {
       setupBuilder = setup()
         .withSession({
           getId: () => '1234',
+          getPlan: () => RumSessionPlan.REPLAY,
           isTracked: () => true,
           isTrackedWithResource: () => true,
         })
@@ -158,6 +160,7 @@ describe('resourceCollection', () => {
       setupBuilder = setup()
         .withSession({
           getId: () => '1234',
+          getPlan: () => RumSessionPlan.REPLAY,
           isTracked: () => true,
           isTrackedWithResource: () => false,
         })
@@ -195,6 +198,7 @@ describe('resourceCollection', () => {
       setupBuilder = setup()
         .withSession({
           getId: () => '1234',
+          getPlan: () => RumSessionPlan.REPLAY,
           isTracked: () => true,
           isTrackedWithResource: () => isTrackedWithResource,
         })

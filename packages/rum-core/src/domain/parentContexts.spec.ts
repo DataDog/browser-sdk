@@ -10,6 +10,7 @@ import {
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import { RumSessionPlan } from './rumSession'
 
 function stubActionWithDuration(duration: number): AutoAction {
   const action: Partial<AutoAction> = { duration: duration as Duration }
@@ -40,6 +41,7 @@ describe('parentContexts', () => {
       .withFakeLocation('http://fake-url.com')
       .withSession({
         getId: () => sessionId,
+        getPlan: () => RumSessionPlan.REPLAY,
         isTracked: () => true,
         isTrackedWithResource: () => true,
       })
