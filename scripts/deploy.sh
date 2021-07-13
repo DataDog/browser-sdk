@@ -37,6 +37,7 @@ v[0-9]*) # if major version also update legacy files
       ["datadog-logs-eu.js"]="packages/logs/bundle/datadog-logs-eu.js"
       ["datadog-logs-us.js"]="packages/logs/bundle/datadog-logs-us.js" 
     )
+    CACHE_CONTROL='max-age=14400, s-maxage=60'
   ;;
 "canary" | "head")
     declare -A BUNDLES=(
@@ -44,14 +45,13 @@ v[0-9]*) # if major version also update legacy files
       ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
       ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
     )
+    CACHE_CONTROL='max-age=900, s-maxage=60'
   ;;
 * )
     echo $USAGE
     exit 1
   ;;
 esac
-
-CACHE_CONTROL='max-age=14400, s-maxage=60'
 
 main() {
   in-isolation upload-to-s3
