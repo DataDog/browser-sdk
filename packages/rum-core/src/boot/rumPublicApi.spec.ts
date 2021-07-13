@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
@@ -280,25 +280,10 @@ describe('rum public api', () => {
           context: undefined,
           error: new Error('foo'),
           handlingStack: jasmine.any(String),
-          source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
         { context: {}, user: {} },
       ])
-    })
-
-    it('allows setting an ErrorSource', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
-    })
-
-    it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
-      const displaySpy = spyOn(display, 'error')
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
-      expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
 
     it('should generate a handling stack', () => {
