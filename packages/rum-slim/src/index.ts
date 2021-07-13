@@ -2,7 +2,6 @@
 export { datadogRum } from './boot/rumSlim.entry'
 export {
   CommonProperties,
-  ProvidedSource,
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
   RumUserConfiguration,
