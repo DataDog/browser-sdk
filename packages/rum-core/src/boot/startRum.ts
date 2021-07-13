@@ -46,8 +46,10 @@ export function startRum(
     getCommonContext
   )
 
-  startLongTaskCollection(lifeCycle)
-  startResourceCollection(lifeCycle, session)
+  if (session.hasReplayPlan()) {
+    startLongTaskCollection(lifeCycle)
+  }
+  startResourceCollection(lifeCycle)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
     configuration,
