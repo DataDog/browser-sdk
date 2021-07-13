@@ -4,6 +4,7 @@ import { flushEvents } from '../../lib/helpers/sdk'
 describe('API calls and events around init', () => {
   createTest('should be associated to corresponding views when views are automatically tracked')
     .withRum()
+    .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before manual view')
       window.DD_RUM!.addAction('before manual view')
@@ -52,6 +53,7 @@ describe('API calls and events around init', () => {
 
   createTest('should be associated to corresponding views when views are manually tracked')
     .withRum({ trackViewsManually: true })
+    .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.addError('before init')
       window.DD_RUM!.addAction('before init')
@@ -110,6 +112,7 @@ describe('beforeSend', () => {
         event.context!.foo = 'bar'
       },
     })
+    .withRumSlim()
     .run(async ({ events }) => {
       await flushEvents()
 
@@ -125,6 +128,7 @@ describe('beforeSend', () => {
         event.context = { foo: 'bar' }
       },
     })
+    .withRumSlim()
     .withRumInit((configuration) => {
       window.DD_RUM!.init(configuration)
       window.DD_RUM!.addRumGlobalContext('foo', 'baz')

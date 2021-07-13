@@ -37,6 +37,7 @@ type TestRunner = (testContext: TestContext) => Promise<void>
 
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
+  private alsoRunWithRumSlim = false
   private rumRecorderConfiguration: RumRecorderInitConfiguration | undefined = undefined
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
@@ -47,6 +48,11 @@ class TestBuilder {
 
   withRum(rumInitConfiguration?: Partial<RumInitConfiguration>) {
     this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
+    return this
+  }
+
+  withRumSlim() {
+    this.alsoRunWithRumSlim = true
     return this
   }
 
@@ -93,16 +99,16 @@ class TestBuilder {
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
       rumRecorder: this.rumRecorderConfiguration,
+      useRumSlim: false,
     }
 
-    if (setups.length > 1) {
+    if (this.alsoRunWithRumSlim) {
       describe(this.title, () => {
-        for (const { name, factory } of setups) {
-          declareTest(name!, factory(setupOptions), runner)
-        }
+        declareTestsForSetups('rum', setups, setupOptions, runner)
+        declareTestsForSetups('rum-slim', setups, { ...setupOptions, useRumSlim: true }, runner)
       })
     } else {
-      declareTest(this.title, setups[0].factory(setupOptions), runner)
+      declareTestsForSetups(this.title, setups, setupOptions, runner)
     }
   }
 
@@ -115,6 +121,23 @@ interface ItResult {
   getFullName(): string
 }
 declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
+
+function declareTestsForSetups(
+  title: string,
+  setups: Array<{ factory: SetupFactory; name?: string }>,
+  setupOptions: SetupOptions,
+  runner: TestRunner
+) {
+  if (setups.length > 1) {
+    describe(title, () => {
+      for (const { name, factory } of setups) {
+        declareTest(name!, factory(setupOptions), runner)
+      }
+    })
+  } else {
+    declareTest(title, setups[0].factory(setupOptions), runner)
+  }
+}
 
 function declareTest(title: string, setup: string, runner: TestRunner) {
   const spec = it(title, async () => {
