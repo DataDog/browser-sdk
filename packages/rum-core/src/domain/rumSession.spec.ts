@@ -10,10 +10,10 @@ import {
 import { Clock, isIE, mockClock } from '../../../core/test/specHelper'
 
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { RUM_SESSION_KEY, RumTrackingType, startRumSession, RumSessionPlan } from './rumSession'
+import { RUM_SESSION_KEY, RumTrackingType, startRumSession } from './rumSession'
 
-function setupDraws({ tracked, trackedWithResources }: { tracked?: boolean; trackedWithResources?: boolean }) {
-  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithResources ? 0 : 1)
+function setupDraws({ tracked, trackedWithReplay }: { tracked?: boolean; trackedWithReplay?: boolean }) {
+  spyOn(Math, 'random').and.returnValues(tracked ? 0 : 1, trackedWithReplay ? 0 : 1)
 }
 
 describe('rum session', () => {
@@ -21,8 +21,8 @@ describe('rum session', () => {
   const configuration: Partial<Configuration> = {
     ...DEFAULT_CONFIGURATION,
     isEnabled: () => true,
-    resourceSampleRate: 50,
     sampleRate: 50,
+    replaySampleRate: 50,
   }
   let lifeCycle: LifeCycle
   let renewSessionSpy: jasmine.Spy
@@ -47,25 +47,23 @@ describe('rum session', () => {
   })
 
   describe('cookie storage', () => {
-    it('when tracked with resources should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithResources: true })
+    it('when tracked with replay plan should store session type and id', () => {
+      setupDraws({ tracked: true, trackedWithReplay: true })
 
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
 
-    it('when tracked without resources should store session type and id', () => {
-      setupDraws({ tracked: true, trackedWithResources: false })
+    it('when tracked with lite plan should store session type and id', () => {
+      setupDraws({ tracked: true, trackedWithReplay: false })
 
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(
-        `${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITHOUT_RESOURCES}`
-      )
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_LITE}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
 
@@ -85,7 +83,7 @@ describe('rum session', () => {
       startRumSession(configuration as Configuration, lifeCycle)
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcdef')
     })
 
@@ -106,11 +104,11 @@ describe('rum session', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(COOKIE_ACCESS_DELAY)
 
-      setupDraws({ tracked: true, trackedWithResources: true })
+      setupDraws({ tracked: true, trackedWithReplay: true })
       document.dispatchEvent(new CustomEvent('click'))
 
       expect(renewSessionSpy).toHaveBeenCalled()
-      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_WITH_RESOURCES}`)
+      expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
     })
   })
@@ -130,24 +128,45 @@ describe('rum session', () => {
     })
   })
 
-  describe('getPlan', () => {
-    it('should return the session plan', () => {
+  describe('hasReplayPlan', () => {
+    it('should return true if the session has the replay plan', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
-      expect(rumSession.getPlan()).toBe(RumSessionPlan.REPLAY)
+      expect(rumSession.hasReplayPlan()).toBeTrue()
     })
 
-    it('should return undefined if the session has expired', () => {
+    it('should return false if the session has expired', () => {
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
-      expect(rumSession.getPlan()).toBe(undefined)
+      expect(rumSession.hasReplayPlan()).toBeFalse()
     })
 
-    it('should return undefined if the session is not tracked', () => {
+    it('should return false if the session is not tracked', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
-      expect(rumSession.getPlan()).toBe(undefined)
+      expect(rumSession.hasReplayPlan()).toBeFalse()
+    })
+  })
+
+  describe('hasLitePlan', () => {
+    it('should return true if the session has the lite plan', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=2', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      expect(rumSession.hasLitePlan()).toBeTrue()
+    })
+
+    it('should return false if the session has expired', () => {
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      setCookie(SESSION_COOKIE_NAME, '', DURATION)
+      clock.tick(COOKIE_ACCESS_DELAY)
+      expect(rumSession.hasLitePlan()).toBeFalse()
+    })
+
+    it('should return false if the session is not tracked', () => {
+      setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=0', DURATION)
+      const rumSession = startRumSession(configuration as Configuration, lifeCycle)
+      expect(rumSession.hasLitePlan()).toBeFalse()
     })
   })
 })

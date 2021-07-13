@@ -1,3 +1,4 @@
+import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { startInternalContext } from './internalContext'
 import { ParentContexts } from './parentContexts'
@@ -54,15 +55,7 @@ describe('internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    setupBuilder
-      .withSession({
-        getId: () => '1234',
-        getPlan: () => undefined,
-        isTracked: () => false,
-        isTrackedWithResource: () => false,
-      })
-      .build()
-
+    setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
     expect(internalContext.get()).toEqual(undefined)
   })
 

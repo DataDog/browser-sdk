@@ -19,7 +19,6 @@ import {
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
-import { RumSession } from '../../rumSession'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -29,15 +28,13 @@ import {
   isRequestKind,
 } from './resourceUtils'
 
-export function startResourceCollection(lifeCycle: LifeCycle, session: RumSession) {
+export function startResourceCollection(lifeCycle: LifeCycle) {
   lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    if (session.isTrackedWithResource()) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
-    }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processRequest(request))
   })
 
   lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
-    if (session.isTrackedWithResource() && entry.entryType === 'resource' && !isRequestKind(entry)) {
+    if (entry.entryType === 'resource' && !isRequestKind(entry)) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResourceEntry(entry))
     }
   })
