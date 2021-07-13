@@ -1,5 +1,6 @@
 import { RelativeTime, Configuration } from '@datadog/browser-core'
 import { RumSession } from '@datadog/browser-rum-core'
+import { createRumSessionMock, RumSessionMock } from '../..//test/mockRumSession'
 import { isIE } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { DOMMutationObservable } from '../browser/domMutationObservable'
@@ -8,7 +9,6 @@ import { RumPerformanceNavigationTiming } from '../browser/performanceCollection
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
-import { RumSessionPlan } from '../domain/rumSession'
 import { RumEvent } from '../rumEvent.types'
 import { startRumEventCollection } from './startRum'
 
@@ -75,20 +75,14 @@ describe('rum session', () => {
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
-    let sessionId = '42'
-    const { lifeCycle } = setupBuilder
-      .withSession({
-        getId: () => sessionId,
-        getPlan: () => RumSessionPlan.REPLAY,
-        isTracked: () => true,
-      })
-      .build()
+    const session = createRumSessionMock().setId('42')
+    const { lifeCycle } = setupBuilder.withSession(session).build()
 
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    sessionId = '43'
+    session.setId('43')
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(serverRumEvents.length).toEqual(2)
@@ -101,7 +95,7 @@ describe('rum session', () => {
 })
 
 describe('rum session keep alive', () => {
-  let isSessionTracked: boolean
+  let session: RumSessionMock
   let setupBuilder: TestSetupBuilder
   let serverRumEvents: RumEvent[]
 
@@ -109,14 +103,10 @@ describe('rum session keep alive', () => {
     if (isIE()) {
       pending('no full rum support')
     }
-    isSessionTracked = true
+    session = createRumSessionMock().setId('1234')
     setupBuilder = setup()
       .withFakeClock()
-      .withSession({
-        getId: () => '1234',
-        getPlan: () => (isSessionTracked ? RumSessionPlan.REPLAY : undefined),
-        isTracked: () => isSessionTracked,
-      })
+      .withSession(session)
       .beforeBuild(({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
         return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
@@ -155,7 +145,7 @@ describe('rum session keep alive', () => {
     serverRumEvents.length = 0
 
     // expire session
-    isSessionTracked = false
+    session.setNotTracked()
 
     clock.tick(SESSION_KEEP_ALIVE_INTERVAL * 0.1)
 

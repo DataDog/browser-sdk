@@ -1,4 +1,5 @@
 import { Duration, RelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
 import {
@@ -10,7 +11,6 @@ import {
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
-import { RumSessionPlan } from './rumSession'
 
 function stubActionWithDuration(duration: number): AutoAction {
   const action: Partial<AutoAction> = { duration: duration as Duration }
@@ -31,19 +31,15 @@ describe('parentContexts', () => {
     }
   }
 
-  let sessionId: string
+  let session: RumSessionMock
   let setupBuilder: TestSetupBuilder
   let parentContexts: ParentContexts
 
   beforeEach(() => {
-    sessionId = 'fake-session'
+    session = createRumSessionMock().setId('fake-session')
     setupBuilder = setup()
       .withFakeLocation('http://fake-url.com')
-      .withSession({
-        getId: () => sessionId,
-        getPlan: () => RumSessionPlan.REPLAY,
-        isTracked: () => true,
-      })
+      .withSession(session)
       .beforeBuild(({ lifeCycle, session }) => {
         parentContexts = startParentContexts(lifeCycle, session)
         return parentContexts
@@ -146,7 +142,7 @@ describe('parentContexts', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent())
       expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
-      sessionId = 'other-session'
+      session.setId('other-session')
       expect(parentContexts.findView()!.session.id).toBe('fake-session')
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))

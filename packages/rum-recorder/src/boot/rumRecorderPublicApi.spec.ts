@@ -1,4 +1,5 @@
-import { LifeCycleEventType, RumSessionPlan, StartRum } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, StartRum } from '@datadog/browser-rum-core'
+import { createRumSessionMock, RumSessionMock } from 'packages/rum-core/test/mockRumSession'
 import { createNewEvent } from '../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
 import { makeRumRecorderPublicApi, RumRecorderPublicApi, StartRecording } from './rumRecorderPublicApi'
@@ -154,47 +155,31 @@ describe('makeRumRecorderPublicApi', () => {
     })
 
     it('ignores calls if the session is not tracked', () => {
-      setupBuilder
-        .withSession({
-          isTracked: () => false,
-          getId: () => undefined,
-          getPlan: () => undefined,
-        })
-        .build()
+      setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
       rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumRecorderPublicApi.startSessionReplayRecording()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
     it('ignores calls if the session plan is LITE', () => {
-      setupBuilder
-        .withSession({
-          isTracked: () => true,
-          getId: () => '123',
-          getPlan: () => RumSessionPlan.LITE,
-        })
-        .build()
+      setupBuilder.withSession(createRumSessionMock().setLitePlan()).build()
       rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumRecorderPublicApi.startSessionReplayRecording()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
     describe('when an untracked session expires and the renewed session plan is REPLAY', () => {
-      let isTracked: boolean
+      let session: RumSessionMock
       beforeEach(() => {
-        isTracked = false
-        setupBuilder.withSession({
-          isTracked: () => isTracked,
-          getId: () => (isTracked ? '123' : undefined),
-          getPlan: () => (isTracked ? RumSessionPlan.REPLAY : undefined),
-        })
+        session = createRumSessionMock().setNotTracked()
+        setupBuilder.withSession(session)
       })
 
       it('starts recording if startSessionReplayRecording was called', () => {
         const { lifeCycle } = setupBuilder.build()
         rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
         rumRecorderPublicApi.startSessionReplayRecording()
-        isTracked = true
+        session.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
       })
@@ -204,7 +189,8 @@ describe('makeRumRecorderPublicApi', () => {
         rumRecorderPublicApi.init(DEFAULT_INIT_CONFIGURATION)
         rumRecorderPublicApi.startSessionReplayRecording()
         rumRecorderPublicApi.stopSessionReplayRecording()
-        isTracked = true
+        session.setReplayPlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })

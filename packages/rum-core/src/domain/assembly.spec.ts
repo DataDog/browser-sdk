@@ -1,4 +1,5 @@
 import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
+import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventDomainContext } from '../domainContext.types'
@@ -447,13 +448,7 @@ describe('rum assembly', () => {
     })
 
     it('when not tracked, it should not generate event', () => {
-      const { lifeCycle } = setupBuilder
-        .withSession({
-          getId: () => '1234',
-          getPlan: () => undefined,
-          isTracked: () => false,
-        })
-        .build()
+      const { lifeCycle } = setupBuilder.withSession(createRumSessionMock().setNotTracked()).build()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })

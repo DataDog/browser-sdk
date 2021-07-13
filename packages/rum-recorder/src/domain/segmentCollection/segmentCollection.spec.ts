@@ -1,5 +1,5 @@
 import { DOM_EVENT } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewContext } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, ViewContext } from '@datadog/browser-rum-core'
 import {
   Clock,
   createNewEvent,
@@ -8,7 +8,7 @@ import {
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
-import { RumSessionPlan } from 'packages/rum-core/src/domain/rumSession'
+import { createRumSessionMock } from '../../../../rum-core/test/mockRumSession'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
@@ -222,11 +222,7 @@ describe('computeSegmentContext', () => {
     view: { id: '123', url: 'http://foo.com', referrer: 'http://bar.com' },
   }
 
-  const DEFAULT_SESSION: RumSession = {
-    getId: () => '456',
-    getPlan: () => RumSessionPlan.REPLAY,
-    isTracked: () => true,
-  }
+  const DEFAULT_SESSION = createRumSessionMock().setId('456')
 
   it('returns a segment context', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockParentContexts(DEFAULT_VIEW_CONTEXT))).toEqual({
