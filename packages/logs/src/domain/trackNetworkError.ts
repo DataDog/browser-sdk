@@ -12,20 +12,12 @@ import {
   XhrCompleteContext,
 } from '@datadog/browser-core'
 
-export function trackNetworkError(
-  configuration: Configuration,
-  errorObservable: Observable<RawError>,
-  trackAbortedRequests = true
-) {
+export function trackNetworkError(configuration: Configuration, errorObservable: Observable<RawError>) {
   startXhrProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.XHR, context))
   startFetchProxy().onRequestComplete((context) => handleCompleteRequest(RequestType.FETCH, context))
 
   function handleCompleteRequest(type: RequestType, request: XhrCompleteContext | FetchCompleteContext) {
-    if (
-      !configuration.isIntakeUrl(request.url) &&
-      (trackAbortedRequests || !request.isAborted) &&
-      (isRejected(request) || isServerError(request))
-    ) {
+    if (!configuration.isIntakeUrl(request.url) && (isRejected(request) || isServerError(request))) {
       errorObservable.notify({
         message: `${format(type)} error ${request.method} ${request.url}`,
         resource: {
