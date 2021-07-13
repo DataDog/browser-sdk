@@ -5,8 +5,9 @@ export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSession {
   getId: () => string | undefined
-  getPlan(): RumSessionPlan | undefined
   isTracked: () => boolean
+  hasReplayPlan: () => boolean
+  hasLitePlan: () => boolean
 }
 
 export enum RumSessionPlan {
@@ -34,21 +35,14 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
 
   return {
     getId: session.getId,
-    getPlan: () => getSessionPlan(session),
     isTracked: () => isSessionTracked(session),
+    hasReplayPlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_REPLAY,
+    hasLitePlan: () => isSessionTracked(session) && session.getTrackingType() === RumTrackingType.TRACKED_LITE,
   }
 }
 
 function isSessionTracked(session: Session<RumTrackingType>) {
   return session.getId() !== undefined && isTypeTracked(session.getTrackingType())
-}
-
-function getSessionPlan(session: Session<RumTrackingType>) {
-  return isSessionTracked(session)
-    ? session.getTrackingType() === RumTrackingType.TRACKED_LITE
-      ? RumSessionPlan.LITE
-      : RumSessionPlan.REPLAY
-    : undefined
 }
 
 function computeSessionState(configuration: Configuration, rawTrackingType?: string) {

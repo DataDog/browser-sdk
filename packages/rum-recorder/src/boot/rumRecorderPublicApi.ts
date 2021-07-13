@@ -5,7 +5,6 @@ import {
   RumInitConfiguration,
   StartRum,
   CommonContext,
-  RumSessionPlan,
 } from '@datadog/browser-rum-core'
 
 import { startRecording } from './startRecording'
@@ -98,7 +97,7 @@ export function makeRumRecorderPublicApi(startRumImpl: StartRum, startRecordingI
     })
 
     startSessionReplayRecordingStrategy = () => {
-      if (session.getPlan() !== RumSessionPlan.REPLAY) {
+      if (!session.hasReplayPlan()) {
         state = { status: RecorderStatus.IntentToStart }
         return
       }
