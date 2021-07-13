@@ -3,8 +3,9 @@
 set -ex
 
 env=$1
-suffix=${2+"-$2"}
+suffix=$2
 
+USAGE="Usage: ./deploy.sh staging|prod head|canary|vXXX"
 
 case "${env}" in
 "prod")
@@ -18,28 +19,39 @@ case "${env}" in
     DISTRIBUTION_ID="E2FP11ZSCFD3EU"
     ;;
 * )
-    echo "Usage: ./deploy.sh staging|prod [head|canary]"
+    echo $USAGE
     exit 1
     ;;
 esac
 
-FILE_PATHS=(
-  "packages/logs/bundle/datadog-logs.js"
-  "packages/rum/bundle/datadog-rum.js"
-  "packages/rum-recorder/bundle/datadog-rum-recorder.js"
-)
-
-# no need to update legacy files for deployments with suffix
-if [[ -z $suffix ]]; then
-  FILE_PATHS+=(
-    "packages/logs/bundle/datadog-logs-eu.js"
-    "packages/logs/bundle/datadog-logs-us.js"
-    "packages/rum/bundle/datadog-rum-eu.js"
-    "packages/rum/bundle/datadog-rum-us.js"
-  )
-fi
-
-CACHE_CONTROL='max-age=900, s-maxage=60'
+case "${suffix}" in
+v[0-9]*) # if major version also update legacy files
+    declare -A BUNDLES=(
+      ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+      ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
+      ["datadog-rum.js"]="packages/rum/bundle/datadog-rum.js" # deprecated: to remove with version 3
+      ["datadog-rum-recorder.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js" # deprecated: to remove with version 3
+      ["datadog-rum-eu.js"]="packages/rum/bundle/datadog-rum-eu.js" # deprecated: to remove with version 3
+      ["datadog-rum-us.js"]="packages/rum/bundle/datadog-rum-us.js" # deprecated: to remove with version 3
+      ["datadog-logs.js"]="packages/logs/bundle/datadog-logs.js"
+      ["datadog-logs-eu.js"]="packages/logs/bundle/datadog-logs-eu.js"
+      ["datadog-logs-us.js"]="packages/logs/bundle/datadog-logs-us.js" 
+    )
+    CACHE_CONTROL='max-age=14400, s-maxage=60'
+  ;;
+"canary" | "head")
+    declare -A BUNDLES=(
+      ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
+      ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+      ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
+    )
+    CACHE_CONTROL='max-age=900, s-maxage=60'
+  ;;
+* )
+    echo $USAGE
+    exit 1
+  ;;
+esac
 
 main() {
   in-isolation upload-to-s3
@@ -48,10 +60,10 @@ main() {
 
 upload-to-s3() {
     assume-role "build-stable-browser-agent-artifacts-s3-write"
-    for file_path in "${FILE_PATHS[@]}"; do
-      local file_name=$(suffixed-file-name "$file_path")
-      echo "Upload ${file_name}"
-      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${file_name};
+    for bundle_name in "${!BUNDLES[@]}"; do
+      local file_path=${BUNDLES[$bundle_name]}
+      echo "Upload ${bundle_name}"
+      aws s3 cp --cache-control "$CACHE_CONTROL" "$file_path" s3://${BUCKET_NAME}/${bundle_name};
     done
 }
 
@@ -59,16 +71,10 @@ invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
     local -a paths_to_invalidate
-    for file_path in "${FILE_PATHS[@]}"; do
-      paths_to_invalidate+=("/$(suffixed-file-name "$file_path")")
+    for bundle_name in "${!BUNDLES[@]}"; do
+      paths_to_invalidate+=("/$bundle_name")
     done
     aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "${paths_to_invalidate[@]}"
-}
-
-suffixed-file-name() {
-    file_path=$1
-    local file_name=$(basename "$file_path")
-    echo ${file_name%.*}${suffix}.${file_name##*.}
 }
 
 in-isolation() {

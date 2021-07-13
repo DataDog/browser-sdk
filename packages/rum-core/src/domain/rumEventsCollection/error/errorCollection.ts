@@ -4,10 +4,14 @@ import {
   Context,
   formatUnknownError,
   RawError,
-  startAutomaticErrorCollection,
+  ErrorSource,
   ClocksState,
   generateUUID,
   ErrorHandling,
+  Observable,
+  trackConsoleError,
+  trackRuntimeError,
+  trackNetworkError,
 } from '@datadog/browser-core'
 import { CommonContext, RawRumErrorEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
@@ -17,20 +21,22 @@ export interface ProvidedError {
   startClocks: ClocksState
   error: unknown
   context?: Context
-  source: ProvidedSource
   handlingStack: string
 }
-
-export type ProvidedSource = 'custom' | 'network' | 'source'
 
 export function startErrorCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   foregroundContexts: ForegroundContexts
 ) {
-  startAutomaticErrorCollection(configuration).subscribe((error) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
-  )
+  const errorObservable = new Observable<RawError>()
+  trackConsoleError(errorObservable)
+  trackRuntimeError(errorObservable)
+  if (!configuration.isEnabled('remove-network-errors')) {
+    trackNetworkError(configuration, errorObservable) // deprecated: to remove with version 3
+  }
+
+  errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
   return doStartErrorCollection(lifeCycle, foregroundContexts)
 }
@@ -46,10 +52,10 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
 
   return {
     addError: (
-      { error, handlingStack, startClocks, context: customerContext, source }: ProvidedError,
+      { error, handlingStack, startClocks, context: customerContext }: ProvidedError,
       savedCommonContext?: CommonContext
     ) => {
-      const rawError = computeRawError(error, handlingStack, startClocks, source)
+      const rawError = computeRawError(error, handlingStack, startClocks)
       lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
         customerContext,
         savedCommonContext,
@@ -59,16 +65,11 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, foregroundContexts:
   }
 }
 
-function computeRawError(
-  error: unknown,
-  handlingStack: string,
-  startClocks: ClocksState,
-  source: ProvidedSource
-): RawError {
+function computeRawError(error: unknown, handlingStack: string, startClocks: ClocksState): RawError {
   const stackTrace = error instanceof Error ? computeStackTrace(error) : undefined
   return {
     startClocks,
-    source,
+    source: ErrorSource.CUSTOM,
     originalError: error,
     ...formatUnknownError(stackTrace, error, 'Provided', handlingStack),
     handling: ErrorHandling.HANDLED,

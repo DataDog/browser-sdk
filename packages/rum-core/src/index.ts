@@ -5,7 +5,6 @@ export {
   makeRumPublicApi,
   StartRum,
 } from './boot/rumPublicApi'
-export { ProvidedSource } from './domain/rumEventsCollection/error/errorCollection'
 export {
   RumEvent,
   RumActionEvent,

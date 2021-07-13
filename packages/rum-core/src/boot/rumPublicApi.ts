@@ -6,7 +6,6 @@ import {
   Context,
   createContextManager,
   deepClone,
-  ErrorSource,
   isPercentage,
   makePublicApi,
   monitor,
@@ -20,7 +19,6 @@ import {
   callMonitored,
   createHandlingStack,
 } from '@datadog/browser-core'
-import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
@@ -161,21 +159,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       rumPublicApi.addAction(name, context as Context)
     },
 
-    addError: (error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
+    addError: (error: unknown, context?: object) => {
       const handlingStack = createHandlingStack()
       callMonitored(() => {
-        let checkedSource: ProvidedSource
-        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-          checkedSource = source
-        } else {
-          display.error(`DD_RUM.addError: Invalid source '${source as string}'`)
-          checkedSource = ErrorSource.CUSTOM
-        }
         addErrorStrategy({
           error,
           handlingStack,
           context: deepClone(context as Context),
-          source: checkedSource,
           startClocks: clocksNow(),
         })
       })
