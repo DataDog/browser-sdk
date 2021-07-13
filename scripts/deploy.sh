@@ -38,6 +38,7 @@ v[0-9]*) # if major version also update legacy files
       ["datadog-logs-eu.js"]="packages/logs/bundle/datadog-logs-eu.js"
       ["datadog-logs-us.js"]="packages/logs/bundle/datadog-logs-us.js" 
     )
+    CACHE_CONTROL='max-age=14400, s-maxage=60'
   ;;
 "canary" | "head")
     declare -A BUNDLES=(
@@ -46,14 +47,13 @@ v[0-9]*) # if major version also update legacy files
       ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
       ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
     )
+    CACHE_CONTROL='max-age=900, s-maxage=60'
   ;;
 * )
     echo $USAGE
     exit 1
   ;;
 esac
-
-CACHE_CONTROL='max-age=14400, s-maxage=60'
 
 main() {
   in-isolation upload-to-s3
@@ -73,7 +73,7 @@ invalidate-cloudfront() {
     assume-role "build-stable-cloudfront-invalidation"
     echo "Creating invalidation"
     local -a paths_to_invalidate
-    for bundle_name in "${!BUNDLES[@]}}"; do
+    for bundle_name in "${!BUNDLES[@]}"; do
       paths_to_invalidate+=("/$bundle_name")
     done
     aws cloudfront create-invalidation --distribution-id ${DISTRIBUTION_ID} --paths "${paths_to_invalidate[@]}"
