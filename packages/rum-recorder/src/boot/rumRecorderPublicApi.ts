@@ -24,9 +24,14 @@ export interface RumRecorderInitConfiguration extends RumInitConfiguration {
 export type RumRecorderUserConfiguration = RumRecorderInitConfiguration
 
 const enum RecorderStatus {
+  // The recorder is stopped.
   Stopped,
+  // The user started the recording while it wasn't possible yet. The recorder should start as soon
+  // as possible.
   IntentToStart,
+  // The recorder is starting. It does not record anything yet.
   Starting,
+  // The recorder is started, it records the session.
   Started,
 }
 type RecorderState =
