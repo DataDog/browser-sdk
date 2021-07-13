@@ -86,9 +86,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     ) {
       return
     }
-    if (initConfiguration.publicApiKey) {
-      initConfiguration.clientToken = initConfiguration.publicApiKey
-    }
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
@@ -218,7 +215,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       }
       return false
     }
-    if (!initConfiguration || (!initConfiguration.clientToken && !initConfiguration.publicApiKey)) {
+    if (!initConfiguration || !initConfiguration.clientToken) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }

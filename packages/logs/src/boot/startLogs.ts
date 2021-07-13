@@ -22,6 +22,7 @@ import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
+  publicApiKey?: string // deprecated
   forwardErrorsToLogs?: boolean
   beforeSend?: (event: LogsEvent) => void | boolean
 }
