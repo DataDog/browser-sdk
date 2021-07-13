@@ -154,13 +154,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       })
     }),
 
-    /**
-     * @deprecated use addAction instead
-     */
-    addUserAction: (name: string, context?: object) => {
-      rumPublicApi.addAction(name, context as Context)
-    },
-
     addError: (error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
       const handlingStack = createHandlingStack()
       callMonitored(() => {
