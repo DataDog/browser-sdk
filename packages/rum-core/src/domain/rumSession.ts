@@ -45,8 +45,7 @@ function isSessionTracked(session: Session<RumTrackingType>) {
 
 function getSessionPlan(session: Session<RumTrackingType>) {
   return isSessionTracked(session)
-    ? // TODO: return correct plan based on tracking type
-      session.getTrackingType() === RumTrackingType.TRACKED_LITE
+    ? session.getTrackingType() === RumTrackingType.TRACKED_LITE
       ? RumSessionPlan.LITE
       : RumSessionPlan.REPLAY
     : undefined
