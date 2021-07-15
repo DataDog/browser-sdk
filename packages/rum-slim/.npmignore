@@ -1,0 +1,5 @@
+*
+!/bundle/datadog-rum.js
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*
