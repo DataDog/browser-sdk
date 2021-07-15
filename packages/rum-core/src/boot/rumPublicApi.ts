@@ -18,6 +18,7 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
+  Omit,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
@@ -25,7 +26,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumInitConfiguration extends InitConfiguration {
+export interface RumInitConfiguration extends Omit<InitConfiguration, 'useAlternateIntakeDomains'> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
