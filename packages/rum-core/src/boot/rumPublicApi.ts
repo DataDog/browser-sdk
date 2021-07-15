@@ -18,6 +18,7 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
+  Omit,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
