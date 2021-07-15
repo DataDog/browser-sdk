@@ -11,7 +11,7 @@ import {
   Observable,
   RawError,
   RelativeTime,
-  InitConfiguration,
+  InitConfigurationWithDeprecated,
   trackRuntimeError,
   trackConsoleError,
 } from '@datadog/browser-core'
@@ -21,8 +21,7 @@ import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
 
-export interface LogsInitConfiguration extends InitConfiguration {
-  publicApiKey?: string // deprecated
+export interface LogsInitConfiguration extends InitConfigurationWithDeprecated {
   forwardErrorsToLogs?: boolean
   beforeSend?: (event: LogsEvent) => void | boolean
 }

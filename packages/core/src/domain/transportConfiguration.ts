@@ -1,6 +1,6 @@
 import { BuildEnv, BuildMode } from '../boot/init'
 import { includes } from '../tools/utils'
-import { TransportConfiguration, InitConfiguration } from './configuration'
+import { TransportConfiguration, InitConfigurationWithDeprecated } from './configuration'
 
 const ENDPOINTS = {
   alternate: {
@@ -47,7 +47,10 @@ interface TransportSettings {
   version?: string
 }
 
-export function computeTransportConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
+export function computeTransportConfiguration(
+  initConfiguration: InitConfigurationWithDeprecated,
+  buildEnv: BuildEnv
+): TransportConfiguration {
   const transportSettings: TransportSettings = {
     buildMode: buildEnv.buildMode,
     clientToken: initConfiguration.clientToken,
@@ -111,7 +114,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   return configuration
 }
 
-function getIntakeType(site: string, initConfiguration: InitConfiguration) {
+function getIntakeType(site: string, initConfiguration: InitConfigurationWithDeprecated) {
   return !initConfiguration.useAlternateIntakeDomains && includes(CLASSIC_ALLOWED_SITES, site) ? 'classic' : 'alternate'
 }
 

@@ -2,6 +2,7 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
+  InitConfigurationWithDeprecated,
   UserConfiguration,
   buildCookieOptions,
   BeforeSendCallback,

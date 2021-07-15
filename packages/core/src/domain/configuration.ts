@@ -46,7 +46,6 @@ export interface InitConfiguration {
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   replaySampleRate?: number
-  datacenter?: Datacenter // deprecated
   site?: string
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
@@ -66,6 +65,11 @@ export interface InitConfiguration {
 
   // only on staging build mode
   replica?: ReplicaUserConfiguration
+}
+
+export interface InitConfigurationWithDeprecated extends InitConfiguration {
+  publicApiKey?: string // deprecated
+  datacenter?: Datacenter // deprecated
 }
 
 /**
