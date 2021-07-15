@@ -32,6 +32,8 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/rum-recorder/src/index.ts`,
   `${packagesRoot}/rum/src/boot/rum.entry.ts`,
   `${packagesRoot}/rum/src/index.ts`,
+  `${packagesRoot}/rum-slim/src/boot/rumSlim.entry.ts`,
+  `${packagesRoot}/rum-slim/src/index.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated
