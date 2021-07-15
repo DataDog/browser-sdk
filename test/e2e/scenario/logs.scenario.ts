@@ -16,7 +16,7 @@ describe('logs', () => {
       expect(events.logs[0].message).toBe('hello')
     })
 
-  createTest('send errors')
+  createTest('send console errors')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ events }) => {
       await browserExecute(() => {
@@ -30,18 +30,49 @@ describe('logs', () => {
       })
     })
 
-  createTest('add RUM internal context to logs')
-    .withRum()
-    .withLogs()
+  createTest('send XHR network errors')
+    .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ events }) => {
-      await browserExecute(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        window.DD_LOGS!.logger.log('hello')
-      })
+      await browserExecuteAsync((unreachableUrl, done) => {
+        const xhr = new XMLHttpRequest()
+        xhr.addEventListener('error', () => done(undefined))
+        xhr.open('GET', unreachableUrl)
+        xhr.send()
+      }, UNREACHABLE_URL)
+
       await flushEvents()
       expect(events.logs.length).toBe(1)
-      expect(events.logs[0].view.id).toBeDefined()
-      expect(events.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+      expect(events.logs[0].message).toBe(`XHR error GET ${UNREACHABLE_URL}`)
+      expect(events.logs[0].error?.origin).toBe('network')
+
+      await withBrowserLogs((browserLogs) => {
+        // Some browser report two errors:
+        // * failed to load resource
+        // * blocked by CORS policy
+        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
+      })
+    })
+
+  createTest('send fetch network errors')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ events }) => {
+      await browserExecuteAsync((unreachableUrl, done) => {
+        fetch(unreachableUrl).catch(() => {
+          done(undefined)
+        })
+      }, UNREACHABLE_URL)
+
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].message).toBe(`Fetch error GET ${UNREACHABLE_URL}`)
+      expect(events.logs[0].error?.origin).toBe('network')
+
+      await withBrowserLogs((browserLogs) => {
+        // Some browser report two errors:
+        // * failed to load resource
+        // * blocked by CORS policy
+        expect(browserLogs.length).toBeGreaterThanOrEqual(1)
+      })
     })
 
   createTest('track fetch error')
@@ -83,6 +114,20 @@ describe('logs', () => {
       expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
       expect(unreachableRequest.http.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
+    })
+
+  createTest('add RUM internal context to logs')
+    .withRum()
+    .withLogs()
+    .run(async ({ events }) => {
+      await browserExecute(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        window.DD_LOGS!.logger.log('hello')
+      })
+      await flushEvents()
+      expect(events.logs.length).toBe(1)
+      expect(events.logs[0].view.id).toBeDefined()
+      expect(events.logs[0].application_id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
 
   createTest('allow to modify events')
