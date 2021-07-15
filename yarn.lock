@@ -1767,14 +1767,6 @@
     easy-table "^1.1.1"
     pretty-ms "^6.0.0"
 
-"@wdio/sync@6.1.0":
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/@wdio/sync/-/sync-6.1.0.tgz#b3bb65a6079d69577777154e440d2e28c911c888"
-  integrity sha512-0dG/JX7jahtorZbJBekWt9p6J4WEYe8rHcdImNE7qdv4HGjDzLvQw554RZKvANKRfDQaPligExBfLHY8B/zHxw==
-  dependencies:
-    "@wdio/logger" "6.0.16"
-    fibers "^4.0.1"
-
 "@wdio/utils@6.1.0":
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/@wdio/utils/-/utils-6.1.0.tgz#34b5d47e9a686a975d8e855568c21d57357f7297"
@@ -3531,11 +3523,6 @@ detect-indent@^6.0.0:
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-6.0.0.tgz#0abd0f549f69fc6659a254fe96786186b6f528fd"
   integrity sha512-oSyFlqaTHCItVRGK5RmrmjB+CmaMOW7IaNA/kdxqhoa6d17j/5ce9O9eWXmV/KEdRwqpQA+Vqe8a8Bsybu4YnA==
 
-detect-libc@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b"
-  integrity sha1-+hN8S9aY7fVc1c0CrFWfkaTEups=
-
 devtools-protocol@0.0.854822:
   version "0.0.854822"
   resolved "https://registry.yarnpkg.com/devtools-protocol/-/devtools-protocol-0.0.854822.tgz#eac3a5260a6b3b4e729a09fdc0c77b0d322e777b"
@@ -4401,13 +4388,6 @@ fd-slicer@~1.1.0:
   integrity sha1-JcfInLH5B3+IkbvmHY85Dq4lbx4=
   dependencies:
     pend "~1.2.0"
-
-fibers@^4.0.1:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/fibers/-/fibers-4.0.2.tgz#d04f9ccd0aba179588202202faeb4fed65d497f5"
-  integrity sha512-FhICi1K4WZh9D6NC18fh2ODF3EWy1z0gzIdV9P7+s2pRjfRBnCkMDJ6x3bV1DkVymKH8HGrQa/FNOBjYvnJ/tQ==
-  dependencies:
-    detect-libc "^1.0.3"
 
 figures@^3.0.0:
   version "3.1.0"
