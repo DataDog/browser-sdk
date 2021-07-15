@@ -2,7 +2,6 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
-  UserConfiguration,
   buildCookieOptions,
   BeforeSendCallback,
 } from './domain/configuration'
