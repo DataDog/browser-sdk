@@ -27,7 +27,7 @@ import {
 import { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
-import { RumSession } from './rumSession'
+import { RumSession, RumSessionPlan } from './rumSession'
 
 interface BrowserWindow extends Window {
   _DATADOG_SYNTHETICS_BROWSER?: unknown
@@ -73,8 +73,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, rawRumEvent, domainContext, savedCommonContext, customerContext }) => {
       const viewContext = parentContexts.findView(startTime)
-      const plan = session.getPlan()
-      if (plan && viewContext && viewContext.session.id === session.getId()) {
+      if (session.isTracked() && viewContext && viewContext.session.id === session.getId()) {
         const actionContext = parentContexts.findAction(startTime)
         const commonContext = savedCommonContext || getCommonContext()
         const rumContext: RumContext = {
@@ -82,7 +81,7 @@ export function startRumAssembly(
             format_version: 2,
             drift: currentDrift(),
             session: {
-              plan,
+              plan: session.hasReplayPlan() ? RumSessionPlan.REPLAY : RumSessionPlan.LITE,
             },
           },
           application: {

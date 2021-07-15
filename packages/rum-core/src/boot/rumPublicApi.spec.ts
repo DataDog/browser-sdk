@@ -1,4 +1,4 @@
-import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
@@ -42,19 +42,19 @@ describe('rum public api', () => {
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
-    it('init should log an error if resourceSampleRate is invalid', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 'foo' as any })
+    it('init should log an error if replaySampleRate is invalid', () => {
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 'foo' as any })
       expect(displaySpy).toHaveBeenCalledTimes(1)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 200 })
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
     it('should log an error if init is called several times', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(1)
     })
 
@@ -82,7 +82,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -91,7 +90,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -99,7 +97,7 @@ describe('rum public api', () => {
     })
 
     it("shouldn't trigger any console.error if the configuration is correct", () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
     })
   })
@@ -280,25 +278,10 @@ describe('rum public api', () => {
           context: undefined,
           error: new Error('foo'),
           handlingStack: jasmine.any(String),
-          source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
         { context: {}, user: {} },
       ])
-    })
-
-    it('allows setting an ErrorSource', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
-    })
-
-    it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
-      const displaySpy = spyOn(display, 'error')
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
-      expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
 
     it('should generate a handling stack', () => {

@@ -16,6 +16,7 @@ import { trackViews, ViewEvent } from '../src/domain/rumEventsCollection/view/tr
 import { RumSession, RumSessionPlan } from '../src/domain/rumSession'
 import { RawRumEvent, RumContext, ViewContext } from '../src/rawRumEvent.types'
 import { validateFormat } from './formatValidation'
+import { createRumSessionMock } from './mockRumSession'
 
 export interface TestSetupBuilder {
   withFakeLocation: (initialUrl: string) => TestSetupBuilder
@@ -52,12 +53,7 @@ export interface TestIO {
 }
 
 export function setup(): TestSetupBuilder {
-  let session: RumSession = {
-    getId: () => '1234' as string | undefined,
-    getPlan: () => RumSessionPlan.REPLAY,
-    isTracked: () => true,
-    isTrackedWithResource: () => true,
-  }
+  let session: RumSession = createRumSessionMock().setId('1234')
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<void>()
   const cleanupTasks: Array<() => void> = []
