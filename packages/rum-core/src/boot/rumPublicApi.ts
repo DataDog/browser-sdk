@@ -108,7 +108,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
-      doStartRum()
+      doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -117,44 +117,49 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(name)
+        doStartRum(initConfiguration, configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
     getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
     isAlreadyInitialized = true
+  }
 
-    function doStartRum(initialViewName?: string) {
-      const startRumResults = startRumImpl(
-        initConfiguration,
-        configuration,
-        internalMonitoring,
-        () => ({
-          user,
-          context: globalContextManager.get(),
-          hasReplay: recorderApi.isRecording() ? true : undefined,
-        }),
-        initialViewName
-      )
+  function doStartRum(
+    initConfiguration: C,
+    configuration: Configuration,
+    internalMonitoring: InternalMonitoring,
+    initialViewName?: string
+  ) {
+    const startRumResults = startRumImpl(
+      initConfiguration,
+      configuration,
+      internalMonitoring,
+      () => ({
+        user,
+        context: globalContextManager.get(),
+        hasReplay: recorderApi.isRecording() ? true : undefined,
+      }),
+      initialViewName
+    )
 
-      ;({
-        startView: startViewStrategy,
-        addAction: addActionStrategy,
-        addError: addErrorStrategy,
-        addTiming: addTimingStrategy,
-        getInternalContext: getInternalContextStrategy,
-      } = startRumResults)
-      bufferApiCalls.drain()
+    ;({
+      startView: startViewStrategy,
+      addAction: addActionStrategy,
+      addError: addErrorStrategy,
+      addTiming: addTimingStrategy,
+      getInternalContext: getInternalContextStrategy,
+    } = startRumResults)
+    bufferApiCalls.drain()
 
-      recorderApi.onRumStart(
-        startRumResults.lifeCycle,
-        initConfiguration,
-        configuration,
-        startRumResults.session,
-        startRumResults.parentContexts
-      )
-    }
+    recorderApi.onRumStart(
+      startRumResults.lifeCycle,
+      initConfiguration,
+      configuration,
+      startRumResults.session,
+      startRumResults.parentContexts
+    )
   }
 
   const rumPublicApi = makePublicApi({
