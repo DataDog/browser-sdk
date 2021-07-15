@@ -1,5 +1,4 @@
-# Use mirror registry to avoid rate limit from Dockerhub
-FROM registry.ddbuild.io/images/mirror/node:12.18.3-buster-slim
+FROM node:16.3.0-buster-slim
 
 # Install Chrome deps
 RUN apt-get update && apt-get install -y -q --no-install-recommends \
