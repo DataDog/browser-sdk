@@ -46,8 +46,10 @@ export function startRum(
     getCommonContext
   )
 
-  startLongTaskCollection(lifeCycle)
-  startResourceCollection(lifeCycle, session)
+  if (session.hasReplayPlan()) {
+    startLongTaskCollection(lifeCycle)
+  }
+  startResourceCollection(lifeCycle)
   const { addTiming, startView } = startViewCollection(
     lifeCycle,
     configuration,
@@ -56,7 +58,7 @@ export function startRum(
     foregroundContexts,
     initialViewName
   )
-  const { addError } = startErrorCollection(lifeCycle, configuration, foregroundContexts)
+  const { addError } = startErrorCollection(lifeCycle, foregroundContexts)
   const { addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts)
 
   startRequestCollection(lifeCycle, configuration)
