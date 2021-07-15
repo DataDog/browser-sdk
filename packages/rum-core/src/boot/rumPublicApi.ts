@@ -25,7 +25,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumInitConfiguration extends InitConfiguration {
+export interface RumInitConfiguration extends Omit<InitConfiguration, 'publicApiKey' | 'datacenter'> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
