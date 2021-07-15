@@ -3,7 +3,6 @@ export { datadogRum } from './boot/recorder.entry'
 export {
   CommonProperties,
   RumInitConfiguration,
-  RumUserConfiguration,
   // Events
   RumEvent,
   RumActionEvent,
@@ -22,8 +21,4 @@ export {
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 
-export {
-  RumRecorderPublicApi as RumGlobal,
-  RumRecorderInitConfiguration,
-  RumRecorderUserConfiguration,
-} from './boot/rumRecorderPublicApi'
+export { RumRecorderPublicApi as RumGlobal, RumRecorderInitConfiguration } from './boot/rumRecorderPublicApi'

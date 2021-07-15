@@ -16,12 +16,6 @@ export interface RumRecorderInitConfiguration extends RumInitConfiguration {
   manualSessionReplayRecordingStart?: boolean
 }
 
-/**
- * TODO: remove this type in the next major release
- * @deprecated Use RumRecorderInitConfiguration instead
- */
-export type RumRecorderUserConfiguration = RumRecorderInitConfiguration
-
 const enum RecorderStatus {
   // The recorder is stopped.
   Stopped,

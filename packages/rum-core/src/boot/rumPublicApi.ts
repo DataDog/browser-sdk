@@ -30,12 +30,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
 
-/**
- * TODO: remove this type in the next major release
- * @deprecated Use RumInitConfiguration instead
- */
-export type RumUserConfiguration = RumInitConfiguration
-
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
 export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
