@@ -1,6 +1,5 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { RumRecorderInitConfiguration } from '@datadog/browser-rum'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
 import { validateFormat } from '../helpers/validation'
@@ -38,7 +37,6 @@ type TestRunner = (testContext: TestContext) => Promise<void>
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
-  private rumRecorderConfiguration: RumRecorderInitConfiguration | undefined = undefined
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
@@ -53,11 +51,6 @@ class TestBuilder {
 
   withRumSlim() {
     this.alsoRunWithRumSlim = true
-    return this
-  }
-
-  withRumRecorder(rumRecorderInitConfiguration?: Partial<RumRecorderInitConfiguration>) {
-    this.rumRecorderConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumRecorderInitConfiguration }
     return this
   }
 
@@ -98,7 +91,6 @@ class TestBuilder {
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
-      rumRecorder: this.rumRecorderConfiguration,
       useRumSlim: false,
     }
 
