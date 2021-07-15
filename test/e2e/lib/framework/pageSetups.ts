@@ -4,6 +4,7 @@ import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
+  useRumSlim: boolean
   rumRecorder?: RumRecorderInitConfiguration
   logs?: LogsInitConfiguration
   rumInit: (initConfiguration: RumInitConfiguration) => void
@@ -51,7 +52,14 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   if (rumConfiguration) {
     body += html`
       <script type="text/javascript">
-        ${formatSnippet(options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js', 'DD_RUM')}
+        ${formatSnippet(
+          options.rumRecorder
+            ? './datadog-rum-recorder.js'
+            : options.useRumSlim
+            ? './datadog-rum-slim.js'
+            : './datadog-rum.js',
+          'DD_RUM'
+        )}
         DD_RUM.onReady(function () {
           ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
         })
@@ -82,7 +90,11 @@ export function bundleSetup(options: SetupOptions) {
     header += html`
       <script
         type="text/javascript"
-        src="${options.rumRecorder ? './datadog-rum-recorder.js' : './datadog-rum.js'}"
+        src="${options.rumRecorder
+          ? './datadog-rum-recorder.js'
+          : options.useRumSlim
+          ? './datadog-rum-slim.js'
+          : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
         ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})

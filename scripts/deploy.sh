@@ -28,6 +28,7 @@ case "${suffix}" in
 v[0-9]*) # if major version also update legacy files
     declare -A BUNDLES=(
       ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+      ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
       ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
       ["datadog-rum.js"]="packages/rum/bundle/datadog-rum.js" # deprecated: to remove with version 3
       ["datadog-rum-recorder.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js" # deprecated: to remove with version 3
@@ -43,6 +44,7 @@ v[0-9]*) # if major version also update legacy files
     declare -A BUNDLES=(
       ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
       ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+      ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
       ["datadog-rum-recorder-${suffix}.js"]="packages/rum-recorder/bundle/datadog-rum-recorder.js"
     )
     CACHE_CONTROL='max-age=900, s-maxage=60'

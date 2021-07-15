@@ -4,13 +4,14 @@ const middleware = require('webpack-dev-middleware')
 const webpack = require('webpack')
 
 const logsConfig = require('../packages/logs/webpack.config')
+const rumSlimConfig = require('../packages/rum-slim/webpack.config')
 const rumConfig = require('../packages/rum/webpack.config')
 const rumRecorderConfig = require('../packages/rum-recorder/webpack.config')
 
 const app = express()
 
 app.use(express.static(path.join(__dirname, '../sandbox')))
-for (const config of [rumConfig, logsConfig, rumRecorderConfig]) {
+for (const config of [rumConfig, logsConfig, rumSlimConfig, rumRecorderConfig]) {
   app.use(middleware(webpack(config(null, { mode: 'development' }))))
 }
 
