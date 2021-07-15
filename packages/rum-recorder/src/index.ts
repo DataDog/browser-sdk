@@ -2,7 +2,6 @@
 export { datadogRum } from './boot/recorder.entry'
 export {
   CommonProperties,
-  ProvidedSource,
   RumInitConfiguration,
   RumUserConfiguration,
   // Events
