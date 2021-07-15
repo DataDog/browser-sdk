@@ -7,7 +7,7 @@ import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
-import { DEFAULT_SETUPS, SetupFactory, SetupOptions } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, SetupFactory, SetupOptions } from './pageSetups'
 import { Endpoints } from './sdkBuilds'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
@@ -105,7 +105,12 @@ class TestBuilder {
     if (this.alsoRunWithRumSlim) {
       describe(this.title, () => {
         declareTestsForSetups('rum', setups, setupOptions, runner)
-        declareTestsForSetups('rum-slim', setups, { ...setupOptions, useRumSlim: true }, runner)
+        declareTestsForSetups(
+          'rum-slim',
+          setups.filter((setup) => setup.factory !== npmSetup),
+          { ...setupOptions, useRumSlim: true },
+          runner
+        )
       })
     } else {
       declareTestsForSetups(this.title, setups, setupOptions, runner)
