@@ -12,10 +12,10 @@ import {
   RawError,
   RelativeTime,
   InitConfiguration,
-  trackNetworkError,
   trackRuntimeError,
   trackConsoleError,
 } from '@datadog/browser-core'
+import { trackNetworkError } from '../domain/trackNetworkError'
 import { Logger, LogsMessage, StatusType } from '../domain/logger'
 import { LoggerSession, startLoggerSession } from '../domain/loggerSession'
 import { LogsEvent } from '../logsEvent.types'
@@ -43,7 +43,7 @@ export function startLogs(
   if (initConfiguration.forwardErrorsToLogs !== false) {
     trackConsoleError(errorObservable)
     trackRuntimeError(errorObservable)
-    trackNetworkError(configuration, errorObservable, configuration.isEnabled('remove-network-errors'))
+    trackNetworkError(configuration, errorObservable)
   }
 
   const session = startLoggerSession(configuration, areCookiesAuthorized(configuration.cookieOptions))
