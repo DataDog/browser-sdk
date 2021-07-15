@@ -1,4 +1,4 @@
-import { Configuration, monitor, noop, runOnReadyState } from '@datadog/browser-core'
+import { Configuration, monitor, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -11,16 +11,6 @@ import {
 import { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
-
-export interface RumRecorderInitConfiguration extends RumInitConfiguration {
-  manualSessionReplayRecordingStart?: boolean
-}
-
-/**
- * TODO: remove this type in the next major release
- * @deprecated Use RumRecorderInitConfiguration instead
- */
-export type RumRecorderUserConfiguration = RumRecorderInitConfiguration
 
 const enum RecorderStatus {
   // The recorder is stopped.
@@ -53,21 +43,11 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
     status: RecorderStatus.Stopped,
   }
 
-  let onRumStartStrategy = (initConfiguration: RumRecorderInitConfiguration, configuration: Configuration) => {
-    if (
-      !initConfiguration.manualSessionReplayRecordingStart &&
-      // TODO: remove this when no snippets without manualSessionReplayRecordingStart are served in
-      // the Datadog app. See RUMF-886
-      !configuration.isEnabled('postpone_start_recording')
-    ) {
-      startSessionReplayRecordingStrategy()
-    }
-  }
   let startSessionReplayRecordingStrategy = () => {
-    onRumStartStrategy = () => startSessionReplayRecordingStrategy()
+    state = { status: RecorderStatus.IntentToStart }
   }
   let stopSessionReplayRecordingStrategy = () => {
-    onRumStartStrategy = noop
+    state = { status: RecorderStatus.Stopped }
   }
   return {
     public: {
@@ -80,7 +60,7 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
     },
     onRumStart: (
       lifeCycle: LifeCycle,
-      initConfiguration: RumRecorderInitConfiguration,
+      initConfiguration: RumInitConfiguration,
       configuration: Configuration,
       session: RumSession,
       parentContexts: ParentContexts
@@ -138,7 +118,9 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
         lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
       }
 
-      onRumStartStrategy(initConfiguration, configuration)
+      if (state.status === RecorderStatus.IntentToStart) {
+        startSessionReplayRecordingStrategy()
+      }
     },
 
     isRecording: () => state.status === RecorderStatus.Started,

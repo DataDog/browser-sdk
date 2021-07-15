@@ -1,9 +1,9 @@
 import { Configuration, includes } from '@datadog/browser-core'
-import { RecorderApi, ParentContexts, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { RecorderApi, ParentContexts, LifeCycleEventType, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { makeRecorderApi, RumRecorderInitConfiguration, StartRecording } from './recorderApi'
+import { makeRecorderApi, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
@@ -13,7 +13,7 @@ describe('makeRecorderApi', () => {
   let startRecordingSpy: jasmine.Spy<StartRecording>
   let stopRecordingSpy: jasmine.Spy<() => void>
 
-  let rumInit: (initConfiguration: RumRecorderInitConfiguration) => void
+  let rumInit: (initConfiguration: RumInitConfiguration) => void
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(({ lifeCycle, session }) => {
@@ -41,35 +41,20 @@ describe('makeRecorderApi', () => {
   })
 
   describe('boot', () => {
-    it('starts recording when init() is called', () => {
+    it('does not start recording when init() is called', () => {
       setupBuilder.build()
       expect(startRecordingSpy).not.toHaveBeenCalled()
       rumInit(DEFAULT_INIT_CONFIGURATION)
-      expect(startRecordingSpy).toHaveBeenCalled()
-    })
-
-    it('does not start recording when calling init() with manualSessionReplayRecordingStart: true', () => {
-      setupBuilder.build()
-      rumInit({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start recording when calling init() with the feature "postpone_start_recording"', () => {
-      setupBuilder.build()
-      rumInit({
-        ...DEFAULT_INIT_CONFIGURATION,
-        enableExperimentalFeatures: ['postpone_start_recording'],
-      })
-      expect(startRecordingSpy).not.toHaveBeenCalled()
-    })
-
-    it('does not start recording before the page "load"', () => {
+    it('does not start recording after the page "load"', () => {
       setupBuilder.build()
       const { triggerOnLoad } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
       expect(startRecordingSpy).not.toHaveBeenCalled()
       triggerOnLoad()
-      expect(startRecordingSpy).toHaveBeenCalled()
+      expect(startRecordingSpy).not.toHaveBeenCalled()
     })
   })
 
@@ -86,7 +71,7 @@ describe('makeRecorderApi', () => {
     it('starts recording if called before init()', () => {
       setupBuilder.build()
       recorderApi.public.startSessionReplayRecording()
-      rumInit({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+      rumInit(DEFAULT_INIT_CONFIGURATION)
       expect(startRecordingSpy).toHaveBeenCalled()
     })
 
@@ -94,6 +79,7 @@ describe('makeRecorderApi', () => {
       setupBuilder.build()
       const { triggerOnLoad } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
+      recorderApi.public.startSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
       recorderApi.public.startSessionReplayRecording()
       triggerOnLoad()
@@ -146,6 +132,7 @@ describe('makeRecorderApi', () => {
     it('ignores calls while recording is already stopped', () => {
       setupBuilder.build()
       rumInit(DEFAULT_INIT_CONFIGURATION)
+      recorderApi.public.startSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
@@ -154,6 +141,7 @@ describe('makeRecorderApi', () => {
 
     it('does not start recording if called before init()', () => {
       setupBuilder.build()
+      recorderApi.public.startSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
       rumInit(DEFAULT_INIT_CONFIGURATION)
       expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -163,6 +151,7 @@ describe('makeRecorderApi', () => {
       setupBuilder.build()
       const { triggerOnLoad } = mockDocumentReadyState()
       rumInit(DEFAULT_INIT_CONFIGURATION)
+      recorderApi.public.startSessionReplayRecording()
       recorderApi.public.stopSessionReplayRecording()
       triggerOnLoad()
       expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -172,7 +161,7 @@ describe('makeRecorderApi', () => {
   describe('isRecording', () => {
     it('is true only if recording', () => {
       setupBuilder.build()
-      rumInit({ ...DEFAULT_INIT_CONFIGURATION, manualSessionReplayRecordingStart: true })
+      rumInit(DEFAULT_INIT_CONFIGURATION)
       expect(recorderApi.isRecording()).toBeFalse()
       recorderApi.public.startSessionReplayRecording()
       expect(recorderApi.isRecording()).toBeTrue()
