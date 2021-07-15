@@ -3,7 +3,7 @@ import { RecorderApi, ParentContexts, LifeCycleEventType } from '@datadog/browse
 import { createNewEvent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
-import { makeRecorderApi, RumRecorderInitConfiguration, StartRecording } from './rumRecorderPublicApi'
+import { makeRecorderApi, RumRecorderInitConfiguration, StartRecording } from './recorderApi'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
