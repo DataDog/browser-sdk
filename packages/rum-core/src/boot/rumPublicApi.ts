@@ -52,10 +52,8 @@ export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
 type StartRumResult = ReturnType<typeof startRum>
 
 export interface RecorderApi {
-  public: {
-    startSessionReplayRecording: () => void
-    stopSessionReplayRecording: () => void
-  }
+  start: () => void
+  stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
     initConfiguration: RumInitConfiguration,
@@ -214,7 +212,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       startViewStrategy(name)
     }),
 
-    ...recorderApi.public,
+    startSessionReplayRecording: monitor(recorderApi.start),
+    stopSessionReplayRecording: monitor(recorderApi.stop),
   })
   return rumPublicApi
 

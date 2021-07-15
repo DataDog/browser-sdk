@@ -1,4 +1,4 @@
-import { Configuration, monitor, runOnReadyState } from '@datadog/browser-core'
+import { Configuration, runOnReadyState } from '@datadog/browser-core'
 import {
   LifeCycleEventType,
   RumInitConfiguration,
@@ -50,14 +50,8 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
     state = { status: RecorderStatus.Stopped }
   }
   return {
-    public: {
-      startSessionReplayRecording: monitor(() => {
-        startSessionReplayRecordingStrategy()
-      }),
-      stopSessionReplayRecording: monitor(() => {
-        stopSessionReplayRecordingStrategy()
-      }),
-    },
+    start: () => startSessionReplayRecordingStrategy(),
+    stop: () => stopSessionReplayRecordingStrategy(),
     onRumStart: (
       lifeCycle: LifeCycle,
       initConfiguration: RumInitConfiguration,

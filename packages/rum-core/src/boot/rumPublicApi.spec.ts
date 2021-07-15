@@ -14,10 +14,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   session: {} as any,
 })
 const noopRecorderApi: RecorderApi = {
-  public: {
-    startSessionReplayRecording: noop,
-    stopSessionReplayRecording: noop,
-  },
+  start: noop,
+  stop: noop,
   isRecording: () => false,
   onRumStart: noop,
 }
