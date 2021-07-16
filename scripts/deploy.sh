@@ -29,7 +29,6 @@ v[0-9]*) # if major version also update legacy files
     declare -A BUNDLES=(
       ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
       ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
-      ["datadog-rum.js"]="packages/rum/bundle/datadog-rum.js" # deprecated: to remove with version 3
       ["datadog-rum-eu.js"]="packages/rum/bundle/datadog-rum-eu.js" # deprecated: to remove with version 3
       ["datadog-rum-us.js"]="packages/rum/bundle/datadog-rum-us.js" # deprecated: to remove with version 3
       ["datadog-logs.js"]="packages/logs/bundle/datadog-logs.js"
