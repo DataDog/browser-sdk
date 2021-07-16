@@ -69,12 +69,6 @@ export interface InitConfiguration {
   replica?: ReplicaUserConfiguration
 }
 
-/**
- * TODO: Remove this type in the next major release
- * @deprecated Use InitConfiguration instead
- */
-export type UserConfiguration = InitConfiguration
-
 export type BeforeSendCallback = (event: any, context?: any) => unknown
 
 interface ReplicaUserConfiguration {
