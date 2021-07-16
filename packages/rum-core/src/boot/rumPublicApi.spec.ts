@@ -1,4 +1,4 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, Datacenter } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
@@ -100,6 +100,13 @@ describe('rum public api', () => {
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
     })
+
+    it('should ignore old configuration options', () => {
+      const oldConfigurationOptions = { publicApiKey: '', datacenter: Datacenter.US }
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
+      rumPublicApi.init(initConfiguration)
+      expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))
+    })
   })
 
   describe('getInternalContext', () => {
@@ -152,7 +159,12 @@ describe('rum public api', () => {
     })
 
     it('returns the user configuration after init', () => {
-      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+      const initConfiguration = {
+        ...DEFAULT_INIT_CONFIGURATION,
+        service: 'my-service',
+        version: '1.4.2',
+        env: 'dev',
+      }
       rumPublicApi.init(initConfiguration)
 
       expect(rumPublicApi.getInitConfiguration()).toEqual(initConfiguration)

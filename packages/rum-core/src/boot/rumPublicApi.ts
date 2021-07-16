@@ -26,7 +26,10 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumInitConfiguration extends Omit<InitConfiguration, 'publicApiKey' | 'datacenter'> {
+const ignoredConfigurationOptions = { publicApiKey: true, datacenter: true } as const
+type IgnoredConfigurationOptions = keyof typeof ignoredConfigurationOptions
+
+export interface RumInitConfiguration extends Omit<InitConfiguration, IgnoredConfigurationOptions> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
@@ -87,6 +90,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     ) {
       return
     }
+
+    ignoreConfigurationOptions(initConfiguration, ignoredConfigurationOptions)
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
@@ -207,6 +212,14 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       result.email = String(result.email)
     }
     return result
+  }
+
+  function ignoreConfigurationOptions(initConfiguration: C, options: object) {
+    for (const option in initConfiguration) {
+      if (options.hasOwnProperty(option)) {
+        delete initConfiguration[option]
+      }
+    }
   }
 
   function canInitRum(initConfiguration: RumInitConfiguration) {
