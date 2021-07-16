@@ -19,6 +19,7 @@ import {
   callMonitored,
   createHandlingStack,
   Omit,
+  includes,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
@@ -26,8 +27,8 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const ignoredConfigurationOptions = { publicApiKey: true, datacenter: true } as const
-type IgnoredConfigurationOptions = keyof typeof ignoredConfigurationOptions
+const ignoredConfigurationOptions = ['publicApiKey', 'datacenter'] as const
+type IgnoredConfigurationOptions = typeof ignoredConfigurationOptions[number]
 
 export interface RumInitConfiguration extends Omit<InitConfiguration, IgnoredConfigurationOptions> {
   applicationId: string
@@ -214,9 +215,9 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     return result
   }
 
-  function ignoreConfigurationOptions(initConfiguration: C, options: object) {
+  function ignoreConfigurationOptions(initConfiguration: C, options: readonly string[]) {
     for (const option in initConfiguration) {
-      if (options.hasOwnProperty(option)) {
+      if (includes(options, option)) {
         delete initConfiguration[option]
       }
     }

@@ -194,7 +194,8 @@ function hasToJSON(value: unknown): value is ObjectWithToJSON {
 
 export function includes(candidate: string, search: string): boolean
 export function includes<T>(candidate: T[], search: T): boolean
-export function includes(candidate: string | unknown[], search: any) {
+export function includes<T>(candidate: readonly T[], search: T): boolean
+export function includes(candidate: string | readonly unknown[], search: any) {
   return candidate.indexOf(search) !== -1
 }
 
