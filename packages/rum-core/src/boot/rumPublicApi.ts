@@ -19,6 +19,7 @@ import {
   callMonitored,
   createHandlingStack,
   Omit,
+  tuple,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
@@ -26,7 +27,8 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const ignoredConfigurationOptions = ['publicApiKey', 'datacenter'] as const
+// eslint-disable-next-line local-rules/disallow-side-effects
+const ignoredConfigurationOptions = tuple('publicApiKey', 'datacenter')
 type IgnoredConfigurationOptions = typeof ignoredConfigurationOptions[number]
 
 export interface RumInitConfiguration extends Omit<InitConfiguration, IgnoredConfigurationOptions> {

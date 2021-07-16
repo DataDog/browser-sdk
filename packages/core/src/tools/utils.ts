@@ -542,6 +542,15 @@ export function combine(...sources: any[]): unknown {
   return destination as unknown
 }
 
+/*
+ * Readonly tuple for TS 3.0 compatibility
+ * Example: `const t = tuple('foo', 'bar')`
+ * With TS 3.4 or latter: `const t = ['foo', 'bar'] as const`
+ */
+export function tuple<T extends string[]>(...args: T) {
+  return args
+}
+
 // Define those types for TS 3.0 compatibility
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
 export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown
