@@ -43,15 +43,15 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
     status: RecorderStatus.Stopped,
   }
 
-  let startSessionReplayRecordingStrategy = () => {
+  let startStrategy = () => {
     state = { status: RecorderStatus.IntentToStart }
   }
-  let stopSessionReplayRecordingStrategy = () => {
+  let stopStrategy = () => {
     state = { status: RecorderStatus.Stopped }
   }
   return {
-    start: () => startSessionReplayRecordingStrategy(),
-    stop: () => stopSessionReplayRecordingStrategy(),
+    start: () => startStrategy(),
+    stop: () => stopStrategy(),
     onRumStart: (
       lifeCycle: LifeCycle,
       initConfiguration: RumInitConfiguration,
@@ -61,11 +61,11 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
     ) => {
       lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
         if (state.status === RecorderStatus.IntentToStart) {
-          startSessionReplayRecordingStrategy()
+          startStrategy()
         }
       })
 
-      startSessionReplayRecordingStrategy = () => {
+      startStrategy = () => {
         if (!session.hasReplayPlan()) {
           state = { status: RecorderStatus.IntentToStart }
           return
@@ -97,7 +97,7 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
         })
       }
 
-      stopSessionReplayRecordingStrategy = () => {
+      stopStrategy = () => {
         if (state.status === RecorderStatus.Stopped) {
           return
         }
@@ -113,7 +113,7 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
       }
 
       if (state.status === RecorderStatus.IntentToStart) {
-        startSessionReplayRecordingStrategy()
+        startStrategy()
       }
     },
 
