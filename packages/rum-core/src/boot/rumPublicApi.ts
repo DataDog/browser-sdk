@@ -28,10 +28,10 @@ import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
 // eslint-disable-next-line local-rules/disallow-side-effects
-const ignoredConfigurationOptions = tuple('publicApiKey', 'datacenter')
-type IgnoredConfigurationOptions = typeof ignoredConfigurationOptions[number]
+const droppedConfigurationOptions = tuple('publicApiKey', 'datacenter')
+type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
 
-export interface RumInitConfiguration extends Omit<InitConfiguration, IgnoredConfigurationOptions> {
+export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
@@ -93,7 +93,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return
     }
 
-    ignoredConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
+    droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
