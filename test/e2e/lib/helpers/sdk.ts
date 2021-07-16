@@ -16,7 +16,7 @@ export async function flushEvents() {
   // The RUM session replay recorder code uses a Web Worker to format the request data to be sent to
   // the intake.  Because all Worker communication is asynchronous, it cannot send its request
   // during the "beforeunload" event, but a few milliseconds after. Thus, when navigating, if the
-  // future page loads very quickly, the page unload may occur before the recorder have time to send
+  // future page loads very quickly, the page unload may occur before the recorder has time to send
   // its last segment.
   //
   // To avoid flaky e2e tests, we currently use /ok with a duration, to allow a bit more time to
