@@ -1,11 +1,9 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
-  rumRecorder?: RumRecorderInitConfiguration
   logs?: LogsInitConfiguration
   rumInit: (initConfiguration: RumInitConfiguration) => void
   head?: string
@@ -48,20 +46,12 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     `
   }
 
-  const rumConfiguration = options.rumRecorder || options.rum
-  if (rumConfiguration) {
+  if (options.rum) {
     body += html`
       <script type="text/javascript">
-        ${formatSnippet(
-          options.rumRecorder
-            ? './datadog-rum-recorder.js'
-            : options.useRumSlim
-            ? './datadog-rum-slim.js'
-            : './datadog-rum.js',
-          'DD_RUM'
-        )}
+        ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
         DD_RUM.onReady(function () {
-          ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
+          ;(${options.rumInit.toString()})(${formatRumConfiguration(options.rum)})
         })
       </script>
     `
@@ -85,19 +75,14 @@ export function bundleSetup(options: SetupOptions) {
     `
   }
 
-  const rumConfiguration = options.rumRecorder || options.rum
-  if (rumConfiguration) {
+  if (options.rum) {
     header += html`
       <script
         type="text/javascript"
-        src="${options.rumRecorder
-          ? './datadog-rum-recorder.js'
-          : options.useRumSlim
-          ? './datadog-rum-slim.js'
-          : './datadog-rum.js'}"
+        src="${options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js'}"
       ></script>
       <script type="text/javascript">
-        ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
+        ;(${options.rumInit.toString()})(${formatRumConfiguration(options.rum)})
       </script>
     `
   }
@@ -119,12 +104,11 @@ export function npmSetup(options: SetupOptions) {
     `
   }
 
-  const rumConfiguration = options.rumRecorder || options.rum
-  if (rumConfiguration) {
+  if (options.rum) {
     header += html`
       <script type="text/javascript">
         window.RUM_INIT = () => {
-          ;(${options.rumInit.toString()})(${formatRumConfiguration(rumConfiguration)})
+          ;(${options.rumInit.toString()})(${formatRumConfiguration(options.rum)})
         }
       </script>
     `

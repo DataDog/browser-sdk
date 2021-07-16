@@ -3,6 +3,7 @@ import type { Proxy } from './proxy'
 export interface ProfilingOptions {
   bundleUrl: string
   proxy: Proxy
+  startRecording: boolean
 }
 
 export interface ProfilingResults {
