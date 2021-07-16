@@ -19,7 +19,6 @@ import {
   callMonitored,
   createHandlingStack,
   Omit,
-  tuple,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
@@ -27,8 +26,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-// eslint-disable-next-line local-rules/disallow-side-effects
-const droppedConfigurationOptions = tuple('publicApiKey', 'datacenter')
+const droppedConfigurationOptions = ['publicApiKey' as const, 'datacenter' as const]
 type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
 
 export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
