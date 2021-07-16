@@ -1,10 +1,4 @@
-export {
-  RumInitConfiguration,
-  RumUserConfiguration,
-  RumPublicApi,
-  makeRumPublicApi,
-  StartRum,
-} from './boot/rumPublicApi'
+export { RumInitConfiguration, RumPublicApi, makeRumPublicApi, RecorderApi, StartRum } from './boot/rumPublicApi'
 export {
   RumEvent,
   RumActionEvent,

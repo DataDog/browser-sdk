@@ -252,7 +252,7 @@ module.exports = {
       },
     },
     {
-      files: ['packages/{rum,logs,rum-recorder}/src/index.ts', 'packages/rum-recorder/src/internal.ts'],
+      files: ['packages/{rum,logs,rum-slim}/src/index.ts', 'packages/rum/src/internal.ts'],
       rules: {
         'local-rules/disallow-enum-exports': 'error',
       },

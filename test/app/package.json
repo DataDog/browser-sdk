@@ -10,8 +10,7 @@
     "@datadog/browser-core": "file:../../packages/core",
     "@datadog/browser-logs": "file:../../packages/logs",
     "@datadog/browser-rum": "file:../../packages/rum",
-    "@datadog/browser-rum-core": "file:../../packages/rum-core",
-    "@datadog/browser-rum-recorder": "file:../../packages/rum-recorder"
+    "@datadog/browser-rum-core": "file:../../packages/rum-core"
   },
   "resolutions": {
     "@datadog/browser-core": "file:../../packages/core",

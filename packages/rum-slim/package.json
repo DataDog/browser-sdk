@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-recorder",
+  "name": "@datadog/browser-rum-slim",
   "version": "2.17.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
@@ -19,10 +19,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-recorder"
-  },
-  "devDependencies": {
-    "@types/pako": "1.0.1",
-    "pako": "2.0.3"
+    "directory": "packages/rum-slim"
   }
 }

@@ -6,8 +6,8 @@ const readFile = promisify(fs.readFile)
 
 const ROOT = path.join(__dirname, '../../../..')
 const RUM_BUNDLE = path.join(ROOT, 'packages/rum/bundle/datadog-rum.js')
+const RUM_SLIM_BUNDLE = path.join(ROOT, 'packages/rum-slim/bundle/datadog-rum-slim.js')
 const LOGS_BUNDLE = path.join(ROOT, 'packages/logs/bundle/datadog-logs.js')
-const RUM_RECORDER_BUNDLE = path.join(ROOT, 'packages/rum-recorder/bundle/datadog-rum-recorder.js')
 const NPM_BUNDLE = path.join(ROOT, 'test/app/dist/app.js')
 
 export interface Endpoints {
@@ -21,8 +21,8 @@ export async function buildRum(endpoints: Endpoints) {
   return replaceEndpoints(await readFile(RUM_BUNDLE), endpoints)
 }
 
-export async function buildRumRecorder(endpoints: Endpoints) {
-  return replaceEndpoints(await readFile(RUM_RECORDER_BUNDLE), endpoints)
+export async function buildRumSlim(endpoints: Endpoints) {
+  return replaceEndpoints(await readFile(RUM_SLIM_BUNDLE), endpoints)
 }
 
 export async function buildLogs(endpoints: Endpoints) {

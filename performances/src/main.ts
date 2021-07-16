@@ -12,7 +12,7 @@ main().catch((error) => {
 })
 
 async function main() {
-  const useRecorder = process.argv.includes('--recorder')
+  const startRecording = process.argv.includes('--recorder')
   const displayHelp = process.argv.includes('-h') || process.argv.includes('--help')
 
   if (displayHelp) {
@@ -22,7 +22,7 @@ This tool runs various scenarios in a browser and profile the impact of the Brow
 
 Options:
   --help, -h: display this help and exit
-  --recorder: use datadog-rum-recorder.js instead of datadog-rum.js
+  --recorder: start session replay recording at init
 `)
     return
   }
@@ -30,8 +30,9 @@ Options:
   const proxy = await startProxy()
 
   const options: ProfilingOptions = {
-    bundleUrl: `https://www.datadoghq-browser-agent.com/${useRecorder ? 'datadog-rum-recorder.js' : 'datadog-rum.js'}`,
+    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
     proxy,
+    startRecording,
   }
 
   const wikipediaResults = await profileScenario(options, runWikipediaScenario)
@@ -161,6 +162,7 @@ async function setupSDK(page: Page, options: ProfilingOptions) {
             trackInteractions: true,
             proxyHost: ${JSON.stringify(options.proxy.host)}
           })
+          ${options.startRecording ? 'window.DD_RUM.startSessionReplayRecording()' : ''}
         })
     }
   `)
