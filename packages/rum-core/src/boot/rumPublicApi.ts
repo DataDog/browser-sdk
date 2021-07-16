@@ -19,7 +19,6 @@ import {
   callMonitored,
   createHandlingStack,
   Omit,
-  includes,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
@@ -92,7 +91,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return
     }
 
-    ignoreConfigurationOptions(initConfiguration, ignoredConfigurationOptions)
+    ignoredConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
@@ -213,14 +212,6 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       result.email = String(result.email)
     }
     return result
-  }
-
-  function ignoreConfigurationOptions(initConfiguration: C, options: readonly string[]) {
-    for (const option in initConfiguration) {
-      if (includes(options, option)) {
-        delete initConfiguration[option]
-      }
-    }
   }
 
   function canInitRum(initConfiguration: RumInitConfiguration) {
