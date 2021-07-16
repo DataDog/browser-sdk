@@ -1,4 +1,4 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, Datacenter } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
@@ -102,7 +102,7 @@ describe('rum public api', () => {
     })
 
     it('should ignore old configuration options', () => {
-      const oldConfigurationOptions = { publicApiKey: '', datacenter: Datacenter.US }
+      const oldConfigurationOptions = { publicApiKey: '', datacenter: 'us' }
       const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
       rumPublicApi.init(initConfiguration)
       expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))
