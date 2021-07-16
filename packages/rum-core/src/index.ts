@@ -3,6 +3,7 @@ export {
   RumUserConfiguration,
   RumPublicApi,
   makeRumPublicApi,
+  RecorderApi,
   StartRum,
 } from './boot/rumPublicApi'
 export {
