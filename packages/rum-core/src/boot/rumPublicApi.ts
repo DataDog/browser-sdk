@@ -91,6 +91,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       initConfiguration.clientToken = initConfiguration.publicApiKey
     }
 
+    ;(initConfiguration as InitConfiguration).useAlternateIntakeDomains = true
+
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
       doStartRum()
