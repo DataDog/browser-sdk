@@ -4,8 +4,9 @@
     "baseUrl": ".",
     "declaration": true,
     "module": "es6",
+    "allowJs": true,
     "outDir": "./esm/"
   },
-  "include": ["./src/**/*.ts"],
+  "include": ["./src"],
   "exclude": ["./src/**/*.spec.ts"]
 }
