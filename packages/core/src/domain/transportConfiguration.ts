@@ -47,7 +47,10 @@ interface TransportSettings {
   version?: string
 }
 
-export function computeTransportConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
+export function computeTransportConfiguration(
+  initConfiguration: InitConfiguration,
+  buildEnv: BuildEnv
+): TransportConfiguration {
   const transportSettings: TransportSettings = {
     buildMode: buildEnv.buildMode,
     clientToken: initConfiguration.clientToken,

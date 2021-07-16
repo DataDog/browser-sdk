@@ -106,6 +106,13 @@ describe('rum public api', () => {
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
     })
+
+    it('should ignore old configuration options', () => {
+      const oldConfigurationOptions = { publicApiKey: '', datacenter: 'us' }
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
+      rumPublicApi.init(initConfiguration)
+      expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))
+    })
   })
 
   describe('getInternalContext', () => {
