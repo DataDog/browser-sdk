@@ -1,7 +1,8 @@
 // Keep the following in sync with packages/rum/src/index.ts
-export { datadogRum } from './boot/recorder.entry'
+export { datadogRum } from './boot/rumSlim.entry'
 export {
   CommonProperties,
+  RumPublicApi as RumGlobal,
   RumInitConfiguration,
   // Events
   RumEvent,
@@ -20,5 +21,3 @@ export {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
-
-export { RumRecorderPublicApi as RumGlobal, RumRecorderInitConfiguration } from './boot/rumRecorderPublicApi'

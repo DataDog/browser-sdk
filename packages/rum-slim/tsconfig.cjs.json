@@ -3,10 +3,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
-    "module": "es6",
-    "allowJs": true,
-    "outDir": "./esm/"
+    "module": "commonjs",
+    "outDir": "./cjs/"
   },
-  "include": ["./src"],
+  "include": ["./src/**/*.ts"],
   "exclude": ["./src/**/*.spec.ts"]
 }

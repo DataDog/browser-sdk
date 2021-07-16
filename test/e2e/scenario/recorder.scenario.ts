@@ -1,5 +1,6 @@
-import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum-recorder/cjs/types'
-import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum-recorder/cjs/domain/record/types'
+import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum/cjs/types'
+import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
+import { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
@@ -12,7 +13,7 @@ import {
   findMeta,
   findTextContent,
   createMutationPayloadValidatorFromSegment,
-} from '../../../packages/rum-recorder/test/utils'
+} from '../../../packages/rum/test/utils'
 
 const INTEGER_RE = /^\d+$/
 const TIMESTAMP_RE = /^\d{13}$/
@@ -20,7 +21,8 @@ const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
 
 describe('recorder', () => {
   createTest('record mouse move')
-    .withRumRecorder()
+    .withRum()
+    .withRumInit(initRumAndStartRecording)
     .run(async ({ events }) => {
       await browserExecute(() => document.documentElement.outerHTML)
       const html = await $('html')
@@ -65,8 +67,9 @@ describe('recorder', () => {
 
   describe('full snapshot', () => {
     createTest('obfuscate elements')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <p id="not-obfuscated">foo</p>
@@ -110,8 +113,9 @@ describe('recorder', () => {
 
   describe('mutations observer', () => {
     createTest('record mutations')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <p>mutation observer</p>
@@ -156,8 +160,9 @@ describe('recorder', () => {
       })
 
     createTest('record character data mutations')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <p>mutation observer</p>
@@ -208,8 +213,9 @@ describe('recorder', () => {
       })
 
     createTest('record attributes mutations')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <p>mutation observer</p>
@@ -252,8 +258,9 @@ describe('recorder', () => {
       })
 
     createTest("don't record hidden elements mutations")
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <div data-dd-privacy="hidden">
@@ -279,8 +286,9 @@ describe('recorder', () => {
       })
 
     createTest('record DOM node movement 1')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         // prettier-ignore
         html`
@@ -327,8 +335,9 @@ describe('recorder', () => {
       })
 
     createTest('record DOM node movement 2')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         // prettier-ignore
         html`
@@ -378,8 +387,9 @@ describe('recorder', () => {
       })
 
     createTest('serialize node before record')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         // prettier-ignore
         html`
@@ -431,8 +441,9 @@ describe('recorder', () => {
 
   describe('input observers', () => {
     createTest('record input interactions')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <form>
@@ -510,8 +521,9 @@ describe('recorder', () => {
       })
 
     createTest("don't record ignored input interactions")
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <input type="text" id="first" name="first" />
@@ -546,8 +558,9 @@ describe('recorder', () => {
       })
 
     createTest('replace masked values by asterisks')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <input type="text" id="by-data-attribute" data-dd-privacy="input-masked" />
@@ -579,8 +592,9 @@ describe('recorder', () => {
 
   describe('stylesheet rules observer', () => {
     createTest('record dynamic CSS changes')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
-      .withRumRecorder()
       .withBody(
         html`
           <style>
@@ -616,4 +630,9 @@ describe('recorder', () => {
 
 function getFirstSegment(events: EventRegistry) {
   return events.sessionReplay[0].segment.data
+}
+
+function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {
+  window.DD_RUM!.init(initConfiguration)
+  window.DD_RUM!.startSessionReplayRecording()
 }
