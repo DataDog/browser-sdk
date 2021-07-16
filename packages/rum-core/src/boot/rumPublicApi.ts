@@ -18,6 +18,7 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
+  Omit,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -28,7 +29,10 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumInitConfiguration extends InitConfiguration {
+const droppedConfigurationOptions = ['publicApiKey' as const, 'datacenter' as const]
+type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
+
+export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
@@ -96,9 +100,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     ) {
       return
     }
-    if (initConfiguration.publicApiKey) {
-      initConfiguration.clientToken = initConfiguration.publicApiKey
-    }
+
+    droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
 
     const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
@@ -240,7 +243,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       }
       return false
     }
-    if (!initConfiguration || (!initConfiguration.clientToken && !initConfiguration.publicApiKey)) {
+    if (!initConfiguration || !initConfiguration.clientToken) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }
