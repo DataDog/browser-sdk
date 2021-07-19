@@ -383,9 +383,9 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
     parentTagName === 'SELECT' ||
     parentTagName === 'OPTGROUP'
   ) {
-      if (!textContent.trim()) {
-        return
-      }
+    if (!textContent.trim()) {
+      return
+    }
   }
 
   const nodePrivacyLevel = getNodePrivacyLevel(textNode)
@@ -484,15 +484,16 @@ function isSVGElement(el: Element): boolean {
 }
 
 // declare const INJECT: { [prop: string]: string | boolean | number }
-// // eslint-disable-next-line local-rules/disallow-side-effects
-// // if (INJECT.INSPECTOR_DEBUG_MODE) {
-//   // In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
-//   const $window = window as any
-//   $window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
-//   $window.serializeNode = serializeNode
-//   $window.serializeNodeWithId = serializeNodeWithId
-//   $window.serializeElementNode = serializeElementNode
-//   $window.serializeTextNode = serializeTextNode
-//   $window.serializeChildNodes = serializeChildNodes
-//   $window.shouldIgnoreElement = shouldIgnoreElement
-// // }
+// eslint-disable-next-line local-rules/disallow-side-effects
+/* eslint-disable local-rules/disallow-side-effects */
+// if (INJECT.INSPECTOR_DEBUG_MODE) {
+// In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
+const $window = window as any
+$window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
+$window.serializeNode = serializeNode
+$window.serializeNodeWithId = serializeNodeWithId
+$window.serializeElementNode = serializeElementNode
+$window.serializeTextNode = serializeTextNode
+$window.serializeChildNodes = serializeChildNodes
+$window.shouldIgnoreElement = shouldIgnoreElement
+// }

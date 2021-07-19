@@ -1,17 +1,10 @@
 import { SerializedNodeWithId } from 'packages/rum-recorder/src/domain/record/types'
 import { NodeCensorshipTag, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
-import {
-  HTML,
-  AST_ALLOW,
-  AST_HIDDEN,
-  AST_MASK,
-  AST_MASK_FORMS_ONLY
-} from '../../../test/htmlAst'
+import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
 import { getNodeSelfPrivacyLevel, _derivePrivacyLevelGivenParent } from './privacy'
 import { serializeDocument } from './serialize'
 import { ElementNode, TextNode, NodeType } from './types'
-
 
 const buildFromHTML = (html: string) => {
   const el = document.createElement('div')
@@ -157,8 +150,6 @@ describe('Inherited Privacy Level', () => {
   })
 })
 
-
-
 describe('Inherited Privacy Level', () => {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
 
@@ -229,7 +220,7 @@ describe('Inherited Privacy Level', () => {
       // console.log(JSON.stringify(innerText));
       expect(innerText).toBe(
         // eslint-disable-next-line max-len
-        "  \n      .example {content: \"anything\";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     private option A private option B private option C \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n"
+        '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     private option A private option B private option C \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
       )
     })
 
@@ -239,4 +230,3 @@ describe('Inherited Privacy Level', () => {
     })
   })
 })
-

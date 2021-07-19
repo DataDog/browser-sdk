@@ -447,7 +447,6 @@ const scrambleText = (text: string) => {
   return whitespacedText.join('')
 }
 
-
 // declare const INJECT: {[prop: string]: string|boolean|number}
 // // eslint-disable-next-line local-rules/disallow-side-effects
 // // if (INJECT.INSPECTOR_DEBUG_MODE) {

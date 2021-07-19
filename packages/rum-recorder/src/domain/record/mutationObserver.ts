@@ -2,7 +2,12 @@ import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodeCensorshipTag, CENSORED_STRING_MARK } from '../../constants'
 import { SerializedNodeWithId } from '../../domain/record/types'
-import { getNodePrivacyLevel, getInternalNodePrivacyLevel, uncachePrivacyLevel } from './privacy'
+import {
+  getNodePrivacyLevel,
+  getInternalNodePrivacyLevel,
+  uncachePrivacyLevel,
+  getAttributesForPrivacyLevel,
+} from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -325,21 +330,20 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Emit mutations
   const emittedMutations = new Map<Element, AttributeMutation>()
   for (const mutation of filteredMutations) {
-    const value = mutation.target.getAttribute(mutation.attributeName!)
-    if (value === mutation.oldValue) {
+    const uncensoredValue = mutation.target.getAttribute(mutation.attributeName!)
+    if (uncensoredValue === mutation.oldValue) {
       continue
     }
+    const privacyLevel = getNodePrivacyLevel(mutation.target)
+    const attributes = getAttributesForPrivacyLevel(mutation.target, privacyLevel)
+    const value = attributes[mutation.attributeName!]
+
+    // TODO: Compare last censored value against this value?
 
     let transformedValue: string | null
-    const target = mutation.target
-    const privacyLevel = getNodePrivacyLevel(target)
+    // REMINDER: `getAttributesForPrivacyLevel()` already handles `MASK` level
     if (privacyLevel === NodeCensorshipTag.HIDDEN) {
       continue
-    } else if (privacyLevel === NodeCensorshipTag.MASK) {
-      // TODO: TODO: This deserves extra options that consider the parent element and attribute name,
-      // for example, keep the attributes for styles
-      // <link rel="stylesheet" href="https://example.com/css" type="text/css" media="print">
-      // value = CENSORED_STRING_MARK
     }
 
     if (mutation.attributeName === 'value') {

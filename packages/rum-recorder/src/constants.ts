@@ -21,19 +21,13 @@ export const enum NodeCensorshipTag {
   MASK_FORMS_ONLY_SEALED = 21, // General censorship of text + attributes
 }
 
-// export const enum InputPrivacyMode {
-//   NONE = 1,
-//   IGNORED,
-//   MASKED,
-// }
-
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 
 // Deprecate via temporariy Alias
-export const PRIVACY_CLASS_INPUT_IGNORED = 'dd-privacy-input-ignored' // TODO: DEPRECATED
-export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked' // TODO: DEPRECATED
-export const PRIVACY_ATTR_VALUE_INPUT_IGNORED = 'input-ignored' // TODO: DEPRECATED
-export const PRIVACY_ATTR_VALUE_INPUT_MASKED = 'input-masked' // TODO: DEPRECATED
+export const PRIVACY_CLASS_INPUT_IGNORED = 'dd-privacy-input-ignored' // DEPRECATED, aliased to mask-forms-only
+export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked' // DEPRECATED, aliased to mask-forms-only
+export const PRIVACY_ATTR_VALUE_INPUT_IGNORED = 'input-ignored' // DEPRECATED, aliased to mask-forms-only
+export const PRIVACY_ATTR_VALUE_INPUT_MASKED = 'input-masked' // DEPRECATED, aliased to mask-forms-only
 
 // Privacy Attrs
 export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
