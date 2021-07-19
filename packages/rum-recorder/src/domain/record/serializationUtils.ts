@@ -1,7 +1,7 @@
 import { buildUrl } from '@datadog/browser-core'
-import { CensorshipLevel, InputPrivacyMode, CENSORED_STRING_MARK } from '../../constants'
+import { CensorshipLevel, NodeCensorshipTag, CENSORED_STRING_MARK } from '../../constants'
 import { getRumRecorderConfig } from '../../boot/startRecording'
-import { getNodeInputPrivacyMode, getNodeOrAncestorsInputPrivacyMode } from './privacy'
+import { getNodePrivacyLevel } from './privacy'
 import { SerializedNodeWithId } from './types'
 
 export interface NodeWithSerializedNode extends Node {
@@ -28,7 +28,6 @@ export function getSerializedNodeId(node: Node): number | undefined
 export function getSerializedNodeId(node: Node) {
   return hasSerializedNode(node) ? node.__sn.id : undefined
 }
-;(window as any).getSerializedNodeId = getSerializedNodeId
 
 export function setSerializedNode(node: Node, serializeNode: SerializedNodeWithId) {
   ;(node as Partial<NodeWithSerializedNode>).__sn = serializeNode
@@ -39,13 +38,13 @@ export function transformAttribute(doc: Document, name: string, value: string): 
     return value
   }
   if (name === 'src' || name === 'href') {
-    return makeUrlAbsolute(value, doc.location.href)
+    return makeUrlAbsolute(value, doc.location?.href)
   }
   if (name === 'srcset') {
-    return makeSrcsetUrlsAbsolute(value, doc.location.href)
+    return makeSrcsetUrlsAbsolute(value, doc.location?.href)
   }
   if (name === 'style') {
-    return makeStylesheetUrlsAbsolute(value, doc.location.href)
+    return makeStylesheetUrlsAbsolute(value, doc.location?.href)
   }
   return value
 }
@@ -83,48 +82,67 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
   }
 }
 
+// Helper Func for mutation observer
+export function getElementInputValue(element: Element) {
+  const nodePrivacyLevel = getNodePrivacyLevel(element)
+  const tagName = element.localName
+  if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN || nodePrivacyLevel === NodeCensorshipTag.MASK) {
+    return CENSORED_STRING_MARK
+  }
+  const inputElement = element as HTMLInputElement
+  if (tagName === 'option' || tagName === 'select') {
+    const optionElement = element as HTMLOptionElement
+    // Matching empty strings is not considered selected.
+    if (optionElement?.value) {
+      return optionElement.value
+    }
+  }
+  // Textarea, Input
+  return inputElement.value
+}
+
 /**
  * Get the element "value" to be serialized as an attribute or an input update record. It respects
  * the input privacy mode of the element. An 'ancestorInputPrivacyMode' can be provided (if known)
  * to avoid iterating over the element ancestors when looking for the input privacy mode.
  */
-export function getElementInputValue(element: Element, ancestorInputPrivacyMode?: InputPrivacyMode) {
-  const tagName = element.tagName
-  if (tagName === 'OPTION' || tagName === 'SELECT') {
-    // Always use the option and select value, as they are useful to display the currently selected
-    // option during replay. They can still be hidden via the "hidden" privacy attribute or class
-    // name.
-    return (element as HTMLOptionElement | HTMLSelectElement).value
-  }
+// export function getElementInputValue(element: Element, ancestorInputPrivacyMode?: InputPrivacyMode) {
+//   const tagName = element.tagName
+//   if (tagName === 'OPTION' || tagName === 'SELECT') {
+//     // Always use the option and select value, as they are useful to display the currently selected
+//     // option during replay. They can still be hidden via the "hidden" privacy attribute or class
+//     // name.
+//     return (element as HTMLOptionElement | HTMLSelectElement).value
+//   }
 
-  if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
-    return
-  }
+//   if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+//     return
+//   }
 
-  const value = (element as HTMLInputElement | HTMLTextAreaElement).value
-  const type = (element as HTMLInputElement | HTMLTextAreaElement).type
+//   const value = (element as HTMLInputElement | HTMLTextAreaElement).value
+//   const type = (element as HTMLInputElement | HTMLTextAreaElement).type
 
-  if (type === 'button' || type === 'submit' || type === 'reset') {
-    // Always use button-like element values, as they are used during replay to display their label.
-    // They can still be hidden via the "hidden" privacy attribute or class name.
-    return value
-  }
+//   if (type === 'button' || type === 'submit' || type === 'reset') {
+//     // Always use button-like element values, as they are used during replay to display their label.
+//     // They can still be hidden via the "hidden" privacy attribute or class name.
+//     return value
+//   }
 
-  const inputPrivacyMode = ancestorInputPrivacyMode
-    ? getNodeInputPrivacyMode(element, ancestorInputPrivacyMode)
-    : getNodeOrAncestorsInputPrivacyMode(element)
+//   // const inputPrivacyMode = ancestorInputPrivacyMode
+//   //   ? getNodeInputPrivacyMode(element, ancestorInputPrivacyMode)
+//   //   : getNodeOrAncestorsInputPrivacyMode(element)
 
-  if (
-    inputPrivacyMode === InputPrivacyMode.IGNORED ||
-    // Never use the radio and checkbox value, as they are not useful during replay.
-    type === 'radio' ||
-    type === 'checkbox'
-  ) {
-    return
-  }
+//   // if (
+//   //   inputPrivacyMode === InputPrivacyMode.IGNORED ||
+//   //   // Never use the radio and checkbox value, as they are not useful during replay.
+//   //   type === 'radio' ||
+//   //   type === 'checkbox'
+//   // ) {
+//   //   return
+//   // }
 
-  return inputPrivacyMode === InputPrivacyMode.MASKED ? maskValue(value) : value
-}
+//   return inputPrivacyMode === InputPrivacyMode.MASKED ? maskValue(value) : value
+// }
 
 export function maskValue(value: string) {
   if (isFlagEnabled('privacy-by-default-poc')) {
@@ -158,4 +176,31 @@ export function getCensorshipLevel(): CensorshipLevel {
   // PENDING review from core package, core defines `censorshipLevel` as any string.
   const level: CensorshipLevel = configuration.censorshipLevel as CensorshipLevel
   return level
+}
+
+// declare const INJECT: {[prop: string]: string|boolean|number}
+// eslint-disable-next-line local-rules/disallow-side-effects
+// if (INJECT.INSPECTOR_DEBUG_MODE) {
+//   // In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
+//   const $window = window as any;
+//   $window.nodeAndAncestorsHaveSerializedNode = nodeAndAncestorsHaveSerializedNode;
+//   $window.getElementInputValue = getElementInputValue;
+//   $window.formTrackingAllowed = formTrackingAllowed;
+// }
+
+/**
+ * Returns an ancestor <Select> element if it exists within 5 iterations (5 arbitrarily chosen)
+ */
+export function getNearbyAncestorSelectElement(optionElement: HTMLOptionElement): HTMLSelectElement | undefined {
+  let parentElement = optionElement.parentElement
+  for (let i = 0; i < 5; i++) {
+    // Check ancestors at most 5 times to see if <OPTION> has a <SELECT> ancestor to match a `select` value from.
+    if (!parentElement || parentElement.tagName === 'SELECT') {
+      break
+    }
+    parentElement = parentElement.parentElement
+  }
+  if (parentElement && parentElement.tagName === 'SELECT') {
+    return parentElement as HTMLSelectElement
+  }
 }

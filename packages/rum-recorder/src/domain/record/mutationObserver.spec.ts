@@ -687,8 +687,11 @@ describe('startMutationCollection', () => {
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
         privacyAttributeOn: 'input',
-        expectedSerializedAttributes: { [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED },
-        expectedAttributesMutation: null,
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+          value: '***',
+        },
+        expectedAttributesMutation: { value: '***' },
       },
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,
@@ -702,8 +705,8 @@ describe('startMutationCollection', () => {
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
         privacyAttributeOn: 'ancestor',
-        expectedSerializedAttributes: {},
-        expectedAttributesMutation: null,
+        expectedSerializedAttributes: { value: '***' },
+        expectedAttributesMutation: { value: '***' },
       },
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,

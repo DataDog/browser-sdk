@@ -1,11 +1,15 @@
 import { isIE } from '../../../../core/test/specHelper'
-import { InputPrivacyMode } from '../../constants'
+import { NodeCensorshipTag } from '../../constants'
 import {
   nodeShouldBeHidden,
   nodeOrAncestorsShouldBeHidden,
   getNodeInputPrivacyMode,
   getNodeOrAncestorsInputPrivacyMode,
+  getNodeSelfPrivacyLevel,
+  getNodePrivacyLevel,
 } from './privacy'
+import { NodeType } from './types'
+import { serializeNodeWithId, serializeChildNodes, serializeDocumentNode } from './serialize'
 
 describe('privacy helpers', () => {
   beforeEach(() => {
@@ -62,102 +66,121 @@ describe('privacy helpers', () => {
   describe('input privacy mode', () => {
     it('use the ancestor privacy mode for a normal DOM Element', () => {
       const node = document.createElement('div')
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.NONE)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.IGNORED)).toBe(InputPrivacyMode.IGNORED)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.MASKED)).toBe(InputPrivacyMode.MASKED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.ALLOW)).toBe(NodeCensorshipTag.ALLOW)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.IGNORE)).toBe(NodeCensorshipTag.IGNORE)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.MASK)).toBe(NodeCensorshipTag.MASK)
     })
 
     it('use the ancestor privacy mode for a DOM Element with a data-dd-privacy="unknown-mode" attribute', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'unknown-mode')
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.NONE)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.IGNORED)).toBe(InputPrivacyMode.IGNORED)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.MASKED)).toBe(InputPrivacyMode.MASKED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.ALLOW)).toBe(NodeCensorshipTag.ALLOW)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.IGNORE)).toBe(NodeCensorshipTag.IGNORE)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.MASK)).toBe(NodeCensorshipTag.MASK)
     })
 
     it('use the ancestor privacy mode for a DOM HTMLInputElement with a type of "text"', () => {
       const node = document.createElement('input')
       node.type = 'text'
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.NONE)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.IGNORED)).toBe(InputPrivacyMode.IGNORED)
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.MASKED)).toBe(InputPrivacyMode.MASKED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.ALLOW)).toBe(NodeCensorshipTag.ALLOW)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.IGNORE)).toBe(NodeCensorshipTag.IGNORE)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.MASK)).toBe(NodeCensorshipTag.MASK)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.MASK_FORMS_ONLY)).toBe(NodeCensorshipTag.MASK)
     })
 
-    it('considers a DOM Document as not to be ignored', () => {
-      expect(getNodeInputPrivacyMode(document, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.NONE)
-    })
+    // it('a masked or hidden DOM Document itself is still serialized ', () => {
+    //   const serializeOptions = {
+    //     document,
+    //     ancestorInputPrivacyMode: 1,
+    //     parentNodePrivacyLevel: NodeCensorshipTag.MASK,
+    //   };
+    //   expect(serializeDocumentNode(document, {
+    //     ...serializeOptions,
+    //     parentNodePrivacyLevel: NodeCensorshipTag.MASK,
+    //   })).toEqual({
+    //     type: NodeType.Document,
+    //     childNodes: serializeChildNodes(document, serializeOptions),
+    //   })
+    //   expect(serializeDocumentNode(document, {
+    //     ...serializeOptions,
+    //     parentNodePrivacyLevel: NodeCensorshipTag.HIDDEN,
+    //   })).toEqual({
+    //     type: NodeType.Document,
+    //     childNodes: serializeChildNodes(document, serializeOptions),
+    //   })
+    // })
 
     it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'input-ignored')
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.IGNORED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.NOT_SET)).toBe(NodeCensorshipTag.MASK)
     })
 
-    it('considers a DOM Element with a dd-privacy-input-ignored class to be ignored', () => {
+    it('considers a DOM Element with a dd-privacy-input-ignored class to be input-ignored (mask-froms-only)', () => {
       const node = document.createElement('input')
       node.className = 'dd-privacy-input-ignored'
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.IGNORED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.NOT_SET)).toBe(NodeCensorshipTag.MASK)
     })
 
-    it('considers a DOM HTMLInputElement with a type of "password" to be ignored', () => {
+    it('considers a DOM HTMLInputElement with a type of "password" to be MASK', () => {
       const node = document.createElement('input')
       node.type = 'password'
-      expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.IGNORED)
+      expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.NOT_SET)).toBe(NodeCensorshipTag.MASK)
     })
 
     describe('input mode priority', () => {
-      it('consider a DOM Element to be ignored if both modes can apply', () => {
+      it('consider a DOM Element to be ignored (mask-froms-only) if both modes can apply', () => {
         const node = document.createElement('input')
         node.className = 'dd-privacy-input-ignored'
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodeInputPrivacyMode(node, InputPrivacyMode.NONE)).toBe(InputPrivacyMode.IGNORED)
+        expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.NOT_SET)).toBe(NodeCensorshipTag.MASK)
       })
 
       it('forces an element to be ignored if an ancestor is ignored', () => {
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodeInputPrivacyMode(node, InputPrivacyMode.IGNORED)).toBe(InputPrivacyMode.IGNORED)
+        expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.IGNORE)).toBe(NodeCensorshipTag.IGNORE)
       })
 
       it('does not force an element to be masked if an ancestor is masked', () => {
         const node = document.createElement('input')
-        node.setAttribute('data-dd-privacy', 'input-ignored')
-        expect(getNodeInputPrivacyMode(node, InputPrivacyMode.MASKED)).toBe(InputPrivacyMode.IGNORED)
+        node.setAttribute('data-dd-privacy', 'allow')
+        expect(getNodeInputPrivacyMode(node, NodeCensorshipTag.MASK_FORMS_ONLY)).toBe(NodeCensorshipTag.ALLOW)
       })
     })
 
     describe('walk through elements ancestors to determine the privacy mode', () => {
-      it('considers a normal DOM Element with a normal parent as not to be ignored', () => {
+      it('considers a normal DOM Element with a normal parent as not to be ALLOW', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.appendChild(node)
-        expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.NONE)
+        expect(getNodePrivacyLevel(node)).toBe(NodeCensorshipTag.ALLOW)
       })
 
-      it('considers a DOM Element with a parent node with a dd-privacy="input-ignored" attribute to be ignored', () => {
+      it('considers DOM Element with parent node with dd-privacy="input-ignored" attr to be MASK', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.setAttribute('data-dd-privacy', 'input-ignored')
         parent.appendChild(node)
-        expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
+        expect(getNodePrivacyLevel(node)).toBe(NodeCensorshipTag.MASK)
       })
 
-      it('considers a DOM Element with a parent node with a dd-privacy-input-ignored class to be ignored', () => {
+      it('considers DOM Element with parent node with dd-privacy-input-ignored class to be MASK', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.className = 'dd-privacy-input-ignored'
         parent.appendChild(node)
-        expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
+        expect(getNodePrivacyLevel(node)).toBe(NodeCensorshipTag.MASK)
       })
 
       // eslint-disable-next-line max-len
-      it('considers a DOM Element with a "masked" privacy mode but within a parent with a "ignored" privacy mode to be ignored', () => {
+      it('considers a DOM Element with a "masked" privacy mode but within a parent with a "ignored" privacy mode to be MASK', () => {
         const node = document.createElement('input')
         const parent = document.createElement('form')
         parent.setAttribute('data-dd-privacy', 'input-ignored')
         parent.appendChild(node)
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodeOrAncestorsInputPrivacyMode(node)).toBe(InputPrivacyMode.IGNORED)
+        expect(getNodePrivacyLevel(node)).toBe(NodeCensorshipTag.MASK)
       })
     })
   })

@@ -104,7 +104,7 @@ describe('recorder', () => {
 
         const inputMasked = findElementWithIdAttribute(fullSnapshot.data.node, 'input-masked')
         expect(inputMasked).toBeTruthy()
-        expect(inputMasked!.attributes.value).toBe('****')
+        expect(inputMasked!.attributes.value).toBe('***')
       })
   })
 

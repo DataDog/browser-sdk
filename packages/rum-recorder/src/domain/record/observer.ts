@@ -8,7 +8,7 @@ import {
   includes,
 } from '@datadog/browser-core'
 import { NodeCensorshipTag } from '../../constants'
-import { getNodeInheritedCensorshipLevel } from './privacy'
+import { getNodePrivacyLevel } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
@@ -104,7 +104,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
     // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-    if (getNodeInheritedCensorshipLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
+    if (getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
@@ -126,11 +126,7 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
       // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-      if (
-        !target ||
-        getNodeInheritedCensorshipLevel(target) === NodeCensorshipTag.HIDDEN ||
-        !hasSerializedNode(target)
-      ) {
+      if (!target || getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
         return
       }
       const id = getSerializedNodeId(target)
@@ -175,13 +171,11 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
 
-    // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-    // TODO: includes input_TAGS -----------------
     if (
       !target ||
       !target.tagName ||
       !includes(INPUT_TAGS, target.tagName) ||
-      getNodeInheritedCensorshipLevel(target) === NodeCensorshipTag.HIDDEN
+      getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN
     ) {
       return
     }
@@ -190,7 +184,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
-      inputState = { isChecked: (target as HTMLInputElement).checked } // TODO: el.checked
+      inputState = { isChecked: (target as HTMLInputElement).checked }
     } else {
       const value = getElementInputValue(target)
       if (value === undefined) {
@@ -199,20 +193,23 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
       inputState = { text: value }
     }
 
+    // Can be multiple changes on the same node within the same batched mutation observation.
     cbWithDedup(target, inputState)
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
-      // TODO: el.checked
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
-          cbWithDedup(el, { isChecked: false }) // TODO: el.checked
+          cbWithDedup(el, { isChecked: false })
         }
       })
     }
   }
 
+  /**
+   * There can be multiple changes on the same node within the same batched mutation observation.
+   */
   function cbWithDedup(target: Node, inputState: InputState) {
     if (!hasSerializedNode(target)) {
       return
@@ -306,7 +303,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
     const target = event.target as Node
 
     // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-    if (!target || getNodeInheritedCensorshipLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
+    if (!target || getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     mediaInteractionCb({

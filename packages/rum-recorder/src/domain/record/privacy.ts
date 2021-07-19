@@ -1,21 +1,25 @@
 import {
   CensorshipLevel,
   NodeCensorshipTag,
-  InputPrivacyMode,
   PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-  PRIVACY_ATTR_VALUE_INPUT_MASKED,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
+  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK_SEALED,
+  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED,
   PRIVACY_CLASS_ALLOW,
+  PRIVACY_CLASS_MASK,
+  PRIVACY_CLASS_MASK_FORMS_ONLY,
   PRIVACY_CLASS_HIDDEN,
-  PRIVACY_CLASS_INPUT_IGNORED,
-  PRIVACY_CLASS_INPUT_MASKED,
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
   CENSORED_IMG_MARK,
+  // To be deprecated below
+  PRIVACY_CLASS_INPUT_IGNORED,
+  PRIVACY_CLASS_INPUT_MASKED,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
 import { shouldIgnoreElement } from './serialize'
@@ -25,9 +29,236 @@ import { getCensorshipLevel } from './serializationUtils'
 // events we want to ignore by default, as they often contain PII.
 // TODO: We might want to differentiate types to fully ignore vs types
 // to obfuscate.
-const PRIVACY_INPUT_TYPES_TO_IGNORE = ['email', 'password', 'tel']
+const PRIVACY_INPUT_TYPES_TO_IGNORE = ['email', 'password', 'tel'] // TODO: TODO: do something here
 
-const MASKING_CHAR = '᙮'
+const TEXT_MASKING_CHAR = '᙮'
+const MIN_LEN_TO_MASK = 80
+const WHITESPACE_TEST = /^\s$/
+
+const nodeInternalPrivacyCache = new WeakMap<Node, NodeCensorshipTag>()
+
+export function uncachePrivacyLevel(node: Node) {
+  nodeInternalPrivacyCache.delete(node)
+}
+
+/**
+ * PUBLIC: Resolves the internal privacy level and remaps to level to the format
+ * exposed to the general codebase  (allow/mask/hidden/ignore) because
+ * NOT_SET/UNKNOWN/*-SEALED/MASK_FORMS_ONLY are not dev friendly and need not be handled by devs
+ */
+export function getNodePrivacyLevel(
+  node: Node,
+  parentNodePrivacyLevel?: NodeCensorshipTag
+): NodeCensorshipTag.ALLOW | NodeCensorshipTag.MASK | NodeCensorshipTag.IGNORE | NodeCensorshipTag.HIDDEN {
+  const privacyLevel = getInternalNodePrivacyLevel(node, parentNodePrivacyLevel)
+  return remapInternalPrivacyLevels(node, privacyLevel)
+}
+
+/**
+ * Remap the internal privacy levels to general use privacy levels
+ */
+export function remapInternalPrivacyLevels(
+  node: Node,
+  privacyLevel: NodeCensorshipTag
+): NodeCensorshipTag.ALLOW | NodeCensorshipTag.MASK | NodeCensorshipTag.IGNORE | NodeCensorshipTag.HIDDEN {
+  switch (privacyLevel) {
+    case NodeCensorshipTag.MASK_SEALED:
+      return NodeCensorshipTag.MASK
+    case NodeCensorshipTag.UNKNOWN:
+      return NodeCensorshipTag.ALLOW // TODO: REVIEW: `hide`, `mask`, or `allow`?
+    case NodeCensorshipTag.NOT_SET:
+      return NodeCensorshipTag.ALLOW // TODO: REVIEW: `allow` by default?
+    // return handleNotSetDefaults(node)
+    case NodeCensorshipTag.IGNORE:
+      return NodeCensorshipTag.IGNORE
+    case NodeCensorshipTag.MASK_FORMS_ONLY_SEALED:
+    case NodeCensorshipTag.MASK_FORMS_ONLY:
+      return isFormElement(node) ? NodeCensorshipTag.MASK : NodeCensorshipTag.ALLOW
+    default:
+      return privacyLevel
+  }
+}
+
+// /**
+//  * Crawls up the DOM tree, and will take a cached privacy level if available.
+//  */
+//  export function recursivelyGetNodePrivacyLevel(node: Node): NodeCensorshipTag {
+//   // First attempt using cache
+//   if (nodeInternalPrivacyCache.has(node)) {
+//     return nodeInternalPrivacyCache.get(node) as NodeCensorshipTag
+//   }
+//   // Next attempt using recursion
+//   if (node.parentNode) {
+//     return recursivelyGetNodePrivacyLevel(node.parentNode)
+//   }
+//   // Finally handle the base case
+//   return getNodeSelfPrivacyLevel(node)
+// }
+
+// /**
+//  * Crawls up the DOM tree, and will take a cached privacy level if available.
+//  */
+//  export function recursivelyGetNodePrivacyLevel(node: Node): NodeCensorshipTag {
+//   // First attempt using cache
+//   if (nodeInternalPrivacyCache.has(node)) {
+//     return nodeInternalPrivacyCache.get(node) as NodeCensorshipTag
+//   }
+//   // Next attempt using recursion
+//   if (node.parentNode) {
+//     return recursivelyGetNodePrivacyLevel(node.parentNode)
+//   }
+//   // Finally handle the base case
+//   return getNodeSelfPrivacyLevel(node)
+// }
+
+/**
+ * INTERNAL FUNC: Get privacy level without remapping (or setting cache)
+ * This function may be explicitly used when passing internal privacy levels to
+ * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
+ */
+export function getInternalNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodeCensorshipTag): NodeCensorshipTag {
+  if (!node) {
+    // TODO: TODO: remove before PR
+    throw new Error('RUNTIME_ASSERTION')
+  }
+
+  // TODO: TODO: REMEMBER TO INVALIDATE CACHE
+  const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
+  if (cachedPrivacyLevel) {
+    return cachedPrivacyLevel
+  }
+
+  let parentNodePrivacyLevelFallback: NodeCensorshipTag
+  // Recursive Fallback
+  if (!parentNodePrivacyLevel) {
+    parentNodePrivacyLevelFallback = node?.parentNode
+      ? getInternalNodePrivacyLevel(node.parentNode)
+      : NodeCensorshipTag.NOT_SET
+  }
+
+  const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
+  const privacyLevel = _derivePrivacyLevelGivenParent(
+    selfPrivacyLevel,
+    parentNodePrivacyLevel || parentNodePrivacyLevelFallback!
+  )
+
+  /**
+   * Cache privacy level for faster mutation observer lookups
+   * Text nodes depend upon the parent element so are not cached.
+   * DIRTY: During tests, we pass in different ancestor privacy levels so we
+   * can't cache the privacy level if `parentNodePrivacyLevel` is passed in.
+   * TODO: Cleanup tests to avoid this effect, or use a new method
+   */
+  if (node?.nodeType === Node.ELEMENT_NODE && !parentNodePrivacyLevel) {
+    nodeInternalPrivacyCache.set(node, privacyLevel)
+  }
+  return privacyLevel
+}
+
+/**
+ * Reduces the next privacy level based on self + parent privacy levels
+ */
+export function _derivePrivacyLevelGivenParent(
+  childPrivacyLevel: NodeCensorshipTag,
+  parentNodePrivacyLevel: NodeCensorshipTag
+): NodeCensorshipTag {
+  switch (parentNodePrivacyLevel) {
+    // These values cannot be overrided
+    case NodeCensorshipTag.MASK_SEALED:
+    case NodeCensorshipTag.MASK_FORMS_ONLY_SEALED:
+    case NodeCensorshipTag.HIDDEN:
+    case NodeCensorshipTag.IGNORE:
+      return parentNodePrivacyLevel
+  }
+  switch (childPrivacyLevel) {
+    case NodeCensorshipTag.NOT_SET:
+      return parentNodePrivacyLevel
+    case NodeCensorshipTag.ALLOW:
+    case NodeCensorshipTag.MASK:
+    case NodeCensorshipTag.MASK_FORMS_ONLY:
+    case NodeCensorshipTag.HIDDEN:
+    case NodeCensorshipTag.IGNORE:
+    case NodeCensorshipTag.MASK_SEALED:
+    case NodeCensorshipTag.MASK_FORMS_ONLY_SEALED:
+      return childPrivacyLevel
+  }
+  // Anything else is unknown.
+  return NodeCensorshipTag.UNKNOWN
+}
+
+/**
+ * Determines the node's own censorship level without checking for ancestors.
+ * This function is purposely not exposed because we do care about the ancestor level.
+ * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
+ */
+export function getNodeSelfPrivacyLevel(node: Node | undefined): NodeCensorshipTag {
+  if (!node) {
+    return NodeCensorshipTag.UNKNOWN
+  }
+
+  // Only Element types can be have a privacy level set
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const elNode = node as HTMLElement
+    const privAttr = elNode.getAttribute(PRIVACY_ATTR_NAME)
+
+    // There are a few `overrules` to enforce for end-user protection
+    if (elNode.tagName === 'BASE') {
+      return NodeCensorshipTag.ALLOW
+    }
+    if (elNode.tagName === 'INPUT') {
+      const inputElement = elNode as HTMLInputElement
+      if (inputElement.type === 'password') {
+        return NodeCensorshipTag.MASK
+      }
+      if (inputElement.type === 'hidden') {
+        return NodeCensorshipTag.MASK // TODO: Review
+      }
+      const autocomplete = inputElement.getAttribute('autocomplete')
+      if (autocomplete && autocomplete.startsWith('cc-')) {
+        return NodeCensorshipTag.MASK
+      }
+    }
+
+    // Customers should first specify privacy tags using HTML attributes
+    switch (privAttr) {
+      case PRIVACY_ATTR_VALUE_ALLOW:
+        return NodeCensorshipTag.ALLOW
+      case PRIVACY_ATTR_VALUE_MASK:
+        return NodeCensorshipTag.MASK
+      case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY:
+      case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
+      case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
+        return NodeCensorshipTag.MASK_FORMS_ONLY
+      case PRIVACY_ATTR_VALUE_HIDDEN:
+        return NodeCensorshipTag.HIDDEN
+      case PRIVACY_ATTR_VALUE_MASK_SEALED:
+        return NodeCensorshipTag.MASK_SEALED
+      case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED:
+        return NodeCensorshipTag.MASK_FORMS_ONLY_SEALED
+    }
+
+    // But we also need to support class based privacy tagging for certain frameworks
+    if (elNode.classList.contains(PRIVACY_CLASS_ALLOW)) {
+      return NodeCensorshipTag.ALLOW
+    } else if (elNode.classList.contains(PRIVACY_CLASS_MASK)) {
+      return NodeCensorshipTag.MASK
+    } else if (elNode.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+      return NodeCensorshipTag.HIDDEN
+    } else if (
+      elNode.classList.contains(PRIVACY_CLASS_MASK_FORMS_ONLY) ||
+      elNode.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
+      elNode.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
+    ) {
+      return NodeCensorshipTag.MASK_FORMS_ONLY
+    } else if (shouldIgnoreElement(elNode)) {
+      // such as for scripts
+      return NodeCensorshipTag.IGNORE
+    }
+  }
+
+  // Other node types cannot be tagged directly
+  return NodeCensorshipTag.NOT_SET
+}
 
 // Returns true if the given DOM node should be hidden. Ancestors
 // are not checked.
@@ -42,7 +273,6 @@ export function nodeShouldBeHidden(node: Node): boolean {
       return nodeShouldBeHidden(node.parentElement)
     }
     const censorshipLevel = getCensorshipLevel()
-    // TODO: Whatabout handling FORM type?
     return censorshipLevel === CensorshipLevel.PRIVATE
   } else if (node.nodeType === Node.DOCUMENT_NODE) {
     const censorshipLevel = getCensorshipLevel()
@@ -86,7 +316,7 @@ export function getAttributesForPrivacyLevel(
     }
 
     // mask image URLs
-    if (tagName === 'IMG' || tagName === 'source') {
+    if (tagName === 'IMG' || tagName === 'SOURCE') {
       if (safeAttrs.src) {
         safeAttrs.src = CENSORED_IMG_MARK
       }
@@ -102,132 +332,13 @@ export function getAttributesForPrivacyLevel(
     }
     // mask data-* attributes
     for (const { name: attrName, value: attrVal } of attrList) {
-      if (attrName.startsWith('data-') && attrVal) {
+      if (attrName.startsWith('data-') && attrVal && attrName !== PRIVACY_ATTR_NAME) {
+        // safe to reveal `${PRIVACY_ATTR_NAME}` attr
         safeAttrs[attrName] = CENSORED_STRING_MARK
       }
     }
   }
   return safeAttrs
-}
-
-/**
- * If a node has no explicit censorship tag, we may apply sensible defaults
- * on a best efforts basis. By spec, we should allow these defaults to evolve over time
- * in an effort to have customers apply their own tags without worrying about defaults changing
- */
-function handleNotSetDefaults(node: Node) {
-  const censorshipLevel = getCensorshipLevel()
-  if (censorshipLevel === CensorshipLevel.PUBLIC) {
-    return NodeCensorshipTag.ALLOW
-  } else if (censorshipLevel === CensorshipLevel.PRIVATE) {
-    return NodeCensorshipTag.MASK
-  } else if (censorshipLevel === CensorshipLevel.FORMS) {
-    return isFormElement(node)
-      ? NodeCensorshipTag.MASK // TODO: HIDDEN?
-      : NodeCensorshipTag.ALLOW
-  }
-  return NodeCensorshipTag.MASK
-}
-
-function getNodeSelfCensorshipLevel(node: Node | null): NodeCensorshipTag {
-  if (!node) {
-    return NodeCensorshipTag.UNKNOWN
-  }
-  if (node.nodeType === Node.ELEMENT_NODE) {
-    const elNode = node as HTMLElement
-    const privAttr = elNode.getAttribute(PRIVACY_ATTR_NAME)
-
-    switch (privAttr) {
-      case PRIVACY_ATTR_VALUE_ALLOW:
-        return NodeCensorshipTag.ALLOW
-      case PRIVACY_ATTR_VALUE_MASK:
-        return NodeCensorshipTag.MASK
-      case PRIVACY_ATTR_VALUE_HIDDEN:
-        return NodeCensorshipTag.HIDDEN
-      case PRIVACY_ATTR_VALUE_MASK_SEALED:
-        return NodeCensorshipTag.MASK_SEALED
-    }
-
-    if (elNode.classList.contains(PRIVACY_CLASS_ALLOW)) {
-      return NodeCensorshipTag.ALLOW
-    } else if (elNode.classList.contains(PRIVACY_CLASS_HIDDEN)) {
-      return NodeCensorshipTag.HIDDEN
-    } else if (shouldIgnoreElement(elNode)) {
-      // such as for scripts
-      return NodeCensorshipTag.IGNORE
-    }
-  } else if (node.nodeType === Node.TEXT_NODE) {
-    if (node.parentNode) {
-      return getNodeSelfCensorshipLevel(node.parentNode)
-    }
-    // We don't know what the censorship level is here
-    return NodeCensorshipTag.UNKNOWN
-  } else if (node.nodeType === Node.DOCUMENT_NODE) {
-    return NodeCensorshipTag.NOT_SET
-  }
-  return NodeCensorshipTag.NOT_SET
-}
-
-/**
- * Checks DOM from top down for first explicit set of `dd-allow` or `dd-block` (or synonyms)
- * if no explicit value has been set, we fallback based on `censorshipLevel`
- * For modes 'PRIVATE' | 'PUBLIC', return a simple true and false respectively
- * For mode 'FORM', we return false if the node is part of the form family (input,textarea etc.)
- */
-export function getNodeInheritedCensorshipLevel(
-  node: Node
-): NodeCensorshipTag.IGNORE | NodeCensorshipTag.ALLOW | NodeCensorshipTag.MASK | NodeCensorshipTag.HIDDEN {
-  let inherited = NodeCensorshipTag.NOT_SET
-  const ancestors = []
-  let nodeItr = node as (Node & ParentNode) | null
-  while (nodeItr) {
-    // TODO: we can probably have more intelligent rules here- if hidden or block-sealed, return early.
-    ancestors.push(nodeItr)
-    nodeItr = nodeItr.parentNode
-  }
-  ancestors.reverse()
-
-  // TODO: These rules can be preplaced with a reducer helper to cleanly determine how rules should be inheritied.
-  for (const ancestorNode of ancestors) {
-    const nodeSelfCensorshipLevel = getNodeSelfCensorshipLevel(ancestorNode)
-    // No Override
-    if (nodeSelfCensorshipLevel === NodeCensorshipTag.MASK_SEALED) {
-      return NodeCensorshipTag.MASK
-    }
-    // TODO: Review spec? No override?
-    else if (nodeSelfCensorshipLevel === NodeCensorshipTag.IGNORE) {
-      return NodeCensorshipTag.IGNORE
-    }
-    // These fields may be overrided
-    else if (
-      nodeSelfCensorshipLevel === NodeCensorshipTag.ALLOW ||
-      nodeSelfCensorshipLevel === NodeCensorshipTag.MASK ||
-      nodeSelfCensorshipLevel === NodeCensorshipTag.HIDDEN
-    ) {
-      inherited = nodeSelfCensorshipLevel
-    }
-    // TODO: Lint fix, dont need to reset
-    else if (nodeSelfCensorshipLevel === NodeCensorshipTag.NOT_SET) {
-      inherited = NodeCensorshipTag.NOT_SET
-    } else if (nodeSelfCensorshipLevel === NodeCensorshipTag.UNKNOWN && inherited === NodeCensorshipTag.NOT_SET) {
-      inherited = NodeCensorshipTag.UNKNOWN
-    }
-  }
-
-  // Now that we have an inherited value, we handle fallbacks
-  if (inherited === NodeCensorshipTag.UNKNOWN) {
-    // Fallback to `MASK` to be extra safe, should never occur
-    // TODO: START LOOSE, THEN BECOME STRICT
-    return NodeCensorshipTag.HIDDEN
-  }
-
-  // These values should not be utilized by child elements
-  // Because these fallback choices do not apply to them
-  if (inherited === NodeCensorshipTag.NOT_SET) {
-    return handleNotSetDefaults(node)
-  }
-
-  return inherited
 }
 
 // Returns true if the given DOM node should be hidden, recursively
@@ -248,71 +359,50 @@ export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
   return nodeOrAncestorsShouldBeHidden(node.parentNode)
 }
 
-/**
- * Returns the given node input privacy mode. The ancestor input privacy mode is required to make
- * sure we respect the privacy mode priorities.
- */
-export function getNodeInputPrivacyMode(node: Node, ancestorInputPrivacyMode: InputPrivacyMode): InputPrivacyMode {
-  // Non-Elements (like Text Nodes) don't have `input` values.
-  if (!isElement(node)) {
-    return InputPrivacyMode.NONE
-  }
+export const getNodeInputPrivacyMode = getNodePrivacyLevel
 
-  const attribute = node.getAttribute(PRIVACY_ATTR_NAME)
-  if (
-    ancestorInputPrivacyMode === InputPrivacyMode.IGNORED ||
-    attribute === PRIVACY_ATTR_VALUE_INPUT_IGNORED ||
-    node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) ||
-    (isInputElement(node) && PRIVACY_INPUT_TYPES_TO_IGNORE.includes(node.type))
-  ) {
-    return InputPrivacyMode.IGNORED
-  }
-
-  // TODO: REVIEW: Is masking stronger than IGNORE? IF so this should be above the ignored part.
-  if (
-    ancestorInputPrivacyMode === InputPrivacyMode.MASKED ||
-    attribute === PRIVACY_ATTR_VALUE_INPUT_MASKED ||
-    node.classList.contains(PRIVACY_CLASS_INPUT_MASKED)
-  ) {
-    return InputPrivacyMode.MASKED
-  }
-
-  return InputPrivacyMode.NONE
-}
-
-/**
- * Returns the given node input privacy mode. This function is costly because it checks all of the
- * node ancestors.
- */
-export function getNodeOrAncestorsInputPrivacyMode(node: Node): InputPrivacyMode {
-  // We basically iterate ancestors from top (document) to bottom (node). It is way easier to do
-  // recursively.
-  const ancestorInputPrivacyMode = node.parentNode
-    ? getNodeOrAncestorsInputPrivacyMode(node.parentNode)
-    : InputPrivacyMode.NONE // TODO: SPEC CLARIFICATION: This is the initial part.
-  return getNodeInputPrivacyMode(node, ancestorInputPrivacyMode)
-}
+export const getNodeOrAncestorsInputPrivacyMode = getNodePrivacyLevel
 
 function isElement(node: Node): node is Element {
   return node.nodeType === node.ELEMENT_NODE
 }
 
-function isInputElement(elem: Element): elem is HTMLInputElement {
-  return elem.tagName === 'INPUT'
-}
-
-export const censorText = (text: string) => text.replace(/[^\s]/g, MASKING_CHAR)
-
-function isFormElement(node: Node | null): boolean {
+export function isFormElement(node: Node | null): boolean {
   if (!node || node.nodeType !== node.ELEMENT_NODE) {
     return false
   }
   const element = node as HTMLInputElement
+  if (element.tagName === 'INPUT') {
+    const type = element.getAttribute('type') || ''
+    switch (type.toLowerCase()) {
+      case 'button':
+      case 'color':
+      case 'reset':
+      case 'submit':
+        return false
+    }
+  }
   return !!FORM_PRIVATE_TAG_NAMES[element.tagName]
 }
 
+/**
+ * Text censoring non-destructively maintains whitespace characters in order to preserve text shape during replay.
+ * For short text, simply replace all non-whitespace characters
+ * For long text, we assume sufficient text entropy to support scrambling the non-whitespace characters in order to
+ * preserve the charset, allowing for near  pixel perfect text shape.
+ */
+export const censorText = (text: string) => {
+  if (text.length <= MIN_LEN_TO_MASK) {
+    return text.replace(/[^\s]/g, TEXT_MASKING_CHAR)
+  }
+  return scrambleText(text)
+}
+
+/**
+ * Bias free random order sorting with Fisher-Yates algorithm
+ */
 export function shuffle<T>(array: T[]) {
-  // COPYRIGHT: This function code from Mike Bostock https://bost.ocks.org/mike/shuffle/
+  // https://bost.ocks.org/mike/shuffle/
   let m = array.length
   let t
   let i
@@ -325,4 +415,47 @@ export function shuffle<T>(array: T[]) {
   return array
 }
 
-;(window as any).getNodeInheritedCensorshipLevel = getNodeInheritedCensorshipLevel
+/**
+ * Scrambles all non-whitespace characters, with minimal transformations to preserve pixel perfect text shape.
+ * We add in 10% of entropy to minimally protect the charset.
+ */
+const scrambleText = (text: string) => {
+  const reducedText = text.toLocaleLowerCase().replace(/[0-9]/gi, '0') // Hide financial data
+  const reducedChars = Array.from(reducedText)
+  const chars = []
+  for (let i = 0; i < reducedChars.length; i++) {
+    if (!WHITESPACE_TEST.test(reducedChars[i])) {
+      chars.push(reducedChars[i])
+    }
+  }
+  // Add 10% TEXT_MASKING_CHAR so that the charset is randomized by 10%
+  const addRandCharsLength = Math.ceil(reducedChars.length * 0.1)
+  const newChars = new Array(addRandCharsLength).fill(TEXT_MASKING_CHAR)
+  Array.prototype.push.apply(chars, newChars)
+  shuffle(chars)
+  // Now we put the scrambled chars back into the string, around the origional whitespace
+  const whitespacedText = []
+  let i = 0
+  while (whitespacedText.length < reducedChars.length) {
+    if (WHITESPACE_TEST.test(reducedChars[i])) {
+      whitespacedText.push(reducedChars[i])
+    } else {
+      whitespacedText.push(chars.pop())
+    }
+    i++
+  }
+  return whitespacedText.join('')
+}
+
+
+// declare const INJECT: {[prop: string]: string|boolean|number}
+// // eslint-disable-next-line local-rules/disallow-side-effects
+// // if (INJECT.INSPECTOR_DEBUG_MODE) {
+// // In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
+// const $window = window as any
+// $window._derivePrivacyLevelGivenParent = _derivePrivacyLevelGivenParent
+// $window.getNodeSelfPrivacyLevel = getNodeSelfPrivacyLevel
+// // $window.recursivelyGetNodePrivacyLevel = recursivelyGetNodePrivacyLevel
+// $window.getNodePrivacyLevel = getNodePrivacyLevel
+// $window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
+// // }

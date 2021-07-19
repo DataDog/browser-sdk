@@ -1,6 +1,8 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
-import { getNodeOrAncestorsInputPrivacyMode, nodeOrAncestorsShouldBeHidden } from './privacy'
+import { NodeCensorshipTag, CENSORED_STRING_MARK } from '../../constants'
+import { SerializedNodeWithId } from '../../domain/record/types'
+import { getNodePrivacyLevel, getInternalNodePrivacyLevel, uncachePrivacyLevel } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -82,30 +84,79 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       document.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
-      !nodeOrAncestorsShouldBeHidden(mutation.target)
+      getNodePrivacyLevel(mutation.target) !== NodeCensorshipTag.HIDDEN
   )
 
+  /*
+      TODO: CACHE INVALIDATION WHEN:
+        - node is added
+        - attributes change:
+            -- privacy attribute
+            -- class name w/ privacy
+            -- other attributes which affect privacy level decisions:
+                -- input type=[password,email,telephone] (though be sure not to reveal password)
+                -- autocomplete (cc-*)
+                - contentEditable
+                - Maybe some meta tag headers?
+  */
+
+  // TODO: Resync check also needs to consider the `default` options that effect privacy levels
+  // TODO: if the default is set to `FORMS`:
+  // TODO: - input[type]
+  // TODO: - contentEditable
+  // TODO: - autocomplete
+
+  const resyncSerializedNodeWithId = new Set<SerializedNodeWithId>()
+  const resyncNodeRefs = new Set<Node>()
+  // filteredMutations.forEach((m) => {
+  //   if (m.type === 'attributes' && m.target) {
+  //     const targetEl = m.target as Element
+  //     // const oldPrivacyMode = m.target.__sn.privacyLevel
+  //     const oldPrivacyMode = getNodePrivacyLevel
+  //     const newPrivacyMode = getNodePrivacyLevel(m.target)
+  //     if (oldPrivacyMode !== newPrivacyMode) {
+  //       const serializedNodeWithId = serializeNodeWithId(targetEl, {
+  //         document,
+  //         ancestorInputPrivacyMode: m.target.parentNode
+  //           ? getNodeOrAncestorsInputPrivacyMode(m.target.parentNode)
+  //           : InputPrivacyMode.MASKED,
+  //         parentNodePrivacyLevel: m.target.parentNode
+  //           ? getNodePrivacyLevel(m.target.parentNode)
+  //           : NodeCensorshipTag.NOT_SET,
+  //       })
+  //       if (serializedNodeWithId) {
+  //         resyncSerializedNodeWithId.add(serializedNodeWithId)
+  //       }
+  //     }
+  //   }
+  // })
+  const resync = Array.from(resyncSerializedNodeWithId.values())
+
+  // TODO: don't process resynced nodes
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
-      (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
+      (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> =>
+        mutation.type === 'childList' && !resyncNodeRefs.has(mutation.target)
     )
   )
 
+  // TODO: don't process resynced nodes
   const texts = processCharacterDataMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumCharacterDataMutationRecord> =>
-        mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
+        mutation.type === 'characterData' && !hasBeenSerialized(mutation.target) && !resyncNodeRefs.has(mutation.target)
     )
   )
 
+  // TODO: don't process resynced nodes
   const attributes = processAttributesMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumAttributesMutationRecord> =>
-        mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
+        mutation.type === 'attributes' && !hasBeenSerialized(mutation.target) && !resyncNodeRefs.has(mutation.target)
     )
   )
 
-  if (!texts.length && !attributes.length && !removes.length && !adds.length) {
+  if (!texts.length && !attributes.length && !removes.length && !adds.length && !resync.length) {
     return
   }
 
@@ -114,6 +165,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     removes,
     texts,
     attributes,
+    // resync,
   })
 }
 
@@ -162,6 +214,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
 
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
+    uncachePrivacyLevel(node) // TODO: TODO: This is likely not needed, review later
     if (hasBeenSerialized(node)) {
       continue
     }
@@ -169,7 +222,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
     const serializedNode = serializeNodeWithId(node, {
       document,
       serializedNodeIds,
-      ancestorInputPrivacyMode: getNodeOrAncestorsInputPrivacyMode(node.parentNode!),
+      parentNodePrivacyLevel: getInternalNodePrivacyLevel(node.parentNode!),
     })
     if (!serializedNode) {
       continue
@@ -181,11 +234,11 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       node: serializedNode,
     })
   }
-
   // Finally, we emit remove mutations.
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
     if (hasSerializedNode(node)) {
+      uncachePrivacyLevel(node)
       removedNodeMutations.push({
         parentId: getSerializedNodeId(parent),
         id: getSerializedNodeId(node),
@@ -218,6 +271,8 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
   // Deduplicate mutations based on their target node
   const handledNodes = new Set<Node>()
   const filteredMutations = mutations.filter((mutation) => {
+    uncachePrivacyLevel(mutation.target) // TODO: TODO: This is likely not needed, review later
+    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: TODO: This is likely not needed, review later
     if (handledNodes.has(mutation.target)) {
       return false
     }
@@ -227,9 +282,17 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
 
   // Emit mutations
   for (const mutation of filteredMutations) {
-    const value = mutation.target.textContent
+    let value = mutation.target.textContent
     if (value === mutation.oldValue) {
       continue
+    }
+    const privacyLevel = getNodePrivacyLevel(mutation.target)
+    if (privacyLevel === NodeCensorshipTag.HIDDEN) {
+      continue
+    } else if (privacyLevel === NodeCensorshipTag.MASK) {
+      // TODO: TODO: This deserves extra options that consider the parent element,
+      // such as whitespace, or <option> within a <select>, or a <script> and <style> tag
+      value = CENSORED_STRING_MARK
     }
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
@@ -246,6 +309,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Deduplicate mutations based on their target node and changed attribute
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
+    uncachePrivacyLevel(mutation.target) // TODO: TODO: This is likely not needed, review later
     const handledAttributes = handledElements.get(mutation.target)
     if (handledAttributes?.has(mutation.attributeName!)) {
       return false
@@ -267,6 +331,17 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
     }
 
     let transformedValue: string | null
+    const target = mutation.target
+    const privacyLevel = getNodePrivacyLevel(target)
+    if (privacyLevel === NodeCensorshipTag.HIDDEN) {
+      continue
+    } else if (privacyLevel === NodeCensorshipTag.MASK) {
+      // TODO: TODO: This deserves extra options that consider the parent element and attribute name,
+      // for example, keep the attributes for styles
+      // <link rel="stylesheet" href="https://example.com/css" type="text/css" media="print">
+      // value = CENSORED_STRING_MARK
+    }
+
     if (mutation.attributeName === 'value') {
       const inputValue = getElementInputValue(mutation.target)
       if (inputValue === undefined) {
@@ -274,8 +349,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
       }
       transformedValue = inputValue
     } else if (value) {
-      // TODO: SPEC CLARIFY: CENSOR VALUES HERE: if (censored....)  transformedValue = 'MASK_CHARS' or null?
-      transformedValue = transformAttribute(document, mutation.attributeName!, value)
+      transformedValue = transformAttribute(mutation.target.ownerDocument, mutation.attributeName!, value)
     } else {
       transformedValue = null
     }

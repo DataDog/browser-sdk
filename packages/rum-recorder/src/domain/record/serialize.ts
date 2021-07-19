@@ -1,26 +1,17 @@
-import { objectEntries } from 'packages/core/src/tools/utils'
+import { objectEntries } from '@datadog/browser-core'
+import { NodeCensorshipTag, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
-  // CensorshipLevel,
-  NodeCensorshipTag,
-  InputPrivacyMode,
-  PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_HIDDEN,
-  CENSORED_STRING_MARK,
-} from '../../constants'
-import {
-  getNodeInputPrivacyMode,
-  nodeShouldBeHidden,
   censorText,
-  // nodeOrAncestorsShouldBeHidden,
-  getNodeInheritedCensorshipLevel,
+  getNodePrivacyLevel,
   getAttributesForPrivacyLevel,
+  remapInternalPrivacyLevels,
+  getInternalNodePrivacyLevel,
   shuffle,
 } from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
   NodeType,
-  Attributes,
   DocumentNode,
   DocumentTypeNode,
   ElementNode,
@@ -32,9 +23,7 @@ import {
   getSerializedNodeId,
   setSerializedNode,
   transformAttribute,
-  getElementInputValue,
-  // getCensorshipLevel,
-  // maskValue,
+  getNearbyAncestorSelectElement,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -42,16 +31,14 @@ export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  ancestorInputPrivacyMode: InputPrivacyMode
+  parentNodePrivacyLevel: NodeCensorshipTag
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
-  // TODO: NOTE: This only affects `input`, not general HTML text blocking
-  const defaultPrivacyMode = InputPrivacyMode.NONE // TODO: get DEFAULT privacy mode, set to MASKED?
   return serializeNodeWithId(document, {
     document,
-    ancestorInputPrivacyMode: defaultPrivacyMode,
+    parentNodePrivacyLevel: NodeCensorshipTag.NOT_SET, // TODO: This should plugin to the root config
   })!
 }
 
@@ -87,7 +74,7 @@ function serializeNode(node: Node, options: SerializeOptions): SerializedNode | 
   }
 }
 
-function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
+export function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
   return {
     type: NodeType.Document,
     childNodes: serializeChildNodes(document, options),
@@ -103,21 +90,40 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
   }
 }
 
-function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
-  const tagName = getValidTagName(element.tagName)
+/**
+ * Serialzing Element nodes involves capturing:
+ * 1. HTML ATTRIBUTES:
+ * 2. JS STATE:
+ * - scroll offsets
+ * - Form fields (input value, checkbox checked, otpion selection, range)
+ * - Canvas state,
+ * - Media (video/audio) play mode + position
+ * - iframe contents
+ * - webcomponents
+ * 3. CUSTOM PROPERTIES:
+ * - height+width for when `hidden` to cover the element
+ * 4. EXCLUDED INTERACTION STATE:
+ * - focus (possible, but not worth perf impact)
+ * - hover (tracked only via mouse activity)
+ * - fullscreen mode
+ */
+export function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
+  const tagName = element.localName
   const isSVG = isSVGElement(element) || undefined
-  const nodePrivacyLevel = getNodeInheritedCensorshipLevel(element)
 
-  // TODO: WHY IS THIS NOT nodeOrAncestorsShouldBeHidden() ???? Also make the function private
-  // if (nodeShouldBeHidden(element)) {
+  // We only get internal privacy level here to pass on to
+  // child nodes, purely for performance reasons
+  const internalPrivacyLevel = getInternalNodePrivacyLevel(element, options.parentNodePrivacyLevel)
+  const nodePrivacyLevel = remapInternalPrivacyLevels(element, internalPrivacyLevel)
+
+  // const state: ElementState = {};
+
   if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
     return {
       type: NodeType.Element,
       tagName,
       attributes: {
-        id: element.id,
-        class: element.className,
         rr_width: `${width}px`,
         rr_height: `${height}px`,
         [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
@@ -128,7 +134,6 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   }
 
   // Ignore Elements like Script and some Link, Metas
-  // if (shouldIgnoreElement(element)) {
   if (nodePrivacyLevel === NodeCensorshipTag.IGNORE) {
     // TODO: We should still record ignored elements, just not their textNode content.
     // TODO: On the record OR replay side, we should prefix the tagName so it has no effect.
@@ -141,16 +146,6 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     // Add domains to relative URLs
     attributes[name] = transformAttribute(options.document, name, attrValue)
   })
-
-  // const attributes: Attributes = {}
-  // // TODO: getAttributesForPrivacyLevel(element, nodePrivacyLevel)
-  // for (const { name, value } of Array.from(element.attributes)) {
-  //   // Never take those attributes into account, as they will be conditionally set below.
-  //   if (name === 'value' || name === 'selected' || name === 'checked') {
-  //     continue
-  //   }
-  //   attributes[name] = transformAttribute(options.document, name, value)
-  // }
 
   // remote css
   if (tagName === 'link') {
@@ -178,30 +173,91 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  // Form fields: INPUT/OPTION/SELECT/TEXTAREA
-  if (nodePrivacyLevel === NodeCensorshipTag.ALLOW) {
-    const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
-    if (value) {
-      attributes.value = value
-    }
-
-    if (tagName === 'option') {
-      const selectElement = (element as HTMLOptionElement).parentElement
-      if ((element as HTMLOptionElement).value === (selectElement as HTMLSelectElement).value) {
-        attributes.selected = (element as HTMLOptionElement).selected
-      }
-    }
-    if (tagName === 'input' && (element as HTMLInputElement).checked) {
-      attributes.checked = true
+  /**
+   * FORMS: <input>, <select>
+   * For some <input> elements, the `value` is an exceptional property/attribute that has the
+   * value synced between el.value and el.getAttribute()
+   * input[type=button,checkbox,hidden,image,radio,reset,submit]
+   */
+  const inputElement = element as HTMLInputElement
+  if (tagName === 'input' && (element as HTMLInputElement).value) {
+    switch (nodePrivacyLevel) {
+      case NodeCensorshipTag.ALLOW:
+        attributes.value = inputElement.value
+        break
+      case NodeCensorshipTag.MASK:
+        attributes.value = CENSORED_STRING_MARK
+        break
     }
   }
 
-  // media elements
+  /**
+   * Forms: input[type=checkbox,radio]
+   * The `checked` property for <input> is a little bit special:
+   * 1. el.checked is a setter that returns if truthy.
+   * 2. getAttribute returns the string value
+   * getAttribute('checked') does not sync with `Element.checked`, so use JS property
+   * NOTE: `checked` property exists on `HTMLInputElement`. For serializer assumptions, we check for type=radio|check.
+   */
+  if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
+    switch (nodePrivacyLevel) {
+      case NodeCensorshipTag.ALLOW:
+        attributes.checked = !!inputElement.checked
+        break
+      case NodeCensorshipTag.MASK:
+        attributes.checked = false
+        break
+    }
+  }
+
+  if (tagName === 'textarea') {
+    const textAreaElement = element as HTMLTextAreaElement
+    // Matching empty strings is not considered selected.
+    switch (nodePrivacyLevel) {
+      case NodeCensorshipTag.ALLOW:
+        attributes.value = textAreaElement.value
+        break
+      case NodeCensorshipTag.MASK:
+        attributes.value = textAreaElement.value ? CENSORED_STRING_MARK : ''
+        break
+    }
+  }
+
+  if (tagName === 'select') {
+    switch (nodePrivacyLevel) {
+      case NodeCensorshipTag.ALLOW:
+        attributes.value = inputElement.value
+        break
+      case NodeCensorshipTag.MASK:
+        attributes.value = inputElement.value ? CENSORED_STRING_MARK : ''
+        break
+    }
+  }
+
+  /**
+   * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
+   */
+  if (tagName === 'option' && nodePrivacyLevel === NodeCensorshipTag.ALLOW) {
+    // For privacy=`MASK`, all the values would be the same, so skip.
+    const optionElement = element as HTMLOptionElement
+    if (optionElement.selected) {
+      attributes.selected = optionElement.selected
+    }
+    attributes.value = optionElement.value
+  }
+
+  /**
+   * Serialize the media playback state
+   */
   if (tagName === 'audio' || tagName === 'video') {
-    attributes.rr_mediaState = (element as HTMLMediaElement).paused ? 'paused' : 'played'
+    const mediaElement = element as HTMLMediaElement
+    // TODO: add `mediaElement.currentTime`
+    attributes.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
   }
 
-  // scroll
+  /**
+   * Serialize the scroll state for each element
+   */
   if (element.scrollLeft) {
     attributes.rr_scrollLeft = Math.round(element.scrollLeft)
   }
@@ -209,33 +265,21 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     attributes.rr_scrollTop = Math.round(element.scrollTop)
   }
 
-  let childNodes: SerializedNodeWithId[]
-
+  let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
-    let childNodesSerializationOptions = options
-
+    const childNodesSerializationOptions = {
+      ...options,
+      // parentNodePrivacyLevel: nodePrivacyLevel,
+      parentNodePrivacyLevel: internalPrivacyLevel,
+      // parentNodePrivacyLevel: getInternalNodePrivacyLevel(element),
+      ignoreWhiteSpace: tagName === 'head',
+    }
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
     if (tagName === 'head') {
-      childNodesSerializationOptions = { ...childNodesSerializationOptions, ignoreWhiteSpace: true }
+      childNodesSerializationOptions.ignoreWhiteSpace = true
     }
-
-    const inputPrivacyMode = getNodeInputPrivacyMode(element, options.ancestorInputPrivacyMode)
-    if (inputPrivacyMode !== options.ancestorInputPrivacyMode) {
-      childNodesSerializationOptions = { ...childNodesSerializationOptions, ancestorInputPrivacyMode: inputPrivacyMode }
-    }
-
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
-  } else {
-    childNodes = []
-  }
-
-  if (
-    // To enhance privacy, we shuffle the
-    nodePrivacyLevel === NodeCensorshipTag.MASK &&
-    (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP')
-  ) {
-    shuffle<SerializedNodeWithId>(childNodes)
   }
 
   return {
@@ -246,9 +290,14 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     isSVG,
   }
 }
-;(window as any).serializeElementNode = serializeElementNode
-;(window as any).getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
 
+/**
+ * TODO: Deprecate this check and move to replay side
+ * TODO: Preserve CSS element order, and record the presence of the tag, just don't render
+ * We don't need this logic on the recorder side.
+ * For security related meta's, customer can mask themmanually given they
+ * are easy to identify in the HEAD tag.
+ */
 export function shouldIgnoreElement(element: Element): boolean {
   if (element.nodeName === 'SCRIPT') {
     return true
@@ -316,28 +365,50 @@ export function shouldIgnoreElement(element: Element): boolean {
   return false
 }
 
+/**
+ * Text Nodes are dependant on Element nodes
+ * Privacy levels are set on elements so we check the parentElement of a text node
+ * for privacy level.
+ */
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
-  const parentTagName = textNode.parentNode && (textNode.parentNode as HTMLElement).tagName
+  const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
 
+  if (
+    options.ignoreWhiteSpace ||
+    // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
+    parentTagName === 'DATALIST' ||
+    parentTagName === 'SELECT' ||
+    parentTagName === 'OPTGROUP'
+  ) {
+      if (!textContent.trim()) {
+        return
+      }
+  }
+
+  const nodePrivacyLevel = getNodePrivacyLevel(textNode)
   const isStyle = parentTagName === 'STYLE' ? true : undefined
-  if (isStyle) {
-    textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
-  } else if (options.ignoreWhiteSpace && !textContent.trim()) {
-    return
-  } else {
-    // if (nodeOrAncestorsShouldBeHidden(textNode)) {
-    const nodePrivacyLevel = getNodeInheritedCensorshipLevel(textNode)
-    if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
-      // TODO: now test
+  const isScript = parentTagName === 'SCRIPT'
+
+  if (isScript) {
+    // For perf reasons, we don't record script (heuristic)
+    textContent = CENSORED_STRING_MARK
+  } else if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
+    // Should never occur, but just in case, we set to CENSORED_MARK.
+    textContent = CENSORED_STRING_MARK
+  } else if (nodePrivacyLevel === NodeCensorshipTag.MASK) {
+    if (isStyle) {
+      // Style tags are `overruled` (Use `hide` to enforce privacy)
+      textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
+    } else if (parentTagName === 'OPTION') {
+      // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
-    } else if (nodePrivacyLevel === NodeCensorshipTag.MASK) {
+    } else {
       textContent = censorText(textContent)
     }
   }
-
   return {
     type: NodeType.Text,
     textContent,
@@ -352,34 +423,43 @@ function serializeCDataNode(): CDataNode {
   }
 }
 
-function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+  const nodeCensorshipTag = options.parentNodePrivacyLevel || getNodePrivacyLevel(node)
   const result: SerializedNodeWithId[] = []
-  forEach(node.childNodes, (childNode) => {
+  let shuffleElements = false
+
+  if (nodeCensorshipTag === NodeCensorshipTag.HIDDEN) {
+    return result
+  }
+
+  // To enhance privacy, we shuffle the child order for dropdowns. We don't want to shuffle text
+  // nodes around though, which should not exist alone within DATALIST/SELECT/OPTGROUP elements
+  if (nodeCensorshipTag === NodeCensorshipTag.MASK && node.nodeType === Node.ELEMENT_NODE) {
+    const tagName = (node as HTMLElement).tagName
+    if (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP') {
+      shuffleElements = true
+    }
+  }
+
+  const childNodeElements = shuffleElements ? (node as HTMLElement).children : node.childNodes
+
+  forEach(childNodeElements, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
   })
+
+  if (shuffleElements) {
+    shuffle<SerializedNodeWithId>(result)
+  }
+
   return result
 }
 
-let nextId = 1
+let _nextId = 1
 function generateNextId(): number {
-  return nextId++
-}
-
-const TAG_NAME_REGEX = /[^a-z1-6-_]/
-function getValidTagName(tagName: string): string {
-  const processedTagName = tagName.toLowerCase().trim()
-
-  if (TAG_NAME_REGEX.test(processedTagName)) {
-    // if the tag name is odd and we cannot extract
-    // anything from the string, then we return a
-    // generic div
-    return 'div'
-  }
-
-  return processedTagName
+  return _nextId++
 }
 
 function getCssRulesString(s: CSSStyleSheet): string | null {
@@ -402,3 +482,17 @@ function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
 function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
 }
+
+// declare const INJECT: { [prop: string]: string | boolean | number }
+// // eslint-disable-next-line local-rules/disallow-side-effects
+// // if (INJECT.INSPECTOR_DEBUG_MODE) {
+//   // In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
+//   const $window = window as any
+//   $window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
+//   $window.serializeNode = serializeNode
+//   $window.serializeNodeWithId = serializeNodeWithId
+//   $window.serializeElementNode = serializeElementNode
+//   $window.serializeTextNode = serializeTextNode
+//   $window.serializeChildNodes = serializeChildNodes
+//   $window.shouldIgnoreElement = shouldIgnoreElement
+// // }

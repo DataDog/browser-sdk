@@ -1,6 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  InputPrivacyMode,
+  NodeCensorshipTag,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -10,10 +10,11 @@ import {
 import { hasSerializedNode } from './serializationUtils'
 import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
 import { ElementNode, NodeType } from './types'
+import { _derivePrivacyLevelGivenParent, getNodeSelfPrivacyLevel } from './privacy'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+  parentNodePrivacyLevel: NodeCensorshipTag.ALLOW, // TODO: Is this a fair test?
 }
 
 describe('serializeNodeWithId', () => {
@@ -66,8 +67,8 @@ describe('serializeNodeWithId', () => {
         type: NodeType.Element,
         tagName: 'div',
         attributes: {
-          id: '',
-          class: '',
+          // id: '',
+          // class: '',
           rr_width: '0px',
           rr_height: '0px',
           [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
@@ -82,7 +83,6 @@ describe('serializeNodeWithId', () => {
       const element = document.createElement('div')
       element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
       element.appendChild(document.createElement('hr'))
-
       expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).childNodes).toEqual([])
     })
 
@@ -119,7 +119,6 @@ describe('serializeNodeWithId', () => {
     })
 
     it('ignores white space in <head>', () => {
-      // TODO: REMOVE: Title can be blocked.
       const head = document.createElement('head')
       head.innerHTML = `  <title>  foo </title>  `
 
@@ -191,7 +190,7 @@ describe('serializeNodeWithId', () => {
 
       expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: { type: 'password' },
+          // attributes: { type: 'password' },
         })
       )
     })
@@ -203,17 +202,21 @@ describe('serializeNodeWithId', () => {
 
       expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: { type: 'password' },
+          // attributes: { type: 'password' },
         })
       )
     })
 
     it('serializes <input type="checkbox"> elements checked state', () => {
       const checkbox = document.createElement('input')
-
+      checkbox.type = 'checkbox'
       expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: {},
+          attributes: {
+            type: 'checkbox',
+            value: 'on',
+            checked: false,
+          },
         })
       )
 
@@ -221,7 +224,11 @@ describe('serializeNodeWithId', () => {
 
       expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: { checked: true },
+          attributes: {
+            type: 'checkbox',
+            value: 'on',
+            checked: true,
+          },
         })
       )
     })
@@ -245,10 +252,10 @@ describe('serializeNodeWithId', () => {
       )
     })
 
-    it('replaces weird tag names with "div"', () => {
-      expect((serializeNodeWithId(document.createElement('foo:bar'), DEFAULT_OPTIONS) as ElementNode).tagName).toEqual(
-        'div'
-      )
+    it('accepts weird tag names like "foo:bar.ßaK"', () => {
+      expect(
+        (serializeNodeWithId(document.createElement('foo:bar.ßaK'), DEFAULT_OPTIONS) as ElementNode).tagName
+      ).toEqual('foo:bar.ßak')
     })
 
     describe('input privacy mode', () => {
@@ -261,7 +268,7 @@ describe('serializeNodeWithId', () => {
           jasmine.objectContaining({
             attributes: {
               [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
-              value: '****',
+              value: '***',
             },
           })
         )
@@ -276,13 +283,13 @@ describe('serializeNodeWithId', () => {
 
         expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
           jasmine.objectContaining({
-            attributes: { value: '****' },
+            attributes: { value: '***' },
           })
         )
       })
     })
 
-    it('does not serialize <input> values for ignored mode', () => {
+    it('does serialize <input> values for ignored mode', () => {
       const input = document.createElement('input')
       input.value = 'toto'
       input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
@@ -291,6 +298,7 @@ describe('serializeNodeWithId', () => {
         jasmine.objectContaining({
           attributes: {
             [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+            value: '***',
           },
         })
       )
