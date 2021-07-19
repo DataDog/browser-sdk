@@ -7,19 +7,20 @@ export const enum InitialPrivacyLevel {
 
 export const enum NodePrivacyLevelInternal {
   // INTERNAL USE:
-  NOT_SET = 1, // Not set, use fallback
-  UNKNOWN = 2, // Something went wrong, so fallback defensively (eg. textNode without aparent)
-  IGNORE = 3, // some tags aren't censored, just ignored, like script tags
+  NOT_SET = 1,
+  UNKNOWN = 2,
+  IGNORE = 3,
 
   // CUSTOMER APPLIED
-  ALLOW = 10, // No privacy
-  MASK = 11, // General privacy of text + attributes
-  MASK_FORMS_ONLY = 12, // General privacy of text + attributes for forms
-  HIDDEN = 13, // Supresses everything but dimentions: JS events, attributes, text, input val, node children + depth.
+  ALLOW = 10,
+  MASK = 11,
+  MASK_FORMS_ONLY = 12,
+  HIDDEN = 13,
 
   // SPECIAL: shouldn't be needed by general customers
-  MASK_SEALED = 20, // General privacy of text + attributes
-  MASK_FORMS_ONLY_SEALED = 21, // General privacy of text + attributes for forms
+  MASK_SEALED = 20,
+  MASK_FORMS_ONLY_SEALED = 21,
+  nodeInternalPrivacyCache,
 }
 
 // Only expose these Privacy levelsto the general codebase

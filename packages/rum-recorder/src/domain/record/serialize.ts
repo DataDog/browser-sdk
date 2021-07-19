@@ -1,4 +1,3 @@
-import { objectEntries } from '@datadog/browser-core'
 import {
   NodePrivacyLevel,
   NodePrivacyLevelInternal,
@@ -33,6 +32,15 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 
+const objectEntries = function (obj: Record<string, any>) {
+  const ownProps = Object.keys(obj)
+  let i = ownProps.length
+  const result = new Array(i)
+  while (i--) {
+    result[i] = [ownProps[i], obj[ownProps[i]]]
+  }
+  return result as [any, any]
+}
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>

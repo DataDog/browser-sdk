@@ -187,7 +187,7 @@ export function derivePrivacyLevelGivenParent(
  */
 export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLevelInternal {
   if (!node) {
-    return NodePrivacyLevelInternal.UNKNOWN
+    return getInitialPrivacyLevel()
   }
 
   // Only Element types can be have a privacy level set
@@ -208,7 +208,7 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
         return NodePrivacyLevelInternal.MASK // TODO: Review: what is the preferred level?
       }
       const autocomplete = inputElement.getAttribute('autocomplete')
-      if (autocomplete && autocomplete.startsWith('cc-')) {
+      if (autocomplete && autocomplete.indexOf('cc-') === 0) {
         return NodePrivacyLevelInternal.MASK
       }
     }
@@ -248,6 +248,8 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
       // such as for scripts
       return NodePrivacyLevelInternal.IGNORE
     }
+  } else if (node.nodeType === Node.DOCUMENT_NODE) {
+    return getInitialPrivacyLevel()
   }
 
   // Other node types cannot be tagged directly
@@ -269,16 +271,14 @@ export function getAttributesForPrivacyLevel(
   }
 
   const tagName = element.tagName
-  const attrList = Array.from(element.attributes).map((attr) => ({ value: attr.value, name: attr.name }))
   const safeAttrs: Record<string, string> = {}
 
-  for (const { name: attrName, value: attrVal } of attrList) {
+  getAttributeEntries(element.attributes).forEach(([attrName, attrVal]) => {
     // Never take those attributes into account, as they will be conditionally added in `serializeElementNode`
-    if (attrName === 'value' || attrName === 'selected' || attrName === 'checked') {
-      continue
+    if (attrName !== 'value' && attrName !== 'selected' && attrName !== 'checked') {
+      safeAttrs[attrName] = attrVal
     }
-    safeAttrs[attrName] = attrVal
-  }
+  })
 
   if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
     // Mask Attribute text content
@@ -305,12 +305,12 @@ export function getAttributesForPrivacyLevel(
       }
     }
     // mask data-* attributes
-    for (const { name: attrName, value: attrVal } of attrList) {
-      if (attrName.startsWith('data-') && attrVal && attrName !== PRIVACY_ATTR_NAME) {
+    getAttributeEntries(element.attributes).forEach(([attrName, attrVal]) => {
+      if (attrName.indexOf('data-') === 0 && attrVal && attrName !== PRIVACY_ATTR_NAME) {
         // safe to reveal `${PRIVACY_ATTR_NAME}` attr
         safeAttrs[attrName] = CENSORED_STRING_MARK
       }
-    }
+    })
   }
   return safeAttrs
 }
@@ -371,7 +371,7 @@ export function shuffle<T>(array: T[]) {
  * Scrambles all non-whitespace characters, with minimal transformations to preserve pixel perfect text shape.
  * We add in 10% of entropy to minimally protect the charset.
  */
-const scrambleText = (text: string) => {
+export const scrambleText = (text: string) => {
   const reducedText = text.toLocaleLowerCase().replace(/[0-9]/gi, '0') // Hide financial data
   const reducedChars = Array.from(reducedText)
   const chars = []
@@ -397,4 +397,16 @@ const scrambleText = (text: string) => {
     i++
   }
   return whitespacedText.join('')
+}
+
+type HtmlAttribute = { name: string; value: string }
+function getAttributeEntries(attributes: NamedNodeMap) {
+  const attributeEntries: Array<[string, string]> = []
+  for (const key in attributes) {
+    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
+      const attribute = attributes[key] as HtmlAttribute
+      attributeEntries.push([attribute.name, attribute.value])
+    }
+  }
+  return attributeEntries
 }

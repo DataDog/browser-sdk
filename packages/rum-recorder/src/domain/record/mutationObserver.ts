@@ -1,7 +1,6 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import { SerializedNodeWithId } from '../../domain/record/types'
 import {
   getNodePrivacyLevel,
   getInternalNodePrivacyLevel,
@@ -92,57 +91,10 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
       getNodePrivacyLevel(mutation.target) !== NodePrivacyLevel.HIDDEN
   )
 
-  /*
-      TODO: CACHE INVALIDATION WHEN:
-        - node is added
-        - attributes change:
-            -- privacy attribute
-            -- class name w/ privacy
-            -- other attributes which affect privacy level decisions:
-                -- input type=[password,email,telephone] (though be sure not to reveal password)
-                -- autocomplete (cc-*)
-                - contentEditable
-                - Maybe some meta tag headers?
-  */
-
-  // TODO: Resync check also needs to consider the `default` options that effect privacy levels
-  // TODO: if the default is set to `FORMS`:
-  // TODO: - input[type]
-  // TODO: - contentEditable
-  // TODO: - autocomplete
-
-  const resyncSerializedNodeWithId = new Set<SerializedNodeWithId>()
-  const resyncNodeRefs = new Set<Node>()
-  // TODO:
-  // filteredMutations.forEach((m) => {
-  //   if (m.type === 'attributes' && m.target) {
-  //     const targetEl = m.target as Element
-  //     // const oldPrivacyMode = m.target.__sn.privacyLevel
-  //     const oldPrivacyMode = getNodePrivacyLevel
-  //     const newPrivacyMode = getNodePrivacyLevel(m.target)
-  //     if (oldPrivacyMode !== newPrivacyMode) {
-  //       const serializedNodeWithId = serializeNodeWithId(targetEl, {
-  //         document,
-  //         ancestorInputPrivacyMode: m.target.parentNode
-  //           ? getNodePrivacyLevel(m.target.parentNode)
-  //           : InputPrivacyMode.MASKED,
-  //         parentNodePrivacyLevel: m.target.parentNode
-  //           ? getNodePrivacyLevel(m.target.parentNode)
-  //           : NodePrivacyLevelInternal.NOT_SET,
-  //       })
-  //       if (serializedNodeWithId) {
-  //         resyncSerializedNodeWithId.add(serializedNodeWithId)
-  //       }
-  //     }
-  //   }
-  // })
-  const resync = Array.from(resyncSerializedNodeWithId.values())
-
   // TODO: don't process resynced nodes
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
-      (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> =>
-        mutation.type === 'childList' && !resyncNodeRefs.has(mutation.target)
+      (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     )
   )
 
@@ -150,7 +102,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
   const texts = processCharacterDataMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumCharacterDataMutationRecord> =>
-        mutation.type === 'characterData' && !hasBeenSerialized(mutation.target) && !resyncNodeRefs.has(mutation.target)
+        mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
     )
   )
 
@@ -158,11 +110,11 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
   const attributes = processAttributesMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumAttributesMutationRecord> =>
-        mutation.type === 'attributes' && !hasBeenSerialized(mutation.target) && !resyncNodeRefs.has(mutation.target)
+        mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
     )
   )
 
-  if (!texts.length && !attributes.length && !removes.length && !adds.length && !resync.length) {
+  if (!texts.length && !attributes.length && !removes.length && !adds.length) {
     return
   }
 
@@ -171,7 +123,6 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     removes,
     texts,
     attributes,
-    // resync,
   })
 }
 

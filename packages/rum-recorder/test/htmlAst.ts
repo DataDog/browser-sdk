@@ -12,7 +12,7 @@ export const HTML = `
 <body>
     <h1>hello private world</h1>
     <p>Loreum ipsum private text</p>
-    <noscript>hello <b>private</b> world</noscript>
+    <noscript>hello private world</noscript>
     <a href='https://private.com/path/nested?query=param#hash'>
       Click https://private.com/path/nested?query=param#hash
     </a>
@@ -175,22 +175,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮ ',
-                },
-                {
-                  type: 2,
-                  tagName: 'b',
-                  attributes: {},
-                  childNodes: [
-                    {
-                      type: 3,
-                      textContent: '᙮᙮᙮᙮᙮᙮᙮',
-                    },
-                  ],
-                },
-                {
-                  type: 3,
-                  textContent: ' ᙮᙮᙮᙮᙮',
+                  textContent: '᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮',
                 },
               ],
             },
@@ -505,22 +490,7 @@ export const AST_MASK_FORMS_ONLY = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: 'hello ',
-                },
-                {
-                  type: 2,
-                  tagName: 'b',
-                  attributes: {},
-                  childNodes: [
-                    {
-                      type: 3,
-                      textContent: 'private',
-                    },
-                  ],
-                },
-                {
-                  type: 3,
-                  textContent: ' world',
+                  textContent: 'hello private world',
                 },
               ],
             },
@@ -835,22 +805,7 @@ export const AST_ALLOW = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: 'hello ',
-                },
-                {
-                  type: 2,
-                  tagName: 'b',
-                  attributes: {},
-                  childNodes: [
-                    {
-                      type: 3,
-                      textContent: 'private',
-                    },
-                  ],
-                },
-                {
-                  type: 3,
-                  textContent: ' world',
+                  textContent: 'hello private world',
                 },
               ],
             },
