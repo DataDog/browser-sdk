@@ -1,5 +1,5 @@
 import { objectEntries } from '@datadog/browser-core'
-import { NodeCensorshipTag, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
   censorText,
   getNodePrivacyLevel,
@@ -31,14 +31,14 @@ export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: NodeCensorshipTag
+  parentNodePrivacyLevel: NodePrivacyLevel
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: NodeCensorshipTag.NOT_SET, // TODO: This should plugin to the root config
+    parentNodePrivacyLevel: NodePrivacyLevel.NOT_SET, // TODO: This should plugin to the root config
   })!
 }
 
@@ -118,7 +118,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   // const state: ElementState = {};
 
-  if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
     return {
       type: NodeType.Element,
@@ -134,7 +134,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   }
 
   // Ignore Elements like Script and some Link, Metas
-  if (nodePrivacyLevel === NodeCensorshipTag.IGNORE) {
+  if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
     // TODO: We should still record ignored elements, just not their textNode content.
     // TODO: On the record OR replay side, we should prefix the tagName so it has no effect.
     return
@@ -182,10 +182,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   const inputElement = element as HTMLInputElement
   if (tagName === 'input' && (element as HTMLInputElement).value) {
     switch (nodePrivacyLevel) {
-      case NodeCensorshipTag.ALLOW:
+      case NodePrivacyLevel.ALLOW:
         attributes.value = inputElement.value
         break
-      case NodeCensorshipTag.MASK:
+      case NodePrivacyLevel.MASK:
         attributes.value = CENSORED_STRING_MARK
         break
     }
@@ -201,10 +201,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
    */
   if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
     switch (nodePrivacyLevel) {
-      case NodeCensorshipTag.ALLOW:
+      case NodePrivacyLevel.ALLOW:
         attributes.checked = !!inputElement.checked
         break
-      case NodeCensorshipTag.MASK:
+      case NodePrivacyLevel.MASK:
         attributes.checked = false
         break
     }
@@ -214,10 +214,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     const textAreaElement = element as HTMLTextAreaElement
     // Matching empty strings is not considered selected.
     switch (nodePrivacyLevel) {
-      case NodeCensorshipTag.ALLOW:
+      case NodePrivacyLevel.ALLOW:
         attributes.value = textAreaElement.value
         break
-      case NodeCensorshipTag.MASK:
+      case NodePrivacyLevel.MASK:
         attributes.value = textAreaElement.value ? CENSORED_STRING_MARK : ''
         break
     }
@@ -225,10 +225,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   if (tagName === 'select') {
     switch (nodePrivacyLevel) {
-      case NodeCensorshipTag.ALLOW:
+      case NodePrivacyLevel.ALLOW:
         attributes.value = inputElement.value
         break
-      case NodeCensorshipTag.MASK:
+      case NodePrivacyLevel.MASK:
         attributes.value = inputElement.value ? CENSORED_STRING_MARK : ''
         break
     }
@@ -237,7 +237,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   /**
    * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
    */
-  if (tagName === 'option' && nodePrivacyLevel === NodeCensorshipTag.ALLOW) {
+  if (tagName === 'option' && nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
     // For privacy=`MASK`, all the values would be the same, so skip.
     const optionElement = element as HTMLOptionElement
     if (optionElement.selected) {
@@ -395,10 +395,10 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   if (isScript) {
     // For perf reasons, we don't record script (heuristic)
     textContent = CENSORED_STRING_MARK
-  } else if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN) {
+  } else if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // Should never occur, but just in case, we set to CENSORED_MARK.
     textContent = CENSORED_STRING_MARK
-  } else if (nodePrivacyLevel === NodeCensorshipTag.MASK) {
+  } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
     if (isStyle) {
       // Style tags are `overruled` (Use `hide` to enforce privacy)
       textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
@@ -428,13 +428,13 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
   const result: SerializedNodeWithId[] = []
   let shuffleElements = false
 
-  if (nodeCensorshipTag === NodeCensorshipTag.HIDDEN) {
+  if (nodeCensorshipTag === NodePrivacyLevel.HIDDEN) {
     return result
   }
 
   // To enhance privacy, we shuffle the child order for dropdowns. We don't want to shuffle text
   // nodes around though, which should not exist alone within DATALIST/SELECT/OPTGROUP elements
-  if (nodeCensorshipTag === NodeCensorshipTag.MASK && node.nodeType === Node.ELEMENT_NODE) {
+  if (nodeCensorshipTag === NodePrivacyLevel.MASK && node.nodeType === Node.ELEMENT_NODE) {
     const tagName = (node as HTMLElement).tagName
     if (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP') {
       shuffleElements = true

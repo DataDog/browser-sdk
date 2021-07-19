@@ -1,6 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  NodeCensorshipTag,
+  NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -14,7 +14,7 @@ import { _derivePrivacyLevelGivenParent, getNodeSelfPrivacyLevel } from './priva
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  parentNodePrivacyLevel: NodeCensorshipTag.ALLOW, // TODO: Is this a fair test?
+  parentNodePrivacyLevel: NodePrivacyLevel.ALLOW, // TODO: Is this a fair test?
 }
 
 describe('serializeNodeWithId', () => {

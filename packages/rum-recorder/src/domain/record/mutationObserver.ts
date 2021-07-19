@@ -1,6 +1,6 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
-import { NodeCensorshipTag, CENSORED_STRING_MARK } from '../../constants'
+import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
 import { SerializedNodeWithId } from '../../domain/record/types'
 import {
   getNodePrivacyLevel,
@@ -89,7 +89,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       document.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
-      getNodePrivacyLevel(mutation.target) !== NodeCensorshipTag.HIDDEN
+      getNodePrivacyLevel(mutation.target) !== NodePrivacyLevel.HIDDEN
   )
 
   /*
@@ -127,7 +127,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
   //           : InputPrivacyMode.MASKED,
   //         parentNodePrivacyLevel: m.target.parentNode
   //           ? getNodePrivacyLevel(m.target.parentNode)
-  //           : NodeCensorshipTag.NOT_SET,
+  //           : NodePrivacyLevel.NOT_SET,
   //       })
   //       if (serializedNodeWithId) {
   //         resyncSerializedNodeWithId.add(serializedNodeWithId)
@@ -292,9 +292,9 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
       continue
     }
     const privacyLevel = getNodePrivacyLevel(mutation.target)
-    if (privacyLevel === NodeCensorshipTag.HIDDEN) {
+    if (privacyLevel === NodePrivacyLevel.HIDDEN) {
       continue
-    } else if (privacyLevel === NodeCensorshipTag.MASK) {
+    } else if (privacyLevel === NodePrivacyLevel.MASK) {
       // TODO: TODO: This deserves extra options that consider the parent element,
       // such as whitespace, or <option> within a <select>, or a <script> and <style> tag
       value = CENSORED_STRING_MARK
@@ -342,7 +342,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
 
     let transformedValue: string | null
     // REMINDER: `getAttributesForPrivacyLevel()` already handles `MASK` level
-    if (privacyLevel === NodeCensorshipTag.HIDDEN) {
+    if (privacyLevel === NodePrivacyLevel.HIDDEN) {
       continue
     }
 

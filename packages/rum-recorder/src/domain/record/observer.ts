@@ -7,7 +7,7 @@ import {
   addEventListener,
   includes,
 } from '@datadog/browser-core'
-import { NodeCensorshipTag } from '../../constants'
+import { NodePrivacyLevel } from '../../constants'
 import { getNodePrivacyLevel } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
@@ -104,7 +104,7 @@ function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHan
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
     // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-    if (getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
+    if (getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
@@ -126,7 +126,7 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
       // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-      if (!target || getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
+      if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
         return
       }
       const id = getSerializedNodeId(target)
@@ -175,7 +175,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
       !target ||
       !target.tagName ||
       !includes(INPUT_TAGS, target.tagName) ||
-      getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN
+      getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
@@ -303,7 +303,7 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
     const target = event.target as Node
 
     // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
-    if (!target || getNodePrivacyLevel(target) === NodeCensorshipTag.HIDDEN || !hasSerializedNode(target)) {
+    if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     mediaInteractionCb({

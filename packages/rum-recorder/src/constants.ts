@@ -4,7 +4,7 @@ export const enum CensorshipLevel {
   PUBLIC = 'PUBLIC',
 }
 
-export const enum NodeCensorshipTag {
+export const enum NodePrivacyLevel {
   // INTERNAL USE:
   NOT_SET = 1, // Not set, use fallback
   UNKNOWN = 2, // Something went wrong, so fallback defensively (eg. textNode without aparent)

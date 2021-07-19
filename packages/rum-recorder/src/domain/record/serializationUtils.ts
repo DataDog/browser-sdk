@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { CensorshipLevel, NodeCensorshipTag, CENSORED_STRING_MARK } from '../../constants'
+import { CensorshipLevel, NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
 import { getRumRecorderConfig } from '../../boot/startRecording'
 import { getNodePrivacyLevel } from './privacy'
 import { SerializedNodeWithId } from './types'
@@ -86,7 +86,7 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
 export function getElementInputValue(element: Element) {
   const nodePrivacyLevel = getNodePrivacyLevel(element)
   const tagName = element.localName
-  if (nodePrivacyLevel === NodeCensorshipTag.HIDDEN || nodePrivacyLevel === NodeCensorshipTag.MASK) {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.MASK) {
     return CENSORED_STRING_MARK
   }
   const inputElement = element as HTMLInputElement

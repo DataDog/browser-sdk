@@ -1,5 +1,5 @@
 import { SerializedNodeWithId } from 'packages/rum-recorder/src/domain/record/types'
-import { NodeCensorshipTag, PRIVACY_ATTR_NAME } from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
 import { getNodeSelfPrivacyLevel, _derivePrivacyLevelGivenParent } from './privacy'
@@ -62,82 +62,82 @@ describe('Self Privacy Level', () => {
   // Simple Spec Entrance Tests
   it('classifies `allow` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-allow" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.ALLOW)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.ALLOW)
   })
   it('classifies `hidden` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-hidden" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.HIDDEN)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.HIDDEN)
   })
   it('classifies `mask` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-mask" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.MASK)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK)
   })
   it('classifies `mask-forms-only` class', () => {
     const el = buildFromHTML(
       '<span class="hi dd-privacy-mask-forms-only" data-test="foo" bar="baz" checked>hello</span>'
     )
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-input-ignored` class as `mask-forms-only`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-input-ignored" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-input-masked` class as `mask-forms-only`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-input-masked" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-foo` class as `NOT_SET`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-foo" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodeCensorshipTag.NOT_SET)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.NOT_SET)
   })
 })
 
 describe('Inherited Privacy Level', () => {
   // Simple Spec Smoke Tests
   const tests = [
-    // {args: [undefined, undefined], expect: NodeCensorshipTag.UNKNOWN, msg: 'Fallback to unknown'},
-    // {args: [NodeCensorshipTag.ALLOW, undefined], expect: NodeCensorshipTag.ALLOW, msg: 'Robust against undefined'},
-    { args: [NodeCensorshipTag.ALLOW, 999], expect: NodeCensorshipTag.ALLOW, msg: 'Robust against parent invalid' },
-    { args: [999, NodeCensorshipTag.ALLOW], expect: NodeCensorshipTag.UNKNOWN, msg: 'Robust against self invalid' },
-    { args: [999, 999], expect: NodeCensorshipTag.UNKNOWN, msg: 'Robust against both invalid' },
+    // {args: [undefined, undefined], expect: NodePrivacyLevel.UNKNOWN, msg: 'Fallback to unknown'},
+    // {args: [NodePrivacyLevel.ALLOW, undefined], expect: NodePrivacyLevel.ALLOW, msg: 'Robust against undefined'},
+    { args: [NodePrivacyLevel.ALLOW, 999], expect: NodePrivacyLevel.ALLOW, msg: 'Robust against parent invalid' },
+    { args: [999, NodePrivacyLevel.ALLOW], expect: NodePrivacyLevel.UNKNOWN, msg: 'Robust against self invalid' },
+    { args: [999, 999], expect: NodePrivacyLevel.UNKNOWN, msg: 'Robust against both invalid' },
 
     {
-      args: [NodeCensorshipTag.NOT_SET, NodeCensorshipTag.UNKNOWN],
-      expect: NodeCensorshipTag.UNKNOWN,
+      args: [NodePrivacyLevel.NOT_SET, NodePrivacyLevel.UNKNOWN],
+      expect: NodePrivacyLevel.UNKNOWN,
       msg: 'Unknown not inherited',
     },
     {
-      args: [NodeCensorshipTag.UNKNOWN, NodeCensorshipTag.NOT_SET],
-      expect: NodeCensorshipTag.UNKNOWN,
+      args: [NodePrivacyLevel.UNKNOWN, NodePrivacyLevel.NOT_SET],
+      expect: NodePrivacyLevel.UNKNOWN,
       msg: 'NOT_SET not inherited',
     },
 
-    { args: [NodeCensorshipTag.ALLOW, NodeCensorshipTag.MASK], expect: NodeCensorshipTag.ALLOW, msg: 'Override mask' },
-    { args: [NodeCensorshipTag.MASK, NodeCensorshipTag.ALLOW], expect: NodeCensorshipTag.MASK, msg: 'Override allow' },
+    { args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK], expect: NodePrivacyLevel.ALLOW, msg: 'Override mask' },
+    { args: [NodePrivacyLevel.MASK, NodePrivacyLevel.ALLOW], expect: NodePrivacyLevel.MASK, msg: 'Override allow' },
     {
-      args: [NodeCensorshipTag.HIDDEN, NodeCensorshipTag.ALLOW],
-      expect: NodeCensorshipTag.HIDDEN,
+      args: [NodePrivacyLevel.HIDDEN, NodePrivacyLevel.ALLOW],
+      expect: NodePrivacyLevel.HIDDEN,
       msg: 'Override allow (for hidden)',
     },
     {
-      args: [NodeCensorshipTag.ALLOW, NodeCensorshipTag.MASK_FORMS_ONLY],
-      expect: NodeCensorshipTag.ALLOW,
+      args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK_FORMS_ONLY],
+      expect: NodePrivacyLevel.ALLOW,
       msg: 'Override mask-forms-only',
     },
 
     {
-      args: [NodeCensorshipTag.MASK, NodeCensorshipTag.HIDDEN],
-      expect: NodeCensorshipTag.HIDDEN,
+      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.HIDDEN],
+      expect: NodePrivacyLevel.HIDDEN,
       msg: 'Hidden is final',
     },
     {
-      args: [NodeCensorshipTag.MASK, NodeCensorshipTag.MASK_SEALED],
-      expect: NodeCensorshipTag.MASK_SEALED,
+      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.MASK_SEALED],
+      expect: NodePrivacyLevel.MASK_SEALED,
       msg: 'Mask-sealed is final',
     },
     {
-      args: [NodeCensorshipTag.MASK, NodeCensorshipTag.MASK_FORMS_ONLY_SEALED],
-      expect: NodeCensorshipTag.MASK_FORMS_ONLY_SEALED,
+      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.MASK_FORMS_ONLY_SEALED],
+      expect: NodePrivacyLevel.MASK_FORMS_ONLY_SEALED,
       msg: 'Mask-forms-only-sealed is final',
     },
   ]
