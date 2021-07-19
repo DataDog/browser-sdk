@@ -1,5 +1,5 @@
 import { SerializedNodeWithId } from 'packages/rum-recorder/src/domain/record/types'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '../../constants'
+import { NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
 import { getNodeSelfPrivacyLevel, _derivePrivacyLevelGivenParent } from './privacy'
@@ -62,82 +62,84 @@ describe('Self Privacy Level', () => {
   // Simple Spec Entrance Tests
   it('classifies `allow` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-allow" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.ALLOW)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.ALLOW)
   })
   it('classifies `hidden` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-hidden" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.HIDDEN)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.HIDDEN)
   })
   it('classifies `mask` class', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-mask" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.MASK)
   })
   it('classifies `mask-forms-only` class', () => {
     const el = buildFromHTML(
       '<span class="hi dd-privacy-mask-forms-only" data-test="foo" bar="baz" checked>hello</span>'
     )
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-input-ignored` class as `mask-forms-only`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-input-ignored" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-input-masked` class as `mask-forms-only`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-input-masked" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.MASK_FORMS_ONLY)
   })
   it('classifies deprecated `dd-privacy-foo` class as `NOT_SET`', () => {
     const el = buildFromHTML('<span class="hi dd-privacy-foo" data-test="foo" bar="baz" checked>hello</span>')
-    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevel.NOT_SET)
+    expect(getNodeSelfPrivacyLevel(el)).toBe(NodePrivacyLevelInternal.NOT_SET)
   })
 })
 
 describe('Inherited Privacy Level', () => {
   // Simple Spec Smoke Tests
   const tests = [
-    // {args: [undefined, undefined], expect: NodePrivacyLevel.UNKNOWN, msg: 'Fallback to unknown'},
-    // {args: [NodePrivacyLevel.ALLOW, undefined], expect: NodePrivacyLevel.ALLOW, msg: 'Robust against undefined'},
-    { args: [NodePrivacyLevel.ALLOW, 999], expect: NodePrivacyLevel.ALLOW, msg: 'Robust against parent invalid' },
-    { args: [999, NodePrivacyLevel.ALLOW], expect: NodePrivacyLevel.UNKNOWN, msg: 'Robust against self invalid' },
-    { args: [999, 999], expect: NodePrivacyLevel.UNKNOWN, msg: 'Robust against both invalid' },
+    { args: [NodePrivacyLevelInternal.ALLOW, 999],
+       expect: NodePrivacyLevelInternal.ALLOW, msg: 'Robust against parent invalid' },
+    { args: [999, NodePrivacyLevelInternal.ALLOW],
+       expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against self invalid' },
+    { args: [999, 999], expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against both invalid' },
 
     {
-      args: [NodePrivacyLevel.NOT_SET, NodePrivacyLevel.UNKNOWN],
-      expect: NodePrivacyLevel.UNKNOWN,
+      args: [NodePrivacyLevelInternal.NOT_SET, NodePrivacyLevelInternal.UNKNOWN],
+      expect: NodePrivacyLevelInternal.UNKNOWN,
       msg: 'Unknown not inherited',
     },
     {
-      args: [NodePrivacyLevel.UNKNOWN, NodePrivacyLevel.NOT_SET],
-      expect: NodePrivacyLevel.UNKNOWN,
+      args: [NodePrivacyLevelInternal.UNKNOWN, NodePrivacyLevelInternal.NOT_SET],
+      expect: NodePrivacyLevelInternal.UNKNOWN,
       msg: 'NOT_SET not inherited',
     },
 
-    { args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK], expect: NodePrivacyLevel.ALLOW, msg: 'Override mask' },
-    { args: [NodePrivacyLevel.MASK, NodePrivacyLevel.ALLOW], expect: NodePrivacyLevel.MASK, msg: 'Override allow' },
+    { args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
+       expect: NodePrivacyLevelInternal.ALLOW, msg: 'Override mask' },
+    { args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.ALLOW],
+       expect: NodePrivacyLevelInternal.MASK, msg: 'Override allow' },
     {
-      args: [NodePrivacyLevel.HIDDEN, NodePrivacyLevel.ALLOW],
-      expect: NodePrivacyLevel.HIDDEN,
+      args: [NodePrivacyLevelInternal.HIDDEN, NodePrivacyLevelInternal.ALLOW],
+      expect: NodePrivacyLevelInternal.HIDDEN,
       msg: 'Override allow (for hidden)',
     },
     {
-      args: [NodePrivacyLevel.ALLOW, NodePrivacyLevel.MASK_FORMS_ONLY],
-      expect: NodePrivacyLevel.ALLOW,
+      args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK_FORMS_ONLY],
+      expect: NodePrivacyLevelInternal.ALLOW,
       msg: 'Override mask-forms-only',
     },
 
     {
-      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.HIDDEN],
-      expect: NodePrivacyLevel.HIDDEN,
+      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.HIDDEN],
+      expect: NodePrivacyLevelInternal.HIDDEN,
       msg: 'Hidden is final',
     },
     {
-      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.MASK_SEALED],
-      expect: NodePrivacyLevel.MASK_SEALED,
+      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_SEALED],
+      expect: NodePrivacyLevelInternal.MASK_SEALED,
       msg: 'Mask-sealed is final',
     },
     {
-      args: [NodePrivacyLevel.MASK, NodePrivacyLevel.MASK_FORMS_ONLY_SEALED],
-      expect: NodePrivacyLevel.MASK_FORMS_ONLY_SEALED,
+      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED],
+      expect: NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED,
       msg: 'Mask-forms-only-sealed is final',
     },
   ]
@@ -192,7 +194,7 @@ describe('Inherited Privacy Level', () => {
   describe('for privacy tag `mask-forms-only`, a DOM tree', () => {
     const newDoc = makeHtmlDoc(HTML, 'mask-forms-only')
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-    // console.log(JSON.stringify(serializedDoc,null,2));
+    // console.log(JSON.stringify((serializedDoc as any).childNodes[1].childNodes[2].childNodes[11].childNodes,null,2));
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_FORMS_ONLY)
     })
@@ -209,6 +211,7 @@ describe('Inherited Privacy Level', () => {
     const newDoc = makeHtmlDoc(HTML, 'allow')
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
     // console.log(JSON.stringify(serializedDoc,null,2));
+    // console.log(JSON.stringify(serializedDoc.childNodes[1].childNodes[2].childNodes[11],null,2));
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_ALLOW)
     })
@@ -220,7 +223,7 @@ describe('Inherited Privacy Level', () => {
       // console.log(JSON.stringify(innerText));
       expect(innerText).toBe(
         // eslint-disable-next-line max-len
-        '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     private option A private option B private option C \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
+        "  \n      .example {content: \"anything\";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n"
       )
     })
 

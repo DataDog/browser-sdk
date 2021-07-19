@@ -187,20 +187,3 @@ export function getCensorshipLevel(): CensorshipLevel {
 //   $window.getElementInputValue = getElementInputValue;
 //   $window.formTrackingAllowed = formTrackingAllowed;
 // }
-
-/**
- * Returns an ancestor <Select> element if it exists within 5 iterations (5 arbitrarily chosen)
- */
-export function getNearbyAncestorSelectElement(optionElement: HTMLOptionElement): HTMLSelectElement | undefined {
-  let parentElement = optionElement.parentElement
-  for (let i = 0; i < 5; i++) {
-    // Check ancestors at most 5 times to see if <OPTION> has a <SELECT> ancestor to match a `select` value from.
-    if (!parentElement || parentElement.tagName === 'SELECT') {
-      break
-    }
-    parentElement = parentElement.parentElement
-  }
-  if (parentElement && parentElement.tagName === 'SELECT') {
-    return parentElement as HTMLSelectElement
-  }
-}

@@ -1,6 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  NodePrivacyLevel,
+  NodePrivacyLevelInternal,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -10,11 +10,10 @@ import {
 import { hasSerializedNode } from './serializationUtils'
 import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
 import { ElementNode, NodeType } from './types'
-import { _derivePrivacyLevelGivenParent, getNodeSelfPrivacyLevel } from './privacy'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  parentNodePrivacyLevel: NodePrivacyLevel.ALLOW, // TODO: Is this a fair test?
+  parentNodePrivacyLevel: NodePrivacyLevelInternal.ALLOW,
 }
 
 describe('serializeNodeWithId', () => {

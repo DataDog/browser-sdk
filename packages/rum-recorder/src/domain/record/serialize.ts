@@ -1,5 +1,11 @@
 import { objectEntries } from '@datadog/browser-core'
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
+import {
+  NodePrivacyLevel,
+  NodePrivacyLevelInternal,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  CENSORED_STRING_MARK,
+} from '../../constants'
 import {
   censorText,
   getNodePrivacyLevel,
@@ -23,7 +29,6 @@ import {
   getSerializedNodeId,
   setSerializedNode,
   transformAttribute,
-  getNearbyAncestorSelectElement,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -31,14 +36,14 @@ export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: NodePrivacyLevel
+  parentNodePrivacyLevel: NodePrivacyLevelInternal
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: NodePrivacyLevel.NOT_SET, // TODO: This should plugin to the root config
+    parentNodePrivacyLevel: NodePrivacyLevelInternal.NOT_SET, // TODO: TODO: This should plugin to the root config?
   })!
 }
 
@@ -376,21 +381,26 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
 
+  if (options.ignoreWhiteSpace) {
+    if (!textContent.trim()) {
+      return
+    }
+
+  }
+
+  const nodePrivacyLevel = getNodePrivacyLevel(textNode.parentNode as Node)
+  const isStyle = parentTagName === 'STYLE' ? true : undefined
+  const isScript = parentTagName === 'SCRIPT'
+
   if (
-    options.ignoreWhiteSpace ||
-    // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
+    parentTagName === 'OPTION' ||
     parentTagName === 'DATALIST' ||
     parentTagName === 'SELECT' ||
     parentTagName === 'OPTGROUP'
   ) {
-    if (!textContent.trim()) {
-      return
-    }
+    console.log(parentTagName, nodePrivacyLevel, textNode);
   }
 
-  const nodePrivacyLevel = getNodePrivacyLevel(textNode)
-  const isStyle = parentTagName === 'STYLE' ? true : undefined
-  const isScript = parentTagName === 'SCRIPT'
 
   if (isScript) {
     // For perf reasons, we don't record script (heuristic)
@@ -402,6 +412,15 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
     if (isStyle) {
       // Style tags are `overruled` (Use `hide` to enforce privacy)
       textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
+    } else if (
+      // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
+      parentTagName === 'DATALIST' ||
+      parentTagName === 'SELECT' ||
+      parentTagName === 'OPTGROUP'
+    ) {
+      if (!textContent.trim()) {
+        return
+      }
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
@@ -424,7 +443,9 @@ function serializeCDataNode(): CDataNode {
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
-  const nodeCensorshipTag = options.parentNodePrivacyLevel || getNodePrivacyLevel(node)
+  const nodeCensorshipTag = options.parentNodePrivacyLevel
+    ?  remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
+    : getNodePrivacyLevel(node)
   const result: SerializedNodeWithId[] = []
   let shuffleElements = false
 

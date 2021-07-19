@@ -127,7 +127,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
   //           : InputPrivacyMode.MASKED,
   //         parentNodePrivacyLevel: m.target.parentNode
   //           ? getNodePrivacyLevel(m.target.parentNode)
-  //           : NodePrivacyLevel.NOT_SET,
+  //           : NodePrivacyLevelInternal.NOT_SET,
   //       })
   //       if (serializedNodeWithId) {
   //         resyncSerializedNodeWithId.add(serializedNodeWithId)
@@ -352,8 +352,12 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
         continue
       }
       transformedValue = inputValue
-    } else if (value) {
-      transformedValue = transformAttribute(mutation.target.ownerDocument, mutation.attributeName!, value)
+    } else if (value && typeof value==='string') {
+      transformedValue = transformAttribute(
+        mutation.target.ownerDocument,
+        mutation.attributeName!,
+        value
+      )
     } else {
       transformedValue = null
     }

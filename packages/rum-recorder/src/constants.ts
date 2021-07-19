@@ -4,7 +4,7 @@ export const enum CensorshipLevel {
   PUBLIC = 'PUBLIC',
 }
 
-export const enum NodePrivacyLevel {
+export const enum NodePrivacyLevelInternal {
   // INTERNAL USE:
   NOT_SET = 1, // Not set, use fallback
   UNKNOWN = 2, // Something went wrong, so fallback defensively (eg. textNode without aparent)
@@ -19,6 +19,15 @@ export const enum NodePrivacyLevel {
   // SPECIAL: shouldn't be needed by general customers
   MASK_SEALED = 20, // General censorship of text + attributes
   MASK_FORMS_ONLY_SEALED = 21, // General censorship of text + attributes
+}
+
+// Only expose these Privacy levelsto the general codebase
+export const enum NodePrivacyLevel {
+  IGNORE = 3,
+  ALLOW = 10,
+  MASK = 11,
+  HIDDEN = 13,
+  _debug = 99999 // TODO: TODO: remove
 }
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
@@ -53,10 +62,10 @@ export const CENSORED_IMG_MARK = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAA
 
 export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
   INPUT: true,
-  SELECT: true,
+  OUTPUT: true,
   TEXTAREA: true,
-  DATALIST: true,
-  OUPUT: true,
+  SELECT: true,
   OPTION: true,
+  DATALIST: true,
   OPTGROUP: true,
 }
