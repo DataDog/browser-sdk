@@ -12,6 +12,7 @@ import {
   getAttributesForPrivacyLevel,
   remapInternalPrivacyLevels,
   getInternalNodePrivacyLevel,
+  getInitialPrivacyLevel,
   shuffle,
 } from './privacy'
 import {
@@ -43,7 +44,7 @@ export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: NodePrivacyLevelInternal.NOT_SET, // TODO: TODO: This should plugin to the root config?
+    parentNodePrivacyLevel: getInitialPrivacyLevel()
   })!
 }
 
@@ -425,19 +426,19 @@ function serializeCDataNode(): CDataNode {
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
-  const nodeCensorshipTag = options.parentNodePrivacyLevel
+  const nodePrivacyLevel = options.parentNodePrivacyLevel
     ? remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
     : getNodePrivacyLevel(node)
   const result: SerializedNodeWithId[] = []
   let shuffleElements = false
 
-  if (nodeCensorshipTag === NodePrivacyLevel.HIDDEN) {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return result
   }
 
   // To enhance privacy, we shuffle the child order for dropdowns. We don't want to shuffle text
   // nodes around though, which should not exist alone within DATALIST/SELECT/OPTGROUP elements
-  if (nodeCensorshipTag === NodePrivacyLevel.MASK && node.nodeType === Node.ELEMENT_NODE) {
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK && node.nodeType === Node.ELEMENT_NODE) {
     const tagName = (node as HTMLElement).tagName
     if (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP') {
       shuffleElements = true

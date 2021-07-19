@@ -30,7 +30,7 @@ import { startRum } from './startRum'
 export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
-  censorshipLevel?: string
+  initialPrivacyLevel?: string
 }
 
 /**

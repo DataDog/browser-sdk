@@ -1,5 +1,5 @@
 import {
-  CensorshipLevel,
+  InitialPrivacyLevel,
   NodePrivacyLevel,
   NodePrivacyLevelInternal,
   PRIVACY_ATTR_NAME,
@@ -23,8 +23,8 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
+import { getRumRecorderConfig } from '../../boot/startRecording'
 import { shouldIgnoreElement } from './serialize'
-import { getCensorshipLevel } from './serializationUtils'
 
 const TEXT_MASKING_CHAR = '᙮'
 const MIN_LEN_TO_MASK = 80
@@ -35,6 +35,25 @@ const nodeInternalPrivacyCache = new WeakMap<Node, NodePrivacyLevelInternal>()
 export function uncachePrivacyLevel(node: Node) {
   nodeInternalPrivacyCache.delete(node)
 }
+
+
+export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
+  switch (getRumRecorderConfig()?.initialPrivacyLevel) {
+    case InitialPrivacyLevel.ALLOW:
+      return NodePrivacyLevelInternal.ALLOW;
+    case InitialPrivacyLevel.MASK:
+      return NodePrivacyLevelInternal.MASK;
+    case InitialPrivacyLevel.MASK_FORMS_ONLY:
+      return NodePrivacyLevelInternal.MASK_FORMS_ONLY;
+    case InitialPrivacyLevel.HIDDEN:
+      return NodePrivacyLevelInternal.HIDDEN;
+    default:
+      // TODO: REVIEW: the default level
+      return NodePrivacyLevelInternal.ALLOW
+  }
+}
+
+
 
 /**
  * PUBLIC: Resolves the internal privacy level and remaps to level to the format
@@ -57,6 +76,7 @@ export function remapInternalPrivacyLevels(
   nodePrivacyLevelInternal: NodePrivacyLevelInternal
 ): NodePrivacyLevel.ALLOW | NodePrivacyLevel.MASK | NodePrivacyLevel.IGNORE | NodePrivacyLevel.HIDDEN {
   switch (nodePrivacyLevelInternal) {
+    // Pass through levels
     case NodePrivacyLevelInternal.ALLOW:
       return NodePrivacyLevel.ALLOW
     case NodePrivacyLevelInternal.MASK:
@@ -65,16 +85,18 @@ export function remapInternalPrivacyLevels(
       return NodePrivacyLevel.HIDDEN
     case NodePrivacyLevelInternal.IGNORE:
       return NodePrivacyLevel.IGNORE
-
+    // Remapped levels
     case NodePrivacyLevelInternal.MASK_SEALED:
       return NodePrivacyLevel.MASK
+    // Conditional levels
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED:
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
       return isFormElement(node) ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
     default:
+    // Edgecase handling: TODO: REVIEW: `hide`, `mask`, or `allow`?
     case NodePrivacyLevelInternal.UNKNOWN:
     case NodePrivacyLevelInternal.NOT_SET:
-      return NodePrivacyLevel.ALLOW // TODO: REVIEW: `hide`, `mask`, or `allow`?
+      return NodePrivacyLevel.ALLOW
   }
 }
 
@@ -91,7 +113,7 @@ export function getInternalNodePrivacyLevel(
     // TODO: TODO: remove before PR
     throw new Error('RUNTIME_ASSERTION')
   }
-  const isElementNode = node.nodeType === Node.ELEMENT_NODE
+  const isElementNode = isElement(node);
 
   const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
   if (cachedPrivacyLevel) {
@@ -162,7 +184,7 @@ export function derivePrivacyLevelGivenParent(
 }
 
 /**
- * Determines the node's own censorship level without checking for ancestors.
+ * Determines the node's own privacy level without checking for ancestors.
  * This function is purposely not exposed because we do care about the ancestor level.
  * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
  */
@@ -172,7 +194,7 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
   }
 
   // Only Element types can be have a privacy level set
-  if (node.nodeType === Node.ELEMENT_NODE) {
+  if (isElement(node)) {
     const elNode = node as HTMLElement
     const privAttr = elNode.getAttribute(PRIVACY_ATTR_NAME)
 
@@ -235,27 +257,6 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
   return NodePrivacyLevelInternal.NOT_SET
 }
 
-// Returns true if the given DOM node should be hidden. Ancestors
-// are not checked.
-export function nodeShouldBeHidden(node: Node): boolean {
-  if (isElement(node)) {
-    return (
-      node.getAttribute(PRIVACY_ATTR_NAME) === PRIVACY_ATTR_VALUE_HIDDEN ||
-      node.classList.contains(PRIVACY_CLASS_HIDDEN)
-    )
-  } else if (node.nodeType === Node.TEXT_NODE) {
-    if (node.parentElement) {
-      return nodeShouldBeHidden(node.parentElement)
-    }
-    const censorshipLevel = getCensorshipLevel()
-    return censorshipLevel === CensorshipLevel.PRIVATE
-  } else if (node.nodeType === Node.DOCUMENT_NODE) {
-    const censorshipLevel = getCensorshipLevel()
-    return censorshipLevel === CensorshipLevel.PRIVATE
-  }
-  return false
-}
-
 export function getAttributesForPrivacyLevel(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel
@@ -315,24 +316,6 @@ export function getAttributesForPrivacyLevel(
     }
   }
   return safeAttrs
-}
-
-// Returns true if the given DOM node should be hidden, recursively
-// checking its ancestors.
-export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
-  if (!node) {
-    // TODO: This strategy implies "default" is just setting the initial value for us. There is no concept of unknown.
-    // Walking up the tree results in a node without a parent so fallback to default
-    // Walking down the tree results in no children to fallback to defaul
-    const censorshipLevel = getCensorshipLevel()
-    return censorshipLevel === CensorshipLevel.PRIVATE
-  }
-
-  if (nodeShouldBeHidden(node)) {
-    return true
-  }
-
-  return nodeOrAncestorsShouldBeHidden(node.parentNode)
 }
 
 function isElement(node: Node): node is Element {

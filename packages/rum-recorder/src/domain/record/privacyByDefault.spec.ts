@@ -3,7 +3,7 @@ import { NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
 import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent } from './privacy'
-import { serializeDocument } from './serialize'
+import { serializeDocument, serializeDocumentNode, serializeChildNodes } from './serialize'
 import { ElementNode, TextNode, NodeType } from './types'
 
 const buildFromHTML = (html: string) => {
@@ -90,81 +90,107 @@ describe('Self Privacy Level', () => {
 })
 
 describe('Inherited Privacy Level', () => {
-  // Simple Spec Smoke Tests
-  const tests = [
-    {
-      args: [NodePrivacyLevelInternal.ALLOW, 999],
-      expect: NodePrivacyLevelInternal.ALLOW,
-      msg: 'Robust against parent invalid',
-    },
-    {
-      args: [999, NodePrivacyLevelInternal.ALLOW],
-      expect: NodePrivacyLevelInternal.UNKNOWN,
-      msg: 'Robust against self invalid',
-    },
-    { args: [999, 999], expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against both invalid' },
+  describe('Simple Spec Smoke Tests', () => {
+    const tests = [
+      {
+        args: [NodePrivacyLevelInternal.ALLOW, 999],
+        expect: NodePrivacyLevelInternal.ALLOW,
+        msg: 'Robust against parent invalid',
+      },
+      {
+        args: [999, NodePrivacyLevelInternal.ALLOW],
+        expect: NodePrivacyLevelInternal.UNKNOWN,
+        msg: 'Robust against self invalid',
+      },
+      { args: [999, 999], expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against both invalid' },
 
-    {
-      args: [NodePrivacyLevelInternal.NOT_SET, NodePrivacyLevelInternal.UNKNOWN],
-      expect: NodePrivacyLevelInternal.UNKNOWN,
-      msg: 'Unknown not inherited',
-    },
-    {
-      args: [NodePrivacyLevelInternal.UNKNOWN, NodePrivacyLevelInternal.NOT_SET],
-      expect: NodePrivacyLevelInternal.UNKNOWN,
-      msg: 'NOT_SET not inherited',
-    },
+      {
+        args: [NodePrivacyLevelInternal.NOT_SET, NodePrivacyLevelInternal.UNKNOWN],
+        expect: NodePrivacyLevelInternal.UNKNOWN,
+        msg: 'Unknown not inherited',
+      },
+      {
+        args: [NodePrivacyLevelInternal.UNKNOWN, NodePrivacyLevelInternal.NOT_SET],
+        expect: NodePrivacyLevelInternal.UNKNOWN,
+        msg: 'NOT_SET not inherited',
+      },
 
-    {
-      args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
-      expect: NodePrivacyLevelInternal.ALLOW,
-      msg: 'Override mask',
-    },
-    {
-      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.ALLOW],
-      expect: NodePrivacyLevelInternal.MASK,
-      msg: 'Override allow',
-    },
-    {
-      args: [NodePrivacyLevelInternal.HIDDEN, NodePrivacyLevelInternal.ALLOW],
-      expect: NodePrivacyLevelInternal.HIDDEN,
-      msg: 'Override allow (for hidden)',
-    },
-    {
-      args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK_FORMS_ONLY],
-      expect: NodePrivacyLevelInternal.ALLOW,
-      msg: 'Override mask-forms-only',
-    },
+      {
+        args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
+        expect: NodePrivacyLevelInternal.ALLOW,
+        msg: 'Override mask',
+      },
+      {
+        args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.ALLOW],
+        expect: NodePrivacyLevelInternal.MASK,
+        msg: 'Override allow',
+      },
+      {
+        args: [NodePrivacyLevelInternal.HIDDEN, NodePrivacyLevelInternal.ALLOW],
+        expect: NodePrivacyLevelInternal.HIDDEN,
+        msg: 'Override allow (for hidden)',
+      },
+      {
+        args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK_FORMS_ONLY],
+        expect: NodePrivacyLevelInternal.ALLOW,
+        msg: 'Override mask-forms-only',
+      },
 
-    {
-      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.HIDDEN],
-      expect: NodePrivacyLevelInternal.HIDDEN,
-      msg: 'Hidden is final',
-    },
-    {
-      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_SEALED],
-      expect: NodePrivacyLevelInternal.MASK_SEALED,
-      msg: 'Mask-sealed is final',
-    },
-    {
-      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED],
-      expect: NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED,
-      msg: 'Mask-forms-only-sealed is final',
-    },
-  ]
+      {
+        args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.HIDDEN],
+        expect: NodePrivacyLevelInternal.HIDDEN,
+        msg: 'Hidden is final',
+      },
+      {
+        args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_SEALED],
+        expect: NodePrivacyLevelInternal.MASK_SEALED,
+        msg: 'Mask-sealed is final',
+      },
+      {
+        args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED],
+        expect: NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED,
+        msg: 'Mask-forms-only-sealed is final',
+      },
+    ]
 
-  tests.forEach((test) => {
-    it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
-      const inherited = derivePrivacyLevelGivenParent(
-        test.args[0] as NodePrivacyLevelInternal,
-        test.args[1] as NodePrivacyLevelInternal
-      )
-      expect(inherited).toBe(test.expect)
+    tests.forEach((test) => {
+      it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
+        const inherited = derivePrivacyLevelGivenParent(
+          test.args[0] as NodePrivacyLevelInternal,
+          test.args[1] as NodePrivacyLevelInternal
+        )
+        expect(inherited).toBe(test.expect)
+      })
     })
-  })
-})
+  });
 
-describe('Inherited Privacy Level', () => {
+  
+  describe('Simple Spec Smoke Tests', () => {
+    it('a masked or hidden DOM Document itself is still serialized ', () => {
+      const serializeOptionsMask = {
+        document,
+        parentNodePrivacyLevel: NodePrivacyLevelInternal.MASK,
+      }
+      expect(
+        serializeDocumentNode(document, serializeOptionsMask)
+      ).toEqual({
+        type: NodeType.Document,
+        childNodes: serializeChildNodes(document, serializeOptionsMask),
+      })
+
+      const serializeOptionsHidden = {
+        document,
+        parentNodePrivacyLevel: NodePrivacyLevelInternal.HIDDEN,
+      }
+      expect(
+        serializeDocumentNode(document, serializeOptionsHidden)
+      ).toEqual({
+        type: NodeType.Document,
+        childNodes: serializeChildNodes(document, serializeOptionsHidden),
+      })
+    })
+  });
+
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
 
   describe('for privacy tag `hidden`, a DOM tree', () => {

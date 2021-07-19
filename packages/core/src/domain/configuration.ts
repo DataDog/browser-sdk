@@ -2,7 +2,7 @@ import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
-import { CensorshipLevel } from '../../../../packages/rum-recorder/src/constants'
+import { InitialPrivacyLevel } from '../../../../packages/rum-recorder/src/constants'
 import { computeTransportConfiguration, Datacenter } from './transportConfiguration'
 
 export const DEFAULT_CONFIGURATION = {
@@ -14,7 +14,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  censorshipLevel: 'PRIVATE',
+  initialPrivacyLevel: 'ALLOW',
 
   /**
    * arbitrary value, byte precision not needed
@@ -57,7 +57,7 @@ export interface InitConfiguration {
   trackViewsManually?: boolean
   proxyHost?: string
   beforeSend?: BeforeSendCallback
-  censorshipLevel?: string
+  initialPrivacyLevel?: string
 
   service?: string
   env?: string
@@ -91,7 +91,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
-    censorshipLevel?: string
+    initialPrivacyLevel?: string
 
     actionNameAttribute?: string
 
@@ -156,8 +156,8 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
-  if ('censorshipLevel' in userConfiguration) {
-    configuration.censorshipLevel = userConfiguration.censorshipLevel ?? configuration.censorshipLevel
+  if ('initialPrivacyLevel' in userConfiguration) {
+    configuration.initialPrivacyLevel = userConfiguration.initialPrivacyLevel ?? configuration.initialPrivacyLevel
   }
 
   return configuration

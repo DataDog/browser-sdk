@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { CensorshipLevel, NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
+import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
 import { getRumRecorderConfig } from '../../boot/startRecording'
 import { getNodePrivacyLevel } from './privacy'
 import { SerializedNodeWithId } from './types'
@@ -111,13 +111,4 @@ export function isFlagEnabled(feature: string): boolean {
     return false
   }
   return configuration.isEnabled(feature)
-}
-
-export function getCensorshipLevel(): CensorshipLevel {
-  const configuration = getRumRecorderConfig()
-  if (!configuration) {
-    return CensorshipLevel.PUBLIC
-  }
-  const level: CensorshipLevel = configuration.censorshipLevel as CensorshipLevel
-  return level
 }

@@ -1,7 +1,8 @@
-export const enum CensorshipLevel {
-  PRIVATE = 'PRIVATE',
-  FORMS = 'FORMS',
-  PUBLIC = 'PUBLIC',
+export const enum InitialPrivacyLevel {
+  ALLOW = 'ALLOW',
+  MASK = 'MASK',
+  MASK_FORMS_ONLY = 'MASK_FORMS_ONLY',
+  HIDDEN = 'HIDDEN',
 }
 
 export const enum NodePrivacyLevelInternal {
@@ -11,23 +12,23 @@ export const enum NodePrivacyLevelInternal {
   IGNORE = 3, // some tags aren't censored, just ignored, like script tags
 
   // CUSTOMER APPLIED
-  ALLOW = 10, // No censorship whatsoever
-  MASK = 11, // General censorship of text + attributes
-  MASK_FORMS_ONLY = 12, // General censorship of text + attributes
+  ALLOW = 10, // No privacy
+  MASK = 11, // General privacy of text + attributes
+  MASK_FORMS_ONLY = 12, // General privacy of text + attributes for forms
   HIDDEN = 13, // Supresses everything but dimentions: JS events, attributes, text, input val, node children + depth.
 
   // SPECIAL: shouldn't be needed by general customers
-  MASK_SEALED = 20, // General censorship of text + attributes
-  MASK_FORMS_ONLY_SEALED = 21, // General censorship of text + attributes
+  MASK_SEALED = 20, // General privacy of text + attributes
+  MASK_FORMS_ONLY_SEALED = 21, // General privacy of text + attributes for forms
 }
 
 // Only expose these Privacy levelsto the general codebase
 export const enum NodePrivacyLevel {
+  // REVIEW: Is there any better way to subset or extend `NodePrivacyLevel` here?
   IGNORE = 3,
   ALLOW = 10,
   MASK = 11,
   HIDDEN = 13,
-  _debug = 99999, // TODO: TODO: remove
 }
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'

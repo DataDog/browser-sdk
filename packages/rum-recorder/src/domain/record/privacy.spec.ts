@@ -1,8 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, NodePrivacyLevelInternal } from '../../constants'
 import { nodeShouldBeHidden, nodeOrAncestorsShouldBeHidden, getNodePrivacyLevel } from './privacy'
-import { NodeType } from './types'
-import { serializeChildNodes, serializeDocumentNode } from './serialize'
 
 describe('privacy helpers', () => {
   beforeEach(() => {
