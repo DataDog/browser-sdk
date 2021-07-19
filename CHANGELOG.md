@@ -16,6 +16,13 @@
 
 ---
 
+## v2.18.0
+
+- 👷 Versioned CDN files ([#932](https://github.com/DataDog/browser-sdk/pull/932))
+- 👷 Increase browser cache to 4 hours ([#933](https://github.com/DataDog/browser-sdk/pull/933))
+- 🐛 ensure that test cookie is correctly deleted after the test ([#927](https://github.com/DataDog/browser-sdk/pull/927))
+- 📝 add `actionNameAttribute` initialization parameter ([#923](https://github.com/DataDog/browser-sdk/pull/923))
+
 ## v2.17.0
 
 - ✨ [RUMF-928] enable manual view tracking ([#924](https://github.com/DataDog/browser-sdk/pull/924))
