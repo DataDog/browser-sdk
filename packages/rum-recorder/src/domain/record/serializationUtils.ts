@@ -101,10 +101,6 @@ export function getElementInputValue(element: Element) {
   return inputElement.value
 }
 
-export function maskValue(value: string) {
-  return value.replace(/.+/, CENSORED_STRING_MARK)
-}
-
 export function isFlagEnabled(feature: string): boolean {
   const configuration = getRumRecorderConfig()
   if (!configuration) {

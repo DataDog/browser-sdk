@@ -12,32 +12,32 @@ describe('privacy helpers', () => {
   describe('for hiding blocks', () => {
     it('considers a normal DOM Element as not hidden', () => {
       const node = document.createElement('p')
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeFalsy()
     })
     it('considers a DOM Element with a data-dd-privacy="hidden" attribute as hidden', () => {
       const node = document.createElement('p')
       node.setAttribute('data-dd-privacy', 'hidden')
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeTruthy()
     })
     it('considers a DOM Element with a data-dd-privacy="foo" attribute as not hidden', () => {
       const node = document.createElement('p')
       node.setAttribute('data-dd-privacy', 'foo')
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeFalsy()
     })
     it('considers a DOM Element with a dd-privacy-hidden class as hidden', () => {
       const node = document.createElement('p')
       node.className = 'dd-privacy-hidden'
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeTruthy()
     })
     it('considers a normal DOM Element with a normal parent as not hidden', () => {
       const node = document.createElement('p')
       const parent = document.createElement('div')
       parent.appendChild(node)
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeFalsy()
     })
     it('considers a DOM Element with a parent node with a dd-privacy="hidden" attribute as hidden', () => {
@@ -45,7 +45,7 @@ describe('privacy helpers', () => {
       const parent = document.createElement('div')
       parent.setAttribute('data-dd-privacy', 'hidden')
       parent.appendChild(node)
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeTruthy()
     })
     it('considers a DOM Element with a parent node with a dd-privacy-hidden class as hidden', () => {
@@ -53,11 +53,11 @@ describe('privacy helpers', () => {
       const parent = document.createElement('div')
       parent.className = 'dd-privacy-hidden'
       parent.appendChild(node)
-      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(node) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeTruthy()
     })
     it('considers a DOM Document as not hidden', () => {
-      const isHidden = getNodePrivacyLevel(document) === NodePrivacyLevel.HIDDEN;
+      const isHidden = getNodePrivacyLevel(document) === NodePrivacyLevel.HIDDEN
       expect(isHidden).toBeFalsy()
     })
   })

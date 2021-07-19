@@ -14,7 +14,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  initialPrivacyLevel: 'ALLOW',
+  initialPrivacyLevel: InitialPrivacyLevel.ALLOW as string,
 
   /**
    * arbitrary value, byte precision not needed
@@ -157,7 +157,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
   }
 
   if ('initialPrivacyLevel' in userConfiguration) {
-    configuration.initialPrivacyLevel = userConfiguration.initialPrivacyLevel ?? configuration.initialPrivacyLevel
+    configuration.initialPrivacyLevel = userConfiguration.initialPrivacyLevel!
   }
 
   return configuration

@@ -36,24 +36,21 @@ export function uncachePrivacyLevel(node: Node) {
   nodeInternalPrivacyCache.delete(node)
 }
 
-
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
   switch (getRumRecorderConfig()?.initialPrivacyLevel) {
     case InitialPrivacyLevel.ALLOW:
-      return NodePrivacyLevelInternal.ALLOW;
+      return NodePrivacyLevelInternal.ALLOW
     case InitialPrivacyLevel.MASK:
-      return NodePrivacyLevelInternal.MASK;
+      return NodePrivacyLevelInternal.MASK
     case InitialPrivacyLevel.MASK_FORMS_ONLY:
-      return NodePrivacyLevelInternal.MASK_FORMS_ONLY;
+      return NodePrivacyLevelInternal.MASK_FORMS_ONLY
     case InitialPrivacyLevel.HIDDEN:
-      return NodePrivacyLevelInternal.HIDDEN;
+      return NodePrivacyLevelInternal.HIDDEN
     default:
       // TODO: REVIEW: the default level
       return NodePrivacyLevelInternal.ALLOW
   }
 }
-
-
 
 /**
  * PUBLIC: Resolves the internal privacy level and remaps to level to the format
@@ -113,7 +110,7 @@ export function getInternalNodePrivacyLevel(
     // TODO: TODO: remove before PR
     throw new Error('RUNTIME_ASSERTION')
   }
-  const isElementNode = isElement(node);
+  const isElementNode = isElement(node)
 
   const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
   if (cachedPrivacyLevel) {
@@ -348,7 +345,7 @@ export function isFormElement(node: Node | null): boolean {
  */
 export const censorText = (text: string) => {
   if (text.length <= MIN_LEN_TO_MASK) {
-    return text.replace(/[^\s]/g, TEXT_MASKING_CHAR)
+    return text.replace(/\S/g, TEXT_MASKING_CHAR)
   }
   return scrambleText(text)
 }

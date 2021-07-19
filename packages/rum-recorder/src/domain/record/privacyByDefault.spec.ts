@@ -162,18 +162,15 @@ describe('Inherited Privacy Level', () => {
         expect(inherited).toBe(test.expect)
       })
     })
-  });
+  })
 
-  
   describe('Simple Spec Smoke Tests', () => {
     it('a masked or hidden DOM Document itself is still serialized ', () => {
       const serializeOptionsMask = {
         document,
         parentNodePrivacyLevel: NodePrivacyLevelInternal.MASK,
       }
-      expect(
-        serializeDocumentNode(document, serializeOptionsMask)
-      ).toEqual({
+      expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
         type: NodeType.Document,
         childNodes: serializeChildNodes(document, serializeOptionsMask),
       })
@@ -182,14 +179,12 @@ describe('Inherited Privacy Level', () => {
         document,
         parentNodePrivacyLevel: NodePrivacyLevelInternal.HIDDEN,
       }
-      expect(
-        serializeDocumentNode(document, serializeOptionsHidden)
-      ).toEqual({
+      expect(serializeDocumentNode(document, serializeOptionsHidden)).toEqual({
         type: NodeType.Document,
         childNodes: serializeChildNodes(document, serializeOptionsHidden),
       })
     })
-  });
+  })
 
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
 

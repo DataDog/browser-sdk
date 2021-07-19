@@ -1,5 +1,10 @@
 import { isIE } from '../../../../core/test/specHelper'
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
+import {
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+  CENSORED_STRING_MARK,
+} from '../../constants'
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
@@ -7,7 +12,6 @@ import {
   setSerializedNode,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
-  maskValue,
   getElementInputValue,
 } from './serializationUtils'
 
@@ -254,8 +258,8 @@ describe('getElementInputValue', () => {
   }
 })
 
-describe('maskValue', () => {
-  it('replaces each characters by an asterisk', () => {
-    expect(maskValue('foo')).toBe('***')
+describe('CENSORED_STRING_MARK', () => {
+  it('replaces each characters with 3 asterisks', () => {
+    expect(CENSORED_STRING_MARK).toBe('***')
   })
 })
