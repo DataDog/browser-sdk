@@ -1,15 +1,8 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, NodePrivacyLevelInternal } from '../../constants'
-import {
-  nodeShouldBeHidden,
-  nodeOrAncestorsShouldBeHidden,
-  getNodeInputPrivacyMode,
-  getNodeOrAncestorsInputPrivacyMode,
-  getNodeSelfPrivacyLevel,
-  getNodePrivacyLevel,
-} from './privacy'
+import { nodeShouldBeHidden, nodeOrAncestorsShouldBeHidden, getNodePrivacyLevel } from './privacy'
 import { NodeType } from './types'
-import { serializeNodeWithId, serializeChildNodes, serializeDocumentNode } from './serialize'
+import { serializeChildNodes, serializeDocumentNode } from './serialize'
 
 describe('privacy helpers', () => {
   beforeEach(() => {
@@ -66,66 +59,44 @@ describe('privacy helpers', () => {
   describe('input privacy mode', () => {
     it('use the ancestor privacy mode for a normal DOM Element', () => {
       const node = document.createElement('div')
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
     })
 
     it('use the ancestor privacy mode for a DOM Element with a data-dd-privacy="unknown-mode" attribute', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'unknown-mode')
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
     })
 
     it('use the ancestor privacy mode for a DOM HTMLInputElement with a type of "text"', () => {
       const node = document.createElement('input')
       node.type = 'text'
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.MASK)
     })
-
-    // it('a masked or hidden DOM Document itself is still serialized ', () => {
-    //   const serializeOptions = {
-    //     document,
-    //     ancestorInputPrivacyMode: 1,
-    //     parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-    //   };
-    //   expect(serializeDocumentNode(document, {
-    //     ...serializeOptions,
-    //     parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-    //   })).toEqual({
-    //     type: NodeType.Document,
-    //     childNodes: serializeChildNodes(document, serializeOptions),
-    //   })
-    //   expect(serializeDocumentNode(document, {
-    //     ...serializeOptions,
-    //     parentNodePrivacyLevel: NodePrivacyLevel.HIDDEN,
-    //   })).toEqual({
-    //     type: NodeType.Document,
-    //     childNodes: serializeChildNodes(document, serializeOptions),
-    //   })
-    // })
 
     it('considers a DOM Element with a data-dd-privacy="input-ignored" attribute to be ignored', () => {
       const node = document.createElement('input')
       node.setAttribute('data-dd-privacy', 'input-ignored')
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
     })
 
     it('considers a DOM Element with a dd-privacy-input-ignored class to be input-ignored (mask-froms-only)', () => {
       const node = document.createElement('input')
       node.className = 'dd-privacy-input-ignored'
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
     })
 
     it('considers a DOM HTMLInputElement with a type of "password" to be MASK', () => {
       const node = document.createElement('input')
       node.type = 'password'
-      expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
     })
 
     describe('input mode priority', () => {
@@ -133,19 +104,19 @@ describe('privacy helpers', () => {
         const node = document.createElement('input')
         node.className = 'dd-privacy-input-ignored'
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
       })
 
       it('forces an element to be ignored if an ancestor is ignored', () => {
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
       })
 
       it('does not force an element to be masked if an ancestor is masked', () => {
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'allow')
-        expect(getNodeInputPrivacyMode(node, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.ALLOW)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.ALLOW)
       })
     })
 

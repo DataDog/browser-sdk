@@ -103,7 +103,6 @@ const eventTypeToMouseInteraction = {
 function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
-    // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
     if (getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
@@ -125,7 +124,6 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
-      // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
       if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
         return
       }
@@ -301,8 +299,6 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (event: Event) => {
     const target = event.target as Node
-
-    // TODO: Was replaced from nodeOrAncestorsShouldBeHidden
     if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }

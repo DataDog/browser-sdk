@@ -102,7 +102,7 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
  * - scroll offsets
  * - Form fields (input value, checkbox checked, otpion selection, range)
  * - Canvas state,
- * - Media (video/audio) play mode + position
+ * - Media (video/audio) play mode + currentTime
  * - iframe contents
  * - webcomponents
  * 3. CUSTOM PROPERTIES:
@@ -120,8 +120,6 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   // child nodes, purely for performance reasons
   const internalPrivacyLevel = getInternalNodePrivacyLevel(element, options.parentNodePrivacyLevel)
   const nodePrivacyLevel = remapInternalPrivacyLevels(element, internalPrivacyLevel)
-
-  // const state: ElementState = {};
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
@@ -141,7 +139,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   // Ignore Elements like Script and some Link, Metas
   if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
     // TODO: We should still record ignored elements, just not their textNode content.
-    // TODO: On the record OR replay side, we should prefix the tagName so it has no effect.
+    // TODO: On the record or replay side, we should prefix the tagName so it has no effect.
     return
   }
 
@@ -256,7 +254,6 @@ export function serializeElementNode(element: Element, options: SerializeOptions
    */
   if (tagName === 'audio' || tagName === 'video') {
     const mediaElement = element as HTMLMediaElement
-    // TODO: add `mediaElement.currentTime`
     attributes.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
   }
 
@@ -274,9 +271,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   if (element.childNodes.length) {
     const childNodesSerializationOptions = {
       ...options,
-      // parentNodePrivacyLevel: nodePrivacyLevel,
       parentNodePrivacyLevel: internalPrivacyLevel,
-      // parentNodePrivacyLevel: getInternalNodePrivacyLevel(element),
       ignoreWhiteSpace: tagName === 'head',
     }
     // We should not create a new object systematically as it could impact performances. Try to reuse
@@ -381,26 +376,13 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
 
-  if (options.ignoreWhiteSpace) {
-    if (!textContent.trim()) {
-      return
-    }
-
+  if (options.ignoreWhiteSpace && !textContent.trim()) {
+    return
   }
 
   const nodePrivacyLevel = getNodePrivacyLevel(textNode.parentNode as Node)
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   const isScript = parentTagName === 'SCRIPT'
-
-  if (
-    parentTagName === 'OPTION' ||
-    parentTagName === 'DATALIST' ||
-    parentTagName === 'SELECT' ||
-    parentTagName === 'OPTGROUP'
-  ) {
-    console.log(parentTagName, nodePrivacyLevel, textNode);
-  }
-
 
   if (isScript) {
     // For perf reasons, we don't record script (heuristic)
@@ -444,7 +426,7 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const nodeCensorshipTag = options.parentNodePrivacyLevel
-    ?  remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
+    ? remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
     : getNodePrivacyLevel(node)
   const result: SerializedNodeWithId[] = []
   let shuffleElements = false
@@ -503,18 +485,3 @@ function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
 function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
 }
-
-// declare const INJECT: { [prop: string]: string | boolean | number }
-// eslint-disable-next-line local-rules/disallow-side-effects
-/* eslint-disable local-rules/disallow-side-effects */
-// if (INJECT.INSPECTOR_DEBUG_MODE) {
-// In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
-const $window = window as any
-$window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
-$window.serializeNode = serializeNode
-$window.serializeNodeWithId = serializeNodeWithId
-$window.serializeElementNode = serializeElementNode
-$window.serializeTextNode = serializeTextNode
-$window.serializeChildNodes = serializeChildNodes
-$window.shouldIgnoreElement = shouldIgnoreElement
-// }

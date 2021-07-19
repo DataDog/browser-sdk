@@ -177,7 +177,7 @@ describe('getElementInputValue', () => {
     const input = document.createElement('input')
     input.type = 'password'
     input.value = 'foo'
-    // Serializing a `Hidden` element (which input[type=password] always is) will only
+    // Serializing a `Hidden` element (which input[type=password] is by current spec) will only
     // return special allow listed attributes and `getElementInputValue` is never called.
     // But to be paranoid, we defensively check the case if it was called
     expect(getElementInputValue(input)).toBe('***')

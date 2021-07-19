@@ -2,7 +2,7 @@ import { SerializedNodeWithId } from 'packages/rum-recorder/src/domain/record/ty
 import { NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
-import { getNodeSelfPrivacyLevel, _derivePrivacyLevelGivenParent } from './privacy'
+import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent } from './privacy'
 import { serializeDocument } from './serialize'
 import { ElementNode, TextNode, NodeType } from './types'
 
@@ -30,6 +30,7 @@ const makeHtmlDoc = (HtmlContent: string, privacyTag: string) => {
     newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
     return newDoc
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Failed to set innerHTML of new doc:', e)
     return document
   }
@@ -44,16 +45,12 @@ const getTextNodesFromSerialized = (serializedNode: SerializedNodeWithId | null)
       return textNode.textContent
     } else if (serializedNode.type === NodeType.Element || serializedNode.type === NodeType.Document) {
       const textNode = serializedNode as ElementNode
-      return textNode.childNodes
-        .map(
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          (node: SerializedNodeWithId) => getTextNodesFromSerialized(node)
-        )
-        .join(' ')
+      return textNode.childNodes.map((node: SerializedNodeWithId) => getTextNodesFromSerialized(node)).join(' ')
     }
     return ''
   } catch (e) {
-    console.error('caught getTextNodesFromSerialized error:', e)
+    // eslint-disable-next-line no-console
+    console.error('caught getTextNodesFromSerialized error:', e, serializedNode)
     return ''
   }
 }
@@ -95,10 +92,16 @@ describe('Self Privacy Level', () => {
 describe('Inherited Privacy Level', () => {
   // Simple Spec Smoke Tests
   const tests = [
-    { args: [NodePrivacyLevelInternal.ALLOW, 999],
-       expect: NodePrivacyLevelInternal.ALLOW, msg: 'Robust against parent invalid' },
-    { args: [999, NodePrivacyLevelInternal.ALLOW],
-       expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against self invalid' },
+    {
+      args: [NodePrivacyLevelInternal.ALLOW, 999],
+      expect: NodePrivacyLevelInternal.ALLOW,
+      msg: 'Robust against parent invalid',
+    },
+    {
+      args: [999, NodePrivacyLevelInternal.ALLOW],
+      expect: NodePrivacyLevelInternal.UNKNOWN,
+      msg: 'Robust against self invalid',
+    },
     { args: [999, 999], expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against both invalid' },
 
     {
@@ -112,10 +115,16 @@ describe('Inherited Privacy Level', () => {
       msg: 'NOT_SET not inherited',
     },
 
-    { args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
-       expect: NodePrivacyLevelInternal.ALLOW, msg: 'Override mask' },
-    { args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.ALLOW],
-       expect: NodePrivacyLevelInternal.MASK, msg: 'Override allow' },
+    {
+      args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
+      expect: NodePrivacyLevelInternal.ALLOW,
+      msg: 'Override mask',
+    },
+    {
+      args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.ALLOW],
+      expect: NodePrivacyLevelInternal.MASK,
+      msg: 'Override allow',
+    },
     {
       args: [NodePrivacyLevelInternal.HIDDEN, NodePrivacyLevelInternal.ALLOW],
       expect: NodePrivacyLevelInternal.HIDDEN,
@@ -146,7 +155,10 @@ describe('Inherited Privacy Level', () => {
 
   tests.forEach((test) => {
     it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
-      const inherited = _derivePrivacyLevelGivenParent(test.args[0], test.args[1])
+      const inherited = derivePrivacyLevelGivenParent(
+        test.args[0] as NodePrivacyLevelInternal,
+        test.args[1] as NodePrivacyLevelInternal
+      )
       expect(inherited).toBe(test.expect)
     })
   })
@@ -158,7 +170,6 @@ describe('Inherited Privacy Level', () => {
   describe('for privacy tag `hidden`, a DOM tree', () => {
     const newDoc = makeHtmlDoc(HTML, 'hidden')
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-    // console.log(JSON.stringify(serializedDoc,null,2));
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_HIDDEN)
     })
@@ -172,10 +183,7 @@ describe('Inherited Privacy Level', () => {
 
   describe('for privacy tag `mask`, a DOM tree', () => {
     const newDoc = makeHtmlDoc(HTML, 'mask')
-    // console.log(JSON.stringify(serializeDocument(newDoc), null, 2));
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-    // console.log(JSON.stringify(serializedDoc,null,2));
-    // debugger;
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK)
     })
@@ -194,7 +202,6 @@ describe('Inherited Privacy Level', () => {
   describe('for privacy tag `mask-forms-only`, a DOM tree', () => {
     const newDoc = makeHtmlDoc(HTML, 'mask-forms-only')
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-    // console.log(JSON.stringify((serializedDoc as any).childNodes[1].childNodes[2].childNodes[11].childNodes,null,2));
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_FORMS_ONLY)
     })
@@ -210,8 +217,6 @@ describe('Inherited Privacy Level', () => {
   describe('for privacy tag `allow`, a DOM tree', () => {
     const newDoc = makeHtmlDoc(HTML, 'allow')
     const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-    // console.log(JSON.stringify(serializedDoc,null,2));
-    // console.log(JSON.stringify(serializedDoc.childNodes[1].childNodes[2].childNodes[11],null,2));
     it('is serialized correctly', () => {
       expect(toJSONObj(serializedDoc)).toEqual(AST_ALLOW)
     })
@@ -220,10 +225,9 @@ describe('Inherited Privacy Level', () => {
       const innerText = getTextNodesFromSerialized(serializedDoc)
       const privateWordMatchCount = innerText.match(/private/g)?.length
       expect(privateWordMatchCount).toBe(10)
-      // console.log(JSON.stringify(innerText));
       expect(innerText).toBe(
         // eslint-disable-next-line max-len
-        "  \n      .example {content: \"anything\";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n"
+        '  \n      .example {content: "anything";}\n       private title \n \n     hello private world \n     Loreum ipsum private text \n     hello  private  world \n     \n      Click https://private.com/path/nested?query=param#hash\n     \n      \n     \n       private option A \n       private option B \n       private option C \n     \n      \n      \n      \n     inputFoo label \n\n      \n\n           Loreum Ipsum private ...\n     \n\n     editable private div \n'
       )
     })
 

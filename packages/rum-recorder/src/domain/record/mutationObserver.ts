@@ -113,6 +113,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
 
   const resyncSerializedNodeWithId = new Set<SerializedNodeWithId>()
   const resyncNodeRefs = new Set<Node>()
+  // TODO:
   // filteredMutations.forEach((m) => {
   //   if (m.type === 'attributes' && m.target) {
   //     const targetEl = m.target as Element
@@ -123,7 +124,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
   //       const serializedNodeWithId = serializeNodeWithId(targetEl, {
   //         document,
   //         ancestorInputPrivacyMode: m.target.parentNode
-  //           ? getNodeOrAncestorsInputPrivacyMode(m.target.parentNode)
+  //           ? getNodePrivacyLevel(m.target.parentNode)
   //           : InputPrivacyMode.MASKED,
   //         parentNodePrivacyLevel: m.target.parentNode
   //           ? getNodePrivacyLevel(m.target.parentNode)
@@ -219,7 +220,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
 
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
-    uncachePrivacyLevel(node) // TODO: TODO: This is likely not needed, review later
+    uncachePrivacyLevel(node) // TODO: REVIEW: This is likely not needed, review later
     if (hasBeenSerialized(node)) {
       continue
     }
@@ -276,8 +277,8 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
   // Deduplicate mutations based on their target node
   const handledNodes = new Set<Node>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: TODO: This is likely not needed, review later
-    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: TODO: This is likely not needed, review later
+    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: This is likely not needed, review later
+    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: REVIEW: This is likely not needed, review later
     if (handledNodes.has(mutation.target)) {
       return false
     }
@@ -295,7 +296,7 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
     if (privacyLevel === NodePrivacyLevel.HIDDEN) {
       continue
     } else if (privacyLevel === NodePrivacyLevel.MASK) {
-      // TODO: TODO: This deserves extra options that consider the parent element,
+      // TODO: REVIEW: This deserves extra options that consider the parent element,
       // such as whitespace, or <option> within a <select>, or a <script> and <style> tag
       value = CENSORED_STRING_MARK
     }
@@ -314,7 +315,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Deduplicate mutations based on their target node and changed attribute
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: TODO: This is likely not needed, review later
+    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: This is likely not needed, review later
     const handledAttributes = handledElements.get(mutation.target)
     if (handledAttributes?.has(mutation.attributeName!)) {
       return false
@@ -338,7 +339,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
     const attributes = getAttributesForPrivacyLevel(mutation.target, privacyLevel)
     const value = attributes[mutation.attributeName!]
 
-    // TODO: Compare last censored value against this value?
+    // TODO: REVIEW: Compare last censored value against this value?
 
     let transformedValue: string | null
     // REMINDER: `getAttributesForPrivacyLevel()` already handles `MASK` level
@@ -352,12 +353,8 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
         continue
       }
       transformedValue = inputValue
-    } else if (value && typeof value==='string') {
-      transformedValue = transformAttribute(
-        mutation.target.ownerDocument,
-        mutation.attributeName!,
-        value
-      )
+    } else if (value && typeof value === 'string') {
+      transformedValue = transformAttribute(mutation.target.ownerDocument, mutation.attributeName!, value)
     } else {
       transformedValue = null
     }

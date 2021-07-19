@@ -267,22 +267,6 @@ export type Attributes = {
   [key: string]: string | number | boolean
 }
 
-// export type ElementState = {
-//   scrollLeft?: number
-//   scrollTop?: number
-//   privacyLevel?: number
-//   // Masking
-//   width?: number
-//   height?: number
-//   // Forms
-//   value?: string | number | boolean | null
-//   checked?: boolean | null
-//   selected?: boolean | null
-//   // Media
-//   currentTime?: number
-//   paused?: string
-// }
-
 export type ElementNode = {
   type: NodeType.Element
   tagName: string

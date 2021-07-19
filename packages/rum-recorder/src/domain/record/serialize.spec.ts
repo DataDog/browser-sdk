@@ -66,8 +66,6 @@ describe('serializeNodeWithId', () => {
         type: NodeType.Element,
         tagName: 'div',
         attributes: {
-          // id: '',
-          // class: '',
           rr_width: '0px',
           rr_height: '0px',
           [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
@@ -187,11 +185,7 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.value = 'toto'
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          // attributes: { type: 'password' },
-        })
-      )
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(jasmine.objectContaining({}))
     })
 
     it('does not serialize <input type="password"> values set via attribute setter', () => {
@@ -199,11 +193,7 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.setAttribute('value', 'toto')
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          // attributes: { type: 'password' },
-        })
-      )
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(jasmine.objectContaining({}))
     })
 
     it('serializes <input type="checkbox"> elements checked state', () => {

@@ -16,7 +16,7 @@ import {
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
   CENSORED_IMG_MARK,
-  // To be deprecated below
+  // Deprecated (now aliased) below
   PRIVACY_CLASS_INPUT_IGNORED,
   PRIVACY_CLASS_INPUT_MASKED,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
@@ -25,12 +25,6 @@ import {
 
 import { shouldIgnoreElement } from './serialize'
 import { getCensorshipLevel } from './serializationUtils'
-
-// PRIVACY_INPUT_TYPES_TO_IGNORE defines the input types whose input
-// events we want to ignore by default, as they often contain PII.
-// TODO: We might want to differentiate types to fully ignore vs types
-// to obfuscate.
-const PRIVACY_INPUT_TYPES_TO_IGNORE = ['email', 'password', 'tel'] // TODO: TODO: do something here
 
 const TEXT_MASKING_CHAR = '᙮'
 const MIN_LEN_TO_MASK = 80
@@ -52,7 +46,7 @@ export function getNodePrivacyLevel(
   parentNodePrivacyLevel?: NodePrivacyLevelInternal
 ): NodePrivacyLevel.ALLOW | NodePrivacyLevel.MASK | NodePrivacyLevel.IGNORE | NodePrivacyLevel.HIDDEN {
   const privacyLevel = getInternalNodePrivacyLevel(node, parentNodePrivacyLevel)
-  return remapInternalPrivacyLevels(node, privacyLevel);
+  return remapInternalPrivacyLevels(node, privacyLevel)
 }
 
 /**
@@ -63,11 +57,15 @@ export function remapInternalPrivacyLevels(
   nodePrivacyLevelInternal: NodePrivacyLevelInternal
 ): NodePrivacyLevel.ALLOW | NodePrivacyLevel.MASK | NodePrivacyLevel.IGNORE | NodePrivacyLevel.HIDDEN {
   switch (nodePrivacyLevelInternal) {
-    case NodePrivacyLevelInternal.ALLOW:  return NodePrivacyLevel.ALLOW;
-    case NodePrivacyLevelInternal.MASK:   return NodePrivacyLevel.MASK;
-    case NodePrivacyLevelInternal.HIDDEN: return NodePrivacyLevel.HIDDEN;
-    case NodePrivacyLevelInternal.IGNORE: return NodePrivacyLevel.IGNORE
-    
+    case NodePrivacyLevelInternal.ALLOW:
+      return NodePrivacyLevel.ALLOW
+    case NodePrivacyLevelInternal.MASK:
+      return NodePrivacyLevel.MASK
+    case NodePrivacyLevelInternal.HIDDEN:
+      return NodePrivacyLevel.HIDDEN
+    case NodePrivacyLevelInternal.IGNORE:
+      return NodePrivacyLevel.IGNORE
+
     case NodePrivacyLevelInternal.MASK_SEALED:
       return NodePrivacyLevel.MASK
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED:
@@ -93,7 +91,7 @@ export function getInternalNodePrivacyLevel(
     // TODO: TODO: remove before PR
     throw new Error('RUNTIME_ASSERTION')
   }
-  const isElementNode = node.nodeType === Node.ELEMENT_NODE;
+  const isElementNode = node.nodeType === Node.ELEMENT_NODE
 
   const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
   if (cachedPrivacyLevel) {
@@ -102,7 +100,7 @@ export function getInternalNodePrivacyLevel(
 
   // Only Elements have tags directly applied
   if (node.parentElement && !isElementNode) {
-    return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement);
+    return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement)
   }
 
   let parentNodePrivacyLevelFallback: NodePrivacyLevelInternal
@@ -114,7 +112,7 @@ export function getInternalNodePrivacyLevel(
   }
 
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
-  const privacyLevel = _derivePrivacyLevelGivenParent(
+  const privacyLevel = derivePrivacyLevelGivenParent(
     selfPrivacyLevel,
     parentNodePrivacyLevel || parentNodePrivacyLevelFallback!
   )
@@ -124,7 +122,7 @@ export function getInternalNodePrivacyLevel(
    * Text nodes depend upon the parent element so are not cached.
    * DIRTY: During tests, we pass in different ancestor privacy levels so we
    * can't cache the privacy level if `parentNodePrivacyLevel` is passed in.
-   * TODO: Cleanup tests to avoid this effect, or use a new method
+   * TODO: TODO: Cleanup tests to avoid this effect, or use a new method
    */
   if (isElementNode && !parentNodePrivacyLevel) {
     nodeInternalPrivacyCache.set(node, privacyLevel)
@@ -135,7 +133,7 @@ export function getInternalNodePrivacyLevel(
 /**
  * Reduces the next privacy level based on self + parent privacy levels
  */
-export function _derivePrivacyLevelGivenParent(
+export function derivePrivacyLevelGivenParent(
   childPrivacyLevel: NodePrivacyLevelInternal,
   parentNodePrivacyLevel: NodePrivacyLevelInternal
 ): NodePrivacyLevelInternal {
@@ -184,11 +182,11 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
     }
     if (elNode.tagName === 'INPUT') {
       const inputElement = elNode as HTMLInputElement
-      if (inputElement.type === 'password') {
+      if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
         return NodePrivacyLevelInternal.MASK
       }
       if (inputElement.type === 'hidden') {
-        return NodePrivacyLevelInternal.MASK // TODO: Review
+        return NodePrivacyLevelInternal.MASK // TODO: Review: what is the preferred level?
       }
       const autocomplete = inputElement.getAttribute('autocomplete')
       if (autocomplete && autocomplete.startsWith('cc-')) {
@@ -266,6 +264,7 @@ export function getAttributesForPrivacyLevel(
     NEVER ALLOW	`value` under these conditions
     input[type=password]	
     input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]	
+    MAYBE: input[type=tel,email]	
   */
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -335,10 +334,6 @@ export function nodeOrAncestorsShouldBeHidden(node: Node | null): boolean {
 
   return nodeOrAncestorsShouldBeHidden(node.parentNode)
 }
-
-export const getNodeInputPrivacyMode = getNodePrivacyLevel
-
-export const getNodeOrAncestorsInputPrivacyMode = getNodePrivacyLevel
 
 function isElement(node: Node): node is Element {
   return node.nodeType === node.ELEMENT_NODE
@@ -423,15 +418,3 @@ const scrambleText = (text: string) => {
   }
   return whitespacedText.join('')
 }
-
-// declare const INJECT: {[prop: string]: string|boolean|number}
-// // eslint-disable-next-line local-rules/disallow-side-effects
-// // if (INJECT.INSPECTOR_DEBUG_MODE) {
-// // In INSPECTOR_DEBUG_MODE, leak these methods globally for better debugging developer experience.
-// const $window = window as any
-// $window._derivePrivacyLevelGivenParent = _derivePrivacyLevelGivenParent
-// $window.getNodeSelfPrivacyLevel = getNodeSelfPrivacyLevel
-// // $window.recursivelyGetNodePrivacyLevel = recursivelyGetNodePrivacyLevel
-// $window.getNodePrivacyLevel = getNodePrivacyLevel
-// $window.getAttributesForPrivacyLevel = getAttributesForPrivacyLevel
-// // }

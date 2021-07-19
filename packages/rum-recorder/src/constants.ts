@@ -27,7 +27,7 @@ export const enum NodePrivacyLevel {
   ALLOW = 10,
   MASK = 11,
   HIDDEN = 13,
-  _debug = 99999 // TODO: TODO: remove
+  _debug = 99999, // TODO: TODO: remove
 }
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
