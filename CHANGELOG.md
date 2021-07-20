@@ -18,7 +18,10 @@
 
 ## v3.0.0
 
-Here is the list of all the breaking changes between version 2 and 3. For each change, we show the new way to handle your use case.
+Here is the list of all the breaking changes between version 2 and 3 of the RUM SDK.
+The Log SDK isn't impacted and is still fully backward compatible.
+
+For each change, we show the new way to handle your use case.
 
 ### Network errors no longer monitored
 
@@ -32,22 +35,6 @@ You can no longer change the source of error sent with `addError()`. All these e
 
 **New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
 
-### Non versioned RUM CDN files no longer updated
-
-All these files are frozen on version 2.18.0:
-
-- www.datadoghq-browser-agent.com/datadog-rum.js
-- www.datadoghq-browser-agent.com/datadog-rum-recorder.js
-- www.datadoghq-browser-agent.com/datadog-rum-eu.js
-- www.datadoghq-browser-agent.com/datadog-rum-us.js
-
-**New option**: In order to get the last update of the sdk, you have to use versioned CDN files:
-
-| Old files                                            | New files              |
-| ---------------------------------------------------- | ---------------------- |
-| datadog-rum.js, datadog-rum-eu.js, datadog-rum-us.js | datadog-rum-slim-v3.js |
-| datadog-rum-recorder.js                              | datadog-rum-v3.js      |
-
 ### New intake domains
 
 RUM now uses a new intake domain. Therefore the init options `useAlternateIntakeDomains` has been removed.
@@ -57,7 +44,7 @@ RUM now uses a new intake domain. Therefore the init options `useAlternateIntake
 | rum-http-intake.logs.datadoghq.com | rum.browser-intake-datadoghq.com |
 | rum-http-intake.logs.datadoghq.eu  | rum.browser-intake-datadoghq.eu  |
 
-> Warning: You have to update your content security policy, if you use it.
+> Warning: You have to update your content security policy, if you use one.
 
 ### Removed typescript types
 
