@@ -16,6 +16,70 @@
 
 ---
 
+## v3.0.0
+
+Here is the list of all the breaking changes between version 2 and 3. For each change, we show the new way to handle your use case.
+
+### Network errors no longer monitored
+
+RUM browser SDK no longer automatically monitors network errors.
+
+**New option**: You can use the option beforeSend to get the resource, check the `status` and send it with the `addError()` API.
+
+### Source attribute of addError() has been removed
+
+You can no longer change the source of error sent with `addError()`. All these errors have a `custom` source.
+
+**New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
+
+### Non versioned RUM CDN files no longer updated
+
+All these files are frozen on version 2.18.0:
+
+- www.datadoghq-browser-agent.com/datadog-rum.js
+- www.datadoghq-browser-agent.com/datadog-rum-recorder.js
+- www.datadoghq-browser-agent.com/datadog-rum-eu.js
+- www.datadoghq-browser-agent.com/datadog-rum-us.js
+
+**New option**: In order to get the last update of the sdk, you have to use versioned CDN files:
+
+| Old files                                            | New files              |
+| ---------------------------------------------------- | ---------------------- |
+| datadog-rum.js, datadog-rum-eu.js, datadog-rum-us.js | datadog-rum-slim-v3.js |
+| datadog-rum-recorder.js                              | datadog-rum-v3.js      |
+
+### New intake domains
+
+RUM now uses a new intake domain. Therefore the init options `useAlternateIntakeDomains` has been removed.
+
+| Old domains                        | New domains                      |
+| ---------------------------------- | -------------------------------- |
+| rum-http-intake.logs.datadoghq.com | rum.browser-intake-datadoghq.com |
+| rum-http-intake.logs.datadoghq.eu  | rum.browser-intake-datadoghq.eu  |
+
+> Warning: You have to update your content security policy, if you use it.
+
+### Removed typescript types
+
+| Old types                    | New types                    |
+| ---------------------------- | ---------------------------- |
+| RumUserConfiguration         | RumInitConfiguration         |
+| RumRecorderUserConfiguration | RumRecorderInitConfiguration |
+
+### Removed init options
+
+| Old options        | New options |
+| ------------------ | ----------- |
+| publicApiKey       | clientToken |
+| datacenter         | site        |
+| resourceSampleRate | NONE        |
+
+### Removed API
+
+| Old API       | New API   |
+| ------------- | --------- |
+| addUserAction | addAction |
+
 ## v2.17.0
 
 - ✨ [RUMF-928] enable manual view tracking ([#924](https://github.com/DataDog/browser-sdk/pull/924))
