@@ -67,6 +67,17 @@ RUM now uses a new intake domain. Therefore the init options `useAlternateIntake
 | ------------- | --------- |
 | addUserAction | addAction |
 
+### Changes
+
+- 💥 always use alternative domains for RUM ([#944](https://github.com/DataDog/browser-sdk/pull/944))
+- 💥 remove deprecated rum init options ([#940](https://github.com/DataDog/browser-sdk/pull/940))
+- 💥 remove deprecated types ([#942](https://github.com/DataDog/browser-sdk/pull/942))
+- 💥 [RUMF-951] merge rum-recorder into rum ([#941](https://github.com/DataDog/browser-sdk/pull/941))
+- 👷 [RUMF-937] create the rum-slim package ([#935](https://github.com/DataDog/browser-sdk/pull/935))
+- 💥 remove deprecated RUM.addUserAction ([#939](https://github.com/DataDog/browser-sdk/pull/939))
+- ✨ [RUMF-940] implement the replay sample rate option and remove resource sample rate option ([#931](https://github.com/DataDog/browser-sdk/pull/931))
+- 💥 Remove addError 'source' argument ([#936](https://github.com/DataDog/browser-sdk/pull/936))
+
 ## v2.18.0
 
 - 👷 Versioned CDN files ([#932](https://github.com/DataDog/browser-sdk/pull/932))
