@@ -53,14 +53,6 @@ export class Segment {
     })
     worker.addEventListener('message', listener)
     this.worker.postMessage({ data: `{"records":[${JSON.stringify(initialRecord)}`, id: this.id, action: 'write' })
-
-    if (typeof (window as any).___dd_send_segments_hook === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window as any).___dd_send_segments_hook({
-        record: initialRecord,
-        meta: this.meta,
-      })
-    }
   }
 
   addRecord(record: Record): void {
@@ -68,14 +60,6 @@ export class Segment {
     this.recordsCount += 1
     this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
-
-    if (typeof (window as any).___dd_send_segments_hook === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      ;(window as any).___dd_send_segments_hook({
-        record,
-        meta: this.meta,
-      })
-    }
   }
 
   flush() {
