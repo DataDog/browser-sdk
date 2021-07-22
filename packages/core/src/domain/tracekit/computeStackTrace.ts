@@ -184,7 +184,7 @@ export function computeStackTraceFromStackProp(ex: unknown) {
   }
 
   // eslint-disable-next-line  max-len
-  const chrome = /^\s*at (.*?) ?\(((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
+  const chrome = /^\s*at (.*?) ?\(?((?:file|https?|blob|chrome-extension|native|eval|webpack|<anonymous>|\/).*?)(?::(\d+))?(?::(\d+))?\)?\s*$/i
   // eslint-disable-next-line  max-len
   const gecko = /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle)(?::(\d+))?(?::(\d+))?\s*$/i
   // eslint-disable-next-line  max-len
