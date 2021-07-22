@@ -63,6 +63,11 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
         if (state.status === RecorderStatus.IntentToStart) {
           startStrategy()
         }
+
+        if (!session.hasReplayPlan() && state.status === RecorderStatus.Started) {
+          stopStrategy()
+          state = { status: RecorderStatus.IntentToStart }
+        }
       })
 
       startStrategy = () => {
