@@ -91,14 +91,12 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
       getNodePrivacyLevel(mutation.target) !== NodePrivacyLevel.HIDDEN
   )
 
-  // TODO: don't process resynced nodes
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     )
   )
 
-  // TODO: don't process resynced nodes
   const texts = processCharacterDataMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumCharacterDataMutationRecord> =>
@@ -106,7 +104,6 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     )
   )
 
-  // TODO: don't process resynced nodes
   const attributes = processAttributesMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumAttributesMutationRecord> =>
@@ -171,7 +168,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
 
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
-    uncachePrivacyLevel(node) // TODO: REVIEW: This is likely not needed, review later
+    uncachePrivacyLevel(node) // TODO: REVIEW: This is likely not needed, review caching spec next
     if (hasBeenSerialized(node)) {
       continue
     }
@@ -228,8 +225,8 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
   // Deduplicate mutations based on their target node
   const handledNodes = new Set<Node>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: This is likely not needed, review later
-    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: REVIEW: This is likely not needed, review later
+    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: Better handle clean caching spec.
+    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: REVIEW: Better handle clean caching spec.
     if (handledNodes.has(mutation.target)) {
       return false
     }
@@ -266,7 +263,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Deduplicate mutations based on their target node and changed attribute
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: This is likely not needed, review later
+    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: Uncache for now, later implement more intelligent check.
     const handledAttributes = handledElements.get(mutation.target)
     if (handledAttributes?.has(mutation.attributeName!)) {
       return false

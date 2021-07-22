@@ -47,7 +47,6 @@ export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
     case InitialPrivacyLevel.HIDDEN:
       return NodePrivacyLevelInternal.HIDDEN
     default:
-      // TODO: REVIEW: the default level
       return NodePrivacyLevelInternal.ALLOW
   }
 }
@@ -106,10 +105,6 @@ export function getInternalNodePrivacyLevel(
   node: Node,
   parentNodePrivacyLevel?: NodePrivacyLevelInternal
 ): NodePrivacyLevelInternal {
-  if (!node) {
-    // TODO: TODO: remove before PR
-    throw new Error('RUNTIME_ASSERTION')
-  }
   const isElementNode = isElement(node)
 
   const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
@@ -141,7 +136,7 @@ export function getInternalNodePrivacyLevel(
    * Text nodes depend upon the parent element so are not cached.
    * DIRTY: During tests, we pass in different ancestor privacy levels so we
    * can't cache the privacy level if `parentNodePrivacyLevel` is passed in.
-   * TODO: TODO: Cleanup tests to avoid this effect, or use a new method
+   * TODO: Cleanup tests to avoid this effect, or use a new method
    */
   if (isElementNode && !parentNodePrivacyLevel) {
     nodeInternalPrivacyCache.set(node, privacyLevel)

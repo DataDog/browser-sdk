@@ -46,8 +46,8 @@ export const PRIVACY_ATTR_VALUE_MASK = 'mask'
 export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY = 'mask-forms-only'
 export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden' // TODO: rename to `hide`?
 
-export const PRIVACY_ATTR_VALUE_MASK_SEALED = 'mask-sealed'
-export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED = 'mask-forms-only-sealed'
+export const PRIVACY_ATTR_VALUE_MASK_SEALED = '_unstable-mask-sealed'
+export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED = '_unstable-mask-forms-only-sealed'
 
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
 export const PRIVACY_CLASS_ALLOW = 'dd-privacy-allow'
