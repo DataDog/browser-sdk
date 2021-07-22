@@ -158,8 +158,9 @@ export const CHROME_15 = {
   stack: `TypeError: Object #<Object> has no method 'undef'
     at bar (http://path/to/file.js:13:17)
     at bar (http://path/to/file.js:16:5)
-    at foo (http://path/to/file.js:20:5)
-    at http://path/to/file.js:24:4`,
+    at foo (chrome-extension://path/to/file.js:20:5)
+    at http://path/to/file.js:24:5)
+    at chrome-extension://path/to/file.js:28:4`,
 }
 
 export const CHROME_36 = {

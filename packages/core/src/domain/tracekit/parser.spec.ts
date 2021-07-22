@@ -359,7 +359,7 @@ describe('Parser', () => {
   it('should parse Chrome 15 error', () => {
     const stackFrames = computeStackTrace(CapturedExceptions.CHROME_15 as any)
 
-    expect(stackFrames.stack.length).toEqual(4)
+    expect(stackFrames.stack.length).toEqual(5)
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       column: 17,
@@ -379,14 +379,21 @@ describe('Parser', () => {
       column: 5,
       func: 'foo',
       line: 20,
-      url: 'http://path/to/file.js',
+      url: 'chrome-extension://path/to/file.js',
     })
     expect(stackFrames.stack[3]).toEqual({
       args: [],
-      column: 4,
+      column: 5,
       func: '?',
       line: 24,
       url: 'http://path/to/file.js',
+    })
+    expect(stackFrames.stack[4]).toEqual({
+      args: [],
+      column: 4,
+      func: '?',
+      line: 28,
+      url: 'chrome-extension://path/to/file.js',
     })
   })
 
