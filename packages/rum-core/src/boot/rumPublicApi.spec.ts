@@ -1,7 +1,7 @@
-import { ErrorSource, ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, noop } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum, RecorderApi } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -13,6 +13,12 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   parentContexts: {} as any,
   session: {} as any,
 })
+const noopRecorderApi: RecorderApi = {
+  start: noop,
+  stop: noop,
+  isRecording: () => false,
+  onRumStart: noop,
+}
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
 describe('rum public api', () => {
@@ -22,7 +28,7 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      rumPublicApi = makeRumPublicApi(noopStartRum)
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
     it('init should log an error with no application id', () => {
@@ -42,19 +48,19 @@ describe('rum public api', () => {
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
-    it('init should log an error if resourceSampleRate is invalid', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 'foo' as any })
+    it('init should log an error if replaySampleRate is invalid', () => {
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 'foo' as any })
       expect(displaySpy).toHaveBeenCalledTimes(1)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', resourceSampleRate: 200 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', replaySampleRate: 200 })
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
     it('should log an error if init is called several times', () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, replaySampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(1)
     })
 
@@ -62,7 +68,7 @@ describe('rum public api', () => {
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', allowedTracingOrigins: [] })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      makeRumPublicApi(noopStartRum).init({
+      makeRumPublicApi(noopStartRum, noopRecorderApi).init({
         allowedTracingOrigins: ['foo.bar'],
         applicationId: 'yes',
         clientToken: 'yes',
@@ -70,7 +76,7 @@ describe('rum public api', () => {
       })
       expect(displaySpy).toHaveBeenCalledTimes(0)
 
-      makeRumPublicApi(noopStartRum).init({
+      makeRumPublicApi(noopStartRum, noopRecorderApi).init({
         allowedTracingOrigins: ['foo.bar'],
         applicationId: 'yes',
         clientToken: 'yes',
@@ -82,7 +88,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -91,7 +96,6 @@ describe('rum public api', () => {
       rumPublicApi.init({
         applicationId: 'yes',
         clientToken: 'yes',
-        resourceSampleRate: 1,
         sampleRate: 1,
         silentMultipleInit: true,
       })
@@ -99,8 +103,15 @@ describe('rum public api', () => {
     })
 
     it("shouldn't trigger any console.error if the configuration is correct", () => {
-      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1, resourceSampleRate: 1 })
+      rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
+    })
+
+    it('should ignore old configuration options', () => {
+      const oldConfigurationOptions = { publicApiKey: '', datacenter: 'us' }
+      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
+      rumPublicApi.init(initConfiguration)
+      expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))
     })
   })
 
@@ -113,10 +124,13 @@ describe('rum public api', () => {
         application_id: '123',
         session_id: '123',
       }))
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-        getInternalContext: getInternalContextSpy,
-      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          getInternalContext: getInternalContextSpy,
+        }),
+        noopRecorderApi
+      )
     })
 
     it('returns undefined before init', () => {
@@ -144,9 +158,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-      }))
+      rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi)
     })
 
     it('returns undefined before init', () => {
@@ -169,10 +181,13 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-        addAction: addActionSpy,
-      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
       setupBuilder = setup()
     })
 
@@ -257,10 +272,13 @@ describe('rum public api', () => {
 
     beforeEach(() => {
       addErrorSpy = jasmine.createSpy()
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-        addError: addErrorSpy,
-      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addError: addErrorSpy,
+        }),
+        noopRecorderApi
+      )
       setupBuilder = setup()
     })
 
@@ -280,25 +298,10 @@ describe('rum public api', () => {
           context: undefined,
           error: new Error('foo'),
           handlingStack: jasmine.any(String),
-          source: ErrorSource.CUSTOM,
           startClocks: jasmine.any(Object),
         },
         { context: {}, user: {} },
       ])
-    })
-
-    it('allows setting an ErrorSource', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, ErrorSource.SOURCE)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.SOURCE)
-    })
-
-    it('fallbacks to ErrorSource.CUSTOM if an invalid source is given', () => {
-      const displaySpy = spyOn(display, 'error')
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.addError(new Error('foo'), undefined, 'invalid' as any)
-      expect(addErrorSpy.calls.argsFor(0)[0].source).toBe(ErrorSource.CUSTOM)
-      expect(displaySpy).toHaveBeenCalledWith("DD_RUM.addError: Invalid source 'invalid'")
     })
 
     it('should generate a handling stack', () => {
@@ -373,10 +376,13 @@ describe('rum public api', () => {
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
       displaySpy = spyOn(display, 'error')
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-        addAction: addActionSpy,
-      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addAction: addActionSpy,
+        }),
+        noopRecorderApi
+      )
       setupBuilder = setup()
     })
 
@@ -444,10 +450,13 @@ describe('rum public api', () => {
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       displaySpy = spyOn(display, 'error')
-      rumPublicApi = makeRumPublicApi(() => ({
-        ...noopStartRum(),
-        addTiming: addTimingSpy,
-      }))
+      rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          addTiming: addTimingSpy,
+        }),
+        noopRecorderApi
+      )
       setupBuilder = setup()
     })
 
@@ -489,6 +498,7 @@ describe('rum public api', () => {
     let startViewSpy: jasmine.Spy<ReturnType<StartRum>['startView']>
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let displaySpy: jasmine.Spy<() => void>
+    let recorderApiOnRumStartSpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
     let setupBuilder: TestSetupBuilder
 
@@ -501,7 +511,8 @@ describe('rum public api', () => {
         addTiming: addTimingSpy,
         startView: startViewSpy,
       })
-      rumPublicApi = makeRumPublicApi(startRumSpy)
+      recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
+      rumPublicApi = makeRumPublicApi(startRumSpy, { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy })
       setupBuilder = setup()
     })
 
@@ -514,6 +525,7 @@ describe('rum public api', () => {
         rumPublicApi.init(AUTO_CONFIGURATION)
 
         expect(startRumSpy).toHaveBeenCalled()
+        expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
       })
 
       it('before init startView should be handled after init', () => {
@@ -552,6 +564,7 @@ describe('rum public api', () => {
         rumPublicApi.init(MANUAL_CONFIGURATION)
 
         expect(startRumSpy).not.toHaveBeenCalled()
+        expect(recorderApiOnRumStartSpy).not.toHaveBeenCalled()
       })
 
       it('before init startView should start rum', () => {
@@ -562,6 +575,7 @@ describe('rum public api', () => {
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
         expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
 
@@ -573,6 +587,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
         expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
 
@@ -583,6 +598,7 @@ describe('rum public api', () => {
 
         expect(startRumSpy).toHaveBeenCalled()
         expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual('bar')
         expect(startViewSpy.calls.argsFor(0)[1]).toBeUndefined()
@@ -616,6 +632,36 @@ describe('rum public api', () => {
 
         expect(addTimingSpy.calls.argsFor(2)[0]).toEqual('third')
         expect(addTimingSpy.calls.argsFor(2)[1]).toBeUndefined() // no time saved when started
+      })
+    })
+  })
+
+  describe('common context', () => {
+    let isRecording: boolean
+    let rumPublicApi: RumPublicApi
+    let startRumSpy: jasmine.Spy<StartRum>
+
+    function getCommonContext() {
+      return startRumSpy.calls.argsFor(0)[3]()
+    }
+
+    beforeEach(() => {
+      isRecording = false
+      startRumSpy = jasmine.createSpy('startRum')
+      rumPublicApi = makeRumPublicApi(startRumSpy, { ...noopRecorderApi, isRecording: () => isRecording })
+    })
+
+    describe('hasReplay', () => {
+      it('should be undefined if it is not recording', () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        isRecording = false
+        expect(getCommonContext().hasReplay).toBeUndefined()
+      })
+
+      it('should be true if it is recording', () => {
+        rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        isRecording = true
+        expect(getCommonContext().hasReplay).toBeTrue()
       })
     })
   })

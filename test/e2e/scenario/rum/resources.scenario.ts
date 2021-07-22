@@ -162,9 +162,6 @@ describe('rum resources', () => {
 
       return {
         toBeAborted() {
-          // Aborted XHR should be considered as errors for now
-          expect(events.rumErrors.length).toBe(1)
-
           expect(resourceEvent?.resource.status_code).toBe(0)
         },
 
@@ -192,9 +189,6 @@ describe('rum resources', () => {
         })
 
         await flushEvents()
-
-        // Aborted fetch should be considered as errors for now
-        expect(events.rumErrors.length).toBe(1)
 
         const resourceEvent = events.rumResources.find((event) => event.resource.type === 'fetch')
         expect(resourceEvent).toBeTruthy()

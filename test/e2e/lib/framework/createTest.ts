@@ -1,13 +1,12 @@
 import { LogsInitConfiguration } from '@datadog/browser-logs'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { RumRecorderInitConfiguration } from '@datadog/browser-rum-recorder'
 import { deleteAllCookies, withBrowserLogs } from '../helpers/browser'
 import { flushEvents } from '../helpers/sdk'
 import { validateFormat } from '../helpers/validation'
 import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
-import { DEFAULT_SETUPS, SetupFactory, SetupOptions } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, SetupFactory, SetupOptions } from './pageSetups'
 import { Endpoints } from './sdkBuilds'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
@@ -37,7 +36,7 @@ type TestRunner = (testContext: TestContext) => Promise<void>
 
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
-  private rumRecorderConfiguration: RumRecorderInitConfiguration | undefined = undefined
+  private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private head = ''
   private body = ''
@@ -50,8 +49,8 @@ class TestBuilder {
     return this
   }
 
-  withRumRecorder(rumRecorderInitConfiguration?: Partial<RumRecorderInitConfiguration>) {
-    this.rumRecorderConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumRecorderInitConfiguration }
+  withRumSlim() {
+    this.alsoRunWithRumSlim = true
     return this
   }
 
@@ -92,17 +91,21 @@ class TestBuilder {
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
       rumInit: this.rumInit,
-      rumRecorder: this.rumRecorderConfiguration,
+      useRumSlim: false,
     }
 
-    if (setups.length > 1) {
+    if (this.alsoRunWithRumSlim) {
       describe(this.title, () => {
-        for (const { name, factory } of setups) {
-          declareTest(name!, factory(setupOptions), runner)
-        }
+        declareTestsForSetups('rum', setups, setupOptions, runner)
+        declareTestsForSetups(
+          'rum-slim',
+          setups.filter((setup) => setup.factory !== npmSetup),
+          { ...setupOptions, useRumSlim: true },
+          runner
+        )
       })
     } else {
-      declareTest(this.title, setups[0].factory(setupOptions), runner)
+      declareTestsForSetups(this.title, setups, setupOptions, runner)
     }
   }
 
@@ -115,6 +118,23 @@ interface ItResult {
   getFullName(): string
 }
 declare function it(expectation: string, assertion?: jasmine.ImplementationCallback, timeout?: number): ItResult
+
+function declareTestsForSetups(
+  title: string,
+  setups: Array<{ factory: SetupFactory; name?: string }>,
+  setupOptions: SetupOptions,
+  runner: TestRunner
+) {
+  if (setups.length > 1) {
+    describe(title, () => {
+      for (const { name, factory } of setups) {
+        declareTest(name!, factory(setupOptions), runner)
+      }
+    })
+  } else {
+    declareTest(title, setups[0].factory(setupOptions), runner)
+  }
+}
 
 function declareTest(title: string, setup: string, runner: TestRunner) {
   const spec = it(title, async () => {

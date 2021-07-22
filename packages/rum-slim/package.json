@@ -1,6 +1,6 @@
 {
-  "name": "@datadog/browser-rum-recorder",
-  "version": "2.18.0",
+  "name": "@datadog/browser-rum-slim",
+  "version": "3.0.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -12,17 +12,13 @@
     "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
   },
   "dependencies": {
-    "@datadog/browser-core": "2.18.0",
-    "@datadog/browser-rum-core": "2.18.0",
+    "@datadog/browser-core": "3.0.0",
+    "@datadog/browser-rum-core": "3.0.0",
     "tslib": "^1.10.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-recorder"
-  },
-  "devDependencies": {
-    "@types/pako": "1.0.1",
-    "pako": "2.0.3"
+    "directory": "packages/rum-slim"
   }
 }

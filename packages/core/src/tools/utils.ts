@@ -542,7 +542,7 @@ export function combine(...sources: any[]): unknown {
   return destination as unknown
 }
 
-// Define those types for TS 3.0 compatibility
+// Define those utilities for TS 3.0 compatibility
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#thisparametertypetype
 export type ThisParameterType<T> = T extends (this: infer U, ...args: any[]) => any ? U : unknown
 // https://www.typescriptlang.org/docs/handbook/utility-types.html#parameterstype

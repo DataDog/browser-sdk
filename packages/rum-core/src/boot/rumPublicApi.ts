@@ -6,7 +6,6 @@ import {
   Context,
   createContextManager,
   deepClone,
-  ErrorSource,
   isPercentage,
   makePublicApi,
   monitor,
@@ -19,25 +18,29 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
+  Omit,
 } from '@datadog/browser-core'
-import { ProvidedSource } from '../domain/rumEventsCollection/error/errorCollection'
+import { LifeCycle } from '../domain/lifeCycle'
+import { ParentContexts } from '../domain/parentContexts'
+import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, User, ActionType } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-export interface RumInitConfiguration extends InitConfiguration {
+const droppedConfigurationOptions = [
+  'publicApiKey' as const,
+  'datacenter' as const,
+  'useAlternateIntakeDomains' as const,
+]
+type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
+
+export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
   initialPrivacyLevel?: string
 }
-
-/**
- * TODO: remove this type in the next major release
- * @deprecated Use RumInitConfiguration instead
- */
-export type RumUserConfiguration = RumInitConfiguration
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
 
@@ -51,7 +54,20 @@ export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
 
 type StartRumResult = ReturnType<typeof startRum>
 
-export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>) {
+export interface RecorderApi {
+  start: () => void
+  stop: () => void
+  onRumStart: (
+    lifeCycle: LifeCycle,
+    initConfiguration: RumInitConfiguration,
+    configuration: Configuration,
+    session: RumSession,
+    parentContexts: ParentContexts
+  ) => void
+  isRecording: () => boolean
+}
+
+export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>, recorderApi: RecorderApi) {
   let isAlreadyInitialized = false
 
   const globalContextManager = createContextManager()
@@ -89,13 +105,15 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     ) {
       return
     }
-    if (initConfiguration.publicApiKey) {
-      initConfiguration.clientToken = initConfiguration.publicApiKey
-    }
 
-    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
+    droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
+
+    const { configuration, internalMonitoring } = commonInit(
+      { ...initConfiguration, useAlternateIntakeDomains: true },
+      buildEnv
+    )
     if (!configuration.trackViewsManually) {
-      doStartRum()
+      doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
       // drain beforeInitCalls by buffering them until we start RUM
       // if we get a startView, drain re-buffered calls before continuing to drain beforeInitCalls
@@ -104,33 +122,49 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       bufferApiCalls = new BoundedBuffer()
 
       startViewStrategy = (name) => {
-        doStartRum(name)
+        doStartRum(initConfiguration, configuration, internalMonitoring, name)
       }
       beforeInitCalls.drain()
     }
     getInitConfigurationStrategy = () => deepClone<InitConfiguration>(initConfiguration)
 
     isAlreadyInitialized = true
+  }
 
-    function doStartRum(initialViewName?: string) {
-      ;({
-        startView: startViewStrategy,
-        addAction: addActionStrategy,
-        addError: addErrorStrategy,
-        addTiming: addTimingStrategy,
-        getInternalContext: getInternalContextStrategy,
-      } = startRumImpl(
-        initConfiguration,
-        configuration,
-        internalMonitoring,
-        () => ({
-          user,
-          context: globalContextManager.get(),
-        }),
-        initialViewName
-      ))
-      bufferApiCalls.drain()
-    }
+  function doStartRum(
+    initConfiguration: C,
+    configuration: Configuration,
+    internalMonitoring: InternalMonitoring,
+    initialViewName?: string
+  ) {
+    const startRumResults = startRumImpl(
+      initConfiguration,
+      configuration,
+      internalMonitoring,
+      () => ({
+        user,
+        context: globalContextManager.get(),
+        hasReplay: recorderApi.isRecording() ? true : undefined,
+      }),
+      initialViewName
+    )
+
+    ;({
+      startView: startViewStrategy,
+      addAction: addActionStrategy,
+      addError: addErrorStrategy,
+      addTiming: addTimingStrategy,
+      getInternalContext: getInternalContextStrategy,
+    } = startRumResults)
+    bufferApiCalls.drain()
+
+    recorderApi.onRumStart(
+      startRumResults.lifeCycle,
+      initConfiguration,
+      configuration,
+      startRumResults.session,
+      startRumResults.parentContexts
+    )
   }
 
   const rumPublicApi = makePublicApi({
@@ -155,28 +189,13 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       })
     }),
 
-    /**
-     * @deprecated use addAction instead
-     */
-    addUserAction: (name: string, context?: object) => {
-      rumPublicApi.addAction(name, context as Context)
-    },
-
-    addError: (error: unknown, context?: object, source: ProvidedSource = ErrorSource.CUSTOM) => {
+    addError: (error: unknown, context?: object) => {
       const handlingStack = createHandlingStack()
       callMonitored(() => {
-        let checkedSource: ProvidedSource
-        if (source === ErrorSource.CUSTOM || source === ErrorSource.NETWORK || source === ErrorSource.SOURCE) {
-          checkedSource = source
-        } else {
-          display.error(`DD_RUM.addError: Invalid source '${source as string}'`)
-          checkedSource = ErrorSource.CUSTOM
-        }
         addErrorStrategy({
           error,
           handlingStack,
           context: deepClone(context as Context),
-          source: checkedSource,
           startClocks: clocksNow(),
         })
       })
@@ -202,6 +221,9 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
     startView: monitor((name?: string) => {
       startViewStrategy(name)
     }),
+
+    startSessionReplayRecording: monitor(recorderApi.start),
+    stopSessionReplayRecording: monitor(recorderApi.stop),
   })
   return rumPublicApi
 
@@ -229,7 +251,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       }
       return false
     }
-    if (!initConfiguration || (!initConfiguration.clientToken && !initConfiguration.publicApiKey)) {
+    if (!initConfiguration || !initConfiguration.clientToken) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }
@@ -241,8 +263,8 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       display.error('Sample Rate should be a number between 0 and 100')
       return false
     }
-    if (initConfiguration.resourceSampleRate !== undefined && !isPercentage(initConfiguration.resourceSampleRate)) {
-      display.error('Resource Sample Rate should be a number between 0 and 100')
+    if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
+      display.error('Replay Sample Rate should be a number between 0 and 100')
       return false
     }
     if (

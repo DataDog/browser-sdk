@@ -33,7 +33,6 @@ describe('error collection', () => {
       addError({
         error,
         handlingStack: 'Error: handling foo',
-        source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
@@ -69,7 +68,6 @@ describe('error collection', () => {
         context: { foo: 'bar' },
         error: new Error('foo'),
         handlingStack: 'Error: handling foo',
-        source: ErrorSource.CUSTOM,
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
       expect(rawRumEvents[0].customerContext).toEqual({
@@ -83,7 +81,6 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           handlingStack: 'Error: handling foo',
-          source: ErrorSource.CUSTOM,
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
         { context: { foo: 'bar' }, user: {} }
@@ -99,7 +96,6 @@ describe('error collection', () => {
         {
           error: new Error('foo'),
           handlingStack: 'Error: handling foo',
-          source: ErrorSource.CUSTOM,
           startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         },
         { context: {}, user: { id: 'foo' } }
@@ -113,7 +109,6 @@ describe('error collection', () => {
       const { rawRumEvents } = setupBuilder.build()
       addError({
         error: { foo: 'bar' },
-        source: ErrorSource.CUSTOM,
         handlingStack: 'Error: handling foo',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })

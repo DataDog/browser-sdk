@@ -1,5 +1,5 @@
-import { isIE } from '@datadog/browser-core/test/specHelper'
-import { SerializedNodeWithId } from 'packages/rum-recorder/src/domain/record/types'
+import { isIE } from '../../../../core/test/specHelper'
+import { SerializedNodeWithId } from './types'
 import { NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'

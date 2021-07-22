@@ -1,7 +1,7 @@
 import { HttpRequest } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { RumSessionPlan } from 'packages/rum-core/src/domain/rumSession'
 import { inflate } from 'pako'
+import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
 import { createNewEvent, isIE } from '../../../core/test/specHelper'
 
 import { setup, TestSetupBuilder } from '../../../rum-core/test/specHelper'
@@ -13,7 +13,7 @@ import { startRecording } from './startRecording'
 
 describe('startRecording', () => {
   let setupBuilder: TestSetupBuilder
-  let sessionId: string | undefined
+  let session: RumSessionMock
   let viewId: string
   let waitRequestSendCalls: (
     expectedCallsCount: number,
@@ -27,7 +27,7 @@ describe('startRecording', () => {
     if (isIE()) {
       pending('IE not supported')
     }
-    sessionId = 'session-id'
+    session = createRumSessionMock()
     viewId = 'view-id'
 
     sandbox = document.createElement('div')
@@ -40,7 +40,7 @@ describe('startRecording', () => {
         findView() {
           return {
             session: {
-              id: sessionId,
+              id: session.getId(),
             },
             view: {
               id: viewId,
@@ -50,12 +50,7 @@ describe('startRecording', () => {
           }
         },
       })
-      .withSession({
-        getId: () => sessionId,
-        getPlan: () => RumSessionPlan.REPLAY,
-        isTracked: () => true,
-        isTrackedWithResource: () => true,
-      })
+      .withSession(session)
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
         startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
       )
@@ -117,7 +112,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click'))
 
-    sessionId = undefined
+    session.setNotTracked()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 
@@ -130,12 +125,12 @@ describe('startRecording', () => {
   })
 
   it('restarts sending segments when the session is renewed', (done) => {
-    sessionId = undefined
+    session.setNotTracked()
     const { lifeCycle } = setupBuilder.build()
 
     document.body.dispatchEvent(createNewEvent('click'))
 
-    sessionId = 'new-session-id'
+    session.setId('new-session-id').setReplayPlan()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click'))
 

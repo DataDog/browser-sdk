@@ -2,12 +2,10 @@ export {
   DEFAULT_CONFIGURATION,
   Configuration,
   InitConfiguration,
-  UserConfiguration,
   buildCookieOptions,
   BeforeSendCallback,
 } from './domain/configuration'
 export { trackConsoleError } from './domain/error/trackConsoleError'
-export { trackNetworkError } from './domain/error/trackNetworkError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export {

@@ -8,8 +8,8 @@ export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
   maxErrorsByMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
-  resourceSampleRate: 100,
   sampleRate: 100,
+  replaySampleRate: 100,
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
@@ -47,7 +47,7 @@ export interface InitConfiguration {
   internalMonitoringApiKey?: string
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
-  resourceSampleRate?: number // deprecated
+  replaySampleRate?: number
   datacenter?: Datacenter // deprecated
   site?: string
   enableExperimentalFeatures?: string[]
@@ -70,12 +70,6 @@ export interface InitConfiguration {
   // only on staging build mode
   replica?: ReplicaUserConfiguration
 }
-
-/**
- * TODO: Remove this type in the next major release
- * @deprecated Use InitConfiguration instead
- */
-export type UserConfiguration = InitConfiguration
 
 export type BeforeSendCallback = (event: any, context?: any) => unknown
 
@@ -139,8 +133,8 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.sampleRate = initConfiguration.sampleRate!
   }
 
-  if ('resourceSampleRate' in initConfiguration) {
-    configuration.resourceSampleRate = initConfiguration.resourceSampleRate!
+  if ('replaySampleRate' in initConfiguration) {
+    configuration.replaySampleRate = initConfiguration.replaySampleRate!
   }
 
   if ('trackInteractions' in initConfiguration) {
