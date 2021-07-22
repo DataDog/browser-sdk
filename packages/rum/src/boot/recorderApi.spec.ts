@@ -157,6 +157,7 @@ describe('makeRecorderApi', () => {
         session.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
 
       it('does not starts recording if stopSessionReplayRecording was called', () => {
@@ -178,6 +179,7 @@ describe('makeRecorderApi', () => {
         session.setReplayPlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
 
       it('does not starts recording if stopSessionReplayRecording was called', () => {
@@ -209,7 +211,7 @@ describe('makeRecorderApi', () => {
 
       it('stops recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        session.setNotTracked()
+        session.setLitePlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(stopRecordingSpy).toHaveBeenCalled()
       })
