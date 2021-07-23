@@ -228,8 +228,8 @@ describe('makeRecorderApi', () => {
       it('keeps recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(stopRecordingSpy).not.toHaveBeenCalled()
-        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+        expect(stopRecordingSpy).toHaveBeenCalled()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(2)
       })
 
       it('does not starts recording if stopSessionReplayRecording was called', () => {
