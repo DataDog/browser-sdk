@@ -179,6 +179,7 @@ describe('makeRecorderApi', () => {
         session.setNotTracked()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -191,6 +192,7 @@ describe('makeRecorderApi', () => {
         recorderApi.start()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -203,7 +205,8 @@ describe('makeRecorderApi', () => {
         recorderApi.start()
         session.setLitePlan()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-        expect(startRecordingSpy).toHaveBeenCalled()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+        expect(stopRecordingSpy).toHaveBeenCalled()
       })
     })
 
@@ -216,6 +219,7 @@ describe('makeRecorderApi', () => {
         recorderApi.start()
         session.setNotTracked()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         expect(stopRecordingSpy).toHaveBeenCalled()
       })
     })
