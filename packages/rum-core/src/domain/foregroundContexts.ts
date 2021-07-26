@@ -1,6 +1,4 @@
 import {
-  Configuration,
-  noop,
   addEventListener,
   DOM_EVENT,
   RelativeTime,
@@ -28,14 +26,7 @@ export interface ForegroundPeriod {
 
 let foregroundPeriods: ForegroundPeriod[] = []
 
-export function startForegroundContexts(configuration: Configuration): ForegroundContexts {
-  if (!configuration.isEnabled('track-foreground')) {
-    return {
-      getInForeground: () => undefined,
-      getInForegroundPeriods: () => undefined,
-      stop: noop,
-    }
-  }
+export function startForegroundContexts(): ForegroundContexts {
   if (document.hasFocus()) {
     addNewForegroundPeriod()
   }

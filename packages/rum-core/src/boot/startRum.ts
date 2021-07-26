@@ -86,7 +86,7 @@ export function startRumEventCollection(
   getCommonContext: () => CommonContext
 ) {
   const parentContexts = startParentContexts(lifeCycle, session)
-  const foregroundContexts = startForegroundContexts(configuration)
+  const foregroundContexts = startForegroundContexts()
   const batch = startRumBatch(configuration, lifeCycle)
 
   startRumAssembly(applicationId, configuration, lifeCycle, session, parentContexts, getCommonContext)
