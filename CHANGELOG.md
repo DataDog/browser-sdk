@@ -16,6 +16,10 @@
 
 ---
 
+## v3.0.1
+
+- 🐛 fix recording session renewal ([#955](https://github.com/DataDog/browser-sdk/pull/955))
+
 ## v3.0.0
 
 Here is the list of all the breaking changes between version 2 and 3 of the RUM SDK.
