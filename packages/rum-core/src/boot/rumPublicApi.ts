@@ -29,11 +29,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const droppedConfigurationOptions = [
-  'publicApiKey' as const,
-  'datacenter' as const,
-  'useAlternateIntakeDomains' as const,
-]
+const droppedConfigurationOptions = ['publicApiKey' as const, 'datacenter' as const]
 type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
 
 export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
@@ -107,10 +103,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
 
     droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
 
-    const { configuration, internalMonitoring } = commonInit(
-      { ...initConfiguration, useAlternateIntakeDomains: true },
-      buildEnv
-    )
+    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
