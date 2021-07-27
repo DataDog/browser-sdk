@@ -16,6 +16,11 @@
 
 ---
 
+## v3.0.2
+
+- [RUMF-972] Revert "💥 always use alternative domains for RUM ([#944](https://github.com/DataDog/browser-sdk/pull/944))" ([#963](https://github.com/DataDog/browser-sdk/pull/963))
+- 📝 update CDN URLs for V3 ([#962](https://github.com/DataDog/browser-sdk/pull/962))
+
 ## v3.0.1
 
 - 🐛 fix recording session renewal ([#955](https://github.com/DataDog/browser-sdk/pull/955))
