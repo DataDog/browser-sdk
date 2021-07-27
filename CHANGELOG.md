@@ -39,17 +39,6 @@ You can no longer change the source of error sent with `addError()`. All these e
 
 **New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
 
-### New intake domains
-
-RUM now uses a new intake domain. Therefore the init options `useAlternateIntakeDomains` has been removed.
-
-| Old domains                        | New domains                      |
-| ---------------------------------- | -------------------------------- |
-| rum-http-intake.logs.datadoghq.com | rum.browser-intake-datadoghq.com |
-| rum-http-intake.logs.datadoghq.eu  | rum.browser-intake-datadoghq.eu  |
-
-> Warning: You have to update your content security policy, if you use one.
-
 ### Removed typescript types
 
 | Old types                    | New types                    |
