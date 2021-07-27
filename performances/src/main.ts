@@ -30,7 +30,7 @@ Options:
   const proxy = await startProxy()
 
   const options: ProfilingOptions = {
-    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum.js',
+    bundleUrl: 'https://www.datadoghq-browser-agent.com/datadog-rum-v3.js',
     proxy,
     startRecording,
   }
