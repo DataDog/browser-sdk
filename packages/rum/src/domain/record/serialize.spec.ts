@@ -241,12 +241,6 @@ describe('serializeNodeWithId', () => {
       )
     })
 
-    it('accepts weird tag names like "foo:bar.ßaK"', () => {
-      expect(
-        (serializeNodeWithId(document.createElement('foo:bar.ßaK'), DEFAULT_OPTIONS) as ElementNode).tagName
-      ).toEqual('foo:bar.ßak')
-    })
-
     describe('input privacy mode', () => {
       it('replaces <input> values with asterisks for masked mode', () => {
         const input = document.createElement('input')

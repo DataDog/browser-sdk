@@ -122,7 +122,7 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
  * - fullscreen mode
  */
 export function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
-  const tagName = element.localName
+  const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
   // We only get internal privacy level here to pass on to
@@ -472,6 +472,20 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
 let _nextId = 1
 function generateNextId(): number {
   return _nextId++
+}
+
+const TAG_NAME_REGEX = /[^a-z1-6-_]/
+function getValidTagName(tagName: string): string {
+  const processedTagName = tagName.toLowerCase().trim()
+
+  if (TAG_NAME_REGEX.test(processedTagName)) {
+    // if the tag name is odd and we cannot extract
+    // anything from the string, then we return a
+    // generic div
+    return 'div'
+  }
+
+  return processedTagName
 }
 
 function getCssRulesString(s: CSSStyleSheet): string | null {
