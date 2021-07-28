@@ -39,7 +39,6 @@ type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
 export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
-  initialPrivacyLevel?: string
 }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>

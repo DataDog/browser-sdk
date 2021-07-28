@@ -1,5 +1,4 @@
 import {
-  InitialPrivacyLevel,
   NodePrivacyLevel,
   NodePrivacyLevelInternal,
   PRIVACY_ATTR_NAME,
@@ -21,7 +20,6 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
-import { getRumRecorderConfig } from '../../boot/startRecording'
 import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = '᙮'
@@ -29,18 +27,7 @@ const MIN_LEN_TO_MASK = 80
 const WHITESPACE_TEST = /^\s$/
 
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
-  switch (getRumRecorderConfig()?.initialPrivacyLevel) {
-    case InitialPrivacyLevel.ALLOW:
-      return NodePrivacyLevelInternal.ALLOW
-    case InitialPrivacyLevel.MASK:
-      return NodePrivacyLevelInternal.MASK
-    case InitialPrivacyLevel.MASK_FORMS_ONLY:
-      return NodePrivacyLevelInternal.MASK_FORMS_ONLY
-    case InitialPrivacyLevel.HIDDEN:
-      return NodePrivacyLevelInternal.HIDDEN
-    default:
-      return NodePrivacyLevelInternal.ALLOW
-  }
+  return NodePrivacyLevelInternal.ALLOW
 }
 
 /**
@@ -148,7 +135,7 @@ export function derivePrivacyLevelGivenParent(
  */
 export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLevelInternal {
   if (!node) {
-    return getInitialPrivacyLevel()
+    return NodePrivacyLevelInternal.MASK
   }
 
   // Only Element types can be have a privacy level set

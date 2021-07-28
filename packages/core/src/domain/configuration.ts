@@ -13,7 +13,6 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  initialPrivacyLevel: 'ALLOW',
 
   /**
    * arbitrary value, byte precision not needed
@@ -56,7 +55,6 @@ export interface InitConfiguration {
   trackViewsManually?: boolean
   proxyHost?: string
   beforeSend?: BeforeSendCallback
-  initialPrivacyLevel?: string
 
   service?: string
   env?: string
@@ -84,7 +82,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
-    initialPrivacyLevel?: string
 
     actionNameAttribute?: string
 
@@ -147,10 +144,6 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
 
   if ('actionNameAttribute' in initConfiguration) {
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
-  }
-
-  if ('initialPrivacyLevel' in initConfiguration) {
-    configuration.initialPrivacyLevel = initConfiguration.initialPrivacyLevel!
   }
 
   return configuration

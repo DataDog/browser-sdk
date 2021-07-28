@@ -1,10 +1,3 @@
-export const enum InitialPrivacyLevel {
-  ALLOW = 'ALLOW',
-  MASK = 'MASK',
-  MASK_FORMS_ONLY = 'MASK_FORMS_ONLY',
-  HIDDEN = 'HIDDEN',
-}
-
 export const NodePrivacyLevel = {
   IGNORE: 'IGNORE',
   ALLOW: 'ALLOW',
