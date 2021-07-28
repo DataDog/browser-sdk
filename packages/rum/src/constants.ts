@@ -5,27 +5,22 @@ export const enum InitialPrivacyLevel {
   HIDDEN = 'HIDDEN',
 }
 
-export const enum NodePrivacyLevelInternal {
-  // INTERNAL USE:
-  NOT_SET = 1,
-  UNKNOWN = 2,
-  IGNORE = 3,
+export const NodePrivacyLevel = {
+  IGNORE: 'IGNORE',
+  ALLOW: 'ALLOW',
+  MASK: 'MASK',
+  HIDDEN: 'HIDDEN',
+} as const
+export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
-  // CUSTOMER APPLIED
-  ALLOW = 10,
-  MASK = 11,
-  MASK_FORMS_ONLY = 12,
-  HIDDEN = 13,
-}
-
-// Only expose these Privacy levelsto the general codebase
-export const enum NodePrivacyLevel {
-  // REVIEW: Is there any better way to subset or extend `NodePrivacyLevel` here?
-  IGNORE = 3,
-  ALLOW = 10,
-  MASK = 11,
-  HIDDEN = 13,
-}
+export const NodePrivacyLevelInternal = {
+  // INTERNAL USE: not to be used by the general codebase
+  NOT_SET: 'NOT_SET',
+  UNKNOWN: 'UNKNOWN',
+  MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
+  ...NodePrivacyLevel,
+} as const
+export type NodePrivacyLevelInternal = typeof NodePrivacyLevelInternal[keyof typeof NodePrivacyLevelInternal]
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 

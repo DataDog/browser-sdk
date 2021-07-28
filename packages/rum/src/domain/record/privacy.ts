@@ -48,10 +48,7 @@ export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
  * exposed to the general codebase  (allow/mask/hidden/ignore) because
  * NOT_SET/UNKNOWN/*-SEALED/MASK_FORMS_ONLY are not dev friendly and need not be handled by devs
  */
-export function getNodePrivacyLevel(
-  node: Node,
-  parentNodePrivacyLevel?: NodePrivacyLevelInternal
-): NodePrivacyLevel.ALLOW | NodePrivacyLevel.MASK | NodePrivacyLevel.IGNORE | NodePrivacyLevel.HIDDEN {
+export function getNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodePrivacyLevelInternal): NodePrivacyLevel {
   const privacyLevel = getInternalNodePrivacyLevel(node, parentNodePrivacyLevel)
   return remapInternalPrivacyLevels(node, privacyLevel)
 }
@@ -62,7 +59,7 @@ export function getNodePrivacyLevel(
 export function remapInternalPrivacyLevels(
   node: Node,
   nodePrivacyLevelInternal: NodePrivacyLevelInternal
-): NodePrivacyLevel.ALLOW | NodePrivacyLevel.MASK | NodePrivacyLevel.IGNORE | NodePrivacyLevel.HIDDEN {
+): NodePrivacyLevel {
   switch (nodePrivacyLevelInternal) {
     // Pass through levels
     case NodePrivacyLevelInternal.ALLOW:
