@@ -28,12 +28,6 @@ const TEXT_MASKING_CHAR = '᙮'
 const MIN_LEN_TO_MASK = 80
 const WHITESPACE_TEST = /^\s$/
 
-const nodeInternalPrivacyCache = new WeakMap<Node, NodePrivacyLevelInternal>()
-
-export function uncachePrivacyLevel(node: Node) {
-  nodeInternalPrivacyCache.delete(node)
-}
-
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
   switch (getRumRecorderConfig()?.initialPrivacyLevel) {
     case InitialPrivacyLevel.ALLOW:
@@ -101,11 +95,6 @@ export function getInternalNodePrivacyLevel(
 ): NodePrivacyLevelInternal {
   const isElementNode = isElement(node)
 
-  const cachedPrivacyLevel = nodeInternalPrivacyCache.get(node)
-  if (cachedPrivacyLevel) {
-    return cachedPrivacyLevel
-  }
-
   // Only Elements have tags directly applied
   if (node.parentElement && !isElementNode) {
     return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement)
@@ -125,16 +114,6 @@ export function getInternalNodePrivacyLevel(
     parentNodePrivacyLevel || parentNodePrivacyLevelFallback!
   )
 
-  /**
-   * Cache privacy level for faster mutation observer lookups
-   * Text nodes depend upon the parent element so are not cached.
-   * DIRTY: During tests, we pass in different ancestor privacy levels so we
-   * can't cache the privacy level if `parentNodePrivacyLevel` is passed in.
-   * TODO: Cleanup tests to avoid this effect, or use a new method
-   */
-  if (isElementNode && !parentNodePrivacyLevel) {
-    nodeInternalPrivacyCache.set(node, privacyLevel)
-  }
   return privacyLevel
 }
 

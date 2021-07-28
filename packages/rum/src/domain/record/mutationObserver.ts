@@ -1,12 +1,7 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import {
-  getNodePrivacyLevel,
-  getInternalNodePrivacyLevel,
-  uncachePrivacyLevel,
-  getAttributesForPrivacyLevel,
-} from './privacy'
+import { getNodePrivacyLevel, getInternalNodePrivacyLevel, getAttributesForPrivacyLevel } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -168,7 +163,6 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
 
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
-    uncachePrivacyLevel(node) // TODO: REVIEW: This is likely not needed, review caching spec next
     if (hasBeenSerialized(node)) {
       continue
     }
@@ -192,7 +186,6 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
     if (hasSerializedNode(node)) {
-      uncachePrivacyLevel(node)
       removedNodeMutations.push({
         parentId: getSerializedNodeId(parent),
         id: getSerializedNodeId(node),
@@ -225,8 +218,6 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
   // Deduplicate mutations based on their target node
   const handledNodes = new Set<Node>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: Better handle clean caching spec.
-    uncachePrivacyLevel((mutation.target as any).parentElement) // TODO: REVIEW: Better handle clean caching spec.
     if (handledNodes.has(mutation.target)) {
       return false
     }
@@ -263,7 +254,6 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Deduplicate mutations based on their target node and changed attribute
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
-    uncachePrivacyLevel(mutation.target) // TODO: REVIEW: Uncache for now, later implement more intelligent check.
     const handledAttributes = handledElements.get(mutation.target)
     if (handledAttributes?.has(mutation.attributeName!)) {
       return false

@@ -16,9 +16,6 @@ export const enum NodePrivacyLevelInternal {
   MASK = 11,
   MASK_FORMS_ONLY = 12,
   HIDDEN = 13,
-
-  // SPECIAL: shouldn't be needed by general customers
-  nodeInternalPrivacyCache,
 }
 
 // Only expose these Privacy levelsto the general codebase
