@@ -162,16 +162,6 @@ if (!isIE()) {
           expect: NodePrivacyLevelInternal.HIDDEN,
           msg: 'Hidden is final',
         },
-        {
-          args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_SEALED],
-          expect: NodePrivacyLevelInternal.MASK_SEALED,
-          msg: 'Mask-sealed is final',
-        },
-        {
-          args: [NodePrivacyLevelInternal.MASK, NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED],
-          expect: NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED,
-          msg: 'Mask-forms-only-sealed is final',
-        },
       ]
 
       tests.forEach((test) => {

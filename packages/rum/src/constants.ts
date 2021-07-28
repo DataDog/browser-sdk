@@ -18,8 +18,6 @@ export const enum NodePrivacyLevelInternal {
   HIDDEN = 13,
 
   // SPECIAL: shouldn't be needed by general customers
-  MASK_SEALED = 20,
-  MASK_FORMS_ONLY_SEALED = 21,
   nodeInternalPrivacyCache,
 }
 
@@ -46,17 +44,11 @@ export const PRIVACY_ATTR_VALUE_MASK = 'mask'
 export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY = 'mask-forms-only'
 export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden' // TODO: rename to `hide`?
 
-export const PRIVACY_ATTR_VALUE_MASK_SEALED = '_unstable-mask-sealed'
-export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED = '_unstable-mask-forms-only-sealed'
-
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
 export const PRIVACY_CLASS_ALLOW = 'dd-privacy-allow'
 export const PRIVACY_CLASS_MASK = 'dd-privacy-mask'
 export const PRIVACY_CLASS_MASK_FORMS_ONLY = 'dd-privacy-mask-forms-only'
 export const PRIVACY_CLASS_HIDDEN = 'dd-privacy-hidden' // TODO: rename to `hide`?
-
-export const PRIVACY_CLASS_MASK_SEALED = '_unstable-dd-privacy-mask-sealed'
-export const PRIVACY_CLASS_MASK_FORMS_ONLY_SEALED = '_unstable-dd-privacy-mask-forms-only-sealed'
 
 // Private Replacement Templates
 export const CENSORED_STRING_MARK = '***'

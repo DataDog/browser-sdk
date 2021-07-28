@@ -7,8 +7,6 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
   PRIVACY_ATTR_VALUE_HIDDEN,
-  PRIVACY_ATTR_VALUE_MASK_SEALED,
-  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED,
   PRIVACY_CLASS_ALLOW,
   PRIVACY_CLASS_MASK,
   PRIVACY_CLASS_MASK_FORMS_ONLY,
@@ -81,11 +79,7 @@ export function remapInternalPrivacyLevels(
       return NodePrivacyLevel.HIDDEN
     case NodePrivacyLevelInternal.IGNORE:
       return NodePrivacyLevel.IGNORE
-    // Remapped levels
-    case NodePrivacyLevelInternal.MASK_SEALED:
-      return NodePrivacyLevel.MASK
     // Conditional levels
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED:
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
       return isFormElement(node) ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
     default:
@@ -153,8 +147,6 @@ export function derivePrivacyLevelGivenParent(
 ): NodePrivacyLevelInternal {
   switch (parentNodePrivacyLevel) {
     // These values cannot be overrided
-    case NodePrivacyLevelInternal.MASK_SEALED:
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED:
     case NodePrivacyLevelInternal.HIDDEN:
     case NodePrivacyLevelInternal.IGNORE:
       return parentNodePrivacyLevel
@@ -167,8 +159,6 @@ export function derivePrivacyLevelGivenParent(
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
     case NodePrivacyLevelInternal.HIDDEN:
     case NodePrivacyLevelInternal.IGNORE:
-    case NodePrivacyLevelInternal.MASK_SEALED:
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED:
       return childPrivacyLevel
   }
   // Anything else is unknown.
@@ -220,10 +210,6 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
         return NodePrivacyLevelInternal.MASK_FORMS_ONLY
       case PRIVACY_ATTR_VALUE_HIDDEN:
         return NodePrivacyLevelInternal.HIDDEN
-      case PRIVACY_ATTR_VALUE_MASK_SEALED:
-        return NodePrivacyLevelInternal.MASK_SEALED
-      case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY_SEALED:
-        return NodePrivacyLevelInternal.MASK_FORMS_ONLY_SEALED
     }
 
     // But we also need to support class based privacy tagging for certain frameworks
