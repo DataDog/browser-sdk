@@ -1,6 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
 import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import { getRumRecorderConfig } from '../../boot/startRecording'
 import { getNodePrivacyLevel } from './privacy'
 import { SerializedNodeWithId } from './types'
 
@@ -99,12 +98,4 @@ export function getElementInputValue(element: Element) {
   }
   // Textarea, Input
   return inputElement.value
-}
-
-export function isFlagEnabled(feature: string): boolean {
-  const configuration = getRumRecorderConfig()
-  if (!configuration) {
-    return false
-  }
-  return configuration.isEnabled(feature)
 }
