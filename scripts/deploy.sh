@@ -29,7 +29,7 @@ v[0-9]*) # if major version also update legacy files
     declare -A BUNDLES=(
       ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
       ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
-      ["datadog-logs.js"]="packages/logs/bundle/datadog-logs.js"
+      ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
       ["datadog-logs-eu.js"]="packages/logs/bundle/datadog-logs-eu.js"
       ["datadog-logs-us.js"]="packages/logs/bundle/datadog-logs-us.js" 
     )
