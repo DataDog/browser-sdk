@@ -1,11 +1,9 @@
 const path = require('path')
-const { BannerPlugin } = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const buildEnv = require('./scripts/build-env')
 
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
-const SUFFIX_REGEXP = /-(us|eu)/
 
 module.exports = ({ entry, mode, filename, types }) => ({
   entry,
@@ -66,17 +64,4 @@ module.exports = ({ entry, mode, filename, types }) => ({
       }),
     ],
   },
-
-  plugins: [
-    new BannerPlugin({
-      banner({ filename }) {
-        const env = SUFFIX_REGEXP.exec(filename)[1]
-        const newFileName = filename.replace(SUFFIX_REGEXP, '')
-        return `\n${filename} IS DEPRECATED, USE ${newFileName} WITH { site: 'datadoghq.${
-          env === 'eu' ? 'eu' : 'com'
-        }' } INIT CONFIGURATION INSTEAD\n`
-      },
-      include: SUFFIX_REGEXP,
-    }),
-  ],
 })
