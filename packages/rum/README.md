@@ -160,6 +160,12 @@ The application’s environment, for example: prod, pre-prod, staging, etc.
 **Type**: String<br/>
 The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.
 
+`trackViewsManually`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Allows you to control RUM views creation. See [override default RUM view names][10].
+
 `trackInteractions`
 : Optional<br/>
 **Type**: Boolean<br/>
@@ -244,3 +250,4 @@ init(configuration: {
 [7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
+[10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
