@@ -7,7 +7,7 @@ const buildEnv = require('./scripts/build-env')
 const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
 const SUFFIX_REGEXP = /-(us|eu)/
 
-module.exports = ({ entry, mode, filename, datacenter, types }) => ({
+module.exports = ({ entry, mode, filename, types }) => ({
   entry,
   mode,
   output: {
@@ -23,7 +23,6 @@ module.exports = ({ entry, mode, filename, datacenter, types }) => ({
         loader: 'string-replace-loader',
         options: {
           multiple: [
-            { search: '<<< TARGET_DATACENTER >>>', replace: datacenter || 'us' },
             { search: '<<< SDK_VERSION >>>', replace: buildEnv.SDK_VERSION },
             { search: '<<< BUILD_MODE >>>', replace: buildEnv.BUILD_MODE },
           ],
