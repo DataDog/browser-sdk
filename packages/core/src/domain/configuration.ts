@@ -2,7 +2,7 @@ import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
-import { computeTransportConfiguration, Datacenter } from './transportConfiguration'
+import { computeTransportConfiguration } from './transportConfiguration'
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
@@ -39,7 +39,6 @@ export const DEFAULT_CONFIGURATION = {
 }
 
 export interface InitConfiguration {
-  publicApiKey?: string // deprecated
   clientToken: string
   applicationId?: string
   actionNameAttribute?: string
@@ -47,7 +46,6 @@ export interface InitConfiguration {
   allowedTracingOrigins?: Array<string | RegExp>
   sampleRate?: number
   replaySampleRate?: number
-  datacenter?: Datacenter // deprecated
   site?: string
   enableExperimentalFeatures?: string[]
   silentMultipleInit?: boolean
