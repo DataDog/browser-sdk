@@ -1,7 +1,6 @@
 import { areCookiesAuthorized, CookieOptions } from '../browser/cookie'
 import { buildConfiguration, InitConfiguration } from '../domain/configuration'
 import { setDebugMode, startInternalMonitoring } from '../domain/internalMonitoring'
-import { Datacenter } from '../domain/transportConfiguration'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { display } from '../tools/display'
 
@@ -44,7 +43,6 @@ export enum BuildMode {
 }
 
 export interface BuildEnv {
-  datacenter: Datacenter
   buildMode: BuildMode
   sdkVersion: string
 }

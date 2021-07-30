@@ -58,7 +58,7 @@ export function computeTransportConfiguration(
     proxyHost: initConfiguration.proxyHost,
     sdkVersion: buildEnv.sdkVersion,
     service: initConfiguration.service,
-    site: initConfiguration.site || INTAKE_SITE[initConfiguration.datacenter || buildEnv.datacenter],
+    site: initConfiguration.site || INTAKE_SITE[initConfiguration.datacenter || Datacenter.US],
     version: initConfiguration.version,
   }
 

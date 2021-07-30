@@ -25,22 +25,10 @@ case "${env}" in
 esac
 
 case "${suffix}" in
-v[0-9]*) # if major version also update legacy files
-    declare -A BUNDLES=(
-      ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
-      ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
-      ["datadog-logs.js"]="packages/logs/bundle/datadog-logs.js"
-      ["datadog-logs-eu.js"]="packages/logs/bundle/datadog-logs-eu.js"
-      ["datadog-logs-us.js"]="packages/logs/bundle/datadog-logs-us.js" 
-    )
+v[0-9]*)
     CACHE_CONTROL='max-age=14400, s-maxage=60'
   ;;
 "canary" | "head")
-    declare -A BUNDLES=(
-      ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
-      ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
-      ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
-    )
     CACHE_CONTROL='max-age=900, s-maxage=60'
   ;;
 * )
@@ -48,6 +36,12 @@ v[0-9]*) # if major version also update legacy files
     exit 1
   ;;
 esac
+
+declare -A BUNDLES=(
+  ["datadog-rum-${suffix}.js"]="packages/rum/bundle/datadog-rum.js"
+  ["datadog-rum-slim-${suffix}.js"]="packages/rum-slim/bundle/datadog-rum-slim.js"
+  ["datadog-logs-${suffix}.js"]="packages/logs/bundle/datadog-logs.js"
+)
 
 main() {
   in-isolation upload-to-s3
