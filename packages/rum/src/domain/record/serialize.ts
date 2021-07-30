@@ -6,12 +6,12 @@ import {
   CENSORED_STRING_MARK,
 } from '../../constants'
 import {
-  censorText,
   getNodePrivacyLevel,
   getAttributesForPrivacyLevel,
   remapInternalPrivacyLevels,
   getInternalNodePrivacyLevel,
   getInitialPrivacyLevel,
+  getTextContent,
   shuffle,
 } from './privacy'
 import {
@@ -32,15 +32,6 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 
-const objectEntries = function (obj: Record<string, any>) {
-  const ownProps = Object.keys(obj)
-  let i = ownProps.length
-  const result = new Array(i)
-  while (i--) {
-    result[i] = [ownProps[i], obj[ownProps[i]]]
-  }
-  return result as [any, any]
-}
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
@@ -153,11 +144,15 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   }
 
   const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
-  objectEntries(attributes).forEach(([name, value]) => {
-    const attrValue = value as string
+
+  // Inlining ObjectEntries for perf
+  const attributeKeys = Object.keys(attributes)
+  for (let i = 0; i < attributeKeys.length; i += 1) {
+    const attributeName = attributeKeys[i]
+    const attributeValue = attributes[attributeName] as string
     // Add domains to relative URLs
-    attributes[name] = transformAttribute(options.document, name, attrValue)
-  })
+    attributes[attributeName] = transformAttribute(options.document, attributeName, attributeValue)
+  }
 
   // remote css
   if (tagName === 'link') {
@@ -278,13 +273,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
-    const childNodesSerializationOptions = {
-      ...options,
-      parentNodePrivacyLevel: internalPrivacyLevel,
-      ignoreWhiteSpace: tagName === 'head',
-    }
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
+    const childNodesSerializationOptions = { ...options } // TODO: TODO:
+    childNodesSerializationOptions.parentNodePrivacyLevel = internalPrivacyLevel
     if (tagName === 'head') {
       childNodesSerializationOptions.ignoreWhiteSpace = true
     }
@@ -383,46 +375,14 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
-  let textContent = textNode.textContent || ''
-
-  if (options.ignoreWhiteSpace && !textContent.trim()) {
+  const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false)
+  if (!textContent) {
     return
-  }
-
-  const nodePrivacyLevel = getNodePrivacyLevel(textNode.parentNode as Node)
-  const isStyle = parentTagName === 'STYLE' ? true : undefined
-  const isScript = parentTagName === 'SCRIPT'
-
-  if (isScript) {
-    // For perf reasons, we don't record script (heuristic)
-    textContent = CENSORED_STRING_MARK
-  } else if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-    // Should never occur, but just in case, we set to CENSORED_MARK.
-    textContent = CENSORED_STRING_MARK
-  } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    if (isStyle) {
-      // Style tags are `overruled` (Use `hide` to enforce privacy)
-      textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
-    } else if (
-      // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
-      parentTagName === 'DATALIST' ||
-      parentTagName === 'SELECT' ||
-      parentTagName === 'OPTGROUP'
-    ) {
-      if (!textContent.trim()) {
-        return
-      }
-    } else if (parentTagName === 'OPTION') {
-      // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
-      textContent = CENSORED_STRING_MARK
-    } else {
-      textContent = censorText(textContent)
-    }
   }
   return {
     type: NodeType.Text,
     textContent,
-    isStyle,
+    isStyle: parentTagName === 'STYLE' ? true : undefined,
   }
 }
 

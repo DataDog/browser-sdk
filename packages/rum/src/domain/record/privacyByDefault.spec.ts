@@ -7,14 +7,6 @@ import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, scrambleText } 
 import { serializeDocument, serializeDocumentNode, serializeChildNodes } from './serialize'
 
 if (!isIE()) {
-  try {
-    if ((Error as any).stackTraceLimit) {
-      ;(Error as any).stackTraceLimit = 50
-    }
-  } catch (e) {
-    /* ; */
-  }
-
   const getUniqueChars = (text: string) =>
     text
       .split('')

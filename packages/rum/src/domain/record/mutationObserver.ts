@@ -1,7 +1,12 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
-import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import { getNodePrivacyLevel, getInternalNodePrivacyLevel, getAttributesForPrivacyLevel } from './privacy'
+import { NodePrivacyLevel } from '../../constants'
+import {
+  getNodePrivacyLevel,
+  getInternalNodePrivacyLevel,
+  getAttributesForPrivacyLevel,
+  getTextContent,
+} from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -227,21 +232,14 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
 
   // Emit mutations
   for (const mutation of filteredMutations) {
-    let value = mutation.target.textContent
+    const value = mutation.target.textContent
     if (value === mutation.oldValue) {
       continue
     }
-    const privacyLevel = getNodePrivacyLevel(mutation.target)
-    if (privacyLevel === NodePrivacyLevel.HIDDEN) {
-      continue
-    } else if (privacyLevel === NodePrivacyLevel.MASK) {
-      // TODO: REVIEW: This deserves extra options that consider the parent element,
-      // such as whitespace, or <option> within a <select>, or a <script> and <style> tag
-      value = CENSORED_STRING_MARK
-    }
+
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
-      value,
+      value: getTextContent(mutation.target, false) ?? null, // REVIEW: using `options.ignoreWhiteSpace`
     })
   }
 
@@ -280,11 +278,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
     // TODO: REVIEW: Compare last censored value against this value?
 
     let transformedValue: string | null
-    // REMINDER: `getAttributesForPrivacyLevel()` already handles `MASK` level
-    if (privacyLevel === NodePrivacyLevel.HIDDEN) {
-      continue
-    }
-
+    // REMINDER: `getAttributesForPrivacyLevel()` already handles `HIDDEN` + `MASK` level
     if (mutation.attributeName === 'value') {
       const inputValue = getElementInputValue(mutation.target)
       if (inputValue === undefined) {

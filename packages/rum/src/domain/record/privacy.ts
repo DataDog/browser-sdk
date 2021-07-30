@@ -20,6 +20,8 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
+import { makeStylesheetUrlsAbsolute } from './serializationUtils'
+
 import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = '᙮'
@@ -27,6 +29,7 @@ const MIN_LEN_TO_MASK = 80
 const WHITESPACE_TEST = /^\s$/
 
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
+  // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
   return NodePrivacyLevelInternal.ALLOW
 }
 
@@ -47,25 +50,25 @@ export function remapInternalPrivacyLevels(
   node: Node,
   nodePrivacyLevelInternal: NodePrivacyLevelInternal
 ): NodePrivacyLevel {
+  if (
+    nodePrivacyLevelInternal === NodePrivacyLevelInternal.UNKNOWN ||
+    nodePrivacyLevelInternal === NodePrivacyLevelInternal.NOT_SET
+  ) {
+    // Fallback value from getInitialPrivacyLevel() needs to be remapped too for the `MASK_FORMS_ONLY` case.
+    nodePrivacyLevelInternal = getInitialPrivacyLevel()
+  }
+
   switch (nodePrivacyLevelInternal) {
-    // Pass through levels
     case NodePrivacyLevelInternal.ALLOW:
-      return NodePrivacyLevel.ALLOW
     case NodePrivacyLevelInternal.MASK:
-      return NodePrivacyLevel.MASK
     case NodePrivacyLevelInternal.HIDDEN:
-      return NodePrivacyLevel.HIDDEN
     case NodePrivacyLevelInternal.IGNORE:
-      return NodePrivacyLevel.IGNORE
+      return nodePrivacyLevelInternal
     // Conditional levels
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
       return isFormElement(node) ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
-    default:
-    // Edgecase handling: TODO: REVIEW: `hide`, `mask`, or `allow`?
-    case NodePrivacyLevelInternal.UNKNOWN:
-    case NodePrivacyLevelInternal.NOT_SET:
-      return NodePrivacyLevel.ALLOW
   }
+  return NodePrivacyLevelInternal.HIDDEN
 }
 
 /**
@@ -80,7 +83,7 @@ export function getInternalNodePrivacyLevel(
   const isElementNode = isElement(node)
 
   // Only Elements have tags directly applied
-  if (node.parentElement && !isElementNode) {
+  if (!isElementNode && node.parentElement) {
     return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement)
   }
 
@@ -153,7 +156,7 @@ export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLeve
         return NodePrivacyLevelInternal.MASK
       }
       if (inputElement.type === 'hidden') {
-        return NodePrivacyLevelInternal.MASK // TODO: Review: what is the preferred level?
+        return NodePrivacyLevelInternal.MASK
       }
       const autocomplete = inputElement.getAttribute('autocomplete')
       if (autocomplete && autocomplete.indexOf('cc-') === 0) {
@@ -222,40 +225,27 @@ export function getAttributesForPrivacyLevel(
     if (attrName !== 'value' && attrName !== 'selected' && attrName !== 'checked') {
       safeAttrs[attrName] = attrVal
     }
-  })
 
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
-    // Mask Attribute text content
-    if (safeAttrs.title) {
-      safeAttrs.title = CENSORED_STRING_MARK
-    }
-    if (safeAttrs.alt) {
-      safeAttrs.alt = CENSORED_STRING_MARK
-    }
-
-    // mask image URLs
-    if (tagName === 'IMG' || tagName === 'SOURCE') {
-      if (safeAttrs.src) {
-        safeAttrs.src = CENSORED_IMG_MARK
-      }
-      if (safeAttrs.srcset) {
-        safeAttrs.srcset = CENSORED_IMG_MARK
-      }
-    }
-    // mask <a> URLs
-    if (tagName === 'A') {
-      if (safeAttrs.href) {
-        safeAttrs.href = CENSORED_STRING_MARK
-      }
-    }
-    // mask data-* attributes
-    getAttributeEntries(element.attributes).forEach(([attrName, attrVal]) => {
-      if (attrName.indexOf('data-') === 0 && attrVal && attrName !== PRIVACY_ATTR_NAME) {
-        // safe to reveal `${PRIVACY_ATTR_NAME}` attr
+    if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+      // Mask Attribute text content
+      if (attrName === 'title' || attrName === 'alt') {
+        safeAttrs[attrName] = CENSORED_STRING_MARK
+      } // mask image URLs
+      else if (tagName === 'IMG' || tagName === 'SOURCE') {
+        if (attrName === 'src' || attrName === 'srcset') {
+          safeAttrs[attrName] = CENSORED_IMG_MARK
+        }
+      } // mask <a> URLs
+      else if (tagName === 'A' && attrName === 'href') {
+        safeAttrs[attrName] = CENSORED_STRING_MARK
+      } // mask data-* attributes
+      else if (attrName.indexOf('data-') === 0 && attrVal && attrName !== PRIVACY_ATTR_NAME) {
+        // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
         safeAttrs[attrName] = CENSORED_STRING_MARK
       }
-    })
-  }
+    }
+  })
+
   return safeAttrs
 }
 
@@ -269,8 +259,7 @@ export function isFormElement(node: Node | null): boolean {
   }
   const element = node as HTMLInputElement
   if (element.tagName === 'INPUT') {
-    const type = element.getAttribute('type') || ''
-    switch (type.toLowerCase()) {
+    switch (element.type) {
       case 'button':
       case 'color':
       case 'reset':
@@ -346,11 +335,52 @@ export const scrambleText = (text: string) => {
 type HtmlAttribute = { name: string; value: string }
 function getAttributeEntries(attributes: NamedNodeMap) {
   const attributeEntries: Array<[string, string]> = []
-  for (const key in attributes) {
-    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
-      const attribute = attributes[key] as HtmlAttribute
-      attributeEntries.push([attribute.name, attribute.value])
-    }
+  for (let i = 0; i < attributes.length; i += 1) {
+    const attribute = attributes.item(i) as HtmlAttribute
+    attributeEntries.push([attribute.name, attribute.value])
   }
   return attributeEntries
+}
+
+export function getTextContent(textNode: Node, ignoreWhiteSpace: boolean): string | undefined {
+  // The parent node may not be a html element which has a tagName attribute.
+  // So just let it be undefined which is ok in this use case.
+  const parentTagName = textNode.parentElement?.tagName
+  let textContent = textNode.textContent || ''
+
+  if (ignoreWhiteSpace && !textContent.trim()) {
+    return
+  }
+
+  const nodePrivacyLevel = getNodePrivacyLevel(textNode.parentNode as Node)
+  const isStyle = parentTagName === 'STYLE' ? true : undefined
+  const isScript = parentTagName === 'SCRIPT'
+
+  if (isScript) {
+    // For perf reasons, we don't record script (heuristic)
+    textContent = CENSORED_STRING_MARK
+  } else if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    // Should never occur, but just in case, we set to CENSORED_MARK.
+    textContent = CENSORED_STRING_MARK
+  } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    if (isStyle) {
+      // Style tags are `overruled` (Use `hide` to enforce privacy)
+      textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
+    } else if (
+      // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
+      parentTagName === 'DATALIST' ||
+      parentTagName === 'SELECT' ||
+      parentTagName === 'OPTGROUP'
+    ) {
+      if (!textContent.trim()) {
+        return
+      }
+    } else if (parentTagName === 'OPTION') {
+      // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
+      textContent = CENSORED_STRING_MARK
+    } else {
+      textContent = censorText(textContent)
+    }
+  }
+  return textContent
 }
