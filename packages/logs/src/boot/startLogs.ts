@@ -26,12 +26,6 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: (event: LogsEvent) => void | boolean
 }
 
-/**
- * TODO: remove this type in the next major release
- * @deprecated Use LogsInitConfiguration instead
- */
-export type LogsUserConfiguration = LogsInitConfiguration
-
 export function startLogs(
   initConfiguration: LogsInitConfiguration,
   errorLogger: Logger,
