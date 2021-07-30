@@ -102,7 +102,7 @@ describe('privacy helpers', () => {
       it('consider a DOM Element to be MASK (mask-froms-only) if both modes can apply', () => {
         const node = document.createElement('input')
         node.className = 'dd-privacy-input-ignored'
-        node.setAttribute('data-dd-privacy', 'input-masked')
+        node.setAttribute('data-dd-privacy', 'mask-forms-only')
         expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.NOT_SET)).toBe(NodePrivacyLevel.MASK)
       })
 
@@ -112,7 +112,13 @@ describe('privacy helpers', () => {
         expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
       })
 
-      it('does not force an element to be masked if an ancestor is masked', () => {
+      it('forces an element to be ignored if an ancestor is MASK', () => {
+        const node = document.createElement('input')
+        node.setAttribute('data-dd-privacy', 'mask')
+        expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+      })
+
+      it('consider a DOM element to be ALLOW even if an ancestor is MASK', () => {
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'allow')
         expect(getNodePrivacyLevel(node, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBe(NodePrivacyLevel.ALLOW)

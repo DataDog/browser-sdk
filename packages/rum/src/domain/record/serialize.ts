@@ -212,7 +212,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
         attributes.checked = !!inputElement.checked
         break
       case NodePrivacyLevel.MASK:
-        attributes.checked = false
+        attributes.checked = CENSORED_STRING_MARK
         break
     }
   }
