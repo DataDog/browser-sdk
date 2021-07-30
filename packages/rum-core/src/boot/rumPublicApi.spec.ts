@@ -108,7 +108,7 @@ describe('rum public api', () => {
     })
 
     it('should ignore old configuration options', () => {
-      const oldConfigurationOptions = { publicApiKey: '', datacenter: 'us' }
+      const oldConfigurationOptions = { datacenter: 'us' }
       const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
       rumPublicApi.init(initConfiguration)
       expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))

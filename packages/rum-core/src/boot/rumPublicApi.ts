@@ -29,7 +29,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const droppedConfigurationOptions = ['publicApiKey' as const, 'datacenter' as const]
+const droppedConfigurationOptions = ['datacenter' as const]
 type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
 
 export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {

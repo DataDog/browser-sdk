@@ -39,7 +39,6 @@ export const DEFAULT_CONFIGURATION = {
 }
 
 export interface InitConfiguration {
-  publicApiKey?: string // deprecated
   clientToken: string
   applicationId?: string
   actionNameAttribute?: string
