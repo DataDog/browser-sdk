@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode, Datacenter } from '@datadog/browser-core'
+import { BuildEnv, BuildMode } from '@datadog/browser-core'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 describe('transportConfiguration', () => {
@@ -22,7 +22,6 @@ describe('transportConfiguration', () => {
     it('should be available for e2e-test build mode', () => {
       const e2eEnv = {
         buildMode: BuildMode.E2E_TEST,
-        datacenter: Datacenter.US,
         sdkVersion: 'some_version',
       }
       const configuration = computeTransportConfiguration({ clientToken }, e2eEnv)
@@ -34,21 +33,13 @@ describe('transportConfiguration', () => {
   })
 
   describe('site', () => {
-    it('should use buildEnv value by default', () => {
+    it('should use US site by default', () => {
       const configuration = computeTransportConfiguration({ clientToken }, buildEnv)
       expect(configuration.rumEndpoint).toContain('datadoghq.com')
     })
 
-    it('should use datacenter value when set', () => {
-      const configuration = computeTransportConfiguration({ clientToken, datacenter: Datacenter.EU }, buildEnv)
-      expect(configuration.rumEndpoint).toContain('datadoghq.eu')
-    })
-
     it('should use site value when set', () => {
-      const configuration = computeTransportConfiguration(
-        { clientToken, datacenter: Datacenter.EU, site: 'foo.com' },
-        buildEnv
-      )
+      const configuration = computeTransportConfiguration({ clientToken, site: 'foo.com' }, buildEnv)
       expect(configuration.rumEndpoint).toContain('foo.com')
     })
   })
