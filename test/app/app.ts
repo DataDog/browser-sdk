@@ -1,9 +1,9 @@
-import { datadogLogs, LogsUserConfiguration } from '@datadog/browser-logs'
+import { datadogLogs, LogsInitConfiguration } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 
 declare global {
   interface Window {
-    LOGS_CONFIG?: LogsUserConfiguration
+    LOGS_CONFIG?: LogsInitConfiguration
     RUM_INIT?: () => void
   }
 }
