@@ -12,7 +12,6 @@ import {
   getInternalNodePrivacyLevel,
   getInitialPrivacyLevel,
   getTextContent,
-  shuffle,
 } from './privacy'
 import {
   SerializedNode,
@@ -398,33 +397,17 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
     ? remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
     : getNodePrivacyLevel(node)
   const result: SerializedNodeWithId[] = []
-  let shuffleElements = false
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return result
   }
 
-  // To enhance privacy, we shuffle the child order for dropdowns. We don't want to shuffle text
-  // nodes around though, which should not exist alone within DATALIST/SELECT/OPTGROUP elements
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK && node.nodeType === Node.ELEMENT_NODE) {
-    const tagName = (node as HTMLElement).tagName
-    if (tagName === 'DATALIST' || tagName === 'SELECT' || tagName === 'OPTGROUP') {
-      shuffleElements = true
-    }
-  }
-
-  const childNodeElements = shuffleElements ? (node as HTMLElement).children : node.childNodes
-
-  forEach(childNodeElements, (childNode) => {
+  forEach(node.childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
   })
-
-  if (shuffleElements) {
-    shuffle<SerializedNodeWithId>(result)
-  }
 
   return result
 }
