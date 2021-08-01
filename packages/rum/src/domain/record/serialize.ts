@@ -274,8 +274,14 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   if (element.childNodes.length) {
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
-    const childNodesSerializationOptions = { ...options } // TODO: TODO:
-    childNodesSerializationOptions.parentNodePrivacyLevel = internalPrivacyLevel
+    const childNodesSerializationOptions =
+      options.parentNodePrivacyLevel === internalPrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')
+        ? options
+        : { ...options }
+
+    if (options.parentNodePrivacyLevel !== internalPrivacyLevel) {
+      childNodesSerializationOptions.parentNodePrivacyLevel = internalPrivacyLevel
+    }
     if (tagName === 'head') {
       childNodesSerializationOptions.ignoreWhiteSpace = true
     }
