@@ -51,10 +51,6 @@ function addNewForegroundPeriod() {
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
-    addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
-      inForegroundPeriodsCount: foregroundPeriods.length,
-      currentForegroundPeriodStart: currentForegroundPeriod.start,
-    })
     return
   }
   foregroundPeriods.push({
