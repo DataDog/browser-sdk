@@ -18,7 +18,6 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  Omit,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
@@ -29,14 +28,7 @@ import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const droppedConfigurationOptions = [
-  'publicApiKey' as const,
-  'datacenter' as const,
-  'useAlternateIntakeDomains' as const,
-]
-type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
-
-export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
+export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
@@ -105,12 +97,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return
     }
 
-    droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
-
-    const { configuration, internalMonitoring } = commonInit(
-      { ...initConfiguration, useAlternateIntakeDomains: true },
-      buildEnv
-    )
+    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {

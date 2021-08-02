@@ -16,6 +16,11 @@
 
 ---
 
+## v3.0.2
+
+- [RUMF-972] Revert "💥 always use alternative domains for RUM ([#944](https://github.com/DataDog/browser-sdk/pull/944))" ([#963](https://github.com/DataDog/browser-sdk/pull/963))
+- 📝 update CDN URLs for V3 ([#962](https://github.com/DataDog/browser-sdk/pull/962))
+
 ## v3.0.1
 
 - 🐛 fix recording session renewal ([#955](https://github.com/DataDog/browser-sdk/pull/955))
@@ -38,17 +43,6 @@ RUM browser SDK no longer automatically monitors network errors.
 You can no longer change the source of error sent with `addError()`. All these errors have a `custom` source.
 
 **New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
-
-### New intake domains
-
-RUM now uses a new intake domain. Therefore the init options `useAlternateIntakeDomains` has been removed.
-
-| Old domains                        | New domains                      |
-| ---------------------------------- | -------------------------------- |
-| rum-http-intake.logs.datadoghq.com | rum.browser-intake-datadoghq.com |
-| rum-http-intake.logs.datadoghq.eu  | rum.browser-intake-datadoghq.eu  |
-
-> Warning: You have to update your content security policy, if you use one.
 
 ### Removed typescript types
 

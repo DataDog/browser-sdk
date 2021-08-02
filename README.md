@@ -27,14 +27,14 @@ This repository contains several packages:
 [12]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum
 [13]: https://badgen.net/bundlephobia/minzip/@datadog/browser-rum
 [14]: https://bundlephobia.com/result?p=@datadog/browser-rum
-[15]: https://www.datadoghq-browser-agent.com/datadog-rum.js
+[15]: https://www.datadoghq-browser-agent.com/datadog-rum-v3.js
 [17]: ./packages/rum/README.md
 [18]: https://docs.datadoghq.com/real_user_monitoring/
 [21]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-slim.svg
 [22]: https://badge.fury.io/js/%40datadog%2Fbrowser-rum-slim
 [23]: https://badgen.net/bundlephobia/minzip/@datadog/browser-rum-slim
 [24]: https://bundlephobia.com/result?p=@datadog/browser-rum-slim
-[25]: https://www.datadoghq-browser-agent.com/datadog-rum-slim.js
+[25]: https://www.datadoghq-browser-agent.com/datadog-rum-slim-v3.js
 [27]: ./packages/rum-slim/README.md
 [28]: https://docs.datadoghq.com/real_user_monitoring/
 [41]: https://badge.fury.io/js/%40datadog%2Fbrowser-core.svg

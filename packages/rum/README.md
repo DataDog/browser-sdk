@@ -61,7 +61,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
    h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
    d=o.createElement(u);d.async=1;d.src=n
    n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum.js','DD_RUM')
+})(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-rum-v3.js','DD_RUM')
   DD_RUM.onReady(function() {
     DD_RUM.init({
       clientToken: '<CLIENT_TOKEN>',
@@ -87,7 +87,7 @@ Add the generated code snippet to the head tag of every HTML page you want to mo
 Add the generated code snippet to the head tag (in front of any other script tags) of every HTML page you want to monitor in your application. Including the script tag higher and synchronized ensures Datadog RUM can collect all performance data and errors.
 
 ```html
-<script src="https://www.datadoghq-browser-agent.com/datadog-rum.js" type="text/javascript"></script>
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum-v3.js" type="text/javascript"></script>
 <script>
   window.DD_RUM &&
     window.DD_RUM.init({
@@ -159,6 +159,12 @@ The application’s environment, for example: prod, pre-prod, staging, etc.
 : Optional<br/>
 **Type**: String<br/>
 The application’s version, for example: 1.2.3, 6c44da20, 2020.02.13, etc.
+
+`trackViewsManually`
+: Optional<br/>
+**Type**: Boolean<br/>
+**Default**: `false` <br/>
+Allows you to control RUM views creation. See [override default RUM view names][10].
 
 `trackInteractions`
 : Optional<br/>
@@ -244,3 +250,4 @@ init(configuration: {
 [7]: https://docs.datadoghq.com/real_user_monitoring/faq/proxy_rum_data/
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
+[10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
