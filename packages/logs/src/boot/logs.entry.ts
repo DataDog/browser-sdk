@@ -53,11 +53,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
         return
       }
 
-      if (initConfiguration.publicApiKey) {
-        initConfiguration.clientToken = initConfiguration.publicApiKey
-        display.warn('Public API Key is deprecated. Please use Client Token instead.')
-      }
-
       sendLogStrategy = startLogsImpl(initConfiguration, logger, globalContextManager.get)
       getInitConfigurationStrategy = () => deepClone(initConfiguration)
       beforeInitSendLog.drain()
@@ -92,7 +87,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs) {
       }
       return false
     }
-    if (!initConfiguration || (!initConfiguration.publicApiKey && !initConfiguration.clientToken)) {
+    if (!initConfiguration || !initConfiguration.clientToken) {
       display.error('Client Token is not configured, we will not send any data.')
       return false
     }

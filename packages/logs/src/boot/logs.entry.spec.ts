@@ -55,13 +55,6 @@ describe('logs entry', () => {
       expect(displaySpy).toHaveBeenCalledTimes(2)
     })
 
-    it('should warn if now deprecated publicApiKey is used', () => {
-      spyOn(display, 'warn')
-
-      LOGS.init({ publicApiKey: 'yo' } as any)
-      expect(display.warn).toHaveBeenCalledTimes(1)
-    })
-
     it('should add a `_setDebug` that works', () => {
       const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
       expect(!!setDebug).toEqual(true)
