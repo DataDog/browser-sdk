@@ -1,4 +1,5 @@
 import { ErrorSource, ONE_MINUTE, RawError, RelativeTime, display } from '@datadog/browser-core'
+import { setUserAgent, restoreUserAgent } from '@datadog/browser-core/test/specHelper'
 import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
@@ -500,6 +501,18 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0]._dd.session).toEqual({
         plan: RumSessionPlan.REPLAY,
       })
+    })
+
+    it('should detect synthetics sessions', () => {
+      setUserAgent('foo DatadogSynthetics bar')
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].session.type).toEqual('synthetics')
+      restoreUserAgent()
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
