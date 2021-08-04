@@ -112,22 +112,27 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     handlePerformanceEntries(lifeCycle, configuration, performance.getEntries())
   }
   if (window.PerformanceObserver) {
-    const observer = new PerformanceObserver(
-      monitor((entries: PerformanceObserverEntryList) =>
-        handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())
-      )
+    const handlePerformanceEntryList = monitor((entries: PerformanceObserverEntryList) =>
+      handlePerformanceEntries(lifeCycle, configuration, entries.getEntries())
     )
-    const entryTypes = [
-      'resource',
-      'navigation',
-      'longtask',
-      'paint',
-      'largest-contentful-paint',
-      'first-input',
-      'layout-shift',
-    ]
+    const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
+    const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
 
-    observer.observe({ entryTypes })
+    if (!configuration.isEnabled('buffered-perf')) {
+      const observer = new PerformanceObserver(handlePerformanceEntryList)
+      observer.observe({ entryTypes: mainEntries.concat(experimentalEntries) })
+    } else {
+      const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
+      mainObserver.observe({ entryTypes: mainEntries })
+
+      // Experimental entries are not retrieved by performance.getEntries()
+      // use a single PerformanceObserver with buffered flag by type
+      // to get values that could happen before SDK init
+      experimentalEntries.forEach((type) => {
+        const observer = new PerformanceObserver(handlePerformanceEntryList)
+        observer.observe({ type, buffered: true })
+      })
+    }
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377

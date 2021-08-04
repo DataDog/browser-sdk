@@ -1,8 +1,7 @@
 {
   "name": "@datadog/browser-logs",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "license": "Apache-2.0",
-  "private": true,
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
@@ -14,7 +13,7 @@
     "replace-build-env": "node ../../scripts/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "3.0.2",
+    "@datadog/browser-core": "3.1.0",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
