@@ -27,31 +27,31 @@
 
 ## v3.0.0
 
-Here is the list of all the breaking changes between version 2 and 3 of the RUM SDK.
-The Log SDK isn't impacted and is still fully backward compatible.
+Here is the list of all the breaking changes between version 2 and 3 of the RUM and Logs SDKs.
 
 For each change, we show the new way to handle your use case.
 
-### Network errors no longer monitored
+### [RUM] Network errors no longer monitored
 
 RUM browser SDK no longer automatically monitors network errors.
 
 **New option**: You can use the option beforeSend to get the resource, check the `status` and send it with the `addError()` API.
 
-### Source attribute of addError() has been removed
+### [RUM] Source attribute of addError() has been removed
 
 You can no longer change the source of error sent with `addError()`. All these errors have a `custom` source.
 
 **New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
 
-### Removed typescript types
+### [RUM and Logs] Removed typescript types
 
 | Old types                    | New types                    |
 | ---------------------------- | ---------------------------- |
 | RumUserConfiguration         | RumInitConfiguration         |
 | RumRecorderUserConfiguration | RumRecorderInitConfiguration |
+| LogsUserConfiguration        | LogsInitConfiguration        |
 
-### Removed init options
+### [RUM and Logs] Removed init options
 
 | Old options        | New options |
 | ------------------ | ----------- |
@@ -59,7 +59,7 @@ You can no longer change the source of error sent with `addError()`. All these e
 | datacenter         | site        |
 | resourceSampleRate | NONE        |
 
-### Removed API
+### [RUM] Removed API
 
 | Old API       | New API   |
 | ------------- | --------- |
