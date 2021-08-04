@@ -122,16 +122,21 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
       const observer = new PerformanceObserver(handlePerformanceEntryList)
       observer.observe({ entryTypes: mainEntries.concat(experimentalEntries) })
     } else {
+      try {
+        // Experimental entries are not retrieved by performance.getEntries()
+        // use a single PerformanceObserver with buffered flag by type
+        // to get values that could happen before SDK init
+        experimentalEntries.forEach((type) => {
+          const observer = new PerformanceObserver(handlePerformanceEntryList)
+          observer.observe({ type, buffered: true })
+        })
+      } catch (e) {
+        // Some old browser versions don't support PerformanceObserver without entryTypes option
+        mainEntries.push(...experimentalEntries)
+      }
+
       const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
       mainObserver.observe({ entryTypes: mainEntries })
-
-      // Experimental entries are not retrieved by performance.getEntries()
-      // use a single PerformanceObserver with buffered flag by type
-      // to get values that could happen before SDK init
-      experimentalEntries.forEach((type) => {
-        const observer = new PerformanceObserver(handlePerformanceEntryList)
-        observer.observe({ type, buffered: true })
-      })
     }
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
