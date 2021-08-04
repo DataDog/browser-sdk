@@ -3,6 +3,14 @@ import { Duration, elapsed, relativeNow, RelativeTime, ClocksState, clocksNow, t
 import { normalizeUrl } from '../tools/urlPolyfill'
 
 interface BrowserXHR<T extends XhrOpenContext> extends XMLHttpRequest {
+  /**
+   * @deprecated this property is shared by both logs and rum and can be used by different code
+   * versions depending on customer setup. To improve reliability and make SDKs independent, this
+   * property should be removed in the future, but this would be a breaking change since some
+   * customers are using it.
+   *
+   * TODO(v4): replace this property with a weakmap index
+   */
   _datadog_xhr?: T
 }
 
