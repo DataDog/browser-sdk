@@ -9,6 +9,7 @@ import {
   addMonitoringMessage,
   relativeNow,
   timeStampNow,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -124,7 +125,7 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
-  const lcpSizes: number[] = []
+  const lcpSizes: Array<{ timeStamp: TimeStamp; startTime: RelativeTime; size: number }> = []
 
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
@@ -134,7 +135,7 @@ export function trackLargestContentfulPaint(
         entry.startTime < firstInteractionTimestamp &&
         entry.startTime < firstHidden.timeStamp
       ) {
-        lcpSizes.push(entry.size)
+        lcpSizes.push({ timeStamp: timeStampNow(), startTime: entry.startTime, size: entry.size })
         if (entry.startTime > ONE_DAY) {
           addMonitoringMessage('LCP > 1 day', {
             debug: {
