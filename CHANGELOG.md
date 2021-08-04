@@ -16,6 +16,18 @@
 
 ---
 
+## v3.1.0
+
+Note: this is the first 3.x release for the Logs SDK. See migration notes in [v3.0.0](#v300).
+
+- 📝🗑 deprecate the XHR context, to be removed in V4 ([#973](https://github.com/DataDog/browser-sdk/pull/973))
+- ⚗ [RUMF-970] experiment with buffered PerformanceObserver ([#972](https://github.com/DataDog/browser-sdk/pull/972))
+- 📝 [RUMF-984] update CHANGELOG for logs breaking changes ([#971](https://github.com/DataDog/browser-sdk/pull/971))
+- ✨ [RUMF-974] use user-agent to detect synthetics sessions ([#969](https://github.com/DataDog/browser-sdk/pull/969))
+- 💥 [RUMF-982] remove deprecated LogsUserConfiguration type ([#968](https://github.com/DataDog/browser-sdk/pull/968))
+- 💥 [RUMF-981] remove deprecated logs options ([#967](https://github.com/DataDog/browser-sdk/pull/967))
+- 📝 document `trackViewsManually` option ([#965](https://github.com/DataDog/browser-sdk/pull/965))
+
 ## v3.0.2
 
 - [RUMF-972] Revert "💥 always use alternative domains for RUM ([#944](https://github.com/DataDog/browser-sdk/pull/944))" ([#963](https://github.com/DataDog/browser-sdk/pull/963))
