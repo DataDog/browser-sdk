@@ -4,10 +4,10 @@ export const SLEEP_CHECK_DELAY = ONE_SECOND
 export const SLEEP_THRESHOLD = ONE_MINUTE
 
 let sleepPeriods: Array<{ start: TimeStamp; end: TimeStamp }> | undefined
-let lastWokeDate: TimeStamp | undefined
+let lastWoke: TimeStamp | undefined
 
 export function trackSleep() {
-  lastWokeDate = timeStampNow()
+  lastWoke = timeStampNow()
   sleepPeriods = []
   const intervalId = setInterval(monitor(checkSleep), SLEEP_CHECK_DELAY)
   return { stop: () => clearInterval(intervalId) }
@@ -28,12 +28,12 @@ export function getSleepDuration(since?: TimeStamp) {
 }
 
 function checkSleep() {
-  if (lastWokeDate === undefined || !sleepPeriods) {
+  if (lastWoke === undefined || !sleepPeriods) {
     return
   }
   const now = timeStampNow()
-  if (now - lastWokeDate >= SLEEP_THRESHOLD) {
-    sleepPeriods.push({ start: lastWokeDate, end: now })
+  if (now - lastWoke >= SLEEP_THRESHOLD) {
+    sleepPeriods.push({ start: lastWoke, end: now })
   }
-  lastWokeDate = now
+  lastWoke = now
 }
