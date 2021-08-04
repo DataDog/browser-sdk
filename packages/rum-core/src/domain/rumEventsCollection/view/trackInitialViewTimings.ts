@@ -11,6 +11,7 @@ import {
   timeStampNow,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
+import { getSleepDuration } from '../../trackSleep'
 import { trackFirstHidden } from './trackFirstHidden'
 
 export interface Timings {
@@ -86,6 +87,7 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
             fcp: Math.round(entry.startTime),
             relativeNow: Math.round(relativeNow()),
             timeStampNow: timeStampNow(),
+            sleepDuration: getSleepDuration(),
           },
         })
       }
@@ -135,6 +137,7 @@ export function trackLargestContentfulPaint(
               lcp: Math.round(entry.startTime),
               relativeNow: Math.round(relativeNow()),
               timeStampNow: timeStampNow(),
+              sleepDuration: getSleepDuration(),
             },
           })
         }
