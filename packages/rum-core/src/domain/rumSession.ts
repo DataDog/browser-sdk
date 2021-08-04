@@ -56,7 +56,12 @@ function computeSessionState(configuration: Configuration, rawTrackingType?: str
   } else {
     trackingType = RumTrackingType.TRACKED_REPLAY
   }
+
+  const id = (configuration.generateSessionUuid) ?
+    configuration.generateSessionUuid() : undefined
+
   return {
+    id,
     trackingType,
     isTracked: isTypeTracked(trackingType),
   }

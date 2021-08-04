@@ -80,6 +80,7 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service?: string
     beforeSend?: BeforeSendCallback
+    generateSessionUuid?: () => string,
 
     actionNameAttribute?: string
 

@@ -22,13 +22,19 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
+type InitialSessionState<TrackingType> = {
+  id?: string
+  trackingType: TrackingType
+  isTracked: boolean 
+}
+
 /**
  * Limit access to cookie to avoid performance issues
  */
 export function startSessionManagement<TrackingType extends string>(
   options: CookieOptions,
   productKey: string,
-  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
+  computeSessionState: (rawTrackingType?: string) => InitialSessionState<TrackingType>
 ): Session<TrackingType> {
   const sessionCookie = cacheCookieAccess(SESSION_COOKIE_NAME, options)
   tryOldCookiesMigration(sessionCookie)
@@ -38,10 +44,10 @@ export function startSessionManagement<TrackingType extends string>(
   const { throttled: expandOrRenewSession } = utils.throttle(
     monitor(() => {
       const session = retrieveActiveSession(sessionCookie)
-      const { trackingType, isTracked } = computeSessionState(session[productKey])
+      const { id, trackingType, isTracked } = computeSessionState(session[productKey])
       session[productKey] = trackingType
       if (isTracked && !session.id) {
-        session.id = utils.generateUUID()
+        session.id = id || utils.generateUUID()
         session.created = String(Date.now())
       }
       // save changes and expand session duration

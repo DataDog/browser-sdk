@@ -38,7 +38,12 @@ function computeTrackingType(configuration: Configuration) {
 
 function computeSessionState(configuration: Configuration, rawSessionType?: string) {
   const trackingType = hasValidLoggerSession(rawSessionType) ? rawSessionType : computeTrackingType(configuration)
+
+  const id = (configuration.generateSessionUuid) ?
+    configuration.generateSessionUuid() : undefined
+
   return {
+    id,
     trackingType,
     isTracked: trackingType === LoggerTrackingType.TRACKED,
   }

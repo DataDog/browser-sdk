@@ -114,7 +114,7 @@ describe('rum session', () => {
   })
 
   describe('getId', () => {
-    it('should return the session id', () => {
+    it('should return the generated session id', () => {
       setCookie(SESSION_COOKIE_NAME, 'id=abcdef&rum=1', DURATION)
       const rumSession = startRumSession(configuration as Configuration, lifeCycle)
       expect(rumSession.getId()).toBe('abcdef')
@@ -125,6 +125,18 @@ describe('rum session', () => {
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       clock.tick(COOKIE_ACCESS_DELAY)
       expect(rumSession.getId()).toBe(undefined)
+    })
+
+    it('should return the custom session id', () => {
+      // Must respect UUID format
+      const customSessionUuid = 'c610b260-edf5-48a4-b919-2ebc76f49393'
+
+      const rumSession = startRumSession({
+        ...configuration,
+        generateSessionUuid: () => customSessionUuid,
+      } as Configuration, lifeCycle)
+
+      expect(rumSession.getId()).toBe(customSessionUuid)
     })
   })
 
