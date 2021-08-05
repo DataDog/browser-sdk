@@ -27,6 +27,7 @@ function workerCodeFn() {
             self.postMessage({
               id: data.id,
               compressedSize: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
+              rawSize,
             })
             break
           case 'flush':

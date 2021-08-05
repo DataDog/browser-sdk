@@ -25,6 +25,7 @@ export type DeflateWorkerResponse =
   | {
       id: number
       compressedSize: number
+      rawSize: number
     }
   | {
       id: number

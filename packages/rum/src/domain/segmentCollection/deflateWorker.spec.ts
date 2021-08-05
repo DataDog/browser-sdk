@@ -11,9 +11,9 @@ describe('deflateWorker', () => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 3, (events) => {
       expect(events).toEqual([
-        { id: 0, compressedSize: 11 },
-        { id: 1, compressedSize: 20 },
-        { id: 2, compressedSize: 29 },
+        { id: 0, compressedSize: 11, rawSize: 3 },
+        { id: 1, compressedSize: 20, rawSize: 6 },
+        { id: 2, compressedSize: 29, rawSize: 9 },
       ])
       done()
     })
@@ -26,7 +26,7 @@ describe('deflateWorker', () => {
     const deflateWorker = createDeflateWorker()
     listen(deflateWorker, 2, (events) => {
       expect(events).toEqual([
-        { id: 0, compressedSize: 11 },
+        { id: 0, compressedSize: 11, rawSize: 3 },
         {
           id: 1,
           result: new Uint8Array([120, 156, 74, 203, 207, 7, 0, 0, 0, 255, 255, 3, 0, 2, 130, 1, 69]),
@@ -61,6 +61,7 @@ describe('deflateWorker', () => {
         {
           id: 0,
           compressedSize: 11,
+          rawSize: 3,
         },
         {
           id: 1,
@@ -70,6 +71,7 @@ describe('deflateWorker', () => {
         {
           id: 2,
           compressedSize: 11,
+          rawSize: 3,
         },
         {
           id: 3,
