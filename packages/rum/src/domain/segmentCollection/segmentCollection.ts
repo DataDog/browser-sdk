@@ -1,7 +1,8 @@
 import { addErrorToMonitoringBatch, addEventListener, DOM_EVENT, EventEmitter, monitor } from '@datadog/browser-core'
-import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, ParentContexts, RumSession, ViewReplayStats } from '@datadog/browser-rum-core'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
 import { CreationReason, Record, SegmentContext, SegmentMeta } from '../../types'
+import { getOrCreateViewStats } from '../viewStats'
 import { createDeflateWorker, DeflateWorker } from './deflateWorker'
 import { Segment } from './segment'
 
@@ -74,6 +75,7 @@ type SegmentCollectionState =
   | {
       status: SegmentCollectionStatus.SegmentPending
       segment: Segment
+      viewStats: ViewReplayStats
       expirationTimeoutId: number
     }
   | {
@@ -135,6 +137,9 @@ export function doStartSegmentCollection(
       return
     }
 
+    const viewStats = getOrCreateViewStats(context.view.id)
+
+    let previousRawSize = 0
     const segment = new Segment(
       worker,
       context,
@@ -144,15 +149,22 @@ export function doStartSegmentCollection(
         if (!segment.isFlushed && sizes.compressed > MAX_SEGMENT_SIZE) {
           flushSegment('max_size')
         }
+        viewStats.segments_total_raw_size += sizes.raw - previousRawSize
+        previousRawSize = sizes.raw
       },
       (data, rawSegmentSize) => {
+        viewStats.segments_total_raw_size += rawSegmentSize - previousRawSize
         send(data, segment.meta, rawSegmentSize)
       }
     )
 
+    viewStats.segments_count += 1
+    viewStats.records_count += 1
+
     state = {
       status: SegmentCollectionStatus.SegmentPending,
       segment,
+      viewStats,
       expirationTimeoutId: setTimeout(
         monitor(() => {
           flushSegment('max_duration')
@@ -171,6 +183,7 @@ export function doStartSegmentCollection(
 
         case SegmentCollectionStatus.SegmentPending:
           state.segment.addRecord(record)
+          state.viewStats.records_count += 1
           break
       }
     },
