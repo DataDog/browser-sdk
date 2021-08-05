@@ -17,6 +17,7 @@ import { FullSnapshotRecord, IncrementalSnapshotRecord, MetaRecord, RecordType, 
 
 export class MockWorker implements DeflateWorker {
   readonly pendingMessages: DeflateWorkerAction[] = []
+  private rawSize = 0
   private deflatedData: Uint8Array[] = []
   private listeners: DeflateWorkerListener[] = []
 
@@ -63,8 +64,10 @@ export class MockWorker implements DeflateWorker {
   processNextMessage(): void {
     const message = this.pendingMessages.shift()
     if (message) {
-      // In the mock worker, for simplicity, we'll just encode the string to UTF-8 instead of deflate it.
-      this.deflatedData.push(new TextEncoder().encode(message.data))
+      const encodedData = new TextEncoder().encode(message.data)
+      this.rawSize += encodedData.length
+      // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string of deflating it.
+      this.deflatedData.push(encodedData)
 
       switch (message.action) {
         case 'write':
@@ -73,6 +76,7 @@ export class MockWorker implements DeflateWorker {
               data: {
                 id: message.id,
                 compressedSize: uint8ArraysSize(this.deflatedData),
+                rawSize: this.rawSize,
               },
             })
           )
@@ -83,11 +87,12 @@ export class MockWorker implements DeflateWorker {
               data: {
                 id: message.id,
                 result: mergeUint8Arrays(this.deflatedData),
-                rawSize: 0,
+                rawSize: this.rawSize,
               },
             })
           )
           this.deflatedData.length = 0
+          this.rawSize = 0
       }
     }
   }
