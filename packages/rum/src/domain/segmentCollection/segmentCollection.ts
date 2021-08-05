@@ -135,6 +135,7 @@ export function doStartSegmentCollection(
       return
     }
 
+    let previousRawSize = 0
     const segment = new Segment(
       worker,
       context,
@@ -144,11 +145,26 @@ export function doStartSegmentCollection(
         if (!segment.isFlushed && sizes.compressed > MAX_SEGMENT_SIZE) {
           flushSegment('max_size')
         }
+        lifeCycle.notify(LifeCycleEventType.REPLAY_STATS_UPDATED, {
+          viewId: context.view.id,
+          rawSize: sizes.raw - previousRawSize,
+        })
+        previousRawSize = sizes.raw
       },
       (data, rawSegmentSize) => {
+        lifeCycle.notify(LifeCycleEventType.REPLAY_STATS_UPDATED, {
+          viewId: context.view.id,
+          rawSize: rawSegmentSize - previousRawSize,
+        })
         send(data, segment.meta, rawSegmentSize)
       }
     )
+
+    lifeCycle.notify(LifeCycleEventType.REPLAY_STATS_UPDATED, {
+      viewId: context.view.id,
+      segmentsCount: 1,
+      recordsCount: 1,
+    })
 
     state = {
       status: SegmentCollectionStatus.SegmentPending,
@@ -171,6 +187,10 @@ export function doStartSegmentCollection(
 
         case SegmentCollectionStatus.SegmentPending:
           state.segment.addRecord(record)
+          lifeCycle.notify(LifeCycleEventType.REPLAY_STATS_UPDATED, {
+            viewId: state.segment.context.view.id,
+            recordsCount: 1,
+          })
           break
       }
     },

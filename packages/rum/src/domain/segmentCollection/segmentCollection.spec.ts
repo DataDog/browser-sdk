@@ -8,6 +8,7 @@ import {
   restorePageVisibility,
   setPageVisibility,
 } from '@datadog/browser-core/test/specHelper'
+import { ReplayIncrementalStatsUpdate } from 'packages/rum-core/src/domain/lifeCycle'
 import { createRumSessionMock } from '../../../../rum-core/test/mockRumSession'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
@@ -35,6 +36,8 @@ describe('startSegmentCollection', () => {
     const worker = new MockWorker()
     const eventEmitter = document.createElement('div')
     const sendSpy = jasmine.createSpy<(data: Uint8Array, meta: SegmentMeta) => void>()
+    const replayStatsUpdateSpy = jasmine.createSpy<(data: ReplayIncrementalStatsUpdate) => void>()
+    lifeCycle.subscribe(LifeCycleEventType.REPLAY_STATS_UPDATED, replayStatsUpdateSpy)
 
     const { stop, addRecord } = doStartSegmentCollection(lifeCycle, () => context, sendSpy, worker, eventEmitter)
     stopSegmentCollection = stop
@@ -44,6 +47,7 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       sendSpy,
       worker,
+      replayStatsUpdateSpy,
       sendCurrentSegment: () => {
         // Make sure the segment is not empty
         addRecord(RECORD)
@@ -212,6 +216,102 @@ describe('startSegmentCollection', () => {
       stopSegmentCollection()
       worker.processAllMessages()
       expect(sendSpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('notify view stats updates', () => {
+    it('when adding a new record', () => {
+      const { addRecord, worker, replayStatsUpdateSpy } = startSegmentCollection(CONTEXT)
+      expect(replayStatsUpdateSpy).not.toHaveBeenCalled()
+      addRecord(RECORD)
+      worker.processAllMessages()
+      expect(replayStatsUpdateSpy.calls.allArgs()).toEqual([
+        [
+          {
+            viewId: 'b',
+            segmentsCount: 1,
+            recordsCount: 1,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 37,
+          },
+        ],
+      ])
+    })
+
+    it('when sending a segment', () => {
+      const { lifeCycle, addRecord, worker, replayStatsUpdateSpy } = startSegmentCollection(CONTEXT)
+      expect(replayStatsUpdateSpy).not.toHaveBeenCalled()
+      addRecord(RECORD)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      worker.processAllMessages()
+      expect(replayStatsUpdateSpy.calls.allArgs()).toEqual([
+        [
+          {
+            viewId: 'b',
+            segmentsCount: 1,
+            recordsCount: 1,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 37,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 156,
+          },
+        ],
+      ])
+    })
+
+    it('when creating a new segment', () => {
+      const { lifeCycle, addRecord, worker, replayStatsUpdateSpy } = startSegmentCollection(CONTEXT)
+      expect(replayStatsUpdateSpy).not.toHaveBeenCalled()
+      addRecord(RECORD)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
+      addRecord(RECORD)
+      worker.processAllMessages()
+      expect(replayStatsUpdateSpy.calls.allArgs()).toEqual([
+        [
+          {
+            viewId: 'b',
+            segmentsCount: 1,
+            recordsCount: 1,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            segmentsCount: 1,
+            recordsCount: 1,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 37,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 156,
+          },
+        ],
+        [
+          {
+            viewId: 'b',
+            rawSize: 37,
+          },
+        ],
+      ])
     })
   })
 })

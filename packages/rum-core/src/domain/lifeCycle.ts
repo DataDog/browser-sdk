@@ -23,6 +23,7 @@ export enum LifeCycleEventType {
   RUM_EVENT_COLLECTED,
   RECORD_STARTED,
   RECORD_STOPPED,
+  REPLAY_STATS_UPDATED,
   RAW_ERROR_COLLECTED,
 }
 
@@ -49,6 +50,7 @@ export class LifeCycle {
       | LifeCycleEventType.RECORD_STARTED
       | LifeCycleEventType.RECORD_STOPPED
   ): void
+  notify(eventType: LifeCycleEventType.REPLAY_STATS_UPDATED, data: ReplayIncrementalStatsUpdate): void
   notify(eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, data: RawRumEventCollectedData): void
   notify(eventType: LifeCycleEventType.RUM_EVENT_COLLECTED, data: RumEvent & Context): void
   notify(eventType: LifeCycleEventType, data?: any) {
@@ -89,6 +91,10 @@ export class LifeCycle {
     callback: () => void
   ): Subscription
   subscribe(
+    eventType: LifeCycleEventType.REPLAY_STATS_UPDATED,
+    callback: (data: ReplayIncrementalStatsUpdate) => void
+  ): Subscription
+  subscribe(
     eventType: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     callback: (data: RawRumEventCollectedData) => void
   ): Subscription
@@ -115,4 +121,11 @@ export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
   customerContext?: Context
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>
+}
+
+export interface ReplayIncrementalStatsUpdate {
+  viewId: string
+  segmentsCount?: number
+  recordsCount?: number
+  rawSize?: number
 }
