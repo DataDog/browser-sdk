@@ -9,6 +9,7 @@ import {
   addMonitoringMessage,
   relativeNow,
   timeStampNow,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { getSleepDuration } from '../../trackSleep'
@@ -74,6 +75,7 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
 }
 
 export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: RelativeTime) => void) {
+  let fcpCount = 0
   const firstHidden = trackFirstHidden()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (
@@ -81,6 +83,7 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
       entry.name === 'first-contentful-paint' &&
       entry.startTime < firstHidden.timeStamp
     ) {
+      fcpCount += 1
       if (entry.startTime > ONE_DAY) {
         addMonitoringMessage('FCP > 1 day', {
           debug: {
@@ -88,6 +91,7 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
             relativeNow: Math.round(relativeNow()),
             timeStampNow: timeStampNow(),
             sleepDuration: getSleepDuration(),
+            fcpCount,
           },
         })
       }
@@ -123,6 +127,8 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
+  const lcpSizes: Array<{ timeStamp: TimeStamp; startTime: RelativeTime; size: number }> = []
+
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
@@ -131,6 +137,7 @@ export function trackLargestContentfulPaint(
         entry.startTime < firstInteractionTimestamp &&
         entry.startTime < firstHidden.timeStamp
       ) {
+        lcpSizes.push({ timeStamp: timeStampNow(), startTime: entry.startTime, size: entry.size })
         if (entry.startTime > ONE_DAY) {
           addMonitoringMessage('LCP > 1 day', {
             debug: {
@@ -138,6 +145,7 @@ export function trackLargestContentfulPaint(
               relativeNow: Math.round(relativeNow()),
               timeStampNow: timeStampNow(),
               sleepDuration: getSleepDuration(),
+              lcpSizes,
             },
           })
         }

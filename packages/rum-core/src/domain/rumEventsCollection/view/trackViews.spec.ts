@@ -17,6 +17,7 @@ const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
 const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   entryType: 'largest-contentful-paint',
   startTime: 789 as RelativeTime,
+  size: 10,
 }
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domComplete: 456 as RelativeTime,
