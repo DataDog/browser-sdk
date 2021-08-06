@@ -45,7 +45,6 @@ describe('viewCollection', () => {
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: undefined,
       isActive: false,
-      hasReplay: false,
       loadingTime: 20 as Duration,
       loadingType: ViewLoadingType.INITIAL_LOAD,
       location: location as Location,
@@ -115,7 +114,7 @@ describe('viewCollection', () => {
         in_foreground_periods: [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       },
       session: {
-        has_replay: undefined,
+        has_replay: true,
       },
     })
   })

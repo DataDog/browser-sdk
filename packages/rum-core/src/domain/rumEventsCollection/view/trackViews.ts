@@ -37,7 +37,6 @@ export interface ViewEvent {
   loadingTime?: Duration
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
-  hasReplay: boolean
   replayStats?: ViewReplayStats
 }
 
@@ -63,8 +62,6 @@ export function trackViews(
   areViewsTrackedAutomatically: boolean,
   initialViewName?: string
 ) {
-  let isRecording = false
-
   const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewName)
   let currentView = initialView
 
@@ -78,7 +75,6 @@ export function trackViews(
       lifeCycle,
       domMutationObservable,
       location,
-      isRecording,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
       clocksOrigin(),
@@ -96,7 +92,6 @@ export function trackViews(
       lifeCycle,
       domMutationObservable,
       location,
-      isRecording,
       ViewLoadingType.ROUTE_CHANGE,
       currentView.url,
       startClocks,
@@ -116,15 +111,6 @@ export function trackViews(
     lifeCycle.subscribe(LifeCycleEventType.BEFORE_UNLOAD, () => {
       currentView.end()
       currentView.triggerUpdate()
-    })
-
-    lifeCycle.subscribe(LifeCycleEventType.RECORD_STARTED, () => {
-      isRecording = true
-      currentView.updateHasReplay(true)
-    })
-
-    lifeCycle.subscribe(LifeCycleEventType.RECORD_STOPPED, () => {
-      isRecording = false
     })
 
     // Session keep alive
@@ -186,7 +172,6 @@ function newView(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
   initialLocation: Location,
-  initialHasReplay: boolean,
   loadingType: ViewLoadingType,
   referrer: string,
   startClocks: ClocksState = clocksNow(),
@@ -199,7 +184,6 @@ function newView(
   let documentVersion = 0
   let endClocks: ClocksState | undefined
   let location = { ...initialLocation }
-  let hasReplay = initialHasReplay
   let replayStats: ViewReplayStats | undefined
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
@@ -238,7 +222,6 @@ function newView(
       name,
       loadingType,
       location,
-      hasReplay,
       referrer,
       startClocks,
       timings,
@@ -276,9 +259,6 @@ function newView(
     },
     updateLocation(newLocation: Location) {
       location = { ...newLocation }
-    },
-    updateHasReplay(newHasReplay: boolean) {
-      hasReplay = newHasReplay
     },
     get url() {
       return location.href
