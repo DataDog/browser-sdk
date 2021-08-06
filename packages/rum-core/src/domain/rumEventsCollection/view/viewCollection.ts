@@ -34,6 +34,7 @@ function processViewUpdate(
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
+      replay: view.replayStats,
     },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,

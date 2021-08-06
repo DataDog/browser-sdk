@@ -13,12 +13,13 @@ import {
   display,
 } from '@datadog/browser-core'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
-import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
+import { ViewLoadingType, ViewCustomTimings, ViewReplayStats } from '../../../rawRumEvent.types'
 
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts } from '../../trackEventCounts'
 import { Timings, trackInitialViewTimings } from './trackInitialViewTimings'
 import { trackLocationChanges, areDifferentLocation } from './trackLocationChanges'
+import { trackReplayStats } from './trackReplayStats'
 import { trackViewMetrics } from './trackViewMetrics'
 
 export interface ViewEvent {
@@ -37,6 +38,7 @@ export interface ViewEvent {
   loadingType: ViewLoadingType
   cumulativeLayoutShift?: number
   hasReplay: boolean
+  replayStats?: ViewReplayStats
 }
 
 export interface ViewCreatedEvent {
@@ -198,6 +200,7 @@ function newView(
   let endClocks: ClocksState | undefined
   let location = { ...initialLocation }
   let hasReplay = initialHasReplay
+  let replayStats: ViewReplayStats | undefined
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
 
@@ -216,6 +219,10 @@ function newView(
     scheduleViewUpdate,
     loadingType
   )
+
+  const { stop: stopReplayStatsTracking } = trackReplayStats(lifeCycle, id, (newReplayStats) => {
+    replayStats = newReplayStats
+  })
 
   // Initial view update
   triggerViewUpdate()
@@ -237,6 +244,7 @@ function newView(
       timings,
       duration: elapsed(startClocks.timeStamp, currentEnd),
       isActive: endClocks === undefined,
+      replayStats,
     })
   }
 
@@ -247,6 +255,7 @@ function newView(
       endClocks = clocks
       stopViewMetricsTracking()
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
+      stopReplayStatsTracking()
     },
     getLocation() {
       return location

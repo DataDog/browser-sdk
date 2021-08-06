@@ -61,6 +61,11 @@ describe('viewCollection', () => {
         largestContentfulPaint: 10 as Duration,
         loadEvent: 10 as Duration,
       },
+      replayStats: {
+        segments_count: 1,
+        records_count: 2,
+        segments_total_raw_size: 100,
+      },
     }
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
 
@@ -68,6 +73,11 @@ describe('viewCollection', () => {
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,
+        replay: {
+          segments_count: 1,
+          records_count: 2,
+          segments_total_raw_size: 100,
+        },
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
