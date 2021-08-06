@@ -7,6 +7,7 @@ import {
   RumSession,
   RecorderApi,
 } from '@datadog/browser-rum-core'
+import { getViewStats } from '../domain/viewStats'
 
 import { startRecording } from './startRecording'
 
@@ -52,6 +53,8 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
+    getViewStats,
+
     onRumStart: (
       lifeCycle: LifeCycle,
       initConfiguration: RumInitConfiguration,

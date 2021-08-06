@@ -9,6 +9,7 @@ import {
   noop,
 } from '@datadog/browser-core'
 import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
+import { RecorderApi } from '../src/boot/rumPublicApi'
 import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { ParentContexts } from '../src/domain/parentContexts'
@@ -241,4 +242,12 @@ export function spyOnViews(name?: string) {
   }
 
   return { handler, getViewEvent, getHandledCount }
+}
+
+export const noopRecorderApi: RecorderApi = {
+  start: noop,
+  stop: noop,
+  isRecording: () => false,
+  onRumStart: noop,
+  getViewStats: () => undefined,
 }
