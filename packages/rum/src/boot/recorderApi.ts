@@ -101,7 +101,6 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
             status: RecorderStatus.Started,
             stopRecording,
           }
-          lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
         })
       }
 
@@ -117,7 +116,6 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
         state = {
           status: RecorderStatus.Stopped,
         }
-        lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
       }
 
       if (state.status === RecorderStatus.IntentToStart) {

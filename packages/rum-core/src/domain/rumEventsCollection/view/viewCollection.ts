@@ -75,7 +75,7 @@ function processViewUpdate(
       in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, view.duration),
     },
     session: {
-      has_replay: view.hasReplay || undefined,
+      has_replay: replayStats ? true : undefined,
     },
   }
   if (!isEmptyObject(view.customTimings)) {
