@@ -16,6 +16,12 @@
 
 ---
 
+## v3.1.1
+
+- ⚗ [RUMF-970] Buffered PerformanceObserver: add fallback for older browsers ([#978](https://github.com/DataDog/browser-sdk/pull/978))
+- ⚗ [RUMF-971] experiment to detect when the computer goes to sleep ([#976](https://github.com/DataDog/browser-sdk/pull/976))
+- 🔊 [RUMF-971] add some context on suspicious LCP and FCP monitoring ([#979](https://github.com/DataDog/browser-sdk/pull/979))
+
 ## v3.1.0
 
 Note: this is the first 3.x release for the Logs SDK. See migration notes in [v3.0.0](#v300).
