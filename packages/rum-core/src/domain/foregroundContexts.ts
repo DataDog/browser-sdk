@@ -13,7 +13,7 @@ import {
 import { InForegroundPeriod } from '../rawRumEvent.types'
 
 // Arbitrary value to cap number of element (mostly for backend)
-export const MAX_NUMBER_OF_FOCUSED_TIME = 500
+export const MAX_NUMBER_OF_FOCUSED_TIME = 1000
 
 export interface ForegroundContexts {
   getInForeground: (startTime: RelativeTime) => boolean | undefined
