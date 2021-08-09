@@ -301,7 +301,12 @@ function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallba
 }
 
 function initFocusObserver(focusCb: FocusCallback): ListenerHandler {
-  return addEventListeners(window, [DOM_EVENT.FOCUS, DOM_EVENT.BLUR], () => {
-    focusCb({ has_focus: document.hasFocus() })
-  }).stop
+  return addEventListeners(
+    window,
+    [DOM_EVENT.FOCUS, DOM_EVENT.BLUR],
+    () => {
+      focusCb({ has_focus: document.hasFocus() })
+    },
+    { capture: true }
+  ).stop
 }

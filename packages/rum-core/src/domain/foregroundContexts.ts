@@ -89,11 +89,11 @@ function closeForegroundPeriod() {
 }
 
 function trackFocus(onFocusChange: () => void) {
-  return addEventListener(window, DOM_EVENT.FOCUS, () => onFocusChange())
+  return addEventListener(window, DOM_EVENT.FOCUS, () => onFocusChange(), { capture: true })
 }
 
 function trackBlur(onBlurChange: () => void) {
-  return addEventListener(window, DOM_EVENT.BLUR, () => onBlurChange())
+  return addEventListener(window, DOM_EVENT.BLUR, () => onBlurChange(), { capture: true })
 }
 
 function getInForeground(startTime: RelativeTime): boolean {
