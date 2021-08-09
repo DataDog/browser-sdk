@@ -30,13 +30,14 @@ const WHITESPACE_TEST = /^\s$/
 
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
   // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
+  // Setting "NOT_SET" will be treated as "MASK_FORMS_ONLY"
   return NodePrivacyLevelInternal.ALLOW
 }
 
 /**
  * PUBLIC: Resolves the internal privacy level and remaps to level to the format
  * exposed to the general codebase  (allow/mask/hidden/ignore) because
- * NOT_SET/UNKNOWN/*-SEALED/MASK_FORMS_ONLY are not dev friendly and need not be handled by devs
+ * NOT_SET/*-SEALED/MASK_FORMS_ONLY are not dev friendly and need not be handled by devs
  */
 export function getNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodePrivacyLevelInternal): NodePrivacyLevel {
   const privacyLevel = getInternalNodePrivacyLevel(node, parentNodePrivacyLevel)
@@ -50,10 +51,7 @@ export function remapInternalPrivacyLevels(
   node: Node,
   nodePrivacyLevelInternal: NodePrivacyLevelInternal
 ): NodePrivacyLevel {
-  if (
-    nodePrivacyLevelInternal === NodePrivacyLevelInternal.UNKNOWN ||
-    nodePrivacyLevelInternal === NodePrivacyLevelInternal.NOT_SET
-  ) {
+  if (nodePrivacyLevelInternal === NodePrivacyLevelInternal.NOT_SET) {
     // Fallback value from getInitialPrivacyLevel() needs to be remapped too for the `MASK_FORMS_ONLY` case.
     nodePrivacyLevelInternal = getInitialPrivacyLevel()
   }
@@ -66,9 +64,9 @@ export function remapInternalPrivacyLevels(
       return nodePrivacyLevelInternal
     // Conditional levels
     case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
+    case NodePrivacyLevelInternal.NOT_SET:
       return isFormElement(node) ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
   }
-  return NodePrivacyLevelInternal.HIDDEN
 }
 
 /**
@@ -126,9 +124,9 @@ export function derivePrivacyLevelGivenParent(
     case NodePrivacyLevelInternal.HIDDEN:
     case NodePrivacyLevelInternal.IGNORE:
       return childPrivacyLevel
+    default:
+      return parentNodePrivacyLevel
   }
-  // Anything else is unknown.
-  return NodePrivacyLevelInternal.UNKNOWN
 }
 
 /**

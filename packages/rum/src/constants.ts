@@ -9,7 +9,6 @@ export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyL
 export const NodePrivacyLevelInternal = {
   // INTERNAL USE: not to be used by the general codebase
   NOT_SET: 'NOT_SET',
-  UNKNOWN: 'UNKNOWN',
   MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
   ...NodePrivacyLevel,
 } as const

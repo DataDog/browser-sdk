@@ -266,28 +266,20 @@ if (!isIE()) {
     describe(' derivePrivacyLevelGivenParent()', function testDerivePrivacyLevelGivenParent() {
       const tests = [
         {
-          args: [NodePrivacyLevelInternal.ALLOW, 999],
+          args: [NodePrivacyLevelInternal.ALLOW, 'CORRUPTED'],
           expect: NodePrivacyLevelInternal.ALLOW,
           msg: 'Robust against parent invalid',
         },
         {
-          args: [999, NodePrivacyLevelInternal.ALLOW],
-          expect: NodePrivacyLevelInternal.UNKNOWN,
+          args: ['CORRUPTED', NodePrivacyLevelInternal.ALLOW],
+          expect: NodePrivacyLevelInternal.ALLOW,
           msg: 'Robust against self invalid',
         },
-        { args: [999, 999], expect: NodePrivacyLevelInternal.UNKNOWN, msg: 'Robust against both invalid' },
-
         {
-          args: [NodePrivacyLevelInternal.NOT_SET, NodePrivacyLevelInternal.UNKNOWN],
-          expect: NodePrivacyLevelInternal.UNKNOWN,
-          msg: 'Unknown not inherited',
+          args: ['CORRUPTED_CHILD', 'CORRUPTED_PARENT'],
+          expect: 'CORRUPTED_PARENT',
+          msg: 'Fallback to parent if child is invalid',
         },
-        {
-          args: [NodePrivacyLevelInternal.UNKNOWN, NodePrivacyLevelInternal.NOT_SET],
-          expect: NodePrivacyLevelInternal.UNKNOWN,
-          msg: 'NOT_SET not inherited',
-        },
-
         {
           args: [NodePrivacyLevelInternal.ALLOW, NodePrivacyLevelInternal.MASK],
           expect: NodePrivacyLevelInternal.ALLOW,
