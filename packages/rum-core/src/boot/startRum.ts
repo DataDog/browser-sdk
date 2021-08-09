@@ -13,6 +13,7 @@ import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
+import { trackSleep } from '../domain/trackSleep'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
 import { RumInitConfiguration } from './rumPublicApi'
@@ -45,6 +46,10 @@ export function startRum(
     session,
     getCommonContext
   )
+
+  if (configuration.isEnabled('track-sleep')) {
+    trackSleep()
+  }
 
   if (session.hasReplayPlan()) {
     startLongTaskCollection(lifeCycle)

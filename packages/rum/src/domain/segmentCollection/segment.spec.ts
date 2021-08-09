@@ -130,7 +130,8 @@ describe('Segment', () => {
     expect(worker.listenersCount).toBe(1)
     expect(displaySpy).toHaveBeenCalledWith(
       '[MONITORING MESSAGE]',
-      "Segment did not receive a 'flush' response before being replaced."
+      "Segment did not receive a 'flush' response before being replaced.",
+      undefined
     )
   })
 })

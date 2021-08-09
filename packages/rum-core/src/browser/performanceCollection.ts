@@ -63,6 +63,7 @@ export interface RumPerformanceNavigationTiming {
 export interface RumLargestContentfulPaintTiming {
   entryType: 'largest-contentful-paint'
   startTime: RelativeTime
+  size: number
 }
 
 export interface RumFirstInputTiming {
