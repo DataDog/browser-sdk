@@ -134,11 +134,7 @@ export function derivePrivacyLevelGivenParent(
  * This function is purposely not exposed because we do care about the ancestor level.
  * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
  */
-export function getNodeSelfPrivacyLevel(node: Node | undefined): NodePrivacyLevelInternal {
-  if (!node) {
-    return NodePrivacyLevelInternal.MASK
-  }
-
+export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
   // Only Element types can be have a privacy level set
   if (isElement(node)) {
     const elNode = node as HTMLElement
