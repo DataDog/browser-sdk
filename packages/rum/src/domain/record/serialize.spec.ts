@@ -7,9 +7,11 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
+import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
+import * as utils from '../../../../core/src/tools/utils'
 import { hasSerializedNode } from './serializationUtils'
 import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
-import { ElementNode, NodeType } from './types'
+import { ElementNode, NodeType, SerializedNodeWithId } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
@@ -396,3 +398,65 @@ describe('serializeNodeWithId', () => {
     })
   })
 })
+
+if (!isIE()) {
+  const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
+    if (thing && typeof thing === 'object') {
+      const object = thing
+      delete object.id
+      utils.objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
+      return object
+    }
+    return thing
+  }
+
+  const makeHtmlDoc = (HtmlContent: string, privacyTag: string) => {
+    try {
+      // Karma doesn't seem to support `document.documentElement.outerHTML`
+      const newDoc = document.implementation.createHTMLDocument('new doc')
+      newDoc.documentElement.innerHTML = HtmlContent
+      newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
+      return newDoc
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to set innerHTML of new doc:', e)
+      return document
+    }
+  }
+
+  describe('serializeDocumentNode handles', function testAllowDomTree() {
+    const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
+
+    describe('for privacy tag `hidden`, a DOM tree', function testHiddenDomTree() {
+      const newDoc = makeHtmlDoc(HTML, 'hidden')
+      const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
+      it('is serialized correctly', () => {
+        expect(toJSONObj(serializedDoc)).toEqual(AST_HIDDEN)
+      })
+    })
+
+    describe('for privacy tag `mask`, a DOM tree', function testMaskDomTree() {
+      const newDoc = makeHtmlDoc(HTML, 'mask')
+      const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
+      it('is serialized correctly', () => {
+        expect(toJSONObj(serializedDoc)).toEqual(AST_MASK)
+      })
+    })
+
+    describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
+      const newDoc = makeHtmlDoc(HTML, 'mask-forms-only')
+      const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
+      it('is serialized correctly', () => {
+        expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_FORMS_ONLY)
+      })
+    })
+
+    describe('for privacy tag `allow`, a DOM tree', function testAllowDomTree() {
+      const newDoc = makeHtmlDoc(HTML, 'allow')
+      const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
+      it('is serialized correctly', () => {
+        expect(toJSONObj(serializedDoc)).toEqual(AST_ALLOW)
+      })
+    })
+  })
+}
