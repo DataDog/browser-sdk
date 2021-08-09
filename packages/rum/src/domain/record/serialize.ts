@@ -6,7 +6,6 @@ import {
   CENSORED_STRING_MARK,
 } from '../../constants'
 import {
-  getNodePrivacyLevel,
   getAttributesForPrivacyLevel,
   remapInternalPrivacyLevels,
   getInternalNodePrivacyLevel,
@@ -399,9 +398,7 @@ function serializeCDataNode(): CDataNode {
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
-  const nodePrivacyLevel = options.parentNodePrivacyLevel
-    ? remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
-    : getNodePrivacyLevel(node)
+  const nodePrivacyLevel = remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
   const result: SerializedNodeWithId[] = []
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {

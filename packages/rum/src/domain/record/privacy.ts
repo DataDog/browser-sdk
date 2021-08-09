@@ -69,6 +69,10 @@ export function remapInternalPrivacyLevels(
   }
 }
 
+function parentNodePrivacyLevelFallback(node: Node) {
+  return node?.parentNode ? getInternalNodePrivacyLevel(node.parentNode) : NodePrivacyLevelInternal.NOT_SET
+}
+
 /**
  * INTERNAL FUNC: Get privacy level without remapping (or setting cache)
  * This function may be explicitly used when passing internal privacy levels to
@@ -85,21 +89,8 @@ export function getInternalNodePrivacyLevel(
     return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement)
   }
 
-  let parentNodePrivacyLevelFallback: NodePrivacyLevelInternal
-  // Recursive Fallback
-  if (!parentNodePrivacyLevel) {
-    parentNodePrivacyLevelFallback = node?.parentNode
-      ? getInternalNodePrivacyLevel(node.parentNode)
-      : NodePrivacyLevelInternal.NOT_SET
-  }
-
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
-  const privacyLevel = derivePrivacyLevelGivenParent(
-    selfPrivacyLevel,
-    parentNodePrivacyLevel || parentNodePrivacyLevelFallback!
-  )
-
-  return privacyLevel
+  return derivePrivacyLevelGivenParent(selfPrivacyLevel, parentNodePrivacyLevel || parentNodePrivacyLevelFallback(node))
 }
 
 /**
