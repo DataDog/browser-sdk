@@ -340,7 +340,11 @@ function getAttributeEntries(attributes: NamedNodeMap) {
   return attributeEntries
 }
 
-export function getTextContent(textNode: Node, ignoreWhiteSpace: boolean): string | undefined {
+export function getTextContent(
+  textNode: Node,
+  ignoreWhiteSpace: boolean,
+  parentNodePrivacyLevel?: NodePrivacyLevelInternal
+): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
@@ -350,7 +354,11 @@ export function getTextContent(textNode: Node, ignoreWhiteSpace: boolean): strin
     return
   }
 
-  const nodePrivacyLevel = getNodePrivacyLevel(textNode.parentNode as Node)
+  const nodePrivacyLevel =
+    parentNodePrivacyLevel && textNode.parentElement
+      ? remapInternalPrivacyLevels(textNode.parentElement, parentNodePrivacyLevel)
+      : getNodePrivacyLevel(textNode.parentNode as Node)
+
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   const isScript = parentTagName === 'SCRIPT'
 

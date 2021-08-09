@@ -26,13 +26,13 @@ export const PRIVACY_ATTR_VALUE_INPUT_MASKED = 'input-masked' // DEPRECATED, ali
 export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
 export const PRIVACY_ATTR_VALUE_MASK = 'mask'
 export const PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY = 'mask-forms-only'
-export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden' // TODO: rename to `hide`?
+export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
 
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
 export const PRIVACY_CLASS_ALLOW = 'dd-privacy-allow'
 export const PRIVACY_CLASS_MASK = 'dd-privacy-mask'
 export const PRIVACY_CLASS_MASK_FORMS_ONLY = 'dd-privacy-mask-forms-only'
-export const PRIVACY_CLASS_HIDDEN = 'dd-privacy-hidden' // TODO: rename to `hide`?
+export const PRIVACY_CLASS_HIDDEN = 'dd-privacy-hidden'
 
 // Private Replacement Templates
 export const CENSORED_STRING_MARK = '***'

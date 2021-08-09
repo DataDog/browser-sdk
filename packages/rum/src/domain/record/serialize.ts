@@ -380,7 +380,7 @@ function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode 
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
-  const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false)
+  const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
   if (!textContent) {
     return
   }
