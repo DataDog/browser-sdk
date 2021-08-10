@@ -43,9 +43,9 @@ const onRequestCompleteCallbacks: Array<(fetch: FetchCompleteContext) => void> =
 export function startFetchProxy<
   StartContext extends FetchStartContext = FetchStartContext,
   CompleteContext extends FetchCompleteContext = FetchCompleteContext
->(): FetchProxy<StartContext, CompleteContext> {
+>(myWindow?: Window): FetchProxy<StartContext, CompleteContext> {
   if (!fetchProxySingleton) {
-    proxyFetch()
+    proxyFetch(myWindow)
     fetchProxySingleton = {
       beforeSend(callback: (context: FetchStartContext) => void) {
         beforeSendCallbacks.push(callback)
@@ -67,14 +67,15 @@ export function resetFetchProxy() {
   }
 }
 
-function proxyFetch() {
-  if (!window.fetch) {
+function proxyFetch(myWindow?: Window) {
+  const finalWindow = myWindow || window
+  if (!finalWindow.fetch) {
     return
   }
 
-  originalFetch = window.fetch
+  originalFetch = finalWindow.fetch
 
-  window.fetch = function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
+  finalWindow.fetch = function (this: WindowOrWorkerGlobalScope['fetch'], input: RequestInfo, init?: RequestInit) {
     let responsePromise: Promise<Response>
 
     const context = callMonitored(beforeSend, null, [input, init])
