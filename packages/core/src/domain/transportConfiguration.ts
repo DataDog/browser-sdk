@@ -7,14 +7,12 @@ const ENDPOINTS = {
     logs: 'logs',
     rum: 'rum',
     sessionReplay: 'session-replay',
-    trace: 'trace',
   },
   classic: {
     logs: 'browser',
     rum: 'rum',
     // session-replay has no classic endpoint
     sessionReplay: undefined,
-    trace: 'public-trace',
   },
 }
 
@@ -61,7 +59,6 @@ export function computeTransportConfiguration(
     logsEndpoint: getEndpoint(intakeType, 'logs', transportSettings),
     rumEndpoint: getEndpoint(intakeType, 'rum', transportSettings),
     sessionReplayEndpoint: getEndpoint(intakeType, 'sessionReplay', transportSettings),
-    traceEndpoint: getEndpoint(intakeType, 'trace', transportSettings),
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
