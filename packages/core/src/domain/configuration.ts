@@ -89,7 +89,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 export interface TransportConfiguration {
   logsEndpoint: string
   rumEndpoint: string
-  traceEndpoint: string
   sessionReplayEndpoint: string
   internalMonitoringEndpoint?: string
   isIntakeUrl: (url: string) => boolean
