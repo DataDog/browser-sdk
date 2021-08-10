@@ -99,7 +99,6 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.eu' }, buildEnv)
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.eu/v1/input/xxx')).toBe(true)
     })
 
@@ -108,7 +107,6 @@ describe('transportConfiguration', () => {
 
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
@@ -116,7 +114,6 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, useAlternateIntakeDomains: true }, buildEnv)
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
@@ -124,7 +121,6 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, useAlternateIntakeDomains: true }, buildEnv)
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://trace.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
     })
 
@@ -148,7 +144,6 @@ describe('transportConfiguration', () => {
       const configuration = computeTransportConfiguration({ clientToken, site: 'foo.datadoghq.com' }, buildEnv)
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://trace.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo-datadoghq.com/v1/input/xxx')).toBe(
         true
       )
@@ -178,7 +173,6 @@ describe('transportConfiguration', () => {
       )
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://browser-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://public-trace-http-intake.logs.datadoghq.eu/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.eu/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum-http-intake.logs.datadoghq.com/v1/input/xxx')).toBe(true)
@@ -192,7 +186,6 @@ describe('transportConfiguration', () => {
       )
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo.com/v1/input/xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://trace.browser-intake-foo.com/v1/input/xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo.com/v1/input/xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/v1/input/xxx')).toBe(true)
