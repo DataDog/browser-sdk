@@ -71,6 +71,7 @@ function addNewForegroundPeriod() {
           count: foregroundPeriods.length,
           currentStart: currentForegroundPeriod.start,
           now,
+          diff: now - currentForegroundPeriod.start,
         },
       })
     }
@@ -96,6 +97,7 @@ function closeForegroundPeriod() {
           currentStart: currentForegroundPeriod.start,
           currentEnd: currentForegroundPeriod.end,
           now,
+          diff: now - currentForegroundPeriod.end,
         },
         now: relativeNow(),
       })
