@@ -14,7 +14,9 @@ import { InForegroundPeriod } from '../rawRumEvent.types'
 
 // Arbitrary value to cap number of element (mostly for backend)
 export const MAX_NUMBER_OF_FOCUSED_TIME = 500
-const MAX_LAG_TIME = 10 as RelativeTime
+// ignore duplicate focus & blur events if coming in the right after the previous one
+// chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1237904
+const MAX_TIME_TO_IGNORE_DUPLICATE = 10 as RelativeTime
 
 export interface ForegroundContexts {
   getInForeground: (startTime: RelativeTime) => boolean | undefined
@@ -63,7 +65,7 @@ function addNewForegroundPeriod() {
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   const now = relativeNow()
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
-    if (now - currentForegroundPeriod.start > MAX_LAG_TIME) {
+    if (now - currentForegroundPeriod.start > MAX_TIME_TO_IGNORE_DUPLICATE) {
       addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
         foregroundPeriods: {
           count: foregroundPeriods.length,
@@ -87,7 +89,7 @@ function closeForegroundPeriod() {
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   const now = relativeNow()
   if (currentForegroundPeriod.end !== undefined) {
-    if (now - currentForegroundPeriod.end > MAX_LAG_TIME) {
+    if (now - currentForegroundPeriod.end > MAX_TIME_TO_IGNORE_DUPLICATE) {
       addMonitoringMessage('Current foreground period already closed', {
         foregroundPeriods: {
           count: foregroundPeriods.length,
