@@ -1,19 +1,13 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
-import {
-  getNodePrivacyLevel,
-  getInternalNodePrivacyLevel,
-  getAttributesForPrivacyLevel,
-  getTextContent,
-} from './privacy'
+import { serializeAttribute, getNodePrivacyLevel, getInternalNodePrivacyLevel, getTextContent } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
   NodeWithSerializedNode,
-  transformAttribute,
 } from './serializationUtils'
 import { serializeNodeWithId } from './serialize'
 import {
@@ -272,21 +266,17 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
       continue
     }
     const privacyLevel = getNodePrivacyLevel(mutation.target)
-    const attributes = getAttributesForPrivacyLevel(mutation.target, privacyLevel)
-    const value = attributes[mutation.attributeName!]
-
-    // TODO: REVIEW: Compare last censored value against this value?
+    const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!)
 
     let transformedValue: string | null
-    // REMINDER: `getAttributesForPrivacyLevel()` already handles `HIDDEN` + `MASK` level
     if (mutation.attributeName === 'value') {
-      const inputValue = getElementInputValue(mutation.target)
+      const inputValue = getElementInputValue(mutation.target, privacyLevel)
       if (inputValue === undefined) {
         continue
       }
       transformedValue = inputValue
-    } else if (value && typeof value === 'string') {
-      transformedValue = transformAttribute(mutation.target.ownerDocument, mutation.attributeName!, value)
+    } else if (attributeValue && typeof attributeValue === 'string') {
+      transformedValue = attributeValue
     } else {
       transformedValue = null
     }

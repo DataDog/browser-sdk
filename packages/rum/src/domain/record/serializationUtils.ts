@@ -32,22 +32,6 @@ export function setSerializedNode(node: Node, serializeNode: SerializedNodeWithI
   ;(node as Partial<NodeWithSerializedNode>).__sn = serializeNode
 }
 
-export function transformAttribute(doc: Document, name: string, value: string): string {
-  if (!value) {
-    return value
-  }
-  if (name === 'src' || name === 'href') {
-    return makeUrlAbsolute(value, doc.location?.href)
-  }
-  if (name === 'srcset') {
-    return makeSrcsetUrlsAbsolute(value, doc.location?.href)
-  }
-  if (name === 'style') {
-    return makeStylesheetUrlsAbsolute(value, doc.location?.href)
-  }
-  return value
-}
-
 const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
 const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
 const DATA_URI = /^data:.*,/i
@@ -81,21 +65,42 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
   }
 }
 
-// Helper Func for mutation observer
-export function getElementInputValue(element: Element) {
-  const nodePrivacyLevel = getNodePrivacyLevel(element)
-  const tagName = element.localName
-  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN || nodePrivacyLevel === NodePrivacyLevel.MASK) {
+/**
+ * Get the element "value" to be serialized as an attribute or an input update record. It respects
+ * the input privacy mode of the element.
+ * PERFROMANCE OPTIMIZATION: Assumes that privacy level `HIDDEN` is never encountered because of earlier checks.
+ */
+export function getElementInputValue(element: Element, explicitNodePrivacyLevel?: NodePrivacyLevel) {
+  /*
+   BROWSER SPEC NOTE: <input>, <select>
+   For some <input> elements, the `value` is an exceptional property/attribute that has the
+   value synced between el.value and el.getAttribute()
+   input[type=button,checkbox,hidden,image,radio,reset,submit]
+   */
+  const nodePrivacyLevel = explicitNodePrivacyLevel ?? getNodePrivacyLevel(element)
+  const tagName = element.tagName
+  const value = (element as HTMLInputElement | HTMLTextAreaElement).value
+
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    const type = (element as HTMLInputElement | HTMLTextAreaElement).type
+    if (tagName === 'INPUT' && (type === 'button' || type === 'submit' || type === 'reset')) {
+      // Overrule `MASK` privacy level for button-like element values, as they are used during replay
+      // to display their label. They can still be hidden via the "hidden" privacy attribute or class name.
+      return value
+    } else if (!value || tagName === 'OPTION') {
+      // <Option> value provides no benefit
+      return
+    }
     return CENSORED_STRING_MARK
   }
-  const inputElement = element as HTMLInputElement
-  if (tagName === 'option' || tagName === 'select') {
-    const optionElement = element as HTMLOptionElement
-    // Matching empty strings is not considered selected.
-    if (optionElement?.value) {
-      return optionElement.value
-    }
+
+  if (tagName === 'OPTION' || tagName === 'SELECT') {
+    return (element as HTMLOptionElement | HTMLSelectElement).value
   }
-  // Textarea, Input
-  return inputElement.value
+
+  if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+    return
+  }
+
+  return value
 }

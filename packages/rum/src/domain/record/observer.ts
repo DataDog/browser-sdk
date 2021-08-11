@@ -168,7 +168,7 @@ const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
-
+    const nodePrivacyLevel = getNodePrivacyLevel(target)
     if (
       !target ||
       !target.tagName ||
@@ -184,7 +184,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
     if (type === 'radio' || type === 'checkbox') {
       inputState = { isChecked: (target as HTMLInputElement).checked }
     } else {
-      const value = getElementInputValue(target)
+      const value = getElementInputValue(target, nodePrivacyLevel)
       if (value === undefined) {
         return
       }

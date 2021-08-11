@@ -20,7 +20,7 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
-import { makeStylesheetUrlsAbsolute } from './serializationUtils'
+import { makeStylesheetUrlsAbsolute, makeSrcsetUrlsAbsolute, makeUrlAbsolute } from './serializationUtils'
 
 import { shouldIgnoreElement } from './serialize'
 
@@ -144,6 +144,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
         return NodePrivacyLevelInternal.MASK
       }
       const autocomplete = inputElement.getAttribute('autocomplete')
+      // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
       if (autocomplete && autocomplete.indexOf('cc-') === 0) {
         return NodePrivacyLevelInternal.MASK
       }
@@ -188,50 +189,58 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
   return NodePrivacyLevelInternal.NOT_SET
 }
 
-export function getAttributesForPrivacyLevel(
+export function serializeAttribute(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevel
-): Record<string, string | number | boolean> {
-  /*
-    NEVER ALLOW	`value` under these conditions
-    input[type=password]	
-    input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]	
-    MAYBE: input[type=tel,email]	
-  */
+  nodePrivacyLevel: NodePrivacyLevel,
+  attributeName: string
+): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-    return {}
+    // dup condition for direct access case
+    return null
   }
+  const attributeValue = element.getAttribute(attributeName)
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    const tagName = element.tagName
 
-  const tagName = element.tagName
-  const safeAttrs: Record<string, string> = {}
-
-  getAttributeEntries(element.attributes).forEach(([attrName, attrVal]) => {
-    // Never take those attributes into account, as they will be conditionally added in `serializeElementNode`
-    if (attrName !== 'value' && attrName !== 'selected' && attrName !== 'checked') {
-      safeAttrs[attrName] = attrVal
-    }
-
-    if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    switch (attributeName) {
       // Mask Attribute text content
-      if (attrName === 'title' || attrName === 'alt') {
-        safeAttrs[attrName] = CENSORED_STRING_MARK
-      } // mask image URLs
-      else if (tagName === 'IMG' || tagName === 'SOURCE') {
-        if (attrName === 'src' || attrName === 'srcset') {
-          safeAttrs[attrName] = CENSORED_IMG_MARK
-        }
-      } // mask <a> URLs
-      else if (tagName === 'A' && attrName === 'href') {
-        safeAttrs[attrName] = CENSORED_STRING_MARK
-      } // mask data-* attributes
-      else if (attrName.indexOf('data-') === 0 && attrVal && attrName !== PRIVACY_ATTR_NAME) {
-        // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
-        safeAttrs[attrName] = CENSORED_STRING_MARK
+      case 'title':
+      case 'alt':
+        return CENSORED_STRING_MARK
+    }
+    // mask image URLs
+    if (tagName === 'IMG' || tagName === 'SOURCE') {
+      if (attributeName === 'src' || attributeName === 'srcset') {
+        return CENSORED_IMG_MARK
       }
     }
-  })
+    // mask <a> URLs
+    if (tagName === 'A' && attributeName === 'href') {
+      return CENSORED_STRING_MARK
+    }
+    // mask data-* attributes
+    if (attributeValue && attributeName.indexOf('data-') === 0 && attributeName !== PRIVACY_ATTR_NAME) {
+      // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
+      return CENSORED_STRING_MARK
+    }
+  }
 
-  return safeAttrs
+  // Rebuild absolute URLs from relative (without using <base> tag)
+  if (!attributeValue || typeof attributeValue !== 'string') {
+    return attributeValue
+  }
+  const doc = element.ownerDocument
+  switch (attributeName) {
+    case 'src':
+    case 'href':
+      return makeUrlAbsolute(attributeValue, doc.location?.href)
+    case 'srcset':
+      return makeSrcsetUrlsAbsolute(attributeValue, doc.location?.href)
+    case 'style':
+      return makeStylesheetUrlsAbsolute(attributeValue, doc.location?.href)
+    default:
+      return attributeValue
+  }
 }
 
 function isElement(node: Node): node is Element {
@@ -315,16 +324,6 @@ export const scrambleText = (text: string) => {
     i++
   }
   return whitespacedText.join('')
-}
-
-type HtmlAttribute = { name: string; value: string }
-function getAttributeEntries(attributes: NamedNodeMap) {
-  const attributeEntries: Array<[string, string]> = []
-  for (let i = 0; i < attributes.length; i += 1) {
-    const attribute = attributes.item(i) as HtmlAttribute
-    attributeEntries.push([attribute.name, attribute.value])
-  }
-  return attributeEntries
 }
 
 export function getTextContent(

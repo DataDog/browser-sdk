@@ -6,10 +6,10 @@ import {
   CENSORED_STRING_MARK,
 } from '../../constants'
 import {
-  getAttributesForPrivacyLevel,
   remapInternalPrivacyLevels,
   getInternalNodePrivacyLevel,
   getInitialPrivacyLevel,
+  serializeAttribute,
   getTextContent,
 } from './privacy'
 import {
@@ -26,7 +26,7 @@ import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
   setSerializedNode,
-  transformAttribute,
+  getElementInputValue,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -136,138 +136,10 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   // Ignore Elements like Script and some Link, Metas
   if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
-    // TODO: We should still record ignored elements, just not their textNode content.
-    // TODO: On the record or replay side, we should prefix the tagName so it has no effect.
     return
   }
 
   const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
-
-  // Inlining ObjectEntries for perf
-  const attributeKeys = Object.keys(attributes)
-  for (let i = 0; i < attributeKeys.length; i += 1) {
-    const attributeName = attributeKeys[i]
-    const attributeValue = attributes[attributeName] as string
-    // Add domains to relative URLs
-    attributes[attributeName] = transformAttribute(options.document, attributeName, attributeValue)
-  }
-
-  // remote css
-  if (tagName === 'link') {
-    const stylesheet = Array.from(options.document.styleSheets).find(
-      (s) => s.href === (element as HTMLLinkElement).href
-    )
-    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
-    if (cssText) {
-      delete attributes.rel
-      delete attributes.href
-      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
-    }
-  }
-
-  // dynamic stylesheet
-  if (
-    tagName === 'style' &&
-    (element as HTMLStyleElement).sheet &&
-    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
-    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
-  ) {
-    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
-    if (cssText) {
-      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
-    }
-  }
-
-  /**
-   * FORMS: <input>, <select>
-   * For some <input> elements, the `value` is an exceptional property/attribute that has the
-   * value synced between el.value and el.getAttribute()
-   * input[type=button,checkbox,hidden,image,radio,reset,submit]
-   */
-  const inputElement = element as HTMLInputElement
-  if (tagName === 'input' && (element as HTMLInputElement).value) {
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        attributes.value = inputElement.value
-        break
-      case NodePrivacyLevel.MASK:
-        attributes.value = CENSORED_STRING_MARK
-        break
-    }
-  }
-
-  /**
-   * Forms: input[type=checkbox,radio]
-   * The `checked` property for <input> is a little bit special:
-   * 1. el.checked is a setter that returns if truthy.
-   * 2. getAttribute returns the string value
-   * getAttribute('checked') does not sync with `Element.checked`, so use JS property
-   * NOTE: `checked` property exists on `HTMLInputElement`. For serializer assumptions, we check for type=radio|check.
-   */
-  if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        attributes.checked = !!inputElement.checked
-        break
-      case NodePrivacyLevel.MASK:
-        attributes.checked = CENSORED_STRING_MARK
-        break
-    }
-  }
-
-  if (tagName === 'textarea') {
-    const textAreaElement = element as HTMLTextAreaElement
-    // Matching empty strings is not considered selected.
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        attributes.value = textAreaElement.value
-        break
-      case NodePrivacyLevel.MASK:
-        attributes.value = textAreaElement.value ? CENSORED_STRING_MARK : ''
-        break
-    }
-  }
-
-  if (tagName === 'select') {
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        attributes.value = inputElement.value
-        break
-      case NodePrivacyLevel.MASK:
-        attributes.value = inputElement.value ? CENSORED_STRING_MARK : ''
-        break
-    }
-  }
-
-  /**
-   * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
-   */
-  if (tagName === 'option' && nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
-    // For privacy=`MASK`, all the values would be the same, so skip.
-    const optionElement = element as HTMLOptionElement
-    if (optionElement.selected) {
-      attributes.selected = optionElement.selected
-    }
-    attributes.value = optionElement.value
-  }
-
-  /**
-   * Serialize the media playback state
-   */
-  if (tagName === 'audio' || tagName === 'video') {
-    const mediaElement = element as HTMLMediaElement
-    attributes.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
-  }
-
-  /**
-   * Serialize the scroll state for each element
-   */
-  if (element.scrollLeft) {
-    attributes.rr_scrollLeft = Math.round(element.scrollLeft)
-  }
-  if (element.scrollTop) {
-    attributes.rr_scrollTop = Math.round(element.scrollTop)
-  }
 
   let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
@@ -297,7 +169,6 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 }
 
 /**
- * TODO: Deprecate this check and move to replay side
  * TODO: Preserve CSS element order, and record the presence of the tag, just don't render
  * We don't need this logic on the recorder side.
  * For security related meta's, customer can mask themmanually given they
@@ -453,4 +324,111 @@ function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
 
 function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
+}
+
+function getAttributesForPrivacyLevel(
+  element: Element,
+  nodePrivacyLevel: NodePrivacyLevel
+): Record<string, string | number | boolean> {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    return {}
+  }
+  const safeAttrs: Record<string, string | number | boolean> = {}
+  const tagName = getValidTagName(element.tagName)
+  const doc = element.ownerDocument
+
+  type HtmlAttribute = { name: string; value: string }
+  for (let i = 0; i < element.attributes.length; i += 1) {
+    const attribute = element.attributes.item(i) as HtmlAttribute
+    const attributeName = attribute.name
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
+    if (attributeValue !== null) {
+      safeAttrs[attributeName] = attributeValue
+    }
+  }
+
+  if (
+    (element as HTMLInputElement).value &&
+    (tagName === 'textarea' || tagName === 'select' || tagName === 'option' || tagName === 'input')
+  ) {
+    const formValue = getElementInputValue(element, nodePrivacyLevel)
+    if (formValue !== undefined) {
+      safeAttrs.value = formValue
+    }
+  }
+
+  /**
+   * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
+   */
+  if (tagName === 'option' && nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
+    // For privacy=`MASK`, all the values would be the same, so skip.
+    const optionElement = element as HTMLOptionElement
+    if (optionElement.selected) {
+      safeAttrs.selected = optionElement.selected
+    }
+  }
+
+  // remote css
+  if (tagName === 'link') {
+    const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
+    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
+    if (cssText && stylesheet) {
+      delete safeAttrs.rel
+      delete safeAttrs.href
+      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet.href!)
+    }
+  }
+
+  // dynamic stylesheet
+  if (
+    tagName === 'style' &&
+    (element as HTMLStyleElement).sheet &&
+    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
+    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
+  ) {
+    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
+    if (cssText) {
+      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
+    }
+  }
+
+  /**
+   * Forms: input[type=checkbox,radio]
+   * The `checked` property for <input> is a little bit special:
+   * 1. el.checked is a setter that returns if truthy.
+   * 2. getAttribute returns the string value
+   * getAttribute('checked') does not sync with `Element.checked`, so use JS property
+   * NOTE: `checked` property exists on `HTMLInputElement`. For serializer assumptions, we check for type=radio|check.
+   */
+  const inputElement = element as HTMLInputElement
+  if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
+    switch (nodePrivacyLevel) {
+      case NodePrivacyLevel.ALLOW:
+        safeAttrs.checked = !!inputElement.checked
+        break
+      case NodePrivacyLevel.MASK:
+        safeAttrs.checked = CENSORED_STRING_MARK
+        break
+    }
+  }
+
+  /**
+   * Serialize the media playback state
+   */
+  if (tagName === 'audio' || tagName === 'video') {
+    const mediaElement = element as HTMLMediaElement
+    safeAttrs.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
+  }
+
+  /**
+   * Serialize the scroll state for each element
+   */
+  if (element.scrollLeft) {
+    safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+  }
+  if (element.scrollTop) {
+    safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+  }
+
+  return safeAttrs
 }
