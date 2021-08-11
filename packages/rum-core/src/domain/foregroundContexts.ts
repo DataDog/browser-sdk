@@ -14,6 +14,9 @@ import { InForegroundPeriod } from '../rawRumEvent.types'
 
 // Arbitrary value to cap number of element (mostly for backend)
 export const MAX_NUMBER_OF_FOCUSED_TIME = 500
+// ignore duplicate focus & blur events if coming in the right after the previous one
+// chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1237904
+const MAX_TIME_TO_IGNORE_DUPLICATE = 10 as RelativeTime
 
 export interface ForegroundContexts {
   getInForeground: (startTime: RelativeTime) => boolean | undefined
@@ -36,6 +39,7 @@ export function startForegroundContexts(configuration: Configuration): Foregroun
       stop: noop,
     }
   }
+
   if (document.hasFocus()) {
     addNewForegroundPeriod()
   }
@@ -59,15 +63,22 @@ function addNewForegroundPeriod() {
     return
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
+  const now = relativeNow()
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
-    addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
-      inForegroundPeriodsCount: foregroundPeriods.length,
-      currentForegroundPeriodStart: currentForegroundPeriod.start,
-    })
+    if (now - currentForegroundPeriod.start > MAX_TIME_TO_IGNORE_DUPLICATE) {
+      addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
+        foregroundPeriods: {
+          count: foregroundPeriods.length,
+          currentStart: currentForegroundPeriod.start,
+          now,
+          diff: now - currentForegroundPeriod.start,
+        },
+      })
+    }
     return
   }
   foregroundPeriods.push({
-    start: relativeNow(),
+    start: now,
   })
 }
 
@@ -77,15 +88,23 @@ function closeForegroundPeriod() {
     return
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
+  const now = relativeNow()
   if (currentForegroundPeriod.end !== undefined) {
-    addMonitoringMessage('Current foreground period already closed', {
-      inForegroundPeriodsCount: foregroundPeriods.length,
-      currentForegroundPeriodStart: currentForegroundPeriod.start,
-      currentForegroundPeriodEnd: currentForegroundPeriod.end,
-    })
+    if (now - currentForegroundPeriod.end > MAX_TIME_TO_IGNORE_DUPLICATE) {
+      addMonitoringMessage('Current foreground period already closed', {
+        foregroundPeriods: {
+          count: foregroundPeriods.length,
+          currentStart: currentForegroundPeriod.start,
+          currentEnd: currentForegroundPeriod.end,
+          now,
+          diff: now - currentForegroundPeriod.end,
+        },
+        now: relativeNow(),
+      })
+    }
     return
   }
-  currentForegroundPeriod.end = relativeNow()
+  currentForegroundPeriod.end = now
 }
 
 function trackFocus(onFocusChange: () => void) {
