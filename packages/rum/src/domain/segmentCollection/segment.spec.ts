@@ -32,7 +32,7 @@ describe('Segment', () => {
   })
 
   it('writes a segment', () => {
-    const onWroteSpy = jasmine.createSpy<(sizes: { raw: number; compressed: number }) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
     const segment = new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy, onFlushedSpy)
 
@@ -96,13 +96,10 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callback when data is written', () => {
-    const onWroteSpy = jasmine.createSpy<(sizes: { raw: number; compressed: number }) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy, noop)
     worker.processAllMessages()
-    expect(onWroteSpy).toHaveBeenCalledOnceWith({
-      raw: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE,
-      compressed: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE,
-    })
+    expect(onWroteSpy).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE)
   })
 
   it('calls the onFlushed callback when data is flush', () => {
@@ -114,21 +111,15 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callbacks separately when two Segment are used', () => {
-    const onWroteSpy1 = jasmine.createSpy<(sizes: { raw: number; compressed: number }) => void>()
-    const onWroteSpy2 = jasmine.createSpy<(sizes: { raw: number; compressed: number }) => void>()
+    const onWroteSpy1 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
+    const onWroteSpy2 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     const segment1 = new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy1, noop)
     segment1.flush()
     const segment2 = new Segment(worker, CONTEXT, 'max_duration', FULL_SNAPSHOT_RECORD, onWroteSpy2, noop)
     segment2.flush()
     worker.processAllMessages()
-    expect(onWroteSpy1).toHaveBeenCalledOnceWith({
-      compressed: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE,
-      raw: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE,
-    })
-    expect(onWroteSpy2).toHaveBeenCalledOnceWith({
-      compressed: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE,
-      raw: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE,
-    })
+    expect(onWroteSpy1).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE)
+    expect(onWroteSpy2).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE)
   })
 
   it('unsubscribes from the worker if a flush() response fails and another Segment is used', () => {

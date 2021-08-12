@@ -140,8 +140,8 @@ export function doStartSegmentCollection(
       context,
       creationReason,
       initialRecord,
-      (sizes) => {
-        if (!segment.isFlushed && sizes.compressed > MAX_SEGMENT_SIZE) {
+      (compressedSegmentSize) => {
+        if (!segment.isFlushed && compressedSegmentSize > MAX_SEGMENT_SIZE) {
           flushSegment('max_size')
         }
       },

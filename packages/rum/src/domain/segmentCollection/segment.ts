@@ -21,7 +21,7 @@ export class Segment {
     readonly context: SegmentContext,
     private creationReason: CreationReason,
     initialRecord: Record,
-    onWrote: (sizes: { compressed: number; raw: number }) => void,
+    onWrote: (compressedSize: number) => void,
     onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
     this.start = initialRecord.timestamp
@@ -33,20 +33,18 @@ export class Segment {
     this.replayStats.segments_count += 1
     this.replayStats.records_count += 1
 
-    let previousRawSize = 0
     const listener: DeflateWorkerListener = monitor(({ data }) => {
       if ('error' in data) {
         return
       }
 
       if (data.id === this.id) {
-        this.replayStats.segments_total_raw_size += data.rawSize - previousRawSize
-        previousRawSize = data.rawSize
+        this.replayStats.segments_total_raw_size += data.additionalRawSize
         if ('result' in data) {
           onFlushed(data.result, data.rawSize)
           worker.removeEventListener('message', listener)
         } else {
-          onWrote({ compressed: data.compressedSize, raw: data.rawSize })
+          onWrote(data.compressedSize)
         }
       } else if (data.id > this.id) {
         // Messages should be received in the same order as they are sent, so if we receive a

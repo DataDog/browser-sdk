@@ -77,6 +77,7 @@ export class MockWorker implements DeflateWorker {
                 id: message.id,
                 compressedSize: uint8ArraysSize(this.deflatedData),
                 rawSize: this.rawSize,
+                additionalRawSize: encodedData.length,
               },
             })
           )
@@ -88,6 +89,7 @@ export class MockWorker implements DeflateWorker {
                 id: message.id,
                 result: mergeUint8Arrays(this.deflatedData),
                 rawSize: this.rawSize,
+                additionalRawSize: encodedData.length,
               },
             })
           )
