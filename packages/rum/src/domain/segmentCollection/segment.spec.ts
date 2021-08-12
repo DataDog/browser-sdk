@@ -12,6 +12,8 @@ const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp:
 const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
 const ENCODED_RECORD_SIZE = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
+const ENCODED_SEPARATOR_SIZE = 1 // ,
+const ENCODED_META_SIZE = 155 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -156,7 +158,7 @@ describe('Segment', () => {
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
-        segments_total_raw_size: 47,
+        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE,
       })
     })
 
@@ -167,7 +169,7 @@ describe('Segment', () => {
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
-        segments_total_raw_size: 202,
+        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE + ENCODED_META_SIZE,
       })
     })
 
@@ -178,7 +180,11 @@ describe('Segment', () => {
       expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 2,
-        segments_total_raw_size: 73,
+        segments_total_raw_size:
+          ENCODED_SEGMENT_HEADER_SIZE +
+          ENCODED_FULL_SNAPSHOT_RECORD_SIZE +
+          ENCODED_SEPARATOR_SIZE +
+          ENCODED_RECORD_SIZE,
       })
     })
   })
