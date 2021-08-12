@@ -101,7 +101,7 @@ export interface RawRumViewEvent {
   }
   _dd: {
     document_version: number
-    replay?: ViewReplayStats
+    replay_stats?: ReplayStats
   }
 }
 
@@ -119,7 +119,7 @@ export interface ViewCustomTimings {
   [key: string]: Duration
 }
 
-export interface ViewReplayStats {
+export interface ReplayStats {
   records_count: number
   segments_count: number
   segments_total_raw_size: number

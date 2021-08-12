@@ -42,7 +42,7 @@ const VIEW: ViewEvent = {
 
 describe('viewCollection', () => {
   let setupBuilder: TestSetupBuilder
-  let getViewStatsSpy: jasmine.Spy<RecorderApi['getViewStats']>
+  let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
 
   beforeEach(() => {
     setupBuilder = setup()
@@ -53,10 +53,10 @@ describe('viewCollection', () => {
         getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
       .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
-        getViewStatsSpy = jasmine.createSpy()
+        getReplayStatsSpy = jasmine.createSpy()
         startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts, {
           ...noopRecorderApi,
-          getViewStats: getViewStatsSpy,
+          getReplayStats: getReplayStatsSpy,
         })
       })
   })
@@ -73,7 +73,7 @@ describe('viewCollection', () => {
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,
-        replay: undefined,
+        replay_stats: undefined,
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
@@ -118,7 +118,7 @@ describe('viewCollection', () => {
 
   it('should include replay information if available', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    getViewStatsSpy.and.callFake((viewId) => {
+    getReplayStatsSpy.and.callFake((viewId) => {
       if (viewId === VIEW.id) {
         return { segments_count: 4, records_count: 10, segments_total_raw_size: 1000 }
       }
@@ -128,7 +128,7 @@ describe('viewCollection', () => {
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
-    expect(rawRumViewEvent._dd.replay).toEqual({
+    expect(rawRumViewEvent._dd.replay_stats).toEqual({
       segments_count: 4,
       records_count: 10,
       segments_total_raw_size: 1000,

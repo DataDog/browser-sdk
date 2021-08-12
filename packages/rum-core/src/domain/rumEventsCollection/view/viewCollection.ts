@@ -37,11 +37,11 @@ function processViewUpdate(
   foregroundContexts: ForegroundContexts,
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
-  const replayStats = recorderApi.getViewStats(view.id)
+  const replayStats = recorderApi.getReplayStats(view.id)
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
-      replay: replayStats,
+      replay_stats: replayStats,
     },
     date: view.startClocks.timeStamp,
     type: RumEventType.VIEW,

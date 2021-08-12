@@ -2,7 +2,7 @@ import { noop, setDebugMode, display } from '@datadog/browser-core'
 import { isIE } from '@datadog/browser-core/test/specHelper'
 import { MockWorker, parseSegment } from '../../../test/utils'
 import { Record, RecordType, SegmentContext } from '../../types'
-import { getViewStats, resetViewStats } from '../viewStats'
+import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -145,15 +145,15 @@ describe('Segment', () => {
     )
   })
 
-  describe('updates view stats', () => {
+  describe('updates replay stats', () => {
     beforeEach(() => {
-      resetViewStats()
+      resetReplayStats()
     })
 
     it('when creating a segment', () => {
       new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
       worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
+      expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
         segments_total_raw_size: 47,
@@ -164,7 +164,7 @@ describe('Segment', () => {
       const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
       segment.flush()
       worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
+      expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 1,
         segments_total_raw_size: 202,
@@ -175,7 +175,7 @@ describe('Segment', () => {
       const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
       segment.addRecord(RECORD)
       worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
+      expect(getReplayStats('b')).toEqual({
         segments_count: 1,
         records_count: 2,
         segments_total_raw_size: 73,

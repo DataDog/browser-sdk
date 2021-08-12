@@ -1,36 +1,36 @@
-import { ViewReplayStats } from '@datadog/browser-rum-core'
+import { ReplayStats } from '@datadog/browser-rum-core'
 
 export const MAX_STATS_HISTORY = 10
-let statsPerView: Map<string, ViewReplayStats> | undefined
+let statsPerView: Map<string, ReplayStats> | undefined
 
-export function getOrCreateViewStats(viewId: string) {
+export function getOrCreateReplayStats(viewId: string) {
   if (!statsPerView) {
     statsPerView = new Map()
   }
 
-  let viewStats: ViewReplayStats
+  let replayStats: ReplayStats
   if (statsPerView.has(viewId)) {
-    viewStats = statsPerView.get(viewId)!
+    replayStats = statsPerView.get(viewId)!
   } else {
-    viewStats = {
+    replayStats = {
       records_count: 0,
       segments_count: 0,
       segments_total_raw_size: 0,
     }
-    statsPerView.set(viewId, viewStats)
+    statsPerView.set(viewId, replayStats)
     if (statsPerView.size > MAX_STATS_HISTORY) {
       deleteOldestStats()
     }
   }
 
-  return viewStats
+  return replayStats
 }
 
-export function getViewStats(viewId: string) {
+export function getReplayStats(viewId: string) {
   return statsPerView?.get(viewId)
 }
 
-export function resetViewStats() {
+export function resetReplayStats() {
   statsPerView = undefined
 }
 

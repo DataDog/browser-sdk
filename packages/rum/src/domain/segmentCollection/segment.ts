@@ -1,7 +1,7 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
-import { ViewReplayStats } from '@datadog/browser-rum-core'
+import { ReplayStats } from '@datadog/browser-rum-core'
 import { CreationReason, Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
-import { getOrCreateViewStats } from '../viewStats'
+import { getOrCreateReplayStats } from '../replayStats'
 import { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
 
 let nextId = 0
@@ -14,7 +14,7 @@ export class Segment {
   private end: number
   private recordsCount: number
   private hasFullSnapshot: boolean
-  private viewStats: ViewReplayStats
+  private replayStats: ReplayStats
 
   constructor(
     private worker: DeflateWorker,
@@ -29,9 +29,9 @@ export class Segment {
     this.recordsCount = 1
     this.hasFullSnapshot = initialRecord.type === RecordType.FullSnapshot
 
-    this.viewStats = getOrCreateViewStats(context.view.id)
-    this.viewStats.segments_count += 1
-    this.viewStats.records_count += 1
+    this.replayStats = getOrCreateReplayStats(context.view.id)
+    this.replayStats.segments_count += 1
+    this.replayStats.records_count += 1
 
     let previousRawSize = 0
     const listener: DeflateWorkerListener = monitor(({ data }) => {
@@ -40,7 +40,7 @@ export class Segment {
       }
 
       if (data.id === this.id) {
-        this.viewStats.segments_total_raw_size += data.rawSize - previousRawSize
+        this.replayStats.segments_total_raw_size += data.rawSize - previousRawSize
         previousRawSize = data.rawSize
         if ('result' in data) {
           onFlushed(data.result, data.rawSize)
@@ -68,7 +68,7 @@ export class Segment {
   addRecord(record: Record): void {
     this.end = record.timestamp
     this.recordsCount += 1
-    this.viewStats.records_count += 1
+    this.replayStats.records_count += 1
     this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }

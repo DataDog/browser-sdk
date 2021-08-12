@@ -23,7 +23,7 @@ import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
 import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, User, ActionType, ViewReplayStats } from '../rawRumEvent.types'
+import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
@@ -57,7 +57,7 @@ export interface RecorderApi {
     parentContexts: ParentContexts
   ) => void
   isRecording: () => boolean
-  getViewStats: (viewId: string) => ViewReplayStats | undefined
+  getReplayStats: (viewId: string) => ReplayStats | undefined
 }
 
 export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>, recorderApi: RecorderApi) {

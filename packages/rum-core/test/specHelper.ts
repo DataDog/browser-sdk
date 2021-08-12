@@ -249,5 +249,5 @@ export const noopRecorderApi: RecorderApi = {
   stop: noop,
   isRecording: () => false,
   onRumStart: noop,
-  getViewStats: () => undefined,
+  getReplayStats: () => undefined,
 }
