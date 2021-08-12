@@ -2,6 +2,7 @@ import { noop, setDebugMode, display } from '@datadog/browser-core'
 import { isIE } from '@datadog/browser-core/test/specHelper'
 import { MockWorker, parseSegment } from '../../../test/utils'
 import { Record, RecordType, SegmentContext } from '../../types'
+import { getViewStats, resetViewStats } from '../viewStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -142,5 +143,43 @@ describe('Segment', () => {
       "Segment did not receive a 'flush' response before being replaced.",
       undefined
     )
+  })
+
+  describe('updates view stats', () => {
+    beforeEach(() => {
+      resetViewStats()
+    })
+
+    it('when creating a segment', () => {
+      new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      worker.processAllMessages()
+      expect(getViewStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 1,
+        segments_total_raw_size: 47,
+      })
+    })
+
+    it('when flushing a segment', () => {
+      const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      segment.flush()
+      worker.processAllMessages()
+      expect(getViewStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 1,
+        segments_total_raw_size: 202,
+      })
+    })
+
+    it('when adding a record', () => {
+      const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      segment.addRecord(RECORD)
+      worker.processAllMessages()
+      expect(getViewStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 2,
+        segments_total_raw_size: 73,
+      })
+    })
   })
 })

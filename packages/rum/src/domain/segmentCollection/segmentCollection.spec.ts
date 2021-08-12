@@ -12,7 +12,6 @@ import { createRumSessionMock } from '../../../../rum-core/test/mockRumSession'
 import { Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
 import { MockWorker } from '../../../test/utils'
 import { SEND_BEACON_BYTE_LENGTH_LIMIT } from '../../transport/send'
-import { getViewStats, resetViewStats } from '../viewStats'
 import { computeSegmentContext, doStartSegmentCollection, MAX_SEGMENT_DURATION } from './segmentCollection'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -65,7 +64,6 @@ describe('startSegmentCollection', () => {
   afterEach(() => {
     clock?.cleanup()
     stopSegmentCollection()
-    resetViewStats()
   })
 
   it('immediately starts a new segment', () => {
@@ -214,47 +212,6 @@ describe('startSegmentCollection', () => {
       stopSegmentCollection()
       worker.processAllMessages()
       expect(sendSpy).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('updates view stats', () => {
-    it('when adding a new record', () => {
-      const { addRecord, worker } = startSegmentCollection(CONTEXT)
-      expect(getViewStats('b')).toEqual(undefined)
-      addRecord(RECORD)
-      worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
-        segments_count: 1,
-        records_count: 1,
-        segments_total_raw_size: 37,
-      })
-    })
-
-    it('when sending a segment', () => {
-      const { lifeCycle, addRecord, worker } = startSegmentCollection(CONTEXT)
-      expect(getViewStats('b')).toEqual(undefined)
-      addRecord(RECORD)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-      worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
-        segments_count: 1,
-        records_count: 1,
-        segments_total_raw_size: 193,
-      })
-    })
-
-    it('when creating a new segment', () => {
-      const { lifeCycle, addRecord, worker } = startSegmentCollection(CONTEXT)
-      expect(getViewStats('b')).toEqual(undefined)
-      addRecord(RECORD)
-      lifeCycle.notify(LifeCycleEventType.BEFORE_UNLOAD)
-      addRecord(RECORD)
-      worker.processAllMessages()
-      expect(getViewStats('b')).toEqual({
-        segments_count: 2,
-        records_count: 2,
-        segments_total_raw_size: 230,
-      })
     })
   })
 })
