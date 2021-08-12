@@ -66,7 +66,7 @@ export class MockWorker implements DeflateWorker {
     if (message) {
       const encodedData = new TextEncoder().encode(message.data)
       this.rawSize += encodedData.length
-      // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string of deflating it.
+      // In the mock worker, for simplicity, we'll just use the UTF-8 encoded string instead of deflating it.
       this.deflatedData.push(encodedData)
 
       switch (message.action) {
