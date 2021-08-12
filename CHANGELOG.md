@@ -16,6 +16,12 @@
 
 ---
 
+## v3.1.2
+
+- ✨[RUMF-970] enable buffered PerformanceObserver ([#995](https://github.com/DataDog/browser-sdk/pull/995))
+- Limit log monitoring + add more details ([#990](https://github.com/DataDog/browser-sdk/pull/990))
+- 🗑️ Remove deprecated trace endpoint ([#992](https://github.com/DataDog/browser-sdk/pull/992))
+
 ## v3.1.1
 
 - ⚗ [RUMF-970] Buffered PerformanceObserver: add fallback for older browsers ([#978](https://github.com/DataDog/browser-sdk/pull/978))
