@@ -118,14 +118,11 @@ describe('viewCollection', () => {
 
   it('should include replay information if available', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    getReplayStatsSpy.and.callFake((viewId) => {
-      if (viewId === VIEW.id) {
-        return { segments_count: 4, records_count: 10, segments_total_raw_size: 1000 }
-      }
-    })
+    getReplayStatsSpy.and.callFake(() => ({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 }))
 
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
+    expect(getReplayStatsSpy).toHaveBeenCalledWith(VIEW.id)
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
     const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
     expect(rawRumViewEvent._dd.replay_stats).toEqual({
