@@ -6,7 +6,7 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventDomainContext } from '../domainContext.types'
 import { CommonContext, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
-import { startRumAssembly } from './assembly'
+import { BrowserWindow, startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
 import { RumSessionPlan } from './rumSession'
 
@@ -503,7 +503,7 @@ describe('rum assembly', () => {
       })
     })
 
-    it('should detect synthetics sessions', () => {
+    it('should detect synthetics sessions from UA', () => {
       setUserAgent('foo DatadogSynthetics bar')
 
       const { lifeCycle } = setupBuilder.build()
@@ -513,6 +513,19 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].session.type).toEqual('synthetics')
       restoreUserAgent()
+    })
+
+    it('should detect synthetics sessions from global', () => {
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER = true
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].session.type).toEqual('synthetics')
+
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {

@@ -119,26 +119,21 @@ export function startPerformanceCollection(lifeCycle: LifeCycle, configuration: 
     const mainEntries = ['resource', 'navigation', 'longtask', 'paint']
     const experimentalEntries = ['largest-contentful-paint', 'first-input', 'layout-shift']
 
-    if (!configuration.isEnabled('buffered-perf')) {
-      const observer = new PerformanceObserver(handlePerformanceEntryList)
-      observer.observe({ entryTypes: mainEntries.concat(experimentalEntries) })
-    } else {
-      try {
-        // Experimental entries are not retrieved by performance.getEntries()
-        // use a single PerformanceObserver with buffered flag by type
-        // to get values that could happen before SDK init
-        experimentalEntries.forEach((type) => {
-          const observer = new PerformanceObserver(handlePerformanceEntryList)
-          observer.observe({ type, buffered: true })
-        })
-      } catch (e) {
-        // Some old browser versions don't support PerformanceObserver without entryTypes option
-        mainEntries.push(...experimentalEntries)
-      }
-
-      const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
-      mainObserver.observe({ entryTypes: mainEntries })
+    try {
+      // Experimental entries are not retrieved by performance.getEntries()
+      // use a single PerformanceObserver with buffered flag by type
+      // to get values that could happen before SDK init
+      experimentalEntries.forEach((type) => {
+        const observer = new PerformanceObserver(handlePerformanceEntryList)
+        observer.observe({ type, buffered: true })
+      })
+    } catch (e) {
+      // Some old browser versions don't support PerformanceObserver without entryTypes option
+      mainEntries.push(...experimentalEntries)
     }
+
+    const mainObserver = new PerformanceObserver(handlePerformanceEntryList)
+    mainObserver.observe({ entryTypes: mainEntries })
 
     if (supportPerformanceObject() && 'addEventListener' in performance) {
       // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
