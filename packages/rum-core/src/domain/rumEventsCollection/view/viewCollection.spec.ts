@@ -118,7 +118,7 @@ describe('viewCollection', () => {
 
   it('should include replay information if available', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    getReplayStatsSpy.and.callFake(() => ({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 }))
+    getReplayStatsSpy.and.returnValue({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 })
 
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
