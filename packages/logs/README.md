@@ -56,7 +56,7 @@ Load and configure the SDK in the head section of your pages.
         h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
         d=o.createElement(u);d.async=1;d.src=n
         n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-      })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-logs.js','DD_LOGS')
+      })(window,document,'script','https://www.datadoghq-browser-agent.com/datadog-logs-v3.js','DD_LOGS')
       DD_LOGS.onReady(function() {
           DD_LOGS.init({
             clientToken: 'XXX',
@@ -80,7 +80,7 @@ To receive all logs and errors, load and configure the SDK at the beginning of t
 <html>
   <head>
     <title>Example to send logs to Datadog</title>
-    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs.js"></script>
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-v3.js"></script>
     <script>
       window.DD_LOGS &&
         DD_LOGS.init({
