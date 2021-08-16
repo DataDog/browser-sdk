@@ -25,8 +25,6 @@ import { makeStylesheetUrlsAbsolute, makeSrcsetUrlsAbsolute, makeUrlAbsolute } f
 import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = '᙮'
-const MIN_LEN_TO_MASK = 80
-const WHITESPACE_TEST = /^\s$/
 
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
   // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
@@ -270,12 +268,7 @@ export function isFormElement(node: Node | null): boolean {
  * For long text, we assume sufficient text entropy to support scrambling the non-whitespace characters in order to
  * preserve the charset, allowing for near  pixel perfect text shape.
  */
-export const censorText = (text: string) => {
-  if (text.length <= MIN_LEN_TO_MASK) {
-    return text.replace(/\S/g, TEXT_MASKING_CHAR)
-  }
-  return scrambleText(text)
-}
+export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 
 /**
  * Bias free random order sorting with Fisher-Yates algorithm
@@ -292,38 +285,6 @@ export function shuffle<T>(array: T[]) {
     array[i] = t
   }
   return array
-}
-
-/**
- * Scrambles all non-whitespace characters, with minimal transformations to preserve pixel perfect text shape.
- * We add in 10% of entropy to minimally protect the charset.
- */
-export const scrambleText = (text: string) => {
-  const reducedText = text.toLocaleLowerCase().replace(/[0-9]/gi, '0') // Hide financial data
-  const reducedChars = Array.from(reducedText)
-  const chars = []
-  for (let i = 0; i < reducedChars.length; i++) {
-    if (!WHITESPACE_TEST.test(reducedChars[i])) {
-      chars.push(reducedChars[i])
-    }
-  }
-  // Add 10% TEXT_MASKING_CHAR so that the charset is randomized by 10%
-  const addRandCharsLength = Math.ceil(reducedChars.length * 0.1)
-  const newChars = new Array(addRandCharsLength).fill(TEXT_MASKING_CHAR)
-  Array.prototype.push.apply(chars, newChars)
-  shuffle(chars)
-  // Now we put the scrambled chars back into the string, around the origional whitespace
-  const whitespacedText = []
-  let i = 0
-  while (whitespacedText.length < reducedChars.length) {
-    if (WHITESPACE_TEST.test(reducedChars[i])) {
-      whitespacedText.push(reducedChars[i])
-    } else {
-      whitespacedText.push(chars.pop())
-    }
-    i++
-  }
-  return whitespacedText.join('')
 }
 
 export function getTextContent(

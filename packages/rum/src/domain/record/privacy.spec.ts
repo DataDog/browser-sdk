@@ -2,7 +2,7 @@ import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
 import * as utils from '../../../../core/src/tools/utils'
 import { HTML } from '../../../test/htmlAst'
-import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, scrambleText, getNodePrivacyLevel } from './privacy'
+import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, getNodePrivacyLevel } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 import { serializeDocument, serializeDocumentNode, serializeChildNodes } from './serialize'
 
@@ -167,12 +167,6 @@ describe('privacy helpers', () => {
 })
 
 if (!isIE()) {
-  const getUniqueChars = (text: string) =>
-    text
-      .split('')
-      .filter((char, index, array) => array.indexOf(char) === index)
-      .join('')
-
   const buildFromHTML = (html: string) => {
     const el = document.createElement('div')
     el.innerHTML = html
@@ -272,34 +266,6 @@ if (!isIE()) {
         )
         expect(inherited).toBe(test.expect)
       })
-    })
-  })
-
-  describe('scrambleText()', function testScrambleText() {
-    // eslint-disable-next-line max-len
-    const loreumIpsum = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce non tortor arcu. Nulla quis fermentum nunc. Integer eget nunc risus. Vestibulum a ante vel ipsum molestie mollis. In risus eros, venenatis at mauris quis, sollicitudin pulvinar dolor. Nulla fringilla est nec turpis luctus faucibus. Integer congue, libero et varius lacinia, ipsum sapien hendrerit est, sit amet tempus massa orci non enim.\nVivamus euismod risus non urna faucibus auctor. Donec est quam, iaculis ultrices felis vel, sollicitudin eleifend nisl. Donec sollicitudin nibh eget velit consectetur semper. Integer hendrerit ligula ac est cursus, eget posuere purus blandit. Duis dolor sem, congue non sodales ac, elementum eget lorem. Cras porttitor ac eros eu accumsan. Vivamus sit amet scelerisque urna, eget tincidunt sem. Maecenas finibus, nisl convallis condimentum luctus, elit nulla fringilla odio, sit amet dictum nulla ante id ante.\n\nCurabitur efficitur hendrerit facilisis. Sed volutpat lectus sed tortor fringilla lacinia. Praesent eu lectus varius augue gravida blandit. Sed elementum eget nisl ut feugiat. Curabitur vitae ex in elit sodales luctus sed nec purus. Morbi sit amet fermentum orci. Curabitur vestibulum congue tortor eget mattis.\n\nSed tincidunt elit lacus, at placerat mi luctus quis. Vestibulum a turpis id dolor semper congue. Maecenas semper, est sed scelerisque porta, turpis diam molestie odio, eget ultrices massa arcu at mi. Phasellus laoreet nisi quis tellus cursus, a imperdiet ante condimentum. Aliquam ut rutrum augue, eget rhoncus nunc. Maecenas et velit ac nisi pretium molestie eget vitae magna. Phasellus dapibus metus in ipsum condimentum, a varius arcu vehicula. In in iaculis ipsum, quis facilisis sem. Donec tortor tellus, malesuada id viverra ut, scelerisque ac nunc. Nullam lobortis rutrum nulla, ut tincidunt metus commodo at. Ut vitae lorem ex. Cras facilisis facilisis neque molestie tincidunt. Pellentesque pellentesque mi magna. Etiam eget neque vitae quam blandit commodo vel in sapien.`
-    const scrambledText = scrambleText(loreumIpsum)
-
-    it('maintains length', () => {
-      expect(scrambledText.length).toBe(loreumIpsum.length)
-    })
-    it('is not censored', () => {
-      expect(scrambledText).not.toContain('xxx')
-    })
-    it('generally maintains charset upperbound', () => {
-      const loreumIpsumCharset = getUniqueChars(loreumIpsum)
-      const scrambledLoreumIpsumCharset = getUniqueChars(scrambledText)
-      // Upperbound charset is +1 because scrambling adds an asterisk
-      expect(loreumIpsumCharset.length + 1).toBeGreaterThanOrEqual(scrambledLoreumIpsumCharset.length)
-    })
-    it('generally maintains charset lowerbound', () => {
-      const loreumIpsumCharset = getUniqueChars(loreumIpsum)
-      // Lower bound charset is rough because of randomly eliminated chars, so is possibly flakey
-      const scrambledLoreumCharsetLengthSamples = new Array(100).fill(1).map(() => getUniqueChars(scrambledText).length)
-      // eslint-disable-next-line prefer-spread
-      const maxLoreumCharsetLength = Math.max.apply(Math, scrambledLoreumCharsetLengthSamples)
-      expect(loreumIpsumCharset.length - 15).toBeLessThanOrEqual(maxLoreumCharsetLength)
-      expect(maxLoreumCharsetLength).toBeGreaterThanOrEqual(20)
     })
   })
 }
