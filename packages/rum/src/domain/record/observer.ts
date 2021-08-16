@@ -173,7 +173,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
       !target ||
       !target.tagName ||
       !includes(INPUT_TAGS, target.tagName) ||
-      getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN
+      nodePrivacyLevel === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
@@ -182,6 +182,9 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
+      if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+        return
+      }
       inputState = { isChecked: (target as HTMLInputElement).checked }
     } else {
       const value = getElementInputValue(target, nodePrivacyLevel)
@@ -199,6 +202,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
+          // TODO: Consider the privacy implications for various differing input privacy levels
           cbWithDedup(el, { isChecked: false })
         }
       })

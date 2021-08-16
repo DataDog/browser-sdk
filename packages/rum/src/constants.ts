@@ -16,7 +16,7 @@ export type NodePrivacyLevelInternal = typeof NodePrivacyLevelInternal[keyof typ
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 
-// Deprecate via alias
+// Deprecate via temporariy Alias
 export const PRIVACY_CLASS_INPUT_IGNORED = 'dd-privacy-input-ignored' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_ATTR_VALUE_INPUT_IGNORED = 'input-ignored' // DEPRECATED, aliased to mask-forms-only
