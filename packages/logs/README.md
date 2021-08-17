@@ -254,7 +254,7 @@ If your Browser logs contain sensitive information that needs redacting, configu
 
 The `beforeSend` callback function gives you access to each event collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
 
-For examples of`beforeSend`, see [Enrich and control browser RUM data with beforeSend][5]. 
+For examples of `beforeSend`, see [Enrich and control browser RUM data with beforeSend][5]. 
 
 To redact email addresses from your web application URLs:
 
