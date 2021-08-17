@@ -6,6 +6,7 @@ export const datadogRum = makeRumPublicApi(startRum, {
   stop: noop,
   onRumStart: noop,
   isRecording: () => false,
+  getReplayStats: () => undefined,
 })
 
 interface BrowserWindow extends Window {

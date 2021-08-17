@@ -2,6 +2,7 @@ import { noop, setDebugMode, display } from '@datadog/browser-core'
 import { isIE } from '@datadog/browser-core/test/specHelper'
 import { MockWorker, parseSegment } from '../../../test/utils'
 import { Record, RecordType, SegmentContext } from '../../types'
+import { getReplayStats, resetReplayStats } from '../replayStats'
 import { Segment } from './segment'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
@@ -11,6 +12,8 @@ const FULL_SNAPSHOT_RECORD: Record = { type: RecordType.FullSnapshot, timestamp:
 const ENCODED_SEGMENT_HEADER_SIZE = 12 // {"records":[
 const ENCODED_RECORD_SIZE = 25
 const ENCODED_FULL_SNAPSHOT_RECORD_SIZE = 35
+const ENCODED_SEPARATOR_SIZE = 1 // ,
+const ENCODED_META_SIZE = 155 // this should stay accurate as long as less than 10 records are added
 
 describe('Segment', () => {
   let worker: MockWorker
@@ -29,7 +32,7 @@ describe('Segment', () => {
   })
 
   it('writes a segment', () => {
-    const onWroteSpy = jasmine.createSpy<(size: number) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     const onFlushedSpy = jasmine.createSpy<(data: Uint8Array) => void>()
     const segment = new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy, onFlushedSpy)
 
@@ -93,7 +96,7 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callback when data is written', () => {
-    const onWroteSpy = jasmine.createSpy<(size: number) => void>()
+    const onWroteSpy = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy, noop)
     worker.processAllMessages()
     expect(onWroteSpy).toHaveBeenCalledOnceWith(ENCODED_SEGMENT_HEADER_SIZE + ENCODED_RECORD_SIZE)
@@ -108,8 +111,8 @@ describe('Segment', () => {
   })
 
   it('calls the onWrote callbacks separately when two Segment are used', () => {
-    const onWroteSpy1 = jasmine.createSpy<(size: number) => void>()
-    const onWroteSpy2 = jasmine.createSpy<(size: number) => void>()
+    const onWroteSpy1 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
+    const onWroteSpy2 = jasmine.createSpy<(compressedSegmentSize: number) => void>()
     const segment1 = new Segment(worker, CONTEXT, 'init', RECORD, onWroteSpy1, noop)
     segment1.flush()
     const segment2 = new Segment(worker, CONTEXT, 'max_duration', FULL_SNAPSHOT_RECORD, onWroteSpy2, noop)
@@ -133,5 +136,47 @@ describe('Segment', () => {
       "Segment did not receive a 'flush' response before being replaced.",
       undefined
     )
+  })
+
+  describe('updates replay stats', () => {
+    beforeEach(() => {
+      resetReplayStats()
+    })
+
+    it('when creating a segment', () => {
+      new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      worker.processAllMessages()
+      expect(getReplayStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 1,
+        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE,
+      })
+    })
+
+    it('when flushing a segment', () => {
+      const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      segment.flush()
+      worker.processAllMessages()
+      expect(getReplayStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 1,
+        segments_total_raw_size: ENCODED_SEGMENT_HEADER_SIZE + ENCODED_FULL_SNAPSHOT_RECORD_SIZE + ENCODED_META_SIZE,
+      })
+    })
+
+    it('when adding a record', () => {
+      const segment = new Segment(worker, CONTEXT, 'init', FULL_SNAPSHOT_RECORD, noop, noop)
+      segment.addRecord(RECORD)
+      worker.processAllMessages()
+      expect(getReplayStats('b')).toEqual({
+        segments_count: 1,
+        records_count: 2,
+        segments_total_raw_size:
+          ENCODED_SEGMENT_HEADER_SIZE +
+          ENCODED_FULL_SNAPSHOT_RECORD_SIZE +
+          ENCODED_SEPARATOR_SIZE +
+          ENCODED_RECORD_SIZE,
+      })
+    })
   })
 })
