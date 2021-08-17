@@ -12,10 +12,12 @@ import {
   ONE_DAY,
   relativeNow,
   timeStampNow,
+  TimeStamp,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
 import { PerformanceResourceDetailsElement } from '../../../rawRumEvent.types'
+import { getSleepDuration } from '../../trackSleep'
 
 export interface PerformanceResourceDetails {
   redirect?: PerformanceResourceDetailsElement
@@ -95,6 +97,7 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
         duration: Math.round(duration),
         relativeNow: Math.round(relativeNow()),
         timeStampNow: timeStampNow(),
+        sleepDuration: getSleepDuration((timeStampNow() - duration) as TimeStamp),
       },
     })
   }

@@ -16,7 +16,6 @@ switch (process.env.BUILD_MODE) {
 }
 
 module.exports = {
-  TARGET_DATACENTER: process.env.TARGET_DATACENTER || 'us',
   BUILD_MODE: process.env.BUILD_MODE,
   SDK_VERSION: sdkVersion,
 }

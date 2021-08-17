@@ -13,15 +13,17 @@ import { startLongTaskCollection } from '../domain/rumEventsCollection/longTask/
 import { startResourceCollection } from '../domain/rumEventsCollection/resource/resourceCollection'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumSession, startRumSession } from '../domain/rumSession'
+import { trackSleep } from '../domain/trackSleep'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-import { RumInitConfiguration } from './rumPublicApi'
+import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
@@ -46,6 +48,10 @@ export function startRum(
     getCommonContext
   )
 
+  if (configuration.isEnabled('track-sleep')) {
+    trackSleep()
+  }
+
   if (session.hasReplayPlan()) {
     startLongTaskCollection(lifeCycle)
   }
@@ -56,6 +62,7 @@ export function startRum(
     location,
     domMutationObservable,
     foregroundContexts,
+    recorderApi,
     initialViewName
   )
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts)

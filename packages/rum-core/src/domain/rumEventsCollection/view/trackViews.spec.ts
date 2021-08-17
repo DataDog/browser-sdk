@@ -17,6 +17,7 @@ const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
 const FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY: RumLargestContentfulPaintTiming = {
   entryType: 'largest-contentful-paint',
   startTime: 789 as RelativeTime,
+  size: 10,
 }
 const FAKE_NAVIGATION_ENTRY: RumPerformanceNavigationTiming = {
   domComplete: 456 as RelativeTime,
@@ -491,75 +492,6 @@ describe('renew session', () => {
 
     expect(getViewUpdateCount()).toEqual(2)
     expect(getViewUpdate(0).id).not.toBe(getViewUpdate(1).id)
-  })
-})
-
-describe('view hasReplay', () => {
-  let setupBuilder: TestSetupBuilder
-  let viewTest: ViewTest
-
-  beforeEach(() => {
-    setupBuilder = setup().beforeBuild((buildContext) => {
-      viewTest = setupViewTest(buildContext)
-      return viewTest
-    })
-  })
-
-  afterEach(() => {
-    setupBuilder.cleanup()
-  })
-
-  it('sets hasReplay to false by default', () => {
-    setupBuilder.build()
-    const { getViewUpdate } = viewTest
-
-    expect(getViewUpdate(0).hasReplay).toBe(false)
-  })
-
-  it('sets hasReplay to true when the recording starts', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewUpdate, startView } = viewTest
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-
-    startView()
-
-    expect(getViewUpdate(1).hasReplay).toBe(true)
-  })
-
-  it('keeps hasReplay to true when the recording stops', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewUpdate, startView } = viewTest
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
-
-    startView()
-
-    expect(getViewUpdate(1).hasReplay).toBe(true)
-  })
-
-  it('sets hasReplay to true when a new view is created after the recording starts', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewUpdate, startView } = viewTest
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-
-    startView()
-
-    expect(getViewUpdate(2).hasReplay).toBe(true)
-  })
-
-  it('sets hasReplay to false when a new view is created after the recording stops', () => {
-    const { lifeCycle } = setupBuilder.build()
-    const { getViewUpdate, startView } = viewTest
-
-    lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
-    lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
-
-    startView()
-
-    expect(getViewUpdate(2).hasReplay).toBe(false)
   })
 })
 

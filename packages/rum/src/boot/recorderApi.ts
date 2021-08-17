@@ -7,6 +7,7 @@ import {
   RumSession,
   RecorderApi,
 } from '@datadog/browser-rum-core'
+import { getReplayStats } from '../domain/replayStats'
 
 import { startRecording } from './startRecording'
 
@@ -52,6 +53,8 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
   return {
     start: () => startStrategy(),
     stop: () => stopStrategy(),
+    getReplayStats,
+
     onRumStart: (
       lifeCycle: LifeCycle,
       initConfiguration: RumInitConfiguration,
@@ -60,6 +63,11 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
       parentContexts: ParentContexts
     ) => {
       lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+        if (state.status === RecorderStatus.Started) {
+          stopStrategy()
+          state = { status: RecorderStatus.IntentToStart }
+        }
+
         if (state.status === RecorderStatus.IntentToStart) {
           startStrategy()
         }
@@ -93,7 +101,6 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
             status: RecorderStatus.Started,
             stopRecording,
           }
-          lifeCycle.notify(LifeCycleEventType.RECORD_STARTED)
         })
       }
 
@@ -109,7 +116,6 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
         state = {
           status: RecorderStatus.Stopped,
         }
-        lifeCycle.notify(LifeCycleEventType.RECORD_STOPPED)
       }
 
       if (state.status === RecorderStatus.IntentToStart) {

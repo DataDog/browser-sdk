@@ -16,44 +16,66 @@
 
 ---
 
+## v3.1.2
+
+- ✨[RUMF-970] enable buffered PerformanceObserver ([#995](https://github.com/DataDog/browser-sdk/pull/995))
+- Limit log monitoring + add more details ([#990](https://github.com/DataDog/browser-sdk/pull/990))
+- 🗑️ Remove deprecated trace endpoint ([#992](https://github.com/DataDog/browser-sdk/pull/992))
+
+## v3.1.1
+
+- ⚗ [RUMF-970] Buffered PerformanceObserver: add fallback for older browsers ([#978](https://github.com/DataDog/browser-sdk/pull/978))
+- ⚗ [RUMF-971] experiment to detect when the computer goes to sleep ([#976](https://github.com/DataDog/browser-sdk/pull/976))
+- 🔊 [RUMF-971] add some context on suspicious LCP and FCP monitoring ([#979](https://github.com/DataDog/browser-sdk/pull/979))
+
+## v3.1.0
+
+Note: this is the first 3.x release for the Logs SDK. See migration notes in [v3.0.0](#v300).
+
+- 📝🗑 deprecate the XHR context, to be removed in V4 ([#973](https://github.com/DataDog/browser-sdk/pull/973))
+- ⚗ [RUMF-970] experiment with buffered PerformanceObserver ([#972](https://github.com/DataDog/browser-sdk/pull/972))
+- 📝 [RUMF-984] update CHANGELOG for logs breaking changes ([#971](https://github.com/DataDog/browser-sdk/pull/971))
+- ✨ [RUMF-974] use user-agent to detect synthetics sessions ([#969](https://github.com/DataDog/browser-sdk/pull/969))
+- 💥 [RUMF-982] remove deprecated LogsUserConfiguration type ([#968](https://github.com/DataDog/browser-sdk/pull/968))
+- 💥 [RUMF-981] remove deprecated logs options ([#967](https://github.com/DataDog/browser-sdk/pull/967))
+- 📝 document `trackViewsManually` option ([#965](https://github.com/DataDog/browser-sdk/pull/965))
+
+## v3.0.2
+
+- [RUMF-972] Revert "💥 always use alternative domains for RUM ([#944](https://github.com/DataDog/browser-sdk/pull/944))" ([#963](https://github.com/DataDog/browser-sdk/pull/963))
+- 📝 update CDN URLs for V3 ([#962](https://github.com/DataDog/browser-sdk/pull/962))
+
+## v3.0.1
+
+- 🐛 fix recording session renewal ([#955](https://github.com/DataDog/browser-sdk/pull/955))
+
 ## v3.0.0
 
-Here is the list of all the breaking changes between version 2 and 3 of the RUM SDK.
-The Log SDK isn't impacted and is still fully backward compatible.
+Here is the list of all the breaking changes between version 2 and 3 of the RUM and Logs SDKs.
 
 For each change, we show the new way to handle your use case.
 
-### Network errors no longer monitored
+### [RUM] Network errors no longer monitored
 
 RUM browser SDK no longer automatically monitors network errors.
 
 **New option**: You can use the option beforeSend to get the resource, check the `status` and send it with the `addError()` API.
 
-### Source attribute of addError() has been removed
+### [RUM] Source attribute of addError() has been removed
 
 You can no longer change the source of error sent with `addError()`. All these errors have a `custom` source.
 
 **New option**: If you used this feature to identify `network` and `source` errors, you can add context attributes with `addError()` instead.
 
-### New intake domains
-
-RUM now uses a new intake domain. Therefore the init options `useAlternateIntakeDomains` has been removed.
-
-| Old domains                        | New domains                      |
-| ---------------------------------- | -------------------------------- |
-| rum-http-intake.logs.datadoghq.com | rum.browser-intake-datadoghq.com |
-| rum-http-intake.logs.datadoghq.eu  | rum.browser-intake-datadoghq.eu  |
-
-> Warning: You have to update your content security policy, if you use one.
-
-### Removed typescript types
+### [RUM and Logs] Removed typescript types
 
 | Old types                    | New types                    |
 | ---------------------------- | ---------------------------- |
 | RumUserConfiguration         | RumInitConfiguration         |
 | RumRecorderUserConfiguration | RumRecorderInitConfiguration |
+| LogsUserConfiguration        | LogsInitConfiguration        |
 
-### Removed init options
+### [RUM and Logs] Removed init options
 
 | Old options        | New options |
 | ------------------ | ----------- |
@@ -61,7 +83,7 @@ RUM now uses a new intake domain. Therefore the init options `useAlternateIntake
 | datacenter         | site        |
 | resourceSampleRate | NONE        |
 
-### Removed API
+### [RUM] Removed API
 
 | Old API       | New API   |
 | ------------- | --------- |

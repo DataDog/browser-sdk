@@ -140,7 +140,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
 }
 
 export function addMonitoringMessage(message: string, context?: Context) {
-  logMessageIfDebug(message)
+  logMessageIfDebug(message, context)
   addToMonitoringBatch({
     message,
     ...context,
@@ -195,8 +195,8 @@ function logErrorIfDebug(e: any) {
   }
 }
 
-function logMessageIfDebug(message: any) {
+function logMessageIfDebug(message: any, context?: Context) {
   if (monitoringConfiguration.debugMode) {
-    display.log('[MONITORING MESSAGE]', message)
+    display.log('[MONITORING MESSAGE]', message, context)
   }
 }

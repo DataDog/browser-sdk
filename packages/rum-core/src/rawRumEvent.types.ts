@@ -36,8 +36,9 @@ export interface RawRumResourceEvent {
     download?: PerformanceResourceDetailsElement
   }
   _dd?: {
-    trace_id: string
+    trace_id?: string
     span_id?: string // not available for initial document tracing
+    sleep_duration?: number
   }
 }
 
@@ -100,6 +101,7 @@ export interface RawRumViewEvent {
   }
   _dd: {
     document_version: number
+    replay_stats?: ReplayStats
   }
 }
 
@@ -115,6 +117,12 @@ export enum ViewLoadingType {
 
 export interface ViewCustomTimings {
   [key: string]: Duration
+}
+
+export interface ReplayStats {
+  records_count: number
+  segments_count: number
+  segments_total_raw_size: number
 }
 
 interface Count {

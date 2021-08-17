@@ -1,7 +1,7 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, noop } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum, RecorderApi } from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -13,12 +13,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   parentContexts: {} as any,
   session: {} as any,
 })
-const noopRecorderApi: RecorderApi = {
-  start: noop,
-  stop: noop,
-  isRecording: () => false,
-  onRumStart: noop,
-}
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 
 describe('rum public api', () => {
@@ -105,13 +99,6 @@ describe('rum public api', () => {
     it("shouldn't trigger any console.error if the configuration is correct", () => {
       rumPublicApi.init({ clientToken: 'yes', applicationId: 'yes', sampleRate: 1 })
       expect(displaySpy).toHaveBeenCalledTimes(0)
-    })
-
-    it('should ignore old configuration options', () => {
-      const oldConfigurationOptions = { publicApiKey: '', datacenter: 'us' }
-      const initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, ...oldConfigurationOptions }
-      rumPublicApi.init(initConfiguration)
-      expect(initConfiguration).not.toEqual(jasmine.objectContaining(oldConfigurationOptions))
     })
   })
 
@@ -574,7 +561,7 @@ describe('rum public api', () => {
 
         rumPublicApi.init(MANUAL_CONFIGURATION)
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual('foo')
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -586,7 +573,7 @@ describe('rum public api', () => {
 
         rumPublicApi.startView('foo')
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual('foo')
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).not.toHaveBeenCalled()
       })
@@ -597,7 +584,7 @@ describe('rum public api', () => {
         rumPublicApi.startView('bar')
 
         expect(startRumSpy).toHaveBeenCalled()
-        expect(startRumSpy.calls.argsFor(0)[4]).toEqual('foo')
+        expect(startRumSpy.calls.argsFor(0)[5]).toEqual('foo')
         expect(recorderApiOnRumStartSpy).toHaveBeenCalled()
         expect(startViewSpy).toHaveBeenCalled()
         expect(startViewSpy.calls.argsFor(0)[0]).toEqual('bar')

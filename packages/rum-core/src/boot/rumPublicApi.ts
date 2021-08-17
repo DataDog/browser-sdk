@@ -18,25 +18,17 @@ import {
   InternalMonitoring,
   callMonitored,
   createHandlingStack,
-  Omit,
 } from '@datadog/browser-core'
 import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
 import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, User, ActionType } from '../rawRumEvent.types'
+import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
 
-const droppedConfigurationOptions = [
-  'publicApiKey' as const,
-  'datacenter' as const,
-  'useAlternateIntakeDomains' as const,
-]
-type DroppedConfigurationOptions = typeof droppedConfigurationOptions[number]
-
-export interface RumInitConfiguration extends Omit<InitConfiguration, DroppedConfigurationOptions> {
+export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
 }
@@ -48,6 +40,7 @@ export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   initialViewName?: string
 ) => StartRumResult
 
@@ -64,6 +57,7 @@ export interface RecorderApi {
     parentContexts: ParentContexts
   ) => void
   isRecording: () => boolean
+  getReplayStats: (viewId: string) => ReplayStats | undefined
 }
 
 export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>, recorderApi: RecorderApi) {
@@ -105,12 +99,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
       return
     }
 
-    droppedConfigurationOptions.forEach((option) => delete (initConfiguration as InitConfiguration)[option])
-
-    const { configuration, internalMonitoring } = commonInit(
-      { ...initConfiguration, useAlternateIntakeDomains: true },
-      buildEnv
-    )
+    const { configuration, internalMonitoring } = commonInit(initConfiguration, buildEnv)
     if (!configuration.trackViewsManually) {
       doStartRum(initConfiguration, configuration, internalMonitoring)
     } else {
@@ -145,6 +134,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
         context: globalContextManager.get(),
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
+      recorderApi,
       initialViewName
     )
 

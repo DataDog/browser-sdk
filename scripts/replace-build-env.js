@@ -4,7 +4,7 @@ const buildEnv = require('./build-env')
 /**
  * Replace BuildEnv in build files
  * Usage:
- * TARGET_DATACENTER=xxx BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
+ * BUILD_MODE=zzz node replace-build-env.js /path/to/build/directory
  */
 
 const buildDirectory = process.argv[2]

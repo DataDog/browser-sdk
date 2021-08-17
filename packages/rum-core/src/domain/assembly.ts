@@ -29,7 +29,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
 
-interface BrowserWindow extends Window {
+export interface BrowserWindow extends Window {
   _DATADOG_SYNTHETICS_BROWSER?: unknown
 }
 
@@ -91,7 +91,6 @@ export function startRumAssembly(
           service: configuration.service,
           session: {
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
-            // cf https://github.com/puppeteer/puppeteer/issues/3667
             type: getSessionType(),
           },
         }
@@ -163,5 +162,8 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
-  return (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined ? SessionType.USER : SessionType.SYNTHETICS
+  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 &&
+    (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined
+    ? SessionType.USER
+    : SessionType.SYNTHETICS
 }

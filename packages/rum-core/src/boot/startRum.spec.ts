@@ -2,7 +2,7 @@ import { RelativeTime, Configuration } from '@datadog/browser-core'
 import { RumSession } from '@datadog/browser-rum-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { isIE } from '../../../core/test/specHelper'
-import { setup, TestSetupBuilder } from '../../test/specHelper'
+import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
@@ -43,7 +43,8 @@ function startRum(
     configuration,
     location,
     domMutationObservable,
-    foregroundContexts
+    foregroundContexts,
+    noopRecorderApi
   )
   return {
     stop: () => {

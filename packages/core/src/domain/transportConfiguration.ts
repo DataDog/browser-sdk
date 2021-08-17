@@ -7,30 +7,19 @@ const ENDPOINTS = {
     logs: 'logs',
     rum: 'rum',
     sessionReplay: 'session-replay',
-    trace: 'trace',
   },
   classic: {
     logs: 'browser',
     rum: 'rum',
     // session-replay has no classic endpoint
     sessionReplay: undefined,
-    trace: 'public-trace',
   },
 }
 
-export const Datacenter = {
-  EU: 'eu',
-  US: 'us',
-} as const
+const INTAKE_SITE_US = 'datadoghq.com'
+const INTAKE_SITE_EU = 'datadoghq.eu'
 
-export type Datacenter = typeof Datacenter[keyof typeof Datacenter]
-
-export const INTAKE_SITE = {
-  [Datacenter.EU]: 'datadoghq.eu',
-  [Datacenter.US]: 'datadoghq.com',
-}
-
-const CLASSIC_ALLOWED_SITES = [INTAKE_SITE[Datacenter.US], INTAKE_SITE[Datacenter.EU]]
+const CLASSIC_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_EU]
 
 type IntakeType = keyof typeof ENDPOINTS
 type EndpointType = keyof typeof ENDPOINTS[IntakeType]
@@ -58,7 +47,7 @@ export function computeTransportConfiguration(
     proxyHost: initConfiguration.proxyHost,
     sdkVersion: buildEnv.sdkVersion,
     service: initConfiguration.service,
-    site: initConfiguration.site || INTAKE_SITE[initConfiguration.datacenter || buildEnv.datacenter],
+    site: initConfiguration.site || INTAKE_SITE_US,
     version: initConfiguration.version,
   }
 
@@ -70,7 +59,6 @@ export function computeTransportConfiguration(
     logsEndpoint: getEndpoint(intakeType, 'logs', transportSettings),
     rumEndpoint: getEndpoint(intakeType, 'rum', transportSettings),
     sessionReplayEndpoint: getEndpoint(intakeType, 'sessionReplay', transportSettings),
-    traceEndpoint: getEndpoint(intakeType, 'trace', transportSettings),
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
@@ -95,7 +83,7 @@ export function computeTransportConfiguration(
         ...transportSettings,
         applicationId: initConfiguration.replica.applicationId,
         clientToken: initConfiguration.replica.clientToken,
-        site: INTAKE_SITE[Datacenter.US],
+        site: INTAKE_SITE_US,
       }
       configuration.replica = {
         applicationId: initConfiguration.replica.applicationId,
@@ -124,7 +112,7 @@ function getIntakeUrls(intakeType: IntakeType, settings: TransportSettings, with
   }
   const sites = [settings.site]
   if (settings.buildMode === BuildMode.STAGING && withReplica) {
-    sites.push(INTAKE_SITE[Datacenter.US])
+    sites.push(INTAKE_SITE_US)
   }
   const urls = []
   const endpointTypes = Object.keys(ENDPOINTS[intakeType]) as EndpointType[]
