@@ -1,10 +1,8 @@
 import { isIE } from '../../../../core/test/specHelper'
-import { NodePrivacyLevel, NodePrivacyLevelInternal, PRIVACY_ATTR_NAME } from '../../constants'
-import * as utils from '../../../../core/src/tools/utils'
-import { HTML } from '../../../test/htmlAst'
+import { NodePrivacyLevel, NodePrivacyLevelInternal } from '../../constants'
+import { HTML, generateLeanSerializedDoc } from '../../../test/htmlAst'
 import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, getNodePrivacyLevel } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
-import { serializeDocument } from './serialize'
 
 describe('privacy helpers', () => {
   beforeEach(() => {
@@ -269,36 +267,6 @@ describe('Inherited Privacy Level  derivePrivacyLevelGivenParent() ... ', functi
     })
   })
 })
-
-const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
-  try {
-    // Karma doesn't seem to support `document.documentElement.outerHTML`
-    const newDoc = document.implementation.createHTMLDocument('new doc')
-    newDoc.documentElement.innerHTML = htmlContent
-    newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
-    return newDoc
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to set innerHTML of new doc:', e)
-    return document
-  }
-}
-
-const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
-  if (thing && typeof thing === 'object') {
-    const object = thing
-    delete object.id
-    utils.objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
-    return object
-  }
-  return thing
-}
-
-const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
-  const newDoc = makeHtmlDoc(htmlContent, privacyTag)
-  const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-  return serializedDoc
-}
 
 const getTextNodesFromSerialized = (serializedNode: SerializedNodeWithId | null): string => {
   try {

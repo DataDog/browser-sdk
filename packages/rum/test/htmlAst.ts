@@ -1,3 +1,37 @@
+import * as utils from '../../core/src/tools/utils'
+import { SerializedNodeWithId } from '../src/domain/record/types'
+import { serializeDocument } from '../src/domain/record/serialize'
+import { PRIVACY_ATTR_NAME } from '../src/constants'
+
+export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
+  try {
+    const newDoc = document.implementation.createHTMLDocument('new doc')
+    newDoc.documentElement.innerHTML = htmlContent
+    newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
+    return newDoc
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to set innerHTML of new doc:', e)
+    return document
+  }
+}
+
+export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
+  if (thing && typeof thing === 'object') {
+    const object = thing
+    delete object.id
+    utils.objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
+    return object
+  }
+  return thing
+}
+
+export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
+  const newDoc = makeHtmlDoc(htmlContent, privacyTag)
+  const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
+  return serializedDoc
+}
+
 export const HTML = `
 <head>
     <link href="https://public.com/path/nested?query=param#hash" rel="stylesheet">

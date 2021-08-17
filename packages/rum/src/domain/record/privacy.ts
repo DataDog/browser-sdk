@@ -270,23 +270,6 @@ export function isFormElement(node: Node | null): boolean {
  */
 export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 
-/**
- * Bias free random order sorting with Fisher-Yates algorithm
- */
-export function shuffle<T>(array: T[]) {
-  // https://bost.ocks.org/mike/shuffle/
-  let m = array.length
-  let t
-  let i
-  while (m) {
-    i = Math.floor(Math.random() * m--)
-    t = array[m]
-    array[m] = array[i]
-    array[i] = t
-  }
-  return array
-}
-
 export function getTextContent(
   textNode: Node,
   ignoreWhiteSpace: boolean,

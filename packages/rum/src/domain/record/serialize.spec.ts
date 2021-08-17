@@ -7,8 +7,14 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
-import { HTML, AST_ALLOW, AST_HIDDEN, AST_MASK, AST_MASK_FORMS_ONLY } from '../../../test/htmlAst'
-import * as utils from '../../../../core/src/tools/utils'
+import {
+  HTML,
+  AST_ALLOW,
+  AST_HIDDEN,
+  AST_MASK,
+  AST_MASK_FORMS_ONLY,
+  generateLeanSerializedDoc,
+} from '../../../test/htmlAst'
 import { hasSerializedNode } from './serializationUtils'
 import {
   serializeDocument,
@@ -17,7 +23,7 @@ import {
   serializeDocumentNode,
   serializeChildNodes,
 } from './serialize'
-import { ElementNode, NodeType, SerializedNodeWithId } from './types'
+import { ElementNode, NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
@@ -404,36 +410,6 @@ describe('serializeNodeWithId', () => {
     })
   })
 })
-
-const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
-  try {
-    // Karma doesn't seem to support `document.documentElement.outerHTML`
-    const newDoc = document.implementation.createHTMLDocument('new doc')
-    newDoc.documentElement.innerHTML = htmlContent
-    newDoc.documentElement.setAttribute(PRIVACY_ATTR_NAME, privacyTag)
-    return newDoc
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to set innerHTML of new doc:', e)
-    return document
-  }
-}
-
-const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
-  if (thing && typeof thing === 'object') {
-    const object = thing
-    delete object.id
-    utils.objectValues(object).forEach((value) => removeIdFieldsRecursivelyClone(value as Record<string, unknown>))
-    return object
-  }
-  return thing
-}
-
-const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
-  const newDoc = makeHtmlDoc(htmlContent, privacyTag)
-  const serializedDoc = removeIdFieldsRecursivelyClone(serializeDocument(newDoc)) as SerializedNodeWithId
-  return serializedDoc
-}
 
 describe('serializeDocumentNode handles', function testAllowDomTree() {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
