@@ -600,4 +600,3 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 [3]: https://www.npmjs.com/package/@datadog/browser-logs
 [4]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/BROWSER_SUPPORT.md
 [5]: /real_user_monitoring/guide/enrich-and-control-rum-data/
-[6]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/src/logsEvent.types.ts
