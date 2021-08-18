@@ -1,6 +1,13 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
+import {
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_ALLOW,
+  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+  PRIVACY_ATTR_VALUE_INPUT_MASKED,
+  PRIVACY_ATTR_VALUE_MASK,
+  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+} from '../../constants'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
 import { AttributeMutation, Attributes, MutationCallBack, NodeType } from './types'
@@ -687,8 +694,11 @@ describe('startMutationCollection', () => {
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
         privacyAttributeOn: 'input',
-        expectedSerializedAttributes: { [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED },
-        expectedAttributesMutation: null,
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+          value: '***',
+        },
+        expectedAttributesMutation: { value: '***' },
       },
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,
@@ -700,16 +710,61 @@ describe('startMutationCollection', () => {
         expectedAttributesMutation: { value: '***' },
       },
       {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK,
+        privacyAttributeOn: 'input',
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK,
+          value: '***',
+        },
+        expectedAttributesMutation: { value: '***' },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeOn: 'input',
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+          value: '***',
+        },
+        expectedAttributesMutation: { value: '***' },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_ALLOW,
+        privacyAttributeOn: 'input',
+        expectedSerializedAttributes: {
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_ALLOW,
+          value: 'foo',
+        },
+        expectedAttributesMutation: { value: 'foo' },
+      },
+      {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
         privacyAttributeOn: 'ancestor',
-        expectedSerializedAttributes: {},
-        expectedAttributesMutation: null,
+        expectedSerializedAttributes: { value: '***' },
+        expectedAttributesMutation: { value: '***' },
       },
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_INPUT_MASKED,
         privacyAttributeOn: 'ancestor',
         expectedSerializedAttributes: { value: '***' },
         expectedAttributesMutation: { value: '***' },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK,
+        privacyAttributeOn: 'ancestor',
+        expectedSerializedAttributes: { value: '***' },
+        expectedAttributesMutation: { value: '***' },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeOn: 'ancestor',
+        expectedSerializedAttributes: { value: '***' },
+        expectedAttributesMutation: { value: '***' },
+      },
+      {
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_ALLOW,
+        privacyAttributeOn: 'ancestor',
+        expectedSerializedAttributes: { value: 'foo' },
+        expectedAttributesMutation: { value: 'foo' },
       },
     ]
 

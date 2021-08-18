@@ -266,6 +266,7 @@ export type DocumentTypeNode = {
 export type Attributes = {
   [key: string]: string | number | boolean
 }
+
 export type ElementNode = {
   type: NodeType.Element
   tagName: string

@@ -23,7 +23,7 @@ import { LifeCycle } from '../domain/lifeCycle'
 import { ParentContexts } from '../domain/parentContexts'
 import { RumSession } from '../domain/rumSession'
 import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, User, ActionType } from '../rawRumEvent.types'
+import { CommonContext, User, ActionType, ReplayStats } from '../rawRumEvent.types'
 import { RumEvent } from '../rumEvent.types'
 import { buildEnv } from './buildEnv'
 import { startRum } from './startRum'
@@ -40,6 +40,7 @@ export type StartRum<C extends RumInitConfiguration = RumInitConfiguration> = (
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   initialViewName?: string
 ) => StartRumResult
 
@@ -56,6 +57,7 @@ export interface RecorderApi {
     parentContexts: ParentContexts
   ) => void
   isRecording: () => boolean
+  getReplayStats: (viewId: string) => ReplayStats | undefined
 }
 
 export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: StartRum<C>, recorderApi: RecorderApi) {
@@ -132,6 +134,7 @@ export function makeRumPublicApi<C extends RumInitConfiguration>(startRumImpl: S
         context: globalContextManager.get(),
         hasReplay: recorderApi.isRecording() ? true : undefined,
       }),
+      recorderApi,
       initialViewName
     )
 

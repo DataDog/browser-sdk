@@ -25,10 +25,12 @@ export type DeflateWorkerResponse =
   | {
       id: number
       compressedSize: number
+      additionalRawSize: number
     }
   | {
       id: number
       result: Uint8Array
+      additionalRawSize: number
       rawSize: number
     }
   | { error: Error | string }

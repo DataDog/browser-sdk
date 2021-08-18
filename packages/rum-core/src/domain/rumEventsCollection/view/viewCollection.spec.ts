@@ -1,12 +1,48 @@
 import { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { setup, TestSetupBuilder } from '../../../../test/specHelper'
-import { RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
+import { RecorderApi } from '../../../boot/rumPublicApi'
+import { noopRecorderApi, setup, TestSetupBuilder } from '../../../../test/specHelper'
+import { RawRumViewEvent, RumEventType, ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { ViewEvent } from './trackViews'
 import { startViewCollection } from './viewCollection'
 
+const VIEW: ViewEvent = {
+  cumulativeLayoutShift: 1,
+  customTimings: {
+    bar: 20 as Duration,
+    foo: 10 as Duration,
+  },
+  documentVersion: 3,
+  duration: 100 as Duration,
+  eventCounts: {
+    errorCount: 10,
+    longTaskCount: 10,
+    resourceCount: 10,
+    userActionCount: 10,
+  },
+  id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+  name: undefined,
+  isActive: false,
+  loadingTime: 20 as Duration,
+  loadingType: ViewLoadingType.INITIAL_LOAD,
+  location: {} as Location,
+  referrer: '',
+  startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+  timings: {
+    domComplete: 10 as Duration,
+    domContentLoaded: 10 as Duration,
+    domInteractive: 10 as Duration,
+    firstContentfulPaint: 10 as Duration,
+    firstInputDelay: 12 as Duration,
+    firstInputTime: 10 as Duration,
+    largestContentfulPaint: 10 as Duration,
+    loadEvent: 10 as Duration,
+  },
+}
+
 describe('viewCollection', () => {
   let setupBuilder: TestSetupBuilder
+  let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
 
   beforeEach(() => {
     setupBuilder = setup()
@@ -17,7 +53,11 @@ describe('viewCollection', () => {
         getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
       .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
-        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts)
+        getReplayStatsSpy = jasmine.createSpy()
+        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts, {
+          ...noopRecorderApi,
+          getReplayStats: getReplayStatsSpy,
+        })
       })
   })
 
@@ -27,47 +67,13 @@ describe('viewCollection', () => {
 
   it('should create view from view update', () => {
     const { lifeCycle, rawRumEvents } = setupBuilder.build()
-    const location: Partial<Location> = {}
-    const view: ViewEvent = {
-      cumulativeLayoutShift: 1,
-      customTimings: {
-        bar: 20 as Duration,
-        foo: 10 as Duration,
-      },
-      documentVersion: 3,
-      duration: 100 as Duration,
-      eventCounts: {
-        errorCount: 10,
-        longTaskCount: 10,
-        resourceCount: 10,
-        userActionCount: 10,
-      },
-      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-      name: undefined,
-      isActive: false,
-      hasReplay: false,
-      loadingTime: 20 as Duration,
-      loadingType: ViewLoadingType.INITIAL_LOAD,
-      location: location as Location,
-      referrer: '',
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      timings: {
-        domComplete: 10 as Duration,
-        domContentLoaded: 10 as Duration,
-        domInteractive: 10 as Duration,
-        firstContentfulPaint: 10 as Duration,
-        firstInputDelay: 12 as Duration,
-        firstInputTime: 10 as Duration,
-        largestContentfulPaint: 10 as Duration,
-        loadEvent: 10 as Duration,
-      },
-    }
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, view)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
     expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,
+        replay_stats: undefined,
       },
       date: jasmine.any(Number),
       type: RumEventType.VIEW,
@@ -108,5 +114,22 @@ describe('viewCollection', () => {
         has_replay: undefined,
       },
     })
+  })
+
+  it('should include replay information if available', () => {
+    const { lifeCycle, rawRumEvents } = setupBuilder.build()
+    getReplayStatsSpy.and.returnValue({ segments_count: 4, records_count: 10, segments_total_raw_size: 1000 })
+
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+    expect(getReplayStatsSpy).toHaveBeenCalledWith(VIEW.id)
+    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
+    const rawRumViewEvent = rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent
+    expect(rawRumViewEvent._dd.replay_stats).toEqual({
+      segments_count: 4,
+      records_count: 10,
+      segments_total_raw_size: 1000,
+    })
+    expect(rawRumViewEvent.session.has_replay).toBe(true)
   })
 })

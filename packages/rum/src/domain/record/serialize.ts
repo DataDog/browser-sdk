@@ -1,10 +1,21 @@
-import { InputPrivacyMode, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN } from '../../constants'
-import { getNodeInputPrivacyMode, nodeShouldBeHidden } from './privacy'
+import {
+  NodePrivacyLevel,
+  NodePrivacyLevelInternal,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  CENSORED_STRING_MARK,
+} from '../../constants'
+import {
+  remapInternalPrivacyLevels,
+  getInternalNodePrivacyLevel,
+  getInitialPrivacyLevel,
+  serializeAttribute,
+  getTextContent,
+} from './privacy'
 import {
   SerializedNode,
   SerializedNodeWithId,
   NodeType,
-  Attributes,
   DocumentNode,
   DocumentTypeNode,
   ElementNode,
@@ -15,7 +26,6 @@ import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
   setSerializedNode,
-  transformAttribute,
   getElementInputValue,
 } from './serializationUtils'
 import { forEach } from './utils'
@@ -24,14 +34,14 @@ export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  ancestorInputPrivacyMode: InputPrivacyMode
+  parentNodePrivacyLevel: NodePrivacyLevelInternal
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+    parentNodePrivacyLevel: getInitialPrivacyLevel(),
   })!
 }
 
@@ -67,7 +77,7 @@ function serializeNode(node: Node, options: SerializeOptions): SerializedNode | 
   }
 }
 
-function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
+export function serializeDocumentNode(document: Document, options: SerializeOptions): DocumentNode {
   return {
     type: NodeType.Document,
     childNodes: serializeChildNodes(document, options),
@@ -83,22 +93,38 @@ function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode
   }
 }
 
-function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
+/**
+ * Serialzing Element nodes involves capturing:
+ * 1. HTML ATTRIBUTES:
+ * 2. JS STATE:
+ * - scroll offsets
+ * - Form fields (input value, checkbox checked, otpion selection, range)
+ * - Canvas state,
+ * - Media (video/audio) play mode + currentTime
+ * - iframe contents
+ * - webcomponents
+ * 3. CUSTOM PROPERTIES:
+ * - height+width for when `hidden` to cover the element
+ * 4. EXCLUDED INTERACTION STATE:
+ * - focus (possible, but not worth perf impact)
+ * - hover (tracked only via mouse activity)
+ * - fullscreen mode
+ */
+export function serializeElementNode(element: Element, options: SerializeOptions): ElementNode | undefined {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
-  if (shouldIgnoreElement(element)) {
-    return
-  }
+  // We only get internal privacy level here to pass on to
+  // child nodes, purely for performance reasons
+  const internalPrivacyLevel = getInternalNodePrivacyLevel(element, options.parentNodePrivacyLevel)
+  const nodePrivacyLevel = remapInternalPrivacyLevels(element, internalPrivacyLevel)
 
-  if (nodeShouldBeHidden(element)) {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
     return {
       type: NodeType.Element,
       tagName,
       attributes: {
-        id: element.id,
-        class: element.className,
         rr_width: `${width}px`,
         rr_height: `${height}px`,
         [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
@@ -108,90 +134,29 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     }
   }
 
-  const attributes: Attributes = {}
-  for (const { name, value } of Array.from(element.attributes)) {
-    // Never take those attributes into account, as they will be conditionally set below.
-    if (name === 'value' || name === 'selected' || name === 'checked') {
-      continue
-    }
-    attributes[name] = transformAttribute(options.document, name, value)
+  // Ignore Elements like Script and some Link, Metas
+  if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+    return
   }
 
-  // remote css
-  if (tagName === 'link') {
-    const stylesheet = Array.from(options.document.styleSheets).find(
-      (s) => s.href === (element as HTMLLinkElement).href
-    )
-    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
-    if (cssText) {
-      delete attributes.rel
-      delete attributes.href
-      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet!.href!)
-    }
-  }
+  const attributes = getAttributesForPrivacyLevel(element, nodePrivacyLevel)
 
-  // dynamic stylesheet
-  if (
-    tagName === 'style' &&
-    (element as HTMLStyleElement).sheet &&
-    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
-    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
-  ) {
-    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
-    if (cssText) {
-      attributes._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
-    }
-  }
-
-  // form fields
-  const value = getElementInputValue(element, options.ancestorInputPrivacyMode)
-  if (value) {
-    attributes.value = value
-  }
-
-  if (tagName === 'option') {
-    const selectElement = (element as HTMLOptionElement).parentElement
-    if ((element as HTMLOptionElement).value === (selectElement as HTMLSelectElement).value) {
-      attributes.selected = (element as HTMLOptionElement).selected
-    }
-  }
-
-  if (tagName === 'input' && (element as HTMLInputElement).checked) {
-    attributes.checked = true
-  }
-
-  // media elements
-  if (tagName === 'audio' || tagName === 'video') {
-    attributes.rr_mediaState = (element as HTMLMediaElement).paused ? 'paused' : 'played'
-  }
-
-  // scroll
-  if (element.scrollLeft) {
-    attributes.rr_scrollLeft = Math.round(element.scrollLeft)
-  }
-  if (element.scrollTop) {
-    attributes.rr_scrollTop = Math.round(element.scrollTop)
-  }
-
-  let childNodes: SerializedNodeWithId[]
-
+  let childNodes: SerializedNodeWithId[] = []
   if (element.childNodes.length) {
-    let childNodesSerializationOptions = options
-
+    // OBJECT POOLING OPTIMIZATION:
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
-    if (tagName === 'head') {
-      childNodesSerializationOptions = { ...childNodesSerializationOptions, ignoreWhiteSpace: true }
+    let childNodesSerializationOptions
+    if (options.parentNodePrivacyLevel === internalPrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
+      childNodesSerializationOptions = options
+    } else {
+      childNodesSerializationOptions = {
+        ...options,
+        parentNodePrivacyLevel: internalPrivacyLevel,
+        ignoreWhiteSpace: tagName === 'head',
+      }
     }
-
-    const inputPrivacyMode = getNodeInputPrivacyMode(element, options.ancestorInputPrivacyMode)
-    if (inputPrivacyMode !== options.ancestorInputPrivacyMode) {
-      childNodesSerializationOptions = { ...childNodesSerializationOptions, ancestorInputPrivacyMode: inputPrivacyMode }
-    }
-
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
-  } else {
-    childNodes = []
   }
 
   return {
@@ -203,7 +168,13 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
   }
 }
 
-function shouldIgnoreElement(element: Element) {
+/**
+ * TODO: Preserve CSS element order, and record the presence of the tag, just don't render
+ * We don't need this logic on the recorder side.
+ * For security related meta's, customer can mask themmanually given they
+ * are easy to identify in the HEAD tag.
+ */
+export function shouldIgnoreElement(element: Element): boolean {
   if (element.nodeName === 'SCRIPT') {
     return true
   }
@@ -270,21 +241,23 @@ function shouldIgnoreElement(element: Element) {
   return false
 }
 
-function serializeTextNode(text: Text, options: SerializeOptions): TextNode | undefined {
+/**
+ * Text Nodes are dependant on Element nodes
+ * Privacy levels are set on elements so we check the parentElement of a text node
+ * for privacy level.
+ */
+function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
-  const parentTagName = text.parentNode && (text.parentNode as HTMLElement).tagName
-  let textContent = text.textContent || ''
-  const isStyle = parentTagName === 'STYLE' ? true : undefined
-  if (isStyle) {
-    textContent = makeStylesheetUrlsAbsolute(textContent, location.href)
-  } else if (options.ignoreWhiteSpace && !textContent.trim()) {
+  const parentTagName = textNode.parentElement?.tagName
+  const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
+  if (!textContent) {
     return
   }
   return {
     type: NodeType.Text,
     textContent,
-    isStyle,
+    isStyle: parentTagName === 'STYLE' ? true : undefined,
   }
 }
 
@@ -295,20 +268,27 @@ function serializeCDataNode(): CDataNode {
   }
 }
 
-function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
+  const nodePrivacyLevel = remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
   const result: SerializedNodeWithId[] = []
+
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    return result
+  }
+
   forEach(node.childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
   })
+
   return result
 }
 
-let nextId = 1
+let _nextId = 1
 function generateNextId(): number {
-  return nextId++
+  return _nextId++
 }
 
 const TAG_NAME_REGEX = /[^a-z1-6-_]/
@@ -344,4 +324,111 @@ function isCSSImportRule(rule: CSSRule): rule is CSSImportRule {
 
 function isSVGElement(el: Element): boolean {
   return el.tagName === 'svg' || el instanceof SVGElement
+}
+
+function getAttributesForPrivacyLevel(
+  element: Element,
+  nodePrivacyLevel: NodePrivacyLevel
+): Record<string, string | number | boolean> {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    return {}
+  }
+  const safeAttrs: Record<string, string | number | boolean> = {}
+  const tagName = getValidTagName(element.tagName)
+  const doc = element.ownerDocument
+
+  type HtmlAttribute = { name: string; value: string }
+  for (let i = 0; i < element.attributes.length; i += 1) {
+    const attribute = element.attributes.item(i) as HtmlAttribute
+    const attributeName = attribute.name
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName)
+    if (attributeValue !== null) {
+      safeAttrs[attributeName] = attributeValue
+    }
+  }
+
+  if (
+    (element as HTMLInputElement).value &&
+    (tagName === 'textarea' || tagName === 'select' || tagName === 'option' || tagName === 'input')
+  ) {
+    const formValue = getElementInputValue(element, nodePrivacyLevel)
+    if (formValue !== undefined) {
+      safeAttrs.value = formValue
+    }
+  }
+
+  /**
+   * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
+   */
+  if (tagName === 'option' && nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
+    // For privacy=`MASK`, all the values would be the same, so skip.
+    const optionElement = element as HTMLOptionElement
+    if (optionElement.selected) {
+      safeAttrs.selected = optionElement.selected
+    }
+  }
+
+  // remote css
+  if (tagName === 'link') {
+    const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
+    const cssText = getCssRulesString(stylesheet as CSSStyleSheet)
+    if (cssText && stylesheet) {
+      delete safeAttrs.rel
+      delete safeAttrs.href
+      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, stylesheet.href!)
+    }
+  }
+
+  // dynamic stylesheet
+  if (
+    tagName === 'style' &&
+    (element as HTMLStyleElement).sheet &&
+    // TODO: Currently we only try to get dynamic stylesheet when it is an empty style element
+    !((element as HTMLStyleElement).innerText || element.textContent || '').trim().length
+  ) {
+    const cssText = getCssRulesString((element as HTMLStyleElement).sheet as CSSStyleSheet)
+    if (cssText) {
+      safeAttrs._cssText = makeStylesheetUrlsAbsolute(cssText, location.href)
+    }
+  }
+
+  /**
+   * Forms: input[type=checkbox,radio]
+   * The `checked` property for <input> is a little bit special:
+   * 1. el.checked is a setter that returns if truthy.
+   * 2. getAttribute returns the string value
+   * getAttribute('checked') does not sync with `Element.checked`, so use JS property
+   * NOTE: `checked` property exists on `HTMLInputElement`. For serializer assumptions, we check for type=radio|check.
+   */
+  const inputElement = element as HTMLInputElement
+  if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
+    switch (nodePrivacyLevel) {
+      case NodePrivacyLevel.ALLOW:
+        safeAttrs.checked = !!inputElement.checked
+        break
+      case NodePrivacyLevel.MASK:
+        safeAttrs.checked = CENSORED_STRING_MARK
+        break
+    }
+  }
+
+  /**
+   * Serialize the media playback state
+   */
+  if (tagName === 'audio' || tagName === 'video') {
+    const mediaElement = element as HTMLMediaElement
+    safeAttrs.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
+  }
+
+  /**
+   * Serialize the scroll state for each element
+   */
+  if (element.scrollLeft) {
+    safeAttrs.rr_scrollLeft = Math.round(element.scrollLeft)
+  }
+  if (element.scrollTop) {
+    safeAttrs.rr_scrollTop = Math.round(element.scrollTop)
+  }
+
+  return safeAttrs
 }

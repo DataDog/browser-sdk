@@ -1,10 +1,5 @@
 import { isIE } from '../../../../core/test/specHelper'
-import {
-  InputPrivacyMode,
-  PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_INPUT_IGNORED,
-  PRIVACY_ATTR_VALUE_INPUT_MASKED,
-} from '../../constants'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import {
   makeStylesheetUrlsAbsolute,
   getSerializedNodeId,
@@ -12,7 +7,6 @@ import {
   setSerializedNode,
   makeSrcsetUrlsAbsolute,
   makeUrlAbsolute,
-  maskValue,
   getElementInputValue,
 } from './serializationUtils'
 
@@ -182,34 +176,37 @@ describe('getElementInputValue', () => {
     const input = document.createElement('input')
     input.type = 'password'
     input.value = 'foo'
-    expect(getElementInputValue(input)).toBeUndefined()
+    // Serializing a `Hidden` element (which input[type=password] is by current spec) will only
+    // return special allow listed attributes and `getElementInputValue` is never called.
+    // But to be paranoid, we defensively check the case if it was called
+    expect(getElementInputValue(input)).toBe('***')
   })
 
-  it('does not return the value of a <input> with a IGNORED privacy mode', () => {
+  it('does not return the value of a <input> with a IGNORED (mask-forms-only) privacy mode', () => {
     const input = document.createElement('input')
     input.value = 'foo'
     wrapInIgnoredParent(input)
-    expect(getElementInputValue(input)).toBeUndefined()
+    expect(getElementInputValue(input)).toBe('***')
   })
 
-  it('always returns the value of a <select>', () => {
+  it('`input-ignore` (mask-forms-only) never returns the value of a <select>', () => {
     const select = document.createElement('select')
     const option = document.createElement('option')
     option.value = 'foo'
     select.appendChild(option)
     select.value = 'foo'
     wrapInIgnoredParent(select)
-    expect(getElementInputValue(select)).toBe('foo')
+    expect(getElementInputValue(select)).not.toBe('foo')
   })
 
-  it('always returns the value of a <option>', () => {
+  it('`input-ignore` (mask-forms-only) never returns the value of a <option>', () => {
     const option = document.createElement('option')
     option.value = 'foo'
     wrapInIgnoredParent(option)
-    expect(getElementInputValue(option)).toBe('foo')
+    expect(getElementInputValue(option)).not.toBe('foo')
   })
 
-  it('always returns the value of a <input type="button">', () => {
+  it('`input-ignore` (mask-forms-only) always returns the value of a <input type="button">', () => {
     const input = document.createElement('input')
     input.value = 'foo'
     input.type = 'button'
@@ -234,9 +231,12 @@ describe('getElementInputValue', () => {
   })
 
   it('respects the provided ancestor InputPrivacyMode', () => {
+    const div = document.createElement('div')
+    div.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
     const input = document.createElement('input')
     input.value = 'foo'
-    expect(getElementInputValue(input, InputPrivacyMode.IGNORED)).toBeUndefined()
+    div.appendChild(input)
+    expect(getElementInputValue(input)).toBe('***')
   })
 
   it('masks the value according to the InputPrivacyMode', () => {
@@ -251,10 +251,4 @@ describe('getElementInputValue', () => {
     parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
     parent.appendChild(element)
   }
-})
-
-describe('maskValue', () => {
-  it('replaces each characters by an asterisk', () => {
-    expect(maskValue('foo')).toBe('***')
-  })
 })

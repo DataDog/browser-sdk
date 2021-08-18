@@ -1,18 +1,33 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  InputPrivacyMode,
+  NodePrivacyLevelInternal,
   PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
+import {
+  HTML,
+  AST_ALLOW,
+  AST_HIDDEN,
+  AST_MASK,
+  AST_MASK_FORMS_ONLY,
+  generateLeanSerializedDoc,
+} from '../../../test/htmlAst'
 import { hasSerializedNode } from './serializationUtils'
-import { serializeDocument, serializeNodeWithId, SerializeOptions } from './serialize'
+import {
+  serializeDocument,
+  serializeNodeWithId,
+  SerializeOptions,
+  serializeDocumentNode,
+  serializeChildNodes,
+} from './serialize'
 import { ElementNode, NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  ancestorInputPrivacyMode: InputPrivacyMode.NONE,
+  parentNodePrivacyLevel: NodePrivacyLevelInternal.ALLOW,
 }
 
 describe('serializeNodeWithId', () => {
@@ -65,8 +80,6 @@ describe('serializeNodeWithId', () => {
         type: NodeType.Element,
         tagName: 'div',
         attributes: {
-          id: '',
-          class: '',
           rr_width: '0px',
           rr_height: '0px',
           [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_HIDDEN,
@@ -81,7 +94,6 @@ describe('serializeNodeWithId', () => {
       const element = document.createElement('div')
       element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
       element.appendChild(document.createElement('hr'))
-
       expect((serializeNodeWithId(element, DEFAULT_OPTIONS)! as ElementNode).childNodes).toEqual([])
     })
 
@@ -187,11 +199,7 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.value = 'toto'
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          attributes: { type: 'password' },
-        })
-      )
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(jasmine.objectContaining({}))
     })
 
     it('does not serialize <input type="password"> values set via attribute setter', () => {
@@ -199,19 +207,19 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.setAttribute('value', 'toto')
 
-      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(
-        jasmine.objectContaining({
-          attributes: { type: 'password' },
-        })
-      )
+      expect(serializeNodeWithId(input, DEFAULT_OPTIONS)! as ElementNode).toEqual(jasmine.objectContaining({}))
     })
 
     it('serializes <input type="checkbox"> elements checked state', () => {
       const checkbox = document.createElement('input')
-
+      checkbox.type = 'checkbox'
       expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: {},
+          attributes: {
+            type: 'checkbox',
+            value: 'on',
+            checked: false,
+          },
         })
       )
 
@@ -219,7 +227,11 @@ describe('serializeNodeWithId', () => {
 
       expect(serializeNodeWithId(checkbox, DEFAULT_OPTIONS)! as ElementNode).toEqual(
         jasmine.objectContaining({
-          attributes: { checked: true },
+          attributes: {
+            type: 'checkbox',
+            value: 'on',
+            checked: true,
+          },
         })
       )
     })
@@ -243,12 +255,6 @@ describe('serializeNodeWithId', () => {
       )
     })
 
-    it('replaces weird tag names with "div"', () => {
-      expect((serializeNodeWithId(document.createElement('foo:bar'), DEFAULT_OPTIONS) as ElementNode).tagName).toEqual(
-        'div'
-      )
-    })
-
     describe('input privacy mode', () => {
       it('replaces <input> values with asterisks for masked mode', () => {
         const input = document.createElement('input')
@@ -259,7 +265,7 @@ describe('serializeNodeWithId', () => {
           jasmine.objectContaining({
             attributes: {
               [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_MASKED,
-              value: '****',
+              value: '***',
             },
           })
         )
@@ -274,13 +280,13 @@ describe('serializeNodeWithId', () => {
 
         expect((serializeNodeWithId(parent, DEFAULT_OPTIONS)! as ElementNode).childNodes[0]).toEqual(
           jasmine.objectContaining({
-            attributes: { value: '****' },
+            attributes: { value: '***' },
           })
         )
       })
     })
 
-    it('does not serialize <input> values for ignored mode', () => {
+    it('does serialize <input> values for ignored mode', () => {
       const input = document.createElement('input')
       input.value = 'toto'
       input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_IGNORED)
@@ -289,6 +295,7 @@ describe('serializeNodeWithId', () => {
         jasmine.objectContaining({
           attributes: {
             [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_INPUT_IGNORED,
+            value: '***',
           },
         })
       )
@@ -315,7 +322,11 @@ describe('serializeNodeWithId', () => {
 
   describe('text nodes serialization', () => {
     it('serializes a text node', () => {
-      expect(serializeNodeWithId(document.createTextNode('foo'), DEFAULT_OPTIONS)).toEqual({
+      const parentEl = document.createElement('bar')
+      parentEl.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_ALLOW)
+      const textNode = document.createTextNode('foo')
+      parentEl.appendChild(textNode)
+      expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
         type: NodeType.Text,
         id: (jasmine.any(Number) as unknown) as number,
         isStyle: undefined,
@@ -396,6 +407,64 @@ describe('serializeNodeWithId', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'KeYwOrDs')
       expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
+    })
+  })
+})
+
+describe('serializeDocumentNode handles', function testAllowDomTree() {
+  const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
+
+  beforeEach(() => {
+    if (isIE()) {
+      pending('IE not supported')
+    }
+  })
+
+  it('a masked or hidden DOM Document itself is still serialized ', () => {
+    const serializeOptionsMask = {
+      document,
+      parentNodePrivacyLevel: NodePrivacyLevelInternal.MASK,
+    }
+    expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
+      type: NodeType.Document,
+      childNodes: serializeChildNodes(document, serializeOptionsMask),
+    })
+
+    const serializeOptionsHidden = {
+      document,
+      parentNodePrivacyLevel: NodePrivacyLevelInternal.HIDDEN,
+    }
+    expect(serializeDocumentNode(document, serializeOptionsHidden)).toEqual({
+      type: NodeType.Document,
+      childNodes: serializeChildNodes(document, serializeOptionsHidden),
+    })
+  })
+
+  describe('for privacy tag `hidden`, a DOM tree', function testHiddenDomTree() {
+    it('is serialized correctly', () => {
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'hidden')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_HIDDEN)
+    })
+  })
+
+  describe('for privacy tag `mask`, a DOM tree', function testMaskDomTree() {
+    it('is serialized correctly', () => {
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_MASK)
+    })
+  })
+
+  describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
+    it('is serialized correctly', () => {
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_FORMS_ONLY)
+    })
+  })
+
+  describe('for privacy tag `allow`, a DOM tree', function testAllowDomTree() {
+    it('is serialized correctly', () => {
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_ALLOW)
     })
   })
 })
