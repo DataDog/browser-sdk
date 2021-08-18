@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "bumbag": "1.6.12",
-    "react": "16",
-    "react-dom": "16"
+    "react": "16.14.0",
+    "react-dom": "16.14.0"
   }
 }
