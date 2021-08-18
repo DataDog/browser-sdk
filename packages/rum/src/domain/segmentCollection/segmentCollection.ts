@@ -153,7 +153,7 @@ export function doStartSegmentCollection(
     state = {
       status: SegmentCollectionStatus.SegmentPending,
       segment,
-      expirationTimeoutId: setTimeout(
+      expirationTimeoutId: window.setTimeout(
         monitor(() => {
           flushSegment('max_duration')
         }),
