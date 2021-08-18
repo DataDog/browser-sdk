@@ -19,6 +19,7 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
+import { getRumRecorderConfig } from '../../boot/startRecording'
 
 import { makeStylesheetUrlsAbsolute, makeSrcsetUrlsAbsolute, makeUrlAbsolute } from './serializationUtils'
 
@@ -27,9 +28,21 @@ import { shouldIgnoreElement } from './serialize'
 const TEXT_MASKING_CHAR = '᙮'
 
 export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
-  // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
-  // Setting "NOT_SET" will be treated as "MASK_FORMS_ONLY"
-  return NodePrivacyLevelInternal.ALLOW
+  // May return "ALLOW" | "MASK" | "HIDDEN", OR "MASK_FORMS_ONLY" (internal state)
+  // REVIEW:  Setting "NOT_SET" will be treated as "MASK_FORMS_ONLY"
+  // REVIEW: Excluding NOT_SET?
+  const initialPrivacyLevel = getRumRecorderConfig()?.initialPrivacyLevel || NodePrivacyLevelInternal.ALLOW
+  const initialPrivacyLevelUpperCased = initialPrivacyLevel.toUpperCase()
+  switch (initialPrivacyLevelUpperCased) {
+    case NodePrivacyLevelInternal.ALLOW:
+    case NodePrivacyLevelInternal.MASK:
+    case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
+    case NodePrivacyLevelInternal.HIDDEN:
+    case NodePrivacyLevelInternal.NOT_SET:
+      return initialPrivacyLevelUpperCased
+    default:
+      return NodePrivacyLevelInternal.ALLOW
+  }
 }
 
 /**

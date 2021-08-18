@@ -31,6 +31,7 @@ import { startRum } from './startRum'
 export interface RumInitConfiguration extends InitConfiguration {
   applicationId: string
   beforeSend?: (event: RumEvent, context: RumEventDomainContext) => void | boolean
+  initialPrivacyLevel?: string
 }
 
 export type RumPublicApi = ReturnType<typeof makeRumPublicApi>
