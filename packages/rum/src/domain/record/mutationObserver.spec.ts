@@ -1,3 +1,4 @@
+import { InitialPrivacyLevel } from '@datadog/browser-core'
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
@@ -21,7 +22,11 @@ describe('startMutationCollection', () => {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
     const mutationController = new MutationController()
 
-    ;({ stop: stopMutationCollection } = startMutationObserver(mutationController, mutationCallbackSpy))
+    ;({ stop: stopMutationCollection } = startMutationObserver(
+      mutationController,
+      mutationCallbackSpy,
+      InitialPrivacyLevel.ALLOW
+    ))
 
     return {
       mutationController,

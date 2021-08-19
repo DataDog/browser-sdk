@@ -1,5 +1,4 @@
 import { RecordType } from '../../types'
-import { NodePrivacyLevel } from '../../constants'
 import { serializeDocument } from './serialize'
 import { initObservers } from './observer'
 import { IncrementalSource, RecordAPI, RecordOptions } from './types'
@@ -36,7 +35,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document, NodePrivacyLevel.ALLOW /* TODO */),
+        node: serializeDocument(document, options.initialPrivacyLevel),
         initialOffset: {
           left:
             window.pageXOffset !== undefined
@@ -62,6 +61,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const stopObservers = initObservers({
     mutationController,
+    initialPrivacyLevel: options.initialPrivacyLevel,
     inputCb: (v) =>
       emit({
         data: {

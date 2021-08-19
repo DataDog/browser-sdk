@@ -1,3 +1,4 @@
+import { InitialPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import { initInputObserver } from './observer'
@@ -15,7 +16,7 @@ describe('initInputObserver', () => {
       pending('IE not supported')
     }
     inputCallbackSpy = jasmine.createSpy()
-    stopInputObserver = initInputObserver(inputCallbackSpy)
+    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
 
     sandbox = document.createElement('div')
     input = document.createElement('input')

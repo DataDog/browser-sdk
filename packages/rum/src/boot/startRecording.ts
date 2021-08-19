@@ -27,6 +27,7 @@ export function startRecording(
 
   const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
     emit: addRawRecord,
+    initialPrivacyLevel: configuration.initialPrivacyLevel,
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, flushMutations)
