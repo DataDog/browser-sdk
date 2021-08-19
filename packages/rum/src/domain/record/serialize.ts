@@ -25,11 +25,19 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 
+// Those values are the only one that can be used when inheriting privacy levels from parent to
+// children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
+// ensures that no children are serialized when they shouldn't.
+type ParentNodePrivacyLevel =
+  | typeof NodePrivacyLevel.ALLOW
+  | typeof NodePrivacyLevel.MASK
+  | typeof NodePrivacyLevel.MASK_FORMS_ONLY
+
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: NodePrivacyLevel
+  parentNodePrivacyLevel: ParentNodePrivacyLevel
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
@@ -267,10 +275,6 @@ function serializeCDataNode(): CDataNode {
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
-
-  if (options.parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-    return result
-  }
 
   forEach(node.childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)

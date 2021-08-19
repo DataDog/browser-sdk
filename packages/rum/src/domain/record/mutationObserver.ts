@@ -166,10 +166,15 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       continue
     }
 
+    const parentNodePrivacyLevel = getNodePrivacyLevel(node.parentNode!)
+    if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+      continue
+    }
+
     const serializedNode = serializeNodeWithId(node, {
       document,
       serializedNodeIds,
-      parentNodePrivacyLevel: getNodePrivacyLevel(node.parentNode!),
+      parentNodePrivacyLevel,
     })
     if (!serializedNode) {
       continue

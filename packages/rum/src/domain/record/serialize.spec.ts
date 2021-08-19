@@ -420,7 +420,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     }
   })
 
-  it('a masked or hidden DOM Document itself is still serialized ', () => {
+  it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask = {
       document,
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
@@ -428,15 +428,6 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
       childNodes: serializeChildNodes(document, serializeOptionsMask),
-    })
-
-    const serializeOptionsHidden = {
-      document,
-      parentNodePrivacyLevel: NodePrivacyLevel.HIDDEN,
-    }
-    expect(serializeDocumentNode(document, serializeOptionsHidden)).toEqual({
-      type: NodeType.Document,
-      childNodes: serializeChildNodes(document, serializeOptionsHidden),
     })
   })
 
