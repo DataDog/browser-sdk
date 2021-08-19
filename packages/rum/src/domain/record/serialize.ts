@@ -4,7 +4,8 @@ import {
   serializeAttribute,
   getTextContent,
   shouldMaskNode,
-  getNodePrivacyLevel,
+  derivePrivacyLevelGivenParent,
+  getNodeSelfPrivacyLevel,
 } from './privacy'
 import {
   SerializedNode,
@@ -108,9 +109,12 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
-  // We only get internal privacy level here to pass on to
-  // child nodes, purely for performance reasons
-  const nodePrivacyLevel = getNodePrivacyLevel(element, options.parentNodePrivacyLevel)
+  // For performance reason, we don't use getNodePrivacyLevel directly: we leverage the
+  // parentNodePrivacyLevel option to avoid iterating over all parents
+  const nodePrivacyLevel = derivePrivacyLevelGivenParent(
+    getNodeSelfPrivacyLevel(element),
+    options.parentNodePrivacyLevel
+  )
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()

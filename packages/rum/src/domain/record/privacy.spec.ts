@@ -108,16 +108,21 @@ describe('privacy helpers', () => {
         expect(getNodePrivacyLevel(node, NodePrivacyLevel.NOT_SET)).toBe(NodePrivacyLevel.MASK_FORMS_ONLY)
       })
 
-      it('forces an element to be ignored if an ancestor is ignored', () => {
+      it('forces an element to be hidden if an ancestor is hidden', () => {
+        const ancestor = document.createElement('div')
+        ancestor.setAttribute('data-dd-privacy', 'hidden')
         const node = document.createElement('input')
         node.setAttribute('data-dd-privacy', 'input-masked')
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+        ancestor.appendChild(node)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.HIDDEN)
       })
 
       it('forces an element to be ignored if an ancestor is MASK', () => {
-        const node = document.createElement('input')
-        node.setAttribute('data-dd-privacy', 'mask')
-        expect(getNodePrivacyLevel(node, NodePrivacyLevel.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
+        const ancestor = document.createElement('div')
+        ancestor.setAttribute('data-dd-privacy', 'mask')
+        const node = document.createElement('script')
+        ancestor.appendChild(node)
+        expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.IGNORE)
       })
 
       it('consider a DOM element to be ALLOW even if an ancestor is MASK', () => {

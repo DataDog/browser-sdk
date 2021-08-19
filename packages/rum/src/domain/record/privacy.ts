@@ -36,20 +36,15 @@ export function getInitialPrivacyLevel(): NodePrivacyLevel {
  * This function may be explicitly used when passing internal privacy levels to
  * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
  */
-export function getNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodePrivacyLevel): NodePrivacyLevel {
-  const isElementNode = isElement(node)
-
-  // Only Elements have tags directly applied
-  if (!isElementNode && node.parentElement) {
-    return parentNodePrivacyLevel || getNodePrivacyLevel(node.parentElement)
-  }
-
-  const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
-  return derivePrivacyLevelGivenParent(selfPrivacyLevel, parentNodePrivacyLevel || parentNodePrivacyLevelFallback(node))
-}
-
-function parentNodePrivacyLevelFallback(node: Node) {
-  return node?.parentNode ? getNodePrivacyLevel(node.parentNode) : NodePrivacyLevel.ALLOW
+export function getNodePrivacyLevel(
+  node: Node,
+  initialPrivacyLevel: NodePrivacyLevel = getInitialPrivacyLevel()
+): NodePrivacyLevel {
+  const parentNodePrivacyLevel = node.parentNode
+    ? getNodePrivacyLevel(node.parentNode, initialPrivacyLevel)
+    : initialPrivacyLevel
+  const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
+  return derivePrivacyLevelGivenParent(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }
 
 /**
