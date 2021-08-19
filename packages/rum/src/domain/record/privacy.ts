@@ -51,7 +51,7 @@ export function getNodePrivacyLevel(
  * Reduces the next privacy level based on self + parent privacy levels
  */
 export function derivePrivacyLevelGivenParent(
-  childPrivacyLevel: NodePrivacyLevel,
+  childPrivacyLevel: NodePrivacyLevel | undefined,
   parentNodePrivacyLevel: NodePrivacyLevel
 ): NodePrivacyLevel {
   switch (parentNodePrivacyLevel) {
@@ -61,8 +61,6 @@ export function derivePrivacyLevelGivenParent(
       return parentNodePrivacyLevel
   }
   switch (childPrivacyLevel) {
-    case NodePrivacyLevel.NOT_SET:
-      return parentNodePrivacyLevel
     case NodePrivacyLevel.ALLOW:
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.MASK_FORMS_ONLY:
@@ -79,7 +77,7 @@ export function derivePrivacyLevelGivenParent(
  * This function is purposely not exposed because we do care about the ancestor level.
  * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
  */
-export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel {
+export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
   // Only Element types can be have a privacy level set
   if (isElement(node)) {
     const elNode = node as HTMLElement
@@ -138,9 +136,6 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel {
   } else if (node.nodeType === Node.DOCUMENT_NODE) {
     return getInitialPrivacyLevel()
   }
-
-  // Other node types cannot be tagged directly
-  return NodePrivacyLevel.NOT_SET
 }
 
 export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {

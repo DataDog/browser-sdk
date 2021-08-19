@@ -3,15 +3,13 @@ export const NodePrivacyLevel = {
   ALLOW: 'ALLOW',
   MASK: 'MASK',
   HIDDEN: 'HIDDEN',
-
-  NOT_SET: 'NOT_SET',
   MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
 } as const
 export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 
-// Deprecate via temporariy Alias
+// Deprecate via temporary Alias
 export const PRIVACY_CLASS_INPUT_IGNORED = 'dd-privacy-input-ignored' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_ATTR_VALUE_INPUT_IGNORED = 'input-ignored' // DEPRECATED, aliased to mask-forms-only
