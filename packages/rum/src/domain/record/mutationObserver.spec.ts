@@ -1,6 +1,7 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls, createMutationPayloadValidator } from '../../../test/utils'
 import {
+  NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
@@ -46,7 +47,7 @@ describe('startMutationCollection', () => {
 
   describe('childList mutation records', () => {
     it('emits a mutation when a node is appended to a known node', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('div'))
@@ -66,7 +67,7 @@ describe('startMutationCollection', () => {
     })
 
     it('processes mutations asynchronously', (done) => {
-      serializeDocument(document)
+      serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationCallbackSpy } = startMutationCollection()
       const {
         waitAsyncCalls: waitMutationCallbackCalls,
@@ -93,7 +94,7 @@ describe('startMutationCollection', () => {
     })
 
     it('emits buffered mutation records on flush', () => {
-      serializeDocument(document)
+      serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       sandbox.appendChild(document.createElement('div'))
@@ -109,7 +110,7 @@ describe('startMutationCollection', () => {
       it('attribute mutations', () => {
         const element = document.createElement('div')
         sandbox.appendChild(element)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -123,7 +124,7 @@ describe('startMutationCollection', () => {
       it('text mutations', () => {
         const textNode = document.createTextNode('foo')
         sandbox.appendChild(textNode)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -135,7 +136,7 @@ describe('startMutationCollection', () => {
       })
 
       it('add mutations', () => {
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -149,7 +150,7 @@ describe('startMutationCollection', () => {
       it('remove mutations', () => {
         const element = document.createElement('div')
         sandbox.appendChild(element)
-        const serializedDocument = serializeDocument(document)
+        const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -178,7 +179,7 @@ describe('startMutationCollection', () => {
       it('attribute mutations', () => {
         const element = document.createElement('div')
         sandbox.appendChild(element)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -194,7 +195,7 @@ describe('startMutationCollection', () => {
       it('text mutations', () => {
         const textNode = document.createTextNode('foo')
         sandbox.appendChild(textNode)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -212,7 +213,7 @@ describe('startMutationCollection', () => {
         const child = document.createElement('b')
         sandbox.appendChild(parent)
         parent.appendChild(child)
-        const serializedDocument = serializeDocument(document)
+        const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -249,7 +250,7 @@ describe('startMutationCollection', () => {
       })
 
       it('remove mutations', () => {
-        const serializedDocument = serializeDocument(document)
+        const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -275,7 +276,7 @@ describe('startMutationCollection', () => {
 
     it('emits only an "add" mutation when adding, removing then re-adding a child', () => {
       const element = document.createElement('a')
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -301,7 +302,7 @@ describe('startMutationCollection', () => {
       const elementB = document.createElement('b')
       sandbox.appendChild(elementA)
       sandbox.appendChild(elementB)
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -334,7 +335,7 @@ describe('startMutationCollection', () => {
       sandbox.appendChild(element)
       sandbox.appendChild(container1)
       sandbox.appendChild(container2)
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -361,7 +362,7 @@ describe('startMutationCollection', () => {
     })
 
     it('keep nodes order when adding multiple sibling nodes', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -405,7 +406,7 @@ describe('startMutationCollection', () => {
     })
 
     it('emits a mutation when a text node is changed', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       textNode.data = 'bar'
@@ -425,7 +426,7 @@ describe('startMutationCollection', () => {
     })
 
     it('does not emit a mutation when a text node keeps the same value', () => {
-      serializeDocument(document)
+      serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       textNode.data = 'bar'
@@ -438,7 +439,7 @@ describe('startMutationCollection', () => {
 
   describe('attributes mutations', () => {
     it('emits a mutation when an attribute is changed', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo', 'bar')
@@ -459,7 +460,7 @@ describe('startMutationCollection', () => {
 
     it('does not emit a mutation when an attribute keeps the same value', () => {
       sandbox.setAttribute('foo', 'bar')
-      serializeDocument(document)
+      serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
       sandbox.setAttribute('foo', 'biz')
@@ -470,7 +471,7 @@ describe('startMutationCollection', () => {
     })
 
     it('reuse the same mutation when multiple attributes are changed', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
       sandbox.setAttribute('foo1', 'biz')
@@ -498,7 +499,7 @@ describe('startMutationCollection', () => {
     })
 
     it('skips ignored nodes when looking for the next id', () => {
-      const serializedDocument = serializeDocument(document)
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -520,7 +521,7 @@ describe('startMutationCollection', () => {
     describe('does not emit mutations occurring in ignored node', () => {
       it('when adding an ignored node', () => {
         ignoredElement.remove()
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -532,7 +533,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when changing the attributes of an ignored node', () => {
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -544,7 +545,7 @@ describe('startMutationCollection', () => {
       })
 
       it('when adding a new child node', () => {
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -558,7 +559,7 @@ describe('startMutationCollection', () => {
       it('when mutating a known child node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
         ignoredElement.appendChild(textNode)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
@@ -573,7 +574,7 @@ describe('startMutationCollection', () => {
       it('when adding a known child node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        const serializedDocument = serializeDocument(document)
+        const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -600,7 +601,7 @@ describe('startMutationCollection', () => {
         sandbox.appendChild(a)
         sandbox.appendChild(script)
         sandbox.appendChild(b)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -621,7 +622,7 @@ describe('startMutationCollection', () => {
     })
 
     it('does not emit attribute mutations on hidden nodes', () => {
-      serializeDocument(document)
+      serializeDocument(document, NodePrivacyLevel.ALLOW)
 
       const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -634,7 +635,7 @@ describe('startMutationCollection', () => {
 
     describe('does not emit mutations occurring in hidden node', () => {
       it('when adding a new node', () => {
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
 
@@ -648,7 +649,7 @@ describe('startMutationCollection', () => {
       it('when mutating a known child node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        serializeDocument(document)
+        serializeDocument(document, NodePrivacyLevel.ALLOW)
         hiddenElement.appendChild(textNode)
 
         const { mutationController, mutationCallbackSpy } = startMutationCollection()
@@ -663,7 +664,7 @@ describe('startMutationCollection', () => {
       it('when moving a known node into an hidden node', () => {
         const textNode = document.createTextNode('function foo() {}')
         sandbox.appendChild(textNode)
-        const serializedDocument = serializeDocument(document)
+        const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
         const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -783,7 +784,7 @@ describe('startMutationCollection', () => {
           } else {
             sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
           }
-          const serializedDocument = serializeDocument(document)
+          const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
           const { mutationController, getLatestMutationPayload } = startMutationCollection()
 
@@ -814,7 +815,7 @@ describe('startMutationCollection', () => {
             sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
           }
           sandbox.appendChild(input)
-          const serializedDocument = serializeDocument(document)
+          const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
 
           const { mutationController, getLatestMutationPayload, mutationCallbackSpy } = startMutationCollection()
 

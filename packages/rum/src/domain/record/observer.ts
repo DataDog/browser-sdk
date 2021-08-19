@@ -103,7 +103,10 @@ const eventTypeToMouseInteraction = {
 function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
-    if (getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
+    if (
+      getNodePrivacyLevel(target, NodePrivacyLevel.ALLOW /* TODO */) === NodePrivacyLevel.HIDDEN ||
+      !hasSerializedNode(target)
+    ) {
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
@@ -124,7 +127,11 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
-      if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
+      if (
+        !target ||
+        getNodePrivacyLevel(target, NodePrivacyLevel.ALLOW /* TODO */) === NodePrivacyLevel.HIDDEN ||
+        !hasSerializedNode(target)
+      ) {
         return
       }
       const id = getSerializedNodeId(target)
@@ -168,7 +175,7 @@ const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
-    const nodePrivacyLevel = getNodePrivacyLevel(target)
+    const nodePrivacyLevel = getNodePrivacyLevel(target, NodePrivacyLevel.ALLOW /* TODO */)
     if (
       !target ||
       !target.tagName ||
@@ -303,7 +310,11 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (event: Event) => {
     const target = event.target as Node
-    if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
+    if (
+      !target ||
+      getNodePrivacyLevel(target, NodePrivacyLevel.ALLOW /* TODO */) === NodePrivacyLevel.HIDDEN ||
+      !hasSerializedNode(target)
+    ) {
       return
     }
     mediaInteractionCb({

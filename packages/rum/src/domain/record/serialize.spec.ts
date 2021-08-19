@@ -49,7 +49,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString(`<!doctype html><html>foo</html>`, 'text/html')
-      expect(serializeDocument(document)).toEqual({
+      expect(serializeDocument(document, NodePrivacyLevel.ALLOW)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),

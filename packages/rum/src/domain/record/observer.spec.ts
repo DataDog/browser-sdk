@@ -1,5 +1,5 @@
 import { createNewEvent, isIE } from '../../../../core/test/specHelper'
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED } from '../../constants'
 import { initInputObserver } from './observer'
 import { serializeDocument } from './serialize'
 import { InputCallback } from './types'
@@ -22,7 +22,7 @@ describe('initInputObserver', () => {
     sandbox.appendChild(input)
     document.body.appendChild(sandbox)
 
-    serializeDocument(document)
+    serializeDocument(document, NodePrivacyLevel.ALLOW)
   })
 
   afterEach(() => {

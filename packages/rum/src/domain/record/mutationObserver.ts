@@ -82,7 +82,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       document.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
-      getNodePrivacyLevel(mutation.target) !== NodePrivacyLevel.HIDDEN
+      getNodePrivacyLevel(mutation.target, NodePrivacyLevel.ALLOW /* TODO */) !== NodePrivacyLevel.HIDDEN
   )
 
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
@@ -166,7 +166,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       continue
     }
 
-    const parentNodePrivacyLevel = getNodePrivacyLevel(node.parentNode!)
+    const parentNodePrivacyLevel = getNodePrivacyLevel(node.parentNode!, NodePrivacyLevel.ALLOW /* TODO */)
     if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
       continue
     }
@@ -238,7 +238,8 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
 
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
-      value: getTextContent(mutation.target, false) ?? null, // REVIEW: using `options.ignoreWhiteSpace`
+      // TODO: pass a valid "ignoreWhiteSpace" argument
+      value: getTextContent(mutation.target, false, NodePrivacyLevel.ALLOW /* TODO */) ?? null,
     })
   }
 
@@ -270,7 +271,7 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
     if (uncensoredValue === mutation.oldValue) {
       continue
     }
-    const privacyLevel = getNodePrivacyLevel(mutation.target)
+    const privacyLevel = getNodePrivacyLevel(mutation.target, NodePrivacyLevel.ALLOW /* TODO  */)
     const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!)
 
     let transformedValue: string | null

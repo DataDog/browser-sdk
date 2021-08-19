@@ -1,6 +1,5 @@
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
-  getInitialPrivacyLevel,
   serializeAttribute,
   getTextContent,
   shouldMaskNode,
@@ -40,11 +39,14 @@ export interface SerializeOptions {
   parentNodePrivacyLevel: ParentNodePrivacyLevel
 }
 
-export function serializeDocument(document: Document): SerializedNodeWithId {
+export function serializeDocument(
+  document: Document,
+  initialPrivacyLevel: ParentNodePrivacyLevel
+): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: getInitialPrivacyLevel(),
+    parentNodePrivacyLevel: initialPrivacyLevel,
   })!
 }
 

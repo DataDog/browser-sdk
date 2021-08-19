@@ -25,21 +25,12 @@ import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = '᙮'
 
-export function getInitialPrivacyLevel(): NodePrivacyLevel {
-  // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
-  // Setting "NOT_SET" will be treated as "MASK_FORMS_ONLY"
-  return NodePrivacyLevel.ALLOW
-}
-
 /**
  * INTERNAL FUNC: Get privacy level without remapping (or setting cache)
  * This function may be explicitly used when passing internal privacy levels to
  * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
  */
-export function getNodePrivacyLevel(
-  node: Node,
-  initialPrivacyLevel: NodePrivacyLevel = getInitialPrivacyLevel()
-): NodePrivacyLevel {
+export function getNodePrivacyLevel(node: Node, initialPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
   const parentNodePrivacyLevel = node.parentNode
     ? getNodePrivacyLevel(node.parentNode, initialPrivacyLevel)
     : initialPrivacyLevel
@@ -133,8 +124,6 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
       // such as for scripts
       return NodePrivacyLevel.IGNORE
     }
-  } else if (node.nodeType === Node.DOCUMENT_NODE) {
-    return getInitialPrivacyLevel()
   }
 }
 
@@ -241,7 +230,7 @@ export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHA
 export function getTextContent(
   textNode: Node,
   ignoreWhiteSpace: boolean,
-  parentNodePrivacyLevel?: NodePrivacyLevel
+  parentNodePrivacyLevel: NodePrivacyLevel
 ): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
@@ -252,7 +241,7 @@ export function getTextContent(
     return
   }
 
-  const nodePrivacyLevel = parentNodePrivacyLevel || getNodePrivacyLevel(textNode.parentNode as Node)
+  const nodePrivacyLevel = parentNodePrivacyLevel
 
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   const isScript = parentTagName === 'SCRIPT'
