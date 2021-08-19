@@ -3,16 +3,11 @@ export const NodePrivacyLevel = {
   ALLOW: 'ALLOW',
   MASK: 'MASK',
   HIDDEN: 'HIDDEN',
-} as const
-export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
-export const NodePrivacyLevelInternal = {
-  // INTERNAL USE: not to be used by the general codebase
   NOT_SET: 'NOT_SET',
   MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
-  ...NodePrivacyLevel,
 } as const
-export type NodePrivacyLevelInternal = typeof NodePrivacyLevelInternal[keyof typeof NodePrivacyLevelInternal]
+export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 

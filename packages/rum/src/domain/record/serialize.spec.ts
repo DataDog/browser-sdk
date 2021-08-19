@@ -1,6 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  NodePrivacyLevelInternal,
+  NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -27,7 +27,7 @@ import { ElementNode, NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  parentNodePrivacyLevel: NodePrivacyLevelInternal.ALLOW,
+  parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
 }
 
 describe('serializeNodeWithId', () => {
@@ -423,7 +423,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   it('a masked or hidden DOM Document itself is still serialized ', () => {
     const serializeOptionsMask = {
       document,
-      parentNodePrivacyLevel: NodePrivacyLevelInternal.MASK,
+      parentNodePrivacyLevel: NodePrivacyLevel.MASK,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
@@ -432,7 +432,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
     const serializeOptionsHidden = {
       document,
-      parentNodePrivacyLevel: NodePrivacyLevelInternal.HIDDEN,
+      parentNodePrivacyLevel: NodePrivacyLevel.HIDDEN,
     }
     expect(serializeDocumentNode(document, serializeOptionsHidden)).toEqual({
       type: NodeType.Document,

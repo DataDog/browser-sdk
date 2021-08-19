@@ -1,10 +1,4 @@
-import {
-  NodePrivacyLevel,
-  NodePrivacyLevelInternal,
-  PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_HIDDEN,
-  CENSORED_STRING_MARK,
-} from '../../constants'
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
   getInitialPrivacyLevel,
   serializeAttribute,
@@ -34,7 +28,7 @@ export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: NodePrivacyLevelInternal
+  parentNodePrivacyLevel: NodePrivacyLevel
 }
 
 export function serializeDocument(document: Document): SerializedNodeWithId {
@@ -326,7 +320,7 @@ function isSVGElement(el: Element): boolean {
 
 function getAttributesForPrivacyLevel(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevelInternal
+  nodePrivacyLevel: NodePrivacyLevel
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}

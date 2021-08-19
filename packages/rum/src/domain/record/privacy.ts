@@ -1,6 +1,5 @@
 import {
   NodePrivacyLevel,
-  NodePrivacyLevelInternal,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
@@ -26,10 +25,10 @@ import { shouldIgnoreElement } from './serialize'
 
 const TEXT_MASKING_CHAR = '᙮'
 
-export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
+export function getInitialPrivacyLevel(): NodePrivacyLevel {
   // REVIEW: may return "ALLOW" | "MASK" | "HIDDEN" OR "MASK_FORMS_ONLY" (internal state)
   // Setting "NOT_SET" will be treated as "MASK_FORMS_ONLY"
-  return NodePrivacyLevelInternal.ALLOW
+  return NodePrivacyLevel.ALLOW
 }
 
 /**
@@ -37,10 +36,7 @@ export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
  * This function may be explicitly used when passing internal privacy levels to
  * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
  */
-export function getNodePrivacyLevel(
-  node: Node,
-  parentNodePrivacyLevel?: NodePrivacyLevelInternal
-): NodePrivacyLevelInternal {
+export function getNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodePrivacyLevel): NodePrivacyLevel {
   const isElementNode = isElement(node)
 
   // Only Elements have tags directly applied
@@ -53,30 +49,30 @@ export function getNodePrivacyLevel(
 }
 
 function parentNodePrivacyLevelFallback(node: Node) {
-  return node?.parentNode ? getNodePrivacyLevel(node.parentNode) : NodePrivacyLevelInternal.ALLOW
+  return node?.parentNode ? getNodePrivacyLevel(node.parentNode) : NodePrivacyLevel.ALLOW
 }
 
 /**
  * Reduces the next privacy level based on self + parent privacy levels
  */
 export function derivePrivacyLevelGivenParent(
-  childPrivacyLevel: NodePrivacyLevelInternal,
-  parentNodePrivacyLevel: NodePrivacyLevelInternal
-): NodePrivacyLevelInternal {
+  childPrivacyLevel: NodePrivacyLevel,
+  parentNodePrivacyLevel: NodePrivacyLevel
+): NodePrivacyLevel {
   switch (parentNodePrivacyLevel) {
     // These values cannot be overrided
-    case NodePrivacyLevelInternal.HIDDEN:
-    case NodePrivacyLevelInternal.IGNORE:
+    case NodePrivacyLevel.HIDDEN:
+    case NodePrivacyLevel.IGNORE:
       return parentNodePrivacyLevel
   }
   switch (childPrivacyLevel) {
-    case NodePrivacyLevelInternal.NOT_SET:
+    case NodePrivacyLevel.NOT_SET:
       return parentNodePrivacyLevel
-    case NodePrivacyLevelInternal.ALLOW:
-    case NodePrivacyLevelInternal.MASK:
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
-    case NodePrivacyLevelInternal.HIDDEN:
-    case NodePrivacyLevelInternal.IGNORE:
+    case NodePrivacyLevel.ALLOW:
+    case NodePrivacyLevel.MASK:
+    case NodePrivacyLevel.MASK_FORMS_ONLY:
+    case NodePrivacyLevel.HIDDEN:
+    case NodePrivacyLevel.IGNORE:
       return childPrivacyLevel
     default:
       return parentNodePrivacyLevel
@@ -88,7 +84,7 @@ export function derivePrivacyLevelGivenParent(
  * This function is purposely not exposed because we do care about the ancestor level.
  * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
  */
-export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
+export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel {
   // Only Element types can be have a privacy level set
   if (isElement(node)) {
     const elNode = node as HTMLElement
@@ -96,69 +92,69 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
 
     // There are a few `overrules` to enforce for end-user protection
     if (elNode.tagName === 'BASE') {
-      return NodePrivacyLevelInternal.ALLOW
+      return NodePrivacyLevel.ALLOW
     }
     if (elNode.tagName === 'INPUT') {
       const inputElement = elNode as HTMLInputElement
       if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
-        return NodePrivacyLevelInternal.MASK
+        return NodePrivacyLevel.MASK
       }
       if (inputElement.type === 'hidden') {
-        return NodePrivacyLevelInternal.MASK
+        return NodePrivacyLevel.MASK
       }
       const autocomplete = inputElement.getAttribute('autocomplete')
       // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
       if (autocomplete && autocomplete.indexOf('cc-') === 0) {
-        return NodePrivacyLevelInternal.MASK
+        return NodePrivacyLevel.MASK
       }
     }
 
     // Customers should first specify privacy tags using HTML attributes
     switch (privAttr) {
       case PRIVACY_ATTR_VALUE_ALLOW:
-        return NodePrivacyLevelInternal.ALLOW
+        return NodePrivacyLevel.ALLOW
       case PRIVACY_ATTR_VALUE_MASK:
-        return NodePrivacyLevelInternal.MASK
+        return NodePrivacyLevel.MASK
       case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY:
       case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
       case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
-        return NodePrivacyLevelInternal.MASK_FORMS_ONLY
+        return NodePrivacyLevel.MASK_FORMS_ONLY
       case PRIVACY_ATTR_VALUE_HIDDEN:
-        return NodePrivacyLevelInternal.HIDDEN
+        return NodePrivacyLevel.HIDDEN
     }
 
     // But we also need to support class based privacy tagging for certain frameworks
     if (elNode.classList.contains(PRIVACY_CLASS_ALLOW)) {
-      return NodePrivacyLevelInternal.ALLOW
+      return NodePrivacyLevel.ALLOW
     } else if (elNode.classList.contains(PRIVACY_CLASS_MASK)) {
-      return NodePrivacyLevelInternal.MASK
+      return NodePrivacyLevel.MASK
     } else if (elNode.classList.contains(PRIVACY_CLASS_HIDDEN)) {
-      return NodePrivacyLevelInternal.HIDDEN
+      return NodePrivacyLevel.HIDDEN
     } else if (
       elNode.classList.contains(PRIVACY_CLASS_MASK_FORMS_ONLY) ||
       elNode.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
       elNode.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
     ) {
-      return NodePrivacyLevelInternal.MASK_FORMS_ONLY
+      return NodePrivacyLevel.MASK_FORMS_ONLY
     } else if (shouldIgnoreElement(elNode)) {
       // such as for scripts
-      return NodePrivacyLevelInternal.IGNORE
+      return NodePrivacyLevel.IGNORE
     }
   } else if (node.nodeType === Node.DOCUMENT_NODE) {
     return getInitialPrivacyLevel()
   }
 
   // Other node types cannot be tagged directly
-  return NodePrivacyLevelInternal.NOT_SET
+  return NodePrivacyLevel.NOT_SET
 }
 
-export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevelInternal) {
+export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
   switch (privacyLevel) {
-    case NodePrivacyLevelInternal.MASK:
-    case NodePrivacyLevelInternal.HIDDEN:
-    case NodePrivacyLevelInternal.IGNORE:
+    case NodePrivacyLevel.MASK:
+    case NodePrivacyLevel.HIDDEN:
+    case NodePrivacyLevel.IGNORE:
       return true
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
+    case NodePrivacyLevel.MASK_FORMS_ONLY:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
     default:
       return false
@@ -167,7 +163,7 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevelInterna
 
 export function serializeAttribute(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevelInternal,
+  nodePrivacyLevel: NodePrivacyLevel,
   attributeName: string
 ): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
@@ -255,7 +251,7 @@ export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHA
 export function getTextContent(
   textNode: Node,
   ignoreWhiteSpace: boolean,
-  parentNodePrivacyLevel?: NodePrivacyLevelInternal
+  parentNodePrivacyLevel?: NodePrivacyLevel
 ): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
