@@ -1,7 +1,7 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
-import { serializeAttribute, getNodePrivacyLevel, getInternalNodePrivacyLevel, getTextContent } from './privacy'
+import { serializeAttribute, getNodePrivacyLevel, getTextContent } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -169,7 +169,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
     const serializedNode = serializeNodeWithId(node, {
       document,
       serializedNodeIds,
-      parentNodePrivacyLevel: getInternalNodePrivacyLevel(node.parentNode!),
+      parentNodePrivacyLevel: getNodePrivacyLevel(node.parentNode!),
     })
     if (!serializedNode) {
       continue

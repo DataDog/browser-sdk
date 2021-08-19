@@ -6,12 +6,11 @@ import {
   CENSORED_STRING_MARK,
 } from '../../constants'
 import {
-  remapInternalPrivacyLevels,
-  getInternalNodePrivacyLevel,
   getInitialPrivacyLevel,
   serializeAttribute,
   getTextContent,
   shouldMaskNode,
+  getNodePrivacyLevel,
 } from './privacy'
 import {
   SerializedNode,
@@ -117,8 +116,7 @@ export function serializeElementNode(element: Element, options: SerializeOptions
 
   // We only get internal privacy level here to pass on to
   // child nodes, purely for performance reasons
-  const internalPrivacyLevel = getInternalNodePrivacyLevel(element, options.parentNodePrivacyLevel)
-  const nodePrivacyLevel = remapInternalPrivacyLevels(element, internalPrivacyLevel)
+  const nodePrivacyLevel = getNodePrivacyLevel(element, options.parentNodePrivacyLevel)
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
@@ -148,12 +146,12 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
     let childNodesSerializationOptions
-    if (options.parentNodePrivacyLevel === internalPrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
+    if (options.parentNodePrivacyLevel === nodePrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
       childNodesSerializationOptions = options
     } else {
       childNodesSerializationOptions = {
         ...options,
-        parentNodePrivacyLevel: internalPrivacyLevel,
+        parentNodePrivacyLevel: nodePrivacyLevel,
         ignoreWhiteSpace: tagName === 'head',
       }
     }
@@ -270,10 +268,9 @@ function serializeCDataNode(): CDataNode {
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
-  const nodePrivacyLevel = remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
   const result: SerializedNodeWithId[] = []
 
-  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+  if (options.parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return result
   }
 
@@ -329,7 +326,7 @@ function isSVGElement(el: Element): boolean {
 
 function getAttributesForPrivacyLevel(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevelInternal
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}

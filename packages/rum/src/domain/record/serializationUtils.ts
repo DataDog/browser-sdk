@@ -1,5 +1,5 @@
 import { buildUrl } from '@datadog/browser-core'
-import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
+import { CENSORED_STRING_MARK, NodePrivacyLevelInternal } from '../../constants'
 import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
@@ -70,7 +70,7 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
  * the input privacy mode of the element.
  * PERFROMANCE OPTIMIZATION: Assumes that privacy level `HIDDEN` is never encountered because of earlier checks.
  */
-export function getElementInputValue(element: Element, explicitNodePrivacyLevel?: NodePrivacyLevel) {
+export function getElementInputValue(element: Element, explicitNodePrivacyLevel?: NodePrivacyLevelInternal) {
   /*
    BROWSER SPEC NOTE: <input>, <select>
    For some <input> elements, the `value` is an exceptional property/attribute that has the

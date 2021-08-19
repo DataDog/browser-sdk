@@ -33,50 +33,11 @@ export function getInitialPrivacyLevel(): NodePrivacyLevelInternal {
 }
 
 /**
- * PUBLIC: Resolves the internal privacy level and remaps to level to the format
- * exposed to the general codebase  (allow/mask/hidden/ignore) because
- * NOT_SET/*-SEALED/MASK_FORMS_ONLY are not dev friendly and need not be handled by devs
- */
-export function getNodePrivacyLevel(node: Node, parentNodePrivacyLevel?: NodePrivacyLevelInternal): NodePrivacyLevel {
-  const privacyLevel = getInternalNodePrivacyLevel(node, parentNodePrivacyLevel)
-  return remapInternalPrivacyLevels(node, privacyLevel)
-}
-
-/**
- * Remap the internal privacy levels to general use privacy levels
- */
-export function remapInternalPrivacyLevels(
-  node: Node,
-  nodePrivacyLevelInternal: NodePrivacyLevelInternal
-): NodePrivacyLevel {
-  if (nodePrivacyLevelInternal === NodePrivacyLevelInternal.NOT_SET) {
-    // Fallback value from getInitialPrivacyLevel() needs to be remapped too for the `MASK_FORMS_ONLY` case.
-    nodePrivacyLevelInternal = getInitialPrivacyLevel()
-  }
-
-  switch (nodePrivacyLevelInternal) {
-    case NodePrivacyLevelInternal.ALLOW:
-    case NodePrivacyLevelInternal.MASK:
-    case NodePrivacyLevelInternal.HIDDEN:
-    case NodePrivacyLevelInternal.IGNORE:
-      return nodePrivacyLevelInternal
-    // Conditional levels
-    case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
-    case NodePrivacyLevelInternal.NOT_SET:
-      return isFormElement(node) ? NodePrivacyLevel.MASK : NodePrivacyLevel.ALLOW
-  }
-}
-
-function parentNodePrivacyLevelFallback(node: Node) {
-  return node?.parentNode ? getInternalNodePrivacyLevel(node.parentNode) : NodePrivacyLevelInternal.NOT_SET
-}
-
-/**
  * INTERNAL FUNC: Get privacy level without remapping (or setting cache)
  * This function may be explicitly used when passing internal privacy levels to
  * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
  */
-export function getInternalNodePrivacyLevel(
+export function getNodePrivacyLevel(
   node: Node,
   parentNodePrivacyLevel?: NodePrivacyLevelInternal
 ): NodePrivacyLevelInternal {
@@ -84,11 +45,15 @@ export function getInternalNodePrivacyLevel(
 
   // Only Elements have tags directly applied
   if (!isElementNode && node.parentElement) {
-    return parentNodePrivacyLevel || getInternalNodePrivacyLevel(node.parentElement)
+    return parentNodePrivacyLevel || getNodePrivacyLevel(node.parentElement)
   }
 
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
   return derivePrivacyLevelGivenParent(selfPrivacyLevel, parentNodePrivacyLevel || parentNodePrivacyLevelFallback(node))
+}
+
+function parentNodePrivacyLevelFallback(node: Node) {
+  return node?.parentNode ? getNodePrivacyLevel(node.parentNode) : NodePrivacyLevelInternal.ALLOW
 }
 
 /**
@@ -202,7 +167,7 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevelInterna
 
 export function serializeAttribute(
   element: Element,
-  nodePrivacyLevel: NodePrivacyLevel,
+  nodePrivacyLevel: NodePrivacyLevelInternal,
   attributeName: string
 ): string | number | boolean | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
@@ -301,10 +266,7 @@ export function getTextContent(
     return
   }
 
-  const nodePrivacyLevel =
-    parentNodePrivacyLevel && textNode.parentElement
-      ? remapInternalPrivacyLevels(textNode.parentElement, parentNodePrivacyLevel)
-      : getNodePrivacyLevel(textNode.parentNode as Node)
+  const nodePrivacyLevel = parentNodePrivacyLevel || getNodePrivacyLevel(textNode.parentNode as Node)
 
   const isStyle = parentTagName === 'STYLE' ? true : undefined
   const isScript = parentTagName === 'SCRIPT'
