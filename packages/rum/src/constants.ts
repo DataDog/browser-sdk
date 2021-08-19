@@ -1,9 +1,9 @@
 export const NodePrivacyLevel = {
-  IGNORE: 'IGNORE',
-  ALLOW: 'ALLOW',
-  MASK: 'MASK',
-  HIDDEN: 'HIDDEN',
-  MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
+  IGNORE: 'ignore',
+  ALLOW: 'allow',
+  MASK: 'mask',
+  HIDDEN: 'hidden',
+  MASK_FORMS_ONLY: 'mask-forms-only',
 } as const
 export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
