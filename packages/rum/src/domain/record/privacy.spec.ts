@@ -1,7 +1,7 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel, NodePrivacyLevelInternal } from '../../constants'
 import { HTML, generateLeanSerializedDoc } from '../../../test/htmlAst'
-import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, getNodePrivacyLevel } from './privacy'
+import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 
 describe('privacy helpers', () => {
@@ -342,6 +342,48 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
       expect(JSON.stringify(serializedDoc)).not.toContain('*')
       expect(JSON.stringify(serializedDoc)).not.toContain('xx')
+    })
+  })
+})
+
+describe('shouldMaskNode', () => {
+  describe('for form elements', () => {
+    it('returns false if the privacy level is ALLOW', () => {
+      const element = document.createElement('input')
+      expect(shouldMaskNode(element, NodePrivacyLevel.ALLOW)).toBeFalse()
+    })
+
+    it('returns true if the privacy level is not ALLOW', () => {
+      const element = document.createElement('input')
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.MASK)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.IGNORE)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.HIDDEN)).toBeTrue()
+    })
+  })
+
+  describe('for text nodes contained in form elements', () => {
+    it('returns true if the privacy level is MASK or MASK_FORMS_ONLY', () => {
+      const element = document.createElement('input')
+      const text = document.createTextNode('foo')
+      element.appendChild(text)
+      expect(shouldMaskNode(text, NodePrivacyLevelInternal.MASK)).toBeTrue()
+      expect(shouldMaskNode(text, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBeTrue()
+    })
+  })
+
+  describe('for other elements', () => {
+    it('returns false if the privacy level is ALLOW or MASK_FORMS_ONLY', () => {
+      const element = document.createElement('div')
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.ALLOW)).toBeFalse()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.MASK_FORMS_ONLY)).toBeFalse()
+    })
+
+    it('returns true if the privacy level is not ALLOW nor MASK_FORMS_ONLY', () => {
+      const element = document.createElement('div')
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.MASK)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.IGNORE)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevelInternal.HIDDEN)).toBeTrue()
     })
   })
 })

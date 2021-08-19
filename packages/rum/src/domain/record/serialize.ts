@@ -11,6 +11,7 @@ import {
   getInitialPrivacyLevel,
   serializeAttribute,
   getTextContent,
+  shouldMaskNode,
 } from './privacy'
 import {
   SerializedNode,
@@ -402,13 +403,10 @@ function getAttributesForPrivacyLevel(
    */
   const inputElement = element as HTMLInputElement
   if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        safeAttrs.checked = !!inputElement.checked
-        break
-      case NodePrivacyLevel.MASK:
-        safeAttrs.checked = CENSORED_STRING_MARK
-        break
+    if (nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
+      safeAttrs.checked = !!inputElement.checked
+    } else if (shouldMaskNode(inputElement, nodePrivacyLevel)) {
+      safeAttrs.checked = CENSORED_STRING_MARK
     }
   }
 

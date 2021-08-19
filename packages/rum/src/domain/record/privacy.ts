@@ -187,6 +187,19 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevelInternal {
   return NodePrivacyLevelInternal.NOT_SET
 }
 
+export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevelInternal) {
+  switch (privacyLevel) {
+    case NodePrivacyLevelInternal.MASK:
+    case NodePrivacyLevelInternal.HIDDEN:
+    case NodePrivacyLevelInternal.IGNORE:
+      return true
+    case NodePrivacyLevelInternal.MASK_FORMS_ONLY:
+      return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
+    default:
+      return false
+  }
+}
+
 export function serializeAttribute(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
@@ -245,7 +258,11 @@ function isElement(node: Node): node is Element {
   return node.nodeType === node.ELEMENT_NODE
 }
 
-export function isFormElement(node: Node | null): boolean {
+function isTextNode(node: Node): node is Text {
+  return node.nodeType === node.TEXT_NODE
+}
+
+function isFormElement(node: Node | null): boolean {
   if (!node || node.nodeType !== node.ELEMENT_NODE) {
     return false
   }
@@ -298,7 +315,7 @@ export function getTextContent(
   } else if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // Should never occur, but just in case, we set to CENSORED_MARK.
     textContent = CENSORED_STRING_MARK
-  } else if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  } else if (shouldMaskNode(textNode, nodePrivacyLevel)) {
     if (isStyle) {
       // Style tags are `overruled` (Use `hide` to enforce privacy)
       textContent = makeStylesheetUrlsAbsolute(textContent, location.href)

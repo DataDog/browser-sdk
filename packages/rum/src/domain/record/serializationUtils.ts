@@ -1,6 +1,6 @@
 import { buildUrl } from '@datadog/browser-core'
 import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import { getNodePrivacyLevel } from './privacy'
+import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
 export interface NodeWithSerializedNode extends Node {
@@ -81,7 +81,7 @@ export function getElementInputValue(element: Element, explicitNodePrivacyLevel?
   const tagName = element.tagName
   const value = (element as HTMLInputElement | HTMLTextAreaElement).value
 
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  if (shouldMaskNode(element, nodePrivacyLevel)) {
     const type = (element as HTMLInputElement | HTMLTextAreaElement).type
     if (tagName === 'INPUT' && (type === 'button' || type === 'submit' || type === 'reset')) {
       // Overrule `MASK` privacy level for button-like element values, as they are used during replay

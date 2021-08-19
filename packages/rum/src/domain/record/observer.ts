@@ -8,7 +8,7 @@ import {
   includes,
 } from '@datadog/browser-core'
 import { NodePrivacyLevel } from '../../constants'
-import { getNodePrivacyLevel } from './privacy'
+import { getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
@@ -182,7 +182,7 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
-      if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+      if (shouldMaskNode(target, nodePrivacyLevel)) {
         return
       }
       inputState = { isChecked: (target as HTMLInputElement).checked }
