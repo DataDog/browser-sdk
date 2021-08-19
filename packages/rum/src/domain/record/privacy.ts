@@ -26,9 +26,10 @@ import { shouldIgnoreElement } from './serialize'
 const TEXT_MASKING_CHAR = '᙮'
 
 /**
- * INTERNAL FUNC: Get privacy level without remapping (or setting cache)
- * This function may be explicitly used when passing internal privacy levels to
- * child nodes for performance reasons, otherwise you should use `getNodePrivacyLevel`
+ * Get node privacy level by iterating over its ancestors. When the direct parent privacy level is
+ * know, it is best to use something like:
+ *
+ * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
 export function getNodePrivacyLevel(node: Node, initialPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
   const parentNodePrivacyLevel = node.parentNode
@@ -46,7 +47,7 @@ export function derivePrivacyLevelGivenParent(
   parentNodePrivacyLevel: NodePrivacyLevel
 ): NodePrivacyLevel {
   switch (parentNodePrivacyLevel) {
-    // These values cannot be overrided
+    // These values cannot be overridden
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return parentNodePrivacyLevel
@@ -65,8 +66,6 @@ export function derivePrivacyLevelGivenParent(
 
 /**
  * Determines the node's own privacy level without checking for ancestors.
- * This function is purposely not exposed because we do care about the ancestor level.
- * As per our privacy spreadsheet, we will `overrule` privacy tags to protect user passwords and autocomplete fields.
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
   // Only Element types can be have a privacy level set
@@ -220,10 +219,8 @@ function isFormElement(node: Node | null): boolean {
 }
 
 /**
- * Text censoring non-destructively maintains whitespace characters in order to preserve text shape during replay.
- * For short text, simply replace all non-whitespace characters
- * For long text, we assume sufficient text entropy to support scrambling the non-whitespace characters in order to
- * preserve the charset, allowing for near  pixel perfect text shape.
+ * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
+ * during replay.
  */
 export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 

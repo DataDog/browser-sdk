@@ -307,7 +307,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   describe('for privacy tag `mask`, a DOM tree', function testMaskDomTree() {
-    it("doesn't have innerText alpha numberics", () => {
+    it("doesn't have innerText alpha numeric", () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
       expect({ text: getTextNodesFromSerialized(serializedDoc) }).not.toBe({
         text: jasmine.stringMatching(/^[*᙮\s]+\.example {content: "anything";}[*᙮\s]+$/),
@@ -321,7 +321,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
-    it('doesnt mask text content', () => {
+    it("doesn't mask text content", () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
       expect(JSON.stringify(serializedDoc)).not.toContain('xx')
     })
@@ -332,7 +332,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   describe('for privacy tag `allow`, a DOM tree', function testAllowDomTree() {
-    it("doesn't have innerText alpha numberics", () => {
+    it("doesn't have innerText alpha numeric", () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
       const innerText = getTextNodesFromSerialized(serializedDoc)
       const privateWordMatchCount = innerText.match(/private/g)?.length
