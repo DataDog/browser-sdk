@@ -16,7 +16,6 @@ describe('initInputObserver', () => {
       pending('IE not supported')
     }
     inputCallbackSpy = jasmine.createSpy()
-    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
 
     sandbox = document.createElement('div')
     input = document.createElement('input')
@@ -32,6 +31,7 @@ describe('initInputObserver', () => {
   })
 
   it('collects input values when an "input" event is dispatched', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
     dispatchInputEvent('foo')
 
     expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
@@ -40,7 +40,8 @@ describe('initInputObserver', () => {
     })
   })
 
-  it('masks input values according to the element privacy mode', () => {
+  it('masks input values according to the element privacy level', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
     sandbox.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
 
     dispatchInputEvent('foo')
@@ -48,8 +49,17 @@ describe('initInputObserver', () => {
     expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
   })
 
-  it('masks input values according to a parent element privacy mode', () => {
+  it('masks input values according to a parent element privacy level', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.ALLOW)
     input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_INPUT_MASKED)
+
+    dispatchInputEvent('foo')
+
+    expect((inputCallbackSpy.calls.first().args[0] as { text?: string }).text).toBe('***')
+  })
+
+  it('masks input values according to a the initial privacy level', () => {
+    stopInputObserver = initInputObserver(inputCallbackSpy, InitialPrivacyLevel.MASK)
 
     dispatchInputEvent('foo')
 

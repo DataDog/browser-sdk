@@ -18,14 +18,14 @@ describe('startMutationCollection', () => {
   let sandbox: HTMLElement
   let stopMutationCollection: () => void
 
-  function startMutationCollection() {
+  function startMutationCollection(initialPrivacyLevel: InitialPrivacyLevel = InitialPrivacyLevel.ALLOW) {
     const mutationCallbackSpy = jasmine.createSpy<MutationCallBack>()
     const mutationController = new MutationController()
 
     ;({ stop: stopMutationCollection } = startMutationObserver(
       mutationController,
       mutationCallbackSpy,
-      InitialPrivacyLevel.ALLOW
+      initialPrivacyLevel
     ))
 
     return {
@@ -400,6 +400,27 @@ describe('startMutationCollection', () => {
         ],
       })
     })
+
+    it('respects the initial privacy level setting', () => {
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+
+      sandbox.innerText = 'foo bar'
+      mutationController.flush()
+
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        adds: [
+          {
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
+            node: expectNewNode({
+              type: NodeType.Text,
+              textContent: '᙮᙮᙮ ᙮᙮᙮',
+            }),
+          },
+        ],
+      })
+    })
   })
 
   describe('characterData mutations', () => {
@@ -439,6 +460,24 @@ describe('startMutationCollection', () => {
       mutationController.flush()
 
       expect(mutationCallbackSpy).not.toHaveBeenCalled()
+    })
+
+    it('respects the initial privacy level setting', () => {
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+
+      textNode.data = 'foo bar'
+      mutationController.flush()
+
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        texts: [
+          {
+            node: expectInitialNode({ text: 'foo' }),
+            value: '᙮᙮᙮ ᙮᙮᙮',
+          },
+        ],
+      })
     })
   })
 
@@ -489,6 +528,24 @@ describe('startMutationCollection', () => {
           {
             node: expectInitialNode({ idAttribute: 'sandbox' }),
             attributes: { foo1: 'biz', foo2: 'bar' },
+          },
+        ],
+      })
+    })
+
+    it('respects the initial privacy level setting', () => {
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.ALLOW)
+      const { mutationController, getLatestMutationPayload } = startMutationCollection(InitialPrivacyLevel.MASK)
+
+      sandbox.setAttribute('data-foo', 'biz')
+      mutationController.flush()
+
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        attributes: [
+          {
+            node: expectInitialNode({ idAttribute: 'sandbox' }),
+            attributes: { 'data-foo': '***' },
           },
         ],
       })
