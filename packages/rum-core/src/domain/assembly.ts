@@ -173,7 +173,7 @@ function getSyntheticsContext() {
   const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
   const resultId = (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
 
-  if (testId && resultId) {
+  if (typeof testId === 'string' && typeof resultId === 'string') {
     return {
       test_id: testId,
       result_id: resultId,

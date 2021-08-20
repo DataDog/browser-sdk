@@ -51,6 +51,7 @@ describe('rum assembly', () => {
 
   afterEach(() => {
     setupBuilder.cleanup()
+    cleanupSyntheticsGlobals()
   })
 
   describe('beforeSend', () => {
@@ -516,8 +517,7 @@ describe('rum assembly', () => {
     })
 
     it('should detect synthetics sessions from global', () => {
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = 'bar'
+      setSyntheticsGlobals('foo', 'bar')
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -525,9 +525,6 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].session.type).toEqual('synthetics')
-
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
@@ -553,8 +550,7 @@ describe('rum assembly', () => {
 
   describe('synthetics context', () => {
     it('sets the synthetics context defined by global variables', () => {
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = 'bar'
+      setSyntheticsGlobals('foo', 'bar')
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -565,13 +561,10 @@ describe('rum assembly', () => {
         test_id: 'foo',
         result_id: 'bar',
       })
-
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
     })
 
     it('does not set synthetics context if one global variable is undefined', () => {
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
+      setSyntheticsGlobals('foo')
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -579,8 +572,17 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents[0].synthetics).toBeUndefined()
+    })
 
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+    it('does not set synthetics context if global variables are not strings', () => {
+      setSyntheticsGlobals(1, 2)
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].synthetics).toBeUndefined()
     })
   })
 
@@ -663,4 +665,14 @@ function notifyRawRumEvent<E extends RawRumEvent>(
     ...partialData,
   }
   lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, fullData)
+}
+
+function setSyntheticsGlobals(publicId: any, resultId?: any) {
+  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
+  ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
+}
+
+function cleanupSyntheticsGlobals() {
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+  delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
 }
