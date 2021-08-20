@@ -30,7 +30,8 @@ import { ParentContexts } from './parentContexts'
 import { RumSession, RumSessionPlan } from './rumSession'
 
 export interface BrowserWindow extends Window {
-  _DATADOG_SYNTHETICS_BROWSER?: unknown
+  _DATADOG_SYNTHETICS_PUBLIC_ID?: string
+  _DATADOG_SYNTHETICS_RESULT_ID?: string
 }
 
 enum SessionType {
@@ -93,6 +94,7 @@ export function startRumAssembly(
             // must be computed on each event because synthetics instrumentation can be done after sdk execution
             type: getSessionType(),
           },
+          synthetics: getSyntheticsContext(),
         }
         const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
@@ -162,8 +164,19 @@ function needToAssembleWithAction(
 }
 
 function getSessionType() {
-  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 &&
-    (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER === undefined
+  return navigator.userAgent.indexOf('DatadogSynthetics') === -1 && !getSyntheticsContext()
     ? SessionType.USER
     : SessionType.SYNTHETICS
+}
+
+function getSyntheticsContext() {
+  const testId = (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+  const resultId = (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
+
+  if (testId && resultId) {
+    return {
+      test_id: testId,
+      result_id: resultId,
+    }
+  }
 }

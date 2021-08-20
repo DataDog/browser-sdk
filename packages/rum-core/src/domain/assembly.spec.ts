@@ -516,7 +516,8 @@ describe('rum assembly', () => {
     })
 
     it('should detect synthetics sessions from global', () => {
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER = true
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = 'bar'
 
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -525,7 +526,8 @@ describe('rum assembly', () => {
 
       expect(serverRumEvents[0].session.type).toEqual('synthetics')
 
-      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_BROWSER
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
     })
 
     it('should set the session.has_replay attribute if it is defined in the common context', () => {
@@ -546,6 +548,39 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
       expect(serverRumEvents[0].session.has_replay).toBe(undefined)
+    })
+  })
+
+  describe('synthetics context', () => {
+    it('sets the synthetics context defined by global variables', () => {
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = 'bar'
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].synthetics).toEqual({
+        test_id: 'foo',
+        result_id: 'bar',
+      })
+
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
+    })
+
+    it('does not set synthetics context if one global variable is undefined', () => {
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = 'foo'
+
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].synthetics).toBeUndefined()
+
+      delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
     })
   })
 

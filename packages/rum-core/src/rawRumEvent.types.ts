@@ -179,6 +179,10 @@ export interface RumContext {
     type: string
     has_replay?: boolean
   }
+  synthetics?: {
+    test_id: string
+    result_id: string
+  }
   _dd: {
     format_version: 2
     drift: number
