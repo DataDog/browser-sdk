@@ -14,7 +14,7 @@ export type RumActionEvent = CommonProperties & {
   /**
    * RUM event type
    */
-  readonly type: string
+  readonly type: 'action'
   /**
    * Action properties
    */
@@ -102,7 +102,7 @@ export type RumErrorEvent = CommonProperties & {
   /**
    * RUM event type
    */
-  readonly type: string
+  readonly type: 'error'
   /**
    * Error properties
    */
@@ -220,7 +220,7 @@ export type RumLongTaskEvent = CommonProperties & {
   /**
    * RUM event type
    */
-  readonly type: string
+  readonly type: 'long_task'
   /**
    * Long Task properties
    */
@@ -233,6 +233,10 @@ export type RumLongTaskEvent = CommonProperties & {
      * Duration in ns of the long task
      */
     readonly duration: number
+    /**
+     * Whether this long task is considered a frozen frame
+     */
+    readonly is_frozen_frame?: boolean
     [k: string]: unknown
   }
   /**
@@ -254,7 +258,7 @@ export type RumResourceEvent = CommonProperties & {
   /**
    * RUM event type
    */
-  readonly type: string
+  readonly type: 'resource'
   /**
    * Resource properties
    */
@@ -438,7 +442,7 @@ export type RumViewEvent = CommonProperties & {
   /**
    * RUM event type
    */
-  readonly type: string
+  readonly type: 'view'
   /**
    * View properties
    */
@@ -510,6 +514,10 @@ export type RumViewEvent = CommonProperties & {
      */
     readonly is_active?: boolean
     /**
+     * Whether the View had a low average refresh rate
+     */
+    readonly is_slow_rendered?: boolean
+    /**
      * Properties of the actions of the view
      */
     readonly action: {
@@ -545,6 +553,16 @@ export type RumViewEvent = CommonProperties & {
     readonly long_task?: {
       /**
        * Number of long tasks that occurred on the view
+       */
+      readonly count: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the frozen frames of the view
+     */
+    readonly frozen_frame?: {
+      /**
+       * Number of frozen frames that occurred on the view
        */
       readonly count: number
       [k: string]: unknown
@@ -731,13 +749,37 @@ export interface CommonProperties {
     [k: string]: unknown
   }
   /**
+   * Synthetics properties
+   */
+  readonly synthetics?: {
+    /**
+     * The identifier of the current Synthetics test
+     */
+    readonly test_id: string
+    /**
+     * The identifier of the current Synthetics test results
+     */
+    readonly result_id: string
+    [k: string]: unknown
+  }
+  /**
    * Internal properties
    */
   readonly _dd: {
     /**
      * Version of the RUM event format
      */
-    readonly format_version: number
+    readonly format_version: 2
+    /**
+     * Session-related internal properties
+     */
+    session?: {
+      /**
+       * Session plan: 1 is the 'lite' plan, 2 is the 'replay' plan
+       */
+      plan: 1 | 2
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   /**
