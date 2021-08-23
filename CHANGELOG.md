@@ -16,6 +16,13 @@
 
 ---
 
+## v3.1.3
+
+- ⚗✨[REPLAY-336] Privacy by Default ([#951](https://github.com/DataDog/browser-sdk/pull/951))
+- ⚗✨ [REPLAY-379] add replay stats on view (getter edition) ([#994](https://github.com/DataDog/browser-sdk/pull/994))
+- 📝 Update Readme for v3 cdn links ([#999](https://github.com/DataDog/browser-sdk/pull/999))
+- 🐛[RUMF-990] restore global check to detect synthetics sessions ([#997](https://github.com/DataDog/browser-sdk/pull/997))
+
 ## v3.1.2
 
 - ✨[RUMF-970] enable buffered PerformanceObserver ([#995](https://github.com/DataDog/browser-sdk/pull/995))
