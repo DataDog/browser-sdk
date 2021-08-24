@@ -220,11 +220,11 @@ export function isNumber(value: unknown): value is number {
 }
 
 export function objectValues(object: { [key: string]: unknown }) {
-  const values: unknown[] = []
-  Object.keys(object).forEach((key) => {
-    values.push(object[key])
-  })
-  return values
+  return Object.keys(object).map((key) => object[key])
+}
+
+export function objectHasValue<T extends { [key: string]: unknown }>(object: T, value: unknown): value is T[keyof T] {
+  return Object.keys(object).some((key) => object[key] === value)
 }
 
 export function objectEntries(object: { [key: string]: unknown }): Array<[string, unknown]> {
