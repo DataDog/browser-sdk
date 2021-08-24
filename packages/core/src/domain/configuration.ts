@@ -1,7 +1,7 @@
 import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
-import { includes, objectHasValue, objectValues, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
+import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 import { computeTransportConfiguration } from './transportConfiguration'
 
 export const InitialPrivacyLevel = {
@@ -152,7 +152,10 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
-  if (objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)) {
+  if (
+    configuration.isEnabled('initial-privacy-level-option') &&
+    objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)
+  ) {
     configuration.initialPrivacyLevel = initConfiguration.initialPrivacyLevel
   }
 

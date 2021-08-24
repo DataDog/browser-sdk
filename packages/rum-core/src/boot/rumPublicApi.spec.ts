@@ -673,9 +673,25 @@ describe('rum public api', () => {
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.ALLOW)
     })
 
-    it('recording is started with the configured initialPrivacyLevel', () => {
-      rumPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, initialPrivacyLevel: InitialPrivacyLevel.MASK })
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.MASK)
+    describe('initial-privacy-level-option feature enabled', () => {
+      it('recording is started with the configured initialPrivacyLevel', () => {
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          initialPrivacyLevel: InitialPrivacyLevel.MASK,
+          enableExperimentalFeatures: ['initial-privacy-level-option'],
+        })
+        expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.MASK)
+      })
+    })
+
+    describe('initial-privacy-level-option feature disabled', () => {
+      it('recording ignores the configured initialPrivacyLevel', () => {
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          initialPrivacyLevel: InitialPrivacyLevel.MASK,
+        })
+        expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.ALLOW)
+      })
     })
   })
 })
