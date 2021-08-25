@@ -1,13 +1,13 @@
 import { monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
-import { getNodeOrAncestorsInputPrivacyMode, nodeOrAncestorsShouldBeHidden } from './privacy'
+import { NodePrivacyLevel } from '../../constants'
+import { serializeAttribute, getNodePrivacyLevel, getInternalNodePrivacyLevel, getTextContent } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
   hasSerializedNode,
   nodeAndAncestorsHaveSerializedNode,
   NodeWithSerializedNode,
-  transformAttribute,
 } from './serializationUtils'
 import { serializeNodeWithId } from './serialize'
 import {
@@ -82,7 +82,7 @@ function processMutations(mutations: RumMutationRecord[], mutationCallback: Muta
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       document.contains(mutation.target) &&
       nodeAndAncestorsHaveSerializedNode(mutation.target) &&
-      !nodeOrAncestorsShouldBeHidden(mutation.target)
+      getNodePrivacyLevel(mutation.target) !== NodePrivacyLevel.HIDDEN
   )
 
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
@@ -169,7 +169,7 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
     const serializedNode = serializeNodeWithId(node, {
       document,
       serializedNodeIds,
-      ancestorInputPrivacyMode: getNodeOrAncestorsInputPrivacyMode(node.parentNode!),
+      parentNodePrivacyLevel: getInternalNodePrivacyLevel(node.parentNode!),
     })
     if (!serializedNode) {
       continue
@@ -181,7 +181,6 @@ function processChildListMutations(mutations: Array<WithSerializedTarget<RumChil
       node: serializedNode,
     })
   }
-
   // Finally, we emit remove mutations.
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
@@ -231,9 +230,10 @@ function processCharacterDataMutations(mutations: Array<WithSerializedTarget<Rum
     if (value === mutation.oldValue) {
       continue
     }
+
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
-      value,
+      value: getTextContent(mutation.target, false) ?? null, // REVIEW: using `options.ignoreWhiteSpace`
     })
   }
 
@@ -261,20 +261,22 @@ function processAttributesMutations(mutations: Array<WithSerializedTarget<RumAtt
   // Emit mutations
   const emittedMutations = new Map<Element, AttributeMutation>()
   for (const mutation of filteredMutations) {
-    const value = mutation.target.getAttribute(mutation.attributeName!)
-    if (value === mutation.oldValue) {
+    const uncensoredValue = mutation.target.getAttribute(mutation.attributeName!)
+    if (uncensoredValue === mutation.oldValue) {
       continue
     }
+    const privacyLevel = getNodePrivacyLevel(mutation.target)
+    const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!)
 
     let transformedValue: string | null
     if (mutation.attributeName === 'value') {
-      const inputValue = getElementInputValue(mutation.target)
+      const inputValue = getElementInputValue(mutation.target, privacyLevel)
       if (inputValue === undefined) {
         continue
       }
       transformedValue = inputValue
-    } else if (value) {
-      transformedValue = transformAttribute(document, mutation.attributeName!, value)
+    } else if (attributeValue && typeof attributeValue === 'string') {
+      transformedValue = attributeValue
     } else {
       transformedValue = null
     }

@@ -16,13 +16,14 @@ import { RumSession, startRumSession } from '../domain/rumSession'
 import { trackSleep } from '../domain/trackSleep'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
-import { RumInitConfiguration } from './rumPublicApi'
+import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
 
 export function startRum(
   initConfiguration: RumInitConfiguration,
   configuration: Configuration,
   internalMonitoring: InternalMonitoring,
   getCommonContext: () => CommonContext,
+  recorderApi: RecorderApi,
   initialViewName?: string
 ) {
   const lifeCycle = new LifeCycle()
@@ -61,6 +62,7 @@ export function startRum(
     location,
     domMutationObservable,
     foregroundContexts,
+    recorderApi,
     initialViewName
   )
   const { addError } = startErrorCollection(lifeCycle, foregroundContexts)

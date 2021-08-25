@@ -1,5 +1,6 @@
 import { addMonitoringMessage, monitor } from '@datadog/browser-core'
 import { CreationReason, Record, RecordType, SegmentContext, SegmentMeta } from '../../types'
+import * as replayStats from '../replayStats'
 import { DeflateWorker, DeflateWorkerListener } from './deflateWorker'
 
 let nextId = 0
@@ -18,7 +19,7 @@ export class Segment {
     readonly context: SegmentContext,
     private creationReason: CreationReason,
     initialRecord: Record,
-    onWrote: (size: number) => void,
+    onWrote: (compressedSize: number) => void,
     onFlushed: (data: Uint8Array, rawSize: number) => void
   ) {
     this.start = initialRecord.timestamp
@@ -26,12 +27,17 @@ export class Segment {
     this.recordsCount = 1
     this.hasFullSnapshot = initialRecord.type === RecordType.FullSnapshot
 
+    const viewId = this.context.view.id
+    replayStats.addSegment(viewId)
+    replayStats.addRecord(viewId)
+
     const listener: DeflateWorkerListener = monitor(({ data }) => {
       if ('error' in data) {
         return
       }
 
       if (data.id === this.id) {
+        replayStats.addWroteData(viewId, data.additionalRawSize)
         if ('result' in data) {
           onFlushed(data.result, data.rawSize)
           worker.removeEventListener('message', listener)
@@ -58,6 +64,7 @@ export class Segment {
   addRecord(record: Record): void {
     this.end = record.timestamp
     this.recordsCount += 1
+    replayStats.addRecord(this.context.view.id)
     this.hasFullSnapshot ||= record.type === RecordType.FullSnapshot
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }

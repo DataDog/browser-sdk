@@ -7,7 +7,8 @@ import {
   addEventListener,
   includes,
 } from '@datadog/browser-core'
-import { nodeOrAncestorsShouldBeHidden } from './privacy'
+import { NodePrivacyLevel } from '../../constants'
+import { getNodePrivacyLevel } from './privacy'
 import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from './serializationUtils'
 import {
   FocusCallback,
@@ -102,7 +103,7 @@ const eventTypeToMouseInteraction = {
 function initMouseInteractionObserver(cb: MouseInteractionCallBack): ListenerHandler {
   const handler = (event: MouseEvent | TouchEvent) => {
     const target = event.target as Node
-    if (nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
+    if (getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     const { clientX, clientY } = isTouchEvent(event) ? event.changedTouches[0] : event
@@ -123,7 +124,7 @@ function initScrollObserver(cb: ScrollCallback): ListenerHandler {
   const { throttled: updatePosition } = throttle(
     monitor((event: UIEvent) => {
       const target = event.target as HTMLElement | Document
-      if (!target || nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
+      if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
         return
       }
       const id = getSerializedNodeId(target)
@@ -167,8 +168,13 @@ const lastInputStateMap: WeakMap<EventTarget, InputState> = new WeakMap()
 export function initInputObserver(cb: InputCallback): ListenerHandler {
   function eventHandler(event: { target: EventTarget | null }) {
     const target = event.target as HTMLInputElement | HTMLTextAreaElement
-
-    if (!target || !target.tagName || !includes(INPUT_TAGS, target.tagName) || nodeOrAncestorsShouldBeHidden(target)) {
+    const nodePrivacyLevel = getNodePrivacyLevel(target)
+    if (
+      !target ||
+      !target.tagName ||
+      !includes(INPUT_TAGS, target.tagName) ||
+      nodePrivacyLevel === NodePrivacyLevel.HIDDEN
+    ) {
       return
     }
 
@@ -176,15 +182,19 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
 
     let inputState: InputState
     if (type === 'radio' || type === 'checkbox') {
+      if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+        return
+      }
       inputState = { isChecked: (target as HTMLInputElement).checked }
     } else {
-      const value = getElementInputValue(target)
+      const value = getElementInputValue(target, nodePrivacyLevel)
       if (value === undefined) {
         return
       }
       inputState = { text: value }
     }
 
+    // Can be multiple changes on the same node within the same batched mutation observation.
     cbWithDedup(target, inputState)
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
@@ -192,12 +202,16 @@ export function initInputObserver(cb: InputCallback): ListenerHandler {
     if (type === 'radio' && name && (target as HTMLInputElement).checked) {
       forEach(document.querySelectorAll(`input[type="radio"][name="${name}"]`), (el: Element) => {
         if (el !== target) {
+          // TODO: Consider the privacy implications for various differing input privacy levels
           cbWithDedup(el, { isChecked: false })
         }
       })
     }
   }
 
+  /**
+   * There can be multiple changes on the same node within the same batched mutation observation.
+   */
   function cbWithDedup(target: Node, inputState: InputState) {
     if (!hasSerializedNode(target)) {
       return
@@ -289,7 +303,7 @@ function initStyleSheetObserver(cb: StyleSheetRuleCallback): ListenerHandler {
 function initMediaInteractionObserver(mediaInteractionCb: MediaInteractionCallback): ListenerHandler {
   const handler = (event: Event) => {
     const target = event.target as Node
-    if (!target || nodeOrAncestorsShouldBeHidden(target) || !hasSerializedNode(target)) {
+    if (!target || getNodePrivacyLevel(target) === NodePrivacyLevel.HIDDEN || !hasSerializedNode(target)) {
       return
     }
     mediaInteractionCb({

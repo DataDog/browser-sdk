@@ -21,24 +21,20 @@ function workerCodeFn() {
         const data = event.data
         switch (data.action) {
           case 'write':
-            const binaryData = new TextEncoder().encode(data.data)
-            deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-            rawSize += binaryData.length
+            const additionalRawSize = pushData(data.data)
             self.postMessage({
               id: data.id,
               compressedSize: deflate.chunks.reduce((total, chunk) => total + chunk.length, 0),
+              additionalRawSize,
             })
             break
           case 'flush':
-            if (data.data) {
-              const binaryData = new TextEncoder().encode(data.data)
-              deflate.push(binaryData, constants.Z_SYNC_FLUSH)
-              rawSize += binaryData.length
-            }
+            const additionalRawSize = data.data ? pushData(data.data) : 0
             deflate.push('', constants.Z_FINISH)
             self.postMessage({
               id: data.id,
               result: deflate.result,
+              additionalRawSize,
               rawSize,
             })
             deflate = new Deflate()
@@ -47,6 +43,13 @@ function workerCodeFn() {
         }
       })
     )
+
+    function pushData(data) {
+      const binaryData = new TextEncoder().encode(data)
+      deflate.push(binaryData, constants.Z_SYNC_FLUSH)
+      rawSize += binaryData.length
+      return binaryData.length
+    }
   })()
 
   function monitor(fn) {

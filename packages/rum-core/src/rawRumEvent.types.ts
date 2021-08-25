@@ -101,6 +101,7 @@ export interface RawRumViewEvent {
   }
   _dd: {
     document_version: number
+    replay_stats?: ReplayStats
   }
 }
 
@@ -116,6 +117,12 @@ export enum ViewLoadingType {
 
 export interface ViewCustomTimings {
   [key: string]: Duration
+}
+
+export interface ReplayStats {
+  records_count: number
+  segments_count: number
+  segments_total_raw_size: number
 }
 
 interface Count {
@@ -171,6 +178,10 @@ export interface RumContext {
   session: {
     type: string
     has_replay?: boolean
+  }
+  synthetics?: {
+    test_id: string
+    result_id: string
   }
   _dd: {
     format_version: 2
