@@ -52,8 +52,8 @@ export function computeTransportConfiguration(
       site: INTAKE_SITE_US,
       applicationId: initConfiguration.replica.applicationId,
       clientToken: initConfiguration.replica.clientToken,
-      useAlternateIntakeDomains: endpointBuilder.supportAlternateDomain(),
-      intakeApiVersion: endpointBuilder.supportIntakeV2() ? 2 : (1 as 1 | 2),
+      useAlternateIntakeDomains: true,
+      intakeApiVersion: isIntakeV2Enabled ? 2 : (1 as 1 | 2),
     }
     const replicaEndpointBuilder = new EndpointBuilder(replicaConfiguration, buildEnv, isIntakeV2Enabled)
 
@@ -66,6 +66,7 @@ export function computeTransportConfiguration(
 
     const replicaIntakeUrls = ENDPOINTS_TYPES.map((endpointType) => replicaEndpointBuilder.buildIntakeUrl(endpointType))
     replicaIntakeUrls.forEach((replicaIntakeUrl) => intakeUrls.push(replicaIntakeUrl))
+    intakeUrls.push(...replicaIntakeUrls)
   }
 
   return configuration

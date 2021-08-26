@@ -48,6 +48,7 @@ export class EndpointBuilder {
   private intakeApiVersion: IntakeApiVersion
   private useAlternateIntakeDomains: boolean
   private isIntakeV2Enabled: boolean
+
   constructor(initConfiguration: InitConfiguration, buildEnv: BuildEnv, isIntakeV2Enabled?: boolean) {
     this.isIntakeV2Enabled = !!isIntakeV2Enabled
     this.site = initConfiguration.site || INTAKE_SITE_US
@@ -61,13 +62,6 @@ export class EndpointBuilder {
     this.useAlternateIntakeDomains = !!initConfiguration.useAlternateIntakeDomains
   }
 
-  supportIntakeV2 = (endpointType?: EndpointType): boolean =>
-    this.isIntakeV2Enabled &&
-    (this.intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay')
-
-  supportAlternateDomain = (endpointType?: EndpointType): boolean =>
-    this.useAlternateIntakeDomains || !includes(CLASSIC_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay'
-
   build(endpointType: EndpointType, source?: string) {
     const tags =
       `sdk_version:${this.sdkVersion}` +
@@ -76,15 +70,17 @@ export class EndpointBuilder {
       `${this.version ? `,version:${this.version}` : ''}`
     const datadogHost = this.buildHost(endpointType)
     const proxyParameter = this.proxyHost ? `ddhost=${datadogHost}&` : ''
-    const parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
-    const newIntakeParameters = this.supportIntakeV2(endpointType)
-      ? `?dd-api-key=${this.clientToken}&` +
+    let parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
+
+    if (this.shouldUseIntakeV2(endpointType)) {
+      parameters +=
+        `&dd-api-key=${this.clientToken}&` +
         `dd-evp-origin-version=${this.sdkVersion}&` +
         `dd-evp-origin=browser&` +
-        `dd-request-id=${generateUUID()}&`
-      : `${this.clientToken}?`
+        `dd-request-id=${generateUUID()}`
+    }
 
-    return `${this.buildIntakeUrl(endpointType)}${newIntakeParameters}${parameters}`
+    return `${this.buildIntakeUrl(endpointType)}?${parameters}`
   }
 
   buildIntakeUrl(endpointType: EndpointType): string {
@@ -94,7 +90,7 @@ export class EndpointBuilder {
   }
 
   private buildHost(endpointType: EndpointType) {
-    if (this.supportAlternateDomain(endpointType)) {
+    if (this.shouldUseAlternateDomain(endpointType)) {
       const endpoint = ENDPOINTS.alternate[endpointType]
       const domainParts = this.site.split('.')
       const extension = domainParts.pop()
@@ -106,6 +102,21 @@ export class EndpointBuilder {
   }
 
   private buildPath(endpointType: EndpointType) {
-    return this.supportIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/`
+    return this.shouldUseIntakeV2(endpointType)
+      ? `/api/v2/${INTAKE_TRACKS[endpointType]}`
+      : `/v1/input/${this.clientToken}`
+  }
+
+  private shouldUseIntakeV2(endpointType?: EndpointType): boolean {
+    return (
+      this.isIntakeV2Enabled &&
+      (this.intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay')
+    )
+  }
+
+  private shouldUseAlternateDomain(endpointType?: EndpointType): boolean {
+    return (
+      this.useAlternateIntakeDomains || !includes(CLASSIC_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay'
+    )
   }
 }
