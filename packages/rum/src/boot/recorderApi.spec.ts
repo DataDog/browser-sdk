@@ -208,6 +208,17 @@ describe('makeRecorderApi', () => {
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         expect(stopRecordingSpy).toHaveBeenCalled()
       })
+
+      it('prevents session recording to start if the session is renewed before onload', () => {
+        setupBuilder.build()
+        const { triggerOnLoad } = mockDocumentReadyState()
+        rumInit(DEFAULT_INIT_CONFIGURATION)
+        recorderApi.start()
+        session.setLitePlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+        triggerOnLoad()
+        expect(startRecordingSpy).not.toHaveBeenCalled()
+      })
     })
 
     describe('from REPLAY to untracked', () => {
