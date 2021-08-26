@@ -35,88 +35,79 @@ const INTAKE_V1_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_US3, INTAKE_SITE_EU
 
 type IntakeType = keyof typeof ENDPOINTS
 
-type IntakeApiVersion = 1 | 2
+export function createEndpointBuilder(
+  initConfiguration: InitConfiguration,
+  buildEnv: BuildEnv,
+  isIntakeV2Enabled?: boolean
+) {
+  const site = initConfiguration.site || INTAKE_SITE_US
+  const sdkVersion = buildEnv.sdkVersion
+  const {
+    clientToken,
+    env,
+    proxyHost,
+    service,
+    version,
+    intakeApiVersion,
+    useAlternateIntakeDomains,
+  } = initConfiguration
 
-export class EndpointBuilder {
-  private site: string
-  private clientToken: string
-  private env: string | undefined
-  private proxyHost: string | undefined
-  private sdkVersion: string
-  private service: string | undefined
-  private version: string | undefined
-  private intakeApiVersion: IntakeApiVersion
-  private useAlternateIntakeDomains: boolean
-  private isIntakeV2Enabled: boolean
-
-  constructor(initConfiguration: InitConfiguration, buildEnv: BuildEnv, isIntakeV2Enabled?: boolean) {
-    this.isIntakeV2Enabled = !!isIntakeV2Enabled
-    this.site = initConfiguration.site || INTAKE_SITE_US
-    this.clientToken = initConfiguration.clientToken
-    this.env = initConfiguration.env
-    this.proxyHost = initConfiguration.proxyHost
-    this.sdkVersion = buildEnv.sdkVersion
-    this.service = initConfiguration.service
-    this.version = initConfiguration.version
-    this.intakeApiVersion = initConfiguration.intakeApiVersion || 1
-    this.useAlternateIntakeDomains = !!initConfiguration.useAlternateIntakeDomains
-  }
-
-  build(endpointType: EndpointType, source?: string) {
+  function build(endpointType: EndpointType, source?: string) {
     const tags =
-      `sdk_version:${this.sdkVersion}` +
-      `${this.env ? `,env:${this.env}` : ''}` +
-      `${this.service ? `,service:${this.service}` : ''}` +
-      `${this.version ? `,version:${this.version}` : ''}`
-    const datadogHost = this.buildHost(endpointType)
-    const proxyParameter = this.proxyHost ? `ddhost=${datadogHost}&` : ''
+      `sdk_version:${sdkVersion}` +
+      `${env ? `,env:${env}` : ''}` +
+      `${service ? `,service:${service}` : ''}` +
+      `${version ? `,version:${version}` : ''}`
+    const datadogHost = buildHost(endpointType)
+    const proxyParameter = proxyHost ? `ddhost=${datadogHost}&` : ''
     let parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
 
-    if (this.shouldUseIntakeV2(endpointType)) {
+    if (shouldUseIntakeV2(endpointType)) {
       parameters +=
-        `&dd-api-key=${this.clientToken}&` +
-        `dd-evp-origin-version=${this.sdkVersion}&` +
+        `&dd-api-key=${clientToken}&` +
+        `dd-evp-origin-version=${sdkVersion}&` +
         `dd-evp-origin=browser&` +
         `dd-request-id=${generateUUID()}`
     }
 
-    return `${this.buildIntakeUrl(endpointType)}?${parameters}`
+    return `${buildIntakeUrl(endpointType)}?${parameters}`
   }
 
-  buildIntakeUrl(endpointType: EndpointType): string {
-    const datadogHost = this.buildHost(endpointType)
-    const host = this.proxyHost ? this.proxyHost : datadogHost
-    return `https://${host}${this.buildPath(endpointType)}`
+  function buildIntakeUrl(endpointType: EndpointType): string {
+    const datadogHost = buildHost(endpointType)
+    const host = proxyHost ? proxyHost : datadogHost
+    return `https://${host}${buildPath(endpointType)}`
   }
 
-  private buildHost(endpointType: EndpointType) {
-    if (this.shouldUseAlternateDomain(endpointType)) {
+  function buildHost(endpointType: EndpointType) {
+    if (shouldUseAlternateDomain(endpointType)) {
       const endpoint = ENDPOINTS.alternate[endpointType]
-      const domainParts = this.site.split('.')
+      const domainParts = site.split('.')
       const extension = domainParts.pop()
       const suffix = `${domainParts.join('-')}.${extension!}`
       return `${endpoint}.browser-intake-${suffix}`
     }
     const endpoint = ENDPOINTS.classic[endpointType]!
-    return `${endpoint}-http-intake.logs.${this.site}`
+    return `${endpoint}-http-intake.logs.${site}`
   }
 
-  private buildPath(endpointType: EndpointType) {
-    return this.shouldUseIntakeV2(endpointType)
-      ? `/api/v2/${INTAKE_TRACKS[endpointType]}`
-      : `/v1/input/${this.clientToken}`
+  function buildPath(endpointType: EndpointType) {
+    return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
   }
 
-  private shouldUseIntakeV2(endpointType?: EndpointType): boolean {
+  function shouldUseIntakeV2(endpointType?: EndpointType): boolean {
     return (
-      this.isIntakeV2Enabled &&
-      (this.intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay')
+      !!isIntakeV2Enabled &&
+      (intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, site) || endpointType === 'sessionReplay')
     )
   }
 
-  private shouldUseAlternateDomain(endpointType?: EndpointType): boolean {
-    return (
-      this.useAlternateIntakeDomains || !includes(CLASSIC_ALLOWED_SITES, this.site) || endpointType === 'sessionReplay'
-    )
+  function shouldUseAlternateDomain(endpointType?: EndpointType): boolean {
+    return useAlternateIntakeDomains || !includes(CLASSIC_ALLOWED_SITES, site) || endpointType === 'sessionReplay'
+  }
+
+  return {
+    build,
+    buildIntakeUrl,
   }
 }

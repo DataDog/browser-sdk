@@ -1,6 +1,6 @@
 import { BuildEnv, BuildMode } from '../boot/init'
 import { InitConfiguration } from './configuration'
-import { EndpointBuilder, ENDPOINTS_TYPES, INTAKE_SITE_US } from './endpointBuilder'
+import { createEndpointBuilder, ENDPOINTS_TYPES, INTAKE_SITE_US } from './endpointBuilder'
 
 export interface TransportConfiguration {
   logsEndpoint: string
@@ -25,7 +25,7 @@ export function computeTransportConfiguration(
   buildEnv: BuildEnv,
   isIntakeV2Enabled?: boolean
 ): TransportConfiguration {
-  const endpointBuilder = new EndpointBuilder(initConfiguration, buildEnv, isIntakeV2Enabled)
+  const endpointBuilder = createEndpointBuilder(initConfiguration, buildEnv, isIntakeV2Enabled)
   const intakeUrls: string[] = ENDPOINTS_TYPES.map((endpointType) => endpointBuilder.buildIntakeUrl(endpointType))
 
   const configuration: TransportConfiguration = {
@@ -55,7 +55,7 @@ export function computeTransportConfiguration(
       useAlternateIntakeDomains: true,
       intakeApiVersion: isIntakeV2Enabled ? 2 : (1 as 1 | 2),
     }
-    const replicaEndpointBuilder = new EndpointBuilder(replicaConfiguration, buildEnv, isIntakeV2Enabled)
+    const replicaEndpointBuilder = createEndpointBuilder(replicaConfiguration, buildEnv, isIntakeV2Enabled)
 
     configuration.replica = {
       applicationId: initConfiguration.replica.applicationId,
