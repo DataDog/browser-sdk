@@ -62,12 +62,14 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
       session: RumSession,
       parentContexts: ParentContexts
     ) => {
-      lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-        if (state.status === RecorderStatus.Started) {
+      lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
           state = { status: RecorderStatus.IntentToStart }
         }
+      })
 
+      lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
         if (state.status === RecorderStatus.IntentToStart) {
           startStrategy()
         }
