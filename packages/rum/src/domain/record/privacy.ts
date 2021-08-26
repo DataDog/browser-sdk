@@ -36,13 +36,13 @@ export function getNodePrivacyLevel(node: Node, initialPrivacyLevel: NodePrivacy
     ? getNodePrivacyLevel(node.parentNode, initialPrivacyLevel)
     : initialPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
-  return derivePrivacyLevelGivenParent(selfNodePrivacyLevel, parentNodePrivacyLevel)
+  return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }
 
 /**
  * Reduces the next privacy level based on self + parent privacy levels
  */
-export function derivePrivacyLevelGivenParent(
+export function reducePrivacyLevel(
   childPrivacyLevel: NodePrivacyLevel | undefined,
   parentNodePrivacyLevel: NodePrivacyLevel
 ): NodePrivacyLevel {

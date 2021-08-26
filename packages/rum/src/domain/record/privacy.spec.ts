@@ -1,7 +1,7 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel } from '../../constants'
 import { HTML, generateLeanSerializedDoc } from '../../../test/htmlAst'
-import { getNodeSelfPrivacyLevel, derivePrivacyLevelGivenParent, getNodePrivacyLevel, shouldMaskNode } from './privacy'
+import { getNodeSelfPrivacyLevel, reducePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 
 describe('privacy helpers', () => {
@@ -264,10 +264,7 @@ describe('Inherited Privacy Level  derivePrivacyLevelGivenParent() ... ', functi
 
   tests.forEach((test) => {
     it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
-      const inherited = derivePrivacyLevelGivenParent(
-        test.args[0] as NodePrivacyLevel,
-        test.args[1] as NodePrivacyLevel
-      )
+      const inherited = reducePrivacyLevel(test.args[0] as NodePrivacyLevel, test.args[1] as NodePrivacyLevel)
       expect(inherited).toBe(test.expect)
     })
   })
