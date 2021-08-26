@@ -272,28 +272,28 @@ describe('transportConfiguration', () => {
     describe('when session-replay on all env', () => {
       it('should force alternate domains intake v2', () => {
         let configuration = computeTransportConfiguration({ clientToken }, buildEnv, true)
-        expect(
-          configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/session-replay?xxx')
-        ).toBe(true)
+        expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx')).toBe(
+          true
+        )
 
         configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.eu' }, buildEnv, true)
-        expect(
-          configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.eu/api/v2/session-replay?xxx')
-        ).toBe(true)
+        expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.eu/api/v2/replay?xxx')).toBe(
+          true
+        )
 
         configuration = computeTransportConfiguration({ clientToken, site: 'us3.datadoghq.com' }, buildEnv, true)
         expect(
-          configuration.isIntakeUrl('https://session-replay.browser-intake-us3-datadoghq.com/api/v2/session-replay?xxx')
+          configuration.isIntakeUrl('https://session-replay.browser-intake-us3-datadoghq.com/api/v2/replay?xxx')
         ).toBe(true)
 
         configuration = computeTransportConfiguration({ clientToken, site: 'ddog-gov.com' }, buildEnv, true)
-        expect(
-          configuration.isIntakeUrl('https://session-replay.browser-intake-ddog-gov.com/api/v2/session-replay?xxx')
-        ).toBe(true)
+        expect(configuration.isIntakeUrl('https://session-replay.browser-intake-ddog-gov.com/api/v2/replay?xxx')).toBe(
+          true
+        )
 
         configuration = computeTransportConfiguration({ clientToken, site: 'us5.datadoghq.com' }, buildEnv, true)
         expect(
-          configuration.isIntakeUrl('https://session-replay.browser-intake-us5-datadoghq.com/api/v2/session-replay?xxx')
+          configuration.isIntakeUrl('https://session-replay.browser-intake-us5-datadoghq.com/api/v2/replay?xxx')
         ).toBe(true)
       })
     })
@@ -306,15 +306,13 @@ describe('transportConfiguration', () => {
       )
       expect(configuration.isIntakeUrl('https://rum.browser-intake-foo.com/api/v2/rum?xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-foo.com/api/v2/logs?xxx')).toBe(true)
-      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo.com/api/v2/session-replay?xxx')).toBe(
-        true
-      )
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-foo.com/api/v2/replay?xxx')).toBe(true)
 
       expect(configuration.isIntakeUrl('https://rum.browser-intake-datadoghq.com/api/v2/rum?xxx')).toBe(true)
       expect(configuration.isIntakeUrl('https://logs.browser-intake-datadoghq.com/api/v2/logs?xxx')).toBe(true)
-      expect(
-        configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/session-replay?xxx')
-      ).toBe(true)
+      expect(configuration.isIntakeUrl('https://session-replay.browser-intake-datadoghq.com/api/v2/replay?xxx')).toBe(
+        true
+      )
     })
   })
 })

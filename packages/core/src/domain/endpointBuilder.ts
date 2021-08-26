@@ -19,7 +19,7 @@ export const ENDPOINTS = {
 const INTAKE_TRACKS = {
   logs: 'logs',
   rum: 'rum',
-  sessionReplay: 'session-replay',
+  sessionReplay: 'replay',
 }
 
 export const ENDPOINTS_TYPES = Object.keys(ENDPOINTS['alternate']) as EndpointType[]
