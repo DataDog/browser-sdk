@@ -75,7 +75,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
 
   const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
 
-  // There are a few `overrules` to enforce for end-user protection
+  // Overrules to enforce end-user protection
   if (node.tagName === 'BASE') {
     return NodePrivacyLevel.ALLOW
   }
@@ -94,7 +94,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     }
   }
 
-  // Customers should first specify privacy tags using HTML attributes
+  // Check HTML privacy attributes
   switch (privAttr) {
     case PRIVACY_ATTR_VALUE_ALLOW:
       return NodePrivacyLevel.ALLOW
@@ -108,7 +108,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
       return NodePrivacyLevel.HIDDEN
   }
 
-  // But we also need to support class based privacy tagging for certain frameworks
+  // Check HTML privacy classes
   if (node.classList.contains(PRIVACY_CLASS_ALLOW)) {
     return NodePrivacyLevel.ALLOW
   } else if (node.classList.contains(PRIVACY_CLASS_MASK)) {
@@ -127,6 +127,17 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 }
 
+/**
+ * Helper aiming to unify `mask` and `mask-forms-only` privacy levels:
+ *
+ * In the `mask` case, it is trivial: we should mask the element.
+ *
+ * In the `mask-forms-only` case, we should mask the element only if it is a "form" element or the
+ * direct parent is a form element for text nodes).
+ *
+ * Other `shouldMaskNode` cases are edge cases that should not matter too much (ex: should we mask a
+ * node if it is ignored or hidden? it doesn't matter since it won't be serialized).
+ */
 export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
   switch (privacyLevel) {
     case NodePrivacyLevel.MASK:
