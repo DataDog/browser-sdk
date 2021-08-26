@@ -69,60 +69,61 @@ export function reducePrivacyLevel(
  */
 export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
   // Only Element types can be have a privacy level set
-  if (isElement(node)) {
-    const elNode = node as HTMLElement
-    const privAttr = elNode.getAttribute(PRIVACY_ATTR_NAME)
+  if (!isElement(node)) {
+    return
+  }
 
-    // There are a few `overrules` to enforce for end-user protection
-    if (elNode.tagName === 'BASE') {
-      return NodePrivacyLevel.ALLOW
-    }
-    if (elNode.tagName === 'INPUT') {
-      const inputElement = elNode as HTMLInputElement
-      if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
-        return NodePrivacyLevel.MASK
-      }
-      if (inputElement.type === 'hidden') {
-        return NodePrivacyLevel.MASK
-      }
-      const autocomplete = inputElement.getAttribute('autocomplete')
-      // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
-      if (autocomplete && autocomplete.indexOf('cc-') === 0) {
-        return NodePrivacyLevel.MASK
-      }
-    }
+  const privAttr = node.getAttribute(PRIVACY_ATTR_NAME)
 
-    // Customers should first specify privacy tags using HTML attributes
-    switch (privAttr) {
-      case PRIVACY_ATTR_VALUE_ALLOW:
-        return NodePrivacyLevel.ALLOW
-      case PRIVACY_ATTR_VALUE_MASK:
-        return NodePrivacyLevel.MASK
-      case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY:
-      case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
-      case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
-        return NodePrivacyLevel.MASK_FORMS_ONLY
-      case PRIVACY_ATTR_VALUE_HIDDEN:
-        return NodePrivacyLevel.HIDDEN
-    }
-
-    // But we also need to support class based privacy tagging for certain frameworks
-    if (elNode.classList.contains(PRIVACY_CLASS_ALLOW)) {
-      return NodePrivacyLevel.ALLOW
-    } else if (elNode.classList.contains(PRIVACY_CLASS_MASK)) {
+  // There are a few `overrules` to enforce for end-user protection
+  if (node.tagName === 'BASE') {
+    return NodePrivacyLevel.ALLOW
+  }
+  if (node.tagName === 'INPUT') {
+    const inputElement = node as HTMLInputElement
+    if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
       return NodePrivacyLevel.MASK
-    } else if (elNode.classList.contains(PRIVACY_CLASS_HIDDEN)) {
-      return NodePrivacyLevel.HIDDEN
-    } else if (
-      elNode.classList.contains(PRIVACY_CLASS_MASK_FORMS_ONLY) ||
-      elNode.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
-      elNode.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
-    ) {
-      return NodePrivacyLevel.MASK_FORMS_ONLY
-    } else if (shouldIgnoreElement(elNode)) {
-      // such as for scripts
-      return NodePrivacyLevel.IGNORE
     }
+    if (inputElement.type === 'hidden') {
+      return NodePrivacyLevel.MASK
+    }
+    const autocomplete = inputElement.getAttribute('autocomplete')
+    // Handle input[autocomplete=cc-number/cc-csc/cc-exp/cc-exp-month/cc-exp-year]
+    if (autocomplete && autocomplete.indexOf('cc-') === 0) {
+      return NodePrivacyLevel.MASK
+    }
+  }
+
+  // Customers should first specify privacy tags using HTML attributes
+  switch (privAttr) {
+    case PRIVACY_ATTR_VALUE_ALLOW:
+      return NodePrivacyLevel.ALLOW
+    case PRIVACY_ATTR_VALUE_MASK:
+      return NodePrivacyLevel.MASK
+    case PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY:
+    case PRIVACY_ATTR_VALUE_INPUT_IGNORED: // Deprecated, now aliased
+    case PRIVACY_ATTR_VALUE_INPUT_MASKED: // Deprecated, now aliased
+      return NodePrivacyLevel.MASK_FORMS_ONLY
+    case PRIVACY_ATTR_VALUE_HIDDEN:
+      return NodePrivacyLevel.HIDDEN
+  }
+
+  // But we also need to support class based privacy tagging for certain frameworks
+  if (node.classList.contains(PRIVACY_CLASS_ALLOW)) {
+    return NodePrivacyLevel.ALLOW
+  } else if (node.classList.contains(PRIVACY_CLASS_MASK)) {
+    return NodePrivacyLevel.MASK
+  } else if (node.classList.contains(PRIVACY_CLASS_HIDDEN)) {
+    return NodePrivacyLevel.HIDDEN
+  } else if (
+    node.classList.contains(PRIVACY_CLASS_MASK_FORMS_ONLY) ||
+    node.classList.contains(PRIVACY_CLASS_INPUT_MASKED) || // Deprecated, now aliased
+    node.classList.contains(PRIVACY_CLASS_INPUT_IGNORED) // Deprecated, now aliased
+  ) {
+    return NodePrivacyLevel.MASK_FORMS_ONLY
+  } else if (shouldIgnoreElement(node)) {
+    // such as for scripts
+    return NodePrivacyLevel.IGNORE
   }
 }
 
