@@ -30,6 +30,7 @@ export function startRumSession(configuration: Configuration, lifeCycle: LifeCyc
   )
 
   session.renewObservable.subscribe(() => {
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
   })
 

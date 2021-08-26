@@ -1,10 +1,10 @@
-import { CreationReason, IncrementalSource, Segment } from '@datadog/browser-rum/cjs/types'
+import { CreationReason, IncrementalSource, RecordType, Segment } from '@datadog/browser-rum/cjs/types'
 import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
-import { flushEvents } from '../lib/helpers/sdk'
+import { flushEvents, renewSession } from '../lib/helpers/sdk'
 import {
   findElement,
   findElementWithIdAttribute,
@@ -628,10 +628,35 @@ describe('recorder', () => {
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: 0 }])
       })
   })
+
+  describe('session renewal', () => {
+    createTest('a single fullSnapshot is taken when the session is renewed')
+      .withRum()
+      .withRumInit(initRumAndStartRecording)
+      .withSetup(bundleSetup)
+      .run(async ({ events }) => {
+        await renewSession()
+
+        await flushEvents()
+
+        expect(events.sessionReplay.length).toBe(2)
+
+        const segment = getLastSegment(events)
+        expect(segment.creation_reason).toBe('init')
+        expect(segment.records[0].type).toBe(RecordType.Meta)
+        expect(segment.records[1].type).toBe(RecordType.Focus)
+        expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
+        expect(segment.records.slice(3).every((record) => record.type !== RecordType.FullSnapshot)).toBe(true)
+      })
+  })
 })
 
 function getFirstSegment(events: EventRegistry) {
   return events.sessionReplay[0].segment.data
+}
+
+function getLastSegment(events: EventRegistry) {
+  return events.sessionReplay[events.sessionReplay.length - 1].segment.data
 }
 
 function initRumAndStartRecording(initConfiguration: RumInitConfiguration) {

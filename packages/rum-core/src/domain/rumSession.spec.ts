@@ -25,6 +25,7 @@ describe('rum session', () => {
     replaySampleRate: 50,
   }
   let lifeCycle: LifeCycle
+  let expireSessionSpy: jasmine.Spy
   let renewSessionSpy: jasmine.Spy
   let clock: Clock
 
@@ -33,8 +34,10 @@ describe('rum session', () => {
       pending('no full rum support')
     }
     clock = mockClock()
+    expireSessionSpy = jasmine.createSpy('expireSessionSpy')
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
     lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)
   })
 
@@ -52,6 +55,7 @@ describe('rum session', () => {
 
       startRumSession(configuration as Configuration, lifeCycle)
 
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
@@ -62,6 +66,7 @@ describe('rum session', () => {
 
       startRumSession(configuration as Configuration, lifeCycle)
 
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_LITE}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)
@@ -72,6 +77,7 @@ describe('rum session', () => {
 
       startRumSession(configuration as Configuration, lifeCycle)
 
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
       expect(getCookie(SESSION_COOKIE_NAME)).not.toContain('id=')
@@ -82,6 +88,7 @@ describe('rum session', () => {
 
       startRumSession(configuration as Configuration, lifeCycle)
 
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toContain('id=abcdef')
@@ -92,6 +99,7 @@ describe('rum session', () => {
 
       startRumSession(configuration as Configuration, lifeCycle)
 
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.NOT_TRACKED}`)
     })
@@ -101,12 +109,14 @@ describe('rum session', () => {
 
       setCookie(SESSION_COOKIE_NAME, '', DURATION)
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
+      expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(COOKIE_ACCESS_DELAY)
 
       setupDraws({ tracked: true, trackedWithReplay: true })
       document.dispatchEvent(new CustomEvent('click'))
 
+      expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
       expect(getCookie(SESSION_COOKIE_NAME)).toContain(`${RUM_SESSION_KEY}=${RumTrackingType.TRACKED_REPLAY}`)
       expect(getCookie(SESSION_COOKIE_NAME)).toMatch(/id=[a-f0-9-]/)

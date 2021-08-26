@@ -155,6 +155,8 @@ describe('makeRecorderApi', () => {
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         session.setReplayPlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+        expect(startRecordingSpy).not.toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
         expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -164,6 +166,7 @@ describe('makeRecorderApi', () => {
         recorderApi.start()
         recorderApi.stop()
         session.setReplayPlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
@@ -177,6 +180,7 @@ describe('makeRecorderApi', () => {
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         session.setNotTracked()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -190,6 +194,7 @@ describe('makeRecorderApi', () => {
 
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -203,10 +208,12 @@ describe('makeRecorderApi', () => {
 
       it('stops recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         session.setLitePlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+        expect(stopRecordingSpy).toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        expect(stopRecordingSpy).toHaveBeenCalled()
       })
 
       it('prevents session recording to start if the session is renewed before onload', () => {
@@ -215,6 +222,7 @@ describe('makeRecorderApi', () => {
         rumInit(DEFAULT_INIT_CONFIGURATION)
         recorderApi.start()
         session.setLitePlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         triggerOnLoad()
         expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -228,10 +236,12 @@ describe('makeRecorderApi', () => {
 
       it('stops recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         session.setNotTracked()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+        expect(stopRecordingSpy).toHaveBeenCalled()
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-        expect(stopRecordingSpy).toHaveBeenCalled()
       })
     })
 
@@ -242,14 +252,19 @@ describe('makeRecorderApi', () => {
 
       it('keeps recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
-        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         expect(stopRecordingSpy).toHaveBeenCalled()
+        lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalledTimes(2)
       })
 
       it('does not starts recording if stopSessionReplayRecording was called', () => {
         recorderApi.start()
+        expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         recorderApi.stop()
+        expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
@@ -264,6 +279,7 @@ describe('makeRecorderApi', () => {
       it('starts recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         session.setReplayPlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).toHaveBeenCalled()
         expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -273,8 +289,10 @@ describe('makeRecorderApi', () => {
         recorderApi.start()
         recorderApi.stop()
         session.setReplayPlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -286,8 +304,10 @@ describe('makeRecorderApi', () => {
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
         session.setLitePlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
     })
 
@@ -298,8 +318,10 @@ describe('makeRecorderApi', () => {
 
       it('keeps not recording if startSessionReplayRecording was called', () => {
         recorderApi.start()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(stopRecordingSpy).not.toHaveBeenCalled()
       })
     })
   })
