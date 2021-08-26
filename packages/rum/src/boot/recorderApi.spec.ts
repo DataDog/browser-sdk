@@ -222,6 +222,7 @@ describe('makeRecorderApi', () => {
         rumInit(DEFAULT_INIT_CONFIGURATION)
         recorderApi.start()
         session.setLitePlan()
+        lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
         lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
         triggerOnLoad()
         expect(startRecordingSpy).not.toHaveBeenCalled()
