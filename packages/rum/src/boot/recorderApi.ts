@@ -63,7 +63,7 @@ export function makeRecorderApi(startRecordingImpl: StartRecording): RecorderApi
       parentContexts: ParentContexts
     ) => {
       lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-        if (state.status === RecorderStatus.Started) {
+        if (state.status === RecorderStatus.Starting || state.status === RecorderStatus.Started) {
           stopStrategy()
           state = { status: RecorderStatus.IntentToStart }
         }
