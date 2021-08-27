@@ -52,7 +52,7 @@ describe('transportConfiguration', () => {
         buildEnv
       )
       expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
-      expect(configuration.rumEndpoint).toContain('?ddhost=rum-http-intake.logs.datadoghq.eu&')
+      expect(configuration.rumEndpoint).toContain('&ddhost=rum-http-intake.logs.datadoghq.eu')
     })
   })
 

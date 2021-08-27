@@ -40,9 +40,9 @@ export function createEndpointBuilder(
   buildEnv: BuildEnv,
   isIntakeV2Enabled?: boolean
 ) {
-  const site = initConfiguration.site || INTAKE_SITE_US
   const sdkVersion = buildEnv.sdkVersion
   const {
+    site = INTAKE_SITE_US,
     clientToken,
     env,
     proxyHost,
@@ -58,9 +58,13 @@ export function createEndpointBuilder(
       `${env ? `,env:${env}` : ''}` +
       `${service ? `,service:${service}` : ''}` +
       `${version ? `,version:${version}` : ''}`
-    const datadogHost = buildHost(endpointType)
-    const proxyParameter = proxyHost ? `ddhost=${datadogHost}&` : ''
-    let parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
+
+    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
+
+    if (proxyHost) {
+      const datadogHost = buildHost(endpointType)
+      parameters += `&ddhost=${datadogHost}`
+    }
 
     if (shouldUseIntakeV2(endpointType)) {
       parameters +=
