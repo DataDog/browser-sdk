@@ -13,7 +13,7 @@ export interface PageActivityEvent {
   isBusy: boolean
 }
 
-type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | { hadActivity: false }
+export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeStamp } | { hadActivity: false }
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,

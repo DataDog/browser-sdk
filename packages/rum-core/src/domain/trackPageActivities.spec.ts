@@ -10,6 +10,7 @@ import {
   PageActivityEvent,
   trackPageActivities,
   waitPageActivitiesCompletion,
+  CompletionCallbackParameters,
 } from './trackPageActivities'
 
 // Used to wait some time after the creation of an action
@@ -141,8 +142,10 @@ describe('trackPagePageActivities', () => {
 
 describe('waitPageActivitiesCompletion', () => {
   let clock: Clock
+  let completionCallbackSpy: jasmine.Spy<(params: CompletionCallbackParameters) => void>
 
   beforeEach(() => {
+    completionCallbackSpy = jasmine.createSpy()
     clock = mockClock()
   })
 
@@ -150,51 +153,43 @@ describe('waitPageActivitiesCompletion', () => {
     clock.cleanup()
   })
 
-  it('should not collect an event that is not followed by page activity', (done) => {
-    waitPageActivitiesCompletion(new Observable(), noop, (params) => {
-      expect(params.hadActivity).toBeFalse()
-      expect((params as any).endTime).toBeUndefined()
-      done()
-    })
+  it('should not collect an event that is not followed by page activity', () => {
+    waitPageActivitiesCompletion(new Observable(), noop, completionCallbackSpy)
 
     clock.tick(EXPIRE_DELAY)
+
+    expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+      hadActivity: false,
+    })
   })
 
-  it('should collect an event that is followed by page activity', (done) => {
+  it('should collect an event that is followed by page activity', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = timeStampNow()
-    waitPageActivitiesCompletion(activityObservable, noop, (params) => {
-      expect(params.hadActivity).toBeTrue()
-      expect((params as { hadActivity: true; endTime: TimeStamp }).endTime).toEqual(
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as TimeStamp
-      )
-      done()
-    })
+    waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
 
     clock.tick(EXPIRE_DELAY)
+
+    expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+      hadActivity: true,
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+      endTime: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as TimeStamp,
+    })
   })
 
   describe('extend with activities', () => {
-    it('is extended while there is page activities', (done) => {
+    it('is extended while there is page activities', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
 
       // Extend the action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
-        expect(params.hadActivity).toBeTrue()
-        expect((params as { hadActivity: true; endTime: TimeStamp }).endTime).toBe(
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          (startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as TimeStamp
-        )
-        done()
-      })
+      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
 
       for (let i = 0; i < extendCount; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -202,9 +197,15 @@ describe('waitPageActivitiesCompletion', () => {
       }
 
       clock.tick(EXPIRE_DELAY)
+
+      expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+        hadActivity: true,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (startTime + (extendCount + 1) * BEFORE_PAGE_ACTIVITY_END_DELAY) as TimeStamp,
+      })
     })
 
-    it('expires after a limit', (done) => {
+    it('expires after a limit', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
       const startTime = timeStampNow()
@@ -212,15 +213,10 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the action until it's more than PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
-        expect(params.hadActivity).toBeTrue()
-        expect((params as { hadActivity: true; endTime: TimeStamp }).endTime).toBe(
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp
-        )
+      completionCallbackSpy.and.callFake(() => {
         stop = true
-        done()
       })
+      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
 
       for (let i = 0; i < extendCount && !stop; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -228,21 +224,20 @@ describe('waitPageActivitiesCompletion', () => {
       }
 
       clock.tick(EXPIRE_DELAY)
+
+      expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+        hadActivity: true,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp,
+      })
     })
   })
 
   describe('busy activities', () => {
-    it('is extended while the page is busy', (done) => {
+    it('is extended while the page is busy', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
-        expect(params.hadActivity).toBeTrue()
-        expect((params as { hadActivity: true; endTime: TimeStamp }).endTime).toBe(
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as TimeStamp
-        )
-        done()
-      })
+      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -251,24 +246,29 @@ describe('waitPageActivitiesCompletion', () => {
       activityObservable.notify({ isBusy: false })
 
       clock.tick(EXPIRE_DELAY)
+
+      expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+        hadActivity: true,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (startTime + BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + PAGE_ACTIVITY_END_DELAY * 2) as TimeStamp,
+      })
     })
 
-    it('expires is the page is busy for too long', (done) => {
+    it('expires is the page is busy for too long', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, (params) => {
-        expect(params.hadActivity).toBeTrue()
-        expect((params as { hadActivity: true; endTime: TimeStamp }).endTime).toBe(
-          // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-          (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp
-        )
-        done()
-      })
+      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
 
       clock.tick(EXPIRE_DELAY)
+
+      expect(completionCallbackSpy).toHaveBeenCalledOnceWith({
+        hadActivity: true,
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+        endTime: (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp,
+      })
     })
   })
 })
