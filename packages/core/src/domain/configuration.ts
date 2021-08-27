@@ -2,7 +2,7 @@ import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
 import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
-import { computeTransportConfiguration } from './transportConfiguration'
+import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
 export const InitialPrivacyLevel = {
   ALLOW: 'allow',
@@ -68,6 +68,8 @@ export interface InitConfiguration {
   version?: string
 
   useAlternateIntakeDomains?: boolean
+  intakeApiVersion?: 1 | 2
+
   useCrossSiteSessionCookie?: boolean
   useSecureSessionCookie?: boolean
   trackSessionAcrossSubdomains?: boolean
@@ -95,36 +97,19 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
     isEnabled: (feature: string) => boolean
   }
 
-export interface TransportConfiguration {
-  logsEndpoint: string
-  rumEndpoint: string
-  sessionReplayEndpoint: string
-  internalMonitoringEndpoint?: string
-  isIntakeUrl: (url: string) => boolean
-
-  // only on staging build mode
-  replica?: ReplicaConfiguration
-}
-
-interface ReplicaConfiguration {
-  applicationId?: string
-  logsEndpoint: string
-  rumEndpoint: string
-  internalMonitoringEndpoint: string
-}
-
 export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
   const enableExperimentalFeatures = Array.isArray(initConfiguration.enableExperimentalFeatures)
     ? initConfiguration.enableExperimentalFeatures
     : []
 
+  const isEnabled = (feature: string) => includes(enableExperimentalFeatures, feature)
   const configuration: Configuration = {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
-    isEnabled: (feature: string) => includes(enableExperimentalFeatures, feature),
+    isEnabled,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
+    ...computeTransportConfiguration(initConfiguration, buildEnv, isEnabled('support-intake-v2')),
     ...DEFAULT_CONFIGURATION,
   }
 

@@ -1,156 +1,73 @@
 import { BuildEnv, BuildMode } from '../boot/init'
-import { includes } from '../tools/utils'
-import { TransportConfiguration, InitConfiguration } from './configuration'
+import { InitConfiguration } from './configuration'
+import { createEndpointBuilder, ENDPOINTS_TYPES, INTAKE_SITE_US } from './endpointBuilder'
 
-const ENDPOINTS = {
-  alternate: {
-    logs: 'logs',
-    rum: 'rum',
-    sessionReplay: 'session-replay',
-  },
-  classic: {
-    logs: 'browser',
-    rum: 'rum',
-    // session-replay has no classic endpoint
-    sessionReplay: undefined,
-  },
+export interface TransportConfiguration {
+  logsEndpoint: string
+  rumEndpoint: string
+  sessionReplayEndpoint: string
+  internalMonitoringEndpoint?: string
+  isIntakeUrl: (url: string) => boolean
+
+  // only on staging build mode
+  replica?: ReplicaConfiguration
 }
 
-const INTAKE_SITE_US = 'datadoghq.com'
-const INTAKE_SITE_EU = 'datadoghq.eu'
-
-const CLASSIC_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_EU]
-
-type IntakeType = keyof typeof ENDPOINTS
-type EndpointType = keyof typeof ENDPOINTS[IntakeType]
-
-interface TransportSettings {
-  clientToken: string
-  site: string
-  buildMode: BuildMode
-  sdkVersion: string
-  proxyHost?: string
-
-  service?: string
-  env?: string
-  version?: string
+export interface ReplicaConfiguration {
+  applicationId?: string
+  logsEndpoint: string
+  rumEndpoint: string
+  internalMonitoringEndpoint: string
 }
 
 export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv
+  buildEnv: BuildEnv,
+  isIntakeV2Enabled?: boolean
 ): TransportConfiguration {
-  const transportSettings: TransportSettings = {
-    buildMode: buildEnv.buildMode,
-    clientToken: initConfiguration.clientToken,
-    env: initConfiguration.env,
-    proxyHost: initConfiguration.proxyHost,
-    sdkVersion: buildEnv.sdkVersion,
-    service: initConfiguration.service,
-    site: initConfiguration.site || INTAKE_SITE_US,
-    version: initConfiguration.version,
-  }
-
-  const intakeType: IntakeType = getIntakeType(transportSettings.site, initConfiguration)
-  const intakeUrls = getIntakeUrls(intakeType, transportSettings, initConfiguration.replica !== undefined)
+  const endpointBuilder = createEndpointBuilder(initConfiguration, buildEnv, isIntakeV2Enabled)
+  const intakeUrls: string[] = ENDPOINTS_TYPES.map((endpointType) => endpointBuilder.buildIntakeUrl(endpointType))
 
   const configuration: TransportConfiguration = {
     isIntakeUrl: (url: string) => intakeUrls.some((intakeUrl) => url.indexOf(intakeUrl) === 0),
-    logsEndpoint: getEndpoint(intakeType, 'logs', transportSettings),
-    rumEndpoint: getEndpoint(intakeType, 'rum', transportSettings),
-    sessionReplayEndpoint: getEndpoint(intakeType, 'sessionReplay', transportSettings),
+    logsEndpoint: endpointBuilder.build('logs'),
+    rumEndpoint: endpointBuilder.build('rum'),
+    sessionReplayEndpoint: endpointBuilder.build('sessionReplay'),
   }
 
   if (initConfiguration.internalMonitoringApiKey) {
-    configuration.internalMonitoringEndpoint = getEndpoint(
-      intakeType,
-      'logs',
-      transportSettings,
-      'browser-agent-internal-monitoring'
-    )
+    configuration.internalMonitoringEndpoint = endpointBuilder.build('logs', 'browser-agent-internal-monitoring')
   }
 
-  if (transportSettings.buildMode === BuildMode.E2E_TEST) {
+  if (buildEnv.buildMode === BuildMode.E2E_TEST) {
     configuration.internalMonitoringEndpoint = '<<< E2E INTERNAL MONITORING ENDPOINT >>>'
     configuration.logsEndpoint = '<<< E2E LOGS ENDPOINT >>>'
     configuration.rumEndpoint = '<<< E2E RUM ENDPOINT >>>'
     configuration.sessionReplayEndpoint = '<<< E2E SESSION REPLAY ENDPOINT >>>'
   }
 
-  if (transportSettings.buildMode === BuildMode.STAGING) {
-    if (initConfiguration.replica !== undefined) {
-      const replicaTransportSettings = {
-        ...transportSettings,
-        applicationId: initConfiguration.replica.applicationId,
-        clientToken: initConfiguration.replica.clientToken,
-        site: INTAKE_SITE_US,
-      }
-      configuration.replica = {
-        applicationId: initConfiguration.replica.applicationId,
-        internalMonitoringEndpoint: getEndpoint(
-          intakeType,
-          'logs',
-          replicaTransportSettings,
-          'browser-agent-internal-monitoring'
-        ),
-        logsEndpoint: getEndpoint(intakeType, 'logs', replicaTransportSettings),
-        rumEndpoint: getEndpoint(intakeType, 'rum', replicaTransportSettings),
-      }
+  if (buildEnv.buildMode === BuildMode.STAGING && initConfiguration.replica !== undefined) {
+    const replicaConfiguration = {
+      ...initConfiguration,
+      site: INTAKE_SITE_US,
+      applicationId: initConfiguration.replica.applicationId,
+      clientToken: initConfiguration.replica.clientToken,
+      useAlternateIntakeDomains: true,
+      intakeApiVersion: isIntakeV2Enabled ? 2 : (1 as 1 | 2),
     }
+    const replicaEndpointBuilder = createEndpointBuilder(replicaConfiguration, buildEnv, isIntakeV2Enabled)
+
+    configuration.replica = {
+      applicationId: initConfiguration.replica.applicationId,
+      internalMonitoringEndpoint: replicaEndpointBuilder.build('logs', 'browser-agent-internal-monitoring'),
+      logsEndpoint: replicaEndpointBuilder.build('logs'),
+      rumEndpoint: replicaEndpointBuilder.build('rum'),
+    }
+
+    const replicaIntakeUrls = ENDPOINTS_TYPES.map((endpointType) => replicaEndpointBuilder.buildIntakeUrl(endpointType))
+    replicaIntakeUrls.forEach((replicaIntakeUrl) => intakeUrls.push(replicaIntakeUrl))
+    intakeUrls.push(...replicaIntakeUrls)
   }
 
   return configuration
-}
-
-function getIntakeType(site: string, initConfiguration: InitConfiguration) {
-  return !initConfiguration.useAlternateIntakeDomains && includes(CLASSIC_ALLOWED_SITES, site) ? 'classic' : 'alternate'
-}
-
-function getIntakeUrls(intakeType: IntakeType, settings: TransportSettings, withReplica: boolean) {
-  if (settings.proxyHost) {
-    return [`https://${settings.proxyHost}/v1/input/`]
-  }
-  const sites = [settings.site]
-  if (settings.buildMode === BuildMode.STAGING && withReplica) {
-    sites.push(INTAKE_SITE_US)
-  }
-  const urls = []
-  const endpointTypes = Object.keys(ENDPOINTS[intakeType]) as EndpointType[]
-  for (const site of sites) {
-    for (const endpointType of endpointTypes) {
-      urls.push(`https://${getHost(intakeType, endpointType, site)}/v1/input/`)
-    }
-  }
-  return urls
-}
-
-function getHost(intakeType: IntakeType, endpointType: EndpointType, site: string) {
-  return (intakeType === 'classic' && getClassicHost(endpointType, site)) || getAlternateHost(endpointType, site)
-}
-
-function getClassicHost(endpointType: EndpointType, site: string): string | undefined {
-  const endpoint = ENDPOINTS.classic[endpointType]
-  return endpoint && `${endpoint}-http-intake.logs.${site}`
-}
-
-function getAlternateHost(endpointType: EndpointType, site: string): string {
-  const endpoint = ENDPOINTS.alternate[endpointType]
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  const suffix = `${domainParts.join('-')}.${extension!}`
-  return `${endpoint}.browser-intake-${suffix}`
-}
-
-function getEndpoint(intakeType: IntakeType, endpointType: EndpointType, settings: TransportSettings, source?: string) {
-  const tags =
-    `sdk_version:${settings.sdkVersion}` +
-    `${settings.env ? `,env:${settings.env}` : ''}` +
-    `${settings.service ? `,service:${settings.service}` : ''}` +
-    `${settings.version ? `,version:${settings.version}` : ''}`
-  const datadogHost = getHost(intakeType, endpointType, settings.site)
-  const host = settings.proxyHost ? settings.proxyHost : datadogHost
-  const proxyParameter = settings.proxyHost ? `ddhost=${datadogHost}&` : ''
-  const parameters = `${proxyParameter}ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
-
-  return `https://${host}/v1/input/${settings.clientToken}?${parameters}`
 }
