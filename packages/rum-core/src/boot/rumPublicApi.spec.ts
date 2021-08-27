@@ -1,7 +1,7 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, InitialPrivacyLevel } from '@datadog/browser-core'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
-import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum } from './rumPublicApi'
+import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum, RecorderApi } from './rumPublicApi'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -649,6 +649,48 @@ describe('rum public api', () => {
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
         isRecording = true
         expect(getCommonContext().hasReplay).toBeTrue()
+      })
+    })
+  })
+
+  describe('recording', () => {
+    let recorderApiOnRumStartSpy: jasmine.Spy<RecorderApi['onRumStart']>
+    let setupBuilder: TestSetupBuilder
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      recorderApiOnRumStartSpy = jasmine.createSpy('recorderApiOnRumStart')
+      rumPublicApi = makeRumPublicApi(noopStartRum, { ...noopRecorderApi, onRumStart: recorderApiOnRumStartSpy })
+      setupBuilder = setup()
+    })
+
+    afterEach(() => {
+      setupBuilder.cleanup()
+    })
+
+    it('recording is started with the default initialPrivacyLevel', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.ALLOW)
+    })
+
+    describe('initial-privacy-level-option feature enabled', () => {
+      it('recording is started with the configured initialPrivacyLevel', () => {
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          initialPrivacyLevel: InitialPrivacyLevel.MASK,
+          enableExperimentalFeatures: ['initial-privacy-level-option'],
+        })
+        expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.MASK)
+      })
+    })
+
+    describe('initial-privacy-level-option feature disabled', () => {
+      it('recording ignores the configured initialPrivacyLevel', () => {
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          initialPrivacyLevel: InitialPrivacyLevel.MASK,
+        })
+        expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.ALLOW)
       })
     })
   })

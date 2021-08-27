@@ -22,6 +22,7 @@ describe('startRecording', () => {
   let sandbox: HTMLElement
   let textField: HTMLInputElement
   let expectNoExtraRequestSendCalls: (done: () => void) => void
+  let stopRecording: () => void
 
   beforeEach(() => {
     if (isIE()) {
@@ -51,9 +52,10 @@ describe('startRecording', () => {
         },
       })
       .withSession(session)
-      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) =>
-        startRecording(lifeCycle, applicationId, configuration, session, parentContexts)
-      )
+      .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
+        ;({ stop: stopRecording } = startRecording(lifeCycle, applicationId, configuration, session, parentContexts))
+        return { stop: stopRecording }
+      })
 
     const requestSendSpy = spyOn(HttpRequest.prototype, 'send')
     ;({
@@ -201,6 +203,35 @@ describe('startRecording', () => {
         expect(segment.records[0].type).toBe(RecordType.Meta)
         expect(segment.records[1].type).toBe(RecordType.Focus)
         expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
+        expectNoExtraRequestSendCalls(done)
+      })
+    })
+  })
+
+  describe('when calling stop()', () => {
+    it('stops collecting records', (done) => {
+      const { lifeCycle } = setupBuilder.build()
+
+      document.body.dispatchEvent(createNewEvent('click'))
+      stopRecording()
+      document.body.dispatchEvent(createNewEvent('click'))
+      flushSegment(lifeCycle)
+
+      waitRequestSendCalls(1, (calls) => {
+        expect(getRequestData(calls.first()).records_count).toBe('4')
+        expectNoExtraRequestSendCalls(done)
+      })
+    })
+
+    it('stops taking full snapshots on view creation', (done) => {
+      const { lifeCycle } = setupBuilder.build()
+
+      stopRecording()
+      changeView(lifeCycle)
+      flushSegment(lifeCycle)
+
+      waitRequestSendCalls(1, (calls) => {
+        expect(getRequestData(calls.first()).records_count).toBe('3')
         expectNoExtraRequestSendCalls(done)
       })
     })

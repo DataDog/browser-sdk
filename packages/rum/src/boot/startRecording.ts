@@ -27,24 +27,23 @@ export function startRecording(
 
   const { stop: stopRecording, takeFullSnapshot, flushMutations } = record({
     emit: addRawRecord,
+    initialPrivacyLevel: configuration.initialPrivacyLevel,
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, flushMutations)
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
-  trackViewEndRecord(lifeCycle, (record) => addRawRecord(record))
-
-  return {
-    stop: () => {
-      stopRecording()
-      stopSegmentCollection()
-    },
-  }
-}
-
-export function trackViewEndRecord(lifeCycle: LifeCycle, addRawRecord: (record: RawRecord) => void) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+  const { unsubscribe: unsubscribeViewEnded } = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
+    flushMutations()
     addRawRecord({
       type: RecordType.ViewEnd,
     })
   })
+  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, takeFullSnapshot)
+
+  return {
+    stop: () => {
+      unsubscribeViewEnded()
+      unsubscribeViewCreated()
+      stopRecording()
+      stopSegmentCollection()
+    },
+  }
 }

@@ -254,7 +254,9 @@ If your Browser logs contain sensitive information that needs redacting, configu
 
 The `beforeSend` callback function gives you access to each event collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
 
-For example, to redact email addresses from your web application URLs:
+For examples of `beforeSend`, see [Enrich and control browser RUM data with beforeSend][5].
+
+To redact email addresses from your web application URLs:
 
 #### NPM
 
@@ -309,8 +311,7 @@ You can update the following event properties:
 | `message`       | String | The content of the log.                                                                          |
 | `error.stack`   | String | The stack trace or complementary information about the error.                                    |
 | `http.url`      | String | The HTTP URL.                                                                                    |
-
-**Note**: The Browser SDK will ignore modifications made to event properties not listed above. For more information about event properties, see the [Browser SDK repository][5].
+| `context`       | String | Extra contextual attributes added with the logger.                                               |
 
 ### Define multiple loggers
 
@@ -597,4 +598,4 @@ window.DD_LOGS && DD_LOGS.logger.setHandler(['<HANDLER1>', '<HANDLER2>'])
 [2]: /account_management/api-app-keys/#client-tokens
 [3]: https://www.npmjs.com/package/@datadog/browser-logs
 [4]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/BROWSER_SUPPORT.md
-[5]: https://github.com/DataDog/browser-sdk/blob/main/packages/logs/src/logsEvent.types.ts
+[5]: /real_user_monitoring/guide/enrich-and-control-rum-data/
