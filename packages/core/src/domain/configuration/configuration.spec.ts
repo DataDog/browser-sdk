@@ -1,6 +1,6 @@
-import { RumEvent } from '../../../rum/src'
-import { BuildEnv, BuildMode } from '../boot/init'
-import { display } from '../tools/display'
+import { RumEvent } from '../../../../rum/src'
+import { BuildEnv, BuildMode } from '../../boot/init'
+import { display } from '../../tools/display'
 import { buildConfiguration } from './configuration'
 
 describe('configuration', () => {

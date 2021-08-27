@@ -1,4 +1,4 @@
-import { BuildEnv, BuildMode } from '../boot/init'
+import { BuildEnv, BuildMode } from '../../boot/init'
 import { InitConfiguration } from './configuration'
 import { createEndpointBuilder, ENDPOINTS_TYPES, INTAKE_SITE_US } from './endpointBuilder'
 
