@@ -1,5 +1,5 @@
-import { BuildEnv } from '../boot/init'
-import { generateUUID, includes } from '../tools/utils'
+import { BuildEnv } from '../../boot/init'
+import { generateUUID, includes } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
