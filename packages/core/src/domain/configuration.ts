@@ -1,8 +1,15 @@
 import { BuildEnv } from '../boot/init'
 import { CookieOptions, getCurrentSite } from '../browser/cookie'
 import { catchUserErrors } from '../tools/catchUserErrors'
-import { includes, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
+import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
 import { computeTransportConfiguration } from './transportConfiguration'
+
+export const InitialPrivacyLevel = {
+  ALLOW: 'allow',
+  MASK: 'mask',
+  MASK_FORMS_ONLY: 'mask-forms-only',
+} as const
+export type InitialPrivacyLevel = typeof InitialPrivacyLevel[keyof typeof InitialPrivacyLevel]
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
@@ -13,6 +20,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
+  initialPrivacyLevel: InitialPrivacyLevel.ALLOW as InitialPrivacyLevel,
 
   /**
    * arbitrary value, byte precision not needed
@@ -53,6 +61,7 @@ export interface InitConfiguration {
   trackViewsManually?: boolean
   proxyHost?: string
   beforeSend?: BeforeSendCallback
+  initialPrivacyLevel?: InitialPrivacyLevel
 
   service?: string
   env?: string
@@ -141,6 +150,13 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
 
   if ('actionNameAttribute' in initConfiguration) {
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
+  }
+
+  if (
+    configuration.isEnabled('initial-privacy-level-option') &&
+    objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)
+  ) {
+    configuration.initialPrivacyLevel = initConfiguration.initialPrivacyLevel
   }
 
   return configuration

@@ -1,6 +1,6 @@
 import { buildUrl } from '@datadog/browser-core'
-import { NodePrivacyLevel, CENSORED_STRING_MARK } from '../../constants'
-import { getNodePrivacyLevel } from './privacy'
+import { CENSORED_STRING_MARK, NodePrivacyLevel } from '../../constants'
+import { shouldMaskNode } from './privacy'
 import { SerializedNodeWithId } from './types'
 
 export interface NodeWithSerializedNode extends Node {
@@ -70,18 +70,17 @@ export function makeUrlAbsolute(url: string, baseUrl: string): string {
  * the input privacy mode of the element.
  * PERFROMANCE OPTIMIZATION: Assumes that privacy level `HIDDEN` is never encountered because of earlier checks.
  */
-export function getElementInputValue(element: Element, explicitNodePrivacyLevel?: NodePrivacyLevel) {
+export function getElementInputValue(element: Element, nodePrivacyLevel: NodePrivacyLevel) {
   /*
    BROWSER SPEC NOTE: <input>, <select>
    For some <input> elements, the `value` is an exceptional property/attribute that has the
    value synced between el.value and el.getAttribute()
    input[type=button,checkbox,hidden,image,radio,reset,submit]
    */
-  const nodePrivacyLevel = explicitNodePrivacyLevel ?? getNodePrivacyLevel(element)
   const tagName = element.tagName
   const value = (element as HTMLInputElement | HTMLTextAreaElement).value
 
-  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+  if (shouldMaskNode(element, nodePrivacyLevel)) {
     const type = (element as HTMLInputElement | HTMLTextAreaElement).type
     if (tagName === 'INPUT' && (type === 'button' || type === 'submit' || type === 'reset')) {
       // Overrule `MASK` privacy level for button-like element values, as they are used during replay

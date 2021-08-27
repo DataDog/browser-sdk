@@ -21,3 +21,4 @@ export {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+export { InitialPrivacyLevel } from '@datadog/browser-core'

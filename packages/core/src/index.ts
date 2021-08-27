@@ -4,6 +4,7 @@ export {
   InitConfiguration,
   buildCookieOptions,
   BeforeSendCallback,
+  InitialPrivacyLevel,
 } from './domain/configuration'
 export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'

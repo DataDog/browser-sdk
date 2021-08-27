@@ -35,7 +35,7 @@ export function record(options: RecordOptions): RecordAPI {
 
     emit({
       data: {
-        node: serializeDocument(document),
+        node: serializeDocument(document, options.initialPrivacyLevel),
         initialOffset: {
           left:
             window.pageXOffset !== undefined
@@ -61,6 +61,7 @@ export function record(options: RecordOptions): RecordAPI {
 
   const stopObservers = initObservers({
     mutationController,
+    initialPrivacyLevel: options.initialPrivacyLevel,
     inputCb: (v) =>
       emit({
         data: {

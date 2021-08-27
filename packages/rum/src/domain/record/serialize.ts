@@ -1,16 +1,10 @@
+import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
-  NodePrivacyLevel,
-  NodePrivacyLevelInternal,
-  PRIVACY_ATTR_NAME,
-  PRIVACY_ATTR_VALUE_HIDDEN,
-  CENSORED_STRING_MARK,
-} from '../../constants'
-import {
-  remapInternalPrivacyLevels,
-  getInternalNodePrivacyLevel,
-  getInitialPrivacyLevel,
   serializeAttribute,
   getTextContent,
+  shouldMaskNode,
+  reducePrivacyLevel,
+  getNodeSelfPrivacyLevel,
 } from './privacy'
 import {
   SerializedNode,
@@ -30,18 +24,29 @@ import {
 } from './serializationUtils'
 import { forEach } from './utils'
 
+// Those values are the only one that can be used when inheriting privacy levels from parent to
+// children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
+// ensures that no children are serialized when they shouldn't.
+type ParentNodePrivacyLevel =
+  | typeof NodePrivacyLevel.ALLOW
+  | typeof NodePrivacyLevel.MASK
+  | typeof NodePrivacyLevel.MASK_FORMS_ONLY
+
 export interface SerializeOptions {
   document: Document
   serializedNodeIds?: Set<number>
   ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: NodePrivacyLevelInternal
+  parentNodePrivacyLevel: ParentNodePrivacyLevel
 }
 
-export function serializeDocument(document: Document): SerializedNodeWithId {
+export function serializeDocument(
+  document: Document,
+  initialPrivacyLevel: ParentNodePrivacyLevel
+): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: getInitialPrivacyLevel(),
+    parentNodePrivacyLevel: initialPrivacyLevel,
   })!
 }
 
@@ -114,10 +119,9 @@ export function serializeElementNode(element: Element, options: SerializeOptions
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
-  // We only get internal privacy level here to pass on to
-  // child nodes, purely for performance reasons
-  const internalPrivacyLevel = getInternalNodePrivacyLevel(element, options.parentNodePrivacyLevel)
-  const nodePrivacyLevel = remapInternalPrivacyLevels(element, internalPrivacyLevel)
+  // For performance reason, we don't use getNodePrivacyLevel directly: we leverage the
+  // parentNodePrivacyLevel option to avoid iterating over all parents
+  const nodePrivacyLevel = reducePrivacyLevel(getNodeSelfPrivacyLevel(element), options.parentNodePrivacyLevel)
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()
@@ -147,12 +151,12 @@ export function serializeElementNode(element: Element, options: SerializeOptions
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
     let childNodesSerializationOptions
-    if (options.parentNodePrivacyLevel === internalPrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
+    if (options.parentNodePrivacyLevel === nodePrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
       childNodesSerializationOptions = options
     } else {
       childNodesSerializationOptions = {
         ...options,
-        parentNodePrivacyLevel: internalPrivacyLevel,
+        parentNodePrivacyLevel: nodePrivacyLevel,
         ignoreWhiteSpace: tagName === 'head',
       }
     }
@@ -269,12 +273,7 @@ function serializeCDataNode(): CDataNode {
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {
-  const nodePrivacyLevel = remapInternalPrivacyLevels(node, options.parentNodePrivacyLevel)
   const result: SerializedNodeWithId[] = []
-
-  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
-    return result
-  }
 
   forEach(node.childNodes, (childNode) => {
     const serializedChildNode = serializeNodeWithId(childNode, options)
@@ -402,13 +401,10 @@ function getAttributesForPrivacyLevel(
    */
   const inputElement = element as HTMLInputElement
   if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
-    switch (nodePrivacyLevel) {
-      case NodePrivacyLevel.ALLOW:
-        safeAttrs.checked = !!inputElement.checked
-        break
-      case NodePrivacyLevel.MASK:
-        safeAttrs.checked = CENSORED_STRING_MARK
-        break
+    if (nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
+      safeAttrs.checked = !!inputElement.checked
+    } else if (shouldMaskNode(inputElement, nodePrivacyLevel)) {
+      safeAttrs.checked = CENSORED_STRING_MARK
     }
   }
 

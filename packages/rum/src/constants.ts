@@ -1,22 +1,15 @@
+import { InitialPrivacyLevel } from '@datadog/browser-core'
+
 export const NodePrivacyLevel = {
-  IGNORE: 'IGNORE',
-  ALLOW: 'ALLOW',
-  MASK: 'MASK',
-  HIDDEN: 'HIDDEN',
+  ...InitialPrivacyLevel,
+  IGNORE: 'ignore',
+  HIDDEN: 'hidden',
 } as const
 export type NodePrivacyLevel = typeof NodePrivacyLevel[keyof typeof NodePrivacyLevel]
 
-export const NodePrivacyLevelInternal = {
-  // INTERNAL USE: not to be used by the general codebase
-  NOT_SET: 'NOT_SET',
-  MASK_FORMS_ONLY: 'MASK_FORMS_ONLY',
-  ...NodePrivacyLevel,
-} as const
-export type NodePrivacyLevelInternal = typeof NodePrivacyLevelInternal[keyof typeof NodePrivacyLevelInternal]
-
 export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 
-// Deprecate via temporariy Alias
+// Deprecate via temporary Alias
 export const PRIVACY_CLASS_INPUT_IGNORED = 'dd-privacy-input-ignored' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_CLASS_INPUT_MASKED = 'dd-privacy-input-masked' // DEPRECATED, aliased to mask-forms-only
 export const PRIVACY_ATTR_VALUE_INPUT_IGNORED = 'input-ignored' // DEPRECATED, aliased to mask-forms-only

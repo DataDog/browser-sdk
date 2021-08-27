@@ -1,6 +1,6 @@
 import { isIE } from '../../../../core/test/specHelper'
 import {
-  NodePrivacyLevelInternal,
+  NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_HIDDEN,
@@ -27,7 +27,7 @@ import { ElementNode, NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
   document,
-  parentNodePrivacyLevel: NodePrivacyLevelInternal.ALLOW,
+  parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
 }
 
 describe('serializeNodeWithId', () => {
@@ -49,7 +49,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString(`<!doctype html><html>foo</html>`, 'text/html')
-      expect(serializeDocument(document)).toEqual({
+      expect(serializeDocument(document, NodePrivacyLevel.ALLOW)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -420,23 +420,14 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     }
   })
 
-  it('a masked or hidden DOM Document itself is still serialized ', () => {
+  it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask = {
       document,
-      parentNodePrivacyLevel: NodePrivacyLevelInternal.MASK,
+      parentNodePrivacyLevel: NodePrivacyLevel.MASK,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
       type: NodeType.Document,
       childNodes: serializeChildNodes(document, serializeOptionsMask),
-    })
-
-    const serializeOptionsHidden = {
-      document,
-      parentNodePrivacyLevel: NodePrivacyLevelInternal.HIDDEN,
-    }
-    expect(serializeDocumentNode(document, serializeOptionsHidden)).toEqual({
-      type: NodeType.Document,
-      childNodes: serializeChildNodes(document, serializeOptionsHidden),
     })
   })
 
