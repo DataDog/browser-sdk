@@ -46,6 +46,7 @@ export function createEndpointBuilder(
     clientToken,
     env,
     proxyHost,
+    proxyUrl,
     service,
     version,
     intakeApiVersion,
@@ -53,6 +54,42 @@ export function createEndpointBuilder(
   } = initConfiguration
 
   function build(endpointType: EndpointType, source?: string) {
+    const host = buildHost(endpointType)
+    const path = buildPath(endpointType)
+    const queryParameters = buildQueryParameters(endpointType, source)
+    const endpoint = `https://${host}${path}?${queryParameters}`
+
+    if (proxyUrl) {
+      return `${proxyUrl}?ddforward=${encodeURIComponent(endpoint)}`
+    } else if (proxyHost) {
+      return `https://${proxyHost}${path}?ddhost=${host}&${queryParameters}`
+    }
+
+    return endpoint
+  }
+
+  function buildIntakeUrl(endpointType: EndpointType): string {
+    const endpoint = build(endpointType)
+    return endpoint.slice(0, endpoint.indexOf('?'))
+  }
+
+  function buildHost(endpointType: EndpointType) {
+    if (shouldUseAlternateDomain(endpointType)) {
+      const endpoint = ENDPOINTS.alternate[endpointType]
+      const domainParts = site.split('.')
+      const extension = domainParts.pop()
+      const suffix = `${domainParts.join('-')}.${extension!}`
+      return `${endpoint}.browser-intake-${suffix}`
+    }
+    const endpoint = ENDPOINTS.classic[endpointType]!
+    return `${endpoint}-http-intake.logs.${site}`
+  }
+
+  function buildPath(endpointType: EndpointType) {
+    return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
+  }
+
+  function buildQueryParameters(endpointType: EndpointType, source?: string) {
     const tags =
       `sdk_version:${sdkVersion}` +
       `${env ? `,env:${env}` : ''}` +
@@ -73,30 +110,7 @@ export function createEndpointBuilder(
         `dd-evp-origin=browser&` +
         `dd-request-id=${generateUUID()}`
     }
-
-    return `${buildIntakeUrl(endpointType)}?${parameters}`
-  }
-
-  function buildIntakeUrl(endpointType: EndpointType): string {
-    const datadogHost = buildHost(endpointType)
-    const host = proxyHost ? proxyHost : datadogHost
-    return `https://${host}${buildPath(endpointType)}`
-  }
-
-  function buildHost(endpointType: EndpointType) {
-    if (shouldUseAlternateDomain(endpointType)) {
-      const endpoint = ENDPOINTS.alternate[endpointType]
-      const domainParts = site.split('.')
-      const extension = domainParts.pop()
-      const suffix = `${domainParts.join('-')}.${extension!}`
-      return `${endpoint}.browser-intake-${suffix}`
-    }
-    const endpoint = ENDPOINTS.classic[endpointType]!
-    return `${endpoint}-http-intake.logs.${site}`
-  }
-
-  function buildPath(endpointType: EndpointType) {
-    return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
+    return parameters
   }
 
   function shouldUseIntakeV2(endpointType?: EndpointType): boolean {
