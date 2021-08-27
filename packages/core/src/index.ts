@@ -37,7 +37,7 @@ export {
   SESSION_COOKIE_NAME,
   stopSessionManagement,
 } from './domain/sessionManagement'
-export { HttpRequest, Batch } from './transport/transport'
+export { HttpRequest, Batch } from './transport'
 export * from './tools/display'
 export * from './tools/urlPolyfill'
 export * from './tools/timeUtils'
