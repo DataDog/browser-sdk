@@ -1,4 +1,4 @@
-import { noop, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { Configuration, noop, Observable, TimeStamp, timeStampNow } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 import { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../browser/performanceCollection'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -19,19 +19,6 @@ const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0
 const BEFORE_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 0.8
 // A long delay used to wait after any action is finished.
 const EXPIRE_DELAY = PAGE_ACTIVITY_MAX_DURATION * 10
-
-function eventsCollector<T>() {
-  const events: T[] = []
-  beforeEach(() => {
-    events.length = 0
-  })
-  return {
-    events,
-    pushEvent: (event: T) => {
-      events.push(event)
-    },
-  }
-}
 
 describe('trackPagePageActivities', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
@@ -154,7 +141,7 @@ describe('waitPageActivitiesCompletion', () => {
   })
 
   it('should not collect an event that is not followed by page activity', () => {
-    waitPageActivitiesCompletion(new Observable(), noop, completionCallbackSpy)
+    waitPageActivitiesCompletion(new Observable(), noop, createConfiguration(), completionCallbackSpy)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -167,7 +154,7 @@ describe('waitPageActivitiesCompletion', () => {
     const activityObservable = new Observable<PageActivityEvent>()
 
     const startTime = timeStampNow()
-    waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+    waitPageActivitiesCompletion(activityObservable, noop, createConfiguration(), completionCallbackSpy)
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
@@ -189,7 +176,7 @@ describe('waitPageActivitiesCompletion', () => {
       // Extend the action but stops before PAGE_ACTIVITY_MAX_DURATION
       const extendCount = Math.floor(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY - 1)
 
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, noop, createConfiguration(), completionCallbackSpy)
 
       for (let i = 0; i < extendCount; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -216,7 +203,7 @@ describe('waitPageActivitiesCompletion', () => {
       completionCallbackSpy.and.callFake(() => {
         stop = true
       })
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, noop, createConfiguration(), completionCallbackSpy)
 
       for (let i = 0; i < extendCount && !stop; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -231,13 +218,34 @@ describe('waitPageActivitiesCompletion', () => {
         endTime: (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp,
       })
     })
+
+    it('with eternal-page-activities, does not expire if the page is busy for too long', () => {
+      const activityObservable = new Observable<PageActivityEvent>()
+
+      // Extend the action until it's more than PAGE_ACTIVITY_MAX_DURATION
+      const extendCount = Math.ceil(PAGE_ACTIVITY_MAX_DURATION / BEFORE_PAGE_ACTIVITY_END_DELAY + 1)
+
+      waitPageActivitiesCompletion(
+        activityObservable,
+        noop,
+        createConfiguration('eternal-page-activities'),
+        completionCallbackSpy
+      )
+
+      for (let i = 0; i < extendCount; i += 1) {
+        clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
+        activityObservable.notify({ isBusy: false })
+      }
+
+      expect(completionCallbackSpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('busy activities', () => {
     it('is extended while the page is busy', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, noop, createConfiguration(), completionCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -257,7 +265,7 @@ describe('waitPageActivitiesCompletion', () => {
     it('expires is the page is busy for too long', () => {
       const activityObservable = new Observable<PageActivityEvent>()
       const startTime = timeStampNow()
-      waitPageActivitiesCompletion(activityObservable, noop, completionCallbackSpy)
+      waitPageActivitiesCompletion(activityObservable, noop, createConfiguration(), completionCallbackSpy)
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -270,5 +278,43 @@ describe('waitPageActivitiesCompletion', () => {
         endTime: (startTime + PAGE_ACTIVITY_MAX_DURATION) as TimeStamp,
       })
     })
+
+    it('with eternal-page-activities, does not expire if the page is busy for too long', () => {
+      const activityObservable = new Observable<PageActivityEvent>()
+      waitPageActivitiesCompletion(
+        activityObservable,
+        noop,
+        createConfiguration('eternal-page-activities'),
+        completionCallbackSpy
+      )
+
+      clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+      activityObservable.notify({ isBusy: true })
+
+      clock.tick(EXPIRE_DELAY)
+
+      expect(completionCallbackSpy).not.toHaveBeenCalled()
+    })
   })
 })
+
+function eventsCollector<T>() {
+  const events: T[] = []
+  beforeEach(() => {
+    events.length = 0
+  })
+  return {
+    events,
+    pushEvent: (event: T) => {
+      events.push(event)
+    },
+  }
+}
+
+function createConfiguration(enabledFeatureFlag?: string) {
+  return {
+    isEnabled(flag: string) {
+      return enabledFeatureFlag === flag
+    },
+  } as Configuration
+}
