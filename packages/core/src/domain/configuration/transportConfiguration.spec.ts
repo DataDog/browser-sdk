@@ -60,16 +60,19 @@ describe('transportConfiguration', () => {
         { clientToken, site: 'datadoghq.eu', proxyHost: 'proxy.io' },
         buildEnv
       )
-      expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
-      expect(configuration.rumEndpoint).toContain('&ddhost=rum-http-intake.logs.datadoghq.eu')
+      expect(configuration.rumEndpoint).toMatch(
+        `https://proxy.io/v1/input/${clientToken}\\?ddhost=rum-http-intake.logs.datadoghq.eu&ddsource=(.*)&ddtags=(.*)`
+      )
     })
   })
 
   describe('proxyUrl', () => {
     it('should replace the full endpoint by the proxyUrl and set it in the attribute ddforward', () => {
       const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://proxy.io/path' }, buildEnv)
-      expect(configuration.rumEndpoint).toContain(
-        `https://proxy.io/path?ddforward=${encodeURIComponent('https://rum-http-intake.logs.datadoghq.com')}`
+      expect(configuration.rumEndpoint).toMatch(
+        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
+          `https://rum-http-intake.logs.datadoghq.com/v1/input/${clientToken}?ddsource=(.*)&ddtags=(.*)`
+        )}`
       )
     })
   })

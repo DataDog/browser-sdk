@@ -98,11 +98,6 @@ export function createEndpointBuilder(
 
     let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
 
-    if (proxyHost) {
-      const datadogHost = buildHost(endpointType)
-      parameters += `&ddhost=${datadogHost}`
-    }
-
     if (shouldUseIntakeV2(endpointType)) {
       parameters +=
         `&dd-api-key=${clientToken}&` +
