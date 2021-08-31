@@ -400,9 +400,9 @@ describe('serializeAttribute ', () => {
   it('truncates "data:" URIs after 100,000 string length', () => {
     const node = document.createElement('p')
 
-    const longString = new Array(100000 - 5).fill('a').join('');
-    const maxAttributeValue = `data:${(longString)}`
-    const exceededAttributeValue = `data:${(longString)}1`
+    const longString = new Array(100000 - 5).fill('a').join('')
+    const maxAttributeValue = `data:${longString}`
+    const exceededAttributeValue = `data:${longString}1`
     const ignoredAttributeValue = `foos:${longString}`
 
     node.setAttribute('test-okay', maxAttributeValue)
