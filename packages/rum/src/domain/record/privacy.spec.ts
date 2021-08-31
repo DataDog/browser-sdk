@@ -1,7 +1,13 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel } from '../../constants'
 import { HTML, generateLeanSerializedDoc } from '../../../test/htmlAst'
-import { getNodeSelfPrivacyLevel, reducePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from './privacy'
+import {
+  getNodeSelfPrivacyLevel,
+  reducePrivacyLevel,
+  getNodePrivacyLevel,
+  shouldMaskNode,
+  serializeAttribute,
+} from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 
 describe('privacy helpers', () => {
@@ -264,7 +270,7 @@ describe('Inherited Privacy Level  derivePrivacyLevelGivenParent() ... ', functi
 
   tests.forEach((test) => {
     it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
-      const inherited = reducePrivacyLevel(test.args[0] as NodePrivacyLevel, test.args[1] as NodePrivacyLevel)
+      const inherited = reducePrivacyLevel(test.args[0] , test.args[1])
       expect(inherited).toBe(test.expect)
     })
   })
@@ -387,5 +393,26 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
     })
+  })
+})
+
+describe('serializeAttribute ', () => {
+  it('truncates "data:" URIs after 32,000 string length', () => {
+    const node = document.createElement('p')
+
+    const maxAttributeValue = `data:${'a'.repeat(32000 - 5)}`
+    const exceededAttributeValue = `data:${'a'.repeat(32001 - 5)}`
+    const ignoredAttributeValue = `foos:${'a'.repeat(32001 - 5)}`
+    node.setAttribute('test-okay', maxAttributeValue)
+    node.setAttribute('test-truncate', exceededAttributeValue)
+    node.setAttribute('test-ignored', ignoredAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay')).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay')).toBe(maxAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('truncated')
   })
 })

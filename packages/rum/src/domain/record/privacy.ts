@@ -187,10 +187,16 @@ export function serializeAttribute(
     }
   }
 
-  // Rebuild absolute URLs from relative (without using <base> tag)
   if (!attributeValue || typeof attributeValue !== 'string') {
     return attributeValue
   }
+
+  // Minimum Fix for customer.
+  if (attributeValue.length > 32_000 && attributeValue.slice(0, 5) === 'data:') {
+    return 'truncated'
+  }
+
+  // Rebuild absolute URLs from relative (without using <base> tag)
   const doc = element.ownerDocument
   switch (attributeName) {
     case 'src':
