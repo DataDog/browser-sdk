@@ -400,7 +400,7 @@ describe('serializeAttribute ', () => {
   it('truncates "data:" URIs after 100,000 string length', () => {
     const node = document.createElement('p')
 
-    const longString = new Array(100000 - 5).fill('a').join('')
+    const longString = new Array(100000 + 1 - 5).join('a')
     const maxAttributeValue = `data:${longString}`
     const exceededAttributeValue = `data:${longString}1`
     const ignoredAttributeValue = `foos:${longString}`
@@ -414,7 +414,7 @@ describe('serializeAttribute ', () => {
 
     expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
 
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('truncated')
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('data:truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('data:truncated')
   })
 })
