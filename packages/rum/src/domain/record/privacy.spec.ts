@@ -270,7 +270,7 @@ describe('Inherited Privacy Level  derivePrivacyLevelGivenParent() ... ', functi
 
   tests.forEach((test) => {
     it(`${test.msg}: ancestor(${test.args[0]}) to self(${test.args[1]}) should be (${test.expect})`, () => {
-      const inherited = reducePrivacyLevel(test.args[0] , test.args[1])
+      const inherited = reducePrivacyLevel(test.args[0] as NodePrivacyLevel, test.args[1] as NodePrivacyLevel)
       expect(inherited).toBe(test.expect)
     })
   })
