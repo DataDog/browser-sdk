@@ -397,12 +397,14 @@ describe('shouldMaskNode', () => {
 })
 
 describe('serializeAttribute ', () => {
-  it('truncates "data:" URIs after 32,000 string length', () => {
+  it('truncates "data:" URIs after 100,000 string length', () => {
     const node = document.createElement('p')
 
-    const maxAttributeValue = `data:${'a'.repeat(32000 - 5)}`
-    const exceededAttributeValue = `data:${'a'.repeat(32001 - 5)}`
-    const ignoredAttributeValue = `foos:${'a'.repeat(32001 - 5)}`
+    const longString = new Array(100000 - 5).fill('a').join('');
+    const maxAttributeValue = `data:${(longString)}`
+    const exceededAttributeValue = `data:${(longString)}1`
+    const ignoredAttributeValue = `foos:${longString}`
+
     node.setAttribute('test-okay', maxAttributeValue)
     node.setAttribute('test-truncate', exceededAttributeValue)
     node.setAttribute('test-ignored', ignoredAttributeValue)

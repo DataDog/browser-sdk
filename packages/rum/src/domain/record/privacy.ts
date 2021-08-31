@@ -192,7 +192,7 @@ export function serializeAttribute(
   }
 
   // Minimum Fix for customer.
-  if (attributeValue.length > 32_000 && attributeValue.slice(0, 5) === 'data:') {
+  if (attributeValue.length > 100_000 && attributeValue.slice(0, 5) === 'data:') {
     return 'truncated'
   }
 
