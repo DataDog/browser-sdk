@@ -45,14 +45,35 @@ describe('transportConfiguration', () => {
     })
   })
 
+  describe('query parameters', () => {
+    it('should add new intake query parameters when "support-intake-v2" enabled', () => {
+      const configuration = computeTransportConfiguration({ clientToken, intakeApiVersion: 2 }, buildEnv, true)
+      expect(configuration.rumEndpoint).toMatch(
+        `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
+      )
+    })
+  })
+
   describe('proxyHost', () => {
-    it('should replace endpoint host add set it as a query parameter', () => {
+    it('should replace endpoint host and add set it as a query parameter', () => {
       const configuration = computeTransportConfiguration(
         { clientToken, site: 'datadoghq.eu', proxyHost: 'proxy.io' },
         buildEnv
       )
-      expect(configuration.rumEndpoint).toMatch(/^https:\/\/proxy\.io\//)
-      expect(configuration.rumEndpoint).toContain('&ddhost=rum-http-intake.logs.datadoghq.eu')
+      expect(configuration.rumEndpoint).toMatch(
+        `https://proxy.io/v1/input/${clientToken}\\?ddhost=rum-http-intake.logs.datadoghq.eu&ddsource=(.*)&ddtags=(.*)`
+      )
+    })
+  })
+
+  describe('proxyUrl', () => {
+    it('should replace the full endpoint by the proxyUrl and set it in the attribute ddforward', () => {
+      const configuration = computeTransportConfiguration({ clientToken, proxyUrl: 'https://proxy.io/path' }, buildEnv)
+      expect(configuration.rumEndpoint).toMatch(
+        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
+          `https://rum-http-intake.logs.datadoghq.com/v1/input/${clientToken}?ddsource=(.*)&ddtags=(.*)`
+        )}`
+      )
     })
   })
 
