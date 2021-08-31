@@ -1,5 +1,14 @@
-import { Duration, noop, elapsed, round, timeStampNow, Configuration } from '@datadog/browser-core'
-import { supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
+import {
+  Duration,
+  noop,
+  elapsed,
+  round,
+  timeStampNow,
+  Configuration,
+  RelativeTime,
+  ONE_SECOND,
+} from '@datadog/browser-core'
+import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
@@ -47,8 +56,8 @@ export function trackViewMetrics(
   let stopCLSTracking: () => void
   if (isLayoutShiftSupported()) {
     viewMetrics.cumulativeLayoutShift = 0
-    ;({ stop: stopCLSTracking } = trackLayoutShift(lifeCycle, (layoutShift) => {
-      viewMetrics.cumulativeLayoutShift = round(viewMetrics.cumulativeLayoutShift! + layoutShift, 4)
+    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(lifeCycle, (layoutShift) => {
+      viewMetrics.cumulativeLayoutShift = Math.max(viewMetrics.cumulativeLayoutShift!, round(layoutShift, 4))
       scheduleViewUpdate()
     }))
   } else {
@@ -120,18 +129,47 @@ function trackActivityLoadingTime(
 }
 
 /**
- * Track layout shifts (LS) occurring during the Views.  This yields multiple values that can be
- * added up to compute the cumulated layout shift (CLS).
+ * Track the cumulative layout shifts (CLS).
+ * Layout shifts are grouped into session windows.
+ * The minimum gap between session windows is 1 second.
+ * The maximum duration of a session window is 5 second.
+ * The session window layout shift value is the sum of layout shifts inside it.
+ * The CLS value is the max of session windows values.
+ *
+ * This yields a new value whenever the CLS value is updated (a higher session window value is computed).
  *
  * See isLayoutShiftSupported to check for browser support.
  *
- * Documentation: https://web.dev/cls/
+ * Documentation:
+ * https://web.dev/cls/
+ * https://web.dev/evolving-cls/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
-function trackLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
+function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
+  let clsValue = 0
+  let windowValue = 0
+  let windowStartedAt = 0 as RelativeTime
+  let windowLastEntryAt = 0 as RelativeTime
+
+  const updateSessionWindow = (entry: RumLayoutShiftTiming) => {
+    const durationSinceStart = entry.startTime - windowStartedAt
+    const durationSinceLastEntry = entry.startTime - windowLastEntryAt
+    if (durationSinceLastEntry < 1 * ONE_SECOND && durationSinceStart < 5 * ONE_SECOND) {
+      windowValue += entry.value
+    } else {
+      windowValue = entry.value
+      windowStartedAt = entry.startTime
+    }
+    windowLastEntryAt = entry.startTime
+  }
+
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-      callback(entry.value)
+      updateSessionWindow(entry)
+      if (windowValue > clsValue) {
+        clsValue = windowValue
+        callback(clsValue)
+      }
     }
   })
 

@@ -1,4 +1,4 @@
-import { Context, RelativeTime, Duration } from '@datadog/browser-core'
+import { Context, RelativeTime, Duration, relativeNow } from '@datadog/browser-core'
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
 import { TestSetupBuilder, setup, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
@@ -311,15 +311,17 @@ describe('rum track view metrics', () => {
     it('should accumulate layout shift values', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-
+      const now = relativeNow()
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
+        startTime: now,
         hadRecentInput: false,
         value: 0.1,
       })
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
+        startTime: (now + 100) as RelativeTime,
         hadRecentInput: false,
         value: 0.2,
       })
@@ -333,15 +335,18 @@ describe('rum track view metrics', () => {
     it('should round the cumulative layout shift value to 4 decimals', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
+      const now = relativeNow()
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
+        startTime: now,
         hadRecentInput: false,
         value: 1.23456789,
       })
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
+        startTime: (now + 100) as RelativeTime,
         hadRecentInput: false,
         value: 1.11111111111,
       })
@@ -358,6 +363,7 @@ describe('rum track view metrics', () => {
 
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
+        startTime: relativeNow(),
         hadRecentInput: true,
         value: 0.1,
       })
