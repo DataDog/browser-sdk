@@ -1,5 +1,5 @@
-import { BuildEnv } from '../boot/init'
-import { generateUUID, includes } from '../tools/utils'
+import { BuildEnv } from '../../boot/init'
+import { generateUUID, includes } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
@@ -46,6 +46,7 @@ export function createEndpointBuilder(
     clientToken,
     env,
     proxyHost,
+    proxyUrl,
     service,
     version,
     intakeApiVersion,
@@ -53,34 +54,23 @@ export function createEndpointBuilder(
   } = initConfiguration
 
   function build(endpointType: EndpointType, source?: string) {
-    const tags =
-      `sdk_version:${sdkVersion}` +
-      `${env ? `,env:${env}` : ''}` +
-      `${service ? `,service:${service}` : ''}` +
-      `${version ? `,version:${version}` : ''}`
+    const host = buildHost(endpointType)
+    const path = buildPath(endpointType)
+    const queryParameters = buildQueryParameters(endpointType, source)
+    const endpoint = `https://${host}${path}?${queryParameters}`
 
-    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
-
-    if (proxyHost) {
-      const datadogHost = buildHost(endpointType)
-      parameters += `&ddhost=${datadogHost}`
+    if (proxyUrl) {
+      return `${proxyUrl}?ddforward=${encodeURIComponent(endpoint)}`
+    } else if (proxyHost) {
+      return `https://${proxyHost}${path}?ddhost=${host}&${queryParameters}`
     }
 
-    if (shouldUseIntakeV2(endpointType)) {
-      parameters +=
-        `&dd-api-key=${clientToken}&` +
-        `dd-evp-origin-version=${sdkVersion}&` +
-        `dd-evp-origin=browser&` +
-        `dd-request-id=${generateUUID()}`
-    }
-
-    return `${buildIntakeUrl(endpointType)}?${parameters}`
+    return endpoint
   }
 
   function buildIntakeUrl(endpointType: EndpointType): string {
-    const datadogHost = buildHost(endpointType)
-    const host = proxyHost ? proxyHost : datadogHost
-    return `https://${host}${buildPath(endpointType)}`
+    const endpoint = build(endpointType)
+    return endpoint.slice(0, endpoint.indexOf('?'))
   }
 
   function buildHost(endpointType: EndpointType) {
@@ -97,6 +87,25 @@ export function createEndpointBuilder(
 
   function buildPath(endpointType: EndpointType) {
     return shouldUseIntakeV2(endpointType) ? `/api/v2/${INTAKE_TRACKS[endpointType]}` : `/v1/input/${clientToken}`
+  }
+
+  function buildQueryParameters(endpointType: EndpointType, source?: string) {
+    const tags =
+      `sdk_version:${sdkVersion}` +
+      `${env ? `,env:${env}` : ''}` +
+      `${service ? `,service:${service}` : ''}` +
+      `${version ? `,version:${version}` : ''}`
+
+    let parameters = `ddsource=${source || 'browser'}&ddtags=${encodeURIComponent(tags)}`
+
+    if (shouldUseIntakeV2(endpointType)) {
+      parameters +=
+        `&dd-api-key=${clientToken}&` +
+        `dd-evp-origin-version=${sdkVersion}&` +
+        `dd-evp-origin=browser&` +
+        `dd-request-id=${generateUUID()}`
+    }
+    return parameters
   }
 
   function shouldUseIntakeV2(endpointType?: EndpointType): boolean {

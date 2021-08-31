@@ -1,7 +1,7 @@
-import { BuildEnv } from '../boot/init'
-import { CookieOptions, getCurrentSite } from '../browser/cookie'
-import { catchUserErrors } from '../tools/catchUserErrors'
-import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../tools/utils'
+import { BuildEnv } from '../../boot/init'
+import { CookieOptions, getCurrentSite } from '../../browser/cookie'
+import { catchUserErrors } from '../../tools/catchUserErrors'
+import { includes, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
 export const InitialPrivacyLevel = {
@@ -59,7 +59,12 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean
   trackInteractions?: boolean
   trackViewsManually?: boolean
+
+  /**
+   * @deprecated Favor proxyUrl option
+   */
   proxyHost?: string
+  proxyUrl?: string
   beforeSend?: BeforeSendCallback
   initialPrivacyLevel?: InitialPrivacyLevel
 

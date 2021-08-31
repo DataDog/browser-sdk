@@ -2,7 +2,7 @@ import { Context } from '../tools/context'
 import { display } from '../tools/display'
 import { toStackTraceString } from '../tools/error'
 import { assign, combine, jsonStringify, Parameters, ThisParameterType } from '../tools/utils'
-import { Batch, HttpRequest } from '../transport/transport'
+import { Batch, HttpRequest } from '../transport'
 import { Configuration } from './configuration'
 import { computeStackTrace } from './tracekit'
 
