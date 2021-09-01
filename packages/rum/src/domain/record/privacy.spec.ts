@@ -7,6 +7,7 @@ import {
   getNodePrivacyLevel,
   shouldMaskNode,
   serializeAttribute,
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
 } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 
@@ -397,10 +398,10 @@ describe('shouldMaskNode', () => {
 })
 
 describe('serializeAttribute ', () => {
-  it('truncates "data:" URIs after 100,000 string length', () => {
+  it('truncates "data:" URIs after long string length', () => {
     const node = document.createElement('p')
 
-    const longString = new Array(100000 + 1 - 5).join('a')
+    const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH + 1 - 5).join('a')
     const maxAttributeValue = `data:${longString}`
     const exceededAttributeValue = `data:${longString}1`
     const ignoredAttributeValue = `foos:${longString}`
