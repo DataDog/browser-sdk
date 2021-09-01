@@ -59,7 +59,12 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean
   trackInteractions?: boolean
   trackViewsManually?: boolean
+
+  /**
+   * @deprecated Favor proxyUrl option
+   */
   proxyHost?: string
+  proxyUrl?: string
   beforeSend?: BeforeSendCallback
   initialPrivacyLevel?: InitialPrivacyLevel
 
