@@ -352,5 +352,58 @@ describe('rum track view metrics', () => {
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).cumulativeLayoutShift).toBe(0)
     })
+
+    it('should create a new session window if the gap is more than 1 second', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      // first session window
+      newLayoutShift(lifeCycle, 0.1)
+      clock.tick(100)
+      newLayoutShift(lifeCycle, 0.2)
+      // second session window
+      clock.tick(1001)
+      newLayoutShift(lifeCycle, 0.1)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).cumulativeLayoutShift).toBe(0.3)
+    })
+
+    it('should create a new session if the current session is more than 5 second', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      // first session window
+      newLayoutShift(lifeCycle, 0.1)
+      clock.tick(4500)
+      newLayoutShift(lifeCycle, 0.2)
+      // second session window
+      clock.tick(501)
+      newLayoutShift(lifeCycle, 0.1)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.3)
+    })
+
+    it('should get the max value sessions', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      // first session window
+      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, 0.2)
+      // second session window
+      clock.tick(5001)
+      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, 0.2)
+      // third session window
+      clock.tick(5001)
+      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, 0.2)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
+    })
   })
 })
