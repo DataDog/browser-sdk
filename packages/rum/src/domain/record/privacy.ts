@@ -19,6 +19,8 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
 } from '../../constants'
 
+export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 100_000
+
 import { makeStylesheetUrlsAbsolute, makeSrcsetUrlsAbsolute, makeUrlAbsolute } from './serializationUtils'
 
 import { shouldIgnoreElement } from './serialize'
@@ -187,10 +189,16 @@ export function serializeAttribute(
     }
   }
 
-  // Rebuild absolute URLs from relative (without using <base> tag)
   if (!attributeValue || typeof attributeValue !== 'string') {
     return attributeValue
   }
+
+  // Minimum Fix for customer.
+  if (attributeValue.length > MAX_ATTRIBUTE_VALUE_CHAR_LENGTH && attributeValue.slice(0, 5) === 'data:') {
+    return 'data:truncated'
+  }
+
+  // Rebuild absolute URLs from relative (without using <base> tag)
   const doc = element.ownerDocument
   switch (attributeName) {
     case 'src':

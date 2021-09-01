@@ -1,4 +1,5 @@
 variables:
+  CURRENT_STAGING: staging-35test
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 25
   BUILD_STABLE_REGISTRY: '486234852809.dkr.ecr.us-east-1.amazonaws.com'
