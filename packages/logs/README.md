@@ -252,7 +252,7 @@ The placeholders in the examples above are described below:
 
 If your Browser logs contain sensitive information that needs redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
 
-The `beforeSend` callback function gives you access to each event collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
+The `beforeSend` callback function gives you access to each log collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
 
 To redact email addresses from your web application URLs:
 
@@ -263,9 +263,9 @@ import { datadogLogs } from '@datadog/browser-logs'
 
 datadogLogs.init({
     ...,
-    beforeSend: (event) => {
+    beforeSend: (log) => {
         // remove email from view url
-        event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+        log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
     },
     ...
 });
@@ -277,9 +277,9 @@ datadogLogs.init({
 DD_LOGS.onReady(function() {
     DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
             // remove email from view url
-            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+            log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
         },
         ...
     })
@@ -292,9 +292,9 @@ DD_LOGS.onReady(function() {
 window.DD_LOGS &&
     window.DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
             // remove email from view url
-            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+            log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
         },
         ...
     });
@@ -324,9 +324,9 @@ import { datadogLogs } from '@datadog/browser-logs'
 
 datadogLogs.init({
     ...,
-    beforeSend: (event) => {
+    beforeSend: (log) => {
         // discard 404 network errors
-        if (event.http && event.http.status_code === 404) {
+        if (log.http && log.http.status_code === 404) {
           return false
         }
     },
@@ -340,9 +340,9 @@ datadogLogs.init({
 DD_LOGS.onReady(function() {
     DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
           // discard 404 network errors
-          if (event.http && event.http.status_code === 404) {
+          if (log.http && log.http.status_code === 404) {
             return false
           }
         },
@@ -357,9 +357,9 @@ DD_LOGS.onReady(function() {
 window.DD_LOGS &&
     window.DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
           // discard 404 network errors
-          if (event.http && event.http.status_code === 404) {
+          if (log.http && log.http.status_code === 404) {
             return false
           }
         },
