@@ -302,7 +302,8 @@ window.DD_LOGS &&
     });
 ```
 
-You can update the following event properties:
+All logs properties are updatable.
+The following properties are automatically collected by the SDK and could contain sensitive data:
 
 | Attribute       | Type   | Description                                                                                      |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------ |
@@ -311,7 +312,6 @@ You can update the following event properties:
 | `message`       | String | The content of the log.                                                                          |
 | `error.stack`   | String | The stack trace or complementary information about the error.                                    |
 | `http.url`      | String | The HTTP URL.                                                                                    |
-| `context`       | String | Extra contextual attributes added with the logger.                                               |
 
 ### Define multiple loggers
 
