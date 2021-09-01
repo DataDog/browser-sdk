@@ -57,7 +57,7 @@ export function trackViewMetrics(
   if (isLayoutShiftSupported()) {
     viewMetrics.cumulativeLayoutShift = 0
     ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(lifeCycle, (layoutShift) => {
-      viewMetrics.cumulativeLayoutShift = Math.max(viewMetrics.cumulativeLayoutShift!, round(layoutShift, 4))
+      viewMetrics.cumulativeLayoutShift = layoutShift
       scheduleViewUpdate()
     }))
   } else {
@@ -168,7 +168,7 @@ function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift
       updateSessionWindow(entry)
       if (windowValue > clsValue) {
         clsValue = windowValue
-        callback(clsValue)
+        callback(round(clsValue, 4))
       }
     }
   })
