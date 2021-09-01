@@ -26,10 +26,10 @@ module.exports = function (config) {
 function withIstanbulRule(module) {
   module.rules.push({
     test: /^.*\.ts$/,
-    exclude: [/.*\.spec\.ts$/, /.*\.d\.ts$/, /.*capturedExceptions\.ts$/, /.*specHelper\.ts$/],
+    exclude: [/.*\.spec\.ts$/, /.*\.d\.ts$/, /.*capturedExceptions\.ts$/, /.*specHelper\.ts$/, /node_modules/],
     enforce: 'post',
     use: {
-      loader: 'istanbul-instrumenter-loader',
+      loader: '@jsdevtools/coverage-istanbul-loader',
       options: {
         esModules: true,
       },
