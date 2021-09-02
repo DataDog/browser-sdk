@@ -12,29 +12,56 @@ import { find, jsonStringify } from '../../tools/utils'
 import { callMonitored } from '../internalMonitoring'
 import { computeStackTrace } from '../tracekit'
 
-let originalConsoleError: (...params: unknown[]) => void
-
 /* eslint-disable no-console */
 export function trackConsoleError(errorObservable: Observable<RawError>) {
-  originalConsoleError = console.error
-
-  console.error = (...params: unknown[]) => {
-    const handlingStack = createHandlingStack()
-    callMonitored(() => {
-      originalConsoleError.apply(console, params)
-      errorObservable.notify({
-        ...buildErrorFromParams(params, handlingStack),
-        source: ErrorSource.CONSOLE,
-        startClocks: clocksNow(),
-        handling: ErrorHandling.HANDLED,
-      })
-    })
-  }
+  startConsoleErrorProxy().afterCall((error) => errorObservable.notify(error))
 
   return {
-    stop: () => {
-      console.error = originalConsoleError
-    },
+    stop: resetConsoleErrorProxy,
+  }
+}
+
+type AfterCallCallback = (error: RawError) => void
+
+interface ConsoleErrorProxy {
+  afterCall: (callback: AfterCallCallback) => void
+}
+
+let originalConsoleError: (...params: unknown[]) => void
+let consoleErrorProxySingleton: ConsoleErrorProxy | undefined
+const afterCallCallbacks: AfterCallCallback[] = []
+
+function startConsoleErrorProxy() {
+  if (!consoleErrorProxySingleton) {
+    originalConsoleError = console.error
+
+    console.error = (...params: unknown[]) => {
+      const handlingStack = createHandlingStack()
+      callMonitored(() => {
+        originalConsoleError.apply(console, params)
+        const rawError = {
+          ...buildErrorFromParams(params, handlingStack),
+          source: ErrorSource.CONSOLE,
+          startClocks: clocksNow(),
+          handling: ErrorHandling.HANDLED,
+        }
+        afterCallCallbacks.forEach((callback) => callback(rawError))
+      })
+    }
+    consoleErrorProxySingleton = {
+      afterCall(callback: AfterCallCallback) {
+        afterCallCallbacks.push(callback)
+      },
+    }
+  }
+  return consoleErrorProxySingleton
+}
+
+function resetConsoleErrorProxy() {
+  if (consoleErrorProxySingleton) {
+    consoleErrorProxySingleton = undefined
+    afterCallCallbacks.splice(0, afterCallCallbacks.length)
+    console.error = originalConsoleError
   }
 }
 

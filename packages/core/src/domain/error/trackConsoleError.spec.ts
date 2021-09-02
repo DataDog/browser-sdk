@@ -76,4 +76,17 @@ describe('console tracker', () => {
       expect(stack).toContain('TypeError: foo')
     }
   })
+
+  it('should allow multiple callers', () => {
+    const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
+    const otherObservable = new Observable<RawError>()
+    otherObservable.subscribe(notifyOtherCaller)
+    const { stop: stopOtherConsoleErrorTracking } = trackConsoleError(otherObservable)
+
+    console.error('foo', 'bar')
+
+    expect(notifyError).toHaveBeenCalledTimes(1)
+    expect(notifyOtherCaller).toHaveBeenCalledTimes(1)
+    stopOtherConsoleErrorTracking()
+  })
 })
