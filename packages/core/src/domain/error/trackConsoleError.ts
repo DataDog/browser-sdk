@@ -12,29 +12,40 @@ import { find, jsonStringify } from '../../tools/utils'
 import { callMonitored } from '../internalMonitoring'
 import { computeStackTrace } from '../tracekit'
 
-let originalConsoleError: (...params: unknown[]) => void
-
 /* eslint-disable no-console */
 export function trackConsoleError(errorObservable: Observable<RawError>) {
-  originalConsoleError = console.error
+  startConsoleErrorProxy().subscribe((error) => errorObservable.notify(error))
+}
 
-  console.error = (...params: unknown[]) => {
-    const handlingStack = createHandlingStack()
-    callMonitored(() => {
-      originalConsoleError.apply(console, params)
-      errorObservable.notify({
-        ...buildErrorFromParams(params, handlingStack),
-        source: ErrorSource.CONSOLE,
-        startClocks: clocksNow(),
-        handling: ErrorHandling.HANDLED,
+let originalConsoleError: (...params: unknown[]) => void
+let consoleErrorObservable: Observable<RawError> | undefined
+
+function startConsoleErrorProxy() {
+  if (!consoleErrorObservable) {
+    consoleErrorObservable = new Observable<RawError>()
+    originalConsoleError = console.error
+
+    console.error = (...params: unknown[]) => {
+      const handlingStack = createHandlingStack()
+      callMonitored(() => {
+        originalConsoleError.apply(console, params)
+        const rawError = {
+          ...buildErrorFromParams(params, handlingStack),
+          source: ErrorSource.CONSOLE,
+          startClocks: clocksNow(),
+          handling: ErrorHandling.HANDLED,
+        }
+        consoleErrorObservable!.notify(rawError)
       })
-    })
+    }
   }
+  return consoleErrorObservable
+}
 
-  return {
-    stop: () => {
-      console.error = originalConsoleError
-    },
+export function resetConsoleErrorProxy() {
+  if (consoleErrorObservable) {
+    consoleErrorObservable = undefined
+    console.error = originalConsoleError
   }
 }
 
