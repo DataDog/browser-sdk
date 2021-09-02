@@ -1,13 +1,12 @@
 import { isIE } from '../../../test/specHelper'
 import { ErrorHandling, ErrorSource, RawError } from '../../tools/error'
 import { Observable } from '../../tools/observable'
-import { trackConsoleError } from './trackConsoleError'
+import { trackConsoleError, resetConsoleErrorProxy } from './trackConsoleError'
 
 /* eslint-disable no-console */
 describe('console tracker', () => {
   let consoleErrorStub: jasmine.Spy
   let notifyError: jasmine.Spy
-  let stopConsoleErrorTracking: () => void
   const CONSOLE_CONTEXT = {
     source: ErrorSource.CONSOLE,
   }
@@ -17,11 +16,11 @@ describe('console tracker', () => {
     notifyError = jasmine.createSpy('notifyError')
     const errorObservable = new Observable<RawError>()
     errorObservable.subscribe(notifyError)
-    ;({ stop: stopConsoleErrorTracking } = trackConsoleError(errorObservable))
+    trackConsoleError(errorObservable)
   })
 
   afterEach(() => {
-    stopConsoleErrorTracking()
+    resetConsoleErrorProxy()
   })
 
   it('should keep original behavior', () => {
@@ -81,12 +80,11 @@ describe('console tracker', () => {
     const notifyOtherCaller = jasmine.createSpy('notifyOtherCaller')
     const otherObservable = new Observable<RawError>()
     otherObservable.subscribe(notifyOtherCaller)
-    const { stop: stopOtherConsoleErrorTracking } = trackConsoleError(otherObservable)
+    trackConsoleError(otherObservable)
 
     console.error('foo', 'bar')
 
     expect(notifyError).toHaveBeenCalledTimes(1)
     expect(notifyOtherCaller).toHaveBeenCalledTimes(1)
-    stopOtherConsoleErrorTracking()
   })
 })

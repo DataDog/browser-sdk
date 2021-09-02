@@ -14,25 +14,15 @@ import { computeStackTrace } from '../tracekit'
 
 /* eslint-disable no-console */
 export function trackConsoleError(errorObservable: Observable<RawError>) {
-  startConsoleErrorProxy().afterCall((error) => errorObservable.notify(error))
-
-  return {
-    stop: resetConsoleErrorProxy,
-  }
-}
-
-type AfterCallCallback = (error: RawError) => void
-
-interface ConsoleErrorProxy {
-  afterCall: (callback: AfterCallCallback) => void
+  startConsoleErrorProxy().subscribe((error) => errorObservable.notify(error))
 }
 
 let originalConsoleError: (...params: unknown[]) => void
-let consoleErrorProxySingleton: ConsoleErrorProxy | undefined
-const afterCallCallbacks: AfterCallCallback[] = []
+let consoleErrorObservable: Observable<RawError> | undefined
 
 function startConsoleErrorProxy() {
-  if (!consoleErrorProxySingleton) {
+  if (!consoleErrorObservable) {
+    consoleErrorObservable = new Observable<RawError>()
     originalConsoleError = console.error
 
     console.error = (...params: unknown[]) => {
@@ -45,22 +35,16 @@ function startConsoleErrorProxy() {
           startClocks: clocksNow(),
           handling: ErrorHandling.HANDLED,
         }
-        afterCallCallbacks.forEach((callback) => callback(rawError))
+        consoleErrorObservable!.notify(rawError)
       })
     }
-    consoleErrorProxySingleton = {
-      afterCall(callback: AfterCallCallback) {
-        afterCallCallbacks.push(callback)
-      },
-    }
   }
-  return consoleErrorProxySingleton
+  return consoleErrorObservable
 }
 
-function resetConsoleErrorProxy() {
-  if (consoleErrorProxySingleton) {
-    consoleErrorProxySingleton = undefined
-    afterCallCallbacks.splice(0, afterCallCallbacks.length)
+export function resetConsoleErrorProxy() {
+  if (consoleErrorObservable) {
+    consoleErrorObservable = undefined
     console.error = originalConsoleError
   }
 }
