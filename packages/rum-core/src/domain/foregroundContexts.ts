@@ -110,7 +110,7 @@ function closeForegroundPeriod() {
 function trackFocus(onFocusChange: () => void) {
   return addEventListener(window, DOM_EVENT.FOCUS, (event) => {
     if (!event.isTrusted) {
-      addMonitoringMessage('Event not trusted for foreground', { eventName: 'focus' })
+      return
     }
     onFocusChange()
   })
@@ -119,7 +119,7 @@ function trackFocus(onFocusChange: () => void) {
 function trackBlur(onBlurChange: () => void) {
   return addEventListener(window, DOM_EVENT.BLUR, (event) => {
     if (!event.isTrusted) {
-      addMonitoringMessage('Event not trusted for foreground', { eventName: 'blur' })
+      return
     }
     onBlurChange()
   })
