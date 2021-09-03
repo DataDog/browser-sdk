@@ -282,7 +282,7 @@ describe('rum track view metrics', () => {
 
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
-    function newLayoutShift(lifeCycle: LifeCycle, value: number, hadRecentInput = false) {
+    function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
         startTime: relativeNow(),
@@ -321,9 +321,9 @@ describe('rum track view metrics', () => {
     it('should accumulate layout shift values for the first session window', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, { value: 0.1 })
       clock.tick(100)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.2 })
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
@@ -333,9 +333,9 @@ describe('rum track view metrics', () => {
     it('should round the cumulative layout shift value to 4 decimals', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-      newLayoutShift(lifeCycle, 1.23456789)
+      newLayoutShift(lifeCycle, { value: 1.23456789 })
       clock.tick(100)
-      newLayoutShift(lifeCycle, 1.11111111111)
+      newLayoutShift(lifeCycle, { value: 1.11111111111 })
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
@@ -346,7 +346,7 @@ describe('rum track view metrics', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      newLayoutShift(lifeCycle, 0.1, true)
+      newLayoutShift(lifeCycle, { value: 0.1, hadRecentInput: true })
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -358,12 +358,12 @@ describe('rum track view metrics', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
       // first session window
-      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, { value: 0.1 })
       clock.tick(100)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.2 })
       // second session window
       clock.tick(1001)
-      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, { value: 0.1 })
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(2)
@@ -374,12 +374,12 @@ describe('rum track view metrics', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
       // first session window
-      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, { value: 0.1 })
       clock.tick(4500)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.2 })
       // second session window
       clock.tick(501)
-      newLayoutShift(lifeCycle, 0.1)
+      newLayoutShift(lifeCycle, { value: 0.1 })
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(3)
@@ -390,17 +390,17 @@ describe('rum track view metrics', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
       // first session window
-      newLayoutShift(lifeCycle, 0.1)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
       // second session window
       clock.tick(5001)
-      newLayoutShift(lifeCycle, 0.1)
-      newLayoutShift(lifeCycle, 0.2)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
       // third session window
       clock.tick(5001)
-      newLayoutShift(lifeCycle, 0.2)
-      newLayoutShift(lifeCycle, 0.2)
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(3)
