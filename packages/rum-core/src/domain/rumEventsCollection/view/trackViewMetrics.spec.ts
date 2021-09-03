@@ -370,20 +370,17 @@ describe('rum track view metrics', () => {
       expect(getViewUpdate(1).cumulativeLayoutShift).toBe(0.3)
     })
 
-    it('should create a new session if the current session is more than 5 second', () => {
+    it('should create a new session window if the current session window is more than 5 second', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-      // first session window
-      newLayoutShift(lifeCycle, { value: 0.1 })
-      clock.tick(4500)
-      newLayoutShift(lifeCycle, { value: 0.2 })
-      // second session window
-      clock.tick(501)
-      newLayoutShift(lifeCycle, { value: 0.1 })
-
+      newLayoutShift(lifeCycle, { value: 0 })
+      for (let i = 0; i < 6; i += 1) {
+        clock.tick(999)
+        newLayoutShift(lifeCycle, { value: 0.1 })
+      } //=> window 1: 0.5 | window 2: 0.1
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(3)
-      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.3)
+      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
     })
 
     it('should get the max value sessions', () => {
