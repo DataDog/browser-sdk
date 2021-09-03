@@ -15,14 +15,9 @@ export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
   send(data: string | FormData, size: number) {
-    let url = this.endpointUrl
-
-    if (isEndpointIntakeV2(url)) {
-      url = addRequestId(url)
-    }
-
+    let url = addQueryParameter(this.endpointUrl, 'dd-request-id', generateUUID())
     if (this.withBatchTime) {
-      url = addBatchTime(url)
+      url = addQueryParameter(url, 'batch_time', new Date().getTime().toString())
     }
 
     const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
@@ -73,16 +68,8 @@ export class HttpRequest {
   }
 }
 
-function addBatchTime(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
-}
-
-function addRequestId(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}dd-request-id=${generateUUID()}`
-}
-
-function isEndpointIntakeV2(url: string) {
-  return includes(url, '/api/v2')
+function addQueryParameter(url: string, key: string, value: string) {
+  return `${url}${includes(url, '?') ? '&' : '?'}${key}=${value}`
 }
 
 let hasReportedBeaconError = false
