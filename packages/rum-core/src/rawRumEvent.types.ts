@@ -217,6 +217,7 @@ export interface InternalContext {
     id: string
     url: string
     referrer: string
+    name?: string
   }
   user_action?: {
     id: string
