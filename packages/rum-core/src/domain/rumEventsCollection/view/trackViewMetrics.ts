@@ -56,8 +56,8 @@ export function trackViewMetrics(
   let stopCLSTracking: () => void
   if (isLayoutShiftSupported()) {
     viewMetrics.cumulativeLayoutShift = 0
-    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(lifeCycle, (layoutShift) => {
-      viewMetrics.cumulativeLayoutShift = layoutShift
+    ;({ stop: stopCLSTracking } = trackCumulativeLayoutShift(lifeCycle, (cumulativeLayoutShift) => {
+      viewMetrics.cumulativeLayoutShift = cumulativeLayoutShift
       scheduleViewUpdate()
     }))
   } else {
@@ -147,27 +147,12 @@ function trackActivityLoadingTime(
  */
 function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
   let clsValue = 0
-  let windowValue = 0
-  let windowStartedAt = 0 as RelativeTime
-  let windowLastEntryAt = 0 as RelativeTime
-
-  const updateSessionWindow = (entry: RumLayoutShiftTiming) => {
-    const durationSinceStart = entry.startTime - windowStartedAt
-    const durationSinceLastEntry = entry.startTime - windowLastEntryAt
-    if (durationSinceLastEntry < 1 * ONE_SECOND && durationSinceStart < 5 * ONE_SECOND) {
-      windowValue += entry.value
-    } else {
-      windowValue = entry.value
-      windowStartedAt = entry.startTime
-    }
-    windowLastEntryAt = entry.startTime
-  }
-
+  const window = slidingSessionWindow()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-      updateSessionWindow(entry)
-      if (windowValue > clsValue) {
-        clsValue = windowValue
+      window.update(entry)
+      if (window.value() > clsValue) {
+        clsValue = window.value()
         callback(round(clsValue, 4))
       }
     }
@@ -175,6 +160,28 @@ function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift
 
   return {
     stop,
+  }
+}
+
+function slidingSessionWindow() {
+  let value = 0
+  let startTime: RelativeTime
+  let endTime: RelativeTime
+  return {
+    update: (entry: RumLayoutShiftTiming) => {
+      const shouldCreateNewWindow =
+        startTime === undefined ||
+        entry.startTime - endTime >= ONE_SECOND ||
+        entry.startTime - startTime >= 5 * ONE_SECOND
+      if (shouldCreateNewWindow) {
+        startTime = endTime = entry.startTime
+        value = entry.value
+      } else {
+        value += entry.value
+        endTime = entry.startTime
+      }
+    },
+    value: () => value,
   }
 }
 
