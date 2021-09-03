@@ -377,7 +377,7 @@ describe('rum track view metrics', () => {
       for (let i = 0; i < 6; i += 1) {
         clock.tick(999)
         newLayoutShift(lifeCycle, { value: 0.1 })
-      } //=> window 1: 0.5 | window 2: 0.1
+      } // window 1: 0.5 | window 2: 0.1
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
       expect(getViewUpdateCount()).toEqual(3)
       expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
