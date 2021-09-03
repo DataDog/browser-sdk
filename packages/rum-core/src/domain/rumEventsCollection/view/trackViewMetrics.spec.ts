@@ -282,7 +282,7 @@ describe('rum track view metrics', () => {
 
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
-    const newLayoutShift = (lifeCycle: LifeCycle, value: number, hadRecentInput = false) => {
+    function newLayoutShift(lifeCycle: LifeCycle, value: number, hadRecentInput = false) {
       lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
         entryType: 'layout-shift',
         startTime: relativeNow(),
@@ -290,6 +290,7 @@ describe('rum track view metrics', () => {
         value,
       })
     }
+
     beforeEach(() => {
       if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
         pending('No PerformanceObserver support')
