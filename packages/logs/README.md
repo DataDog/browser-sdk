@@ -252,9 +252,7 @@ The placeholders in the examples above are described below:
 
 If your Browser logs contain sensitive information that needs redacting, configure the Browser SDK to scrub sensitive sequences by using the `beforeSend` callback when you initialize the Browser Log Collector.
 
-The `beforeSend` callback function gives you access to each event collected by the Browser SDK before it is sent to Datadog, and lets you update commonly redacted properties.
-
-For examples of `beforeSend`, see [Enrich and control browser RUM data with beforeSend][5].
+The `beforeSend` callback function gives you access to each log collected by the Browser SDK before it is sent to Datadog, and lets you update any property.
 
 To redact email addresses from your web application URLs:
 
@@ -265,9 +263,9 @@ import { datadogLogs } from '@datadog/browser-logs'
 
 datadogLogs.init({
     ...,
-    beforeSend: (event) => {
+    beforeSend: (log) => {
         // remove email from view url
-        event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+        log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
     },
     ...
 });
@@ -279,9 +277,9 @@ datadogLogs.init({
 DD_LOGS.onReady(function() {
     DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
             // remove email from view url
-            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+            log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
         },
         ...
     })
@@ -294,15 +292,15 @@ DD_LOGS.onReady(function() {
 window.DD_LOGS &&
     window.DD_LOGS.init({
         ...,
-        beforeSend: (event) => {
+        beforeSend: (log) => {
             // remove email from view url
-            event.view.url = event.view.url.replace(/email=[^&]*/, "email=REDACTED")
+            log.view.url = log.view.url.replace(/email=[^&]*/, "email=REDACTED")
         },
         ...
     });
 ```
 
-You can update the following event properties:
+The following properties are automatically collected by the SDK and could contain sensitive data:
 
 | Attribute       | Type   | Description                                                                                      |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------ |
@@ -311,7 +309,62 @@ You can update the following event properties:
 | `message`       | String | The content of the log.                                                                          |
 | `error.stack`   | String | The stack trace or complementary information about the error.                                    |
 | `http.url`      | String | The HTTP URL.                                                                                    |
-| `context`       | String | Extra contextual attributes added with the logger.                                               |
+
+### Discard specific logs
+
+The `beforeSend` callback function allows you to also discard a log before it is sent to Datadog.
+
+To discard network errors if their status is 404:
+
+#### NPM
+
+```javascript
+import { datadogLogs } from '@datadog/browser-logs'
+
+datadogLogs.init({
+    ...,
+    beforeSend: (log) => {
+        // discard 404 network errors
+        if (log.http && log.http.status_code === 404) {
+          return false
+        }
+    },
+    ...
+});
+```
+
+#### CDN Async
+
+```javascript
+DD_LOGS.onReady(function() {
+    DD_LOGS.init({
+        ...,
+        beforeSend: (log) => {
+          // discard 404 network errors
+          if (log.http && log.http.status_code === 404) {
+            return false
+          }
+        },
+        ...
+    })
+})
+```
+
+#### CDN Sync
+
+```javascript
+window.DD_LOGS &&
+    window.DD_LOGS.init({
+        ...,
+        beforeSend: (log) => {
+          // discard 404 network errors
+          if (log.http && log.http.status_code === 404) {
+            return false
+          }
+        },
+        ...
+    });
+```
 
 ### Define multiple loggers
 

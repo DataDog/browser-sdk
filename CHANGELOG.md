@@ -16,6 +16,20 @@
 
 ---
 
+## v3.3.0
+
+- ✨ [RUMF-993] New proxy strategy ([#1016](https://github.com/DataDog/browser-sdk/pull/1016))
+- 🐛 [RUMF-1012] fix console.error loop on npm setup ([#1027](https://github.com/DataDog/browser-sdk/pull/1027))
+- 🐛 [REPLAY-371] Truncate long "data:" URIs ([#1021](https://github.com/DataDog/browser-sdk/pull/1021))
+
+## v3.2.0
+
+- ✨ [RUMF-994] support intake v2 ([#1013](https://github.com/DataDog/browser-sdk/pull/1013))
+- ✨ [RUMF-998] introduce the initialPrivacyLevel configuration option ([#1004](https://github.com/DataDog/browser-sdk/pull/1004))
+- 🐛 [RUMF-997] dont take a FullSnapshot on view creation during session renew ([#1011](https://github.com/DataDog/browser-sdk/pull/1011))
+- 🐛 prevent recording to start when session renewed before onload ([#1009](https://github.com/DataDog/browser-sdk/pull/1009))
+- ✨ [RUMF-996] set synthetics ids on RUM events ([#1007](https://github.com/DataDog/browser-sdk/pull/1007))
+
 ## v3.1.3
 
 - ⚗✨[REPLAY-336] Privacy by Default ([#951](https://github.com/DataDog/browser-sdk/pull/951))
