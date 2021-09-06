@@ -146,14 +146,14 @@ function trackActivityLoadingTime(
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getCLS.ts
  */
 function trackCumulativeLayoutShift(lifeCycle: LifeCycle, callback: (layoutShift: number) => void) {
-  let clsValue = 0
+  let maxClsValue = 0
   const window = slidingSessionWindow()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
       window.update(entry)
-      if (window.value() > clsValue) {
-        clsValue = window.value()
-        callback(round(clsValue, 4))
+      if (window.value() > maxClsValue) {
+        maxClsValue = window.value()
+        callback(round(maxClsValue, 4))
       }
     }
   })
