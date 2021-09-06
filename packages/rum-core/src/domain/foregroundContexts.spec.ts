@@ -1,7 +1,12 @@
 import { RelativeTime, relativeNow, Duration, ServerDuration } from '@datadog/browser-core'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
-import { createNewEvent } from '../../../core/test/specHelper'
-import { startForegroundContexts, ForegroundContexts, MAX_NUMBER_OF_FOCUSED_TIME } from './foregroundContexts'
+import {
+  startForegroundContexts,
+  ForegroundContexts,
+  MAX_NUMBER_OF_FOCUSED_TIME,
+  closeForegroundPeriod,
+  addNewForegroundPeriod,
+} from './foregroundContexts'
 
 const FOCUS_PERIOD_LENGTH = 10 as Duration
 const BLUR_PERIOD_LENGTH = 5 as Duration
@@ -59,15 +64,15 @@ describe('foreground context', () => {
       beforeEach(() => {
         const { clock } = setupBuilder.build()
         clock.tick(BLUR_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
         clock.tick(BLUR_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
         clock.tick(BLUR_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
       })
 
@@ -149,11 +154,11 @@ describe('foreground context', () => {
       beforeEach(() => {
         const { clock } = setupBuilder.build()
         clock.tick(BLUR_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
         clock.tick(BLUR_PERIOD_LENGTH)
       })
       it('getInForeground should match the focused/burred period', () => {
@@ -167,13 +172,13 @@ describe('foreground context', () => {
     it('should not record anything after reaching the maximum number of focus periods', () => {
       const { clock } = setupBuilder.build()
       for (let i = 0; i < MAX_NUMBER_OF_FOCUSED_TIME + 1; i++) {
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
         clock.tick(BLUR_PERIOD_LENGTH)
       }
 
-      window.dispatchEvent(createNewEvent('focus'))
+      addNewForegroundPeriod()
       clock.tick(FOCUS_PERIOD_LENGTH)
 
       expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
@@ -181,18 +186,18 @@ describe('foreground context', () => {
 
     it('should not be in foreground, when the periods is closed twice', () => {
       const { clock } = setupBuilder.build()
-      window.dispatchEvent(createNewEvent('focus'))
+      addNewForegroundPeriod()
       clock.tick(FOCUS_PERIOD_LENGTH)
-      window.dispatchEvent(createNewEvent('blur'))
+      closeForegroundPeriod()
       clock.tick(BLUR_PERIOD_LENGTH)
-      window.dispatchEvent(createNewEvent('blur'))
+      closeForegroundPeriod()
 
       expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
     })
 
     it('after starting with a blur even, should not be in foreground', () => {
       setupBuilder.build()
-      window.dispatchEvent(createNewEvent('blur'))
+      closeForegroundPeriod()
 
       expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
     })
@@ -207,7 +212,7 @@ describe('foreground context', () => {
       it('should return true during the focused period', () => {
         const { clock } = setupBuilder.build()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
 
         expect(foregroundContext.getInForeground(2 as RelativeTime)).toEqual(true)
       })
@@ -215,7 +220,7 @@ describe('foreground context', () => {
       it('should return false after the first focused period', () => {
         const { clock } = setupBuilder.build()
         clock.tick(FOCUS_PERIOD_LENGTH)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
 
         expect(foregroundContext.getInForeground(12 as RelativeTime)).toEqual(false)
       })
@@ -225,9 +230,9 @@ describe('foreground context', () => {
       it('should return true during the focused period', () => {
         const { clock } = setupBuilder.build()
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
 
         expect(foregroundContext.getInForeground(2 as RelativeTime)).toEqual(true)
       })
@@ -235,9 +240,9 @@ describe('foreground context', () => {
       it('should return false after the focused period', () => {
         const { clock } = setupBuilder.build()
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
-        window.dispatchEvent(createNewEvent('focus'))
+        addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH / 2)
-        window.dispatchEvent(createNewEvent('blur'))
+        closeForegroundPeriod()
 
         expect(foregroundContext.getInForeground(12 as RelativeTime)).toEqual(false)
       })
