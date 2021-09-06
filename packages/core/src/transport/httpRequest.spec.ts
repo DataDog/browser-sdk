@@ -86,6 +86,14 @@ describe('httpRequest parameters', () => {
     expect(sendBeaconSpy.calls.argsFor(0)[0]).toContain(`&batch_time=`)
   })
 
+  it('should not add batch_time', () => {
+    const request = new HttpRequest('https://my.website', BATCH_BYTES_LIMIT, false)
+
+    request.send('{"foo":"bar1"}', 10)
+
+    expect(sendBeaconSpy.calls.argsFor(0)[0]).not.toContain(`&batch_time=`)
+  })
+
   it('should have dd-request-id', () => {
     const request = new HttpRequest('https://my.website', BATCH_BYTES_LIMIT)
 
