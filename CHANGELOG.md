@@ -16,6 +16,12 @@
 
 ---
 
+## v3.3.0
+
+- ✨ [RUMF-993] New proxy strategy ([#1016](https://github.com/DataDog/browser-sdk/pull/1016))
+- 🐛 [RUMF-1012] fix console.error loop on npm setup ([#1027](https://github.com/DataDog/browser-sdk/pull/1027))
+- 🐛 [REPLAY-371] Truncate long "data:" URIs ([#1021](https://github.com/DataDog/browser-sdk/pull/1021))
+
 ## v3.2.0
 
 - ✨ [RUMF-994] support intake v2 ([#1013](https://github.com/DataDog/browser-sdk/pull/1013))
