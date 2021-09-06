@@ -49,7 +49,7 @@ describe('transportConfiguration', () => {
     it('should add new intake query parameters when "support-intake-v2" enabled', () => {
       const configuration = computeTransportConfiguration({ clientToken, intakeApiVersion: 2 }, buildEnv, true)
       expect(configuration.rumEndpoint).toMatch(
-        `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
+        `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser`
       )
     })
   })

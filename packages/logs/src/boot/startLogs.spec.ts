@@ -90,7 +90,7 @@ describe('logs', () => {
       )
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toEqual(baseConfiguration.logsEndpoint!)
+      expect(server.requests[0].url).toContain(baseConfiguration.logsEndpoint!)
       expect(getLoggedMessage(server, 0)).toEqual({
         date: FAKE_DATE,
         foo: 'bar',

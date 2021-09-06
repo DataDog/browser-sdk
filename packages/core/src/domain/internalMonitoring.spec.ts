@@ -194,7 +194,7 @@ describe('internal monitoring', () => {
       })
 
       expect(server.requests.length).toEqual(1)
-      expect(server.requests[0].url).toEqual(configuration.internalMonitoringEndpoint!)
+      expect(server.requests[0].url).toContain(configuration.internalMonitoringEndpoint!)
 
       expect(JSON.parse(server.requests[0].requestBody)).toEqual({
         date: FAKE_DATE,

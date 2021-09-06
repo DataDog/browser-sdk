@@ -16,6 +16,10 @@
 
 ---
 
+## v3.3.1
+
+- 🐛 [RUMF-1005] Fix dd-request-id endpoint query param ([#1018](https://github.com/DataDog/browser-sdk/pull/1018))
+
 ## v3.3.0
 
 - ✨ [RUMF-993] New proxy strategy ([#1016](https://github.com/DataDog/browser-sdk/pull/1016))
