@@ -74,6 +74,7 @@ export interface RumFirstInputTiming {
 
 export interface RumLayoutShiftTiming {
   entryType: 'layout-shift'
+  startTime: RelativeTime
   value: number
   hadRecentInput: boolean
 }
