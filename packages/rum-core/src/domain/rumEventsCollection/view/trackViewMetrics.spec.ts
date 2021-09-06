@@ -1,8 +1,9 @@
-import { Context, RelativeTime, Duration } from '@datadog/browser-core'
+import { Context, RelativeTime, Duration, relativeNow } from '@datadog/browser-core'
 import { LifeCycleEventType, RumEvent } from '@datadog/browser-rum-core'
 import { TestSetupBuilder, setup, setupViewTest, ViewTest } from '../../../../test/specHelper'
 import { RumPerformanceNavigationTiming } from '../../../browser/performanceCollection'
 import { RumEventType } from '../../../rawRumEvent.types'
+import { LifeCycle } from '../../lifeCycle'
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_MAX_DURATION,
@@ -281,6 +282,15 @@ describe('rum track view metrics', () => {
 
   describe('cumulativeLayoutShift', () => {
     let isLayoutShiftSupported: boolean
+    function newLayoutShift(lifeCycle: LifeCycle, { value = 0.1, hadRecentInput = false }) {
+      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+        entryType: 'layout-shift',
+        startTime: relativeNow(),
+        hadRecentInput,
+        value,
+      })
+    }
+
     beforeEach(() => {
       if (!('PerformanceObserver' in window) || !('supportedEntryTypes' in PerformanceObserver)) {
         pending('No PerformanceObserver support')
@@ -308,22 +318,12 @@ describe('rum track view metrics', () => {
       expect(getViewUpdate(0).cumulativeLayoutShift).toBe(undefined)
     })
 
-    it('should accumulate layout shift values', () => {
+    it('should accumulate layout shift values for the first session window', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 0.1,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 0.2,
-      })
-
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      clock.tick(100)
+      newLayoutShift(lifeCycle, { value: 0.2 })
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
@@ -333,19 +333,9 @@ describe('rum track view metrics', () => {
     it('should round the cumulative layout shift value to 4 decimals', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 1.23456789,
-      })
-
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: false,
-        value: 1.11111111111,
-      })
-
+      newLayoutShift(lifeCycle, { value: 1.23456789 })
+      clock.tick(100)
+      newLayoutShift(lifeCycle, { value: 1.11111111111 })
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(2)
@@ -356,16 +346,62 @@ describe('rum track view metrics', () => {
       const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
-        entryType: 'layout-shift',
-        hadRecentInput: true,
-        value: 0.1,
-      })
+      newLayoutShift(lifeCycle, { value: 0.1, hadRecentInput: true })
 
       clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
       expect(getViewUpdateCount()).toEqual(1)
       expect(getViewUpdate(0).cumulativeLayoutShift).toBe(0)
+    })
+
+    it('should create a new session window if the gap is more than 1 second', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      // first session window
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      clock.tick(100)
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      // second session window
+      clock.tick(1001)
+      newLayoutShift(lifeCycle, { value: 0.1 })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(2)
+      expect(getViewUpdate(1).cumulativeLayoutShift).toBe(0.3)
+    })
+
+    it('should create a new session window if the current session window is more than 5 second', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      newLayoutShift(lifeCycle, { value: 0 })
+      for (let i = 0; i < 6; i += 1) {
+        clock.tick(999)
+        newLayoutShift(lifeCycle, { value: 0.1 })
+      } // window 1: 0.5 | window 2: 0.1
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
+    })
+
+    it('should get the max value sessions', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().build()
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+      // first session window
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      // second session window
+      clock.tick(5001)
+      newLayoutShift(lifeCycle, { value: 0.1 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      // third session window
+      clock.tick(5001)
+      newLayoutShift(lifeCycle, { value: 0.2 })
+      newLayoutShift(lifeCycle, { value: 0.2 })
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(2).cumulativeLayoutShift).toBe(0.5)
     })
   })
 })
