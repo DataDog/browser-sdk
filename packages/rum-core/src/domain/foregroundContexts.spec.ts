@@ -3,6 +3,7 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import {
   startForegroundContexts,
   ForegroundContexts,
+  MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW,
   MAX_NUMBER_OF_FOCUSED_TIME,
   closeForegroundPeriod,
   addNewForegroundPeriod,
@@ -171,6 +172,7 @@ describe('foreground context', () => {
 
     it('should not record anything after reaching the maximum number of focus periods', () => {
       const { clock } = setupBuilder.build()
+      const start = relativeNow()
       for (let i = 0; i < MAX_NUMBER_OF_FOCUSED_TIME + 1; i++) {
         addNewForegroundPeriod()
         clock.tick(FOCUS_PERIOD_LENGTH)
@@ -182,6 +184,9 @@ describe('foreground context', () => {
       clock.tick(FOCUS_PERIOD_LENGTH)
 
       expect(foregroundContext.getInForeground(relativeNow())).toEqual(false)
+      const duration = (((FOCUS_PERIOD_LENGTH as number) + (BLUR_PERIOD_LENGTH as number)) *
+        MAX_NUMBER_OF_FOCUSED_TIME) as Duration
+      expect(foregroundContext.getInForegroundPeriods(start, duration)).toHaveSize(MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW)
     })
 
     it('should not be in foreground, when the periods is closed twice', () => {

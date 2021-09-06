@@ -12,8 +12,10 @@ import {
 } from '@datadog/browser-core'
 import { InForegroundPeriod } from '../rawRumEvent.types'
 
-// Arbitrary value to cap number of element (mostly for backend)
-export const MAX_NUMBER_OF_FOCUSED_TIME = 500
+// Arbitrary value to cap number of element mostly for backend & to save bandwidth
+export const MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW = 500
+// Arbitrary value to cap number of element mostly for memory consumption in the browser
+export const MAX_NUMBER_OF_FOCUSED_TIME = 2500
 // ignore duplicate focus & blur events if coming in the right after the previous one
 // chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1237904
 const MAX_TIME_TO_IGNORE_DUPLICATE = 10 as RelativeTime
@@ -148,6 +150,9 @@ function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration
 
   for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
     const foregroundPeriod = foregroundPeriods[i]
+    if (foregroundPeriods.length - i > MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW) {
+      break
+    }
     if (foregroundPeriod.end !== undefined && eventStartTime > foregroundPeriod.end) {
       // event starts after the end of the current focus period
       // since the array is sorted, we can stop looking for foreground periods
