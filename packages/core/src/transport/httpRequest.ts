@@ -1,4 +1,5 @@
 import { monitor, addErrorToMonitoringBatch, addMonitoringMessage } from '../domain/internalMonitoring'
+import { generateUUID, includes } from '../tools/utils'
 
 let hasReportedXhrError = false
 
@@ -14,7 +15,11 @@ export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
   send(data: string | FormData, size: number) {
-    const url = this.withBatchTime ? addBatchTime(this.endpointUrl) : this.endpointUrl
+    let url = addQueryParameter(this.endpointUrl, 'dd-request-id', generateUUID())
+    if (this.withBatchTime) {
+      url = addQueryParameter(url, 'batch_time', new Date().getTime().toString())
+    }
+
     const tryBeacon = !!navigator.sendBeacon && size < this.bytesLimit
     if (tryBeacon) {
       try {
@@ -63,8 +68,8 @@ export class HttpRequest {
   }
 }
 
-function addBatchTime(url: string) {
-  return `${url}${url.indexOf('?') === -1 ? '?' : '&'}batch_time=${new Date().getTime()}`
+function addQueryParameter(url: string, key: string, value: string) {
+  return `${url}${includes(url, '?') ? '&' : '?'}${key}=${value}`
 }
 
 let hasReportedBeaconError = false

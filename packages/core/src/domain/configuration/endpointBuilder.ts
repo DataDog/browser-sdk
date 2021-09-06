@@ -1,5 +1,5 @@
 import { BuildEnv } from '../../boot/init'
-import { generateUUID, includes } from '../../tools/utils'
+import { includes } from '../../tools/utils'
 import { InitConfiguration } from './configuration'
 
 export const ENDPOINTS = {
@@ -101,9 +101,8 @@ export function createEndpointBuilder(
     if (shouldUseIntakeV2(endpointType)) {
       parameters +=
         `&dd-api-key=${clientToken}&` +
-        `dd-evp-origin-version=${sdkVersion}&` +
-        `dd-evp-origin=browser&` +
-        `dd-request-id=${generateUUID()}`
+        `dd-evp-origin-version=${encodeURIComponent(sdkVersion)}&` +
+        `dd-evp-origin=browser`
     }
     return parameters
   }
