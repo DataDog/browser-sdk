@@ -14,7 +14,7 @@ let hasReportedXhrError = false
 export class HttpRequest {
   constructor(private endpointUrl: string, private bytesLimit: number, private withBatchTime: boolean = false) {}
 
-  send(data: string | FormData, size: number) {
+  send(data: string | FormData, size: number, flushReason?: string) {
     let url = addQueryParameter(this.endpointUrl, 'dd-request-id', generateUUID())
     if (this.withBatchTime) {
       url = addQueryParameter(url, 'batch_time', new Date().getTime().toString())
@@ -44,6 +44,7 @@ export class HttpRequest {
           size,
           url,
           try_beacon: tryBeacon,
+          flush_reason: flushReason,
           event: {
             is_trusted: event.isTrusted,
             total: event.total,
