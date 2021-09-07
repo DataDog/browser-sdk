@@ -1,10 +1,16 @@
-import { NodePrivacyLevel, PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, CENSORED_STRING_MARK } from '../../constants'
 import {
-  serializeAttribute,
+  NodePrivacyLevel,
+  PRIVACY_ATTR_NAME,
+  PRIVACY_ATTR_VALUE_HIDDEN,
+  CENSORED_STRING_MARK,
+  CENSORED_IMG_MARK,
+} from '../../constants'
+import {
   getTextContent,
   shouldMaskNode,
   reducePrivacyLevel,
   getNodeSelfPrivacyLevel,
+  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
 } from './privacy'
 import {
   SerializedNode,
@@ -21,6 +27,8 @@ import {
   getSerializedNodeId,
   setSerializedNode,
   getElementInputValue,
+  makeSrcsetUrlsAbsolute,
+  makeUrlAbsolute,
 } from './serializationUtils'
 import { forEach } from './utils'
 
@@ -283,6 +291,66 @@ export function serializeChildNodes(node: Node, options: SerializeOptions): Seri
   })
 
   return result
+}
+
+export function serializeAttribute(
+  element: Element,
+  nodePrivacyLevel: NodePrivacyLevel,
+  attributeName: string
+): string | number | boolean | null {
+  if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
+    // dup condition for direct access case
+    return null
+  }
+  const attributeValue = element.getAttribute(attributeName)
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK) {
+    const tagName = element.tagName
+
+    switch (attributeName) {
+      // Mask Attribute text content
+      case 'title':
+      case 'alt':
+        return CENSORED_STRING_MARK
+    }
+    // mask image URLs
+    if (tagName === 'IMG' || tagName === 'SOURCE') {
+      if (attributeName === 'src' || attributeName === 'srcset') {
+        return CENSORED_IMG_MARK
+      }
+    }
+    // mask <a> URLs
+    if (tagName === 'A' && attributeName === 'href') {
+      return CENSORED_STRING_MARK
+    }
+    // mask data-* attributes
+    if (attributeValue && attributeName.indexOf('data-') === 0 && attributeName !== PRIVACY_ATTR_NAME) {
+      // Exception: it's safe to reveal the `${PRIVACY_ATTR_NAME}` attr
+      return CENSORED_STRING_MARK
+    }
+  }
+
+  if (!attributeValue || typeof attributeValue !== 'string') {
+    return attributeValue
+  }
+
+  // Minimum Fix for customer.
+  if (attributeValue.length > MAX_ATTRIBUTE_VALUE_CHAR_LENGTH && attributeValue.slice(0, 5) === 'data:') {
+    return 'data:truncated'
+  }
+
+  // Rebuild absolute URLs from relative (without using <base> tag)
+  const doc = element.ownerDocument
+  switch (attributeName) {
+    case 'src':
+    case 'href':
+      return makeUrlAbsolute(attributeValue, doc.location?.href)
+    case 'srcset':
+      return makeSrcsetUrlsAbsolute(attributeValue, doc.location?.href)
+    case 'style':
+      return makeStylesheetUrlsAbsolute(attributeValue, doc.location?.href)
+    default:
+      return attributeValue
+  }
 }
 
 let _nextId = 1

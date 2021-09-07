@@ -22,7 +22,9 @@ import {
   SerializeOptions,
   serializeDocumentNode,
   serializeChildNodes,
+  serializeAttribute,
 } from './serialize'
+import { MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './privacy'
 import { ElementNode, NodeType } from './types'
 
 const DEFAULT_OPTIONS: SerializeOptions = {
@@ -457,5 +459,28 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
       expect(toJSONObj(serializedDoc)).toEqual(AST_ALLOW)
     })
+  })
+})
+
+describe('serializeAttribute ', () => {
+  it('truncates "data:" URIs after long string length', () => {
+    const node = document.createElement('p')
+
+    const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH + 1 - 5).join('a')
+    const maxAttributeValue = `data:${longString}`
+    const exceededAttributeValue = `data:${longString}1`
+    const ignoredAttributeValue = `foos:${longString}`
+
+    node.setAttribute('test-okay', maxAttributeValue)
+    node.setAttribute('test-truncate', exceededAttributeValue)
+    node.setAttribute('test-ignored', ignoredAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay')).toBe(maxAttributeValue)
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay')).toBe(maxAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
+
+    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('data:truncated')
+    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('data:truncated')
   })
 })
