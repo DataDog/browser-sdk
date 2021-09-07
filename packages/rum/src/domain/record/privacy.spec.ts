@@ -1,14 +1,7 @@
 import { isIE } from '../../../../core/test/specHelper'
 import { NodePrivacyLevel } from '../../constants'
 import { HTML, generateLeanSerializedDoc } from '../../../test/htmlAst'
-import {
-  getNodeSelfPrivacyLevel,
-  reducePrivacyLevel,
-  getNodePrivacyLevel,
-  shouldMaskNode,
-  serializeAttribute,
-  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
-} from './privacy'
+import { getNodeSelfPrivacyLevel, reducePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from './privacy'
 import { ElementNode, NodeType, TextNode, SerializedNodeWithId } from './types'
 
 describe('privacy helpers', () => {
@@ -394,28 +387,5 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
     })
-  })
-})
-
-describe('serializeAttribute ', () => {
-  it('truncates "data:" URIs after long string length', () => {
-    const node = document.createElement('p')
-
-    const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH + 1 - 5).join('a')
-    const maxAttributeValue = `data:${longString}`
-    const exceededAttributeValue = `data:${longString}1`
-    const ignoredAttributeValue = `foos:${longString}`
-
-    node.setAttribute('test-okay', maxAttributeValue)
-    node.setAttribute('test-truncate', exceededAttributeValue)
-    node.setAttribute('test-ignored', ignoredAttributeValue)
-
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-okay')).toBe(maxAttributeValue)
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-okay')).toBe(maxAttributeValue)
-
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-ignored')).toBe(ignoredAttributeValue)
-
-    expect(serializeAttribute(node, NodePrivacyLevel.ALLOW, 'test-truncate')).toBe('data:truncated')
-    expect(serializeAttribute(node, NodePrivacyLevel.MASK, 'test-truncate')).toBe('data:truncated')
   })
 })
