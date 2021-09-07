@@ -23,3 +23,5 @@ export {
 } from './constants'
 
 export * from './types'
+
+export { serializeNodeWithId } from './domain/record/serialize'
