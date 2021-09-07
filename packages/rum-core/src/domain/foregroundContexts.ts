@@ -148,11 +148,9 @@ function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration
   const eventEndTime = (eventStartTime + duration) as RelativeTime
   const filteredForegroundPeriods: InForegroundPeriod[] = []
 
-  for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
+  const earliestIndex = Math.max(0, foregroundPeriods.length - MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW)
+  for (let i = foregroundPeriods.length - 1; i >= earliestIndex; i--) {
     const foregroundPeriod = foregroundPeriods[i]
-    if (foregroundPeriods.length - i > MAX_NUMBER_OF_FOCUSED_TIME_PER_VIEW) {
-      break
-    }
     if (foregroundPeriod.end !== undefined && eventStartTime > foregroundPeriod.end) {
       // event starts after the end of the current focus period
       // since the array is sorted, we can stop looking for foreground periods
