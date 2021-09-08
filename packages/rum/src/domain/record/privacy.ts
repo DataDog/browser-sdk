@@ -24,7 +24,7 @@ import { makeStylesheetUrlsAbsolute } from './serializationUtils'
 
 import { shouldIgnoreElement } from './serialize'
 
-const TEXT_MASKING_CHAR = '᙮'
+const TEXT_MASKING_CHAR = 'x'
 
 /**
  * Get node privacy level by iterating over its ancestors. When the direct parent privacy level is
