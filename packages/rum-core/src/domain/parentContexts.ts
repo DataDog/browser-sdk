@@ -6,9 +6,10 @@ import {
   relativeNow,
   ClocksState,
 } from '@datadog/browser-core'
-import { ActionContext, ViewContext } from '../rawRumEvent.types'
+import { ActionContext, ViewContext, ViewUrlContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
+import { trackLocationChanges } from './rumEventsCollection/view/trackLocationChanges'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 import { RumSession } from './rumSession'
 
@@ -25,19 +26,23 @@ interface PreviousContext<T> {
 export interface ParentContexts {
   findAction: (startTime?: RelativeTime) => ActionContext | undefined
   findView: (startTime?: RelativeTime) => ViewContext | undefined
+  findViewUrl: (startTime?: RelativeTime) => ViewUrlContext | undefined
   stop: () => void
 }
 
 export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
   let currentView: ViewCreatedEvent | undefined
+  let currentViewUrl: string | undefined
   let currentAction: AutoActionCreatedEvent | undefined
   let currentSessionId: string | undefined
 
   let previousViews: Array<PreviousContext<ViewContext>> = []
+  let previousViewUrls: Array<PreviousContext<ViewUrlContext>> = []
   let previousActions: Array<PreviousContext<ActionContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     currentView = currentContext
+    currentViewUrl = currentView.location.href
     currentSessionId = session.getId()
   })
 
@@ -58,6 +63,10 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
       })
       currentView = undefined
     }
+  })
+
+  const { stop: stopLocationTracking } = trackLocationChanges(() => {
+    currentViewUrl = location.href
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {

@@ -204,6 +204,12 @@ export interface ViewContext extends Context {
   }
 }
 
+export interface ViewUrlContext extends Context {
+  view: {
+    url: string
+  }
+}
+
 export interface ActionContext extends Context {
   action: {
     id: string

@@ -12,6 +12,7 @@ import {
   TimeStamp,
   display,
   Configuration,
+  noop,
 } from '@datadog/browser-core'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
@@ -68,7 +69,7 @@ export function trackViews(
   const { stop: stopViewLifeCycle } = startViewLifeCycle()
   const { stop: stopViewCollectionMode } = areViewsTrackedAutomatically
     ? startAutomaticViewCollection()
-    : startManualViewCollection()
+    : { stop: noop }
 
   function trackInitialView(name?: string) {
     const initialView = newView(
@@ -139,15 +140,6 @@ export function trackViews(
         currentView = trackViewChange()
         return
       }
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
-    })
-  }
-
-  function startManualViewCollection() {
-    return trackLocationChanges(() => {
-      currentView.updateLocation(location)
-      currentView.triggerUpdate()
     })
   }
 

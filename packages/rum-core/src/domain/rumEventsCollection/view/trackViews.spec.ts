@@ -45,7 +45,7 @@ describe('track views automatically', () => {
   })
 
   describe('location changes', () => {
-    it('should update view location on search change', () => {
+    it('should not update view location on search change', () => {
       setupBuilder.build()
       const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
 
@@ -55,7 +55,7 @@ describe('track views automatically', () => {
       expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
 
       const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
+      expect(lastUpdate.location.href).toMatch(/\/foo$/)
       expect(lastUpdate.id).toBe(getViewCreate(0).id)
     })
 
@@ -195,16 +195,6 @@ describe('track views automatically', () => {
 
       expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo$/))
     })
-
-    it('should use the most up-to-date URL of the previous view as a referrer', () => {
-      setupBuilder.build()
-      const { getViewCreate } = viewTest
-
-      history.pushState({}, '', '/foo?a=b')
-      history.pushState({}, '', '/bar')
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/foo\?a=b$/))
-    })
   })
 })
 
@@ -227,7 +217,7 @@ describe('track views manually', () => {
   })
 
   describe('location changes', () => {
-    it('should update view location on search change', () => {
+    it('should not update view location on search change', () => {
       setupBuilder.build()
       const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
 
@@ -237,11 +227,11 @@ describe('track views manually', () => {
       expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
 
       const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/foo\?bar=qux$/)
+      expect(lastUpdate.location.href).toMatch(/\/foo$/)
       expect(lastUpdate.id).toBe(getViewCreate(0).id)
     })
 
-    it('should update view location on path change', () => {
+    it('should not update view location on path change', () => {
       setupBuilder.build()
       const { getViewCreateCount, getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
 
@@ -251,7 +241,7 @@ describe('track views manually', () => {
       expect(getViewCreate(0).location.href).toMatch(/\/foo$/)
 
       const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-      expect(lastUpdate.location.href).toMatch(/\/bar$/)
+      expect(lastUpdate.location.href).toMatch(/\/foo$/)
       expect(lastUpdate.id).toBe(getViewCreate(0).id)
     })
   })
@@ -273,18 +263,6 @@ describe('track views manually', () => {
 
       const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
       expect(lastUpdate.referrer).toEqual(jasmine.stringMatching(/\/foo$/))
-      expect(lastUpdate.location.href).toEqual(jasmine.stringMatching(/\/bar$/))
-    })
-
-    it('should use the most up-to-date URL of the previous view as a referrer', () => {
-      setupBuilder.build()
-      const { getViewCreate, startView } = viewTest
-
-      history.pushState({}, '', '/foo?a=b')
-      history.pushState({}, '', '/bar')
-      startView()
-
-      expect(getViewCreate(1).referrer).toEqual(jasmine.stringMatching(/\/bar$/))
     })
   })
 })

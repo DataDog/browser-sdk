@@ -92,7 +92,7 @@ export function startRumEventCollection(
   session: RumSession,
   getCommonContext: () => CommonContext
 ) {
-  const parentContexts = startParentContexts(lifeCycle, session)
+  const parentContexts = startParentContexts(lifeCycle, session, location)
   const foregroundContexts = startForegroundContexts(configuration)
   const batch = startRumBatch(configuration, lifeCycle)
 
