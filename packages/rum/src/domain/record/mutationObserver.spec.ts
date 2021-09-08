@@ -415,7 +415,7 @@ describe('startMutationCollection', () => {
             parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({
               type: NodeType.Text,
-              textContent: '᙮᙮᙮ ᙮᙮᙮',
+              textContent: 'xxx xxx',
             }),
           },
         ],
@@ -474,7 +474,7 @@ describe('startMutationCollection', () => {
         texts: [
           {
             node: expectInitialNode({ text: 'foo' }),
-            value: '᙮᙮᙮ ᙮᙮᙮',
+            value: 'xxx xxx',
           },
         ],
       })

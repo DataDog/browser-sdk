@@ -307,7 +307,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     it("doesn't have innerText alpha numeric", () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask')
       expect({ text: getTextNodesFromSerialized(serializedDoc) }).not.toBe({
-        text: jasmine.stringMatching(/^[*᙮\s]+\.example {content: "anything";}[*᙮\s]+$/),
+        text: jasmine.stringMatching(/^[*x\s]+\.example {content: "anything";}[*x\s]+$/),
       })
     })
 
