@@ -53,7 +53,7 @@ export class HttpRequest {
           request: {
             status: req.status,
             ready_state: req.readyState,
-            response_text: req.responseText.slice(0, 256),
+            response_text: req.responseText.slice(0, 512),
           },
         })
       }
