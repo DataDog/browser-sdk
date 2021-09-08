@@ -155,7 +155,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮',
+                  textContent: 'xxxxxxx xxxxx',
                 },
               ],
             },
@@ -181,7 +181,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮',
+                  textContent: 'xxxxx xxxxxxx xxxxx',
                 },
               ],
             },
@@ -196,7 +196,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮',
+                  textContent: 'xxxxxx xxxxx xxxxxxx xxxx',
                 },
               ],
             },
@@ -211,7 +211,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮',
+                  textContent: 'xxxxx xxxxxxx xxxxx',
                 },
               ],
             },
@@ -228,7 +228,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '\n      ᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮᙮\n    ',
+                  textContent: '\n      xxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n    ',
                 },
               ],
             },
@@ -342,7 +342,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮',
+                  textContent: 'xxxxxxxx xxxxx',
                 },
               ],
             },
@@ -377,7 +377,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '      ᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮\n    ',
+                  textContent: '      xxxxxx xxxxx xxxxxxx xxx\n    ',
                 },
               ],
             },
@@ -394,7 +394,7 @@ export const AST_MASK = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '᙮᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮',
+                  textContent: 'xxxxxxxx xxxxxxx xxx',
                 },
               ],
             },
@@ -692,7 +692,7 @@ export const AST_MASK_FORMS_ONLY = {
               childNodes: [
                 {
                   type: 3,
-                  textContent: '      ᙮᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮ ᙮᙮᙮᙮᙮᙮᙮ ᙮᙮᙮\n    ',
+                  textContent: '      xxxxxx xxxxx xxxxxxx xxx\n    ',
                 },
               ],
             },

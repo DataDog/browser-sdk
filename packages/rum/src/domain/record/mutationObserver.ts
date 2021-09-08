@@ -1,7 +1,7 @@
 import { InitialPrivacyLevel, monitor, noop } from '@datadog/browser-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel } from '../../constants'
-import { serializeAttribute, getNodePrivacyLevel, getTextContent } from './privacy'
+import { getNodePrivacyLevel, getTextContent } from './privacy'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -9,7 +9,7 @@ import {
   nodeAndAncestorsHaveSerializedNode,
   NodeWithSerializedNode,
 } from './serializationUtils'
-import { serializeNodeWithId } from './serialize'
+import { serializeNodeWithId, serializeAttribute } from './serialize'
 import {
   AddedNodeMutation,
   AttributeMutation,
@@ -257,10 +257,15 @@ function processCharacterDataMutations(
       continue
     }
 
+    const parentNodePrivacyLevel = getNodePrivacyLevel(mutation.target.parentNode!, initialPrivacyLevel)
+    if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
+      continue
+    }
+
     textMutations.push({
       id: getSerializedNodeId(mutation.target),
       // TODO: pass a valid "ignoreWhiteSpace" argument
-      value: getTextContent(mutation.target, false, initialPrivacyLevel) ?? null,
+      value: getTextContent(mutation.target, false, parentNodePrivacyLevel) ?? null,
     })
   }
 

@@ -415,7 +415,7 @@ describe('startMutationCollection', () => {
             parent: expectInitialNode({ idAttribute: 'sandbox' }),
             node: expectNewNode({
               type: NodeType.Text,
-              textContent: '᙮᙮᙮ ᙮᙮᙮',
+              textContent: 'xxx xxx',
             }),
           },
         ],
@@ -474,7 +474,37 @@ describe('startMutationCollection', () => {
         texts: [
           {
             node: expectInitialNode({ text: 'foo' }),
-            value: '᙮᙮᙮ ᙮᙮᙮',
+            value: 'xxx xxx',
+          },
+        ],
+      })
+    })
+
+    it('respects the parent privacy level when emitting a text node mutation', () => {
+      const wrapper = document.createElement('div')
+      wrapper.setAttribute('data-dd-privacy', 'allow')
+      document.body.appendChild(wrapper)
+
+      const div = document.createElement('div')
+      div.innerText = 'foo 81'
+      wrapper.appendChild(div)
+
+      const serializedDocument = serializeDocument(document, NodePrivacyLevel.MASK)
+      const { mutationController, mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection(
+        InitialPrivacyLevel.MASK
+      )
+
+      div.firstChild!.textContent = 'bazz 7'
+      mutationController.flush()
+
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        texts: [
+          {
+            node: expectInitialNode({ text: 'foo 81' }),
+            value: 'bazz 7',
           },
         ],
       })
