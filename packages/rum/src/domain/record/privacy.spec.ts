@@ -320,7 +320,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
     it("doesn't mask text content", () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
-      expect(JSON.stringify(serializedDoc)).not.toContain('xx')
+      expect(JSON.stringify(serializedDoc)).not.toContain('᙮᙮')
     })
     it('keeps form fields private', () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
