@@ -65,7 +65,7 @@ function processAction(
     },
     autoActionProperties
   )
-  const inForeground = foregroundContexts.getInForeground(action.startClocks.relative)
+  const inForeground = foregroundContexts.isInForegroundAt(action.startClocks.relative)
   if (inForeground !== undefined) {
     actionEvent.view = { in_foreground: inForeground }
   }

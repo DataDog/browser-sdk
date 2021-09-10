@@ -50,7 +50,7 @@ describe('viewCollection', () => {
         isEnabled: () => true,
       })
       .withForegroundContexts({
-        getInForegroundPeriods: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
+        selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
       .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
         getReplayStatsSpy = jasmine.createSpy()

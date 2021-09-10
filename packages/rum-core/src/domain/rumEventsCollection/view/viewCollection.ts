@@ -79,7 +79,7 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, view.duration),
+      in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
     },
     session: {
       has_replay: replayStats ? true : undefined,
