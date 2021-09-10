@@ -16,6 +16,11 @@
 
 ---
 
+## v3.4.0
+
+- ForegroundContext: Remove monitoring & ignore untrusted events ([#1029](https://github.com/DataDog/browser-sdk/pull/1029))
+- ✨ [RUMF-992] New CLS implementation ([#1026](https://github.com/DataDog/browser-sdk/pull/1026))
+
 ## v3.3.1
 
 - 🐛 [RUMF-1005] Fix dd-request-id endpoint query param ([#1018](https://github.com/DataDog/browser-sdk/pull/1018))
