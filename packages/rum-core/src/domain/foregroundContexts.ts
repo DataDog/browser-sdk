@@ -12,15 +12,17 @@ import {
 } from '@datadog/browser-core'
 import { InForegroundPeriod } from '../rawRumEvent.types'
 
-// Arbitrary value to cap number of element (mostly for backend)
-export const MAX_NUMBER_OF_FOCUSED_TIME = 500
+// Arbitrary value to cap number of element mostly for backend & to save bandwidth
+export const MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS = 500
+// Arbitrary value to cap number of element mostly for memory consumption in the browser
+export const MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS = 2500
 // ignore duplicate focus & blur events if coming in the right after the previous one
 // chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1237904
 const MAX_TIME_TO_IGNORE_DUPLICATE = 10 as RelativeTime
 
 export interface ForegroundContexts {
-  getInForeground: (startTime: RelativeTime) => boolean | undefined
-  getInForegroundPeriods: (startTime: RelativeTime, duration: Duration) => InForegroundPeriod[] | undefined
+  isInForegroundAt: (startTime: RelativeTime) => boolean | undefined
+  selectInForegroundPeriodsFor: (startTime: RelativeTime, duration: Duration) => InForegroundPeriod[] | undefined
   stop: () => void
 }
 
@@ -34,8 +36,8 @@ let foregroundPeriods: ForegroundPeriod[] = []
 export function startForegroundContexts(configuration: Configuration): ForegroundContexts {
   if (!configuration.isEnabled('track-foreground')) {
     return {
-      getInForeground: () => undefined,
-      getInForegroundPeriods: () => undefined,
+      isInForegroundAt: () => undefined,
+      selectInForegroundPeriodsFor: () => undefined,
       stop: noop,
     }
   }
@@ -47,8 +49,8 @@ export function startForegroundContexts(configuration: Configuration): Foregroun
   const { stop: stopForegroundTracking } = trackFocus(addNewForegroundPeriod)
   const { stop: stopBlurTracking } = trackBlur(closeForegroundPeriod)
   return {
-    getInForeground,
-    getInForegroundPeriods,
+    isInForegroundAt,
+    selectInForegroundPeriodsFor,
     stop: () => {
       foregroundPeriods = []
       stopForegroundTracking()
@@ -58,7 +60,7 @@ export function startForegroundContexts(configuration: Configuration): Foregroun
 }
 
 export function addNewForegroundPeriod() {
-  if (foregroundPeriods.length > MAX_NUMBER_OF_FOCUSED_TIME) {
+  if (foregroundPeriods.length > MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS) {
     addMonitoringMessage('Reached maximum of foreground time')
     return
   }
@@ -125,7 +127,7 @@ function trackBlur(onBlurChange: () => void) {
   })
 }
 
-function getInForeground(startTime: RelativeTime): boolean {
+function isInForegroundAt(startTime: RelativeTime): boolean {
   for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
     const foregroundPeriod = foregroundPeriods[i]
     if (foregroundPeriod.end !== undefined && startTime > foregroundPeriod.end) {
@@ -141,12 +143,13 @@ function getInForeground(startTime: RelativeTime): boolean {
   return false
 }
 
-function getInForegroundPeriods(eventStartTime: RelativeTime, duration: Duration): InForegroundPeriod[] {
+function selectInForegroundPeriodsFor(eventStartTime: RelativeTime, duration: Duration): InForegroundPeriod[] {
   // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
   const eventEndTime = (eventStartTime + duration) as RelativeTime
   const filteredForegroundPeriods: InForegroundPeriod[] = []
 
-  for (let i = foregroundPeriods.length - 1; i >= 0; i--) {
+  const earliestIndex = Math.max(0, foregroundPeriods.length - MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS)
+  for (let i = foregroundPeriods.length - 1; i >= earliestIndex; i--) {
     const foregroundPeriod = foregroundPeriods[i]
     if (foregroundPeriod.end !== undefined && eventStartTime > foregroundPeriod.end) {
       // event starts after the end of the current focus period

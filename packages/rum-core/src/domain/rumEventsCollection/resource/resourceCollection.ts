@@ -5,7 +5,6 @@ import {
   ResourceType,
   toServerDuration,
   relativeToClocks,
-  TimeStamp,
 } from '@datadog/browser-core'
 import {
   RumPerformanceEntry,
@@ -20,7 +19,6 @@ import {
 import { RawRumResourceEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { RequestCompleteEvent } from '../../requestCollection'
-import { getSleepDuration } from '../../trackSleep'
 import { matchRequestTiming } from './matchRequestTiming'
 import {
   computePerformanceResourceDetails,
@@ -65,8 +63,7 @@ function processRequest(request: RequestCompleteEvent): RawRumEventCollectedData
       type: RumEventType.RESOURCE as const,
     },
     tracingInfo,
-    correspondingTimingOverrides,
-    computeSleepInfo(startClocks.timeStamp)
+    correspondingTimingOverrides
   )
   return {
     startTime: startClocks.relative,
@@ -99,8 +96,7 @@ function processResourceEntry(entry: RumPerformanceResourceTiming): RawRumEventC
       type: RumEventType.RESOURCE as const,
     },
     tracingInfo,
-    entryMetrics,
-    computeSleepInfo(startClocks.timeStamp)
+    entryMetrics
   )
   return {
     startTime: startClocks.relative,
@@ -136,17 +132,6 @@ function computeRequestTracingInfo(request: RequestCompleteEvent) {
 
 function computeEntryTracingInfo(entry: RumPerformanceResourceTiming) {
   return entry.traceId ? { _dd: { trace_id: entry.traceId } } : undefined
-}
-
-function computeSleepInfo(date: TimeStamp) {
-  const sleepDuration = getSleepDuration(date)
-  if (sleepDuration > 0) {
-    return {
-      _dd: {
-        sleep_duration: sleepDuration,
-      },
-    }
-  }
 }
 
 function toPerformanceEntryRepresentation(entry: RumPerformanceEntry): PerformanceEntryRepresentation {
