@@ -3,7 +3,13 @@ import { SegmentMeta } from '../types'
 
 export const SEND_BEACON_BYTE_LENGTH_LIMIT = 60_000
 
-export function send(endpointUrl: string, data: Uint8Array, meta: SegmentMeta, rawSegmentSize: number): void {
+export function send(
+  endpointUrl: string,
+  data: Uint8Array,
+  meta: SegmentMeta,
+  rawSegmentSize: number,
+  flushReason?: string
+): void {
   const formData = new FormData()
 
   formData.set(
@@ -18,7 +24,7 @@ export function send(endpointUrl: string, data: Uint8Array, meta: SegmentMeta, r
   formData.set('raw_segment_size', rawSegmentSize.toString())
 
   const request = new HttpRequest(endpointUrl, SEND_BEACON_BYTE_LENGTH_LIMIT)
-  request.send(formData, data.byteLength)
+  request.send(formData, data.byteLength, flushReason)
 }
 
 export function toFormEntries(input: object, onEntry: (key: string, value: string) => void, prefix = '') {
