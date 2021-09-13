@@ -5,6 +5,7 @@ import {
   SESSION_TIME_OUT_DELAY,
   relativeNow,
   ClocksState,
+  relativeToClocks,
 } from '@datadog/browser-core'
 import { ActionContext, ViewContext, ViewUrlContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -23,6 +24,11 @@ interface PreviousContext<T> {
   context: T
 }
 
+interface CurrentViewUrl {
+  startClocks: ClocksState
+  url: string
+}
+
 export interface ParentContexts {
   findAction: (startTime?: RelativeTime) => ActionContext | undefined
   findView: (startTime?: RelativeTime) => ViewContext | undefined
@@ -30,19 +36,21 @@ export interface ParentContexts {
   stop: () => void
 }
 
-export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
+export function startParentContexts(lifeCycle: LifeCycle, session: RumSession, location: Location): ParentContexts {
   let currentView: ViewCreatedEvent | undefined
-  let currentViewUrl: string | undefined
   let currentAction: AutoActionCreatedEvent | undefined
   let currentSessionId: string | undefined
+  let currentViewUrl: CurrentViewUrl = {
+    startClocks: relativeToClocks(relativeNow()),
+    url: location.href,
+  }
 
   let previousViews: Array<PreviousContext<ViewContext>> = []
-  let previousViewUrls: Array<PreviousContext<ViewUrlContext>> = []
   let previousActions: Array<PreviousContext<ActionContext>> = []
+  let previousViewUrls: Array<PreviousContext<ViewUrlContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     currentView = currentContext
-    currentViewUrl = currentView.location.href
     currentSessionId = session.getId()
   })
 
@@ -66,7 +74,17 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   })
 
   const { stop: stopLocationTracking } = trackLocationChanges(() => {
-    currentViewUrl = location.href
+    if (currentViewUrl) {
+      previousViewUrls.unshift({
+        startTime: currentViewUrl.startClocks.relative,
+        endTime: relativeNow(),
+        context: buildCurrentViewUrlContext(),
+      })
+    }
+    currentViewUrl = {
+      startClocks: relativeToClocks(relativeNow()),
+      url: location.href,
+    }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
@@ -99,6 +117,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   const clearOldContextsInterval = setInterval(
     monitor(() => {
       clearOldContexts(previousViews, VIEW_CONTEXT_TIME_OUT_DELAY)
+      clearOldContexts(previousViewUrls, VIEW_CONTEXT_TIME_OUT_DELAY)
       clearOldContexts(previousActions, ACTION_CONTEXT_TIME_OUT_DELAY)
     }),
     CLEAR_OLD_CONTEXTS_INTERVAL
@@ -129,6 +148,10 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
     return { action: { id: currentAction!.id } }
   }
 
+  function buildCurrentViewUrlContext() {
+    return { view: { url: currentViewUrl.url } }
+  }
+
   function findContext<T>(
     buildContext: () => T,
     previousContexts: Array<PreviousContext<T>>,
@@ -155,6 +178,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   return {
     findAction: (startTime) => findContext(buildCurrentActionContext, previousActions, currentAction, startTime),
     findView: (startTime) => findContext(buildCurrentViewContext, previousViews, currentView, startTime),
+    findViewUrl: (startTime) => findContext(buildCurrentViewUrlContext, previousViewUrls, currentViewUrl, startTime),
     stop: () => {
       clearInterval(clearOldContextsInterval)
     },

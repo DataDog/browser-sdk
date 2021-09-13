@@ -40,8 +40,8 @@ describe('parentContexts', () => {
     setupBuilder = setup()
       .withFakeLocation('http://fake-url.com')
       .withSession(session)
-      .beforeBuild(({ lifeCycle, session }) => {
-        parentContexts = startParentContexts(lifeCycle, session)
+      .beforeBuild(({ lifeCycle, session, location }) => {
+        parentContexts = startParentContexts(lifeCycle, session, location)
         return parentContexts
       })
   })
@@ -118,17 +118,6 @@ describe('parentContexts', () => {
       expect(parentContexts.findView()!.view.id).toEqual(newViewId)
     })
 
-    it('should return the current url with the current view', () => {
-      const { lifeCycle, fakeLocation } = setupBuilder.build()
-
-      lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
-      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
-
-      history.pushState({}, '', '/foo')
-
-      expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
-    })
-
     it('should return the view name with the view', () => {
       const { lifeCycle } = setupBuilder.build()
 
@@ -147,6 +136,39 @@ describe('parentContexts', () => {
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ id: 'fake 2' }))
       expect(parentContexts.findView()!.session.id).toBe('other-session')
+    })
+  })
+
+  describe('findViewUrl', () => {
+    it('should be initialized with the location.href', () => {
+      setupBuilder.build()
+
+      expect(parentContexts.findViewUrl()).toBeDefined()
+      expect(parentContexts.findViewUrl()!.view.url).toBe('http://fake-url.com/')
+    })
+
+    it('should return the current view url context when there is no start time', () => {
+      setupBuilder.build()
+      expect(parentContexts.findViewUrl()!.view.url).toEqual('http://fake-url.com/')
+
+      history.pushState({}, '', '/foo')
+      expect(parentContexts.findViewUrl()!.view.url).toEqual('http://fake-url.com/foo')
+    })
+
+    it('should return the view url context corresponding to startTime', () => {
+      const { clock } = setupBuilder.withFakeClock().build()
+
+      clock.tick(100)
+      history.pushState({}, '', '/foo')
+      clock.tick(100)
+      history.pushState({}, '', '/foo?a=b')
+      clock.tick(100)
+      history.pushState({}, '', '/bar')
+
+      expect(parentContexts.findViewUrl(50 as RelativeTime)!.view.url).toEqual('http://fake-url.com/')
+      expect(parentContexts.findViewUrl(120 as RelativeTime)!.view.url).toEqual('http://fake-url.com/foo')
+      expect(parentContexts.findViewUrl(240 as RelativeTime)!.view.url).toEqual('http://fake-url.com/foo?a=b')
+      expect(parentContexts.findViewUrl(330 as RelativeTime)!.view.url).toEqual('http://fake-url.com/bar')
     })
   })
 
