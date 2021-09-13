@@ -9,9 +9,6 @@ import {
   ResourceType,
   ServerDuration,
   toServerDuration,
-  ONE_DAY,
-  relativeNow,
-  timeStampNow,
 } from '@datadog/browser-core'
 import { RumPerformanceResourceTiming } from '../../../browser/performanceCollection'
 
@@ -83,20 +80,6 @@ export function computePerformanceResourceDuration(entry: RumPerformanceResource
   // Safari duration is always 0 on timings blocked by cross origin policies.
   if (duration === 0 && startTime < responseEnd) {
     return toServerDuration(elapsed(startTime, responseEnd))
-  }
-
-  if (duration > ONE_DAY) {
-    addMonitoringMessage('resource duration > 1 day', {
-      debug: {
-        type: entry.initiatorType,
-        name: entry.name,
-        startTime: Math.round(startTime),
-        responseEnd: Math.round(responseEnd),
-        duration: Math.round(duration),
-        relativeNow: Math.round(relativeNow()),
-        timeStampNow: timeStampNow(),
-      },
-    })
   }
 
   return toServerDuration(duration)

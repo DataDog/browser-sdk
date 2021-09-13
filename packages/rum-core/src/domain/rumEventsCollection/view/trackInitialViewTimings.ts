@@ -5,9 +5,6 @@ import {
   elapsed,
   EventEmitter,
   RelativeTime,
-  ONE_DAY,
-  addMonitoringMessage,
-  relativeNow,
   timeStampNow,
   TimeStamp,
 } from '@datadog/browser-core'
@@ -74,7 +71,6 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
 }
 
 export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: RelativeTime) => void) {
-  let fcpCount = 0
   const firstHidden = trackFirstHidden()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (
@@ -82,17 +78,6 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
       entry.name === 'first-contentful-paint' &&
       entry.startTime < firstHidden.timeStamp
     ) {
-      fcpCount += 1
-      if (entry.startTime > ONE_DAY) {
-        addMonitoringMessage('FCP > 1 day', {
-          debug: {
-            fcp: Math.round(entry.startTime),
-            relativeNow: Math.round(relativeNow()),
-            timeStampNow: timeStampNow(),
-            fcpCount,
-          },
-        })
-      }
       callback(entry.startTime)
     }
   })
@@ -136,16 +121,6 @@ export function trackLargestContentfulPaint(
         entry.startTime < firstHidden.timeStamp
       ) {
         lcpSizes.push({ timeStamp: timeStampNow(), startTime: entry.startTime, size: entry.size })
-        if (entry.startTime > ONE_DAY) {
-          addMonitoringMessage('LCP > 1 day', {
-            debug: {
-              lcp: Math.round(entry.startTime),
-              relativeNow: Math.round(relativeNow()),
-              timeStampNow: timeStampNow(),
-              lcpSizes,
-            },
-          })
-        }
         callback(entry.startTime)
       }
     }
