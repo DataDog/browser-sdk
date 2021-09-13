@@ -16,6 +16,11 @@
 
 ---
 
+## v3.4.1
+
+- 🔊 [RUMF-976] add info to monitor failing xhr fallback ([#1035](https://github.com/DataDog/browser-sdk/pull/1035))
+- 🐛 MutationObserver bug fix for privacy level ([#1038](https://github.com/DataDog/browser-sdk/pull/1038))
+
 ## v3.4.0
 
 - ForegroundContext: Remove monitoring & ignore untrusted events ([#1029](https://github.com/DataDog/browser-sdk/pull/1029))
