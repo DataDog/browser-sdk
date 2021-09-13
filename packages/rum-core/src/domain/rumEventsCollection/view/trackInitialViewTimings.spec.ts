@@ -1,4 +1,4 @@
-import { DOM_EVENT, Duration, RelativeTime } from '@datadog/browser-core'
+import { DOM_EVENT, Duration, ONE_MINUTE, RelativeTime } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
@@ -136,6 +136,16 @@ describe('trackFirstContentfulPaint', () => {
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
     expect(fcpCallback).not.toHaveBeenCalled()
   })
+
+  it('should not be present if it happens after 10 minutes', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+      ...FAKE_PAINT_ENTRY,
+      startTime: (10 * ONE_MINUTE) as RelativeTime,
+    })
+    expect(fcpCallback).not.toHaveBeenCalled()
+  })
 })
 
 describe('largestContentfulPaint', () => {
@@ -179,6 +189,16 @@ describe('largestContentfulPaint', () => {
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY)
 
+    expect(lcpCallback).not.toHaveBeenCalled()
+  })
+
+  it('should not be present if it happens after 10 minutes', () => {
+    const { lifeCycle } = setupBuilder.build()
+
+    lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
+      ...FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
+      startTime: (10 * ONE_MINUTE) as RelativeTime,
+    })
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 })

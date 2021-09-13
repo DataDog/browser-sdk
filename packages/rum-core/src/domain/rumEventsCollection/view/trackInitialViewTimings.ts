@@ -7,6 +7,7 @@ import {
   RelativeTime,
   timeStampNow,
   TimeStamp,
+  ONE_MINUTE,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -76,7 +77,8 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
     if (
       entry.entryType === 'paint' &&
       entry.name === 'first-contentful-paint' &&
-      entry.startTime < firstHidden.timeStamp
+      entry.startTime < firstHidden.timeStamp &&
+      entry.startTime < 10 * ONE_MINUTE
     ) {
       callback(entry.startTime)
     }
@@ -118,7 +120,8 @@ export function trackLargestContentfulPaint(
       if (
         entry.entryType === 'largest-contentful-paint' &&
         entry.startTime < firstInteractionTimestamp &&
-        entry.startTime < firstHidden.timeStamp
+        entry.startTime < firstHidden.timeStamp &&
+        entry.startTime < 10 * ONE_MINUTE
       ) {
         lcpSizes.push({ timeStamp: timeStampNow(), startTime: entry.startTime, size: entry.size })
         callback(entry.startTime)
