@@ -47,7 +47,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession, l
 
   let previousViews: Array<PreviousContext<ViewContext>> = []
   let previousActions: Array<PreviousContext<ActionContext>> = []
-  let previousViewUrls: Array<PreviousContext<ViewUrlContext>> = []
+  const previousViewUrls: Array<PreviousContext<ViewUrlContext>> = []
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
     currentView = currentContext
@@ -181,6 +181,7 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession, l
     findViewUrl: (startTime) => findContext(buildCurrentViewUrlContext, previousViewUrls, currentViewUrl, startTime),
     stop: () => {
       clearInterval(clearOldContextsInterval)
+      stopLocationTracking()
     },
   }
 }
