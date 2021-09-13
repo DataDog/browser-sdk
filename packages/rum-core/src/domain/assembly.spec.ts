@@ -39,6 +39,11 @@ describe('rum assembly', () => {
             url: 'url',
           },
         }),
+        findViewUrl: () => ({
+          view: {
+            url: 'updated-url',
+          },
+        }),
       })
       .beforeBuild(({ applicationId, configuration, lifeCycle, session, parentContexts }) => {
         serverRumEvents = []
@@ -425,7 +430,7 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('view context', () => {
+  describe('view and view url contexts', () => {
     it('should be merged with event attributes', () => {
       const { lifeCycle } = setupBuilder.build()
       notifyRawRumEvent(lifeCycle, {
@@ -434,8 +439,17 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].view).toEqual({
         id: 'abcde',
         referrer: 'url',
-        url: 'url',
+        url: 'updated-url',
       })
+      expect(serverRumEvents[0].session.id).toBe('1234')
+    })
+
+    it('should noot update url of view events', () => {
+      const { lifeCycle } = setupBuilder.build()
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+      expect(serverRumEvents[0].view.url).toBe('url')
       expect(serverRumEvents[0].session.id).toBe('1234')
     })
   })

@@ -96,9 +96,13 @@ export function startRumAssembly(
           },
           synthetics: getSyntheticsContext(),
         }
-        const serverRumEvent = (needToAssembleWithAction(rawRumEvent)
+        let serverRumEvent = (needToAssembleWithAction(rawRumEvent)
           ? combine(rumContext, viewContext, actionContext, rawRumEvent)
           : combine(rumContext, viewContext, rawRumEvent)) as RumEvent & Context
+
+        if (rawRumEvent.type !== RumEventType.VIEW) {
+          serverRumEvent = combine(serverRumEvent, parentContexts.findViewUrl(startTime))
+        }
 
         serverRumEvent.context = combine(commonContext.context, customerContext)
 
