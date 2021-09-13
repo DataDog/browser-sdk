@@ -14,7 +14,7 @@ describe('error collection', () => {
         isEnabled: () => true,
       })
       .withForegroundContexts({
-        getInForeground: () => true,
+        isInForegroundAt: () => true,
       })
       .beforeBuild(({ lifeCycle, foregroundContexts }) => {
         ;({ addError } = doStartErrorCollection(lifeCycle, foregroundContexts))
