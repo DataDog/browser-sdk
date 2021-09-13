@@ -178,7 +178,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  let location = { ...initialLocation }
+  const location = { ...initialLocation }
 
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, { id, name, startClocks, location, referrer })
 
@@ -245,9 +245,6 @@ function newView(
     },
     addTiming(name: string, time: TimeStamp) {
       customTimings[sanitizeTiming(name)] = elapsed(startClocks.timeStamp, time)
-    },
-    updateLocation(newLocation: Location) {
-      location = { ...newLocation }
     },
     get url() {
       return location.href
