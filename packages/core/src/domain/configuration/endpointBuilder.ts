@@ -35,11 +35,7 @@ const INTAKE_V1_ALLOWED_SITES = [INTAKE_SITE_US, INTAKE_SITE_US3, INTAKE_SITE_EU
 
 type IntakeType = keyof typeof ENDPOINTS
 
-export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
-  buildEnv: BuildEnv,
-  isIntakeV2Enabled?: boolean
-) {
+export function createEndpointBuilder(initConfiguration: InitConfiguration, buildEnv: BuildEnv) {
   const sdkVersion = buildEnv.sdkVersion
   const {
     site = INTAKE_SITE_US,
@@ -108,10 +104,7 @@ export function createEndpointBuilder(
   }
 
   function shouldUseIntakeV2(endpointType?: EndpointType): boolean {
-    return (
-      !!isIntakeV2Enabled &&
-      (intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, site) || endpointType === 'sessionReplay')
-    )
+    return intakeApiVersion === 2 || !includes(INTAKE_V1_ALLOWED_SITES, site) || endpointType === 'sessionReplay'
   }
 
   function shouldUseAlternateDomain(endpointType?: EndpointType): boolean {
