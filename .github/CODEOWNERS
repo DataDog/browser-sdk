@@ -2,3 +2,6 @@
 
 # Docs
 *README.md    @Datadog/rum-browser @DataDog/documentation
+
+# Replay
+packages/rum  @Datadog/rum-browser @DataDog/rum-session-replay
