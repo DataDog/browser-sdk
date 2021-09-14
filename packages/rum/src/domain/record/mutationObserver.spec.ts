@@ -8,7 +8,7 @@ import {
   PRIVACY_ATTR_VALUE_INPUT_IGNORED,
   PRIVACY_ATTR_VALUE_INPUT_MASKED,
   PRIVACY_ATTR_VALUE_MASK,
-  PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+  PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '../../constants'
 import { serializeDocument } from './serialize'
 import { sortAddedAndMovedNodes, startMutationObserver, MutationController } from './mutationObserver'
@@ -812,10 +812,10 @@ describe('startMutationCollection', () => {
         expectedAttributesMutation: { value: '***' },
       },
       {
-        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
         privacyAttributeOn: 'input',
         expectedSerializedAttributes: {
-          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+          [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
           value: '***',
         },
         expectedAttributesMutation: { value: '***' },
@@ -848,7 +848,7 @@ describe('startMutationCollection', () => {
         expectedAttributesMutation: { value: '***' },
       },
       {
-        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_FORMS_ONLY,
+        privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
         privacyAttributeOn: 'ancestor',
         expectedSerializedAttributes: { value: '***' },
         expectedAttributesMutation: { value: '***' },

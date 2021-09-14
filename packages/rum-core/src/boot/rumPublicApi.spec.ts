@@ -671,7 +671,7 @@ describe('rum public api', () => {
     it('recording is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK_FORMS_ONLY
+        DefaultPrivacyLevel.MASK_USER_INPUT
       )
     })
 

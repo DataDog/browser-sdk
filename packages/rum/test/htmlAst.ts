@@ -409,7 +409,7 @@ export const AST_MASK = {
   ],
 }
 
-export const AST_MASK_FORMS_ONLY = {
+export const AST_MASK_USER_INPUT = {
   type: 0,
   childNodes: [
     {
@@ -422,7 +422,7 @@ export const AST_MASK_FORMS_ONLY = {
       type: 2,
       tagName: 'html',
       attributes: {
-        'data-dd-privacy': 'mask-forms-only',
+        'data-dd-privacy': 'mask-user-input',
       },
       childNodes: [
         {

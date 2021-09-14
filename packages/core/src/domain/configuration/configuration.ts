@@ -7,7 +7,7 @@ import { computeTransportConfiguration, TransportConfiguration } from './transpo
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
-  MASK_FORMS_ONLY: 'mask-forms-only',
+  MASK_USER_INPUT: 'mask-user-input',
 } as const
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
@@ -20,7 +20,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_FORMS_ONLY as DefaultPrivacyLevel,
+  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
 
   /**
    * arbitrary value, byte precision not needed

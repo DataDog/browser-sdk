@@ -38,7 +38,7 @@ import { forEach } from './utils'
 type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
-  | typeof NodePrivacyLevel.MASK_FORMS_ONLY
+  | typeof NodePrivacyLevel.MASK_USER_INPUT
 
 export interface SerializeOptions {
   document: Document
