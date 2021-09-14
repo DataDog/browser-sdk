@@ -142,10 +142,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     configuration.actionNameAttribute = initConfiguration.actionNameAttribute
   }
 
-  if (
-    configuration.isEnabled('initial-privacy-level-option') &&
-    objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)
-  ) {
+  if (objectHasValue(InitialPrivacyLevel, initConfiguration.initialPrivacyLevel)) {
     configuration.initialPrivacyLevel = initConfiguration.initialPrivacyLevel
   }
 
