@@ -192,7 +192,7 @@ Initialization fails silently if Datadog's RUM is already initialized on the pag
 `proxyUrl`
 : Optional<br/>
 **Type**: String<br/>
-Optional proxy URL (ex: www.proxy.com/path), see the full [proxy setup guide][7] for more information.
+Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][7] for more information.
 
 `allowedTracingOrigins`
 : Optional<br/>
