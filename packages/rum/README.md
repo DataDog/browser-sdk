@@ -219,16 +219,6 @@ Use a secure session cookie. This disables RUM events sent on insecure (non-HTTP
 **Default**:`false`<br/>
 Use a secure cross-site session cookie. This allows the RUM SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
 
-`useAlternateIntakeDomains`
-: Optional<br/>
-**Default**:`false`<br/>
-Use the new intake domains for sending RUM and Session Replay data. Make sure to update [CSP][11] headers before enabling.
-
-`intakeApiVersion`
-: Optional<br/>
-**Default**:`1`<br/>
-Set to `2` to use the new intake API for sending RUM and Session Replay data.
-
 #### Example
 
 Init must be called to start the tracking:
@@ -261,4 +251,3 @@ init(configuration: {
 [8]: https://github.com/DataDog/browser-sdk/blob/main/packages/rum/BROWSER_SUPPORT.md
 [9]: https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions#declaring-a-name-for-click-actions
 [10]: https://docs.datadoghq.com/real_user_monitoring/browser/modifying_data_and_context/?tab=npm#override-default-rum-view-names
-[11]: https://docs.datadoghq.com/real_user_monitoring/faq/content_security_policy/
