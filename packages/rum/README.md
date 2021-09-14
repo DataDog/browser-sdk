@@ -189,10 +189,10 @@ The percentage of sessions to track: `100` for all, `0` for none. Only tracked s
 **Default**: `false`<br/>
 Initialization fails silently if Datadog's RUM is already initialized on the page.
 
-`proxyHost`
+`proxyUrl`
 : Optional<br/>
 **Type**: String<br/>
-Optional proxy host (ex: www.proxy.com), see the full [proxy setup guide][7] for more information.
+Optional proxy URL (ex: https://www.proxy.com/path), see the full [proxy setup guide][7] for more information.
 
 `allowedTracingOrigins`
 : Optional<br/>
