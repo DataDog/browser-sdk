@@ -1,4 +1,4 @@
-import { HttpRequest, InitialPrivacyLevel } from '@datadog/browser-core'
+import { HttpRequest, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { inflate } from 'pako'
 import { createRumSessionMock, RumSessionMock } from '../../../rum-core/test/mockRumSession'
@@ -53,7 +53,7 @@ describe('startRecording', () => {
       })
       .withSession(session)
       .withConfiguration({
-        initialPrivacyLevel: InitialPrivacyLevel.ALLOW,
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
       .beforeBuild(({ lifeCycle, applicationId, configuration, parentContexts, session }) => {
         ;({ stop: stopRecording } = startRecording(lifeCycle, applicationId, configuration, session, parentContexts))

@@ -1,7 +1,7 @@
-import { InitialPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 export const NodePrivacyLevel = {
-  ...InitialPrivacyLevel,
+  ...DefaultPrivacyLevel,
   IGNORE: 'ignore',
   HIDDEN: 'hidden',
 } as const

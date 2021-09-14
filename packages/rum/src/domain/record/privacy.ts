@@ -32,10 +32,10 @@ const TEXT_MASKING_CHAR = 'x'
  *
  * derivePrivacyLevelGivenParent(getNodeSelfPrivacyLevel(node), parentNodePrivacyLevel)
  */
-export function getNodePrivacyLevel(node: Node, initialPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
+export function getNodePrivacyLevel(node: Node, defaultPrivacyLevel: NodePrivacyLevel): NodePrivacyLevel {
   const parentNodePrivacyLevel = node.parentNode
-    ? getNodePrivacyLevel(node.parentNode, initialPrivacyLevel)
-    : initialPrivacyLevel
+    ? getNodePrivacyLevel(node.parentNode, defaultPrivacyLevel)
+    : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
   return reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
 }

@@ -1,4 +1,4 @@
-import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, InitialPrivacyLevel } from '@datadog/browser-core'
+import { ONE_SECOND, RelativeTime, getTimeStamp, display, TimeStamp, DefaultPrivacyLevel } from '@datadog/browser-core'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
 import { ActionType } from '../rawRumEvent.types'
 import { makeRumPublicApi, RumPublicApi, RumInitConfiguration, StartRum, RecorderApi } from './rumPublicApi'
@@ -668,19 +668,19 @@ describe('rum public api', () => {
       setupBuilder.cleanup()
     })
 
-    it('recording is started with the default initialPrivacyLevel', () => {
+    it('recording is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(
-        InitialPrivacyLevel.MASK_FORMS_ONLY
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].defaultPrivacyLevel).toBe(
+        DefaultPrivacyLevel.MASK_FORMS_ONLY
       )
     })
 
-    it('recording is started with the configured initialPrivacyLevel', () => {
+    it('recording is started with the configured defaultPrivacyLevel', () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
-        initialPrivacyLevel: InitialPrivacyLevel.MASK,
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
       })
-      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].initialPrivacyLevel).toBe(InitialPrivacyLevel.MASK)
+      expect(recorderApiOnRumStartSpy.calls.mostRecent().args[2].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
   })
 })
