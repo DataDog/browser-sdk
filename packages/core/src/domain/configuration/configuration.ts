@@ -20,7 +20,7 @@ export const DEFAULT_CONFIGURATION = {
   silentMultipleInit: false,
   trackInteractions: false,
   trackViewsManually: false,
-  initialPrivacyLevel: InitialPrivacyLevel.ALLOW as InitialPrivacyLevel,
+  initialPrivacyLevel: InitialPrivacyLevel.MASK_FORMS_ONLY as InitialPrivacyLevel,
 
   /**
    * arbitrary value, byte precision not needed
