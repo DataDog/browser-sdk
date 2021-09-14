@@ -3,8 +3,8 @@ import { formatProfilingResults } from './format'
 import { startProfiling } from './profilers/startProfiling'
 import { ProfilingResults, ProfilingOptions } from './types'
 import { startProxy } from './proxy'
-import { runWikipediaScenario, wikipediaScenarioDescription } from './scenarios/runWikipediaScenario'
-import { runTwitterScenario, twitterScenarioDescription } from './scenarios/runTwitterScenario'
+import { wikipediaScenario } from './scenarios/wikipediaScenario'
+import { twitterScenario } from './scenarios/twitterScenario'
 
 main().catch((error) => {
   console.error(error)
@@ -34,13 +34,10 @@ Options:
     proxy,
     startRecording,
   }
-  const scenarios: Array<[string, (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>]> = [
-    [wikipediaScenarioDescription, runWikipediaScenario],
-    [twitterScenarioDescription, runTwitterScenario],
-  ]
+  const scenarios = [twitterScenario, wikipediaScenario]
 
-  for (const [description, runScenario] of scenarios) {
-    const results = await profileScenario(options, runScenario)
+  for (const { description, run } of scenarios) {
+    const results = await profileScenario(options, run)
     console.log(`${description}\n\n${formatProfilingResults(results)}`)
   }
 
