@@ -1,4 +1,4 @@
-import { DOM_EVENT, Duration, ONE_MINUTE, RelativeTime } from '@datadog/browser-core'
+import { DOM_EVENT, Duration, RelativeTime } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '../../../../../core/test/specHelper'
 import { setup, TestSetupBuilder } from '../../../../test/specHelper'
 import {
@@ -11,11 +11,12 @@ import { LifeCycleEventType } from '../../lifeCycle'
 import { resetFirstHidden } from './trackFirstHidden'
 import {
   Timings,
-  trackFirstContentfulPaint,
+  trackFirstContentfulPaintTiming,
   trackFirstInputTimings,
-  trackLargestContentfulPaint,
+  trackLargestContentfulPaintTiming,
   trackNavigationTimings,
   trackInitialViewTimings,
+  TIMING_MAXIMUM_DELAY,
 } from './trackInitialViewTimings'
 
 const FAKE_PAINT_ENTRY: RumPerformancePaintTiming = {
@@ -105,13 +106,13 @@ describe('trackNavigationTimings', () => {
   })
 })
 
-describe('trackFirstContentfulPaint', () => {
+describe('trackFirstContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
 
   beforeEach(() => {
     fcpCallback = jasmine.createSpy()
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstContentfulPaint(lifeCycle, fcpCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackFirstContentfulPaintTiming(lifeCycle, fcpCallback))
     resetFirstHidden()
   })
 
@@ -130,25 +131,25 @@ describe('trackFirstContentfulPaint', () => {
     expect(fcpCallback).toHaveBeenCalledWith(123 as RelativeTime)
   })
 
-  it('should not set the first contentful paint if the page is hidden', () => {
+  it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, FAKE_PAINT_ENTRY)
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 
-  it('should not be present if it happens after 10 minutes', () => {
+  it('should be discarded if it is reported after a long time', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       ...FAKE_PAINT_ENTRY,
-      startTime: (10 * ONE_MINUTE) as RelativeTime,
+      startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
     })
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 })
 
-describe('largestContentfulPaint', () => {
+describe('largestContentfulPaintTiming', () => {
   let setupBuilder: TestSetupBuilder
   let lcpCallback: jasmine.Spy<(value: RelativeTime) => void>
   let emitter: Element
@@ -156,7 +157,9 @@ describe('largestContentfulPaint', () => {
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
     emitter = document.createElement('div')
-    setupBuilder = setup().beforeBuild(({ lifeCycle }) => trackLargestContentfulPaint(lifeCycle, emitter, lcpCallback))
+    setupBuilder = setup().beforeBuild(({ lifeCycle }) =>
+      trackLargestContentfulPaintTiming(lifeCycle, emitter, lcpCallback)
+    )
     resetFirstHidden()
   })
 
@@ -174,7 +177,7 @@ describe('largestContentfulPaint', () => {
     expect(lcpCallback).toHaveBeenCalledWith(789 as RelativeTime)
   })
 
-  it('should not be present if it happens after a user interaction', () => {
+  it('should be discarded if it is reported after a user interaction', () => {
     const { lifeCycle } = setupBuilder.build()
 
     emitter.dispatchEvent(createNewEvent(DOM_EVENT.KEY_DOWN, { timeStamp: 1 }))
@@ -183,7 +186,7 @@ describe('largestContentfulPaint', () => {
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
-  it('should not be present if the page is hidden', () => {
+  it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
@@ -192,12 +195,12 @@ describe('largestContentfulPaint', () => {
     expect(lcpCallback).not.toHaveBeenCalled()
   })
 
-  it('should not be present if it happens after 10 minutes', () => {
+  it('should be discarded if it is reported after a long time', () => {
     const { lifeCycle } = setupBuilder.build()
 
     lifeCycle.notify(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, {
       ...FAKE_LARGEST_CONTENTFUL_PAINT_ENTRY,
-      startTime: (10 * ONE_MINUTE) as RelativeTime,
+      startTime: TIMING_MAXIMUM_DELAY as RelativeTime,
     })
     expect(lcpCallback).not.toHaveBeenCalled()
   })
@@ -229,7 +232,7 @@ describe('firstInputTimings', () => {
     expect(fitCallback).toHaveBeenCalledWith({ firstInputDelay: 100, firstInputTime: 1000 })
   })
 
-  it('should not be present if the page is hidden', () => {
+  it('should be discarded if the page is hidden', () => {
     setPageVisibility('hidden')
     const { lifeCycle } = setupBuilder.build()
 
