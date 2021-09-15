@@ -4,13 +4,13 @@ import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
-  CLEAR_OLD_CONTEXTS_INTERVAL,
   ParentContexts,
   startParentContexts,
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
+import { CLEAR_OLD_CONTEXTS_INTERVAL } from './contextHistory'
 
 function stubActionWithDuration(duration: number): AutoAction {
   const action: Partial<AutoAction> = { duration: duration as Duration }

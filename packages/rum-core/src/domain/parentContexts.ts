@@ -1,26 +1,13 @@
-import {
-  monitor,
-  ONE_MINUTE,
-  RelativeTime,
-  SESSION_TIME_OUT_DELAY,
-  relativeNow,
-  ClocksState,
-} from '@datadog/browser-core'
+import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY, relativeToClocks } from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
 import { RumSession } from './rumSession'
+import { ContextHistory } from './contextHistory'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
-export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
-
-interface PreviousContext<T> {
-  startTime: RelativeTime
-  endTime: RelativeTime
-  context: T
-}
 
 export interface ParentContexts {
   findAction: (startTime?: RelativeTime) => ActionContext | undefined
@@ -29,125 +16,86 @@ export interface ParentContexts {
 }
 
 export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): ParentContexts {
-  let currentView: ViewCreatedEvent | undefined
-  let currentAction: AutoActionCreatedEvent | undefined
-  let currentSessionId: string | undefined
+  const viewContextHistory = new ContextHistory<ViewCreatedEvent & { sessionId?: string }, ViewContext>(
+    buildCurrentViewContext,
+    VIEW_CONTEXT_TIME_OUT_DELAY
+  )
 
-  let previousViews: Array<PreviousContext<ViewContext>> = []
-  let previousActions: Array<PreviousContext<ActionContext>> = []
+  const actionContextHistory = new ContextHistory<AutoActionCreatedEvent, ActionContext>(
+    buildCurrentActionContext,
+    ACTION_CONTEXT_TIME_OUT_DELAY
+  )
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (currentContext) => {
-    currentView = currentContext
-    currentSessionId = session.getId()
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+    viewContextHistory.current = {
+      sessionId: session.getId(),
+      ...view,
+    }
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (currentContext) => {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     // A view can be updated after its end.  We have to ensure that the view being updated is the
     // most recently created.
-    if (currentView && currentView.id === currentContext.id) {
-      currentView = currentContext
+    if (viewContextHistory.current && viewContextHistory.current.id === view.id) {
+      viewContextHistory.current = {
+        sessionId: viewContextHistory.current.sessionId,
+        ...view,
+      }
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    if (currentView) {
-      previousViews.unshift({
-        endTime: endClocks.relative,
-        context: buildCurrentViewContext(),
-        startTime: currentView.startClocks.relative,
-      })
-      currentView = undefined
-    }
+    viewContextHistory.closeCurrent(endClocks)
+    viewContextHistory.current = undefined
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (currentContext) => {
-    currentAction = currentContext
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
+    actionContextHistory.current = action
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
-    if (currentAction) {
-      previousActions.unshift({
-        context: buildCurrentActionContext(),
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-        endTime: (currentAction.startClocks.relative + action.duration) as RelativeTime,
-        startTime: currentAction.startClocks.relative,
-      })
+    if (actionContextHistory.current) {
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+      const actionEndTime = (actionContextHistory.current.startClocks.relative + action.duration) as RelativeTime
+      actionContextHistory.closeCurrent(relativeToClocks(actionEndTime))
+      actionContextHistory.current = undefined
     }
-    currentAction = undefined
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
-    currentAction = undefined
+    actionContextHistory.current = undefined
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    previousViews = []
-    previousActions = []
-    currentView = undefined
-    currentAction = undefined
+    viewContextHistory.reset()
+    actionContextHistory.reset()
   })
 
-  const clearOldContextsInterval = setInterval(
-    monitor(() => {
-      clearOldContexts(previousViews, VIEW_CONTEXT_TIME_OUT_DELAY)
-      clearOldContexts(previousActions, ACTION_CONTEXT_TIME_OUT_DELAY)
-    }),
-    CLEAR_OLD_CONTEXTS_INTERVAL
-  )
-
-  function clearOldContexts(previousContexts: Array<PreviousContext<unknown>>, timeOutDelay: number) {
-    const oldTimeThreshold = relativeNow() - timeOutDelay
-    while (previousContexts.length > 0 && previousContexts[previousContexts.length - 1].startTime < oldTimeThreshold) {
-      previousContexts.pop()
-    }
-  }
-
-  function buildCurrentViewContext() {
+  function buildCurrentViewContext(current: ViewCreatedEvent & { sessionId?: string }) {
     return {
       session: {
-        id: currentSessionId,
+        id: current.sessionId,
       },
       view: {
-        id: currentView!.id,
-        name: currentView!.name,
-        referrer: currentView!.referrer,
-        url: currentView!.location.href,
+        id: current.id,
+        name: current.name,
+        referrer: current.referrer,
+        url: current.location.href,
       },
     }
   }
 
-  function buildCurrentActionContext() {
-    return { action: { id: currentAction!.id } }
-  }
-
-  function findContext<T>(
-    buildContext: () => T,
-    previousContexts: Array<PreviousContext<T>>,
-    currentContext?: { startClocks: ClocksState },
-    startTime?: RelativeTime
-  ) {
-    if (startTime === undefined) {
-      return currentContext ? buildContext() : undefined
-    }
-    if (currentContext && startTime >= currentContext.startClocks.relative) {
-      return buildContext()
-    }
-    for (const previousContext of previousContexts) {
-      if (startTime > previousContext.endTime) {
-        break
-      }
-      if (startTime >= previousContext.startTime) {
-        return previousContext.context
-      }
-    }
-    return undefined
+  function buildCurrentActionContext(current: AutoActionCreatedEvent) {
+    return { action: { id: current.id } }
   }
 
   return {
-    findAction: (startTime) => findContext(buildCurrentActionContext, previousActions, currentAction, startTime),
-    findView: (startTime) => findContext(buildCurrentViewContext, previousViews, currentView, startTime),
+    findAction: (startTime) =>
+      actionContextHistory.find(startTime !== undefined ? relativeToClocks(startTime) : undefined),
+    findView: (startTime) => viewContextHistory.find(startTime !== undefined ? relativeToClocks(startTime) : undefined),
     stop: () => {
-      clearInterval(clearOldContextsInterval)
+      viewContextHistory.stop()
+      actionContextHistory.stop()
     },
   }
 }
