@@ -47,6 +47,9 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
+// Maximum duration for automatic actions
+export const AUTO_ACTION_MAX_DURATION = 10_000
+
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
@@ -97,14 +100,19 @@ function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMM
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
 
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
-        if (params.hadActivity) {
-          pendingAutoAction.complete(params.endTime)
-        } else {
-          pendingAutoAction.discard()
-        }
-        currentAction = undefined
-      })
+      currentIdlePageActivitySubscription = waitIdlePageActivity(
+        lifeCycle,
+        domMutationObservable,
+        (params) => {
+          if (params.hadActivity) {
+            pendingAutoAction.complete(params.endTime)
+          } else {
+            pendingAutoAction.discard()
+          }
+          currentAction = undefined
+        },
+        AUTO_ACTION_MAX_DURATION
+      )
     },
     discardCurrent: () => {
       if (currentAction) {

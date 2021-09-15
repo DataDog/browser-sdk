@@ -6,8 +6,6 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
-// Maximum duration of the tracking process
-export const PAGE_ACTIVITY_MAX_DURATION = 10_000
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -18,7 +16,8 @@ export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeSta
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  completionCallback: (params: CompletionCallbackParameters) => void
+  completionCallback: (params: CompletionCallbackParameters) => void,
+  maxDuration?: number
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
     lifeCycle,
@@ -28,7 +27,8 @@ export function waitIdlePageActivity(
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
     stopPageActivitiesTracking,
-    completionCallback
+    completionCallback,
+    maxDuration
   )
 
   const stop = () => {
@@ -44,7 +44,7 @@ export function waitIdlePageActivity(
 //              .-------------------'--------------------.
 //              v                                        v
 //     [Wait for a page activity ]          [Wait for a maximum duration]
-//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//     [timeout: VALIDATION_DELAY]          [  timeout: maxDuration     ]
 //          /                  \                           |
 //         v                    v                          |
 //  [No page activity]   [Page activity]                   |
@@ -61,8 +61,8 @@ export function waitIdlePageActivity(
 //                                   v
 //                                 (End)
 //
-// Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
-// after MAX_DURATION, it has been validated.
+// Note: because maxDuration should be greater than VALIDATION_DELAY, we are sure that if the
+// process is still alive after maxDuration, it has been validated.
 export function trackPageActivities(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable
@@ -121,7 +121,8 @@ export function trackPageActivities(
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  completionCallback: (params: CompletionCallbackParameters) => void
+  completionCallback: (params: CompletionCallbackParameters) => void,
+  maxDuration?: number
 ): { stop: () => void } {
   let idleTimeoutId: number
   let hasCompleted = false
@@ -130,10 +131,12 @@ export function waitPageActivitiesCompletion(
     monitor(() => complete({ hadActivity: false })),
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
-  const maxDurationTimeoutId = setTimeout(
-    monitor(() => complete({ hadActivity: true, endTime: timeStampNow() })),
-    PAGE_ACTIVITY_MAX_DURATION
-  )
+  const maxDurationTimeoutId =
+    maxDuration &&
+    setTimeout(
+      monitor(() => complete({ hadActivity: true, endTime: timeStampNow() })),
+      maxDuration
+    )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
