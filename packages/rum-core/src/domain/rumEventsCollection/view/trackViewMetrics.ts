@@ -7,13 +7,13 @@ import {
   Configuration,
   RelativeTime,
   ONE_SECOND,
+  Observable,
 } from '@datadog/browser-core'
 import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 
 export interface ViewMetrics {
   eventCounts: EventCounts
@@ -23,7 +23,7 @@ export interface ViewMetrics {
 
 export function trackViewMetrics(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   scheduleViewUpdate: () => void,
   loadingType: ViewLoadingType,
   configuration: Configuration
@@ -107,7 +107,7 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
 
 function trackActivityLoadingTime(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   configuration: Configuration,
   callback: (loadingTimeValue: Duration | undefined) => void
 ) {

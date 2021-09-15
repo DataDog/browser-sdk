@@ -9,12 +9,12 @@ import {
   clocksNow,
   TimeStamp,
   Configuration,
+  Observable,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -49,7 +49,7 @@ export interface AutoActionCreatedEvent {
 
 export function trackActions(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   configuration: Configuration
 ) {
   const action = startActionManagement(lifeCycle, domMutationObservable, configuration)
@@ -86,7 +86,7 @@ export function trackActions(
 
 function startActionManagement(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   configuration: Configuration
 ) {
   let currentAction: PendingAutoAction | undefined
