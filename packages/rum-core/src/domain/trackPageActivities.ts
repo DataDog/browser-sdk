@@ -1,4 +1,4 @@
-import { Configuration, monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
 import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
@@ -18,7 +18,6 @@ export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeSta
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  configuration: Configuration,
   completionCallback: (params: CompletionCallbackParameters) => void
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
@@ -29,7 +28,6 @@ export function waitIdlePageActivity(
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
     stopPageActivitiesTracking,
-    configuration,
     completionCallback
   )
 
@@ -123,7 +121,6 @@ export function trackPageActivities(
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  configuration: Configuration,
   completionCallback: (params: CompletionCallbackParameters) => void
 ): { stop: () => void } {
   let idleTimeoutId: number
@@ -133,12 +130,10 @@ export function waitPageActivitiesCompletion(
     monitor(() => complete({ hadActivity: false })),
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
-  const maxDurationTimeoutId =
-    !configuration.isEnabled('eternal-page-activities') &&
-    setTimeout(
-      monitor(() => complete({ hadActivity: true, endTime: timeStampNow() })),
-      PAGE_ACTIVITY_MAX_DURATION
-    )
+  const maxDurationTimeoutId = setTimeout(
+    monitor(() => complete({ hadActivity: true, endTime: timeStampNow() })),
+    PAGE_ACTIVITY_MAX_DURATION
+  )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
     clearTimeout(validationTimeoutId)
@@ -156,9 +151,7 @@ export function waitPageActivitiesCompletion(
     hasCompleted = true
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    if (maxDurationTimeoutId) {
-      clearTimeout(maxDurationTimeoutId)
-    }
+    clearTimeout(maxDurationTimeoutId)
     stopPageActivitiesTracking()
   }
 

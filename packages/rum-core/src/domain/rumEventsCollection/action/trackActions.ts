@@ -50,9 +50,9 @@ export interface AutoActionCreatedEvent {
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  configuration: Configuration
+  { actionNameAttribute }: Configuration
 ) {
-  const action = startActionManagement(lifeCycle, domMutationObservable, configuration)
+  const action = startActionManagement(lifeCycle, domMutationObservable)
 
   // New views trigger the discard of the current pending Action
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
@@ -66,7 +66,7 @@ export function trackActions(
       if (!(event.target instanceof Element)) {
         return
       }
-      const name = getActionNameFromElement(event.target, configuration.actionNameAttribute)
+      const name = getActionNameFromElement(event.target, actionNameAttribute)
       if (!name) {
         return
       }
@@ -84,11 +84,7 @@ export function trackActions(
   }
 }
 
-function startActionManagement(
-  lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
-  configuration: Configuration
-) {
+function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
   let currentAction: PendingAutoAction | undefined
   let currentIdlePageActivitySubscription: { stop: () => void }
 
@@ -101,19 +97,14 @@ function startActionManagement(
       const pendingAutoAction = new PendingAutoAction(lifeCycle, type, name, event)
 
       currentAction = pendingAutoAction
-      currentIdlePageActivitySubscription = waitIdlePageActivity(
-        lifeCycle,
-        domMutationObservable,
-        configuration,
-        (params) => {
-          if (params.hadActivity) {
-            pendingAutoAction.complete(params.endTime)
-          } else {
-            pendingAutoAction.discard()
-          }
-          currentAction = undefined
+      currentIdlePageActivitySubscription = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
+        if (params.hadActivity) {
+          pendingAutoAction.complete(params.endTime)
+        } else {
+          pendingAutoAction.discard()
         }
-      )
+        currentAction = undefined
+      })
     },
     discardCurrent: () => {
       if (currentAction) {
