@@ -127,7 +127,7 @@ export function buildAssemble(
   configuration: Configuration,
   reportError: (error: RawError) => void
 ) {
-  const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsByMinute, reportError)
+  const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsPerMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined

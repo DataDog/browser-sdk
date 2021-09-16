@@ -597,7 +597,7 @@ describe('rum assembly', () => {
     })
 
     it('stops sending error events when reaching the limit', () => {
-      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsByMinute: 1 }).build()
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxErrorsPerMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
 
@@ -615,7 +615,7 @@ describe('rum assembly', () => {
     it('does not take discarded errors into account', () => {
       const { lifeCycle } = setupBuilder
         .withConfiguration({
-          maxErrorsByMinute: 1,
+          maxErrorsPerMinute: 1,
           beforeSend: (event) => {
             if (event.type === RumEventType.ERROR && (event as RumErrorEvent).error.message === 'discard me') {
               return false
@@ -633,7 +633,7 @@ describe('rum assembly', () => {
     })
 
     it('allows to send new errors after a minute', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsByMinute: 1 }).build()
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxErrorsPerMinute: 1 }).build()
       notifyRawRumErrorEvent(lifeCycle, 'foo')
       notifyRawRumErrorEvent(lifeCycle, 'bar')
       clock.tick(ONE_MINUTE)
@@ -664,7 +664,7 @@ describe('rum assembly', () => {
     })
 
     it('stops sending action events when reaching the limit', () => {
-      const { lifeCycle } = setupBuilder.withConfiguration({ maxActionsByMinute: 1 }).build()
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxActionsPerMinute: 1 }).build()
 
       notifyRumActionEvent(lifeCycle, 'foo')
       notifyRumActionEvent(lifeCycle, 'bar')
@@ -683,7 +683,7 @@ describe('rum assembly', () => {
     it('does not take discarded actions into account', () => {
       const { lifeCycle } = setupBuilder
         .withConfiguration({
-          maxErrorsByMinute: 1,
+          maxErrorsPerMinute: 1,
           beforeSend: (event) => {
             if (event.type === RumEventType.ACTION && (event as RumActionEvent).action.target?.name === 'discard me') {
               return false
@@ -701,7 +701,7 @@ describe('rum assembly', () => {
     })
 
     it('allows to send new actions after a minute', () => {
-      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxActionsByMinute: 1 }).build()
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxActionsPerMinute: 1 }).build()
       notifyRumActionEvent(lifeCycle, 'foo')
       notifyRumActionEvent(lifeCycle, 'bar')
       clock.tick(ONE_MINUTE)

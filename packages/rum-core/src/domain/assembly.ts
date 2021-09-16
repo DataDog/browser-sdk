@@ -72,8 +72,8 @@ export function startRumAssembly(
   }
 
   const eventRateLimiters = [
-    createEventRateLimiter(RumEventType.ERROR, configuration.maxErrorsByMinute, reportError),
-    createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsByMinute, reportError),
+    createEventRateLimiter(RumEventType.ERROR, configuration.maxErrorsPerMinute, reportError),
+    createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
   ]
 
   lifeCycle.subscribe(
