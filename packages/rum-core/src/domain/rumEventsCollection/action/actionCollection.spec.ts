@@ -15,7 +15,7 @@ describe('actionCollection', () => {
         isEnabled: () => true,
       })
       .withForegroundContexts({
-        getInForeground: () => true,
+        isInForegroundAt: () => true,
       })
       .beforeBuild(({ lifeCycle, configuration, domMutationObservable, foregroundContexts }) => {
         ;({ addAction } = startActionCollection(lifeCycle, domMutationObservable, configuration, foregroundContexts))

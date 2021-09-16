@@ -7,6 +7,7 @@ let nextId = 0
 
 export class Segment {
   public isFlushed = false
+  public flushReason?: string
 
   private id = nextId++
   private start: number
@@ -69,9 +70,14 @@ export class Segment {
     this.worker.postMessage({ data: `,${JSON.stringify(record)}`, id: this.id, action: 'write' })
   }
 
-  flush() {
-    this.worker.postMessage({ data: `],${JSON.stringify(this.meta).slice(1)}\n`, id: this.id, action: 'flush' })
+  flush(reason?: string) {
+    this.worker.postMessage({
+      data: `],${JSON.stringify(this.meta).slice(1)}\n`,
+      id: this.id,
+      action: 'flush',
+    })
     this.isFlushed = true
+    this.flushReason = reason
   }
 
   get meta(): SegmentMeta {

@@ -5,11 +5,11 @@ import {
   ServerDuration,
   toServerDuration,
   Configuration,
+  Observable,
 } from '@datadog/browser-core'
 import { RecorderApi } from '../../../boot/rumPublicApi'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ForegroundContexts } from '../../foregroundContexts'
 import { trackViews, ViewEvent } from './trackViews'
 
@@ -17,7 +17,7 @@ export function startViewCollection(
   lifeCycle: LifeCycle,
   configuration: Configuration,
   location: Location,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   foregroundContexts: ForegroundContexts,
   recorderApi: RecorderApi,
   initialViewName?: string
@@ -29,14 +29,7 @@ export function startViewCollection(
     )
   )
 
-  return trackViews(
-    location,
-    lifeCycle,
-    domMutationObservable,
-    !configuration.trackViewsManually,
-    configuration,
-    initialViewName
-  )
+  return trackViews(location, lifeCycle, domMutationObservable, !configuration.trackViewsManually, initialViewName)
 }
 
 function processViewUpdate(
@@ -79,7 +72,7 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      in_foreground_periods: foregroundContexts.getInForegroundPeriods(view.startClocks.relative, view.duration),
+      in_foreground_periods: foregroundContexts.selectInForegroundPeriodsFor(view.startClocks.relative, view.duration),
     },
     session: {
       has_replay: replayStats ? true : undefined,
