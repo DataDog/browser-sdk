@@ -1,12 +1,10 @@
-import { Configuration, monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
+import { monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
 export const PAGE_ACTIVITY_VALIDATION_DELAY = 100
 // Delay to wait after a page activity to end the tracking process
 export const PAGE_ACTIVITY_END_DELAY = 100
-// Maximum duration of the tracking process
-export const PAGE_ACTIVITY_MAX_DURATION = 10_000
 
 export interface PageActivityEvent {
   isBusy: boolean
@@ -17,8 +15,8 @@ export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeSta
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>,
-  configuration: Configuration,
-  completionCallback: (params: CompletionCallbackParameters) => void
+  completionCallback: (params: CompletionCallbackParameters) => void,
+  maxDuration?: number
 ) {
   const { observable: pageActivitiesObservable, stop: stopPageActivitiesTracking } = trackPageActivities(
     lifeCycle,
@@ -28,8 +26,8 @@ export function waitIdlePageActivity(
   const { stop: stopWaitPageActivitiesCompletion } = waitPageActivitiesCompletion(
     pageActivitiesObservable,
     stopPageActivitiesTracking,
-    configuration,
-    completionCallback
+    completionCallback,
+    maxDuration
   )
 
   const stop = () => {
@@ -45,7 +43,7 @@ export function waitIdlePageActivity(
 //              .-------------------'--------------------.
 //              v                                        v
 //     [Wait for a page activity ]          [Wait for a maximum duration]
-//     [timeout: VALIDATION_DELAY]          [  timeout: MAX_DURATION    ]
+//     [timeout: VALIDATION_DELAY]          [  timeout: maxDuration     ]
 //          /                  \                           |
 //         v                    v                          |
 //  [No page activity]   [Page activity]                   |
@@ -62,8 +60,8 @@ export function waitIdlePageActivity(
 //                                   v
 //                                 (End)
 //
-// Note: because MAX_DURATION > VALIDATION_DELAY, we are sure that if the process is still alive
-// after MAX_DURATION, it has been validated.
+// Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
+// process is still alive after maxDuration, it has been validated.
 export function trackPageActivities(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<void>
@@ -122,8 +120,8 @@ export function trackPageActivities(
 export function waitPageActivitiesCompletion(
   pageActivitiesObservable: Observable<PageActivityEvent>,
   stopPageActivitiesTracking: () => void,
-  configuration: Configuration,
-  completionCallback: (params: CompletionCallbackParameters) => void
+  completionCallback: (params: CompletionCallbackParameters) => void,
+  maxDuration?: number
 ): { stop: () => void } {
   let idleTimeoutId: number
   let hasCompleted = false
@@ -133,10 +131,10 @@ export function waitPageActivitiesCompletion(
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
   const maxDurationTimeoutId =
-    !configuration.isEnabled('eternal-page-activities') &&
+    maxDuration &&
     setTimeout(
       monitor(() => complete({ hadActivity: true, endTime: timeStampNow() })),
-      PAGE_ACTIVITY_MAX_DURATION
+      maxDuration
     )
 
   pageActivitiesObservable.subscribe(({ isBusy }) => {
@@ -155,9 +153,7 @@ export function waitPageActivitiesCompletion(
     hasCompleted = true
     clearTimeout(validationTimeoutId)
     clearTimeout(idleTimeoutId)
-    if (maxDurationTimeoutId) {
-      clearTimeout(maxDurationTimeoutId)
-    }
+    clearTimeout(maxDurationTimeoutId)
     stopPageActivitiesTracking()
   }
 
