@@ -71,10 +71,10 @@ export function startRumAssembly(
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
   }
 
-  const eventRateLimiters = [
-    createEventRateLimiter(RumEventType.ERROR, configuration.maxErrorsPerMinute, reportError),
-    createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
-  ]
+  const eventRateLimiters = {
+    [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, configuration.maxErrorsPerMinute, reportError),
+    [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
+  }
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -142,7 +142,7 @@ function shouldSend(
   event: RumEvent & Context,
   beforeSend: BeforeSendCallback | undefined,
   domainContext: RumEventDomainContext,
-  eventRateLimiters: EventRateLimiter[]
+  eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
     const result = limitModification(
@@ -158,12 +158,8 @@ function shouldSend(
     }
   }
 
-  const rateLimitReached = eventRateLimiters.find((l) => event.type === l.eventType)?.isLimitReached()
-  if (rateLimitReached) {
-    return false
-  }
-
-  return true
+  const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
+  return !rateLimitReached
 }
 
 function needToAssembleWithAction(

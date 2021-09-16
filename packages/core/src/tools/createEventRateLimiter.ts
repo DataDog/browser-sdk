@@ -7,26 +7,25 @@ export function createEventRateLimiter(
   limit: number,
   onLimitReached: (limitError: RawError) => void
 ) {
-  let actionCount = 0
-  let allowNextAction = false
+  let eventCount = 0
+  let allowNextEvent = false
 
   return {
-    eventType,
     isLimitReached() {
-      if (actionCount === 0) {
+      if (eventCount === 0) {
         setTimeout(() => {
-          actionCount = 0
+          eventCount = 0
         }, ONE_MINUTE)
       }
 
-      actionCount += 1
-      if (actionCount <= limit || allowNextAction) {
-        allowNextAction = false
+      eventCount += 1
+      if (eventCount <= limit || allowNextEvent) {
+        allowNextEvent = false
         return false
       }
 
-      if (actionCount === limit + 1) {
-        allowNextAction = true
+      if (eventCount === limit + 1) {
+        allowNextEvent = true
         try {
           onLimitReached({
             message: `Reached max number of ${eventType}s by minute: ${limit}`,
@@ -34,7 +33,7 @@ export function createEventRateLimiter(
             startClocks: clocksNow(),
           })
         } finally {
-          allowNextAction = false
+          allowNextEvent = false
         }
       }
 
