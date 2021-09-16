@@ -61,7 +61,7 @@ export function waitIdlePageActivity(
 //                                   v
 //                                 (End)
 //
-// Note: because maxDuration should be greater than VALIDATION_DELAY, we are sure that if the
+// Note: by assuming that maxDuration is greater than VALIDATION_DELAY, we are sure that if the
 // process is still alive after maxDuration, it has been validated.
 export function trackPageActivities(
   lifeCycle: LifeCycle,

@@ -9,6 +9,7 @@ import {
   clocksNow,
   TimeStamp,
   Configuration,
+  ONE_SECOND,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -48,7 +49,7 @@ export interface AutoActionCreatedEvent {
 }
 
 // Maximum duration for automatic actions
-export const AUTO_ACTION_MAX_DURATION = 10_000
+export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 
 export function trackActions(
   lifeCycle: LifeCycle,
