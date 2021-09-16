@@ -22,8 +22,8 @@ import { LogsEvent } from '../logsEvent.types'
 import { buildEnv } from './buildEnv'
 
 export interface LogsInitConfiguration extends InitConfiguration {
-  forwardErrorsToLogs?: boolean
-  beforeSend?: (event: LogsEvent) => void | boolean
+  forwardErrorsToLogs?: boolean | undefined
+  beforeSend?: ((event: LogsEvent) => void | boolean) | undefined
 }
 
 export function startLogs(
