@@ -2,8 +2,9 @@ import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
 import { buildLogs, buildNpm, buildRum, buildRumSlim } from '../sdkBuilds'
+import { Servers } from '../httpServers'
 
-export function createMockServerApp(intakeUrl: string, setup: string) {
+export function createMockServerApp(servers: Servers, setup: string) {
   const app = express()
 
   app.use(cors())
@@ -49,26 +50,30 @@ export function createMockServerApp(intakeUrl: string, setup: string) {
   app.get('/', (_req, res) => {
     res.header(
       'Content-Security-Policy',
-      `connect-src ${intakeUrl}; script-src 'self' 'unsafe-inline'; worker-src blob:;`
+      [
+        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
+        "script-src 'self' 'unsafe-inline'",
+        'worker-src blob:',
+      ].join(';')
     )
     res.send(setup)
     res.end()
   })
 
   app.get('/datadog-logs.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildLogs(intakeUrl))
+    res.header('content-type', 'application/javascript').send(await buildLogs(servers.intake.url))
   })
 
   app.get('/datadog-rum.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildRum(intakeUrl))
+    res.header('content-type', 'application/javascript').send(await buildRum(servers.intake.url))
   })
 
   app.get('/datadog-rum-slim.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildRumSlim(intakeUrl))
+    res.header('content-type', 'application/javascript').send(await buildRumSlim(servers.intake.url))
   })
 
   app.get('/app.js', async (_req, res) => {
-    res.header('content-type', 'application/javascript').send(await buildNpm(intakeUrl))
+    res.header('content-type', 'application/javascript').send(await buildNpm(servers.intake.url))
   })
 
   return app

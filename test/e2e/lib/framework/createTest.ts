@@ -141,8 +141,8 @@ function declareTest(title: string, setup: string, runner: TestRunner) {
 
     const testContext = createTestContext(servers)
 
-    servers.base.bindServerApp(createMockServerApp(servers.intake.url, setup))
-    servers.crossOrigin.bindServerApp(createMockServerApp(servers.intake.url, setup))
+    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
     servers.intake.bindServerApp(createIntakeServerApp(testContext.events))
 
     await setUpTest(testContext)
