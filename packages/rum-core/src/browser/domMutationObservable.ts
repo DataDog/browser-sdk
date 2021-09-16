@@ -2,28 +2,32 @@ import { monitor, Observable } from '@datadog/browser-core'
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
-  const observable = new Observable<void>({
-    onFirstSubscribe() {
-      if (!observer) {
-        return
-      }
-
-      observer.observe(document, {
-        attributes: true,
-        characterData: true,
-        childList: true,
-        subtree: true,
-      })
-    },
-    onLastUnsubscribe() {
-      if (!observer) {
-        return
-      }
-
-      observer.disconnect()
-    },
+  const observable = new Observable<void>(() => {
+    startDOMObservation()
+    return stopDOMObservation
   })
   const observer = MutationObserver ? new MutationObserver(monitor(() => observable.notify())) : undefined
+
+  function startDOMObservation() {
+    if (!observer) {
+      return
+    }
+
+    observer.observe(document, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true,
+    })
+  }
+
+  function stopDOMObservation() {
+    if (!observer) {
+      return
+    }
+
+    observer.disconnect()
+  }
 
   return observable
 }

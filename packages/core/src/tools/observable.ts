@@ -1,33 +1,22 @@
-import { noop } from './utils'
-
 export interface Subscription {
   unsubscribe: () => void
 }
 
-export interface ObservableParams {
-  onFirstSubscribe?: () => void
-  onLastUnsubscribe?: () => void
-}
-
 export class Observable<T> {
   private observers: Array<(data: T) => void> = []
-  private onFirstSubscribe: () => void
-  private onLastUnsubscribe: () => void
+  private onLastUnsubscribe?: () => void
 
-  constructor(params?: ObservableParams) {
-    this.onFirstSubscribe = params?.onFirstSubscribe || noop
-    this.onLastUnsubscribe = params?.onLastUnsubscribe || noop
-  }
+  constructor(private onFirstSubscribe?: () => (() => void) | void) {}
 
   subscribe(f: (data: T) => void): Subscription {
-    if (!this.observers.length) {
-      this.onFirstSubscribe()
+    if (!this.observers.length && this.onFirstSubscribe) {
+      this.onLastUnsubscribe = this.onFirstSubscribe() || undefined
     }
     this.observers.push(f)
     return {
       unsubscribe: () => {
         this.observers = this.observers.filter((other) => f !== other)
-        if (!this.observers.length) {
+        if (!this.observers.length && this.onLastUnsubscribe) {
           this.onLastUnsubscribe()
         }
       },

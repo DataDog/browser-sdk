@@ -43,7 +43,7 @@ describe('observable', () => {
   it('should execute onFirstSubscribe callback', () => {
     const onFirstSubscribe = jasmine.createSpy('callback')
     const otherSubscriber = jasmine.createSpy('sub2')
-    observable = new Observable({ onFirstSubscribe })
+    observable = new Observable(onFirstSubscribe)
     expect(onFirstSubscribe).not.toHaveBeenCalled()
 
     observable.subscribe(subscriber)
@@ -56,7 +56,7 @@ describe('observable', () => {
   it('should execute onLastUnsubscribe callback', () => {
     const onLastUnsubscribe = jasmine.createSpy('callback')
     const otherSubscriber = jasmine.createSpy('sub2')
-    observable = new Observable({ onLastUnsubscribe })
+    observable = new Observable(() => onLastUnsubscribe)
     const subscription = observable.subscribe(subscriber)
     const otherSubscription = observable.subscribe(otherSubscriber)
     expect(onLastUnsubscribe).not.toHaveBeenCalled()
