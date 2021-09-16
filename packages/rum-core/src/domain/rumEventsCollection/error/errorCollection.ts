@@ -91,7 +91,7 @@ function processError(
     },
     type: RumEventType.ERROR as const,
   }
-  const inForeground = foregroundContexts.getInForeground(error.startClocks.relative)
+  const inForeground = foregroundContexts.isInForegroundAt(error.startClocks.relative)
   if (inForeground !== undefined) {
     rawRumEvent.view = { in_foreground: inForeground }
   }

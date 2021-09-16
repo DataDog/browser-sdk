@@ -65,8 +65,8 @@ export function setup(): TestSetupBuilder {
   let fakeLocation: Partial<Location> = location
   let parentContexts: ParentContexts
   let foregroundContexts: ForegroundContexts = {
-    getInForeground: () => undefined,
-    getInForegroundPeriods: () => undefined,
+    isInForegroundAt: () => undefined,
+    selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
   const configuration: Partial<Configuration> = {
@@ -217,7 +217,6 @@ export function setupViewTest(
     lifeCycle,
     domMutationObservable,
     !configuration.trackViewsManually,
-    configuration,
     initialViewName
   )
   return {

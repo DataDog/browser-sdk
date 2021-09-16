@@ -9,6 +9,7 @@ import {
   clocksNow,
   TimeStamp,
   Configuration,
+  ONE_SECOND,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -47,12 +48,15 @@ export interface AutoActionCreatedEvent {
   startClocks: ClocksState
 }
 
+// Maximum duration for automatic actions
+export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
+
 export function trackActions(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  configuration: Configuration
+  { actionNameAttribute }: Configuration
 ) {
-  const action = startActionManagement(lifeCycle, domMutationObservable, configuration)
+  const action = startActionManagement(lifeCycle, domMutationObservable)
 
   // New views trigger the discard of the current pending Action
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
@@ -66,7 +70,7 @@ export function trackActions(
       if (!(event.target instanceof Element)) {
         return
       }
-      const name = getActionNameFromElement(event.target, configuration.actionNameAttribute)
+      const name = getActionNameFromElement(event.target, actionNameAttribute)
       if (!name) {
         return
       }
@@ -84,11 +88,7 @@ export function trackActions(
   }
 }
 
-function startActionManagement(
-  lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
-  configuration: Configuration
-) {
+function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
   let currentAction: PendingAutoAction | undefined
   let currentIdlePageActivitySubscription: { stop: () => void }
 
@@ -104,7 +104,6 @@ function startActionManagement(
       currentIdlePageActivitySubscription = waitIdlePageActivity(
         lifeCycle,
         domMutationObservable,
-        configuration,
         (params) => {
           if (params.hadActivity) {
             pendingAutoAction.complete(params.endTime)
@@ -112,7 +111,8 @@ function startActionManagement(
             pendingAutoAction.discard()
           }
           currentAction = undefined
-        }
+        },
+        AUTO_ACTION_MAX_DURATION
       )
     },
     discardCurrent: () => {
