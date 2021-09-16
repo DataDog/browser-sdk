@@ -47,6 +47,10 @@ export function createMockServerApp(intakeUrl: string, setup: string) {
   })
 
   app.get('/', (_req, res) => {
+    res.header(
+      'Content-Security-Policy',
+      `connect-src ${intakeUrl}; script-src 'self' 'unsafe-inline'; worker-src blob:;`
+    )
     res.send(setup)
     res.end()
   })
