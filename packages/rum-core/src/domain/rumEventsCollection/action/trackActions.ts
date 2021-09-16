@@ -10,12 +10,12 @@ import {
   TimeStamp,
   Configuration,
   ONE_SECOND,
+  Observable,
 } from '@datadog/browser-core'
 import { ActionType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { EventCounts, trackEventCounts } from '../../trackEventCounts'
 import { waitIdlePageActivity } from '../../trackPageActivities'
-import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { getActionNameFromElement } from './getActionNameFromElement'
 
 type AutoActionType = ActionType.CLICK
@@ -53,7 +53,7 @@ export const AUTO_ACTION_MAX_DURATION = 10 * ONE_SECOND
 
 export function trackActions(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   { actionNameAttribute }: Configuration
 ) {
   const action = startActionManagement(lifeCycle, domMutationObservable)
@@ -88,7 +88,7 @@ export function trackActions(
   }
 }
 
-function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: DOMMutationObservable) {
+function startActionManagement(lifeCycle: LifeCycle, domMutationObservable: Observable<void>) {
   let currentAction: PendingAutoAction | undefined
   let currentIdlePageActivitySubscription: { stop: () => void }
 

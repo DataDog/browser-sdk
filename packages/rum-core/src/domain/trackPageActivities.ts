@@ -1,5 +1,4 @@
 import { monitor, Observable, Subscription, TimeStamp, timeStampNow } from '@datadog/browser-core'
-import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 // Delay to wait for a page activity to validate the tracking process
@@ -15,7 +14,7 @@ export type CompletionCallbackParameters = { hadActivity: true; endTime: TimeSta
 
 export function waitIdlePageActivity(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable,
+  domMutationObservable: Observable<void>,
   completionCallback: (params: CompletionCallbackParameters) => void,
   maxDuration?: number
 ) {
@@ -65,7 +64,7 @@ export function waitIdlePageActivity(
 // process is still alive after maxDuration, it has been validated.
 export function trackPageActivities(
   lifeCycle: LifeCycle,
-  domMutationObservable: DOMMutationObservable
+  domMutationObservable: Observable<void>
 ): { observable: Observable<PageActivityEvent>; stop: () => void } {
   const observable = new Observable<PageActivityEvent>()
   const subscriptions: Subscription[] = []
