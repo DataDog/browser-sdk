@@ -267,3 +267,21 @@ function sanitizeTiming(name: string) {
   }
   return sanitized
 }
+
+function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
+  return (
+    currentLocation.pathname !== otherLocation.pathname ||
+    (!isHashAnAnchor(otherLocation.hash) &&
+      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
+  )
+}
+
+function isHashAnAnchor(hash: string) {
+  const correspondingId = hash.substr(1)
+  return !!document.getElementById(correspondingId)
+}
+
+function getPathFromHash(hash: string) {
+  const index = hash.indexOf('?')
+  return index < 0 ? hash : hash.slice(0, index)
+}

@@ -1,23 +1,34 @@
-import { monitor, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { monitor, addEventListener, DOM_EVENT, Observable } from '@datadog/browser-core'
 
-export function trackLocationChanges(onLocationChange: () => void) {
-  const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
-  const { stop: stopHashTracking } = trackHash(onLocationChange)
-
-  return {
-    stop: () => {
-      stopHistoryTracking()
-      stopHashTracking()
-    },
-  }
+export interface LocationChange {
+  oldLocation: Readonly<Location>
+  newLocation: Readonly<Location>
 }
 
-export function areDifferentLocation(currentLocation: Location, otherLocation: Location) {
-  return (
-    currentLocation.pathname !== otherLocation.pathname ||
-    (!isHashAnAnchor(otherLocation.hash) &&
-      getPathFromHash(otherLocation.hash) !== getPathFromHash(currentLocation.hash))
-  )
+export function createLocationChangeObservable(location: Location) {
+  let currentLocation = { ...location }
+  const observable = new Observable<LocationChange>(() => {
+    const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
+    const { stop: stopHashTracking } = trackHash(onLocationChange)
+    return () => {
+      stopHistoryTracking()
+      stopHashTracking()
+    }
+  })
+
+  function onLocationChange() {
+    if (currentLocation.href === location.href) {
+      return
+    }
+    const newLocation = { ...location }
+    observable.notify({
+      newLocation,
+      oldLocation: currentLocation,
+    })
+    currentLocation = newLocation
+  }
+
+  return observable
 }
 
 function trackHistory(onHistoryChange: () => void) {
@@ -44,14 +55,4 @@ function trackHistory(onHistoryChange: () => void) {
 
 function trackHash(onHashChange: () => void) {
   return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
-}
-
-function isHashAnAnchor(hash: string) {
-  const correspondingId = hash.substr(1)
-  return !!document.getElementById(correspondingId)
-}
-
-function getPathFromHash(hash: string) {
-  const index = hash.indexOf('?')
-  return index < 0 ? hash : hash.slice(0, index)
 }

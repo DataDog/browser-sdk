@@ -1,6 +1,5 @@
 import {
   assign,
-  buildUrl,
   combine,
   Configuration,
   DEFAULT_CONFIGURATION,
@@ -8,7 +7,7 @@ import {
   TimeStamp,
   noop,
 } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, mockClock, Clock } from '../../core/test/specHelper'
+import { SPEC_ENDPOINTS, mockClock, Clock, mockLocation } from '../../core/test/specHelper'
 import { RecorderApi } from '../src/boot/rumPublicApi'
 import { ForegroundContexts } from '../src/domain/foregroundContexts'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../src/domain/lifeCycle'
@@ -84,20 +83,11 @@ export function setup(): TestSetupBuilder {
 
   const setupBuilder = {
     withFakeLocation(initialUrl: string) {
-      fakeLocation = buildLocation(initialUrl, location.href)
-      spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
-        assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
-      })
-
-      function hashchangeCallBack() {
-        fakeLocation.hash = window.location.hash
-      }
-
-      window.addEventListener('hashchange', hashchangeCallBack)
+      let cleanupLocation: () => void
+      ;({ location: fakeLocation, cleanup: cleanupLocation } = mockLocation(initialUrl))
 
       cleanupTasks.push(() => {
-        window.removeEventListener('hashchange', hashchangeCallBack)
-        window.location.hash = ''
+        cleanupLocation()
       })
 
       return setupBuilder
@@ -159,16 +149,6 @@ export function setup(): TestSetupBuilder {
     },
   }
   return setupBuilder
-}
-
-function buildLocation(url: string, base?: string) {
-  const urlObject = buildUrl(url, base)
-  return {
-    hash: urlObject.hash,
-    href: urlObject.href,
-    pathname: urlObject.pathname,
-    search: urlObject.search,
-  }
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {

@@ -1,6 +1,7 @@
+import { buildUrl } from '@datadog/browser-core'
 import { Configuration } from '../src/domain/configuration'
 import { resetNavigationStart } from '../src/tools/timeUtils'
-import { noop, objectEntries } from '../src/tools/utils'
+import { noop, objectEntries, assign } from '../src/tools/utils'
 
 export const SPEC_ENDPOINTS: Partial<Configuration> = {
   internalMonitoringEndpoint: 'https://monitoring-intake.com/v1/input/abcde?foo=bar',
@@ -50,6 +51,37 @@ export function mockClock(date?: Date) {
     cleanup: () => {
       jasmine.clock().uninstall()
       resetNavigationStart()
+    },
+  }
+}
+
+export function mockLocation(initialUrl: string) {
+  const fakeLocation = buildLocation(initialUrl, location.href)
+  spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
+    assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
+  })
+
+  function buildLocation(url: string, base?: string) {
+    const urlObject = buildUrl(url, base)
+    return {
+      hash: urlObject.hash,
+      href: urlObject.href,
+      pathname: urlObject.pathname,
+      search: urlObject.search,
+    }
+  }
+
+  function hashchangeCallBack() {
+    fakeLocation.hash = window.location.hash
+    fakeLocation.href += window.location.hash
+  }
+
+  window.addEventListener('hashchange', hashchangeCallBack)
+  return {
+    location: fakeLocation,
+    cleanup: () => {
+      window.removeEventListener('hashchange', hashchangeCallBack)
+      window.location.hash = ''
     },
   }
 }
