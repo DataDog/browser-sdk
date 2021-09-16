@@ -4,7 +4,7 @@ import { createRumSessionMock } from 'packages/rum-core/test/mockRumSession'
 import { createRawRumEvent } from '../../test/fixtures'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { RumEventDomainContext } from '../domainContext.types'
-import { CommonContext, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
+import { CommonContext, RawRumActionEvent, RawRumErrorEvent, RawRumEvent, RumEventType } from '../rawRumEvent.types'
 import { RumActionEvent, RumErrorEvent, RumEvent } from '../rumEvent.types'
 import { BrowserWindow, startRumAssembly } from './assembly'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from './lifeCycle'
@@ -647,6 +647,74 @@ describe('rum assembly', () => {
     function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message = 'oh snap') {
       const rawRumEvent = createRawRumEvent(RumEventType.ERROR) as RawRumErrorEvent
       rawRumEvent.error.message = message
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent,
+      })
+    }
+  })
+
+  describe('action events limitation', () => {
+    const notifiedRawErrors: RawError[] = []
+
+    beforeEach(() => {
+      notifiedRawErrors.length = 0
+      setupBuilder.beforeBuild(({ lifeCycle }) => {
+        lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => notifiedRawErrors.push(error))
+      })
+    })
+
+    it('stops sending action events when reaching the limit', () => {
+      const { lifeCycle } = setupBuilder.withConfiguration({ maxActionsByMinute: 1 }).build()
+
+      notifyRumActionEvent(lifeCycle, 'foo')
+      notifyRumActionEvent(lifeCycle, 'bar')
+
+      expect(serverRumEvents.length).toBe(1)
+      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
+      expect(notifiedRawErrors.length).toBe(1)
+      expect(notifiedRawErrors[0]).toEqual(
+        jasmine.objectContaining({
+          message: 'Reached max number of actions by minute: 1',
+          source: ErrorSource.AGENT,
+        })
+      )
+    })
+
+    it('does not take discarded actions into account', () => {
+      const { lifeCycle } = setupBuilder
+        .withConfiguration({
+          maxErrorsByMinute: 1,
+          beforeSend: (event) => {
+            if (event.type === RumEventType.ACTION && (event as RumActionEvent).action.target?.name === 'discard me') {
+              return false
+            }
+          },
+        })
+        .build()
+      notifyRumActionEvent(lifeCycle, 'discard me')
+      notifyRumActionEvent(lifeCycle, 'discard me')
+      notifyRumActionEvent(lifeCycle, 'discard me')
+      notifyRumActionEvent(lifeCycle, 'foo')
+      expect(serverRumEvents.length).toBe(1)
+      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
+      expect(notifiedRawErrors.length).toBe(0)
+    })
+
+    it('allows to send new actions after a minute', () => {
+      const { lifeCycle, clock } = setupBuilder.withFakeClock().withConfiguration({ maxActionsByMinute: 1 }).build()
+      notifyRumActionEvent(lifeCycle, 'foo')
+      notifyRumActionEvent(lifeCycle, 'bar')
+      clock.tick(ONE_MINUTE)
+      notifyRumActionEvent(lifeCycle, 'baz')
+
+      expect(serverRumEvents.length).toBe(2)
+      expect((serverRumEvents[0] as RumActionEvent).action.target?.name).toBe('foo')
+      expect((serverRumEvents[1] as RumActionEvent).action.target?.name).toBe('baz')
+    })
+
+    function notifyRumActionEvent(lifeCycle: LifeCycle, name = 'oh great') {
+      const rawRumEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
+      rawRumEvent.action.target.name = name
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent,
       })

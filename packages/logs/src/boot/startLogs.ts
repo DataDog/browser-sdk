@@ -5,7 +5,7 @@ import {
   commonInit,
   Configuration,
   Context,
-  createErrorFilter,
+  createEventRateLimiter,
   HttpRequest,
   InternalMonitoring,
   Observable,
@@ -127,7 +127,7 @@ export function buildAssemble(
   configuration: Configuration,
   reportError: (error: RawError) => void
 ) {
-  const errorFilter = createErrorFilter(configuration, reportError)
+  const errorRateLimiter = createEventRateLimiter(StatusType.error, configuration.maxErrorsByMinute, reportError)
   return (message: LogsMessage, currentContext: Context) => {
     if (!session.isTracked()) {
       return undefined
@@ -141,7 +141,7 @@ export function buildAssemble(
     if (configuration.beforeSend && configuration.beforeSend(contextualizedMessage) === false) {
       return undefined
     }
-    if (contextualizedMessage.status === StatusType.error && errorFilter.isLimitReached()) {
+    if (contextualizedMessage.status === StatusType.error && errorRateLimiter.isLimitReached()) {
       return undefined
     }
     return contextualizedMessage as Context
