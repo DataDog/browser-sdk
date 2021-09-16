@@ -11,7 +11,6 @@ import {
   timeStampNow,
   TimeStamp,
   display,
-  Configuration,
 } from '@datadog/browser-core'
 import { DOMMutationObservable } from '../../../browser/domMutationObservable'
 import { ViewLoadingType, ViewCustomTimings } from '../../../rawRumEvent.types'
@@ -59,7 +58,6 @@ export function trackViews(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
   areViewsTrackedAutomatically: boolean,
-  configuration: Configuration,
   initialViewName?: string
 ) {
   const { stop: stopInitialViewTracking, initialView } = trackInitialView(initialViewName)
@@ -77,7 +75,6 @@ export function trackViews(
       location,
       ViewLoadingType.INITIAL_LOAD,
       document.referrer,
-      configuration,
       clocksOrigin(),
       name
     )
@@ -95,7 +92,6 @@ export function trackViews(
       location,
       ViewLoadingType.ROUTE_CHANGE,
       currentView.url,
-      configuration,
       startClocks,
       name
     )
@@ -176,7 +172,6 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   referrer: string,
-  configuration: Configuration,
   startClocks: ClocksState = clocksNow(),
   name?: string
 ) {
@@ -203,8 +198,7 @@ function newView(
     lifeCycle,
     domMutationObservable,
     scheduleViewUpdate,
-    loadingType,
-    configuration
+    loadingType
   )
 
   // Initial view update

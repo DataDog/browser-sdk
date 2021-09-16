@@ -29,14 +29,7 @@ export function startViewCollection(
     )
   )
 
-  return trackViews(
-    location,
-    lifeCycle,
-    domMutationObservable,
-    !configuration.trackViewsManually,
-    configuration,
-    initialViewName
-  )
+  return trackViews(location, lifeCycle, domMutationObservable, !configuration.trackViewsManually, initialViewName)
 }
 
 function processViewUpdate(

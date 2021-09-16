@@ -217,7 +217,6 @@ export function setupViewTest(
     lifeCycle,
     domMutationObservable,
     !configuration.trackViewsManually,
-    configuration,
     initialViewName
   )
   return {

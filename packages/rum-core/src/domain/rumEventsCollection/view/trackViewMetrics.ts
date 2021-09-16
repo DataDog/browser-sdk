@@ -1,13 +1,4 @@
-import {
-  Duration,
-  noop,
-  elapsed,
-  round,
-  timeStampNow,
-  Configuration,
-  RelativeTime,
-  ONE_SECOND,
-} from '@datadog/browser-core'
+import { Duration, noop, elapsed, round, timeStampNow, RelativeTime, ONE_SECOND } from '@datadog/browser-core'
 import { RumLayoutShiftTiming, supportPerformanceTimingEvent } from '../../../browser/performanceCollection'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -25,8 +16,7 @@ export function trackViewMetrics(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
   scheduleViewUpdate: () => void,
-  loadingType: ViewLoadingType,
-  configuration: Configuration
+  loadingType: ViewLoadingType
 ) {
   const viewMetrics: ViewMetrics = {
     eventCounts: {
@@ -49,7 +39,6 @@ export function trackViewMetrics(
   const { stop: stopActivityLoadingTimeTracking } = trackActivityLoadingTime(
     lifeCycle,
     domMutationObservable,
-    configuration,
     setActivityLoadingTime
   )
 
@@ -108,22 +97,16 @@ function trackLoadingTime(loadType: ViewLoadingType, callback: (loadingTime: Dur
 function trackActivityLoadingTime(
   lifeCycle: LifeCycle,
   domMutationObservable: DOMMutationObservable,
-  configuration: Configuration,
   callback: (loadingTimeValue: Duration | undefined) => void
 ) {
   const startTime = timeStampNow()
-  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(
-    lifeCycle,
-    domMutationObservable,
-    configuration,
-    (params) => {
-      if (params.hadActivity) {
-        callback(elapsed(startTime, params.endTime))
-      } else {
-        callback(undefined)
-      }
+  const { stop: stopWaitIdlePageActivity } = waitIdlePageActivity(lifeCycle, domMutationObservable, (params) => {
+    if (params.hadActivity) {
+      callback(elapsed(startTime, params.endTime))
+    } else {
+      callback(undefined)
     }
-  )
+  })
 
   return { stop: stopWaitIdlePageActivity }
 }
