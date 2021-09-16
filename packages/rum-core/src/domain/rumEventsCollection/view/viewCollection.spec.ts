@@ -52,13 +52,23 @@ describe('viewCollection', () => {
       .withForegroundContexts({
         selectInForegroundPeriodsFor: () => [{ start: 0 as ServerDuration, duration: 10 as ServerDuration }],
       })
-      .beforeBuild(({ lifeCycle, configuration, foregroundContexts, domMutationObservable }) => {
-        getReplayStatsSpy = jasmine.createSpy()
-        startViewCollection(lifeCycle, configuration, location, domMutationObservable, foregroundContexts, {
-          ...noopRecorderApi,
-          getReplayStats: getReplayStatsSpy,
-        })
-      })
+      .beforeBuild(
+        ({ lifeCycle, configuration, foregroundContexts, domMutationObservable, locationChangeObservable }) => {
+          getReplayStatsSpy = jasmine.createSpy()
+          startViewCollection(
+            lifeCycle,
+            configuration,
+            location,
+            domMutationObservable,
+            locationChangeObservable,
+            foregroundContexts,
+            {
+              ...noopRecorderApi,
+              getReplayStats: getReplayStatsSpy,
+            }
+          )
+        }
+      )
   })
 
   afterEach(() => {

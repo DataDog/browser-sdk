@@ -15,6 +15,7 @@ import { startViewCollection } from '../domain/rumEventsCollection/view/viewColl
 import { RumSession, startRumSession } from '../domain/rumSession'
 import { CommonContext } from '../rawRumEvent.types'
 import { startRumBatch } from '../transport/batch'
+import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import { RecorderApi, RumInitConfiguration } from './rumPublicApi'
 
 export function startRum(
@@ -28,6 +29,7 @@ export function startRum(
   const lifeCycle = new LifeCycle()
   const session = startRumSession(configuration, lifeCycle)
   const domMutationObservable = createDOMMutationObservable()
+  const locationChangeObservable = createLocationChangeObservable(location)
 
   internalMonitoring.setExternalContextProvider(() =>
     combine(
@@ -56,6 +58,7 @@ export function startRum(
     configuration,
     location,
     domMutationObservable,
+    locationChangeObservable,
     foregroundContexts,
     recorderApi,
     initialViewName

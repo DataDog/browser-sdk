@@ -56,20 +56,10 @@ export function mockClock(date?: Date) {
 }
 
 export function mockLocation(initialUrl: string) {
-  const fakeLocation = buildLocation(initialUrl, location.href)
+  const fakeLocation = buildLocation(initialUrl)
   spyOn(history, 'pushState').and.callFake((_: any, __: string, pathname: string) => {
     assign(fakeLocation, buildLocation(pathname, fakeLocation.href))
   })
-
-  function buildLocation(url: string, base?: string) {
-    const urlObject = buildUrl(url, base)
-    return {
-      hash: urlObject.hash,
-      href: urlObject.href,
-      pathname: urlObject.pathname,
-      search: urlObject.search,
-    }
-  }
 
   function hashchangeCallBack() {
     fakeLocation.hash = window.location.hash
@@ -84,6 +74,16 @@ export function mockLocation(initialUrl: string) {
       window.location.hash = ''
     },
   }
+}
+
+export function buildLocation(url: string, base = location.href) {
+  const urlObject = buildUrl(url, base)
+  return {
+    hash: urlObject.hash,
+    href: urlObject.href,
+    pathname: urlObject.pathname,
+    search: urlObject.search,
+  } as Location
 }
 
 export interface FetchStubManager {

@@ -11,6 +11,7 @@ import { RecorderApi } from '../../../boot/rumPublicApi'
 import { RawRumViewEvent, RumEventType } from '../../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType, RawRumEventCollectedData } from '../../lifeCycle'
 import { ForegroundContexts } from '../../foregroundContexts'
+import { LocationChange } from '../../../browser/locationChangeObservable'
 import { trackViews, ViewEvent } from './trackViews'
 
 export function startViewCollection(
@@ -18,6 +19,7 @@ export function startViewCollection(
   configuration: Configuration,
   location: Location,
   domMutationObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>,
   foregroundContexts: ForegroundContexts,
   recorderApi: RecorderApi,
   initialViewName?: string
@@ -29,7 +31,14 @@ export function startViewCollection(
     )
   )
 
-  return trackViews(location, lifeCycle, domMutationObservable, !configuration.trackViewsManually, initialViewName)
+  return trackViews(
+    location,
+    lifeCycle,
+    domMutationObservable,
+    locationChangeObservable,
+    !configuration.trackViewsManually,
+    initialViewName
+  )
 }
 
 function processViewUpdate(
