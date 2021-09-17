@@ -644,7 +644,7 @@ describe('rum assembly', () => {
       expect((serverRumEvents[1] as RumErrorEvent).error.message).toBe('baz')
     })
 
-    function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message = 'oh snap') {
+    function notifyRawRumErrorEvent(lifeCycle: LifeCycle, message: string) {
       const rawRumEvent = createRawRumEvent(RumEventType.ERROR) as RawRumErrorEvent
       rawRumEvent.error.message = message
       notifyRawRumEvent(lifeCycle, {
@@ -712,7 +712,7 @@ describe('rum assembly', () => {
       expect((serverRumEvents[1] as RumActionEvent).action.target?.name).toBe('baz')
     })
 
-    function notifyRumActionEvent(lifeCycle: LifeCycle, name = 'oh great') {
+    function notifyRumActionEvent(lifeCycle: LifeCycle, name: string) {
       const rawRumEvent = createRawRumEvent(RumEventType.ACTION) as RawRumActionEvent
       rawRumEvent.action.target.name = name
       notifyRawRumEvent(lifeCycle, {
