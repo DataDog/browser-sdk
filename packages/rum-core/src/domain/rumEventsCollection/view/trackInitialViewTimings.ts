@@ -5,11 +5,14 @@ import {
   elapsed,
   EventEmitter,
   RelativeTime,
-  timeStampNow,
-  TimeStamp,
+  ONE_MINUTE,
 } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
 import { trackFirstHidden } from './trackFirstHidden'
+
+// Discard LCP and FCP timings above a certain delay to avoid incorrect data
+// It happens in some cases like sleep mode or some browser implementations
+export const TIMING_MAXIMUM_DELAY = 10 * ONE_MINUTE
 
 export interface Timings {
   firstContentfulPaint?: Duration
@@ -30,10 +33,10 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
   }
 
   const { stop: stopNavigationTracking } = trackNavigationTimings(lifeCycle, setTimings)
-  const { stop: stopFCPTracking } = trackFirstContentfulPaint(lifeCycle, (firstContentfulPaint) =>
+  const { stop: stopFCPTracking } = trackFirstContentfulPaintTiming(lifeCycle, (firstContentfulPaint) =>
     setTimings({ firstContentfulPaint })
   )
-  const { stop: stopLCPTracking } = trackLargestContentfulPaint(lifeCycle, window, (largestContentfulPaint) => {
+  const { stop: stopLCPTracking } = trackLargestContentfulPaintTiming(lifeCycle, window, (largestContentfulPaint) => {
     setTimings({
       largestContentfulPaint,
     })
@@ -55,7 +58,7 @@ export function trackInitialViewTimings(lifeCycle: LifeCycle, callback: (timings
   }
 }
 
-export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimings: Partial<Timings>) => void) {
+export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (timings: Partial<Timings>) => void) {
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (entry.entryType === 'navigation') {
       callback({
@@ -70,13 +73,14 @@ export function trackNavigationTimings(lifeCycle: LifeCycle, callback: (newTimin
   return { stop }
 }
 
-export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: RelativeTime) => void) {
+export function trackFirstContentfulPaintTiming(lifeCycle: LifeCycle, callback: (fcpTiming: RelativeTime) => void) {
   const firstHidden = trackFirstHidden()
   const { unsubscribe: stop } = lifeCycle.subscribe(LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED, (entry) => {
     if (
       entry.entryType === 'paint' &&
       entry.name === 'first-contentful-paint' &&
-      entry.startTime < firstHidden.timeStamp
+      entry.startTime < firstHidden.timeStamp &&
+      entry.startTime < TIMING_MAXIMUM_DELAY
     ) {
       callback(entry.startTime)
     }
@@ -90,10 +94,10 @@ export function trackFirstContentfulPaint(lifeCycle: LifeCycle, callback: (fcp: 
  * Documentation: https://web.dev/lcp/
  * Reference implementation: https://github.com/GoogleChrome/web-vitals/blob/master/src/getLCP.ts
  */
-export function trackLargestContentfulPaint(
+export function trackLargestContentfulPaintTiming(
   lifeCycle: LifeCycle,
   emitter: EventEmitter,
-  callback: (value: RelativeTime) => void
+  callback: (lcpTiming: RelativeTime) => void
 ) {
   const firstHidden = trackFirstHidden()
 
@@ -110,17 +114,15 @@ export function trackLargestContentfulPaint(
     { capture: true, once: true }
   )
 
-  const lcpSizes: Array<{ timeStamp: TimeStamp; startTime: RelativeTime; size: number }> = []
-
   const { unsubscribe: unsubscribeLifeCycle } = lifeCycle.subscribe(
     LifeCycleEventType.PERFORMANCE_ENTRY_COLLECTED,
     (entry) => {
       if (
         entry.entryType === 'largest-contentful-paint' &&
         entry.startTime < firstInteractionTimestamp &&
-        entry.startTime < firstHidden.timeStamp
+        entry.startTime < firstHidden.timeStamp &&
+        entry.startTime < TIMING_MAXIMUM_DELAY
       ) {
-        lcpSizes.push({ timeStamp: timeStampNow(), startTime: entry.startTime, size: entry.size })
         callback(entry.startTime)
       }
     }
