@@ -1,57 +1,23 @@
-import { monitor, Subscription } from '@datadog/browser-core'
+import { monitor, Observable } from '@datadog/browser-core'
 
-export interface DOMMutationObservable {
-  subscribe(callback: () => void): Subscription
-}
-
-export function createDOMMutationObservable(): DOMMutationObservable {
-  let callbacks: Array<() => void> = []
+export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
-  const observer = MutationObserver ? new MutationObserver(monitor(notify)) : undefined
 
-  function notify() {
-    callbacks.forEach((callback) => callback())
-  }
-
-  function startDOMObservation() {
-    if (!observer) {
+  const observable: Observable<void> = new Observable<void>(() => {
+    if (!MutationObserver) {
       return
     }
-
+    const observer = new MutationObserver(monitor(() => observable.notify()))
     observer.observe(document, {
       attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
     })
-  }
+    return () => observer.disconnect()
+  })
 
-  function stopDOMObservation() {
-    if (!observer) {
-      return
-    }
-
-    observer.disconnect()
-  }
-
-  return {
-    subscribe: (callback) => {
-      if (!callbacks.length) {
-        startDOMObservation()
-      }
-
-      callbacks.push(callback)
-      return {
-        unsubscribe: () => {
-          callbacks = callbacks.filter((other) => callback !== other)
-
-          if (!callbacks.length) {
-            stopDOMObservation()
-          }
-        },
-      }
-    },
-  }
+  return observable
 }
 
 type MutationObserverConstructor = new (callback: MutationCallback) => MutationObserver
@@ -66,7 +32,7 @@ export function getMutationObserverConstructor(): MutationObserverConstructor | 
   let constructor: MutationObserverConstructor | undefined
   const browserWindow: BrowserWindow = window
 
-  // Angular uses Zone.js to provide a context persisting accross async tasks.  Zone.js replaces the
+  // Angular uses Zone.js to provide a context persisting across async tasks.  Zone.js replaces the
   // global MutationObserver constructor with a patched version to support the context propagation.
   // There is an ongoing issue[1][2] with this setup when using a MutationObserver within a Angular
   // component: on some occasions, the callback is being called in an infinite loop, causing the

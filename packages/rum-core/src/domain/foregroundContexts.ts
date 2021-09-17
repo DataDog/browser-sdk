@@ -1,13 +1,10 @@
 import {
-  Configuration,
-  noop,
   addEventListener,
   DOM_EVENT,
   RelativeTime,
   elapsed,
   relativeNow,
   Duration,
-  addMonitoringMessage,
   toServerDuration,
 } from '@datadog/browser-core'
 import { InForegroundPeriod } from '../rawRumEvent.types'
@@ -16,9 +13,6 @@ import { InForegroundPeriod } from '../rawRumEvent.types'
 export const MAX_NUMBER_OF_SELECTABLE_FOREGROUND_PERIODS = 500
 // Arbitrary value to cap number of element mostly for memory consumption in the browser
 export const MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS = 2500
-// ignore duplicate focus & blur events if coming in the right after the previous one
-// chrome bug: https://bugs.chromium.org/p/chromium/issues/detail?id=1237904
-const MAX_TIME_TO_IGNORE_DUPLICATE = 10 as RelativeTime
 
 export interface ForegroundContexts {
   isInForegroundAt: (startTime: RelativeTime) => boolean | undefined
@@ -33,15 +27,7 @@ export interface ForegroundPeriod {
 
 let foregroundPeriods: ForegroundPeriod[] = []
 
-export function startForegroundContexts(configuration: Configuration): ForegroundContexts {
-  if (!configuration.isEnabled('track-foreground')) {
-    return {
-      isInForegroundAt: () => undefined,
-      selectInForegroundPeriodsFor: () => undefined,
-      stop: noop,
-    }
-  }
-
+export function startForegroundContexts(): ForegroundContexts {
   if (document.hasFocus()) {
     addNewForegroundPeriod()
   }
@@ -61,22 +47,11 @@ export function startForegroundContexts(configuration: Configuration): Foregroun
 
 export function addNewForegroundPeriod() {
   if (foregroundPeriods.length > MAX_NUMBER_OF_STORED_FOREGROUND_PERIODS) {
-    addMonitoringMessage('Reached maximum of foreground time')
     return
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   const now = relativeNow()
   if (currentForegroundPeriod !== undefined && currentForegroundPeriod.end === undefined) {
-    if (now - currentForegroundPeriod.start > MAX_TIME_TO_IGNORE_DUPLICATE) {
-      addMonitoringMessage('Previous foreground periods not closed. Continuing current one', {
-        foregroundPeriods: {
-          count: foregroundPeriods.length,
-          currentStart: currentForegroundPeriod.start,
-          now,
-          diff: now - currentForegroundPeriod.start,
-        },
-      })
-    }
     return
   }
   foregroundPeriods.push({
@@ -86,24 +61,11 @@ export function addNewForegroundPeriod() {
 
 export function closeForegroundPeriod() {
   if (foregroundPeriods.length === 0) {
-    addMonitoringMessage('No foreground period')
     return
   }
   const currentForegroundPeriod = foregroundPeriods[foregroundPeriods.length - 1]
   const now = relativeNow()
   if (currentForegroundPeriod.end !== undefined) {
-    if (now - currentForegroundPeriod.end > MAX_TIME_TO_IGNORE_DUPLICATE) {
-      addMonitoringMessage('Current foreground period already closed', {
-        foregroundPeriods: {
-          count: foregroundPeriods.length,
-          currentStart: currentForegroundPeriod.start,
-          currentEnd: currentForegroundPeriod.end,
-          now,
-          diff: now - currentForegroundPeriod.end,
-        },
-        now: relativeNow(),
-      })
-    }
     return
   }
   currentForegroundPeriod.end = now
