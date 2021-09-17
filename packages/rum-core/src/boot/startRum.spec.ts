@@ -1,9 +1,8 @@
-import { RelativeTime, Configuration } from '@datadog/browser-core'
+import { RelativeTime, Configuration, Observable } from '@datadog/browser-core'
 import { RumSession } from '@datadog/browser-rum-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { isIE } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
-import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -26,7 +25,7 @@ function startRum(
   configuration: Configuration,
   session: RumSession,
   location: Location,
-  domMutationObservable: DOMMutationObservable
+  domMutationObservable: Observable<void>
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     applicationId,
