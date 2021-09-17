@@ -1,4 +1,4 @@
-import { ONE_MINUTE, ClocksState, RelativeTime, relativeNow } from '@datadog/browser-core'
+import { ONE_MINUTE, RelativeTime, relativeNow } from '@datadog/browser-core'
 
 interface PreviousContext<T> {
   startTime: RelativeTime
@@ -8,8 +8,9 @@ interface PreviousContext<T> {
 
 export const CLEAR_OLD_CONTEXTS_INTERVAL = ONE_MINUTE
 
-export class ContextHistory<Raw extends { startClocks: ClocksState }, Built> {
-  public current: Raw | undefined
+export class ContextHistory<Raw, Built> {
+  private current: Raw | undefined
+  private currentStart: RelativeTime | undefined
   private previousContexts: Array<PreviousContext<Built>> = []
   private clearOldContextsInterval: number
 
@@ -17,31 +18,46 @@ export class ContextHistory<Raw extends { startClocks: ClocksState }, Built> {
     this.clearOldContextsInterval = setInterval(() => this.clearOldContexts(), CLEAR_OLD_CONTEXTS_INTERVAL)
   }
 
-  find(startClocks?: ClocksState) {
-    if (startClocks === undefined) {
+  find(startTime?: RelativeTime) {
+    if (startTime === undefined) {
       return this.current ? this.buildContext(this.current) : undefined
     }
-    if (this.current && startClocks.relative >= this.current.startClocks.relative) {
+    if (this.current !== undefined && this.currentStart !== undefined && startTime >= this.currentStart) {
       return this.buildContext(this.current)
     }
     for (const previousContext of this.previousContexts) {
-      if (startClocks.relative > previousContext.endTime) {
+      if (startTime > previousContext.endTime) {
         break
       }
-      if (startClocks.relative >= previousContext.startTime) {
+      if (startTime >= previousContext.startTime) {
         return previousContext.context
       }
     }
     return undefined
   }
 
-  closeCurrent(endClocks: ClocksState) {
-    if (this.current) {
+  setCurrent(current: Raw, startTime: RelativeTime) {
+    this.current = current
+    this.currentStart = startTime
+  }
+
+  getCurrent() {
+    return this.current
+  }
+
+  clearCurrent() {
+    this.current = undefined
+    this.currentStart = undefined
+  }
+
+  closeCurrent(endTime: RelativeTime) {
+    if (this.current !== undefined && this.currentStart !== undefined) {
       this.previousContexts.unshift({
+        endTime,
         context: this.buildContext(this.current),
-        startTime: this.current.startClocks.relative,
-        endTime: endClocks.relative,
+        startTime: this.currentStart,
       })
+      this.clearCurrent()
     }
   }
 
@@ -56,7 +72,7 @@ export class ContextHistory<Raw extends { startClocks: ClocksState }, Built> {
   }
 
   reset() {
-    this.current = undefined
+    this.clearCurrent()
     this.previousContexts = []
   }
 

@@ -1,4 +1,4 @@
-import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY, relativeToClocks } from '@datadog/browser-core'
+import { ONE_MINUTE, RelativeTime, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { ActionContext, ViewContext } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { AutoAction, AutoActionCreatedEvent } from './rumEventsCollection/action/trackActions'
@@ -27,43 +27,48 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   )
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    viewContextHistory.current = {
-      sessionId: session.getId(),
-      ...view,
-    }
+    viewContextHistory.setCurrent(
+      {
+        sessionId: session.getId(),
+        ...view,
+      },
+      view.startClocks.relative
+    )
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     // A view can be updated after its end.  We have to ensure that the view being updated is the
     // most recently created.
-    if (viewContextHistory.current && viewContextHistory.current.id === view.id) {
-      viewContextHistory.current = {
-        sessionId: viewContextHistory.current.sessionId,
-        ...view,
-      }
+    const current = viewContextHistory.getCurrent()
+    if (current && current.id === view.id) {
+      viewContextHistory.setCurrent(
+        {
+          sessionId: current.sessionId,
+          ...view,
+        },
+        view.startClocks.relative
+      )
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, ({ endClocks }) => {
-    viewContextHistory.closeCurrent(endClocks)
-    viewContextHistory.current = undefined
+    viewContextHistory.closeCurrent(endClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_CREATED, (action) => {
-    actionContextHistory.current = action
+    actionContextHistory.setCurrent(action, action.startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action: AutoAction) => {
-    if (actionContextHistory.current) {
+    if (actionContextHistory.getCurrent()) {
       // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-      const actionEndTime = (actionContextHistory.current.startClocks.relative + action.duration) as RelativeTime
-      actionContextHistory.closeCurrent(relativeToClocks(actionEndTime))
-      actionContextHistory.current = undefined
+      const actionEndTime = (action.startClocks.relative + action.duration) as RelativeTime
+      actionContextHistory.closeCurrent(actionEndTime)
     }
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_DISCARDED, () => {
-    actionContextHistory.current = undefined
+    actionContextHistory.clearCurrent()
   })
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -90,9 +95,8 @@ export function startParentContexts(lifeCycle: LifeCycle, session: RumSession): 
   }
 
   return {
-    findAction: (startTime) =>
-      actionContextHistory.find(startTime !== undefined ? relativeToClocks(startTime) : undefined),
-    findView: (startTime) => viewContextHistory.find(startTime !== undefined ? relativeToClocks(startTime) : undefined),
+    findAction: (startTime) => actionContextHistory.find(startTime),
+    findView: (startTime) => viewContextHistory.find(startTime),
     stop: () => {
       viewContextHistory.stop()
       actionContextHistory.stop()

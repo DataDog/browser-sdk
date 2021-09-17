@@ -1,11 +1,11 @@
-import { ClocksState, relativeToClocks, RelativeTime, ONE_MINUTE } from '@datadog/browser-core'
+import { RelativeTime, ONE_MINUTE } from '@datadog/browser-core'
 import { mockClock, Clock } from '../../../core/test/specHelper'
 import { CLEAR_OLD_CONTEXTS_INTERVAL, ContextHistory } from './contextHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
 
 describe('contextHistory', () => {
-  let contextHistory: ContextHistory<{ startClocks: ClocksState; value: string }, { value: string }>
+  let contextHistory: ContextHistory<{ value: string }, { value: string }>
   let clock: Clock
 
   beforeEach(() => {
@@ -24,93 +24,54 @@ describe('contextHistory', () => {
     })
 
     it('should return current when there is no startClocks', () => {
-      contextHistory.current = {
-        startClocks: relativeToClocks(0 as RelativeTime),
-        value: 'foo',
-      }
+      contextHistory.setCurrent({ value: 'foo' }, 0 as RelativeTime)
 
       expect(contextHistory.find()).toEqual({ value: 'foo' })
     })
 
     it('should return the context corresponding to startClocks', () => {
-      contextHistory.current = {
-        startClocks: relativeToClocks(0 as RelativeTime),
-        value: 'foo',
-      }
-      contextHistory.closeCurrent(relativeToClocks(5 as RelativeTime))
-      contextHistory.current = {
-        startClocks: relativeToClocks(5 as RelativeTime),
-        value: 'bar',
-      }
-      contextHistory.closeCurrent(relativeToClocks(10 as RelativeTime))
-      contextHistory.current = {
-        startClocks: relativeToClocks(10 as RelativeTime),
-        value: 'qux',
-      }
+      contextHistory.setCurrent({ value: 'foo' }, 0 as RelativeTime)
+      contextHistory.closeCurrent(5 as RelativeTime)
+      contextHistory.setCurrent({ value: 'bar' }, 5 as RelativeTime)
+      contextHistory.closeCurrent(10 as RelativeTime)
+      contextHistory.setCurrent({ value: 'qux' }, 10 as RelativeTime)
 
-      expect(contextHistory.find(relativeToClocks(2 as RelativeTime))).toEqual({ value: 'foo' })
-      expect(contextHistory.find(relativeToClocks(7 as RelativeTime))).toEqual({ value: 'bar' })
-      expect(contextHistory.find(relativeToClocks(10 as RelativeTime))).toEqual({ value: 'qux' })
+      expect(contextHistory.find(2 as RelativeTime)).toEqual({ value: 'foo' })
+      expect(contextHistory.find(7 as RelativeTime)).toEqual({ value: 'bar' })
+      expect(contextHistory.find(10 as RelativeTime)).toEqual({ value: 'qux' })
     })
 
     it('should return undefined when no context corresponding to startClocks', () => {
-      contextHistory.current = {
-        startClocks: relativeToClocks(0 as RelativeTime),
-        value: 'foo',
-      }
-      contextHistory.closeCurrent(relativeToClocks(10 as RelativeTime))
-      contextHistory.current = {
-        startClocks: relativeToClocks(20 as RelativeTime),
-        value: 'bar',
-      }
+      contextHistory.setCurrent({ value: 'foo' }, 0 as RelativeTime)
+      contextHistory.closeCurrent(10 as RelativeTime)
+      contextHistory.setCurrent({ value: 'bar' }, 20 as RelativeTime)
 
-      expect(contextHistory.find(relativeToClocks(15 as RelativeTime))).toBeUndefined()
-    })
-  })
-
-  describe('closeCurrent', () => {
-    it('should not clean current state to allow to use it for next current', () => {
-      contextHistory.current = {
-        startClocks: relativeToClocks(0 as RelativeTime),
-        value: 'foo',
-      }
-      contextHistory.closeCurrent(relativeToClocks(5 as RelativeTime))
-
-      expect(contextHistory.current).toBeDefined()
+      expect(contextHistory.find(15 as RelativeTime)).toBeUndefined()
     })
   })
 
   it('should reset contexts', () => {
-    contextHistory.current = {
-      startClocks: relativeToClocks(0 as RelativeTime),
-      value: 'foo',
-    }
-    contextHistory.closeCurrent(relativeToClocks(10 as RelativeTime))
-    contextHistory.current = {
-      startClocks: relativeToClocks(10 as RelativeTime),
-      value: 'bar',
-    }
+    contextHistory.setCurrent({ value: 'foo' }, 0 as RelativeTime)
+    contextHistory.closeCurrent(10 as RelativeTime)
+    contextHistory.setCurrent({ value: 'bar' }, 10 as RelativeTime)
 
     contextHistory.reset()
 
-    expect(contextHistory.current).toBeUndefined()
-    expect(contextHistory.find(relativeToClocks(0 as RelativeTime))).toBeUndefined()
+    expect(contextHistory.getCurrent()).toBeUndefined()
+    expect(contextHistory.find(0 as RelativeTime)).toBeUndefined()
   })
 
   it('should clear old contexts', () => {
-    const originalTime = performance.now()
-    contextHistory.current = {
-      startClocks: relativeToClocks(originalTime as RelativeTime),
-      value: 'foo',
-    }
-    contextHistory.closeCurrent(relativeToClocks((originalTime + 10) as RelativeTime))
-    contextHistory.current = undefined
+    const originalTime = performance.now() as RelativeTime
+    contextHistory.setCurrent({ value: 'foo' }, originalTime)
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    contextHistory.closeCurrent((originalTime + 10) as RelativeTime)
     clock.tick(10)
 
-    expect(contextHistory.find(relativeToClocks(originalTime as RelativeTime))).toBeDefined()
+    expect(contextHistory.find(originalTime)).toBeDefined()
 
     clock.tick(EXPIRE_DELAY + CLEAR_OLD_CONTEXTS_INTERVAL)
 
-    expect(contextHistory.find(relativeToClocks(originalTime as RelativeTime))).toBeUndefined()
+    expect(contextHistory.find(originalTime)).toBeUndefined()
   })
 })
