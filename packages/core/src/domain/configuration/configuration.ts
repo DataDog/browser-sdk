@@ -13,7 +13,8 @@ export type InitialPrivacyLevel = typeof InitialPrivacyLevel[keyof typeof Initia
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
-  maxErrorsByMinute: 3000,
+  maxErrorsPerMinute: 3000,
+  maxActionsPerMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   sampleRate: 100,
   replaySampleRate: 100,
