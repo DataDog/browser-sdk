@@ -63,7 +63,7 @@ export function mockLocation(initialUrl: string) {
 
   function hashchangeCallBack() {
     fakeLocation.hash = window.location.hash
-    fakeLocation.href += window.location.hash
+    fakeLocation.href = fakeLocation.href.replace(/#.*/, '') + window.location.hash
   }
 
   window.addEventListener('hashchange', hashchangeCallBack)
