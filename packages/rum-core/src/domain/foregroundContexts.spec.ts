@@ -19,9 +19,8 @@ describe('foreground context', () => {
   beforeEach(() => {
     setupBuilder = setup()
       .withFakeClock()
-      .withConfiguration({ isEnabled: () => true })
-      .beforeBuild(({ configuration }) => {
-        foregroundContext = startForegroundContexts(configuration)
+      .beforeBuild(() => {
+        foregroundContext = startForegroundContexts()
         return foregroundContext
       })
   })
