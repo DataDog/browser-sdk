@@ -16,6 +16,15 @@
 
 ---
 
+## v3.5.0
+
+- ✨ Add rate limit on actions ([#1058](https://github.com/DataDog/browser-sdk/pull/1058))
+- ✨ Remove focus feature flag ([#1053](https://github.com/DataDog/browser-sdk/pull/1053))
+- ✨ [RUMF-1029] remove the limit on view.loading_time ([#1054](https://github.com/DataDog/browser-sdk/pull/1054))
+- ✨ Discard long FCP and LCP ([#1045](https://github.com/DataDog/browser-sdk/pull/1045))
+- 📝 Add proxyUrl option documentation ([#1050](https://github.com/DataDog/browser-sdk/pull/1050))
+- ⚡️Introducing new max for foreground periods ([#1032](https://github.com/DataDog/browser-sdk/pull/1032))
+
 ## v3.4.1
 
 - 🔊 [RUMF-976] add info to monitor failing xhr fallback ([#1035](https://github.com/DataDog/browser-sdk/pull/1035))
