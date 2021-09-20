@@ -114,12 +114,12 @@ describe('parentContexts', () => {
     })
 
     it('should return the current url with the current view', () => {
-      const { lifeCycle, fakeLocation } = setupBuilder.build()
+      const { lifeCycle, fakeLocation, changeLocation } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
-      history.pushState({}, '', '/foo')
+      changeLocation('/foo')
 
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })

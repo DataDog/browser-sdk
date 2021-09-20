@@ -202,7 +202,7 @@ describe('rum track view metrics', () => {
     })
 
     it('should reset event count when the view changes', () => {
-      const { lifeCycle } = setupBuilder.build()
+      const { lifeCycle, changeLocation } = setupBuilder.build()
       const { getViewUpdate, getViewUpdateCount, startView } = viewTest
 
       expect(getViewUpdateCount()).toEqual(1)
@@ -217,7 +217,7 @@ describe('rum track view metrics', () => {
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, { type: RumEventType.RESOURCE } as RumEvent & Context)
-      history.pushState({}, '', '/baz')
+      changeLocation('/baz')
 
       expect(getViewUpdateCount()).toEqual(5)
       expect(getViewUpdate(3).eventCounts.resourceCount).toEqual(2)
