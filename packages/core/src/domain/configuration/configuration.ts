@@ -115,7 +115,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     cookieOptions: buildCookieOptions(initConfiguration),
     isEnabled,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv, isEnabled('support-intake-v2')),
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,
   }
 
