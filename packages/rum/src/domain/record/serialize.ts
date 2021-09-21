@@ -38,7 +38,7 @@ import { forEach } from './utils'
 type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
-  | typeof NodePrivacyLevel.MASK_FORMS_ONLY
+  | typeof NodePrivacyLevel.MASK_USER_INPUT
 
 export interface SerializeOptions {
   document: Document
@@ -49,12 +49,12 @@ export interface SerializeOptions {
 
 export function serializeDocument(
   document: Document,
-  initialPrivacyLevel: ParentNodePrivacyLevel
+  defaultPrivacyLevel: ParentNodePrivacyLevel
 ): SerializedNodeWithId {
   // We are sure that Documents are never ignored, so this function never returns null
   return serializeNodeWithId(document, {
     document,
-    parentNodePrivacyLevel: initialPrivacyLevel,
+    parentNodePrivacyLevel: defaultPrivacyLevel,
   })!
 }
 

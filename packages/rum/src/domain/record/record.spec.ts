@@ -1,4 +1,4 @@
-import { InitialPrivacyLevel } from 'packages/core/src/domain/configuration'
+import { DefaultPrivacyLevel } from 'packages/core/src/domain/configuration'
 import { Clock, createNewEvent, isIE } from '../../../../core/test/specHelper'
 import { collectAsyncCalls } from '../../../test/utils'
 import { RecordType, IncrementalSource, RawRecord, IncrementalSnapshotRecord, FocusRecord } from '../../types'
@@ -183,7 +183,7 @@ describe('record', () => {
   function startRecording() {
     recordApi = record({
       emit: emitSpy,
-      initialPrivacyLevel: InitialPrivacyLevel.ALLOW,
+      defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
     })
   }
 

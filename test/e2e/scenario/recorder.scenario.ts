@@ -1,6 +1,7 @@
 import { CreationReason, IncrementalSource, RecordType, Segment } from '@datadog/browser-rum/cjs/types'
 import { InputData, StyleSheetRuleData, NodeType } from '@datadog/browser-rum/cjs/domain/record/types'
 import { RumInitConfiguration } from '@datadog/browser-rum-core'
+import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 
 import { createTest, bundleSetup, html, EventRegistry } from '../lib/framework'
 import { browserExecute } from '../lib/helpers/browser'
@@ -443,7 +444,9 @@ describe('recorder', () => {
 
   describe('input observers', () => {
     createTest('record input interactions')
-      .withRum()
+      .withRum({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(
@@ -523,7 +526,9 @@ describe('recorder', () => {
       })
 
     createTest("don't record ignored input interactions")
-      .withRum()
+      .withRum({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
       .withRumInit(initRumAndStartRecording)
       .withSetup(bundleSetup)
       .withBody(

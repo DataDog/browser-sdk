@@ -12,7 +12,7 @@ import {
   AST_ALLOW,
   AST_HIDDEN,
   AST_MASK,
-  AST_MASK_FORMS_ONLY,
+  AST_MASK_USER_INPUT,
   generateLeanSerializedDoc,
 } from '../../../test/htmlAst'
 import { hasSerializedNode } from './serializationUtils'
@@ -447,10 +447,10 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     })
   })
 
-  describe('for privacy tag `mask-forms-only`, a DOM tree', function testMaskFormsOnlyDomTree() {
+  describe('for privacy tag `mask-user-input`, a DOM tree', function testMaskFormsOnlyDomTree() {
     it('is serialized correctly', () => {
-      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-forms-only')
-      expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_FORMS_ONLY)
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_USER_INPUT)
     })
   })
 
