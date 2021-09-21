@@ -19,10 +19,10 @@ export class ContextHistory<Context> {
   }
 
   find(startTime?: RelativeTime) {
-    if (startTime === undefined) {
-      return this.current ? this.current : undefined
-    }
-    if (this.current !== undefined && this.currentStart !== undefined && startTime >= this.currentStart) {
+    if (
+      startTime === undefined ||
+      (this.current !== undefined && this.currentStart !== undefined && startTime >= this.currentStart)
+    ) {
       return this.current
     }
     for (const previousContext of this.previousContexts) {
