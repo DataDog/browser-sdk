@@ -12,11 +12,6 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 
 export const URL_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
-interface RawUrlContext {
-  url: string
-  referrer: string
-}
-
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined
   stop: () => void
@@ -27,10 +22,7 @@ export function startUrlContexts(
   locationChangeObservable: Observable<LocationChange>,
   location: Location
 ) {
-  const urlContextHistory = new ContextHistory<RawUrlContext, UrlContext>(
-    buildCurrentUrlContext,
-    URL_CONTEXT_TIME_OUT_DELAY
-  )
+  const urlContextHistory = new ContextHistory<UrlContext>(URL_CONTEXT_TIME_OUT_DELAY)
 
   let previousViewUrl: string | undefined
 
@@ -41,10 +33,10 @@ export function startUrlContexts(
   lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ startClocks }) => {
     const viewUrl = location.href
     urlContextHistory.setCurrent(
-      {
-        referrer: !previousViewUrl ? document.referrer : previousViewUrl,
+      buildUrlContext({
         url: viewUrl,
-      },
+        referrer: !previousViewUrl ? document.referrer : previousViewUrl,
+      }),
       startClocks.relative
     )
     previousViewUrl = viewUrl
@@ -56,20 +48,20 @@ export function startUrlContexts(
       const changeTime = relativeNow()
       urlContextHistory.closeCurrent(changeTime)
       urlContextHistory.setCurrent(
-        {
-          ...current,
+        buildUrlContext({
           url: newLocation.href,
-        },
+          referrer: current.view.referrer,
+        }),
         changeTime
       )
     }
   })
 
-  function buildCurrentUrlContext(current: RawUrlContext) {
+  function buildUrlContext({ url, referrer }: { url: string; referrer: string }) {
     return {
       view: {
-        url: current.url,
-        referrer: current.referrer,
+        url,
+        referrer,
       },
     }
   }
