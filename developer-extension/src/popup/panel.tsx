@@ -4,7 +4,7 @@ import { sendAction } from './actions'
 import { useStore } from './useStore'
 
 export function Panel() {
-  const [{ useDevBundles, useRumRecorder, logEventsFromRequests, devServerStatus }, setStore] = useStore()
+  const [{ useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus }, setStore] = useStore()
   return (
     <Stack alignY="top" padding="major-2" spacing="major-2">
       <Stack orientation="horizontal" verticalBelow="0" spacing="major-2" alignX="left" alignY="center">
@@ -19,9 +19,9 @@ export function Panel() {
       </Stack>
 
       <Checkbox
-        label="Use RUM Recorder"
-        checked={useRumRecorder}
-        onChange={(e) => setStore({ useRumRecorder: isChecked(e.target) })}
+        label="Use RUM Slim"
+        checked={useRumSlim}
+        onChange={(e) => setStore({ useRumSlim: isChecked(e.target) })}
       />
 
       <Checkbox
