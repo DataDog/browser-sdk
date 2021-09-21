@@ -48,6 +48,7 @@ listenAction('setStore', (newStore) => {
 function getBundleUrlPatterns(bundleName: string) {
   return [
     `https://*/datadog-${bundleName}.js`,
+    `https://*/datadog-${bundleName}-v3.js`,
     `https://*/datadog-${bundleName}-canary.js`,
     `https://*/datadog-${bundleName}-head.js`,
   ]
