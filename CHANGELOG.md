@@ -16,6 +16,11 @@
 
 ---
 
+## v3.6.0
+
+- ✨ [RUMF-1028] enable privacy by default ([#1049](https://github.com/DataDog/browser-sdk/pull/1049))
+- ✨ [RUMF-1020] enable intake v2 ([#1048](https://github.com/DataDog/browser-sdk/pull/1048))
+
 ## v3.5.0
 
 - ✨ Add rate limit on actions ([#1058](https://github.com/DataDog/browser-sdk/pull/1058))
