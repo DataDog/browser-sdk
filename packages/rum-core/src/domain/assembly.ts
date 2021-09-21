@@ -2,8 +2,6 @@ import {
   combine,
   Configuration,
   Context,
-  createErrorFilter,
-  ErrorFilter,
   isEmptyObject,
   limitModification,
   timeStampNow,
@@ -12,6 +10,9 @@ import {
   addMonitoringMessage,
   relativeNow,
   BeforeSendCallback,
+  RawError,
+  createEventRateLimiter,
+  EventRateLimiter,
 } from '@datadog/browser-core'
 import { RumEventDomainContext } from '../domainContext.types'
 import {
@@ -66,9 +67,14 @@ export function startRumAssembly(
   parentContexts: ParentContexts,
   getCommonContext: () => CommonContext
 ) {
-  const errorFilter = createErrorFilter(configuration, (error) => {
+  const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
-  })
+  }
+
+  const eventRateLimiters = {
+    [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, configuration.maxErrorsPerMinute, reportError),
+    [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, configuration.maxActionsPerMinute, reportError),
+  }
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
@@ -109,7 +115,7 @@ export function startRumAssembly(
         if (!isEmptyObject(commonContext.user)) {
           ;(serverRumEvent.usr as Mutable<RumEvent['usr']>) = commonContext.user as User & Context
         }
-        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, errorFilter)) {
+        if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
           if (isEmptyObject(serverRumEvent.context)) {
             delete serverRumEvent.context
           }
@@ -136,7 +142,7 @@ function shouldSend(
   event: RumEvent & Context,
   beforeSend: BeforeSendCallback | undefined,
   domainContext: RumEventDomainContext,
-  errorFilter: ErrorFilter
+  eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
     const result = limitModification(
@@ -151,10 +157,9 @@ function shouldSend(
       display.warn("Can't dismiss view events using beforeSend!")
     }
   }
-  if (event.type === RumEventType.ERROR) {
-    return !errorFilter.isLimitReached()
-  }
-  return true
+
+  const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
+  return !rateLimitReached
 }
 
 function needToAssembleWithAction(

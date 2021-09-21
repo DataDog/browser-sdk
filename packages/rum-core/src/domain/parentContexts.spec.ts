@@ -1,21 +1,16 @@
-import { Duration, RelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { RelativeTime, relativeToClocks } from '@datadog/browser-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { setup, TestSetupBuilder } from '../../test/specHelper'
 import { LifeCycleEventType } from './lifeCycle'
 import {
   ACTION_CONTEXT_TIME_OUT_DELAY,
-  CLEAR_OLD_CONTEXTS_INTERVAL,
   ParentContexts,
   startParentContexts,
   VIEW_CONTEXT_TIME_OUT_DELAY,
 } from './parentContexts'
 import { AutoAction } from './rumEventsCollection/action/trackActions'
 import { ViewCreatedEvent } from './rumEventsCollection/view/trackViews'
-
-function stubActionWithDuration(duration: number): AutoAction {
-  const action: Partial<AutoAction> = { duration: duration as Duration }
-  return action as AutoAction
-}
+import { CLEAR_OLD_CONTEXTS_INTERVAL } from './contextHistory'
 
 describe('parentContexts', () => {
   const FAKE_ID = 'fake'
@@ -119,12 +114,12 @@ describe('parentContexts', () => {
     })
 
     it('should return the current url with the current view', () => {
-      const { lifeCycle, fakeLocation } = setupBuilder.build()
+      const { lifeCycle, fakeLocation, changeLocation } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, buildViewCreatedEvent({ location: fakeLocation as Location }))
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/')
 
-      history.pushState({}, '', '/foo')
+      changeLocation('/foo')
 
       expect(parentContexts.findView()!.view.url).toBe('http://fake-url.com/foo')
     })
@@ -173,13 +168,21 @@ describe('parentContexts', () => {
         startClocks: relativeToClocks(10 as RelativeTime),
         id: 'action 1',
       })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        startClocks: relativeToClocks(10 as RelativeTime),
+        id: 'action 1',
+        duration: 10,
+      } as AutoAction)
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
         startClocks: relativeToClocks(30 as RelativeTime),
         id: 'action 2',
       })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        startClocks: relativeToClocks(30 as RelativeTime),
+        id: 'action 2',
+        duration: 10,
+      } as AutoAction)
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
         startClocks: relativeToClocks(50 as RelativeTime),
@@ -222,7 +225,11 @@ describe('parentContexts', () => {
       const { lifeCycle } = setupBuilder.build()
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, { startClocks, id: FAKE_ID })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        startClocks,
+        id: FAKE_ID,
+        duration: 10,
+      } as AutoAction)
 
       expect(parentContexts.findAction()).toBeUndefined()
     })
@@ -251,7 +258,11 @@ describe('parentContexts', () => {
         startClocks: relativeToClocks(10 as RelativeTime),
         id: 'action 1',
       })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        startClocks: relativeToClocks(10 as RelativeTime),
+        id: 'action 1',
+        duration: 10,
+      } as AutoAction)
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_CREATED, {
         startClocks: relativeToClocks(20 as RelativeTime),
         id: 'action 2',
@@ -291,7 +302,11 @@ describe('parentContexts', () => {
         startClocks: originalClocks,
         id: 'action 1',
       })
-      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, stubActionWithDuration(10))
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        startClocks: originalClocks,
+        id: 'action 1',
+        duration: 10,
+      } as AutoAction)
       lifeCycle.notify(
         LifeCycleEventType.VIEW_CREATED,
         buildViewCreatedEvent({ startClocks: relativeToClocks((originalTime + 10) as RelativeTime), id: 'view 2' })

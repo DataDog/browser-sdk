@@ -13,7 +13,8 @@ export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof Defaul
 
 export const DEFAULT_CONFIGURATION = {
   allowedTracingOrigins: [] as Array<string | RegExp>,
-  maxErrorsByMinute: 3000,
+  maxErrorsPerMinute: 3000,
+  maxActionsPerMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   sampleRate: 100,
   replaySampleRate: 100,
@@ -114,7 +115,7 @@ export function buildConfiguration(initConfiguration: InitConfiguration, buildEn
     cookieOptions: buildCookieOptions(initConfiguration),
     isEnabled,
     service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv, isEnabled('support-intake-v2')),
+    ...computeTransportConfiguration(initConfiguration, buildEnv),
     ...DEFAULT_CONFIGURATION,
   }
 

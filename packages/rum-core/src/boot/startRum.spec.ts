@@ -1,15 +1,15 @@
-import { RelativeTime, Configuration } from '@datadog/browser-core'
+import { RelativeTime, Configuration, Observable } from '@datadog/browser-core'
 import { RumSession } from '@datadog/browser-rum-core'
 import { createRumSessionMock, RumSessionMock } from '../../test/mockRumSession'
 import { isIE } from '../../../core/test/specHelper'
 import { noopRecorderApi, setup, TestSetupBuilder } from '../../test/specHelper'
-import { DOMMutationObservable } from '../browser/domMutationObservable'
 import { RumPerformanceNavigationTiming } from '../browser/performanceCollection'
 
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/rumEventsCollection/view/trackViews'
 import { startViewCollection } from '../domain/rumEventsCollection/view/viewCollection'
 import { RumEvent } from '../rumEvent.types'
+import { LocationChange } from '../browser/locationChangeObservable'
 import { startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -26,7 +26,8 @@ function startRum(
   configuration: Configuration,
   session: RumSession,
   location: Location,
-  domMutationObservable: DOMMutationObservable
+  domMutationObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>
 ) {
   const { stop: rumEventCollectionStop, foregroundContexts } = startRumEventCollection(
     applicationId,
@@ -43,6 +44,7 @@ function startRum(
     configuration,
     location,
     domMutationObservable,
+    locationChangeObservable,
     foregroundContexts,
     noopRecorderApi
   )
@@ -64,9 +66,25 @@ describe('rum session', () => {
     }
 
     setupBuilder = setup().beforeBuild(
-      ({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
+      ({
+        applicationId,
+        location,
+        lifeCycle,
+        configuration,
+        session,
+        domMutationObservable,
+        locationChangeObservable,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
+        return startRum(
+          applicationId,
+          lifeCycle,
+          configuration,
+          session,
+          location,
+          domMutationObservable,
+          locationChangeObservable
+        )
       }
     )
   })
@@ -108,10 +126,28 @@ describe('rum session keep alive', () => {
     setupBuilder = setup()
       .withFakeClock()
       .withSession(session)
-      .beforeBuild(({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
-        serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
-      })
+      .beforeBuild(
+        ({
+          applicationId,
+          location,
+          lifeCycle,
+          configuration,
+          session,
+          domMutationObservable,
+          locationChangeObservable,
+        }) => {
+          serverRumEvents = collectServerEvents(lifeCycle)
+          return startRum(
+            applicationId,
+            lifeCycle,
+            configuration,
+            session,
+            location,
+            domMutationObservable,
+            locationChangeObservable
+          )
+        }
+      )
   })
 
   afterEach(() => {
@@ -169,9 +205,25 @@ describe('rum view url', () => {
 
   beforeEach(() => {
     setupBuilder = setup().beforeBuild(
-      ({ applicationId, location, lifeCycle, configuration, session, domMutationObservable }) => {
+      ({
+        applicationId,
+        location,
+        lifeCycle,
+        configuration,
+        session,
+        domMutationObservable,
+        locationChangeObservable,
+      }) => {
         serverRumEvents = collectServerEvents(lifeCycle)
-        return startRum(applicationId, lifeCycle, configuration, session, location, domMutationObservable)
+        return startRum(
+          applicationId,
+          lifeCycle,
+          configuration,
+          session,
+          location,
+          domMutationObservable,
+          locationChangeObservable
+        )
       }
     )
   })
@@ -181,11 +233,11 @@ describe('rum view url', () => {
   })
 
   it('should keep the same URL when updating a view ended by a URL change', () => {
-    setupBuilder.withFakeLocation('http://foo.com/').build()
+    const { changeLocation } = setupBuilder.withFakeLocation('http://foo.com/').build()
 
     serverRumEvents.length = 0
 
-    history.pushState({}, '', '/bar')
+    changeLocation('/bar')
 
     expect(serverRumEvents.length).toEqual(2)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
@@ -193,11 +245,14 @@ describe('rum view url', () => {
   })
 
   it('should keep the same URL when updating an ended view', () => {
-    const { lifeCycle, clock } = setupBuilder.withFakeClock().withFakeLocation('http://foo.com/').build()
+    const { lifeCycle, clock, changeLocation } = setupBuilder
+      .withFakeClock()
+      .withFakeLocation('http://foo.com/')
+      .build()
 
     clock.tick(VIEW_DURATION)
 
-    history.pushState({}, '', '/bar')
+    changeLocation('/bar')
 
     serverRumEvents.length = 0
 

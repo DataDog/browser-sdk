@@ -313,7 +313,7 @@ describe('logs', () => {
 
     it('stops sending error logs when reaching the limit', () => {
       const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsByMinute: 1 } })
+      const sendLog = startLogs({ errorLogger: new Logger(sendLogSpy), configuration: { maxErrorsPerMinute: 1 } })
       sendLog({ message: 'foo', status: StatusType.error }, {})
       sendLog({ message: 'bar', status: StatusType.error }, {})
 
@@ -336,7 +336,7 @@ describe('logs', () => {
       const sendLog = startLogs({
         errorLogger: new Logger(sendLogSpy),
         configuration: {
-          maxErrorsByMinute: 1,
+          maxErrorsPerMinute: 1,
           beforeSend(event) {
             if (event.message === 'discard me') {
               return false
@@ -355,7 +355,7 @@ describe('logs', () => {
     })
 
     it('allows to send new errors after a minute', () => {
-      const sendLog = startLogs({ configuration: { maxErrorsByMinute: 1 } })
+      const sendLog = startLogs({ configuration: { maxErrorsPerMinute: 1 } })
       sendLog({ message: 'foo', status: StatusType.error }, {})
       sendLog({ message: 'bar', status: StatusType.error }, {})
       clock.tick(ONE_MINUTE)

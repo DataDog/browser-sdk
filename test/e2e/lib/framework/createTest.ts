@@ -7,7 +7,6 @@ import { EventRegistry } from './eventsRegistry'
 import { getTestServers, Servers, waitForServersIdle } from './httpServers'
 import { log } from './logger'
 import { DEFAULT_SETUPS, npmSetup, SetupFactory, SetupOptions } from './pageSetups'
-import { Endpoints } from './sdkBuilds'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -29,7 +28,6 @@ interface TestContext {
   baseUrl: string
   crossOriginUrl: string
   events: EventRegistry
-  endpoints: Endpoints
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void>
@@ -143,8 +141,8 @@ function declareTest(title: string, setup: string, runner: TestRunner) {
 
     const testContext = createTestContext(servers)
 
-    servers.base.bindServerApp(createMockServerApp(testContext.endpoints, setup))
-    servers.crossOrigin.bindServerApp(createMockServerApp(testContext.endpoints, setup))
+    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
     servers.intake.bindServerApp(createIntakeServerApp(testContext.events))
 
     await setUpTest(testContext)
@@ -167,12 +165,6 @@ function createTestContext(servers: Servers): TestContext {
   return {
     baseUrl: servers.base.url,
     crossOriginUrl: servers.crossOrigin.url,
-    endpoints: {
-      internalMonitoring: `${servers.intake.url}/v1/input/internalMonitoring`,
-      logs: `${servers.intake.url}/v1/input/logs`,
-      rum: `${servers.intake.url}/v1/input/rum`,
-      sessionReplay: `${servers.intake.url}/v1/input/sessionReplay`,
-    },
     events: new EventRegistry(),
   }
 }
